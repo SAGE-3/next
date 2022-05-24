@@ -1,0 +1,42 @@
+name: Webstack CI
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+    working-directory: webstack
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version:
+          - 16.x
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile --silent
+
+      - name: Build Homebase
+        run: yarn build --if-present
+
+      - name: Build Collaboration Space
+        run: yarn build collaboration-space --if-present
+
+      - name: Run Tests
+        run: yarn affected:test --parallel # todo: fix affected:test

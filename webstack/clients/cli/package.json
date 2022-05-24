@@ -1,0 +1,14 @@
+{
+  "name": "cli",
+  "version": "1.0.0",
+  "description": "command line client to connect to SAGE3",
+  "main": "client.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "commander": "^8.0.0",
+    "form-data": "^4.0.0",
+    "socket.io-client": "^4.1.3"
+  }
+}

@@ -1,0 +1,23 @@
+*.weights
+__pycache__/
+*.pyc
+*.egg-info
+*.egg
+venv/*
+foresight/build
+.ipynb_checkpoints
+
+node_modules
+
+# IDE - VSCode
+.vscode/*
+
+# Mac System Files
+.DS_Store
+Thumbs.db
+
+# Idea
+.idea/
+*.pem
+foresight/config.json
+webstack/package-lock.json

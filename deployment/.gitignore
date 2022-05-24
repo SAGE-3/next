@@ -1,0 +1,14 @@
+configurations/mongo/data
+configurations/redis/data
+configurations/jupyter/conf/info.json
+configurations/node/keys/*.crt
+configurations/node/keys/*.key
+configurations/node/keys/*.pem
+
+foresight/ai_services
+foresight/media_server
+foresight/message_broker
+foresight/smartbits
+foresight/task_queue
+
+.ipynb_checkpoints

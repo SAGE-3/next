@@ -1,0 +1,76 @@
+{
+  "cli": "nx",
+  "id": "newapp",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Application name",
+      "x-prompt": "What name would you like to use for the SAGE3 application?",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      }
+    },
+    "username": {
+      "type": "string",
+      "description": "User name",
+      "x-prompt": "What is the name of the developer?",
+      "$default": {
+        "$source": "argv",
+        "index": 1
+      }
+    },
+    "type": {
+      "type": "string",
+      "description": "Provide the main data type of the application (others can be added later)",
+      "x-prompt": {
+        "message": "Which data type would your application use?",
+        "type": "list",
+        "items": [
+          {
+            "value": "atom",
+            "label": "Atom"
+          },
+          {
+            "value": "reducer",
+            "label": "Reducer"
+          },
+          {
+            "value": "image",
+            "label": "Image"
+          },
+          {
+            "value": "text",
+            "label": "Text"
+          },
+          {
+            "value": "code",
+            "label": "Code"
+          },
+          {
+            "value": "cell",
+            "label": "Notebook cell"
+          },
+          {
+            "value": "file",
+            "label": "File"
+          },
+          {
+            "value": ".ipynb",
+            "label": "Notebook file (.ipynb)"
+          },
+          {
+            "value": ".pdf",
+            "label": "PDF file"
+          }
+        ]
+      },
+      "$default": {
+        "$source": "argv",
+        "index": 2
+      }
+    }
+  },
+  "required": ["name", "username", "type"]
+}

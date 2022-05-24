@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  fluent-server:
+    image: "fluent/fluentd:edge"
+    ports:
+      - "127.0.0.1:24224:24224"
+      - "127.0.0.1:24224:24224/udp"
+      - "127.0.0.1:24220:24220"
+      - "127.0.0.1:9880:9880"
+    volumes:
+      - type: bind
+        source: ./configurations/fluentd/conf/fluent.conf
+        target: /fluentd/etc/fluent.conf
+  redis-server:
+    image: "redislabs/redismod:latest"
+    volumes:
+      - ./configurations/redis/data:/data
+      - ./configurations/redis/conf:/conf
+    ports:
+      - "127.0.0.1:6379:6379"
+    entrypoint: redis-server
+    command: /conf/redis.conf
+  node-server:
+    image: "sage3/sage3:prod"
+    ports:
+      - "443:443"
+    depends_on:
+      - "redis-server"
+      - "fluent-server"
+    volumes:
+      - ./configurations/node/keys:/app/keys
+      - ./configurations/node/database:/app/database
+      - ./configurations/node/assets:/app/dist/apps/homebase/assets
+      - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+  jupyter:
+    image: "jupyter/base-notebook"
+    volumes:
+      - ./configurations/jupyter/conf:/conf
+      - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
+      - ./redis-client:/home/jovyan/work
+    ports:
+      - "8888:8888"
+    environment:
+      - REDIS_URL=redis-server:6379
+    depends_on:
+      - "redis-server"
+      - "fluent-server"
+    command: /conf/start.sh

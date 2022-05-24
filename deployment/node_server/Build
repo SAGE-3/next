@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# dev
+#docker build -f Dockerfile -t node-server:dev ../../
+# production
+docker build -f Dockerfile.prod -t node-server:prod ../../
+

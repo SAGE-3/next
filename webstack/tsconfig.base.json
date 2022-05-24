@@ -1,0 +1,33 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "target": "es2015",
+    "module": "esnext",
+    "typeRoots": ["node_modules/@types", "libs/shared/types/src/lib"],
+    "lib": ["es2017", "dom", "es2018", "es2019", "es2020"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sage3/applications": ["libs/applications/src/index.ts"],
+      "@sage3/backend": ["libs/backend/src/index.ts"],
+      "@sage3/frontend": ["libs/frontend/src/index.ts"],
+      "@sage3/sagebase": ["libs/sagebase/src/index.ts"],
+      "@sage3/shared": ["libs/shared/src/index.ts"],
+      "@sage3/shared/types": ["libs/shared/src/lib/types/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

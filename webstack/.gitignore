@@ -1,0 +1,53 @@
+# Keys
+/keys/*.crt
+/keys/*.key
+/keys/*.pem
+
+# compiled output
+/dist
+/tmp
+/out-tsc
+/docs/libs
+/docs/homebase
+/docs/collaboration-space
+
+# dependencies
+/node_modules
+
+# IDEs and editors
+/.idea
+.idea/workspace.xml
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Database
+/database/db-*.json
+
+# Tokens
+/clients/pycli/token_test.json
+/clients/pycli/output.jpg

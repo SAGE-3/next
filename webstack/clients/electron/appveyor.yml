@@ -1,0 +1,77 @@
+version: 1.0.{build}
+
+image: Visual Studio 2017
+
+branches:
+  only:
+  - master
+
+shallow_clone: true
+
+configuration: Release
+
+platform: x64
+
+init:
+  - set PATH=C:\Program Files\Git\mingw64\bin;%PATH%
+
+install:
+  - ps: Get-NodeJsLatestBuild 12.13
+  - ps: Install-Product node 12.13.0 x64
+  - dir C:\avvm\node
+  - node -v
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - cd client
+  - npm install --msvs_version=2017
+  - dir
+  - mkdir public
+  - mkdir public\uploads
+  - mkdir public\uploads\apps
+  - mkdir public\uploads\apps\Webview
+  - copy /Y ..\public\uploads\apps\Webview\SAGE2_script_supplement.js public\uploads\apps\Webview\SAGE2_script_supplement.js
+  - .\node_modules\.bin\electron-packager . --platform=win32 --arch=x64 --icon=sage2.ico --overwrite
+  - copy /Y README.win      SAGE2_client-win32-x64\README
+  - copy /Y View.win        SAGE2_client-win32-x64\Display0.bat
+  - copy /Y Fullscreen.win  SAGE2_client-win32-x64\Fullscreen.bat
+  - 7z a -sfx7z.sfx SAGE2_client-win64.exe SAGE2_client-win32-x64 > nul
+  - move SAGE2_client-win64.exe ..
+  - node build_win.js
+  - move windows-installer\SAGE2_client-Installer.exe ..
+
+build: off
+
+test: off
+
+artifacts:
+  - path: SAGE2_client-Installer.exe
+    name: sage2_client
+  - path: SAGE2_client-win64.exe
+    name: sage2_client2
+
+deploy:
+  - provider: FTP
+    host: ftp.sagecommons.org
+    protocol: ftp
+    username: upload@sagecommons.org
+    password:
+      secure: L4I4NkKN7mrQww7GgwPLrA==
+    folder: /Display
+    artifact: sage2_client
+  - provider: FTP
+    host: ftp.sagecommons.org
+    protocol: ftp
+    username: upload@sagecommons.org
+    password:
+      secure: L4I4NkKN7mrQww7GgwPLrA==
+    folder: /Display
+    artifact: sage2_client2
+
+notifications:
+  - provider: Slack
+    channel: '#appveyor'
+    auth_token:
+      secure: zWPzLLrh/2HV3lXJd9q5XHTy015slI7x1ptyvmOARG2TXpeftHtzKbtzxufzpVBirSHrvr95vgBR+ouSX+KQHceIPeAXEJEBXvA7wHZS7ng=
+    on_build_success: true
+    on_build_failure: true
+    on_build_status_changed: true
+

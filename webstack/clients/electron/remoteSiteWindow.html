@@ -1,0 +1,142 @@
+<!--
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+ -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Connect to a SAGE server</title>
+    <link rel="stylesheet" href="css/materialize.min.css" />
+    <link href="css/material.icons.css" rel="stylesheet" />
+    <script src="src/materialize.min.js"></script>
+  </head>
+
+  <style>
+    .carousel .indicators .indicator-item {
+      background-color: #455a64;
+    }
+  </style>
+
+  <body class="grey lighten-4">
+    <div class="container">
+      <form action="">
+        <div class="section">
+          <div class="row">
+            <div class="col s12"><h4>Connect to a SAGE server</h4></div>
+          </div>
+          <!-- <h4>Connect to SAGE server</h4> -->
+          <div class="row">
+            <div class="col s8">
+              <!-- <h4>Connect to SAGE server</h4> -->
+              <!-- <p>Connected sites and favorites</p> -->
+              <div style="height: 261px; overflow-y: scroll; color: white; max-height: 261px">
+                <div class="z-depth-3">
+                  <ul id="favorites_list" class="collection with-header"></ul>
+                </div>
+              </div>
+            </div>
+            <div class="col s4">
+              <!-- <label>Options</label> -->
+              <!-- <br> -->
+              <p>
+                <label>
+                  <input class="checkb" id="check_2" type="checkbox" checked="true" />
+                  <span>Display Full Wall</span>
+                </label>
+              </p>
+              <div class="row">
+                <div class="col s9">
+                  <p>
+                    <label>
+                      <input class="checkb" id="check_1" type="checkbox" />
+                      <span>Display client ID</span>
+                    </label>
+                  </p>
+                </div>
+                <div class="col s2">
+                  <div id="display-id-div">
+                    <!-- Dropdown Trigger -->
+                    <a
+                      id="id_drop"
+                      class="dropdown-trigger btn blue-grey darken-2 z-depth-3 scale-transition scale-out"
+                      href="#"
+                      data-target="ids_dropdown"
+                      >ID</a
+                    >
+                    <!-- Dropdown Structure -->
+                    <ul id="ids_dropdown" class="dropdown-content"></ul>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="input-field col s12">
+                  <input disabled id="password" type="password" class="validate" />
+                  <label for="password">Password</label>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col s6">
+                  <!-- <a id="cancel_btn"
+                                        class='btn waves-effect wave-lights blue-grey darken-2 z-depth-3' href="#modal1">Info</a> -->
+                  <button data-target="site_info" class="btn modal-trigger waves-effect wave-lights blue-grey darken-2 z-depth-3">
+                    Info
+                  </button>
+                  <div id="site_info" class="modal">
+                    <div class="modal-content">
+                      <h4>SAGE site info</h4>
+                      <div id="site_info_html">Select a site</div>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col s6">
+                  <!-- disabled TODO added pulse class for 2 second on enable-->
+                  <a id="okay_btn" class="btn waves-effect wave-lights blue-grey darken-2 z-depth-3 disabled"> Connect</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="section">
+            <div class="row">
+              <div class="col s12"><h5>Add site</h5></div>
+            </div>
+            <div class="row">
+              <div class="col s8">
+                <div class="input-field">
+                  <input type="text" id="url" />
+                  <label for="url">Enter URL of Remote Site</label>
+                  <span id="status_text" class="helper-text" data-error="Offline" data-success="Online">
+                    Enter the hostname and port number of the secure server (example.com:4343)
+                  </span>
+                </div>
+              </div>
+              <div class="col s4">
+                <br />
+
+                <div class="row">
+                  <div class="col s6">
+                    <a id="current_status_btn" class="btn waves-effect wave-lights blue-grey darken-2 z-depth-3 disabled">Check</a>
+                  </div>
+                  <div class="col s6">
+                    <a id="add_btn" class="btn waves-effect wave-lights blue-grey darken-2 z-depth-3 disabled"> Add site</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <script src="src/remote-connection.js"></script>
+  </body>
+</html>

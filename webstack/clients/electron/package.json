@@ -1,0 +1,37 @@
+{
+  "name": "SAGE3",
+  "version": "1.0.0-alpha.12",
+  "description": "Electron-based SAGE3 client",
+  "main": "electron.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SAGE-3"
+  },
+  "dependencies": {
+    "commander": "^7",
+    "electron-store": "^8",
+    "node-fetch": "^2",
+    "semver": "^7"
+  },
+  "devDependencies": {
+    "electron": "^18",
+    "electron-notarize": "^1",
+    "electron-packager": "latest"
+  },
+  "optionalDependencies": {
+    "electron-installer-debian": "latest",
+    "electron-installer-dmg": "latest",
+    "electron-installer-redhat": "latest",
+    "electron-squirrel-startup": "latest",
+    "electron-winstaller": "latest"
+  },
+  "scripts": {
+    "electron": "electron electron.js -s https://sage3.app/",
+    "local": "electron electron.js -s http://localhost:4200/",
+    "build_mac": "build_mac",
+    "build_win": "build_win.bat",
+    "build_lnx": "build_lnx"
+  },
+  "author": "Luc Renambot <renambot@gmail.com>",
+  "license": "SEE LICENSE IN LICENSE.txt"
+}

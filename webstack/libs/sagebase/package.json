@@ -1,0 +1,17 @@
+{
+  "name": "@sage3/sagebase",
+  "version": "0.0.33",
+  "dependencies": {
+    "connect-redis": "^6.1.3",
+    "express": "4.17.1",
+    "express-session": "^1.17.2",
+    "openid-client": "^5.1.6",
+    "passport": "^0.4.1",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.0",
+    "passport-local": "^1.0.0",
+    "passport-openidconnect": "^0.1.1",
+    "tslib": "^2.3.1",
+    "uuid": "^8.3.0"
+  }
+}

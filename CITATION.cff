@@ -1,0 +1,19 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+abstract: "SAGE3 is a software to enable data-rich collaboration on high-resolution display walls. SAGE2 moved SAGE into cloud computing and SAGE3 ushers in the inclusion of artificial intelligence. Scientists analyzing their data in SAGE3 will collaborate with each other and with artificial intelligence through large interactive visualization spaces, such as multi-monitor workstations, tiled display walls, and virtual reality headsets."
+authors:
+  - family-names: SAGE3
+    given-names: Team
+    orcid: https://orcid.org/0000-0000-000-000
+title: "SAGE3 - Collaborate Smarter"
+url: "https://sage3.sagecommons.org"
+version: 0.1.0
+date-released: 2021-06-29
+keywords:
+  - collaboration
+  - visualiztion
+  - machine learning
+  - artifical intelligence
+  - data analytics
+  - research software
+license: "BSD-3-Clause"

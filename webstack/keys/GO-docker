@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# SAGE2 is available for use under the SAGE2 Software License
+# 
+# University of Illinois at Chicago's Electronic Visualization Laboratory (EVL)
+# and University of Hawai'i at Manoa's Laboratory for Advanced Visualization and
+# Applications (LAVA)
+# 
+# See full text, terms and conditions in the LICENSE.txt included file
+#
+# Copyright (c) 2014
+
+# sudo apt-get update 
+# sudo apt-get -y install libnss3-tools openssl
+
+# Reset the key database
+rm -fr /sage3/.pki/nssdb
+mkdir -p  /sage3/.pki/nssdb
+echo "" > /tmp/pass
+echo "" >> /tmp/pass
+certutil -f /tmp/pass -d sql:/sage3/.pki/nssdb -N
+/bin/rm -f /tmp/pass
+cd /sage3/keys
+
+function generate {
+	password=foobar
+	server=$1
+
+	echo "Start: CA"
+	openssl genrsa -des3 -out /sage3/keys/ca.key  -passout pass:$password 1024
+	openssl req -new -key /sage3/keys/ca.key -out /sage3/keys/ca.csr -passin pass:$password -subj "/CN=$server"
+	openssl x509 -req -days 365 -in /sage3/keys/ca.csr -out /sage3/keys/$server-ca.crt -signkey /sage3/keys/ca.key  -passin pass:$password
+	echo ""
+	echo ""
+
+	#FQDN - hostname (webserver)
+	echo "Start Server Certificate"
+	openssl genrsa -des3 -out /sage3/keys/$server-server.key -passout pass:$password 1024
+	openssl req -new -key /sage3/keys/$server-server.key -out /sage3/keys/server.csr -passin pass:$password -subj "/CN=$server"
+	echo ""
+	echo ""
+
+	echo "Copy Server Certificate"
+	cp /sage3/keys/$server-server.key /sage3/keys/server.key.org
+	openssl rsa -in /sage3/keys/server.key.org -out /sage3/keys/$server-server.key -passin pass:$password
+	echo ""
+	echo ""
+
+	echo "Sign Server Certificate"
+	openssl x509 -req -days 365 -in /sage3/keys/server.csr -signkey /sage3/keys/$server-server.key -out /sage3/keys/$server-server.crt
+	echo ""
+	echo ""
+
+	echo "Trust Server Certificate - Add to DB"
+	# list the DB
+	certutil -d sql:/sage3/.pki/nssdb -L
+	# delete the previous server key
+	certutil -d sql:/sage3/.pki/nssdb -D -n $server
+	# add the new key
+	certutil -d sql:/sage3/.pki/nssdb -A -t "P,," -n $server -i /sage3/keys/$server-server.crt
+	# print the DB again
+	certutil -d sql:/sage3/.pki/nssdb -L
+	echo ""
+	echo "Finished"
+
+	/bin/rm -f /sage3/keys/server.key.org /sage3/keys/server.csr /sage3/keys/ca.csr /sage3/keys/ca.key
+}
+
+
+# Generate new keys
+servers="$1 127.0.0.1 0.0.0.0 localhost"
+
+for f in `echo $servers`
+do
+	generate $f
+done
+
+mv /sage3/keys/$1-server.key /sage3/keys/$1.key 
+mv /sage3/keys/$1-server.crt /sage3/keys/$1.crt 
+

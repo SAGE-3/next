@@ -1,0 +1,11 @@
+{
+    "uuid": "b3256b9d-5164-4294-8051-fa06a9bd6772",
+    "smartbit_type": "PostItSmartBit",
+    "object_id": 1234,
+    "client_id": 1234,
+    "action": "update",
+    "action_params":
+        {
+            "wall_coordinates": [1,2,3,4]
+        }
+}

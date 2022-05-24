@@ -1,0 +1,10 @@
+{
+  "name": "genJWT",
+  "description": "generate a token for a given name and email",
+  "version": "1.0.0",
+  "main": "genJWT.js",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^8.1.0"
+  }
+}

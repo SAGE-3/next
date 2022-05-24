@@ -1,0 +1,46 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+/**
+ * SAGE3 application: <%= name %>
+ * created by: <%= username %>
+ */
+
+// Imports the builtin props for applications
+import { AppProps } from '@sage3/shared/types';
+
+/**
+ * Structure defining the application <%= name %>
+ */
+export const meta = {
+  // Name of the application
+  name: '<%= name %>',
+  description: 'Application named <%= name %>',
+  showInMenu: false,
+  // Defines the state variables of the application
+  data: {},
+  // Defines the default values
+  state: {
+    <% if (type == "reducer") { %>
+      <%= name %>State: {
+        type: 'reducer',
+        init: {},
+        reducer: <%= name %>Reducer,
+      }
+    <% } %>
+    <% if (type == "atom") { %>
+      <%= name %>State: {
+        type: 'atom',
+        init: {}
+      }
+    <% } %>
+  },
+} as const;
+
+// Adding the defined structure to the application props
+export type <%= name %>Props = AppProps<typeof meta>;

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# update dependencies
+rm -fr node_modules
+npm install
+
+# package the app
+./node_modules/.bin/electron-packager ./ --platform=linux --arch=x64 --icon=sage3.icns --overwrite
+
+# add some utility files
+cp README.lnx     SAGE3-linux-x64/README.txt
+

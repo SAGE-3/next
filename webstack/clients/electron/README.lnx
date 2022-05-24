@@ -1,0 +1,41 @@
+How to run:
+-----------
+
+Run the 'SAGE3' binary inside the folder (after decompressing the downloaded file)
+If the SAGE3 file is not executable, change the permissions to make it executable:
+   - terminal: chmod +x SAGE3
+   - or using ubuntu file manager (Nautilus) to update the file permissions to make it executable.
+
+Usage
+-----
+
+./SAGE3
+   - will connect to the default main SAGE3 server at https://sage3.app
+
+For more control, use the following options:
+
+./SAGE -- [options]
+   example:  ./SAGE3 -- -s https://mini.sage3.app
+
+Options:
+  -V, --version              output the version number
+  -f, --fullscreen           Fullscreen (boolean) (default: false)
+  -m, --monitor <n>          Select a monitor (int) (default: null)
+  -n, --no_decoration        Remove window decoration (boolean) (default: false)
+  -s, --server <s>           Server URL (string) (default: "https://sage3.app")
+  -x, --xorigin <n>          Window position x (int) (default: 0)
+  -y, --yorigin <n>          Window position y (int) (default: 0)
+  -c, --clear                Clear window preferences (default: false)
+  --allowDisplayingInsecure  Allow displaying of insecure content (http on https) (default:
+                             true)
+  --allowRunningInsecure     Allow running insecure content (scripts accessed on http vs
+                             https) (default: true)
+  --cache                    Clear the cache at startup (default: false)
+  --console                  Open the devtools console (default: false)
+  --experimentalFeatures     Enable experimental features (default: false)
+  --height <n>               Window height (int) (default: 720)
+  --disable-hardware         Disable hardware acceleration (default: false)
+  --show-fps                 Display the Chrome FPS counter (default: false)
+  --width <n>                Window width (int) (default: 1280)
+  -h, --help                 display help for command
+

@@ -1,0 +1,62 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+/**
+ * SAGE3 application: <%= name %>
+ * created by: <%= username %>
+ */
+
+// Import the React library
+import React from 'react';
+
+// Window layout component provided by SAGE3
+import { Collection, DataPane } from '@sage3/frontend/smart-data/layout';
+
+// State management functions from SAGE3
+import { useSageSmartData, SWRReturnType } from '@sage3/frontend/smart-data/hooks';
+
+// Import the props definition for this application
+import { <%= name %>Props } from './metadata';
+
+// Import the CSS definitions for this application
+import './styling.css';
+
+export const Apps<%= name %> = (props: <%= name %>Props): JSX.Element => {
+  // Getting basic info about the app
+  console.log('App <%= name %> information>', props.id, props.position);
+
+  // Get a state value and a matching setter function
+  const { data: val, setData: setValue } = useSageSmartData(props.data.<%= type %>);
+  // Cast as a JSON object to access fields
+  const v = val as Sage3<%= type %>;
+
+  // Set default values
+  if (!v) setValue(() => props.__meta__.defaultValues.<%= type %>);
+
+  return (
+    // Main application layout
+    <Collection>
+      <DataPane>
+        Application <%= name %>
+      </DataPane>
+      <DataPane>
+        <% if (type == "json") { %>
+          Value <%= type %>: {v}
+        <% } %>
+        <% if (type == "text") { %>
+          Value <%= type %>: {v}
+        <% } %>
+        <% if (type == "code") { %>
+          Value <%= type %>: {v}
+        <% } %>
+      </DataPane>
+    </Collection>
+  );
+};
+
+export default Apps<%= name %>;

@@ -1,0 +1,23 @@
+How to run:
+-----------
+
+# Electron SAGE3 arguments
+# -h, --help           output usage information
+# -V, --version        output the version number
+# -s, --server <s>     Server URL (string)
+# -u, --ui             Open the user interface (instead of display)
+# -a, --audio          Open the audio manager (instead of display)
+# -f, --fullscreen     Fullscreen (boolean)
+# -p, --plugins        Enables plugins and flash (boolean)
+# -n, --no_decoration  Remove window decoration (boolean)
+# -x, --xorigin <n>    Window position x (int)
+# -y, --yorigin <n>    Window position y (int)
+# -m, --monitor <n>    Select a monitor (int)
+# --width <n>          Window width (int)
+# --height <n>         Window height (int)
+# --password <s>       Server password (string)
+# --hash <s>           Server password hash (string)
+# --cache              Clear the cache
+# --console            Open the devtools console
+
+

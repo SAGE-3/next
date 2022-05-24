@@ -1,0 +1,31 @@
+FROM node:16-buster
+
+# Install in that directory
+WORKDIR /app
+
+# Debian package
+RUN apt-get update && apt-get install -y exiftool libheif1 libheif-dev && rm -rf /var/lib/apt/lists/*
+# nodejs module to reduce size
+RUN npm install modclean -g
+
+# Project files
+COPY webstack/package.json package.json
+COPY webstack/yarn.lock yarn.lock
+COPY webstack/nx.json nx.json
+COPY webstack/workspace.json workspace.json
+COPY webstack/babel.config.json babel.config.json
+COPY webstack/tsconfig.base.json	tsconfig.base.json
+
+# Code
+COPY webstack/apps apps
+COPY webstack/libs libs
+COPY webstack/database database
+
+# Install in production mode
+# Build the app
+# Install in production mode (remove dev packages)
+# Remove more files
+# One line -> to reduce docker image size
+RUN yarn install && yarn stage-prod && yarn install --prod && modclean -P -r --patterns="default:*" --ignore="pdfjs-dist/**"
+
+CMD ["node", "dist/apps/homebase/main.js"]

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# update dependencies
+rm -fr node_modules
+yarn
+
+# package the app
+npx electron-packager ./ --platform=darwin --arch=x64 --icon=s3.icns --overwrite --protocol=sage3 --protocol-name="SAGE3 application"
+
+# cleanup
+rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/app/node_modules/electron-installer*
+rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/app/node_modules/electron-winstaller*
+rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/app/node_modules/appdmg
+rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/*.lproj
+rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Frameworks/Electron\ Framework.framework/Versions/A/Resources/*.lproj
+
+# Sign and notarize
+npx electron-osx-sign --type=development --signature-flags=library --hardened-runtime \
+  --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist \
+  SAGE3-darwin-x64/SAGE3.app
+
+node notarize.js
+
+npx electron-installer-dmg SAGE3-darwin-x64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-x64/SAGE3-darwin-x64.dmg --icon=s3.icns --background=background.png --overwrite --iconSize=100 --title="SAGE3 Installer"
