@@ -75,8 +75,6 @@ Open a Chrome browser and navigate to `localhost:4200`
 
 Editing and saving code within `/webstack/apps` or `/webstack/libs` should hot reload the webpage.
 
-**Happy Coding!**
-
 ---
 
 # Branches
