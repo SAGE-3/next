@@ -130,6 +130,14 @@ export function appExpressRouter(): express.Router {
     res.status(status).send(response);
   });
 
+  router.post('/update/state', async (req, res) => {
+    const updateReq = req.body as AppHTTP.UpdateState;
+    const updateRes = await AppService.updateState(updateReq.id, updateReq.state);
+    const response = { success: updateRes } as AppHTTP.UpdateResponse;
+    const status = (updateRes) ? 200 : 404;
+    res.status(status).send(response);
+  });
+
   router.delete('/delete', async (req, res) => {
     const delReq = req.body as AppHTTP.DeleteRequest;
     const delRes = await AppService.deleteApp(delReq.id);

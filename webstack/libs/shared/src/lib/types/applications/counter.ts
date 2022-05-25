@@ -6,7 +6,9 @@
  *
  */
 
-export * from './app-schema';
-export * from './user-schema';
-export * from './board-schema';
-export * from './room-schema';
+
+export type CounterState = {
+  count: number;
+}
+
+export const CounterName = "Counter";

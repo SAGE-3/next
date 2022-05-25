@@ -6,8 +6,8 @@
  *
  */
 
-import { SBPrimitive } from "@sage3/sagebase"
-import { AppSchema } from "@sage3/applications"
+import { AppStates } from "../../applications"
+import { AppSchema } from "../../schemas"
 import { APIWSEvent, APIWSRequest, APIWSResponse } from "../type"
 
 export type CreateRequest = APIWSRequest & {
@@ -19,7 +19,7 @@ export type CreateRequest = APIWSRequest & {
     roomId: AppSchema['roomId']
     boardId: AppSchema['boardId'],
     type: string,
-    state: SBPrimitive,
+    state: AppStates,
   }
 }
 

@@ -13,26 +13,24 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { AppWS } from '@sage3/shared/types';
-
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import { AppSchema } from '@sage3/applications';
+import { AppSchema, AppStates, AppWS } from '@sage3/shared/types';
+import { genId } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { AppHTTPService } from "../api";
 import { SocketAPI } from "../utils";
-import { SBPrimitive } from "@sage3/sagebase";
 
 interface AppState {
   apps: AppSchema[];
-  createApp: (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: string, state: SBPrimitive) => void;
+  createApp: (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => void;
   updateName: (id: AppSchema['id'], name: AppSchema['name']) => void;
   updateDescription: (id: AppSchema['id'], email: AppSchema['description']) => void;
   updateOwnerId: (id: AppSchema['id'], ownerId: AppSchema['ownerId']) => void;
   updateRoomId: (id: AppSchema['id'], roomId: AppSchema['roomId']) => void;
   updateBoardId: (id: AppSchema['id'], boardId: AppSchema['boardId']) => void;
   deleteApp: (id: AppSchema['id']) => void;
-  subscribeByBoardId: (boardId: AppSchema['boardId']) => Promise<void>;
+  updateState: (id: AppSchema['id'], state: Partial<AppStates>) => Promise<void>;
+  subscribeByBoardId?: (boardId: AppSchema['boardId']) => Promise<void>;
 }
 
 /**
@@ -43,7 +41,7 @@ const AppStore = createVanilla<AppState>((set, get) => {
   let appsSub: (() => void) | null;
   return {
     apps: [],
-    createApp(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: string, state: SBPrimitive) {
+    createApp(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) {
       AppHTTPService.createApp(name, description, roomId, boardId, type, state);
     },
     updateName(id: AppSchema['id'], name: AppSchema['name']) {
@@ -60,6 +58,9 @@ const AppStore = createVanilla<AppState>((set, get) => {
     },
     updateBoardId(id: AppSchema['id'], boardId: AppSchema['boardId']) {
       AppHTTPService.updateBoardId(id, boardId);
+    },
+    updateState: async (id: AppSchema['id'], state: Partial<AppStates>) => {
+      AppHTTPService.updateState(id, state);
     },
     deleteApp: (id: AppSchema['id']) => {
       AppHTTPService.deleteApp(id);
@@ -114,5 +115,57 @@ const AppStore = createVanilla<AppState>((set, get) => {
 })
 
 
+/**
+ * The AppPlaygroundStore.
+ */
+const AppPlaygroundStore = createVanilla<AppState>((set, get) => {
+  return {
+    apps: [],
+    createApp: (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => {
+      const newApp = {
+        id: genId(),
+        name,
+        description,
+        roomId: genId(),
+        boardId: genId(),
+        ownerId: genId(),
+        type,
+        state
+      } as AppSchema;
+
+      set({ apps: [...get().apps, newApp] })
+    },
+    updateName: (id: AppSchema['id'], name: AppSchema['name']) => {
+      const apps = [...get().apps];
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, name } } : app) })
+    },
+    updateDescription: (id: AppSchema['id'], description: AppSchema['description']) => {
+      const apps = [...get().apps];
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, description } } : app) })
+    },
+    updateOwnerId: (id: AppSchema['id'], ownerId: AppSchema['ownerId']) => {
+      const apps = [...get().apps];
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, ownerId } } : app) })
+    },
+    updateRoomId: (id: AppSchema['id'], roomId: AppSchema['roomId']) => {
+      const apps = [...get().apps];
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, roomId } } : app) })
+    },
+    updateBoardId: (id: AppSchema['id'], boardId: AppSchema['boardId']) => {
+      const apps = [...get().apps];
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, boardId } } : app) })
+    },
+    updateState: async (id: AppSchema['id'], update: Partial<AppStates>) => {
+      const apps = [...get().apps];
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, ...update } } : app) })
+    },
+    deleteApp: (id: AppSchema['id']) => {
+      set({ apps: get().apps.filter(app => app.id !== id) })
+    },
+  }
+})
+
+const playground = (process.env.NX_TASK_TARGET_PROJECT === 'sage3-app-playground');
 // Convert the Zustand JS store to Zustand React Store
-export const useAppStore = createReact(AppStore);
+export const useAppStore = (playground) ? createReact(AppPlaygroundStore) : createReact(AppStore)
+

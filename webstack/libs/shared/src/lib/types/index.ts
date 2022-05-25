@@ -10,3 +10,4 @@ export * from './schemas';
 export * from './state';
 export * from './server';
 export * from './api';
+export * from './applications';

@@ -19,9 +19,9 @@
  */
 
 import { AppModel } from '../models';
-import { SBDocumentMessage, SBPrimitive } from '@sage3/sagebase';
+import { SBDocumentMessage } from '@sage3/sagebase';
 import { genId } from '@sage3/shared'
-import { AppSchema, AppStates, AppTypes } from '@sage3/applications';
+import { AppSchema, AppStates, AppTypes } from '@sage3/shared/types';
 
 
 /**
@@ -215,6 +215,21 @@ class SAGE3AppService {
     }
   }
 
+  /**
+* Update the app's boardId. This is transferring ownership to a new board.
+* @param {string} id The app's unique id.
+* @param {string} roomId The id of the new room.
+* @return {Promise<boolean>} Returns true if action was succesful.
+*/
+  public async updateState(id: string, state: Partial<AppStates>): Promise<boolean> {
+    try {
+      const success = await AppModel.updateState(id, state);
+      return success;
+    } catch (error) {
+      console.log('AppService updateBoardId error: ', error);
+      return false;
+    }
+  }
 
   /**
  * Delete a app in the database.

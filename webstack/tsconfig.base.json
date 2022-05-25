@@ -21,7 +21,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@sage3/applications": ["libs/applications/src/index.ts"],
       "@sage3/backend": ["libs/backend/src/index.ts"],
       "@sage3/frontend": ["libs/frontend/src/index.ts"],
       "@sage3/sagebase": ["libs/sagebase/src/index.ts"],

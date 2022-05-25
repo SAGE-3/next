@@ -19,7 +19,7 @@
  */
 
 import { SAGEBase, SBCollectionRef, SBDocument, SBDocumentMessage, SBDocumentUpdate } from '@sage3/sagebase';
-import { AppSchema } from '@sage3/applications';
+import { AppSchema, AppStates } from '@sage3/shared/types';
 
 /**
  * The database model for SAGE3 Apps.
@@ -118,6 +118,23 @@ class SAGE3AppModel {
     try {
       const response = await this.appCollection.docRef(id).update(update);
       return response.success;
+    } catch (error) {
+      console.log('BoardModel updateBoard error: ', error);
+      return false;
+    }
+  }
+
+  /**
+ * Update the app doc in the database.
+ * @param {string} id The app's unique id.
+ * @param {SBDocumentUpdate<AppSchema>} update The update values for the doc.
+ * @return {Promise<boolean>} Returns true if update was succesful.
+ */
+  public async updateState(id: string, update: Partial<AppStates>): Promise<boolean> {
+    try {
+      console.log(update)
+      // const response = await this.appCollection.docRef(id).update({ 'state': update });
+      return false;
     } catch (error) {
       console.log('BoardModel updateBoard error: ', error);
       return false;

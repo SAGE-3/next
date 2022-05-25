@@ -6,6 +6,7 @@
  *
  */
 
+export * from './lib/applications';
 export * from './lib/utils';
 export * from './lib/ui';
 export * from './lib/stores';

@@ -6,8 +6,7 @@
  *
  */
 
-import { SBPrimitive } from "@sage3/sagebase"
-import { AppSchema } from "@sage3/applications"
+import { AppSchema } from "../../schemas";
 
 // CREATE MESSAGES
 
@@ -16,8 +15,8 @@ export type CreateRequest = {
   description: AppSchema['description'],
   roomId: AppSchema['roomId']
   boardId: AppSchema['boardId'],
-  type: string,
-  state: SBPrimitive,
+  type: AppSchema['type'],
+  state: AppSchema['state'],
 }
 
 export type CreateResponse = {
@@ -84,6 +83,12 @@ export type UpdateBoardIdRequest = {
   id: AppSchema['id'],
   boardId: AppSchema['boardId']
 }
+
+export type UpdateState = {
+  id: AppSchema['id'],
+  state: AppSchema['state']
+}
+
 
 export type UpdateResponse = {
   success: boolean,

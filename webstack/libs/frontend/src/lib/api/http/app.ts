@@ -13,10 +13,7 @@
  * @version 1.0.0
  */
 
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import { AppSchema } from '@sage3/applications';
-import { SBPrimitive } from '@sage3/sagebase';
-import { AppHTTP } from '@sage3/shared/types';
+import { AppHTTP, AppSchema, AppStates } from '@sage3/shared/types';
 
 import { httpDELETE, httpGET, httpPOST } from './shared';
 
@@ -27,7 +24,7 @@ import { httpDELETE, httpGET, httpPOST } from './shared';
  * @param roomId 
  * @returns 
  */
-async function createApp(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: string, state: SBPrimitive): Promise<AppSchema | undefined> {
+async function createApp(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: string, state: AppStates): Promise<AppSchema | undefined> {
   const reqBody = { name, description, roomId, boardId, type, state } as AppHTTP.CreateRequest;
   const response = await httpPOST<AppHTTP.CreateRequest, AppHTTP.CreateResponse>('/api/app/create', reqBody);
   return response.app;
@@ -130,6 +127,17 @@ async function updateBoardId(id: AppSchema['id'], boardId: AppSchema['boardId'])
   return response.success;
 }
 
+/**
+ * 
+ * @param boardId 
+ * @returns 
+ */
+async function updateState(id: AppSchema['id'], state: Partial<AppStates>): Promise<boolean> {
+  const reqBody = { id, state } as AppHTTP.UpdateState;
+  const response = await httpPOST<AppHTTP.UpdateState, AppHTTP.UpdateResponse>('/api/app/update/state', reqBody);
+  return response.success;
+}
+
 
 /**
  * 
@@ -157,5 +165,6 @@ export const AppHTTPService = {
   updateOwnerId,
   updateRoomId,
   updateBoardId,
+  updateState,
   deleteApp
 };
