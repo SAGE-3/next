@@ -37,6 +37,3 @@ jobs:
 
       - name: Build Webapp
         run: yarn build webapp --if-present
-
-      - name: Run Tests
-        run: yarn affected:test --parallel # todo: fix affected:test
