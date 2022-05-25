@@ -68,7 +68,7 @@ cd ./webstack
 # Start the backend Nodejs web server application
 yarn start
 # Start the frontend React web application
-yarn start collaboration-space
+yarn start webapp
 ```
 
 Open a Chrome browser and navigate to `localhost:4200`

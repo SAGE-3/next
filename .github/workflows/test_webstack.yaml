@@ -35,8 +35,8 @@ jobs:
       - name: Build Homebase
         run: yarn build --if-present
 
-      - name: Build Collaboration Space
-        run: yarn build collaboration-space --if-present
+      - name: Build Webapp
+        run: yarn build webapp --if-present
 
       - name: Run Tests
         run: yarn affected:test --parallel # todo: fix affected:test
