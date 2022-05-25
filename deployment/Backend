@@ -22,7 +22,7 @@ fi
 # trap ctrl-c and call cleanup()
 trap cleanup SIGINT
 
-modules="-f docker-compose-light.yml"
+modules="-f docker-compose-backend.yml"
 
 function cleanup() {
 	echo "-- Trapped CTRL-C --"
