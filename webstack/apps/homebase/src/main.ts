@@ -20,28 +20,20 @@
 import * as fsModule from 'fs';
 import * as https from 'https';
 import * as path from 'path';
+import * as url from 'url';
+import { parse } from 'url';
+
 import { AddressInfo } from 'net';
 import { IncomingMessage, Server } from 'http';
 // Declare fs with Promises
 const fs = fsModule.promises;
 
-/**
- * NPM modules
- */
-// Express web server framework
-import * as express from 'express';
-
-// Express middlewares
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as helmet from 'helmet';
-import * as morgan from 'morgan';
-import * as favicon from 'serve-favicon';
-import * as cookieParser from 'cookie-parser';
-
 // Websocket
 import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
+
+// Create the web server with Express
+import { createApp, listenApp, serveApp } from './web';
 
 /**
  * SAGE3 Libs
@@ -51,11 +43,9 @@ import { loadConfig } from './config';
 import { expressAPIRouter, wsAPIRouter } from './controllers';
 import { loadModels } from './models';
 // import { connectFluent, multerMiddleware } from './connectors';
-import { SAGEBase, SAGEBaseConfig } from "@sage3/sagebase";
-
+import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIWSMessage, serverConfiguration } from '@sage3/shared/types';
-import { parse } from 'url';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -71,54 +61,8 @@ async function startServer() {
   const config: serverConfiguration = await loadConfig();
 
   // Create the Express object
-  const app = express();
-
-  // Set express attributes
-  app.use(favicon(path.join(config.root, config.assets, 'favicon.ico')));
-
-  // Enable reverse proxy support in Express. This causes the
-  // the "X-Forwarded-Proto" header field to be trusted so its
-  // value can be used to determine the protocol. See
-  // http://expressjs.com/en/api.html#app.settings.table for more details.
-  app.enable('trust proxy');
-
-  // using express to parse JSON bodies into JS objects
-  app.use(express.json({ limit: '5mb' }));
-
-  // Cookies
-  app.use(cookieParser());
-
-  // adding Helmet to enhance your API's security
-  // All options
-  // app.use(helmet());
-  // Disabling a few for now, easier during development
-  app.use(
-    helmet({
-      // Content-Security-Policy
-      contentSecurityPolicy: false,
-      // Strict-Transport-Security
-      hsts: false,
-    })
-  );
-
-  // Enabling CORS for all requests
-  app.use(cors());
-  // Compress the traffic
-  app.use(compression());
-
-  // Adding a logger to HTTP requests
-  // combined: Standard Apache combined log output
-  // values: combined tiny ...
-  // Send tiny format to stdout
-  // app.use(morgan('combined'));
-  app.use(
-    morgan('tiny', {
-      // Ignore the HTTP 200 good messages
-      skip: function (req: express.Request, res: express.Response) {
-        return res.statusCode === 200 || res.statusCode === 304;
-      },
-    })
-  );
+  const assetPath = path.join(config.root, config.assets);
+  const app = createApp(assetPath);
 
   // // Multi-file upload
   // app.use(multerMiddleware('files'));
@@ -176,31 +120,28 @@ async function startServer() {
     });
   } else {
     // Start the HTTP web server
-    server = app.listen(config.port, () => {
-      const { port } = server.address() as AddressInfo;
-      console.log('HTTP> listening on port', port);
-    });
+    server = listenApp(app, config.port);
   }
 
   // Init SAGEBase
   // SAGEBase
   const sbConfig = {
-    projectName: "SAGE3",
+    projectName: 'SAGE3',
     authConfig: {
       sessionMaxAge: 1000 * 60 * 60 * 24 * 7,
       sessionSecret: 'SUPERSECRET!!$$',
       strategies: {
         guestConfig: {
-          routeEndpoint: '/auth/guest'
+          routeEndpoint: '/auth/guest',
         },
         googleConfig: {
           clientSecret: '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',
           clientID: '416190066680-brpp3rgo9m271euoihnruhc3in3ipsi7.apps.googleusercontent.com',
           routeEndpoint: '/auth/google',
-          callbackURL: '/auth/google/redirect'
-        }
-      }
-    }
+          callbackURL: '/auth/google/redirect',
+        },
+      },
+    },
   } as SAGEBaseConfig;
   await SAGEBase.init(sbConfig, app);
 
@@ -215,37 +156,36 @@ async function startServer() {
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
 
   apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
-
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIWSMessage;
       wsAPIRouter(socket, request, message, subCache);
-    })
+    });
 
     socket.on('close', () => {
       subCache.deleteAll();
     });
-
   });
 
   yjsWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
-    console.log('NEW YJS SOCKET')
+    console.log('NEW YJS SOCKET');
     socket.on('message', (msg) => {
       console.log(msg);
-    })
+    });
   });
-
 
   server.on('upgrade', (request, socket, head) => {
     const { pathname } = parse(request.url);
+    // const { pathname } = new url.URL(request.url);
+
     if (pathname === null) return;
     const wsPath = pathname.split('/')[1];
 
     SAGEBase.Auth.sessionParser(request, {}, () => {
       if (!request.session.passport?.user) {
-        console.log("not authorized");
+        // console.log('not authorized');
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
         socket.destroy();
         return;
@@ -260,10 +200,10 @@ async function startServer() {
         });
       }
     });
-  })
+  });
 
   // Serves the static react files from webapp folder
-  app.use('/', express.static(path.join(__dirname, 'webapp')));
+  serveApp(app, path.join(__dirname, 'webapp'));
 
   // Handle termination
   function exitHandler() {
