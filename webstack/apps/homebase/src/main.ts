@@ -20,8 +20,6 @@
 import * as fsModule from 'fs';
 import * as https from 'https';
 import * as path from 'path';
-import * as url from 'url';
-import { parse } from 'url';
 
 import { AddressInfo } from 'net';
 import { IncomingMessage, Server } from 'http';
@@ -169,18 +167,17 @@ async function startServer() {
     });
   });
 
-  yjsWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
-    console.log('NEW YJS SOCKET');
+  yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
     socket.on('message', (msg) => {
-      console.log(msg);
+      console.log('YJS> message', msg);
     });
   });
 
   server.on('upgrade', (request, socket, head) => {
-    const { pathname } = parse(request.url);
-    // const { pathname } = new url.URL(request.url);
-
+    // get url path
+    const pathname = request.url;
     if (pathname === null) return;
+    // get the first word of the url
     const wsPath = pathname.split('/')[1];
 
     SAGEBase.Auth.sessionParser(request, {}, () => {
