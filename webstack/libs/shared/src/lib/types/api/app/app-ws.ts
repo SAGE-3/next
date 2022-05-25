@@ -6,7 +6,6 @@
  *
  */
 
-import { AppStates } from "../../applications"
 import { AppSchema } from "../../schemas"
 import { APIWSEvent, APIWSRequest, APIWSResponse } from "../type"
 
@@ -18,8 +17,8 @@ export type CreateRequest = APIWSRequest & {
     description: AppSchema['description'],
     roomId: AppSchema['roomId']
     boardId: AppSchema['boardId'],
-    type: string,
-    state: AppStates,
+    type: AppSchema['type'],
+    state: AppSchema['state'],
   }
 }
 
