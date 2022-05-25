@@ -46,7 +46,6 @@
     "express": "4.17.1",
     "express-session": "^1.17.2",
     "file-loader": "^6.2.0",
-    "fluent-logger": "^3.4.1",
     "framer-motion": "^5",
     "glob": "^7.2.0",
     "helmet": "^4.1.1",

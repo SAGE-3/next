@@ -17,14 +17,8 @@
 /**
  * Node Modules
  */
-import * as fsModule from 'fs';
-import * as https from 'https';
 import * as path from 'path';
-
-import { AddressInfo } from 'net';
 import { IncomingMessage, Server } from 'http';
-// Declare fs with Promises
-const fs = fsModule.promises;
 
 // Websocket
 import { WebSocket } from 'ws';
@@ -32,6 +26,7 @@ import { SubscriptionCache } from '@sage3/backend';
 
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
+import { loadCredentials, listenSecureApp } from './web';
 
 /**
  * SAGE3 Libs
@@ -65,64 +60,21 @@ async function startServer() {
   // // Multi-file upload
   // app.use(multerMiddleware('files'));
 
-  // // Setup the connection for logging
-  // connectFluent(app);
-
   // HTTP/HTTPS server
   let server: Server;
 
-  // Read certificates in production
+  // Create the server
   if (config.production) {
-    // SSL certificate imports for HTTPS
-    const privateKeyFile = path.join(config.root, 'keys', config.keys.ssl.certificateKeyFile);
-    const certificateFile = path.join(config.root, 'keys', config.keys.ssl.certificateFile);
-    const caFile = path.join(config.root, 'keys', config.keys.ssl.certificateChainFile);
-    try {
-      fsModule.accessSync(privateKeyFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Private key file ${privateKeyFile} not found or unreadable.`);
-    }
-    try {
-      fsModule.accessSync(certificateFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Certificate file ${certificateFile} not found or unreadable.`);
-    }
-    try {
-      fsModule.accessSync(caFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Certificate file ${caFile} not found or unreadable.`);
-    }
-    const privateKey = await fs.readFile(privateKeyFile, 'utf8');
-    const certificate = await fs.readFile(certificateFile, 'utf8');
-    const ca = await fs.readFile(caFile).toString();
-    const credentials = {
-      // Keys
-      key: privateKey,
-      cert: certificate,
-      ca: ca,
-      // Control the supported version of TLS
-      minVersion: config.tlsVersion,
-      maxVersion: config.tlsVersion,
-      // Settings
-      requestCert: false,
-      rejectUnauthorized: true,
-      honorCipherOrder: true,
-    } as https.ServerOptions;
-
-    // Create the HTTPS server
-    server = https.createServer(credentials, app);
-    // 0.0.0.0 forces to listen on IPv4 on every interfaces
-    server.listen(config.port, '0.0.0.0', () => {
-      const { port } = server.address() as AddressInfo;
-      console.log('HTTPS> listening on port', port);
-    });
+    // load the HTTPS certificates in production mode
+    const credentials = loadCredentials(config);
+    // Create the server
+    server = listenSecureApp(app, credentials, config.port);
   } else {
-    // Start the HTTP web server
+    // Create and start the HTTP web server
     server = listenApp(app, config.port);
   }
 
-  // Init SAGEBase
-  // SAGEBase
+  // Initialization of SAGEBase
   const sbConfig = {
     projectName: 'SAGE3',
     authConfig: {
@@ -153,6 +105,7 @@ async function startServer() {
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
 
+  // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
@@ -167,12 +120,14 @@ async function startServer() {
     });
   });
 
+  // Websocket API for YJS
   yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
     socket.on('message', (msg) => {
       console.log('YJS> message', msg);
     });
   });
 
+  // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
     // get url path
     const pathname = request.url;

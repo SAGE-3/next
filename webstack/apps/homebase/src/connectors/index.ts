@@ -6,7 +6,6 @@
  *
  */
 
-// export * from './fluent-connector';
 // export * from './redis-connector';
 // export * from './multer-connector';
 // export * from './queue-connector';
