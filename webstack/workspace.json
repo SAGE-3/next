@@ -8,106 +8,16 @@
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "libs/backend/**/*.ts"
-            ]
+            "lintFilePatterns": ["libs/backend/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/backend"
-          ],
+          "outputs": ["coverage/libs/backend"],
           "options": {
             "jestConfig": "libs/backend/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      },
-      "tags": []
-    },
-    "collaboration-space": {
-      "root": "apps/collaboration-space",
-      "sourceRoot": "apps/collaboration-space/src",
-      "projectType": "application",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/web:build",
-          "options": {
-            "outputPath": "dist/apps/collaboration-space",
-            "index": "apps/collaboration-space/src/index.html",
-            "main": "apps/collaboration-space/src/main.tsx",
-            "polyfills": "apps/collaboration-space/src/polyfills.ts",
-            "tsConfig": "apps/collaboration-space/tsconfig.app.json",
-            "assets": [
-              "apps/collaboration-space/src/assets"
-            ],
-            "styles": [
-              "apps/collaboration-space/src/styles.scss"
-            ],
-            "scripts": [],
-            "webpackConfig": "apps/collaboration-space/webpack.config.js"
-          },
-          "configurations": {
-            "production": {
-              "fileReplacements": [
-                {
-                  "replace": "apps/collaboration-space/src/environments/environment.ts",
-                  "with": "apps/collaboration-space/src/environments/environment.prod.ts"
-                }
-              ],
-              "optimization": true,
-              "outputHashing": "all",
-              "sourceMap": false,
-              "extractCss": true,
-              "namedChunks": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
-                }
-              ]
-            }
-          }
-        },
-        "serve": {
-          "builder": "@nrwl/web:dev-server",
-          "options": {
-            "buildTarget": "collaboration-space:build",
-            "proxyConfig": "apps/collaboration-space/proxy.conf.json"
-          },
-          "configurations": {
-            "production": {
-              "buildTarget": "collaboration-space:build:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:lint",
-          "options": {
-            "linter": "eslint",
-            "tsConfig": [
-              "apps/collaboration-space/tsconfig.app.json",
-              "apps/collaboration-space/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/collaboration-space/**/*"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/collaboration-space/jest.config.js",
             "passWithNoTests": true
           }
         }
@@ -122,20 +32,14 @@
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "libs/frontend/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["libs/frontend/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/frontend"
-          ],
+          "outputs": ["coverage/libs/frontend"],
           "options": {
             "jestConfig": "libs/frontend/jest.config.js",
             "passWithNoTests": true
@@ -156,9 +60,7 @@
             "outputPath": "dist/apps/homebase",
             "main": "apps/homebase/src/main.ts",
             "tsConfig": "apps/homebase/tsconfig.app.json",
-            "assets": [
-              "apps/homebase/src/assets"
-            ]
+            "assets": ["apps/homebase/src/assets"]
           },
           "configurations": {
             "production": {
@@ -184,14 +86,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/homebase/tsconfig.app.json",
-              "apps/homebase/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/homebase/**/*"
-            ]
+            "tsConfig": ["apps/homebase/tsconfig.app.json", "apps/homebase/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/homebase/**/*"]
           }
         },
         "test": {
@@ -204,31 +100,24 @@
       },
       "tags": []
     },
-    "sage3-app-playground": {
-      "root": "apps/sage3-app-playground",
-      "sourceRoot": "apps/sage3-app-playground/src",
+    "playground": {
+      "root": "apps/playground",
+      "sourceRoot": "apps/playground/src",
       "projectType": "application",
       "architect": {
         "build": {
           "builder": "@nrwl/web:build",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
-            "outputPath": "dist/apps/sage3-app-playground",
-            "index": "apps/sage3-app-playground/src/index.html",
+            "outputPath": "dist/apps/playground",
+            "index": "apps/playground/src/index.html",
             "baseHref": "/",
-            "main": "apps/sage3-app-playground/src/main.tsx",
-            "polyfills": "apps/sage3-app-playground/src/polyfills.ts",
-            "tsConfig": "apps/sage3-app-playground/tsconfig.app.json",
-            "assets": [
-              "apps/sage3-app-playground/src/favicon.ico",
-              "apps/sage3-app-playground/src/assets"
-            ],
-            "styles": [
-              "apps/sage3-app-playground/src/styles.scss"
-            ],
+            "main": "apps/playground/src/main.tsx",
+            "polyfills": "apps/playground/src/polyfills.ts",
+            "tsConfig": "apps/playground/tsconfig.app.json",
+            "assets": ["apps/playground/src/favicon.ico", "apps/playground/src/assets"],
+            "styles": ["apps/playground/src/styles.scss"],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
@@ -236,8 +125,8 @@
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "apps/sage3-app-playground/src/environments/environment.ts",
-                  "with": "apps/sage3-app-playground/src/environments/environment.prod.ts"
+                  "replace": "apps/playground/src/environments/environment.ts",
+                  "with": "apps/playground/src/environments/environment.prod.ts"
                 }
               ],
               "optimization": true,
@@ -252,34 +141,28 @@
         "serve": {
           "builder": "@nrwl/web:dev-server",
           "options": {
-            "buildTarget": "sage3-app-playground:build",
+            "buildTarget": "playground:build",
             "hmr": true
           },
           "configurations": {
             "production": {
-              "buildTarget": "sage3-app-playground:build:production",
+              "buildTarget": "playground:build:production",
               "hmr": false
             }
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "apps/sage3-app-playground/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["apps/playground/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/sage3-app-playground"
-          ],
+          "outputs": ["coverage/apps/playground"],
           "options": {
-            "jestConfig": "apps/sage3-app-playground/jest.config.js",
+            "jestConfig": "apps/playground/jest.config.js",
             "passWithNoTests": true
           }
         }
@@ -295,57 +178,101 @@
           "builder": "@nrwl/cypress:cypress",
           "options": {
             "cypressConfig": "apps/sage3-app-playground-e2e/cypress.json",
-            "devServerTarget": "sage3-app-playground:serve",
+            "devServerTarget": "playground:serve",
             "tsConfig": "apps/sage3-app-playground-e2e/tsconfig.json"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "sage3-app-playground:serve:production"
+              "devServerTarget": "playground:serve:production"
             }
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "apps/sage3-app-playground-e2e/**/*.{js,ts}"
-            ]
+            "lintFilePatterns": ["apps/sage3-app-playground-e2e/**/*.{js,ts}"]
           }
         }
       },
       "tags": [],
-      "implicitDependencies": [
-        "sage3-app-playground"
-      ]
+      "implicitDependencies": ["playground"]
     },
-    "sage3-webapp": {
-      "root": "apps/sage3-webapp",
-      "sourceRoot": "apps/sage3-webapp/src",
+    "sagebase": {
+      "root": "libs/sagebase",
+      "sourceRoot": "libs/sagebase/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/sagebase/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/sagebase"],
+          "options": {
+            "jestConfig": "libs/sagebase/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "build": {
+          "builder": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/sagebase",
+            "tsConfig": "libs/sagebase/tsconfig.lib.json",
+            "packageJson": "libs/sagebase/package.json",
+            "main": "libs/sagebase/src/index.ts",
+            "assets": ["libs/sagebase/*.md"]
+          }
+        }
+      },
+      "tags": []
+    },
+    "shared": {
+      "root": "libs/shared",
+      "sourceRoot": "libs/shared/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/shared/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared"],
+          "options": {
+            "jestConfig": "libs/shared/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "webapp": {
+      "root": "apps/webapp",
+      "sourceRoot": "apps/webapp/src",
       "projectType": "application",
       "architect": {
         "build": {
           "builder": "@nrwl/web:build",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
-            "outputPath": "dist/apps/sage3-webapp",
-            "index": "apps/sage3-webapp/src/index.html",
+            "outputPath": "dist/apps/webapp",
+            "index": "apps/webapp/src/index.html",
             "baseHref": "/",
-            "main": "apps/sage3-webapp/src/main.tsx",
-            "polyfills": "apps/sage3-webapp/src/polyfills.ts",
-            "tsConfig": "apps/sage3-webapp/tsconfig.app.json",
-            "assets": [
-              "apps/sage3-webapp/src/favicon.ico",
-              "apps/sage3-webapp/src/assets"
-            ],
-            "styles": [
-              "apps/sage3-webapp/src/styles.scss"
-            ],
+            "main": "apps/webapp/src/main.tsx",
+            "polyfills": "apps/webapp/src/polyfills.ts",
+            "tsConfig": "apps/webapp/tsconfig.app.json",
+            "assets": ["apps/webapp/src/favicon.ico", "apps/webapp/src/assets"],
+            "styles": ["apps/webapp/src/styles.scss"],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
@@ -353,8 +280,8 @@
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "apps/sage3-webapp/src/environments/environment.ts",
-                  "with": "apps/sage3-webapp/src/environments/environment.prod.ts"
+                  "replace": "apps/webapp/src/environments/environment.ts",
+                  "with": "apps/webapp/src/environments/environment.prod.ts"
                 }
               ],
               "optimization": true,
@@ -369,108 +296,29 @@
         "serve": {
           "builder": "@nrwl/web:dev-server",
           "options": {
-            "buildTarget": "sage3-webapp:build",
+            "buildTarget": "webapp:build",
             "hmr": true,
             "proxyConfig": "apps/collaboration-space/proxy.conf.json"
           },
           "configurations": {
             "production": {
-              "buildTarget": "sage3-webapp:build:production",
+              "buildTarget": "webapp:build:production",
               "hmr": false
             }
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "apps/sage3-webapp/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["apps/webapp/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/sage3-webapp"
-          ],
+          "outputs": ["coverage/apps/webapp"],
           "options": {
-            "jestConfig": "apps/sage3-webapp/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      },
-      "tags": []
-    },
-    "sagebase": {
-      "root": "libs/sagebase",
-      "sourceRoot": "libs/sagebase/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
-          "options": {
-            "lintFilePatterns": [
-              "libs/sagebase/**/*.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/sagebase"
-          ],
-          "options": {
-            "jestConfig": "libs/sagebase/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "build": {
-          "builder": "@nrwl/node:package",
-          "outputs": [
-            "{options.outputPath}"
-          ],
-          "options": {
-            "outputPath": "dist/libs/sagebase",
-            "tsConfig": "libs/sagebase/tsconfig.lib.json",
-            "packageJson": "libs/sagebase/package.json",
-            "main": "libs/sagebase/src/index.ts",
-            "assets": [
-              "libs/sagebase/*.md"
-            ]
-          }
-        }
-      },
-      "tags": []
-    },
-    "shared": {
-      "root": "libs/shared",
-      "sourceRoot": "libs/shared/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
-          "options": {
-            "lintFilePatterns": [
-              "libs/shared/**/*.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/shared"
-          ],
-          "options": {
-            "jestConfig": "libs/shared/jest.config.js",
+            "jestConfig": "apps/webapp/jest.config.js",
             "passWithNoTests": true
           }
         }

@@ -1,8 +1,0 @@
-{
-  "name": "SAGE3 Libraries",
-  "entryPoints": ["libs/"],
-  "exclude": ["**/*+(e2e|spec|index).tsx", "**/environments/", "**/*.js"],
-  "out": "./docs/libs",
-  "tsconfig": "apps/homebase/tsconfig.json",
-  "readme": "docs/libs.md"
-}

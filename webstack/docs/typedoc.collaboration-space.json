@@ -1,8 +1,0 @@
-{
-  "name": "SAGE3 Collaboration Space",
-  "entryPoints": ["apps/collaboration-space/"],
-  "exclude": ["**/*+(e2e|spec|index).tsx", "**/environments/", "**/*.js"],
-  "out": "./docs/collaboration-space",
-  "tsconfig": "apps/collaboration-space/tsconfig.json",
-  "readme": "docs/collaboration-space.md"
-}
