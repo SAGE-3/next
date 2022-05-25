@@ -12,7 +12,7 @@
   // Folders
   root: ".",
   public: "dist/apps/homebase/assets",
-  assets: "dist/apps/collaboration-space/assets/",
+  assets: "dist/apps/webapp/assets/",
 
   // Services
   redis: {

@@ -1,6 +1,6 @@
 # SAGE3: Webstack
 
-Directory containing an Nrwl Nx Monorepo for the 'homebase' Nodejs web server and the 'collaboration-space' React web application (the main collaboration canvas).
+Directory containing an Nrwl Nx Monorepo for the 'homebase' Nodejs web server and the 'webapp' React web application (the main collaboration canvas).
 
 # Technologies
 
@@ -18,9 +18,9 @@ The Webstack uses the following technologies for its core software stack. There 
 # Folders
 
 - `/apps`
-  - Contains the core **apps** 'homebase' and 'collaboration-space'.
+  - Contains the core **apps** 'homebase' and 'webapp'.
     - `/apps/homebase` Web server that manages user services, files, walls...etc.
-    - `/apps/collaboration-space` React frontend web application
+    - `/apps/webapp` React frontend web application
 - `/certificates`
   - Directory to stage your HTTPS/SSL keys. Contains certificates for localhost development.
 - `/clients`
@@ -33,7 +33,7 @@ The Webstack uses the following technologies for its core software stack. There 
   - SAGE3 Libs for the 'apps' to use.
     - `/libs/applications` Contains all the SAGE3 Applications.
     - `/libs/backend` Libs used by `homebase`
-    - `/libs/frontend` Libs used by `collaboration-space`
+    - `/libs/frontend` Libs used by `webapp`
     - `/libs/shared` Libs that any part of SAGE3 can use
 - `/tools`
   - SAGE3 tools used by the dev team to aid in develpment. ex. SAGE3 Application template generator.
@@ -61,7 +61,7 @@ It is required to run the development backend Docker images before starting up t
 # Start the backend Nodejs web server application
 yarn start
 # Start the frontend React web application
-yarn start collaboration-space
+yarn start webapp
 ```
 
 # Create a new SAGE3 Application
@@ -103,4 +103,3 @@ yarn nx g @nrwl/react:lib ui-lib
 ```bash
 yarn nx g @nrwl/react:component <component-name> --project=components --export
 ```
-
