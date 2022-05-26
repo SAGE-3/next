@@ -33,9 +33,8 @@ import { loadCredentials, listenSecureApp } from './web';
  */
 import { loadConfig } from './config';
 // import { AssetService } from './services';
-import { expressAPIRouter, wsAPIRouter } from './controllers';
+import { expressAPIRouter, wsAPIRouter, uploadHandler } from './controllers';
 import { loadModels } from './models';
-// import {  multerMiddleware } from './connectors';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -56,9 +55,6 @@ async function startServer() {
   // Create the Express object
   const assetPath = path.join(config.root, config.assets);
   const app = createApp(assetPath);
-
-  // // Multi-file upload
-  // app.use(multerMiddleware('files'));
 
   // HTTP/HTTPS server
   let server: Server;
@@ -90,6 +86,9 @@ async function startServer() {
 
   // Load all the models: user, board, ...
   await loadModels();
+
+  // Upload handler
+  app.post('/upload', uploadHandler);
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
