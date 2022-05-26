@@ -6,8 +6,7 @@
  *
  */
 
-import { KeysInterface } from "./keys";
-
+import { KeysInterface } from './keys';
 
 /**
  * Configuration parameters for the SAGE3 server
@@ -37,9 +36,6 @@ export interface serverConfiguration {
   servers: { name: string; url: string }[];
   // Services
   redis: {
-    host: string;
-  };
-  fluent: {
     host: string;
   };
   // ID management API keys

@@ -18,9 +18,6 @@
   redis: {
     host: "localhost",
   },
-  fluent: {
-    host: "localhost",
-  },
 
   // Active SAGE3 servers accessible at login page
   servers: [
