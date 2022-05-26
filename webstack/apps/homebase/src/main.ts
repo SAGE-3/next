@@ -35,7 +35,7 @@ import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './controllers';
 import { loadModels } from './models';
-// import { connectFluent, multerMiddleware } from './connectors';
+// import {  multerMiddleware } from './connectors';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -75,24 +75,17 @@ async function startServer() {
   }
 
   // Initialization of SAGEBase
-  const sbConfig = {
+  const sbConfig: SAGEBaseConfig = {
     projectName: 'SAGE3',
     authConfig: {
-      sessionMaxAge: 1000 * 60 * 60 * 24 * 7,
-      sessionSecret: 'SUPERSECRET!!$$',
+      sessionMaxAge: config.auth.sessionMaxAge,
+      sessionSecret: config.auth.sessionSecret,
       strategies: {
-        guestConfig: {
-          routeEndpoint: '/auth/guest',
-        },
-        googleConfig: {
-          clientSecret: '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',
-          clientID: '416190066680-brpp3rgo9m271euoihnruhc3in3ipsi7.apps.googleusercontent.com',
-          routeEndpoint: '/auth/google',
-          callbackURL: '/auth/google/redirect',
-        },
+        guestConfig: config.auth.guestConfig,
+        googleConfig: config.auth.googleConfig,
       },
     },
-  } as SAGEBaseConfig;
+  };
   await SAGEBase.init(sbConfig, app);
 
   // Load all the models: user, board, ...

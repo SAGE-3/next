@@ -30,9 +30,9 @@ import { serverConfiguration } from '@sage3/shared/types';
 export function loadCredentials(config: serverConfiguration): https.ServerOptions {
   // SSL certificate imports for HTTPS
   const basePath = path.join(config.root, 'keys');
-  const privateKeyFile = path.join(basePath, config.keys.ssl.certificateKeyFile);
-  const certificateFile = path.join(basePath, config.keys.ssl.certificateFile);
-  const caFile = path.join(basePath, config.keys.ssl.certificateChainFile);
+  const privateKeyFile = path.join(basePath, config.ssl.certificateKeyFile);
+  const certificateFile = path.join(basePath, config.ssl.certificateFile);
+  const caFile = path.join(basePath, config.ssl.certificateChainFile);
   try {
     fs.accessSync(privateKeyFile, fs.constants.R_OK);
   } catch (err) {

@@ -6,8 +6,6 @@
  *
  */
 
-import { KeysInterface } from './keys';
-
 /**
  * Configuration parameters for the SAGE3 server
  *
@@ -35,9 +33,55 @@ export interface serverConfiguration {
   // Server list
   servers: { name: string; url: string }[];
   // Services
-  redis: {
-    host: string;
-  };
+  redis: { host: string };
   // ID management API keys
-  keys: KeysInterface;
+  auth: AuthConfiguration;
+  // SSL/HTTPS certificates
+  ssl: {
+    certificateFile: string;
+    certificateKeyFile: string;
+    certificateChainFile: string;
+  };
+}
+
+/**
+ * Credentials for user autentification APIs (passport, cilogon, ...)
+ *
+ * @export
+ * @interface AuthConfiguration
+ */
+
+export interface AuthConfiguration {
+  // Session management
+  sessionMaxAge: number;
+  sessionSecret: string;
+
+  // List of login strategies: guest, google, jwt, cilogon, ...
+  strategies: [string];
+
+  // Guest
+  guestConfig?: {
+    routeEndpoint: string;
+  };
+  // Google API keys
+  googleConfig?: {
+    clientID: string;
+    clientSecret: string;
+    routeEndpoint: string;
+    callbackURL: string;
+  };
+  // JWT JSON Web Token (JWT)
+  jwtConfig?: {
+    publicKey: string;
+    issuer: string;
+    audience: string;
+    routeEndpoint: string;
+  };
+  // CILogon credentials
+  cilogonConfig?: {
+    clientID: string;
+    clientSecret?: string;
+    routeEndpoint: string;
+    callbackURL: string;
+  };
 }
