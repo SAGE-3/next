@@ -6,6 +6,5 @@
  *
  */
 
-// export * from './redis-connector';
-// export * from './multer-connector';
-// export * from './queue-connector';
+export * from './upload-connector';
+export * from './queue-connector';
