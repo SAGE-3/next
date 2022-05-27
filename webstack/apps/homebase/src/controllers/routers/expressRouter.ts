@@ -17,7 +17,7 @@
 import * as express from 'express';
 
 // App imports
-import { boardExpressRouter, roomExpressRouter, userExpressRouter, appExpressRouter } from '../http';
+import { boardExpressRouter, roomExpressRouter, userExpressRouter, appRouter } from '../http';
 
 // Lib Imports
 import { SAGEBase } from '@sage3/sagebase';
@@ -40,7 +40,7 @@ export function expressAPIRouter(): express.Router {
 
   // router.use('/content', AssetRouter());
 
-  router.use('/app', appExpressRouter());
+  router.use('/app', appRouter());
 
   router.use('/board', boardExpressRouter());
 

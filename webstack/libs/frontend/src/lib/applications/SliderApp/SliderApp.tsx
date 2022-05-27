@@ -7,7 +7,7 @@
  */
 
 import { AppSchema, SliderState } from "@sage3/shared/types";
-import { useAppStore } from "../../stores/app-store";
+import { useAppStore } from "../../stores/app";
 
 import './styles.css';
 
