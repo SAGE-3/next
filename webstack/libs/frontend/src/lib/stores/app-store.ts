@@ -22,14 +22,10 @@ import { SocketAPI } from "../utils";
 
 interface AppState {
   apps: AppSchema[];
-  createApp: (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => void;
-  updateName: (id: AppSchema['id'], name: AppSchema['name']) => void;
-  updateDescription: (id: AppSchema['id'], email: AppSchema['description']) => void;
-  updateOwnerId: (id: AppSchema['id'], ownerId: AppSchema['ownerId']) => void;
-  updateRoomId: (id: AppSchema['id'], roomId: AppSchema['roomId']) => void;
-  updateBoardId: (id: AppSchema['id'], boardId: AppSchema['boardId']) => void;
-  deleteApp: (id: AppSchema['id']) => void;
+  create: (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => Promise<void>;
+  update: (id: AppSchema['id'], updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: AppSchema['id'], state: Partial<AppStates>) => Promise<void>;
+  delete: (id: AppSchema['id']) => Promise<void>;
   subscribeByBoardId?: (boardId: AppSchema['boardId']) => Promise<void>;
 }
 
@@ -41,32 +37,20 @@ const AppStore = createVanilla<AppState>((set, get) => {
   let appsSub: (() => void) | null;
   return {
     apps: [],
-    createApp(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) {
-      AppHTTPService.createApp(name, description, roomId, boardId, type, state);
+    create: async (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => {
+      AppHTTPService.create(name, description, roomId, boardId, type, state);
     },
-    updateName(id: AppSchema['id'], name: AppSchema['name']) {
-      AppHTTPService.updateName(id, name);
-    },
-    updateDescription(id: AppSchema['id'], email: AppSchema['description']) {
-      AppHTTPService.updateDescription(id, email);
-    },
-    updateOwnerId(id: AppSchema['id'], ownerId: AppSchema['ownerId']) {
-      AppHTTPService.updateOwnerId(id, ownerId);
-    },
-    updateRoomId(id: AppSchema['id'], roomId: AppSchema['roomId']) {
-      AppHTTPService.updateRoomId(id, roomId);
-    },
-    updateBoardId(id: AppSchema['id'], boardId: AppSchema['boardId']) {
-      AppHTTPService.updateBoardId(id, boardId);
+    update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
+      AppHTTPService.update(id, updates);
     },
     updateState: async (id: AppSchema['id'], state: Partial<AppStates>) => {
       AppHTTPService.updateState(id, state);
     },
-    deleteApp: (id: AppSchema['id']) => {
+    delete: async (id: AppSchema['id']) => {
       AppHTTPService.deleteApp(id);
     },
     subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
-      const apps = await AppHTTPService.readByBoardId(boardId);
+      const apps = await AppHTTPService.query({ boardId });
       if (apps) {
         set({ apps })
       }
@@ -121,7 +105,7 @@ const AppStore = createVanilla<AppState>((set, get) => {
 const AppPlaygroundStore = createVanilla<AppState>((set, get) => {
   return {
     apps: [],
-    createApp: (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => {
+    create: async (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => {
       const newApp = {
         id: genId(),
         name,
@@ -135,31 +119,15 @@ const AppPlaygroundStore = createVanilla<AppState>((set, get) => {
 
       set({ apps: [...get().apps, newApp] })
     },
-    updateName: (id: AppSchema['id'], name: AppSchema['name']) => {
+    update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
       const apps = [...get().apps];
-      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, name } } : app) })
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, ...updates } : app) })
     },
-    updateDescription: (id: AppSchema['id'], description: AppSchema['description']) => {
+    updateState: async (id: AppSchema['id'], updates: Partial<AppStates>) => {
       const apps = [...get().apps];
-      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, description } } : app) })
+      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, ...updates } } : app) })
     },
-    updateOwnerId: (id: AppSchema['id'], ownerId: AppSchema['ownerId']) => {
-      const apps = [...get().apps];
-      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, ownerId } } : app) })
-    },
-    updateRoomId: (id: AppSchema['id'], roomId: AppSchema['roomId']) => {
-      const apps = [...get().apps];
-      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, roomId } } : app) })
-    },
-    updateBoardId: (id: AppSchema['id'], boardId: AppSchema['boardId']) => {
-      const apps = [...get().apps];
-      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, boardId } } : app) })
-    },
-    updateState: async (id: AppSchema['id'], update: Partial<AppStates>) => {
-      const apps = [...get().apps];
-      set({ apps: apps.map(app => (app.id === id) ? { ...app, state: { ...app.state, ...update } } : app) })
-    },
-    deleteApp: (id: AppSchema['id']) => {
+    delete: async (id: AppSchema['id']) => {
       set({ apps: get().apps.filter(app => app.id !== id) })
     },
   }

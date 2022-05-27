@@ -77,21 +77,6 @@ class SAGE3AppModel {
     }
   }
 
-  /**
- * Query Apps
- * @param {string} field Field to query on AppSchema
- * @param {string | number} query The Query
-  * @returns {Array<SBDocument<AppSchema>>} AppSchema array of all apps
- */
-  public async queryApps(field: keyof AppSchema, query: string | number): Promise<SBDocument<AppSchema>[] | undefined> {
-    try {
-      const boards = await this.appCollection.query(field, query);
-      return boards;
-    } catch (error) {
-      console.log('AppModel queryApps error> ', error);
-      return undefined;
-    }
-  }
 
   /**
   * Returns all apps for this SAGE3 server.
@@ -104,6 +89,24 @@ class SAGE3AppModel {
     } catch (error) {
       console.log('AppModel readAllApps error> ')
       return [];
+    }
+  }
+
+  /**
+ * Query Apps
+ * @param {string} field Field to query on AppSchema
+ * @param {string | number} query The Query
+  * @returns {Array<SBDocument<AppSchema>>} AppSchema array of all apps
+ */
+  public async queryApps(field: keyof AppSchema, query: Partial<AppSchema>): Promise<SBDocument<AppSchema>[] | undefined> {
+    try {
+      const q = query[field];
+      if (typeof q !== 'string' || typeof q !== typeof 'number') return undefined;
+      const boards = await this.appCollection.query(field, q);
+      return boards;
+    } catch (error) {
+      console.log('AppModel queryApps error> ', error);
+      return undefined;
     }
   }
 
@@ -127,14 +130,16 @@ class SAGE3AppModel {
   /**
  * Update the app doc in the database.
  * @param {string} id The app's unique id.
- * @param {SBDocumentUpdate<AppSchema>} update The update values for the doc.
+ * @param {Partial<AppStates>} update The update values for the state.
  * @return {Promise<boolean>} Returns true if update was succesful.
  */
   public async updateState(id: string, update: Partial<AppStates>): Promise<boolean> {
     try {
-      console.log(update)
-      // const response = await this.appCollection.docRef(id).update({ 'state': update });
-      return false;
+      const currentState = await this.appCollection.docRef(id).read();
+      if (!currentState) return false;
+      const updatedState = { ...currentState.data.state, ...update }
+      const response = await this.appCollection.docRef(id).update({ 'state': updatedState });
+      return response.success;
     } catch (error) {
       console.log('BoardModel updateBoard error: ', error);
       return false;
@@ -156,6 +161,25 @@ class SAGE3AppModel {
     }
   }
 
+
+  /**
+ * Subscribe to a specific app
+ * @param {string} id the id of the app
+ * @param {() = void} callback The callback function for subscription events.
+ * @return {() => void | undefined} The unsubscribe function.
+ 
+ */
+  public async subscribeToApp(id: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+    try {
+      const board = this.appCollection.docRef(id);
+      const unsubscribe = await board.subscribe(callback);
+      return unsubscribe;
+    } catch (error) {
+      console.log('AppModel subscribeToBoard error>', error)
+      return undefined;
+    }
+  }
+
   /**
  * Subscribe to the Apps Collection
  * @param {() = void} callback The callback function for subscription events.
@@ -167,24 +191,6 @@ class SAGE3AppModel {
       return unsubscribe;
     } catch (error) {
       console.log('AppModel subscribeToApps error>', error)
-      return undefined;
-    }
-  }
-
-  /**
-   * Subscribe to a specific board
-   * @param {string} id the id of the app
-   * @param {() = void} callback The callback function for subscription events.
-   * @return {() => void | undefined} The unsubscribe function.
- 
-   */
-  public async subscribeToApp(id: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
-    try {
-      const board = this.appCollection.docRef(id);
-      const unsubscribe = await board.subscribe(callback);
-      return unsubscribe;
-    } catch (error) {
-      console.log('AppModel subscribeToBoard error>', error)
       return undefined;
     }
   }

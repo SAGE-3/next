@@ -7,4 +7,3 @@
  */
 
 export * as AppWS from './app-ws';
-export * as AppHTTP from './app-http';

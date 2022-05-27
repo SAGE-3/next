@@ -14,7 +14,7 @@
  */
 
 import { BoardSchema, BoardHTTP } from '@sage3/shared/types';
-import { httpDELETE, httpGET, httpPOST } from './shared';
+import { httpDELETE, httpGET, httpPOST } from './http';
 
 /**
  * 

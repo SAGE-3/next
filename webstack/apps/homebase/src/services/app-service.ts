@@ -103,114 +103,34 @@ class SAGE3AppService {
   }
 
   /**
- * Read all apps within a room.
- * @return {AppSchema[] | undefined} Returns an array of apps if the read was sucessful.
+ * Query the apps.
+ * @return {AppSchema[] | undefined} Returns an array of apps if the query was sucessful.
  */
-  public async readByRoomId(roomId: string): Promise<AppSchema[] | undefined> {
+  public async queryApps(field: keyof AppSchema, query: Partial<AppSchema>): Promise<AppSchema[] | undefined> {
     try {
-      const docArray = await AppModel.queryApps('roomId', roomId);
-      if (docArray == undefined) return undefined;
+      const docArray = await AppModel.queryApps(field, query);
+      if (docArray === undefined) return undefined;
       const boards = docArray.map(doc => doc.data) as AppSchema[];
       return boards;
     } catch (error) {
-      console.log('AppService readByRoomId error: ', error);
+      console.log('AppService queryApps error: ', error);
       return undefined;
     }
   }
 
-  /**
-* Read all apps within a board.
-* @return {AppSchema[] | undefined} Returns an array of apps if the read was sucessful.
-*/
-  public async readByBoardId(boardId: string): Promise<AppSchema[] | undefined> {
-    try {
-      const docArray = await AppModel.queryApps('boardId', boardId);
-      if (docArray == undefined) return undefined;
-      const apps = docArray.map(doc => doc.data) as AppSchema[];
-      return apps;
-    } catch (error) {
-      console.log('AppService readByBoardId error: ', error);
-      return undefined;
-    }
-  }
 
   /**
-   * Update the app's name.
-   * @param {string} id The app's unique id.
-   * @param {string} name The new name.
-   * @return {Promise<boolean>} Returns true if update was successful.
-   */
-  public async updateName(id: string, name: string): Promise<boolean> {
+ * Update the app's name.
+ * @param {string} id The app's unique id.
+ * @param {string} name The new name.
+ * @return {Promise<boolean>} Returns true if update was successful.
+ */
+  public async updateApp(id: string, updates: Partial<AppSchema>): Promise<boolean> {
     try {
-      const success = await AppModel.updateApp(id, { "name": name });
+      const success = await AppModel.updateApp(id, updates);
       return success;
     } catch (error) {
       console.log('AppService updateName error: ', error);
-      return false;
-    }
-  }
-
-  /**
-   * Update the app's description.
-   * @param {string} id The app's unique id.
-   * @param {string} description The new description.
-   * @return {Promise<boolean>} Returns true if update was successful.
-   */
-  public async updateDescription(id: string, description: string): Promise<boolean> {
-    try {
-      const success = await AppModel.updateApp(id, { "description": description });
-      return success;
-    } catch (error) {
-      console.log('AppService updateDescription error: ', error);
-      return false;
-    }
-  }
-
-
-  /**
-   * Update the app's ownerId. This is transferring ownership to a new user.
-   * @param {string} id The app's unique id.
-   * @param {string} ownerId The id of the new owner.
-   * @return {Promise<boolean>} Returns true if action was succesful.
-   */
-  public async updateOwnerId(id: string, ownerId: string): Promise<boolean> {
-    try {
-      const success = await AppModel.updateApp(id, { "ownerId": ownerId });
-      return success;
-    } catch (error) {
-      console.log('AppService updateOwnerId error: ', error);
-      return false;
-    }
-  }
-
-  /**
- * Update the app's roomId. This is transferring ownership to a new room.
- * @param {string} id The app's unique id.
- * @param {string} roomId The id of the new room.
- * @return {Promise<boolean>} Returns true if action was succesful.
- */
-  public async updateRoomId(id: string, roomId: string): Promise<boolean> {
-    try {
-      const success = await AppModel.updateApp(id, { "roomId": roomId });
-      return success;
-    } catch (error) {
-      console.log('AppService updateRoomId error: ', error);
-      return false;
-    }
-  }
-
-  /**
-* Update the app's boardId. This is transferring ownership to a new board.
-* @param {string} id The app's unique id.
-* @param {string} roomId The id of the new room.
-* @return {Promise<boolean>} Returns true if action was succesful.
-*/
-  public async updateBoardId(id: string, boardId: string): Promise<boolean> {
-    try {
-      const success = await AppModel.updateApp(id, { "boardId": boardId });
-      return success;
-    } catch (error) {
-      console.log('AppService updateBoardId error: ', error);
       return false;
     }
   }
