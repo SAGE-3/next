@@ -33,7 +33,7 @@ import { loadCredentials, listenSecureApp } from './web';
  */
 import { loadConfig } from './config';
 // import { AssetService } from './services';
-import { expressAPIRouter, wsAPIRouter, uploadHandler } from './controllers';
+import { expressAPIRouter, wsAPIRouter } from './controllers';
 import { loadModels } from './models';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
@@ -86,9 +86,6 @@ async function startServer() {
 
   // Load all the models: user, board, ...
   await loadModels();
-
-  // Upload handler
-  app.post('/upload', uploadHandler);
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());

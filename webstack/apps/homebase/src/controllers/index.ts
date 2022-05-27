@@ -8,4 +8,3 @@
 
 export * from './routers/expressRouter';
 export * from './routers/wsRouter';
-export * from './routers/assetRouter';
