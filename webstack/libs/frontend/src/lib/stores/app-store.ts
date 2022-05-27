@@ -165,7 +165,7 @@ const AppPlaygroundStore = createVanilla<AppState>((set, get) => {
   }
 })
 
-const playground = (process.env.NX_TASK_TARGET_PROJECT === 'sage3-app-playground');
+const playground = (process.env.NX_TASK_TARGET_PROJECT === 'playground');
 // Convert the Zustand JS store to Zustand React Store
 export const useAppStore = (playground) ? createReact(AppPlaygroundStore) : createReact(AppStore)
 
