@@ -17,9 +17,7 @@ import { niceCollection } from './nice-collection';
 import { AssetType } from '@sage3/shared/types';
 
 // Queue for tasks
-import { MetadataProcessor } from './processor-metadata';
-import { ImageProcessor } from './processor-image';
-import { PDFProcessor } from './processor-pdf';
+import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../processors';
 
 import { config } from '../config';
 

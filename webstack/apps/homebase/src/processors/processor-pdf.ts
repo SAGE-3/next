@@ -18,13 +18,52 @@ import { SBQueue } from '../connectors';
 import * as sharp from 'sharp';
 
 // load legacy pdf build
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
 const CMAP_URL = '../node_modules/pdfjs-dist/cmaps/';
 const FONT_URL = '../node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
 import { createCanvas } from 'canvas';
+import { getStaticAssetUrl } from '@sage3/backend';
 
-console.log('PDF> Version', pdfjs.version);
+
+////////////////////////////////////////////////////////////////////////////////
+function NodeCanvasFactory() {
+  // something
+}
+
+NodeCanvasFactory.prototype = {
+  create: function NodeCanvasFactory_create(width: number, height: number) {
+    assert(width > 0 && height > 0, 'Invalid canvas size');
+    const canvas = createCanvas(width, height);
+    const context = canvas.getContext('2d');
+
+    // Rendering quality settings
+    context.patternQuality = 'fast';
+    context.quality = 'fast';
+
+    return { canvas, context };
+  },
+
+  reset: function NodeCanvasFactory_reset(canvasAndContext: any, width: number, height: number) {
+    assert(canvasAndContext.canvas, 'Canvas is not specified');
+    assert(width > 0 && height > 0, 'Invalid canvas size');
+    canvasAndContext.canvas.width = width;
+    canvasAndContext.canvas.height = height;
+  },
+
+  destroy: function NodeCanvasFactory_destroy(canvasAndContext: any) {
+    assert(canvasAndContext.canvas, 'Canvas is not specified');
+
+    // Zeroing the width and height cause Firefox to release graphics
+    // resources immediately, which can greatly reduce memory consumption.
+    canvasAndContext.canvas.width = 0;
+    canvasAndContext.canvas.height = 0;
+    canvasAndContext.canvas = null;
+    canvasAndContext.context = null;
+  },
+};
+////////////////////////////////////////////////////////////////////////////////
 
 // const options: { width: number; quality: number }[] = [
 //   { width: 400, quality: 75 },
@@ -86,16 +125,6 @@ export class PDFProcessor {
   }
 }
 
-/**
- * Return the URL for a given asset
- *
- * @export
- * @param {string} filename
- * @returns {string}
- */
-export function getStaticAssetUrl(filename: string): string {
-  return `/static/${filename}`;
-}
 
 /**
  * Process a file
@@ -147,9 +176,8 @@ async function pdfProcessing(job: any): Promise<any> {
           // Finally, get the viewport with the calculated scale
           const viewport = page.getViewport({ scale: scale });
 
-          // @ts-ignore
-          var canvasFactory = new NodeCanvasFactory();
-          var canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
+          const canvasFactory = NodeCanvasFactory() as any;
+          const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
           const maxWidth = Math.floor(viewport.width);
           // Maximum resolution
@@ -212,40 +240,3 @@ async function pdfProcessing(job: any): Promise<any> {
   });
 }
 
-////////////////////////////////////////////////////////////////////////////////
-function NodeCanvasFactory() {
-  // something
-}
-
-NodeCanvasFactory.prototype = {
-  create: function NodeCanvasFactory_create(width: number, height: number) {
-    assert(width > 0 && height > 0, 'Invalid canvas size');
-    const canvas = createCanvas(width, height);
-    const context = canvas.getContext('2d');
-
-    // Rendering quality settings
-    context.patternQuality = 'fast';
-    context.quality = 'fast';
-
-    return { canvas, context };
-  },
-
-  reset: function NodeCanvasFactory_reset(canvasAndContext: any, width: number, height: number) {
-    assert(canvasAndContext.canvas, 'Canvas is not specified');
-    assert(width > 0 && height > 0, 'Invalid canvas size');
-    canvasAndContext.canvas.width = width;
-    canvasAndContext.canvas.height = height;
-  },
-
-  destroy: function NodeCanvasFactory_destroy(canvasAndContext: any) {
-    assert(canvasAndContext.canvas, 'Canvas is not specified');
-
-    // Zeroing the width and height cause Firefox to release graphics
-    // resources immediately, which can greatly reduce memory consumption.
-    canvasAndContext.canvas.width = 0;
-    canvasAndContext.canvas.height = 0;
-    canvasAndContext.canvas = null;
-    canvasAndContext.context = null;
-  },
-};
-////////////////////////////////////////////////////////////////////////////////

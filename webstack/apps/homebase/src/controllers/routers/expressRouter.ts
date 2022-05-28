@@ -38,15 +38,11 @@ export function expressAPIRouter(): express.Router {
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
-<<<<<<< HEAD
   // router.use('/assets', express.static(path.join(__dirname, 'assets')));
 
   // router.use('/content', AssetRouter());
 
-  router.use('/app', appRouter());
-=======
   router.use('/app', appExpressRouter());
->>>>>>> dev
 
   router.use('/board', boardExpressRouter());
 

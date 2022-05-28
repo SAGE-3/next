@@ -7,6 +7,7 @@
  */
 
 // Node modules
+import { getStaticAssetUrl } from '@sage3/backend';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -76,16 +77,7 @@ export class ImageProcessor {
   }
 }
 
-/**
- * Return the URL for a given asset
- *
- * @export
- * @param {string} filename
- * @returns {string}
- */
-export function getStaticAssetUrl(filename: string): string {
-  return `/static/${filename}`;
-}
+
 
 /**
  * Process a file, using exec method

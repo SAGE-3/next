@@ -16,7 +16,7 @@ export function NoteApp(props: AppSchema): JSX.Element {
   const s = props.state as NoteState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.deleteApp);
+  const deleteApp = useAppStore(state => state.delete);
 
   function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
     updateState(props.id, { text: ev.target.value })

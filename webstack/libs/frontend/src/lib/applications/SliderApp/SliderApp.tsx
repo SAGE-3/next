@@ -17,7 +17,7 @@ export function SliderApp(props: AppSchema): JSX.Element {
   const s = props.state as SliderState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.deleteApp);
+  const deleteApp = useAppStore(state => state.delete);
 
   function handleSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
     updateState(props.id, { value: Number(event.target.value) })

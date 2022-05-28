@@ -16,7 +16,7 @@ export function CounterApp(props: AppSchema): JSX.Element {
   const s = props.state as CounterState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.deleteApp);
+  const deleteApp = useAppStore(state => state.delete);
 
   function handleAddClick() {
     updateState(props.id, { count: s.count + 1 })

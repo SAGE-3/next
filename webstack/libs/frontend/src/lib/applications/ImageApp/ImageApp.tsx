@@ -17,9 +17,9 @@ export function ImageApp(props: AppSchema): JSX.Element {
   const s = props.state as ImageState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.deleteApp);
+  const deleteApp = useAppStore(state => state.delete);
 
-  function handleTextChange(ev: any) {
+  function handleTextChange(ev: React.ChangeEvent<HTMLInputElement>) {
     updateState(props.id, { url: ev.target.value })
   }
 

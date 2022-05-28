@@ -14,7 +14,6 @@
  * @version 1.0.0
  */
 
-import * as path from 'path';
 import * as express from 'express';
 import * as multer from 'multer';
 import { v4 as getUUID } from 'uuid';

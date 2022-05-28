@@ -17,7 +17,7 @@ export function LinkerApp(props: AppSchema): JSX.Element {
   const s = props.state as LinkerState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.deleteApp);
+  const deleteApp = useAppStore(state => state.delete);
   // useEffect(() => {
   //   const newValue = s[s.fromAppField];
   // }, [s])
