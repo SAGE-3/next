@@ -1,171 +1,79 @@
-// /**
-//  * Copyright (c) SAGE3 Development Team
-//  *
-//  * Distributed under the terms of the SAGE3 License.  The full license is in
-//  * the file LICENSE, distributed as part of this software.
-//  *
-//  */
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
 
-// /**
-//  * Node Built-in Modules
-//  */
-// import { DefaultExifToolOptions, ExifTool, Tags } from 'exiftool-vendored';
+/**
+ * NPM modules
+ */
 
-// // Create an exiftool singleton with the right options
-// const exiftool = new ExifTool({
-//   ...DefaultExifToolOptions,
-//   numericTags: ['FileSize'],
-// });
+// Queue package for handling distributed jobs and messages
+import * as Bull from 'bull';
 
-// /**
-//  * NPM modules
-//  */
-// import * as Bull from 'bull';
+/**
+ * Abstraction of queue for tasks
+ *
+ * @export
+ * @class SBQueue
+ */
+export class SBQueue {
+  private aQueue: Bull.Queue;
 
-// /**
-//  * Application modules
-//  */
-// import { config } from '../config';
-// import { ExifDataType } from '@sage3/shared/types';
+  constructor(redisInfo: string, queueName: string) {
+    // Create the Bull queue, based on REDIS
+    this.aQueue = new Bull(queueName, redisInfo, {
+      defaultJobOptions: { removeOnComplete: true },
+    });
+    // Event handler, not really used (because using promises)
+    this.aQueue.on('completed', function (job, _result) {
+      // Job done
+      console.log('Queue> task completed for', job.id);
+    });
 
-// // Datatype for the result of a task processing a file
-// export type QExif = {
-//   file: string;
-//   id: string;
-//   exif: ExifDataType;
-// };
+    // this.aQueue.on("progress", (d, p) => {
+    //   console.log("Progress>", d.queue.name, d.id, p);
+    // });
 
-// class Queues {
-//   private fileQueue: Bull.Queue;
-//   // RedisConnection.getInstance()
+    this.aQueue.on('completed', function (job) {
+      console.log('Job completed> data:', queueName, job.id);
+    });
+  }
 
-//   constructor(redisInfo: string) {
-//     // Create the Bull queue, based on REDIS
-//     this.fileQueue = new Bull('file metadata', {
-//       redis: { host: redisInfo },
-//       defaultJobOptions: {
-//         removeOnComplete: true,
-//       },
-//     });
-//     // Event handler, not really used (because using promises)
-//     this.fileQueue.on('completed', function (job, result) {
-//       // Job done
-//       console.log('fileQueue> task completed for', result.file);
-//     });
-//     // Task to be done, return a promise
-//     this.fileQueue.process(async (job) => {
-//       const data = await exiftoolFile(job.data.file);
-//       return Promise.resolve<QExif>({
-//         file: job.data.file,
-//         id: job.data.id,
-//         exif: data,
-//       });
-//     });
-//   }
+  /**
+   * Add the function to do the task
+   *
+   * @param {any} job
+   *
+   * @memberOf SBQueue
+   */
+  addProcessor(job: (j: any) => Promise<any>): void {
+    // Task to be done, return a promise
+    this.aQueue.process(job);
+  }
 
-//   /**
-//    * Add a file to be process and return a promise about job completed
-//    *
-//    * @param {string} id
-//    * @param {string} file
-//    * @returns {Promise<QExif>}
-//    *
-//    * @memberOf Queues
-//    */
-//   processFile(id: string, file: string): Promise<QExif> {
-//     return this.fileQueue.add({ id: id, file: file }).then((job) => {
-//       // returns the promise for the job completion
-//       return job.finished();
-//     });
-//   }
-// }
+  /**
+   * Add a task to the queue
+   *
+   * @param {*} task
+   * @returns {Promise<any>} promise to the result of the task
+   *
+   * @memberOf SBQueue
+   */
+  addTask(task: any): Promise<any> {
+    console.log('Queue> adding task', task.id);
+    return this.aQueue.add(task);
+  }
 
-// /**
-//  * High-level task manager
-//  *
-//  * @class taskManager
-//  */
-// export class TaskManager {
-//   // Bull queues
-//   private queues: Queues;
-//   // The singleton instance
-//   private static instance: TaskManager;
-
-//   constructor() {
-//     this.queues = new Queues(config.redis.host);
-//   }
-
-//   /**
-//    * Create a task to process a file
-//    *
-//    * @param {string} id
-//    * @param {string} file
-//    * @returns {Promise<QExif>}
-//    *
-//    * @memberOf TaskManager
-//    */
-//   addFile(id: string, file: string): Promise<QExif> {
-//     return this.queues.processFile(id, file);
-//   }
-
-//   /**
-//    * Ensure that there is only one instance created
-//    *
-//    * @static
-//    * @returns {TaskManager}
-//    *
-//    * @memberOf TaskManager
-//    */
-//   public static getInstance(): TaskManager {
-//     if (!TaskManager.instance) {
-//       TaskManager.instance = new TaskManager();
-//     }
-//     return TaskManager.instance;
-//   }
-// }
-
-// /**
-//  * Process a file, using exec method
-//  *
-//  * @method file
-//  * @param filename {String} name of the file to be tested
-//  */
-// async function exiftoolFile(filename: string): Promise<ExifDataType> {
-//   return new Promise((resolve, reject) => {
-//     exiftool
-//       .read(filename)
-//       .then((tags: Tags) => {
-//         if (tags.errors && tags.errors.length > 0) {
-//           reject('EXIF> Error parsing JSON ' + tags.errors);
-//         } else {
-//           // Add a dummy type if needed
-//           if (!tags.MIMEType) {
-//             tags.MIMEType = 'text/plain';
-//           }
-//           if (!tags.FileType) {
-//             tags.FileType = 'text/plain';
-//           }
-//           // rewrite dates as a string
-//           tags.FileModifyDate = tags.FileModifyDate?.toString();
-//           tags.FileAccessDate = tags.FileAccessDate?.toString();
-//           tags.FileInodeChangeDate = tags.FileInodeChangeDate?.toString();
-//           tags.DateTimeOriginal = tags.DateTimeOriginal?.toString();
-//           tags.CreateDate = tags.CreateDate?.toString();
-//           tags.MetadataDate = tags.MetadataDate?.toString();
-//           tags.DateCreated = tags.DateCreated?.toString();
-//           tags.DateTimeCreated = tags.DateTimeCreated?.toString();
-//           // Python notebook
-//           // @ts-ignore
-//           if (tags['Cells']) delete tags.Cells;
-//           // GEOJSON big structure
-//           // @ts-ignore
-//           if (tags['Features']) delete tags.Features;
-//         }
-//         // Done
-//         resolve(tags as ExifDataType);
-//       })
-//       .catch((err) => {
-//         reject('EXIF> Error parsing JSON ' + err);
-//       });
-//   });
-// }
+  /**
+   * Return bull queue name
+   *
+   * @returns {string}
+   * @memberOf SBQueue
+   */
+  getName(): string {
+    return this.aQueue.name;
+  }
+}

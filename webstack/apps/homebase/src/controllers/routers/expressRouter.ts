@@ -17,11 +17,10 @@
 import * as express from 'express';
 
 // App imports
-import { boardExpressRouter, roomExpressRouter, userExpressRouter, appExpressRouter } from '../http';
+import { boardExpressRouter, roomExpressRouter, userExpressRouter, appExpressRouter, assetExpressRouter } from '../http';
 
 // Lib Imports
 import { SAGEBase } from '@sage3/sagebase';
-
 
 /**
  * API Loader function
@@ -33,12 +32,11 @@ export function expressAPIRouter(): express.Router {
   // Express routing
   const router = express.Router();
 
+  // before auth, to test upload
+  router.use('/asset', assetExpressRouter());
+
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
-
-  // router.use('/assets', express.static(path.join(__dirname, 'assets')));
-
-  // router.use('/content', AssetRouter());
 
   router.use('/app', appExpressRouter());
 
@@ -50,4 +48,3 @@ export function expressAPIRouter(): express.Router {
 
   return router;
 }
-

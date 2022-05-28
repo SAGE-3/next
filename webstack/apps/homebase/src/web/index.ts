@@ -6,8 +6,5 @@
  *
  */
 
-export * from './app-schema';
-export * from './user-schema';
-export * from './board-schema';
-export * from './room-schema';
-export * from './asset-schema';
+export * from './http-server';
+export * from './https-server';

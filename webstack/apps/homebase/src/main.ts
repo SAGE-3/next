@@ -17,31 +17,16 @@
 /**
  * Node Modules
  */
-import * as fsModule from 'fs';
-import * as https from 'https';
 import * as path from 'path';
-import { AddressInfo } from 'net';
 import { IncomingMessage, Server } from 'http';
-// Declare fs with Promises
-const fs = fsModule.promises;
-
-/**
- * NPM modules
- */
-// Express web server framework
-import * as express from 'express';
-
-// Express middlewares
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as helmet from 'helmet';
-import * as morgan from 'morgan';
-import * as favicon from 'serve-favicon';
-import * as cookieParser from 'cookie-parser';
 
 // Websocket
 import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
+
+// Create the web server with Express
+import { createApp, listenApp, serveApp } from './web';
+import { loadCredentials, listenSecureApp } from './web';
 
 /**
  * SAGE3 Libs
@@ -50,12 +35,9 @@ import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './controllers';
 import { loadModels } from './models';
-// import { connectFluent, multerMiddleware } from './connectors';
-import { SAGEBase, SAGEBaseConfig } from "@sage3/sagebase";
-
+import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIWSMessage, serverConfiguration } from '@sage3/shared/types';
-import { parse } from 'url';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -71,137 +53,36 @@ async function startServer() {
   const config: serverConfiguration = await loadConfig();
 
   // Create the Express object
-  const app = express();
-
-  // Set express attributes
-  app.use(favicon(path.join(config.root, config.assets, 'favicon.ico')));
-
-  // Enable reverse proxy support in Express. This causes the
-  // the "X-Forwarded-Proto" header field to be trusted so its
-  // value can be used to determine the protocol. See
-  // http://expressjs.com/en/api.html#app.settings.table for more details.
-  app.enable('trust proxy');
-
-  // using express to parse JSON bodies into JS objects
-  app.use(express.json({ limit: '5mb' }));
-
-  // Cookies
-  app.use(cookieParser());
-
-  // adding Helmet to enhance your API's security
-  // All options
-  // app.use(helmet());
-  // Disabling a few for now, easier during development
-  app.use(
-    helmet({
-      // Content-Security-Policy
-      contentSecurityPolicy: false,
-      // Strict-Transport-Security
-      hsts: false,
-    })
-  );
-
-  // Enabling CORS for all requests
-  app.use(cors());
-  // Compress the traffic
-  app.use(compression());
-
-  // Adding a logger to HTTP requests
-  // combined: Standard Apache combined log output
-  // values: combined tiny ...
-  // Send tiny format to stdout
-  // app.use(morgan('combined'));
-  app.use(
-    morgan('tiny', {
-      // Ignore the HTTP 200 good messages
-      skip: function (req: express.Request, res: express.Response) {
-        return res.statusCode === 200 || res.statusCode === 304;
-      },
-    })
-  );
-
-  // // Multi-file upload
-  // app.use(multerMiddleware('files'));
-
-  // // Setup the connection for logging
-  // connectFluent(app);
+  const assetPath = path.join(config.root, config.assets);
+  const app = createApp(assetPath);
 
   // HTTP/HTTPS server
   let server: Server;
 
-  // Read certificates in production
+  // Create the server
   if (config.production) {
-    // SSL certificate imports for HTTPS
-    const privateKeyFile = path.join(config.root, 'keys', config.keys.ssl.certificateKeyFile);
-    const certificateFile = path.join(config.root, 'keys', config.keys.ssl.certificateFile);
-    const caFile = path.join(config.root, 'keys', config.keys.ssl.certificateChainFile);
-    try {
-      fsModule.accessSync(privateKeyFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Private key file ${privateKeyFile} not found or unreadable.`);
-    }
-    try {
-      fsModule.accessSync(certificateFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Certificate file ${certificateFile} not found or unreadable.`);
-    }
-    try {
-      fsModule.accessSync(caFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Certificate file ${caFile} not found or unreadable.`);
-    }
-    const privateKey = await fs.readFile(privateKeyFile, 'utf8');
-    const certificate = await fs.readFile(certificateFile, 'utf8');
-    const ca = await fs.readFile(caFile).toString();
-    const credentials = {
-      // Keys
-      key: privateKey,
-      cert: certificate,
-      ca: ca,
-      // Control the supported version of TLS
-      minVersion: config.tlsVersion,
-      maxVersion: config.tlsVersion,
-      // Settings
-      requestCert: false,
-      rejectUnauthorized: true,
-      honorCipherOrder: true,
-    } as https.ServerOptions;
-
-    // Create the HTTPS server
-    server = https.createServer(credentials, app);
-    // 0.0.0.0 forces to listen on IPv4 on every interfaces
-    server.listen(config.port, '0.0.0.0', () => {
-      const { port } = server.address() as AddressInfo;
-      console.log('HTTPS> listening on port', port);
-    });
+    // load the HTTPS certificates in production mode
+    const credentials = loadCredentials(config);
+    // Create the server
+    server = listenSecureApp(app, credentials, config.port);
   } else {
-    // Start the HTTP web server
-    server = app.listen(config.port, () => {
-      const { port } = server.address() as AddressInfo;
-      console.log('HTTP> listening on port', port);
-    });
+    // Create and start the HTTP web server
+    server = listenApp(app, config.port);
   }
 
-  // Init SAGEBase
-  // SAGEBase
-  const sbConfig = {
-    projectName: "SAGE3",
+  // Initialization of SAGEBase
+  const sbConfig: SAGEBaseConfig = {
+    projectName: 'SAGE3',
+    redisUrl: config.redis.url || 'redis://localhost:6379',
     authConfig: {
-      sessionMaxAge: 1000 * 60 * 60 * 24 * 7,
-      sessionSecret: 'SUPERSECRET!!$$',
+      sessionMaxAge: config.auth.sessionMaxAge,
+      sessionSecret: config.auth.sessionSecret,
       strategies: {
-        guestConfig: {
-          routeEndpoint: '/auth/guest'
-        },
-        googleConfig: {
-          clientSecret: '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',
-          clientID: '416190066680-brpp3rgo9m271euoihnruhc3in3ipsi7.apps.googleusercontent.com',
-          routeEndpoint: '/auth/google',
-          callbackURL: '/auth/google/redirect'
-        }
-      }
-    }
-  } as SAGEBaseConfig;
+        guestConfig: config.auth.guestConfig,
+        googleConfig: config.auth.googleConfig,
+      },
+    },
+  };
   await SAGEBase.init(sbConfig, app);
 
   // Load all the models: user, board, ...
@@ -214,38 +95,39 @@ async function startServer() {
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
 
+  // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
-
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIWSMessage;
       wsAPIRouter(socket, request, message, subCache);
-    })
+    });
 
     socket.on('close', () => {
       subCache.deleteAll();
     });
-
   });
 
-  yjsWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
-    console.log('NEW YJS SOCKET')
+  // Websocket API for YJS
+  yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
     socket.on('message', (msg) => {
-      console.log(msg);
-    })
+      console.log('YJS> message', msg);
+    });
   });
 
-
+  // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
-    const { pathname } = parse(request.url);
-    if (pathname === null) return;
+    // get url path
+    const pathname = request.url;
+    if (!pathname) return;
+    // get the first word of the url
     const wsPath = pathname.split('/')[1];
 
     SAGEBase.Auth.sessionParser(request, {}, () => {
       if (!request.session.passport?.user) {
-        console.log("not authorized");
+        // console.log('not authorized');
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
         socket.destroy();
         return;
@@ -260,10 +142,10 @@ async function startServer() {
         });
       }
     });
-  })
+  });
 
   // Serves the static react files from webapp folder
-  app.use('/', express.static(path.join(__dirname, 'webapp')));
+  serveApp(app, path.join(__dirname, 'webapp'));
 
   // Handle termination
   function exitHandler() {
