@@ -33,7 +33,7 @@ export interface serverConfiguration {
   // Server list
   servers: { name: string; url: string }[];
   // Services
-  redis: { host: string };
+  redis: { url: string };
   // ID management API keys
   auth: AuthConfiguration;
   // SSL/HTTPS certificates

@@ -73,6 +73,7 @@ async function startServer() {
   // Initialization of SAGEBase
   const sbConfig: SAGEBaseConfig = {
     projectName: 'SAGE3',
+    redisUrl: config.redis.url || 'redis://localhost:6379',
     authConfig: {
       sessionMaxAge: config.auth.sessionMaxAge,
       sessionSecret: config.auth.sessionSecret,
@@ -120,7 +121,7 @@ async function startServer() {
   server.on('upgrade', (request, socket, head) => {
     // get url path
     const pathname = request.url;
-    if (pathname === null) return;
+    if (!pathname) return;
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
 

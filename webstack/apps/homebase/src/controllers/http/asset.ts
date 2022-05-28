@@ -16,11 +16,13 @@
 // Express web server framework
 import * as express from 'express';
 
-// SAGEBase
-// import { getAssetCollection } from "./asset";
+import { config } from '../../config';
 
 // Local storage
 import { uploadMiddleware } from '../../connectors/upload-connector';
+
+// Asset model
+import { AssetModel } from '../../models';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -33,6 +35,10 @@ export function assetExpressRouter(): express.Router {
   const router = express.Router();
 
   router.post('/upload', uploadHandler);
+
+  // Access to uploaded files: /api/asset/static/:filename
+  const assetFolder = config.assets;
+  router.use('/static', express.static(assetFolder));
 
   return router;
 }
@@ -61,16 +67,17 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     // Do something with the files
     files.forEach((elt) => {
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
-      // getAssetCollection().addItem({
-      //   file: elt.filename,
-      //   owner: 'luc',
-      //   originalfilename: elt.originalname,
-      //   path: elt.path,
-      //   destination: elt.destination,
-      //   size: elt.size,
-      //   mimetype: elt.mimetype,
-      //   dateAdded: new Date().toISOString(),
-      // });
+      // Put the new file into the collection
+      AssetModel.addAsset({
+        file: elt.filename,
+        owner: 'luc',
+        originalfilename: elt.originalname,
+        path: elt.path,
+        destination: elt.destination,
+        size: elt.size,
+        mimetype: elt.mimetype,
+        dateAdded: new Date().toISOString(),
+      });
     });
 
     // Return success with the information

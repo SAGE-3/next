@@ -25,18 +25,16 @@ import { v4 as getUUID } from 'uuid';
 // import * as AWS from 'aws-sdk';
 // import * as multerS3 from 'multer-s3';
 
+import { config } from '../config';
 /**
  * Multer Middleware for local storage
  **/
-
-// Folders for asset storage
-const destination = path.join(process.cwd(), 'assets');
 
 const upload = multer({
   // use local storage
   storage: multer.diskStorage({
     destination: function (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
-      return cb(null, destination);
+      return cb(null, config.assets);
     },
     filename: function (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
       return cb(null, getUUID() + file.originalname.substring(file.originalname.lastIndexOf('.')));
