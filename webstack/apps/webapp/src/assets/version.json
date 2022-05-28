@@ -1,0 +1,22 @@
+{
+  "currentRelease": "1.0.0-alpha.12",
+  "releases": [
+    {
+      "version": "1.0.0-alpha.12",
+      "notes": "Bug fixes and performances issues",
+      "name": "Alpha release 1.0.0",
+      "darwin": {
+        "pub_date": "2021-12-10T00:00:00.000Z",
+        "url": "https://sage3.sagecommons.org?download=sage3-mac-version-1a12"
+      },
+      "win32": {
+        "pub_date": "2021-12-10T00:00:00.000Z",
+        "url": "https://sage3.sagecommons.org?download=sage3-windows-version-1a12"
+      },
+      "linux": {
+        "pub_date": "2021-12-10T00:00:00.000Z",
+        "url": "https://sage3.sagecommons.org?download=sage3-linux-version-1a12"
+      }
+    }
+  ]
+}

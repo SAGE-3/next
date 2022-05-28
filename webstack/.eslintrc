@@ -8,17 +8,13 @@
   },
   "ignorePatterns": ["**/*"],
   "plugins": ["@typescript-eslint", "@nrwl/nx", "eslint-plugin-tsdoc"],
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/eslint-recommended", "plugin:@typescript-eslint/recommended", "prettier"],
   "rules": {
     "@typescript-eslint/explicit-member-accessibility": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-parameter-properties": "off",
     "@typescript-eslint/no-shadow": "error",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "tsdoc/syntax": "off",
     "@nrwl/nx/enforce-module-boundaries": [
       "error",

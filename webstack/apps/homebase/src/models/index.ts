@@ -6,12 +6,14 @@
  *
  */
 
-import { BoardModel, RoomModel, UserModel, AppModel } from '../models';
+import { BoardModel, RoomModel, UserModel, AppModel, AssetModel } from '../models';
+
 
 export * from './app';
 export * from './board';
 export * from './room';
 export * from './user';
+export * from './asset';
 
 /**
  * Load the various models at startup.
@@ -21,4 +23,5 @@ export async function loadModels(): Promise<void> {
   await BoardModel.initialize();
   await RoomModel.initialize();
   await UserModel.initialize();
+  await AssetModel.initialize();
 }

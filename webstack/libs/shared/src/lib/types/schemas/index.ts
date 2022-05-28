@@ -10,3 +10,4 @@ export * from './app';
 export * from './user';
 export * from './board';
 export * from './room';
+export * from './asset';

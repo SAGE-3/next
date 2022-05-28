@@ -28,7 +28,7 @@ import { AppService } from '../../services';
  * App route/api express middleware.
  * @returns {express.Router} returns the express router object
  */
-export function appRouter(): express.Router {
+export function appExpressRouter(): express.Router {
   const router = express.Router();
 
   router.post('/', async ({ user, body }, res) => {
