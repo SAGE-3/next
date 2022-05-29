@@ -52,8 +52,8 @@ export function userExpressRouter(): express.Router {
     else res.status(500).send({ success: false });
   });
 
-  router.put('/:id', async ({ params, body }, res) => {
-    const update = await UserService.update(params.id, body);
+  router.put('/:id', async ({ user, body }, res) => {
+    const update = await UserService.update(user.id, body);
     if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });

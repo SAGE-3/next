@@ -41,18 +41,18 @@ async function query(query: Partial<AppSchema>): Promise<AppSchema[] | undefined
 }
 
 async function update(id: AppSchema['id'], update: Partial<AppSchema>): Promise<boolean> {
-  const reqParms = { id } as Partial<AppSchema>;
-  const response = await httpPUT('/api/app', reqParms, update);
+  const params = { id } as Partial<AppSchema>;
+  const response = await httpPUT('/api/app', params, update);
   return response.success;
 }
 
 async function updateState(id: AppSchema['id'], state: Partial<AppStates>): Promise<boolean> {
-  const reqBody = { id } as Partial<AppSchema>;
-  const response = await httpPUT('/api/app/state', state, reqBody);
+  const body = { id } as Partial<AppSchema>;
+  const response = await httpPUT('/api/app/state', state, body);
   return response.success;
 }
 
-async function deleteApp(id: AppSchema['id']): Promise<boolean> {
+async function del(id: AppSchema['id']): Promise<boolean> {
   const params = { id };
   const response = await httpDELETE('/api/app', params);
   return response.success;
@@ -65,5 +65,5 @@ export const AppHTTPService = {
   query,
   update,
   updateState,
-  deleteApp
+  del
 };

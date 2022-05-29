@@ -32,7 +32,7 @@ interface CreateUserModalProps {
 export function CreateUserModal(props: CreateUserModalProps): JSX.Element {
   const toast = useToast();
 
-  const createUser = useUserStore(state => state.createUser);
+  const createUser = useUserStore(state => state.create);
 
   const [name, setName] = useState<UserSchema['name']>('');
   const [email, setEmail] = useState<UserSchema['email']>('');

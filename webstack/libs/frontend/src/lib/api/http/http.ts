@@ -22,10 +22,12 @@ export async function httpPOST(url: string, body: any): Promise<any> {
 
 export async function httpGET(url: string, params?: any): Promise<any> {
   let urlQuery = '';
-  Object.keys(params).forEach((el, idx) => {
-    urlQuery += (idx === 0) ? '?' : '&';
-    urlQuery += `${el}=${params[el]}`
-  })
+  if (params) {
+    Object.keys(params).forEach((el, idx) => {
+      urlQuery += (idx === 0) ? '?' : '&';
+      urlQuery += `${el}=${params[el]}`
+    })
+  }
   const resposne = await fetch(`${url}${urlQuery}`, {
     method: 'GET',
     credentials: 'include',

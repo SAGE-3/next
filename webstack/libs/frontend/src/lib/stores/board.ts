@@ -13,7 +13,7 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { BoardSchema, BoardWS } from '@sage3/shared/types';
+import { BoardSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
 import { BoardHTTPService } from "../api";
@@ -21,14 +21,9 @@ import { SocketAPI } from "../utils";
 
 interface BoardState {
   boards: BoardSchema[];
-  createBoard: (name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) => void;
-  updateName: (id: BoardSchema['id'], name: BoardSchema['name']) => void;
-  updateDescription: (id: BoardSchema['id'], email: BoardSchema['description']) => void;
-  updateColor: (id: BoardSchema['id'], color: BoardSchema['color']) => void;
-  updateOwnerId: (id: BoardSchema['id'], ownerId: BoardSchema['ownerId']) => void;
-  updateRoomId: (id: BoardSchema['id'], roomId: BoardSchema['roomId']) => void;
-  updateIsPrivate: (id: BoardSchema['id'], userRole: BoardSchema['isPrivate']) => void;
-  deleteBoard: (id: BoardSchema['id']) => void;
+  create: (name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) => void;
+  update: (id: BoardSchema['id'], updates: Partial<BoardSchema>) => void;
+  delete: (id: BoardSchema['id']) => void;
   subscribeByRoomId: (id: BoardSchema['roomId']) => Promise<void>;
 }
 
@@ -39,34 +34,18 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
   const socket = SocketAPI.getInstance();
   let boardsSub: (() => void) | null;
   return {
-    currentBoard: undefined,
     boards: [],
-    createBoard(name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) {
-      BoardHTTPService.createBoard(name, description, roomId);
+    create(name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) {
+      BoardHTTPService.create(name, description, roomId);
     },
-    updateName(id: BoardSchema['id'], name: BoardSchema['name']) {
-      BoardHTTPService.updateName(id, name);
+    update(id: BoardSchema['id'], updates: Partial<BoardSchema>) {
+      BoardHTTPService.update(id, updates);
     },
-    updateDescription(id: BoardSchema['id'], email: BoardSchema['description']) {
-      BoardHTTPService.updateDescription(id, email);
-    },
-    updateColor(id: BoardSchema['id'], color: BoardSchema['color']) {
-      BoardHTTPService.updateColor(id, color);
-    },
-    updateOwnerId(id: BoardSchema['id'], ownerId: BoardSchema['ownerId']) {
-      BoardHTTPService.updateOwnerId(id, ownerId);
-    },
-    updateRoomId(id: BoardSchema['id'], roomId: BoardSchema['roomId']) {
-      BoardHTTPService.updateRoomId(id, roomId);
-    },
-    updateIsPrivate(id: BoardSchema['id'], isPrivate: BoardSchema['isPrivate']) {
-      BoardHTTPService.updateIsPrivate(id, isPrivate);
-    },
-    deleteBoard: (id: BoardSchema['id']) => {
-      BoardHTTPService.deleteBoard(id);
+    delete: (id: BoardSchema['id']) => {
+      BoardHTTPService.del(id);
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
-      const boards = await BoardHTTPService.readByRoomId(roomId);
+      const boards = await BoardHTTPService.query({ roomId });
       if (boards) {
         set({ boards })
       }
@@ -76,17 +55,11 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const message = {
-        type: 'sub',
-        route: '/api/board/subscribe/roomid',
-        body: {
-          roomId
-        }
-      } as BoardWS.ByRoomIdSub;
+      const route = '/api/app/subscribe/:roomId';
+      const body = { roomId }
 
       // Socket Listenting to updates from server about the current user
-      boardsSub = socket.subscribe<BoardSchema>(message, (message) => {
-        console.log(message)
+      boardsSub = socket.subscribe<BoardSchema>(route, body, (message) => {
         switch (message.type) {
           case 'CREATE': {
             set({ boards: [...get().boards, message.doc.data] })

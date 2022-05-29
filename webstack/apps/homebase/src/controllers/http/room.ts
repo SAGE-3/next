@@ -32,7 +32,7 @@ export function roomExpressRouter(): express.Router {
   const router = express.Router();
 
   router.post('/', async ({ user, body }, res) => {
-    const room = await RoomService.create(body.name, body.description, body.color, user.id);
+    const room = await RoomService.create(body.name, body.description, user.id);
     if (room) res.status(200).send({ success: true, rooms: [room] });
     else res.status(500).send({ success: false });
   });

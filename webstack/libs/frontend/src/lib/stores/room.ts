@@ -13,25 +13,18 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { RoomSchema, RoomWS } from '@sage3/shared/types';
+import { RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
 import { RoomHTTPService } from "../api";
 import { SocketAPI } from "../utils";
 
-
-
 interface RoomState {
-  currentRoom: RoomSchema | undefined;
   rooms: RoomSchema[];
-  createRoom: (name: RoomSchema['name'], description: RoomSchema['description']) => void;
-  updateName: (id: RoomSchema['id'], name: RoomSchema['name']) => void;
-  updateDescription: (id: RoomSchema['id'], email: RoomSchema['description']) => void;
-  updateColor: (id: RoomSchema['id'], color: RoomSchema['color']) => void;
-  updateOwnerId: (id: RoomSchema['id'], ownerId: RoomSchema['ownerId']) => void;
-  updateIsPrivate: (id: RoomSchema['id'], userRole: RoomSchema['isPrivate']) => void;
-  deleteRoom: (id: RoomSchema['id']) => void;
-  subscribeToAllRooms: () => void;
+  create: (name: RoomSchema['name'], description: RoomSchema['description']) => Promise<void>;
+  update: (id: RoomSchema['id'], updates: Partial<RoomSchema>) => Promise<void>;
+  delete: (id: RoomSchema['id']) => Promise<void>;
+  subscribeToAllRooms: () => Promise<void>;
 }
 
 /**
@@ -43,29 +36,17 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
   return {
     currentRoom: undefined,
     rooms: [],
-    createRoom(name: RoomSchema['name'], description: RoomSchema['description']) {
-      RoomHTTPService.createRoom(name, description);
+    create: async (name: RoomSchema['name'], description: RoomSchema['description']) => {
+      RoomHTTPService.create(name, description);
     },
-    updateName(id: RoomSchema['id'], name: RoomSchema['name']) {
-      RoomHTTPService.updateName(id, name);
+    update: async (id: RoomSchema['id'], updates: Partial<RoomSchema>) => {
+      RoomHTTPService.update(id, updates);
     },
-    updateDescription(id: RoomSchema['id'], email: RoomSchema['description']) {
-      RoomHTTPService.updateDescription(id, email);
-    },
-    updateColor(id: RoomSchema['id'], color: RoomSchema['color']) {
-      RoomHTTPService.updateColor(id, color);
-    },
-    updateOwnerId(id: RoomSchema['id'], ownerId: RoomSchema['ownerId']) {
-      RoomHTTPService.updateOwnerId(id, ownerId);
-    },
-    updateIsPrivate(id: RoomSchema['id'], isPrivate: RoomSchema['isPrivate']) {
-      RoomHTTPService.updateIsPrivate(id, isPrivate);
-    },
-    deleteRoom: (id: RoomSchema['id']) => {
-      RoomHTTPService.deleteRoom(id);
+    delete: async (id: RoomSchema['id']) => {
+      RoomHTTPService.del(id);
     },
     subscribeToAllRooms: async () => {
-      const rooms = await RoomHTTPService.readAllRooms();
+      const rooms = await RoomHTTPService.readAll();
       if (rooms) {
         set({ rooms })
       }
@@ -73,14 +54,13 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
         roomSub();
         roomSub = null;
       }
+
       // Socket Subscribe Message
-      const message = {
-        type: 'sub',
-        route: '/api/room/subscribe/all',
-      } as RoomWS.AllRoomsSub;
+      const route = '/api/room/subscribe';
+      const body = {}
 
       // Socket Listenting to updates from server about the current user
-      roomSub = socket.subscribe<RoomSchema>(message, (message) => {
+      roomSub = socket.subscribe<RoomSchema>(route, body, (message) => {
         switch (message.type) {
           case 'CREATE': {
             set({ rooms: [...get().rooms, message.doc.data] })

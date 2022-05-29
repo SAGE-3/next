@@ -50,6 +50,7 @@ export function boardExpressRouter(): express.Router {
   });
 
   router.get('/:roomId', async ({ params }, res) => {
+    console.log('2')
     const boards = await BoardService.query('roomId', params);
     if (boards) res.status(200).send({ success: true, boards });
     else res.status(500).send({ success: false });

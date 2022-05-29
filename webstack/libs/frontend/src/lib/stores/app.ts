@@ -13,7 +13,7 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { AppWS } from '@sage3/shared/types';
+import { APIClientWSMessage } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
 
 // The observable websocket and HTTP
@@ -49,7 +49,7 @@ const AppStore = createVanilla<AppState>((set, get) => {
       AppHTTPService.updateState(id, state);
     },
     delete: async (id: AppSchema['id']) => {
-      AppHTTPService.deleteApp(id);
+      AppHTTPService.del(id);
     },
     subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
       const apps = await AppHTTPService.query({ boardId });
@@ -61,17 +61,10 @@ const AppStore = createVanilla<AppState>((set, get) => {
         appsSub = null;
       }
 
-      // Socket Subscribe Message
-      const message = {
-        type: 'sub',
-        route: '/api/app/subscribe/boardid',
-        body: {
-          boardId
-        }
-      } as AppWS.ByBoardIdSub;
-
+      const route = '/api/app/subscribe/:boardId';
+      const body = { boardId }
       // Socket Listenting to updates from server about the current user
-      appsSub = socket.subscribe<AppSchema>(message, (message) => {
+      appsSub = socket.subscribe<AppSchema>(route, body, (message) => {
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, message.doc.data] })

@@ -32,7 +32,7 @@ interface CreateRoomModalProps {
 export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   const toast = useToast();
 
-  const createRoom = useRoomStore(state => state.createRoom);
+  const createRoom = useRoomStore(state => state.create);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');

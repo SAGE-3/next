@@ -21,7 +21,7 @@
 import { RoomModel } from '../models';
 import { RoomSchema } from '@sage3/shared/types';
 import { SBDocumentMessage } from '@sage3/sagebase';
-import { genId } from '@sage3/shared';
+import { genId, randomSAGEColor } from '@sage3/shared';
 /**
  * The SAGE3 RoomService that interfaces with the UserModel
  */
@@ -44,13 +44,13 @@ class SAGE3RoomService {
    * @param {string} ownerId The id of the user who created the board.
    * @returns {SBDocument<UserSchema> | undefined} Returns the UserDoc or undefined if unsuccessful
    */
-  public async create(name: string, description: string, color: string, ownerId: string): Promise<RoomSchema | undefined> {
+  public async create(name: string, description: string, ownerId: string): Promise<RoomSchema | undefined> {
     const id = genId();
     const newRoom = {
       id,
       name,
       description,
-      color,
+      color: randomSAGEColor().name,
       ownerId: ownerId,
       isPrivate: false
     } as RoomSchema;

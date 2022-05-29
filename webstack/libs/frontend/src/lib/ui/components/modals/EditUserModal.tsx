@@ -32,8 +32,7 @@ interface EditUserModalProps {
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const user = useUserStore(state => state.user);
 
-  const updateEmail = useUserStore(state => state.updateEmail);
-  const updateName = useUserStore(state => state.updateName);
+  const update = useUserStore(state => state.update);
 
   const [name, setName] = useState<UserSchema['name']>('');
   const [email, setEmail] = useState<UserSchema['email']>('');
@@ -65,10 +64,10 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
 
   const updateAccount = () => {
     if (name !== user?.name) {
-      updateName(name);
+      update({ name });
     }
     if (email !== user?.email) {
-      updateEmail(email);
+      update({ email });
     }
     props.onClose();
   };

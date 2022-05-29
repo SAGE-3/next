@@ -33,7 +33,7 @@ interface CreateBoardModalProps {
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const toast = useToast();
 
-  const createBoard = useBoardStore(state => state.createBoard);
+  const createBoard = useBoardStore(state => state.create);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');

@@ -20,15 +20,15 @@ export function HomePage() {
   const subToUser = useUserStore((state) => state.subscribeToCurrentUser);
 
   const rooms = useRoomStore((state) => state.rooms);
-  const deleteRoom = useRoomStore((state) => state.deleteRoom);
+  const deleteRoom = useRoomStore((state) => state.delete);
   const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   const boards = useBoardStore((state) => state.boards);
-  const deleteBoard = useBoardStore((state) => state.deleteBoard);
+  const deleteBoard = useBoardStore((state) => state.delete);
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
 
   const apps = useAppStore((state) => state.apps);
-  const deleteApp = useAppStore((state) => state.deleteApp);
+  const deleteApp = useAppStore((state) => state.delete);
   const subByBoardId = useAppStore((state) => state.subscribeByBoardId);
 
   const [newUserModal, setNewUserModal] = useState(false);
