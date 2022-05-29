@@ -6,5 +6,11 @@
  *
  */
 
-export * as RoomHTTP from './room-http';
-export * as RoomWS from './room-ws';
+export type APIClientWSMessage = {
+  id: string,
+  route: string,
+  body: {
+    subId: string,
+    [key: string]: string
+  }
+}

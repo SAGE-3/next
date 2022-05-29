@@ -11,21 +11,20 @@ import { IncomingMessage } from "http";
 import { WebSocket } from 'ws';
 
 // App Imports
-import { boardWSRouter, roomWSRouter, userWSRouter } from "../ws";
+import { boardWSRouter, roomWSRouter, userWSRouter, appWSRouter } from "../ws";
 
 // Lib Imports
 import { SubscriptionCache } from "@sage3/backend";
-import { APIWSMessage } from "@sage3/shared/types";
-
-
+import { APIClientWSMessage } from "@sage3/shared/types";
 
 const wsRoutes = {
+  '/app': appWSRouter,
   '/user': userWSRouter,
   '/room': roomWSRouter,
   '/board': boardWSRouter
-} as { [key: string]: (socket: WebSocket, request: IncomingMessage, message: APIWSMessage, cache: SubscriptionCache) => Promise<void> }
+} as { [key: string]: (socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void> }
 
-export function wsAPIRouter(socket: WebSocket, request: IncomingMessage, message: APIWSMessage, cache: SubscriptionCache): void {
+export function wsAPIRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): void {
   const route = '/' + message.route.split('/')[2];
   if (wsRoutes[route] != undefined) {
     wsRoutes[route](socket, request, message, cache);

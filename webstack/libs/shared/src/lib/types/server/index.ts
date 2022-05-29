@@ -8,3 +8,4 @@
 
 export * from './exif';
 export * from './serverconfig';
+export * from './wsMessage';
