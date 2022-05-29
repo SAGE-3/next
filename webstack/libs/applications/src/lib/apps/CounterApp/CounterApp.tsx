@@ -6,10 +6,11 @@
  *
  */
 
-import { AppSchema, CounterState } from "@sage3/shared/types";
-import { useAppStore } from "../../stores/app";
-
+import { useAppStore } from "@sage3/frontend";
+import { AppSchema } from "../../schema/app";
+import { CounterState } from "../../types";
 import './styles.css';
+
 
 export function CounterApp(props: AppSchema): JSX.Element {
 

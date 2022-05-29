@@ -1,6 +1,29 @@
 {
   "version": 1,
   "projects": {
+    "applications": {
+      "root": "libs/applications",
+      "sourceRoot": "libs/applications/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/applications/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/applications"],
+          "options": {
+            "jestConfig": "libs/applications/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "backend": {
       "root": "libs/backend",
       "sourceRoot": "libs/backend/src",
@@ -8,20 +31,14 @@
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "libs/backend/**/*.ts"
-            ]
+            "lintFilePatterns": ["libs/backend/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/backend"
-          ],
+          "outputs": ["coverage/libs/backend"],
           "options": {
             "jestConfig": "libs/backend/jest.config.js",
             "passWithNoTests": true
@@ -38,20 +55,14 @@
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "libs/frontend/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["libs/frontend/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/frontend"
-          ],
+          "outputs": ["coverage/libs/frontend"],
           "options": {
             "jestConfig": "libs/frontend/jest.config.js",
             "passWithNoTests": true
@@ -72,9 +83,7 @@
             "outputPath": "dist/apps/homebase",
             "main": "apps/homebase/src/main.ts",
             "tsConfig": "apps/homebase/tsconfig.app.json",
-            "assets": [
-              "apps/homebase/src/assets"
-            ]
+            "assets": ["apps/homebase/src/assets"]
           },
           "configurations": {
             "production": {
@@ -100,14 +109,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/homebase/tsconfig.app.json",
-              "apps/homebase/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/homebase/**/*"
-            ]
+            "tsConfig": ["apps/homebase/tsconfig.app.json", "apps/homebase/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/homebase/**/*"]
           }
         },
         "test": {
@@ -127,9 +130,7 @@
       "architect": {
         "build": {
           "builder": "@nrwl/web:build",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
             "outputPath": "dist/apps/playground",
@@ -138,13 +139,8 @@
             "main": "apps/playground/src/main.tsx",
             "polyfills": "apps/playground/src/polyfills.ts",
             "tsConfig": "apps/playground/tsconfig.app.json",
-            "assets": [
-              "apps/playground/src/favicon.ico",
-              "apps/playground/src/assets"
-            ],
-            "styles": [
-              "apps/playground/src/styles.scss"
-            ],
+            "assets": ["apps/playground/src/favicon.ico", "apps/playground/src/assets"],
+            "styles": ["apps/playground/src/styles.scss"],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
@@ -180,20 +176,14 @@
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "apps/playground/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["apps/playground/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/playground"
-          ],
+          "outputs": ["coverage/apps/playground"],
           "options": {
             "jestConfig": "apps/playground/jest.config.js",
             "passWithNoTests": true
@@ -222,20 +212,14 @@
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "apps/sage3-app-playground-e2e/**/*.{js,ts}"
-            ]
+            "lintFilePatterns": ["apps/sage3-app-playground-e2e/**/*.{js,ts}"]
           }
         }
       },
       "tags": [],
-      "implicitDependencies": [
-        "playground"
-      ]
+      "implicitDependencies": ["playground"]
     },
     "sagebase": {
       "root": "libs/sagebase",
@@ -244,20 +228,14 @@
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "libs/sagebase/**/*.ts"
-            ]
+            "lintFilePatterns": ["libs/sagebase/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/sagebase"
-          ],
+          "outputs": ["coverage/libs/sagebase"],
           "options": {
             "jestConfig": "libs/sagebase/jest.config.js",
             "passWithNoTests": true
@@ -265,17 +243,13 @@
         },
         "build": {
           "builder": "@nrwl/node:package",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/libs/sagebase",
             "tsConfig": "libs/sagebase/tsconfig.lib.json",
             "packageJson": "libs/sagebase/package.json",
             "main": "libs/sagebase/src/index.ts",
-            "assets": [
-              "libs/sagebase/*.md"
-            ]
+            "assets": ["libs/sagebase/*.md"]
           }
         }
       },
@@ -288,20 +262,14 @@
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "libs/shared/**/*.ts"
-            ]
+            "lintFilePatterns": ["libs/shared/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/shared"
-          ],
+          "outputs": ["coverage/libs/shared"],
           "options": {
             "jestConfig": "libs/shared/jest.config.js",
             "passWithNoTests": true
@@ -317,9 +285,7 @@
       "architect": {
         "build": {
           "builder": "@nrwl/web:build",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
             "outputPath": "dist/apps/webapp",
@@ -328,13 +294,8 @@
             "main": "apps/webapp/src/main.tsx",
             "polyfills": "apps/webapp/src/polyfills.ts",
             "tsConfig": "apps/webapp/tsconfig.app.json",
-            "assets": [
-              "apps/webapp/src/favicon.ico",
-              "apps/webapp/src/assets"
-            ],
-            "styles": [
-              "apps/webapp/src/styles.scss"
-            ],
+            "assets": ["apps/webapp/src/favicon.ico", "apps/webapp/src/assets"],
+            "styles": ["apps/webapp/src/styles.scss"],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
@@ -371,20 +332,14 @@
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": [
-            "{options.outputFile}"
-          ],
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": [
-              "apps/webapp/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["apps/webapp/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/webapp"
-          ],
+          "outputs": ["coverage/apps/webapp"],
           "options": {
             "jestConfig": "apps/webapp/jest.config.js",
             "passWithNoTests": true

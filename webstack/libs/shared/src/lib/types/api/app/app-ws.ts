@@ -6,7 +6,7 @@
  *
  */
 
-import { AppSchema } from "../../schemas"
+import { AppSchema } from '@sage3/applications/schema';
 import { APIWSEvent, APIWSRequest, APIWSResponse } from "../type"
 
 export type CreateRequest = APIWSRequest & {

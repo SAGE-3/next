@@ -8,10 +8,10 @@
     }
   ],
   "compilerOptions": {
+    "jsx": "react-jsx",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true
+    "noFallthroughCasesInSwitch": true
   }
 }

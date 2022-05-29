@@ -13,12 +13,14 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { AppSchema, AppStates, AppWS } from '@sage3/shared/types';
+import { AppWS } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { AppHTTPService } from "../api";
 import { SocketAPI } from "../utils";
+import { AppSchema } from "@sage3/applications/schema";
+import { AppStates } from "@sage3/applications/types";
 
 interface AppState {
   apps: AppSchema[];

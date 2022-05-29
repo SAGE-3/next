@@ -6,7 +6,7 @@
  *
  */
 
-import { AppTypes } from '@sage3/shared/types';
+import { AppTypes } from '../types';
 
 import { CounterApp } from './CounterApp/CounterApp';
 import { ImageApp } from './ImageApp/ImageApp';

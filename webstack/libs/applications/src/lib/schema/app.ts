@@ -1,4 +1,4 @@
-import { AppTypes, AppStates } from '../applications'
+import { AppTypes, AppStates } from '../types'
 
 export type AppSchema = {
   id: string,

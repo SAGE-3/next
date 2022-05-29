@@ -7,9 +7,9 @@
  */
 
 
-import { AppSchema, ImageState } from "@sage3/shared/types";
-import { useAppStore } from "../../stores/app";
-
+import { useAppStore } from "@sage3/frontend";
+import { AppSchema } from "../../schema/app";
+import { ImageState } from "../../types";
 import './styles.css';
 
 export function ImageApp(props: AppSchema): JSX.Element {

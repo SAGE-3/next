@@ -6,32 +6,31 @@
  *
  */
 
-import { AppSchema, NoteState } from "@sage3/shared/types";
-import { useAppStore } from "../../stores/app";
-
+import { useAppStore } from "@sage3/frontend";
+import { AppSchema } from "../../schema/app";
+import { LinkerState } from "../../types";
 import './styles.css';
 
-export function NoteApp(props: AppSchema): JSX.Element {
 
-  const s = props.state as NoteState;
+export function LinkerApp(props: AppSchema): JSX.Element {
+
+  const s = props.state as LinkerState;
 
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);
-
-  function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
-    updateState(props.id, { text: ev.target.value })
-  }
+  // useEffect(() => {
+  //   const newValue = s[s.fromAppField];
+  // }, [s])
 
   function handleClose() {
     deleteApp(props.id);
   }
 
   return (
-    <div className="Note-Container">
+    <div className="Linker-Container">
       <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
-      <textarea id="story" name="story" onChange={handleTextChange}>
-        {s.text}
-      </textarea>
+      <p>{s.fromAppId} - {s.toAppId} </p>
+      <p>{s.fromAppField} - {s.toAppField}</p>
     </div>
   )
 }

@@ -12,11 +12,12 @@
  * @version 1.0.0
  */
 
-import { AppSchema, AppStates } from '@sage3/shared/types';
+import { AppSchema } from '@sage3/applications/schema';
+import { AppStates } from '@sage3/applications/types';
 
 import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 
-async function create(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: string, state: AppStates): Promise<AppSchema[] | undefined> {
+async function create(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']): Promise<AppSchema[] | undefined> {
   const body = { name, description, roomId, boardId, type, state };
   const res = await httpPOST('/api/app', body);
   return res.apps;
