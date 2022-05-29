@@ -91,6 +91,23 @@ class SAGE3RoomModel {
     }
   }
 
+  /**
+  * Query rooms
+  * @param {string} id The roomId.
+  * @returns {Array<SBDocument<RoomSchema>>} RoomSchema array of all rooms that satisfy the query
+  */
+  public async queryRooms(field: keyof RoomSchema, query: Partial<RoomSchema>): Promise<SBDocument<RoomSchema>[] | undefined> {
+    try {
+      const q = query[field];
+      if (typeof q !== 'string' || typeof q !== typeof 'number') return undefined;
+      const boards = await this.roomCollection.query(field, q);
+      return boards;
+    } catch (error) {
+      console.log('BoardModel readBoard error> ', error);
+      return undefined;
+    }
+  }
+
 
   /**
    *  Update the room doc in the database.

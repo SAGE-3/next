@@ -19,13 +19,12 @@
  */
 
 // External Imports
+import { UserRole } from '@sage3/shared/types';
 import * as express from 'express';
 
 // App Imports
 import { UserService } from '../../services';
 
-// Lib Imports
-import { UserHTTP, UserRole } from '@sage3/shared/types';
 
 /**
  * User route/api express middleware.
@@ -34,112 +33,35 @@ import { UserHTTP, UserRole } from '@sage3/shared/types';
 export function userExpressRouter(): express.Router {
   const router = express.Router();
 
-  router.post('/create', async (req, res) => {
-    const auth = req.user;
-    const id = auth.id;
-    const role = (auth.provider === 'guest') ? 'guest' as UserRole : 'user' as UserRole;
-    const createReq = req.body as UserHTTP.CreateRequest;
-    const user = await UserService.createUser(id, createReq.name, createReq.email, role);
-    const response = {
-      success: (user) ? true : false,
-      user
-    } as UserHTTP.CreateResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.post('/', async ({ user, body }, res) => {
+    const role = (user.provider === 'guest') ? 'guest' as UserRole : 'user' as UserRole;
+    const u = await UserService.create(user.id, body.name, body.email, role);
+    if (u) res.status(200).send({ success: true, users: [u] });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read', async (req, res) => {
-    const readReq = req.query as UserHTTP.ReadRequest;
-    const user = await UserService.readUser(readReq.id);
-    const response = {
-      success: (user) ? true : false,
-      user
-    } as UserHTTP.ReadResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.get('/', async (req, res) => {
+    const users = await UserService.readAll();
+    if (users) res.status(200).send({ success: true, users });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read/all', async (req, res) => {
-    const users = await UserService.readAllUsers();
-    const response = {
-      success: (users) ? true : false,
-      users
-    } as UserHTTP.ReadAllResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.get('/:id', async ({ params }, res) => {
+    const user = await UserService.read(params.id);
+    if (user) res.status(200).send({ success: true, users: [user] });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read/current', async (req, res) => {
-    const id = req.user.id;
-    const user = await UserService.readUser(id);
-    const response = {
-      success: (user) ? true : false,
-      user
-    } as UserHTTP.ReadCurrentResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.put('/:id', async ({ params, body }, res) => {
+    const update = await UserService.update(params.id, body);
+    if (update) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false });
   });
 
-  router.post('/update/name', async (req, res) => {
-    const id = req.user.id;
-    const updateReq = req.body as UserHTTP.UpdateNameRequest;
-    const updateRes = await UserService.updateName(id, updateReq.name);
-    const response = { success: updateRes } as UserHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/email', async (req, res) => {
-    const id = req.user.id;
-    const updateReq = req.body as UserHTTP.UpdateEmailRequest;
-    const updateRes = await UserService.updateEmail(id, updateReq.email);
-    const response = { success: updateRes } as UserHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/color', async (req, res) => {
-    const id = req.user.id;
-    const updateReq = req.body as UserHTTP.UpdateColorRequest;
-    const updateRes = await UserService.updateColor(id, updateReq.color);
-    const response = { success: updateRes } as UserHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/profilepicture', async (req, res) => {
-    const id = req.user.id;
-    const updateReq = req.body as UserHTTP.UpdateProfilePictureRequest;
-    const updateRes = await UserService.updateProfilePicture(id, updateReq.profilePicture);
-    const response = { success: updateRes } as UserHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/usertype', async (req, res) => {
-    const id = req.user.id;
-    const updateReq = req.body as UserHTTP.UpdateUserTypeRequest;
-    const updateRes = await UserService.updateUserType(id, updateReq.userType);
-    const response = { success: updateRes } as UserHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/userrole', async (req, res) => {
-    const id = req.user.id;
-    const updateReq = req.body as UserHTTP.UpdateUserRoleRequest;
-    const updateRes = await UserService.updateUserRole(id, updateReq.userRole);
-    const response = { success: updateRes } as UserHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.delete('/delete', async (req, res) => {
-    const delReq = req.body as UserHTTP.DeleteRequest;
-    const delRes = await UserService.deleteUser(delReq.id);
-    const response = { success: delRes } as UserHTTP.DeleteResponse;
-    const status = (delRes) ? 200 : 404;
-    res.status(status).send(response);
+  router.delete('/:id', async ({ params }, res) => {
+    const del = await UserService.delete(params.id);
+    if (del) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false });
   });
 
   return router;

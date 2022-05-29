@@ -76,20 +76,6 @@ class SAGE3BoardModel {
     }
   }
 
-  /**
- * Query boards
- * @param {string} id The roomId.
-  * @returns {Array<SBDocument<BoardSchema>>} BoardSchema array of all boards
- */
-  public async queryBoards(field: keyof BoardSchema, query: string | number): Promise<SBDocument<BoardSchema>[] | undefined> {
-    try {
-      const boards = await this.boardCollection.query(field, query);
-      return boards;
-    } catch (error) {
-      console.log('BoardModel readBoard error> ', error);
-      return undefined;
-    }
-  }
 
   /**
   * Returns all boards for this SAGE3 server.
@@ -102,6 +88,24 @@ class SAGE3BoardModel {
     } catch (error) {
       console.log('BoardModel readAllBoards error> ')
       return [];
+    }
+  }
+
+
+  /**
+ * Query boards
+ * @param {string} id The roomId.
+  * @returns {Array<SBDocument<BoardSchema>>} BoardSchema array of all boards
+ */
+  public async queryBoards(field: keyof BoardSchema, query: Partial<BoardSchema>): Promise<SBDocument<BoardSchema>[] | undefined> {
+    try {
+      const q = query[field];
+      if (typeof q !== 'string' || typeof q !== typeof 'number') return undefined;
+      const boards = await this.boardCollection.query(field, q);
+      return boards;
+    } catch (error) {
+      console.log('BoardModel readBoard error> ', error);
+      return undefined;
     }
   }
 

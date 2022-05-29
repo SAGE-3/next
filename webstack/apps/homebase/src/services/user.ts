@@ -19,9 +19,9 @@
  */
 
 import { UserModel } from '../models';
-import { UserRole, UserSchema, UserType } from '@sage3/shared/types';
+import { UserSchema } from '@sage3/shared/types';
 import { SBDocumentMessage } from '@sage3/sagebase';
-import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+import { randomSAGEColor } from '@sage3/shared';
 /**
  * The SAGE3 UserService that interfaces with the UserModel
  */
@@ -44,7 +44,7 @@ class SAGE3UserService {
    * @param {string} email The email address of the user.
    * @returns {SBDocument<UserSchema> | undefined} Returns the UserDoc or undefined if unsuccessful
    */
-  public async createUser(id: string, name: string, email: string, role: string): Promise<UserSchema | undefined> {
+  public async create(id: string, name: string, email: string, role: string): Promise<UserSchema | undefined> {
     const newUser = {
       id: id,
       name: name,
@@ -60,7 +60,7 @@ class SAGE3UserService {
       const doc = await UserModel.createUser(id, newUser);
       return (doc) ? doc.data : undefined;
     } catch (error) {
-      console.log('UserService createUser error: ', error);
+      console.log('UserService create error: ', error);
       return undefined;
     }
   }
@@ -70,12 +70,12 @@ class SAGE3UserService {
    * @param {string} id The user's unique id.
    * @return {SBDocument<UserSchema> | undefined} Returns the user schema if read successful.
    */
-  public async readUser(id: string): Promise<UserSchema | undefined> {
+  public async read(id: string): Promise<UserSchema | undefined> {
     try {
       const doc = await UserModel.readUser(id);
       return (doc) ? doc.data : undefined;
     } catch (error) {
-      console.log('UserService readUser error: ', error);
+      console.log('UserService read error: ', error);
       return undefined;
     }
   }
@@ -84,112 +84,29 @@ class SAGE3UserService {
  * Read all users.
  * @return {UserSchema[] | undefined} Returns an array of users if the read was sucessful.
  */
-  public async readAllUsers(): Promise<UserSchema[] | undefined> {
+  public async readAll(): Promise<UserSchema[] | undefined> {
     try {
       const docArray = await UserModel.readAllUsers();
       const docs = docArray.map(doc => doc.data) as UserSchema[];
       return (docs) ? docs : undefined;
     } catch (error) {
-      console.log('UserService readAllUsers error: ', error);
+      console.log('UserService readAll error: ', error);
       return undefined;
     }
   }
 
   /**
-   * Update the user's name.
+   * Update the user.
    * @param {string} id The user's unique id.
-   * @param {string} name The new name.
+   * @param {Partial<UserSchema>} update The new name.
    * @return {Promise<boolean>} Returns true if update was successful.
    */
-  public async updateName(id: string, name: string): Promise<boolean> {
+  public async update(id: string, update: Partial<UserSchema>): Promise<boolean> {
     try {
-      const success = await UserModel.updateUser(id, { "name": name });
+      const success = await UserModel.updateUser(id, update);
       return success;
     } catch (error) {
-      console.log('UserService updateName error: ', error);
-      return false;
-    }
-  }
-
-  /**
-   * Update the user's email.
-   * @param {string} id The user's unique id.
-   * @param {string} email The new email.
-   * @return {Promise<boolean>} Returns true if update was successful.
-   */
-  public async updateEmail(id: string, email: string): Promise<boolean> {
-    try {
-      const success = await UserModel.updateUser(id, { "email": email });
-      return success;
-    } catch (error) {
-      console.log('UserService updateEmail error: ', error);
-      return false;
-    }
-  }
-
-  /**
-   * Update the user's color.
-   * @param {string} id The user's unique id.
-   * @param {string} color The new color.
-   * @return {Promise<boolean>} Returns true if update was succesful.
-   */
-  public async updateColor(id: string, color: string): Promise<boolean> {
-    try {
-      // Check to see if new color name is an actual sage color
-      const found = SAGEColors.some(el => el.name === color);
-      if (!found) return false;
-      const success = await UserModel.updateUser(id, { "color": color });
-      return success;
-    } catch (error) {
-      console.log('UserService updateColor error: ', error);
-      return false;
-    }
-  }
-
-  /**
-   * Update the user's profile picture.
-   * @param {string} id The user's unique id.
-   * @param {string} profilePicture The url of the new picture
-   * @return {Promise<boolean>} Returns true if update was succesful.
-   */
-  public async updateProfilePicture(id: string, profilePicture: string): Promise<boolean> {
-    try {
-      const success = await UserModel.updateUser(id, { "profilePicture": profilePicture });
-      return success;
-    } catch (error) {
-      console.log('UserService updateProfilePicture error: ', error);
-      return false;
-    }
-  }
-
-  /**
-   * Update the user's type.
-   * @param {string} id The user's unique id.
-   * @param {UserType} color The new type.
-   * @return {Promise<boolean>} Returns true if update was successful.
-   */
-  public async updateUserType(id: string, userType: UserType): Promise<boolean> {
-    try {
-      const success = await UserModel.updateUser(id, { "userType": userType });
-      return success;
-    } catch (error) {
-      console.log('UserService updateUserType error: ', error);
-      return false;
-    }
-  }
-
-  /**
-   * Update the user's role.
-   * @param {string} id The user's unique id.
-   * @param {UserRole} color The new role.
-   * @return {Promise<boolean>} Returns true if update was successful.
-   */
-  public async updateUserRole(id: string, userRole: UserRole): Promise<boolean> {
-    try {
-      const success = await UserModel.updateUser(id, { "userRole": userRole });
-      return success;
-    } catch (error) {
-      console.log('UserService updateUserRole error: ', error);
+      console.log('UserService update error: ', error);
       return false;
     }
   }
@@ -199,7 +116,7 @@ class SAGE3UserService {
  * @param {string} id The id of the user
  * @returns {boolean} Returns true if delete was successful
  */
-  public async deleteUser(id: string): Promise<boolean> {
+  public async delete(id: string): Promise<boolean> {
     try {
       const success = await UserModel.deleteUser(id);
       return success;

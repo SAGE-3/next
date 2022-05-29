@@ -62,20 +62,20 @@ export function appExpressRouter(): express.Router {
   });
 
   router.put('/:id', async ({ params, body }, res) => {
-    const updateRes = await AppService.update(params.id, body);
-    if (updateRes) res.status(200).send({ success: true });
+    const update = await AppService.update(params.id, body);
+    if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });
 
   router.put('/state/:id', async ({ params, body }, res) => {
-    const updateRes = await AppService.updateState(params.id, body);
-    if (updateRes) res.status(200).send({ success: true });
+    const update = await AppService.updateState(params.id, body);
+    if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });
 
   router.delete('/:id', async ({ params }, res) => {
-    const delRes = await AppService.delete(params.id);
-    if (delRes) res.status(200).send({ success: true });
+    const del = await AppService.delete(params.id);
+    if (del) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });
 

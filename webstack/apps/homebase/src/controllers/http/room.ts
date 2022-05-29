@@ -24,9 +24,6 @@ import * as express from 'express';
 // App Imports
 import { RoomService } from '../../services';
 
-// Lib Imports
-import { RoomHTTP } from '@sage3/shared/types';
-
 /**
  * Room route/api express middleware.
  * @returns {express.Router} returns the express router object
@@ -34,86 +31,34 @@ import { RoomHTTP } from '@sage3/shared/types';
 export function roomExpressRouter(): express.Router {
   const router = express.Router();
 
-  router.post('/create', async (req, res) => {
-    const auth = req.user;
-    const id = auth.id;
-    const createReq = req.body as RoomHTTP.CreateRequest;
-    const room = await RoomService.createRoom(createReq.name, createReq.description, id);
-    const response = {
-      success: (room) ? true : false,
-      room
-    } as RoomHTTP.CreateResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.post('/', async ({ user, body }, res) => {
+    const room = await RoomService.create(body.name, body.description, body.color, user.id);
+    if (room) res.status(200).send({ success: true, rooms: [room] });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read', async (req, res) => {
-    const readReq = req.query as RoomHTTP.ReadRequest;
-    const room = await RoomService.readRoom(readReq.id);
-    const response = {
-      success: (room) ? true : false,
-      room
-    } as RoomHTTP.ReadResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.get('/', async (req, res) => {
+    const rooms = await RoomService.readAll();
+    if (rooms) res.status(200).send({ success: true, rooms });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read/all', async (req, res) => {
-    const rooms = await RoomService.readAllRooms();
-    const response = {
-      success: (rooms) ? true : false,
-      rooms
-    } as RoomHTTP.ReadAllResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.get('/:id', async ({ params }, res) => {
+    const room = await RoomService.read(params.id);
+    if (room) res.status(200).send({ success: true, rooms: [room] });
+    else res.status(500).send({ success: false });
   });
 
-  router.post('/update/name', async (req, res) => {
-    const updateReq = req.body as RoomHTTP.UpdateNameRequest;
-    const updateRes = await RoomService.updateName(updateReq.id, updateReq.name);
-    const response = { success: updateRes } as RoomHTTP.UpdateResponse;
-    const status = (response) ? 200 : 404;
-    res.status(status).send(response);
+  router.put('/:id', async ({ params, body }, res) => {
+    const update = await RoomService.update(params.id, body);
+    if (update) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false });
   });
 
-  router.post('/update/description', async (req, res) => {
-    const updateReq = req.body as RoomHTTP.UpdateDescriptionRequest;
-    const updateRes = await RoomService.updateDescription(updateReq.id, updateReq.description);
-    const response = { success: updateRes } as RoomHTTP.UpdateResponse;
-    const status = (response) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/color', async (req, res) => {
-    const updateReq = req.body as RoomHTTP.UpdateColorRequest;
-    const updateRes = await RoomService.updateColor(updateReq.id, updateReq.color);
-    const response = { success: updateRes } as RoomHTTP.UpdateResponse;
-    const status = (response) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/ownerid', async (req, res) => {
-    const updateReq = req.body as RoomHTTP.UpdateOwnerIdRequest;
-    const updateRes = await RoomService.updateOwnerId(updateReq.id, updateReq.ownerId);
-    const response = { success: updateRes } as RoomHTTP.UpdateResponse;
-    const status = (response) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/isprivate', async (req, res) => {
-    const updateReq = req.body as RoomHTTP.UpdateIsPrivateRequest;
-    const updateRes = await RoomService.updateIsPrivate(updateReq.id, updateReq.isPrivate);
-    const response = { success: updateRes } as RoomHTTP.UpdateResponse;
-    const status = (response) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.delete('/delete', async (req, res) => {
-    const delReq = req.body as RoomHTTP.DeleteRequest;
-    const delRes = await RoomService.deleteRoom(delReq.id);
-    const response = { success: delRes } as RoomHTTP.DeleteResponse;
-    const status = (delRes) ? 200 : 404;
-    res.status(status).send(response);
+  router.delete('/:id', async ({ params }, res) => {
+    const del = await RoomService.delete(params.id);
+    if (del) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false });
   });
 
   return router;
