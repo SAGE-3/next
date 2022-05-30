@@ -13,7 +13,6 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { APIClientWSMessage } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
 
 // The observable websocket and HTTP

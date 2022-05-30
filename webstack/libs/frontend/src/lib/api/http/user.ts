@@ -28,6 +28,13 @@ async function read(id: UserSchema['id']): Promise<UserSchema[] | undefined> {
   return response.users;
 }
 
+async function readCurrent(): Promise<UserSchema[] | undefined> {
+  const response = await httpGET('/api/user/current');
+  console.log(response)
+  return response.users;
+}
+
+
 async function readAll(): Promise<UserSchema[] | undefined> {
   const response = await httpGET('/api/user');
   return response.users;
@@ -39,9 +46,8 @@ async function query(query: Partial<UserSchema>): Promise<UserSchema[] | undefin
   return response.users;
 }
 
-async function update(update: Partial<UserSchema>): Promise<boolean> {
-  const params = {} as Partial<UserSchema>;
-  const response = await httpPUT('/api/user', params, update);
+async function update(id: UserSchema['id'], updates: Partial<UserSchema>): Promise<boolean> {
+  const response = await httpPUT('/api/user', { id }, updates);
   return response.success;
 }
 
@@ -51,8 +57,6 @@ async function del(id: UserSchema['id']): Promise<boolean> {
   return response.success;
 }
 
-
-
 /**
  * User HTTP Service.
  * Provides POST, GET, DELETE requests to the backend.
@@ -60,6 +64,7 @@ async function del(id: UserSchema['id']): Promise<boolean> {
 export const UserHTTPService = {
   create,
   read,
+  readCurrent,
   readAll,
   query,
   update,

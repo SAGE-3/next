@@ -43,19 +43,19 @@ export function roomExpressRouter(): express.Router {
     else res.status(500).send({ success: false });
   });
 
-  router.get('/:id', async ({ params }, res) => {
+  router.get('/id/:id', async ({ params }, res) => {
     const room = await RoomService.read(params.id);
     if (room) res.status(200).send({ success: true, rooms: [room] });
     else res.status(500).send({ success: false });
   });
 
-  router.put('/:id', async ({ params, body }, res) => {
+  router.put('/id/:id', async ({ params, body }, res) => {
     const update = await RoomService.update(params.id, body);
     if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });
 
-  router.delete('/:id', async ({ params }, res) => {
+  router.delete('/id/:id', async ({ params }, res) => {
     const del = await RoomService.delete(params.id);
     if (del) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });

@@ -46,19 +46,25 @@ export function userExpressRouter(): express.Router {
     else res.status(500).send({ success: false });
   });
 
-  router.get('/:id', async ({ params }, res) => {
+  router.get('/current', async ({ user }, res) => {
+    const u = await UserService.read(user.id);
+    if (u) res.status(200).send({ success: true, users: [u] });
+    else res.status(500).send({ success: false });
+  });
+
+  router.get('/id/:id', async ({ params }, res) => {
     const user = await UserService.read(params.id);
     if (user) res.status(200).send({ success: true, users: [user] });
     else res.status(500).send({ success: false });
   });
 
-  router.put('/:id', async ({ user, body }, res) => {
+  router.put('/id/:id', async ({ user, body }, res) => {
     const update = await UserService.update(user.id, body);
     if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });
 
-  router.delete('/:id', async ({ params }, res) => {
+  router.delete('/id/:id', async ({ params }, res) => {
     const del = await UserService.delete(params.id);
     if (del) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });

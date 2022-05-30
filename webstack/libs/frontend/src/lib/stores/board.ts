@@ -55,11 +55,12 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = '/api/app/subscribe/:roomId';
+      const route = '/api/board/subscribe/:roomId';
       const body = { roomId }
 
       // Socket Listenting to updates from server about the current user
       boardsSub = socket.subscribe<BoardSchema>(route, body, (message) => {
+        console.log('what', message)
         switch (message.type) {
           case 'CREATE': {
             set({ boards: [...get().boards, message.doc.data] })

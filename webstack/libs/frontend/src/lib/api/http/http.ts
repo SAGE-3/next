@@ -21,14 +21,13 @@ export async function httpPOST(url: string, body: any): Promise<any> {
 }
 
 export async function httpGET(url: string, params?: any): Promise<any> {
-  let urlQuery = '';
+  let urlParams = '';
   if (params) {
     Object.keys(params).forEach((el, idx) => {
-      urlQuery += (idx === 0) ? '?' : '&';
-      urlQuery += `${el}=${params[el]}`
+      urlParams += `/${el}/${params[el]}`
     })
   }
-  const resposne = await fetch(`${url}${urlQuery}`, {
+  const resposne = await fetch(`${url}${urlParams}`, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -42,8 +41,7 @@ export async function httpGET(url: string, params?: any): Promise<any> {
 export async function httpPUT(url: string, params: any, body: any): Promise<any> {
   let urlParams = '';
   Object.keys(params).forEach((el, idx) => {
-    urlParams += (idx === 0) ? '?' : '&';
-    urlParams += `${el}=${params[el]}`
+    urlParams += `/${el}/${params[el]}`
   })
   const response = await fetch(`${url}${urlParams}`, {
     method: 'PUT',
@@ -57,15 +55,18 @@ export async function httpPUT(url: string, params: any, body: any): Promise<any>
   return await response.json();
 }
 
-export async function httpDELETE(url: string, body: any): Promise<any> {
-  const response = await fetch(url, {
+export async function httpDELETE(url: string, params: any): Promise<any> {
+  let urlParams = '';
+  Object.keys(params).forEach((el, idx) => {
+    urlParams += `/${el}/${params[el]}`
+  })
+  const response = await fetch(`${url}${urlParams}`, {
     method: 'DELETE',
     credentials: 'include',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ...body }),
   })
   return await response.json();
 }

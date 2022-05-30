@@ -43,37 +43,37 @@ export function appExpressRouter(): express.Router {
     else res.status(500).send({ success: false });
   });
 
-  router.get('/:id', async ({ params }, res) => {
+  router.get('/id/:id', async ({ params }, res) => {
     const app = await AppService.read(params.id);
     if (app) res.status(200).send({ success: true, apps: [app] });
     else res.status(500).send({ success: false });
   });
 
-  router.get('/:roomId', async ({ params }, res) => {
+  router.get('/roomId/:roomId', async ({ params }, res) => {
     const apps = await AppService.query('roomId', params);
     if (apps) res.status(200).send({ success: true, apps });
     else res.status(500).send({ success: false });
   });
 
-  router.get('/:boardId', async ({ params }, res) => {
+  router.get('/boarId/:boardId', async ({ params }, res) => {
     const apps = await AppService.query('boardId', params);
     if (apps) res.status(200).send({ success: true, apps });
     else res.status(500).send({ success: false });
   });
 
-  router.put('/:id', async ({ params, body }, res) => {
+  router.put('/id/:id', async ({ params, body }, res) => {
     const update = await AppService.update(params.id, body);
     if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });
 
-  router.put('/state/:id', async ({ params, body }, res) => {
+  router.put('/state/id/:id', async ({ params, body }, res) => {
     const update = await AppService.updateState(params.id, body);
     if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
   });
 
-  router.delete('/:id', async ({ params }, res) => {
+  router.delete('/id/:id', async ({ params }, res) => {
     const del = await AppService.delete(params.id);
     if (del) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });

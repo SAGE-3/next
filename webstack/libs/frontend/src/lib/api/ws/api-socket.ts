@@ -43,7 +43,7 @@ export class SocketAPI {
         id: genId(),
         route,
         body: {
-          subId: id
+          subId
         }
       } as APIClientWSMessage;
       this.socketObserver.send(unsubMessage)

@@ -23,7 +23,7 @@ interface UserState {
   user: UserSchema | undefined;
   create: (name: UserSchema['name'], email: UserSchema['email']) => Promise<void>;
   update: (updates: Partial<UserSchema>) => Promise<void>;
-  subscribeToCurrentUser: () => Promise<void>;
+  subscribeToUser: () => Promise<void>;
 }
 
 /**
@@ -38,12 +38,15 @@ const UserStore = createVanilla<UserState>((set, get) => {
       UserHTTPService.create(name, email);
     },
     update: async (updates: Partial<UserSchema>) => {
-      UserHTTPService.update(updates);
+      const user = get().user;
+      if (!user) return;
+      UserHTTPService.update(user.id, updates);
     },
-    subscribeToCurrentUser: async () => {
-      const currUser = get().user;
-      if (!currUser) return;
+    subscribeToUser: async () => {
+      const currUser = await UserHTTPService.readCurrent();
 
+      if (!currUser) return;
+      set({ user: currUser[0] })
       if (userSub) {
         userSub();
         userSub = null;
@@ -51,7 +54,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
 
       // Socket Subscribe Message
       const route = '/api/user/subscribe/:id';
-      const body = { id: currUser.id }
+      const body = { id: currUser[0].id }
 
       // Socket Listenting to updates from server about the current user
       userSub = socket.subscribe<UserSchema>(route, body, (message) => {

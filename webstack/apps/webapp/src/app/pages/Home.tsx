@@ -11,13 +11,16 @@ import {
   useBoardStore,
   CreateBoardModal,
   useAppStore,
+  useAuth,
 } from '@sage3/frontend';
 import { RoomSchema } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
 
 export function HomePage() {
+
+  const auth = useAuth();
   const user = useUserStore((state) => state.user);
-  const subToUser = useUserStore((state) => state.subscribeToCurrentUser);
+  const subToUser = useUserStore((state) => state.subscribeToUser);
 
   const rooms = useRoomStore((state) => state.rooms);
   const deleteRoom = useRoomStore((state) => state.delete);
@@ -39,16 +42,29 @@ export function HomePage() {
 
   useEffect(() => {
     async function subUser() {
-      const user = await subToUser();
+      await subToUser();
       if (user === undefined) {
         setNewUserModal(true);
       } else {
         setNewUserModal(false);
       }
     }
-    subUser();
-    subToAllRooms();
-  }, []);
+    if (!user) {
+      subUser();
+    } else {
+      setNewUserModal(false);
+    }
+  }, [subToUser, user, newUserModal]);
+
+  useEffect(() => {
+    async function subRooms() {
+      await subToAllRooms()
+    }
+    if (rooms.length === 0) {
+      subRooms();
+    }
+
+  }, [subToAllRooms, rooms]);
 
   return (
     <div>
@@ -118,27 +134,7 @@ export function HomePage() {
         </VStack>
       </div>
 
-      <Divider my="2"></Divider>
-      <div style={{ width: '400px' }}>
-        <h1>{currentRoom ? currentRoom.name : 'Select a Room'}</h1>
-        {currentRoom ? <Button onClick={() => setNewBoardModal(true)}>New Board</Button> : null}
-        <VStack>
-          {currentRoom ? (
-            boards.map((board) => {
-              return (
-                <Tag size="lg" key={board.id} borderRadius="full" variant="solid" colorScheme={board.color}>
-                  <TagLabel>
-                    {board.name} - {board.roomId}
-                  </TagLabel>
-                  <TagCloseButton onClick={() => deleteBoard(board.id)} />
-                </Tag>
-              );
-            })
-          ) : (
-            <div>NO ROOM SELECTED</div>
-          )}
-        </VStack>
-      </div>
+
     </div>
   );
 }

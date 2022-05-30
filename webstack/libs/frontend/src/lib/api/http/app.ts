@@ -12,7 +12,10 @@
  * @version 1.0.0
  */
 
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { AppSchema } from '@sage3/applications/schema';
+
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { AppStates } from '@sage3/applications/types';
 
 import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
