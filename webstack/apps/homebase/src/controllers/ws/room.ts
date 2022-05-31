@@ -38,7 +38,6 @@ import { genId } from '@sage3/shared';
  * @param cache 
  */
 export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  console.log(message)
   switch (message.route) {
     case '/api/room/subscribe': {
       const sub = await RoomService.subscribeToAllRooms((doc) => {

@@ -1,6 +1,6 @@
 // import create from "zustand";
 
-import { Button, Divider, Tag, TagCloseButton, TagLabel, VStack } from '@chakra-ui/react';
+import { Box, Button, Divider, Tag, TagCloseButton, TagLabel, VStack } from '@chakra-ui/react';
 import {
   AuthHTTPService,
   CreateUserModal,
@@ -12,15 +12,14 @@ import {
   CreateBoardModal,
   useAppStore,
   useAuth,
+  BoardCard,
+  RoomCard,
 } from '@sage3/frontend';
 import { RoomSchema } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
+import { Header } from '../components/Header';
 
 export function HomePage() {
-
-  const auth = useAuth();
-  const user = useUserStore((state) => state.user);
-  const subToUser = useUserStore((state) => state.subscribeToUser);
 
   const rooms = useRoomStore((state) => state.rooms);
   const deleteRoom = useRoomStore((state) => state.delete);
@@ -30,31 +29,9 @@ export function HomePage() {
   const deleteBoard = useBoardStore((state) => state.delete);
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
 
-  const apps = useAppStore((state) => state.apps);
-  const deleteApp = useAppStore((state) => state.delete);
-  const subByBoardId = useAppStore((state) => state.subscribeByBoardId);
-
-  const [newUserModal, setNewUserModal] = useState(false);
-  const [editAccountModal, setEditAccountModal] = useState(false);
   const [newRoomModal, setNewRoomModal] = useState(false);
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<RoomSchema | null>(null);
-
-  useEffect(() => {
-    async function subUser() {
-      await subToUser();
-      if (user === undefined) {
-        setNewUserModal(true);
-      } else {
-        setNewUserModal(false);
-      }
-    }
-    if (!user) {
-      subUser();
-    } else {
-      setNewUserModal(false);
-    }
-  }, [subToUser, user, newUserModal]);
 
   useEffect(() => {
     async function subRooms() {
@@ -68,17 +45,9 @@ export function HomePage() {
 
   return (
     <div>
-      <h1>HOME PAGE</h1>
+      <Header title="HomePage"></Header>
 
-      <h3>
-        {user?.name} - {user?.email}
-      </h3>
 
-      <Button onClick={() => setEditAccountModal(true)}>EDIT</Button>
-
-      <Button onClick={AuthHTTPService.logout}>Logout</Button>
-      <CreateUserModal isOpen={newUserModal} onClose={() => setNewUserModal(false)}></CreateUserModal>
-      <EditUserModal isOpen={editAccountModal} onClose={() => setEditAccountModal(false)}></EditUserModal>
       <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
 
       {currentRoom ? (
@@ -88,50 +57,41 @@ export function HomePage() {
       <Divider my="2"></Divider>
       <div style={{ width: '400px' }}>
         <Button onClick={() => setNewRoomModal(true)}>New Room</Button>
-        <VStack>
+        <Box display='flex' flexWrap="wrap" width="100vw ">
           {rooms.map((room) => {
             return (
-              <Tag
-                size="lg"
+              <RoomCard
                 key={room.id}
-                borderRadius="full"
-                variant="solid"
-                colorScheme={room.color}
-                onClick={() => {
-                  setCurrentRoom(room);
-                  subByRoomId(room.id);
-                }}
-              >
-                <TagLabel>
-                  {room.name} - {room.id}
-                </TagLabel>
-                <TagCloseButton onClick={() => deleteRoom(room.id)} />
-              </Tag>
-            );
+                room={room}
+                onEnter={() => { setCurrentRoom(room); subByRoomId(room.id) }}
+                onEdit={() => console.log('edit room')}
+                onDelete={() => deleteRoom(room.id)}
+              ></RoomCard>
+            )
           })}
-        </VStack>
+        </Box>
       </div>
 
       <Divider my="2"></Divider>
       <div style={{ width: '400px' }}>
         <h1>{currentRoom ? currentRoom.name : 'Select a Room'}</h1>
         {currentRoom ? <Button onClick={() => setNewBoardModal(true)}>New Board</Button> : null}
-        <VStack>
+        <Box display='flex' flexWrap="wrap" width="100vw ">
           {currentRoom ? (
             boards.map((board) => {
               return (
-                <Tag size="lg" key={board.id} borderRadius="full" variant="solid" colorScheme={board.color}>
-                  <TagLabel>
-                    {board.name} - {board.roomId}
-                  </TagLabel>
-                  <TagCloseButton onClick={() => deleteBoard(board.id)} />
-                </Tag>
+                <BoardCard
+                  key={board.id}
+                  board={board}
+                  onDelete={() => deleteBoard(board.id)}
+                  onEdit={() => { console.log('edit board') }}
+                  onEnter={() => { console.log('enter board') }}></BoardCard>
               );
             })
           ) : (
             <div>NO ROOM SELECTED</div>
           )}
-        </VStack>
+        </Box>
       </div>
 
 
