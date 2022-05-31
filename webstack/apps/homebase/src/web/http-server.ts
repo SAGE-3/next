@@ -15,9 +15,9 @@ import { Server } from 'http';
 import * as express from 'express';
 
 // Express middlewares
+import helmet from 'helmet';
 import * as compression from 'compression';
 import * as cors from 'cors';
-import * as helmet from 'helmet';
 import * as morgan from 'morgan';
 import * as favicon from 'serve-favicon';
 import * as cookieParser from 'cookie-parser';
