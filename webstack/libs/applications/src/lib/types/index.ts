@@ -1,21 +1,15 @@
-import { CounterState, CounterName } from './counter';
-import { ImageState, ImageName } from './image';
-import { LinkerState, LinkerName } from './linker';
-import { NoteState, NoteName } from './note';
-import { SliderState, SliderName } from './slider';
-
-export { CounterState, ImageState, LinkerState, NoteState, SliderState }
+import * as States from '../apps/types'
 
 export type AppStates =
-  CounterState |
-  ImageState |
-  LinkerState |
-  NoteState |
-  SliderState;
+  States.CounterState |
+  States.ImageState |
+  States.LinkerState |
+  States.NoteState |
+  States.SliderState;
 
 export type AppTypes =
-  typeof CounterName |
-  typeof ImageName |
-  typeof LinkerName |
-  typeof NoteName |
-  typeof SliderName;
+  typeof States.CounterName |
+  typeof States.ImageName |
+  typeof States.LinkerName |
+  typeof States.NoteName |
+  typeof States.SliderName;

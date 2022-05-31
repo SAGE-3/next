@@ -6,10 +6,11 @@
  *
  */
 
-
-import { useAppStore } from "@sage3/frontend";
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { useAppStore } from '@sage3/frontend';
 import { AppSchema } from "../../schema/app";
-import { ImageState } from "../../types";
+
+import { ImageState } from "./";
 import './styles.css';
 
 export function ImageApp(props: AppSchema): JSX.Element {

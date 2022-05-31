@@ -6,9 +6,11 @@
  *
  */
 
-import { useAppStore } from "@sage3/frontend";
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { useAppStore } from '@sage3/frontend';
 import { AppSchema } from "../../schema/app";
-import { LinkerState } from "../../types";
+
+import { LinkerState } from "./";
 import './styles.css';
 
 

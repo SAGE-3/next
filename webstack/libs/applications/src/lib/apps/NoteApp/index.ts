@@ -6,9 +6,10 @@
  *
  */
 
+export * from './NoteApp';
 
-export type ImageState = {
-  url: string;
+export type NoteState = {
+  text: string;
 }
 
-export const ImageName = "Image";
+export const NoteName = "Note";

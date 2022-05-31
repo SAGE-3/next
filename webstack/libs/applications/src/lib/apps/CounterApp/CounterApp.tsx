@@ -6,11 +6,12 @@
  *
  */
 
-import { useAppStore } from "@sage3/frontend";
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { useAppStore } from '@sage3/frontend';
 import { AppSchema } from "../../schema/app";
-import { CounterState } from "../../types";
-import './styles.css';
 
+import { CounterState } from "./index";
+import './styles.css';
 
 export function CounterApp(props: AppSchema): JSX.Element {
 

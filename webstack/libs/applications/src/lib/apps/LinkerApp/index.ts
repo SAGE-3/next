@@ -6,9 +6,13 @@
  *
  */
 
+export * from './LinkerApp';
 
-export type CounterState = {
-  count: number;
+export type LinkerState = {
+  toAppId: string;
+  toAppField: string;
+  fromAppId: string;
+  fromAppField: string;
 }
 
-export const CounterName = "Counter";
+export const LinkerName = "Linker";

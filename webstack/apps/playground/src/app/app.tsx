@@ -1,10 +1,18 @@
-import { Applications, useAppStore } from '@sage3/frontend';
-import React from 'react';
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+import { useAppStore } from '@sage3/frontend';
+import { Applications } from '@sage3/applications';
 
 export function App() {
   const apps = useAppStore((state) => state.apps);
 
-  const createApp = useAppStore((state) => state.createApp);
+  const createApp = useAppStore((state) => state.create);
 
   function handleNoteClick() {
     createApp('Note', 'Note Description', '1', '1', 'Note', { text: 'Hello' });

@@ -6,10 +6,12 @@
  *
  */
 
-import { useAppStore } from "@sage3/frontend";
-import { AppSchema } from "../../schema/app";
-import { NoteState } from "../../types";
 
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { useAppStore } from '@sage3/frontend';
+import { AppSchema } from "../../schema/app";
+
+import { NoteState } from "./";
 import './styles.css';
 
 export function NoteApp(props: AppSchema): JSX.Element {
