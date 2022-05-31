@@ -17,7 +17,6 @@ export type BoardCardProps = {
 }
 
 export function BoardCard(props: BoardCardProps) {
-
   return (
     <Box borderWidth='2px' borderRadius='lg' overflow='hidden' width="250px" height="225px">
 
@@ -31,11 +30,9 @@ export function BoardCard(props: BoardCardProps) {
           fontWeight='semibold'
           as='h4'
           lineHeight='tight'
-          isTruncated
         >
           {props.board.description}
         </Box>
-
 
         <Box display='flex' flexDirection='column' width="200px">
           <Button size="sm" onClick={props.onEnter} colorScheme="teal" mt='2'>Enter</Button>
@@ -44,7 +41,5 @@ export function BoardCard(props: BoardCardProps) {
         </Box>
       </Box>
     </Box>
-  )
-
-
+  );
 }

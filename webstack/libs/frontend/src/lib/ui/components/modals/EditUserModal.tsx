@@ -46,13 +46,12 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   // useEffect(() => {
   //   initialRef.current?.select();
   // }, [initialRef.current]);
-  const setRef = useCallback(node => {
+
+  const setRef = useCallback((_node: HTMLInputElement) => {
     if (initialRef.current) {
       initialRef.current.select();
     }
-  }, [])
-
-
+  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
