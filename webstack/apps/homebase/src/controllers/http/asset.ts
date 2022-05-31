@@ -34,9 +34,10 @@ import { AssetModel } from '../../models';
 export function assetExpressRouter(): express.Router {
   const router = express.Router();
 
+  // Upload files: POST /api/assets/upload
   router.post('/upload', uploadHandler);
 
-  // Access to uploaded files: /api/asset/static/:filename
+  // Access to uploaded files: GET /api/assets/static/:filename
   const assetFolder = config.assets;
   router.use('/static', express.static(assetFolder));
 

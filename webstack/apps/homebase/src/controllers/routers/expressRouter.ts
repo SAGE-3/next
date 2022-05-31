@@ -36,19 +36,17 @@ export function expressAPIRouter(): express.Router {
   router.use(SAGEBase.Auth.authenticate);
 
   // before auth, to test upload
-  router.use('/asset', assetExpressRouter());
-
+  router.use('/assets', assetExpressRouter());
   // router.use('/assets', express.static(path.join(__dirname, 'assets')));
-
   // router.use('/content', AssetRouter());
 
-  router.use('/app', appExpressRouter());
+  router.use('/apps', appExpressRouter());
 
-  router.use('/board', boardExpressRouter());
+  router.use('/boards', boardExpressRouter());
 
-  router.use('/room', roomExpressRouter());
+  router.use('/rooms', roomExpressRouter());
 
-  router.use('/user', userExpressRouter());
+  router.use('/users', userExpressRouter());
 
   return router;
 }
