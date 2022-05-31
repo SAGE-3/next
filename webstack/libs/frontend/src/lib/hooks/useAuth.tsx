@@ -43,18 +43,14 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
       value={
         isFulfilled && !isRejected
           ? {
-            isAuthenticated: true,
-          }
+              isAuthenticated: true,
+            }
           : {
-            isAuthenticated: false,
-          }
+              isAuthenticated: false,
+            }
       }
     >
       {props.children}
     </AuthContext.Provider>
   );
 }
-
-
-
-

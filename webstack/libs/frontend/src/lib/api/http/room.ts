@@ -18,39 +18,38 @@ import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 
 async function create(name: RoomSchema['name'], description: RoomSchema['description']): Promise<RoomSchema[] | undefined> {
   const body = { name, description };
-  const res = await httpPOST('/api/room', body);
+  const res = await httpPOST('/api/rooms', body);
   return res.rooms;
 }
 
 async function read(id: RoomSchema['id']): Promise<RoomSchema[] | undefined> {
   const params = { id };
-  const response = await httpGET('/api/room', params);
+  const response = await httpGET('/api/rooms', params);
   return response.rooms;
 }
 
 async function readAll(): Promise<RoomSchema[] | undefined> {
-  const response = await httpGET('/api/room');
+  const response = await httpGET('/api/rooms');
   return response.rooms;
 }
 
 async function query(query: Partial<RoomSchema>): Promise<RoomSchema[] | undefined> {
   const params = { ...query };
-  const response = await httpGET('/api/room', params);
+  const response = await httpGET('/api/rooms', params);
   return response.rooms;
 }
 
 async function update(id: RoomSchema['id'], update: Partial<RoomSchema>): Promise<boolean> {
   const params = { id } as Partial<RoomSchema>;
-  const response = await httpPUT('/api/room', params, update);
+  const response = await httpPUT('/api/rooms', params, update);
   return response.success;
 }
 
 async function del(id: RoomSchema['id']): Promise<boolean> {
   const params = { id };
-  const response = await httpDELETE('/api/room', params);
+  const response = await httpDELETE('/api/rooms', params);
   return response.success;
 }
-
 
 /**
  * Room HTTP Service.
@@ -62,5 +61,5 @@ export const RoomHTTPService = {
   readAll,
   query,
   update,
-  del
+  del,
 };

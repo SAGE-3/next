@@ -1,10 +1,9 @@
-import { SBDocumentMessage, SBJSON } from "@sage3/sagebase";
-import { genId } from "@sage3/shared";
-import { APIClientWSMessage } from "@sage3/shared/types";
-import { webSocket, WebSocketSubject } from "rxjs/webSocket";
+import { SBDocumentMessage, SBJSON } from '@sage3/sagebase';
+import { genId } from '@sage3/shared';
+import { APIClientWSMessage } from '@sage3/shared/types';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 export class SocketAPI {
-
   private static instance: SocketAPI;
   private socketObserver: apiSocketObserver;
   private subscriptions: Record<string, (message: any) => void>;
@@ -19,7 +18,7 @@ export class SocketAPI {
     if (this.subscriptions[message.subId]) {
       this.subscriptions[message.subId](message.doc);
     } else {
-      console.log("WS Mesage with no Sub> ", message);
+      console.log('WS Mesage with no Sub> ', message);
     }
   }
 
@@ -31,8 +30,8 @@ export class SocketAPI {
       route,
       body: {
         subId,
-        ...body
-      }
+        ...body,
+      },
     } as APIClientWSMessage;
     this.subscriptions[subId] = callback;
     this.socketObserver.send(subMessage);
@@ -43,12 +42,12 @@ export class SocketAPI {
         id: genId(),
         route,
         body: {
-          subId
-        }
+          subId,
+        },
       } as APIClientWSMessage;
-      this.socketObserver.send(unsubMessage)
+      this.socketObserver.send(unsubMessage);
       delete this.subscriptions[id];
-    }
+    };
   }
 
   public static getInstance(): SocketAPI {
@@ -60,20 +59,18 @@ export class SocketAPI {
   }
 }
 
-
 class apiSocketObserver {
   // The singleton instance
   private static instance: apiSocketObserver;
   public observeSocket: WebSocketSubject<unknown>;
 
   private constructor() {
-    console.log("wsObserve> opening socket");
+    console.log('wsObserve> opening socket');
     // Open a socket.
-    const socketType = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
+    const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-    this.observeSocket = webSocket(`${socketType}//${window.location.hostname}:${window.location.port}/api`);
-
-
+    // this.observeSocket = webSocket(`${socketType}//${window.location.hostname}:${window.location.port}/api`);
+    this.observeSocket = webSocket('ws://localhost:3333/api');
   }
 
   public send(message: any): void {

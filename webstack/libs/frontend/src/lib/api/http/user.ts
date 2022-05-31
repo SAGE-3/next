@@ -18,42 +18,40 @@ import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 
 async function create(name: UserSchema['name'], email: UserSchema['email']): Promise<UserSchema[] | undefined> {
   const body = { name, email };
-  const res = await httpPOST('/api/user', body);
+  const res = await httpPOST('/api/users', body);
   return res.users;
 }
 
 async function read(id: UserSchema['id']): Promise<UserSchema[] | undefined> {
   const params = { id };
-  const response = await httpGET('/api/user', params);
+  const response = await httpGET('/api/users', params);
   return response.users;
 }
 
 async function readCurrent(): Promise<UserSchema[] | undefined> {
   const response = await httpGET('/api/user/current');
-  console.log(response)
   return response.users;
 }
 
-
 async function readAll(): Promise<UserSchema[] | undefined> {
-  const response = await httpGET('/api/user');
+  const response = await httpGET('/api/users');
   return response.users;
 }
 
 async function query(query: Partial<UserSchema>): Promise<UserSchema[] | undefined> {
   const params = { ...query };
-  const response = await httpGET('/api/user', params);
+  const response = await httpGET('/api/users', params);
   return response.users;
 }
 
 async function update(id: UserSchema['id'], updates: Partial<UserSchema>): Promise<boolean> {
-  const response = await httpPUT('/api/user', { id }, updates);
+  const response = await httpPUT('/api/users', { id }, updates);
   return response.success;
 }
 
 async function del(id: UserSchema['id']): Promise<boolean> {
   const params = { id };
-  const response = await httpDELETE('/api/user', params);
+  const response = await httpDELETE('/api/users', params);
   return response.success;
 }
 
@@ -68,5 +66,5 @@ export const UserHTTPService = {
   readAll,
   query,
   update,
-  del
+  del,
 };
