@@ -32,11 +32,15 @@ export function expressAPIRouter(): express.Router {
   // Express routing
   const router = express.Router();
 
+  // Authenticate all API Routes
+  router.use(SAGEBase.Auth.authenticate);
+
   // before auth, to test upload
   router.use('/asset', assetExpressRouter());
 
-  // Authenticate all API Routes
-  router.use(SAGEBase.Auth.authenticate);
+  // router.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+  // router.use('/content', AssetRouter());
 
   router.use('/app', appExpressRouter());
 

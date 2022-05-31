@@ -6,7 +6,7 @@
  *
  */
 
-export * from './user-service';
-export * from './board-service';
-export * from './app-service';
-export * from './room-service';
+export * from './user';
+export * from './board';
+export * from './app';
+export * from './room';

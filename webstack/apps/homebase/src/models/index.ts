@@ -8,11 +8,12 @@
 
 import { BoardModel, RoomModel, UserModel, AppModel, AssetModel } from '../models';
 
-export * from './app-model';
-export * from './board-model';
-export * from './room-model';
-export * from './user-model';
-export * from './asset-model';
+
+export * from './app';
+export * from './board';
+export * from './room';
+export * from './user';
+export * from './asset';
 
 /**
  * Load the various models at startup.

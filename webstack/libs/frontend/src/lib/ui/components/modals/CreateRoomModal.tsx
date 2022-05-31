@@ -32,7 +32,7 @@ interface CreateRoomModalProps {
 export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   const toast = useToast();
 
-  const createRoom = useRoomStore(state => state.createRoom);
+  const createRoom = useRoomStore(state => state.create);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
@@ -43,13 +43,11 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-  const setRef = useCallback(node => {
+  const setRef = useCallback((_node: HTMLInputElement) => {
     if (initialRef.current) {
       initialRef.current.select();
     }
   }, [])
-
-
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -77,8 +75,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       }
     }
   };
-
-
 
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>

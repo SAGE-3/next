@@ -27,7 +27,8 @@ import { AppService } from '../../services';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
-import { AppWS } from '@sage3/shared/types';
+import { genId } from '@sage3/shared';
+import { APIClientWSMessage } from '@sage3/shared/types';
 
 /**
  * 
@@ -36,186 +37,45 @@ import { AppWS } from '@sage3/shared/types';
  * @param message 
  * @param cache 
  */
-export async function appWSRouter(socket: WebSocket, request: IncomingMessage, message: AppWS.Message, cache: SubscriptionCache): Promise<void> {
-  const auth = request.session.passport.user;
+export async function appWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
 
-  switch (message.type) {
-
-    case 'post':
-      switch (message.route) {
-        case '/api/app/create': {
-          const m = message as AppWS.CreateRequest;
-          const body = m.body;
-          const app = await AppService.createApp(body.name, body.description, auth.id, body.roomId, body.boardId, body.type, body.state);
-          const response = {
-            ...m,
-            body: {
-              success: (app) ? true : false,
-              app
-            }
-          } as AppWS.CreateResponse;
-          socket.send(response);
-          break;
-        }
-      }
-      break;
-
-    case 'get':
-      switch (message.route) {
-        case '/api/app/read': {
-          const m = message as AppWS.ReadRequest;
-          const body = m.body;
-          const app = await AppService.readApp(body.id);
-          const response = {
-            ...m,
-            body: {
-              success: (app) ? true : false,
-              app
-            }
-          } as AppWS.ReadResponse;
-          socket.send(response);
-          break;
-        }
-        case '/api/app/read/all': {
-          const m = message as AppWS.ReadAllRequest;
-          const apps = await AppService.readAllApps();
-          const response = {
-            ...m,
-            body: {
-              success: (apps) ? true : false,
-              apps
-            }
-          } as AppWS.ReadAllResponse;
-          socket.send(response);
-          break;
-        }
-        case '/api/app/read/roomid': {
-          const m = message as AppWS.ReadByRoomIdRequest;
-          const body = m.body;
-          const apps = await AppService.readByRoomId(body.roomId);
-          const response = {
-            ...m,
-            body: {
-              success: (apps) ? true : false,
-              apps
-            }
-          } as AppWS.ReadByRoomIdResponse;
-          socket.send(response);
-          break;
-        }
-        case '/api/app/read/boardid': {
-          const m = message as AppWS.ReadByBoardIdRequest;
-          const body = m.body;
-          const apps = await AppService.readByBoardId(body.roomId);
-          const response = {
-            ...m,
-            body: {
-              success: (apps) ? true : false,
-              apps
-            }
-          } as AppWS.ReadByBoardIdResponse;
-          socket.send(response);
-          break;
-        }
-      }
-      break;
-
-    case 'del':
-      switch (message.route) {
-        case '/api/app/delete': {
-          const m = message as AppWS.DeleteRequest;
-          const body = m.body;
-          const delReq = await AppService.deleteApp(body.id);
-          const response = {
-            ...m,
-            body: {
-              success: delReq
-            }
-          } as AppWS.DeleteResponse
-          socket.send(response);
-          break;
-        }
-      }
-      break;
-
-    case 'sub': {
-      switch (message.route) {
-        case '/api/app/subscribe': {
-          const m = message as AppWS.AppSub;
-          const body = m.body;
-          const sub = await AppService.subscribeToApp(body.id, (doc) => {
-            const event = {
-              msgId: m.msgId,
-              type: 'event',
-              event: doc
-            } as AppWS.BoardEvent;
-            socket.send(JSON.stringify(event));
-          });
-          if (sub) {
-            cache.add(m.msgId, sub);
-          }
-          break;
-        }
-        case '/api/app/subscribe/all': {
-          const m = message as AppWS.AllAppsSub;
-          const sub = await AppService.subscribetoAllApps((doc) => {
-            const event = {
-              msgId: m.msgId,
-              type: 'event',
-              event: doc
-            } as AppWS.BoardEvent;
-            socket.send(JSON.stringify(event));
-          });
-          if (sub) {
-            cache.add(m.msgId, sub);
-          }
-          break;
-        }
-        case '/api/app/subscribe/roomid': {
-          const m = message as AppWS.ByRoomIdSub;
-          const body = m.body;
-          const sub = await AppService.subscribeByRoomId(body.roomId, (doc) => {
-            const event = {
-              msgId: m.msgId,
-              type: 'event',
-              event: doc
-            } as AppWS.BoardEvent;
-            socket.send(JSON.stringify(event));
-          });
-          if (sub) {
-            cache.add(m.msgId, sub);
-          }
-          break;
-        }
-        case '/api/app/subscribe/boardid': {
-          const m = message as AppWS.ByBoardIdSub;
-          const body = m.body;
-          const sub = await AppService.subscribeByBoardId(body.boardId, (doc) => {
-            const event = {
-              msgId: m.msgId,
-              type: 'event',
-              event: doc
-            } as AppWS.BoardEvent;
-            socket.send(JSON.stringify(event));
-          });
-          if (sub) {
-            cache.add(m.msgId, sub);
-          }
-          break;
-        }
-      }
+  switch (message.route) {
+    case '/api/app/subscribe': {
+      const sub = await AppService.subscribeToAllApps((doc) => {
+        const msg = { id: genId(), subId: message.body.subId, doc }
+        socket.send(JSON.stringify(msg));
+      });
+      if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case 'unsub': {
-      switch (message.route) {
-        case '/api/app/unsubscribe': {
-          const m = message as AppWS.Unsub;
-          const body = m.body;
-          cache.delete(body.subId)
-          break;
-        }
-      }
+    case '/api/app/subscribe/:id': {
+      const sub = await AppService.subscribeToApp(message.body.id, (doc) => {
+        const msg = { id: genId(), subId: message.body.subId, doc }
+        socket.send(JSON.stringify(msg));
+      });
+      if (sub) cache.add(message.body.subId, sub)
       break;
     }
+    case '/api/app/subscribe/:roomId': {
+      const sub = await AppService.subscribeByRoomId(message.body.roomId, (doc) => {
+        const msg = { id: genId(), subId: message.body.subId, doc }
+        socket.send(JSON.stringify(msg));
+      });
+      if (sub) cache.add(message.body.subId, sub)
+      break;
+    }
+    case '/api/app/subscribe/:boardId': {
+      const sub = await AppService.subscribeByRoomId(message.body.boardId, (doc) => {
+        const msg = { id: genId(), subId: message.body.subId, doc }
+        socket.send(JSON.stringify(msg));
+      });
+      if (sub) cache.add(message.body.subId, sub)
+      break;
+    }
+    case '/api/app/unsubscribe': {
+      cache.delete(message.body.subId)
+      break;
+    }
+
   }
 }

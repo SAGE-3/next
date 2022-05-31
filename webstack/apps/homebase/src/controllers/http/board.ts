@@ -24,9 +24,6 @@ import * as express from 'express';
 // App Imports
 import { BoardService } from '../../services';
 
-// Lib Imports
-import { BoardHTTP } from '@sage3/shared/types';
-
 /**
  * Board route/api express middleware.
  * @returns {express.Router} returns the express router object
@@ -34,107 +31,40 @@ import { BoardHTTP } from '@sage3/shared/types';
 export function boardExpressRouter(): express.Router {
   const router = express.Router();
 
-  router.post('/create', async (req, res) => {
-    const auth = req.user;
-    const id = auth.id;
-    const createReq = req.body as BoardHTTP.CreateRequest;
-    const board = await BoardService.createBoard(createReq.name, createReq.description, id, createReq.roomId);
-    const response = {
-      success: (board) ? true : false,
-      board
-    } as BoardHTTP.CreateResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.post('/', async ({ user, body }, res) => {
+    const board = await BoardService.create(body.name, body.description, user.id, body.roomId);
+    if (board) res.status(200).send({ success: true, boards: [board] });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read', async (req, res) => {
-    const readReq = req.query as BoardHTTP.ReadRequest;
-    const board = await BoardService.readBoard(readReq.id);
-    const response = {
-      success: (board) ? true : false,
-      board
-    } as BoardHTTP.ReadResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.get('/', async (req, res) => {
+    const boards = await BoardService.readAll();
+    if (boards) res.status(200).send({ success: true, boards });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read/all', async (req, res) => {
-    const boards = await BoardService.readAllBoards();
-    const response = {
-      success: (boards) ? true : false,
-      boards
-    } as BoardHTTP.ReadAllResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.get('/id/:id', async ({ params }, res) => {
+    const board = await BoardService.read(params.id);
+    if (board) res.status(200).send({ success: true, boards: [board] });
+    else res.status(500).send({ success: false });
   });
 
-  router.get('/read/roomid', async (req, res) => {
-    const readReq = req.query as BoardHTTP.ReadByRoomIdRequest;
-    const boards = await BoardService.readByRoomId(readReq.roomId);
-    const response = {
-      success: (boards) ? true : false,
-      boards
-    } as BoardHTTP.ReadByRoomIdResponse;
-    const status = (response.success) ? 200 : 404;
-    res.status(status).send(response);
+  router.get('/roomId/:roomId', async ({ params }, res) => {
+    const boards = await BoardService.query('roomId', params);
+    if (boards) res.status(200).send({ success: true, boards });
+    else res.status(500).send({ success: false });
   });
 
-  router.post('/update/name', async (req, res) => {
-    const updateReq = req.body as BoardHTTP.UpdateNameRequest;
-    const updateRes = await BoardService.updateName(updateReq.id, updateReq.name);
-    const response = { success: updateRes } as BoardHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
+  router.put('/id/:id', async ({ params, body }, res) => {
+    const update = await BoardService.update(params.id, body);
+    if (update) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false });
   });
 
-  router.post('/update/description', async (req, res) => {
-    const updateReq = req.body as BoardHTTP.UpdateDescriptionRequest;
-    const updateRes = await BoardService.updateDescription(updateReq.id, updateReq.description);
-    const response = { success: updateRes } as BoardHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/color', async (req, res) => {
-    const updateReq = req.body as BoardHTTP.UpdateColorRequest;
-    const updateRes = await BoardService.updateColor(updateReq.id, updateReq.color);
-    const response = { success: updateRes } as BoardHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/ownerid', async (req, res) => {
-    const updateReq = req.body as BoardHTTP.UpdateOwnerIdRequest;
-    const updateRes = await BoardService.updateOwnerId(updateReq.id, updateReq.ownerId);
-    const response = { success: updateRes } as BoardHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/roomid', async (req, res) => {
-    const updateReq = req.body as BoardHTTP.UpdateRoomIdRequest;
-    const updateRes = await BoardService.updateRoomId(updateReq.id, updateReq.roomId);
-    const response = { success: updateRes } as BoardHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.post('/update/isprivate', async (req, res) => {
-    const updateReq = req.body as BoardHTTP.UpdateIsPrivateRequest;
-    const updateRes = await BoardService.updateIsPrivate(updateReq.id, updateReq.isPrivate);
-    const response = { success: updateRes } as BoardHTTP.UpdateResponse;
-    const status = (updateRes) ? 200 : 404;
-    res.status(status).send(response);
-  });
-
-  router.delete('/delete', async (req, res) => {
-    const delReq = req.body as BoardHTTP.DeleteRequest;
-    const delRes = await BoardService.deleteBoard(delReq.id);
-    const response = {
-      success: delRes
-    } as BoardHTTP.DeleteResponse;
-    const status = (delRes) ? 200 : 404;
-    res.status(status).send(response);
+  router.delete('/id/:id', async ({ params }, res) => {
+    const del = await BoardService.delete(params.id);
+    if (del) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false });
   });
 
   return router;

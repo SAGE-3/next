@@ -1,60 +1,52 @@
 import { SBDocumentMessage, SBJSON } from "@sage3/sagebase";
-import { APIWSEvent, APIWSMessage, APIWSRequest } from "@sage3/shared/types";
+import { genId } from "@sage3/shared";
+import { APIClientWSMessage } from "@sage3/shared/types";
 import { webSocket, WebSocketSubject } from "rxjs/webSocket";
-import { v4 } from "uuid";
 
 export class SocketAPI {
+
   private static instance: SocketAPI;
   private socketObserver: apiSocketObserver;
   private subscriptions: Record<string, (message: any) => void>;
 
-  private requestCallbacks: Record<string, Promise<() => void>>;
-
-
   private constructor() {
     this.socketObserver = apiSocketObserver.getInstance();
     this.subscriptions = {};
-    this.requestCallbacks = {};
-    this.socketObserver.observeSocket.subscribe((message: unknown) => this.processServerMessage(message as APIWSMessage | APIWSEvent<SBJSON>));
+    this.socketObserver.observeSocket.subscribe((message: unknown) => this.processServerMessage(message as any));
   }
 
-  private processServerMessage(message: APIWSMessage | APIWSEvent<SBJSON>) {
-    if (message.type === 'event') {
-      this.subscriptions[message.msgId](message.event);
+  private processServerMessage(message: any) {
+    if (this.subscriptions[message.subId]) {
+      this.subscriptions[message.subId](message.doc);
     } else {
-      console.log("WS REPONSE> ", message);
+      console.log("WS Mesage with no Sub> ", message);
     }
   }
 
-  public sendMessage(message: APIWSRequest): void {
-    const id = v4();
-    const request = {
-      ...message,
-      msgId: id
-    } as APIWSMessage;
-    this.socketObserver.send(request);
-  }
-
-  public subscribe<T extends SBJSON>(message: APIWSRequest, callback: (message: SBDocumentMessage<T>) => void): () => void {
-    const id = v4();
-    const request = {
-      ...message,
-      msgId: id
-    } as APIWSMessage;
-    this.subscriptions[id] = callback;
-    this.socketObserver.send(request);
+  public subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): () => void {
+    const id = genId();
+    const subId = genId();
+    const subMessage = {
+      id,
+      route,
+      body: {
+        subId,
+        ...body
+      }
+    } as APIClientWSMessage;
+    this.subscriptions[subId] = callback;
+    this.socketObserver.send(subMessage);
     return () => {
-      const parts = message.route.split('/');
+      const parts = subMessage.route.split('/');
       const route = `/api/${parts[2]}/unsubscribe`;
-      const unsubRequest = {
-        msgId: id,
-        type: 'unsub',
+      const unsubMessage = {
+        id: genId(),
         route,
         body: {
-          subId: id
+          subId
         }
-      } as APIWSMessage;
-      this.socketObserver.send(unsubRequest)
+      } as APIClientWSMessage;
+      this.socketObserver.send(unsubMessage)
       delete this.subscriptions[id];
     }
   }

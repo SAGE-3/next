@@ -13,117 +13,47 @@
  * @version 1.0.0
  */
 
-import { UserHTTP, UserSchema } from '@sage3/shared/types';
-import { httpDELETE, httpGET, httpPOST } from './shared';
+import { UserSchema } from '@sage3/shared/types';
+import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 
-/**
- * 
- * @param name 
- * @param email 
- * @returns 
- */
-async function createUser(name: UserSchema['name'], email: UserSchema['email']): Promise<UserSchema | undefined> {
-  const reqBody = { name, email } as UserHTTP.CreateRequest;
-  const response = await httpPOST<UserHTTP.CreateRequest, UserHTTP.CreateResponse>('/api/user/create', reqBody);
-  return response.user;
+async function create(name: UserSchema['name'], email: UserSchema['email']): Promise<UserSchema[] | undefined> {
+  const body = { name, email };
+  const res = await httpPOST('/api/user', body);
+  return res.users;
 }
 
-/**
- * 
- * @param id 
- * @returns 
- */
-async function readUser(id: UserSchema['id']): Promise<UserSchema | undefined> {
-  const reqQuery = { id } as UserHTTP.ReadRequest;
-  const response = await httpGET<UserHTTP.ReadRequest, UserHTTP.ReadResponse>('/api/user/read', reqQuery);
-  return response.user;
+async function read(id: UserSchema['id']): Promise<UserSchema[] | undefined> {
+  const params = { id };
+  const response = await httpGET('/api/user', params);
+  return response.users;
 }
 
-/**
- * 
- * @param id 
- * @returns 
- */
-async function readCurrentUser(): Promise<UserSchema | undefined> {
-  const reqQuery = {} as UserHTTP.ReadCurrentResponse;
-  const response = await httpGET<UserHTTP.ReadCurrentRequest, UserHTTP.ReadCurrentResponse>('/api/user/read/current', reqQuery);
-  return response.user;
+async function readCurrent(): Promise<UserSchema[] | undefined> {
+  const response = await httpGET('/api/user/current');
+  console.log(response)
+  return response.users;
 }
 
-/**
- * 
- * @param name 
- * @returns 
- */
-async function updateName(name: UserSchema['name']): Promise<boolean> {
-  const reqBody = { name } as UserHTTP.UpdateNameRequest;
-  const response = await httpPOST<UserHTTP.UpdateNameRequest, UserHTTP.UpdateResponse>('/api/user/update/name', reqBody);
+
+async function readAll(): Promise<UserSchema[] | undefined> {
+  const response = await httpGET('/api/user');
+  return response.users;
+}
+
+async function query(query: Partial<UserSchema>): Promise<UserSchema[] | undefined> {
+  const params = { ...query };
+  const response = await httpGET('/api/user', params);
+  return response.users;
+}
+
+async function update(id: UserSchema['id'], updates: Partial<UserSchema>): Promise<boolean> {
+  const response = await httpPUT('/api/user', { id }, updates);
   return response.success;
 }
 
-/**
- * 
- * @param email 
- * @returns 
- */
-async function updateEmail(email: UserSchema['email']): Promise<boolean> {
-  const reqBody = { email } as UserHTTP.UpdateEmailRequest;
-  const response = await httpPOST<UserHTTP.UpdateEmailRequest, UserHTTP.UpdateResponse>('/api/user/update/email', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param color 
- * @returns 
- */
-async function updateColor(color: UserSchema['color']): Promise<boolean> {
-  const reqBody = { color } as UserHTTP.UpdateColorRequest;
-  const response = await httpPOST<UserHTTP.UpdateColorRequest, UserHTTP.UpdateResponse>('/api/user/update/color', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param profilePicture 
- * @returns 
- */
-async function updateProfilePicture(profilePicture: UserSchema['profilePicture']): Promise<boolean> {
-  const reqBody = { profilePicture } as UserHTTP.UpdateProfilePictureRequest;
-  const response = await httpPOST<UserHTTP.UpdateProfilePictureRequest, UserHTTP.UpdateResponse>('/api/user/update/profilepicture', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param userType 
- * @returns 
- */
-async function updateUserType(userType: UserSchema['userType']): Promise<boolean> {
-  const reqBody = { userType } as UserHTTP.UpdateUserTypeRequest;
-  const response = await httpPOST<UserHTTP.UpdateUserTypeRequest, UserHTTP.UpdateResponse>('/api/user/update/usertype', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param userRole 
- * @returns 
- */
-async function updateUserRole(userRole: UserSchema['userRole']): Promise<boolean> {
-  const reqBody = { userRole } as UserHTTP.UpdateUserRoleRequest;
-  const response = await httpPOST<UserHTTP.UpdateUserRoleRequest, UserHTTP.UpdateResponse>('/api/user/update/userrole', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param id 
- * @returns 
- */
-async function deleteUser(id: UserSchema['id']): Promise<boolean> {
-  const reqBody = { id } as UserHTTP.DeleteRequest;
-  const response = await httpDELETE<UserHTTP.DeleteRequest, UserHTTP.DeleteResponse>('/api/user/delete', reqBody);
+async function del(id: UserSchema['id']): Promise<boolean> {
+  const params = { id };
+  const response = await httpDELETE('/api/user', params);
   return response.success;
 }
 
@@ -132,14 +62,11 @@ async function deleteUser(id: UserSchema['id']): Promise<boolean> {
  * Provides POST, GET, DELETE requests to the backend.
  */
 export const UserHTTPService = {
-  createUser,
-  readUser,
-  readCurrentUser,
-  updateName,
-  updateEmail,
-  updateColor,
-  updateProfilePicture,
-  updateUserRole,
-  updateUserType,
-  deleteUser
+  create,
+  read,
+  readCurrent,
+  readAll,
+  query,
+  update,
+  del
 };

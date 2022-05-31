@@ -7,164 +7,66 @@
  */
 
 /**
- * Board HTTP Service
- * @file User Service
+ * App HTTP Service
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
 
-import { AppHTTP, AppSchema, AppStates } from '@sage3/shared/types';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { AppSchema } from '@sage3/applications/schema';
 
-import { httpDELETE, httpGET, httpPOST } from './shared';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { AppStates } from '@sage3/applications/types';
 
-/**
- * 
- * @param name 
- * @param description 
- * @param roomId 
- * @returns 
- */
-async function createApp(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: string, state: AppStates): Promise<AppSchema | undefined> {
-  const reqBody = { name, description, roomId, boardId, type, state } as AppHTTP.CreateRequest;
-  const response = await httpPOST<AppHTTP.CreateRequest, AppHTTP.CreateResponse>('/api/app/create', reqBody);
-  return response.app;
+import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
+
+async function create(name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']): Promise<AppSchema[] | undefined> {
+  const body = { name, description, roomId, boardId, type, state };
+  const res = await httpPOST('/api/app', body);
+  return res.apps;
 }
 
-/**
- * 
- * @param id 
- * @returns 
- */
-async function readApp(id: AppSchema['id']): Promise<AppSchema | undefined> {
-  const reqQuery = { id } as AppHTTP.ReadRequest;
-  const response = await httpGET<AppHTTP.ReadRequest, AppHTTP.ReadResponse>('/api/app/read', reqQuery);
-  return response.app;
-}
-
-/**
- * 
- * @returns 
- */
-async function readAllApps(): Promise<AppSchema[] | undefined> {
-  const reqQuery = {} as AppHTTP.ReadAllRequest;
-  const response = await httpGET<AppHTTP.ReadAllRequest, AppHTTP.ReadAllResponse>('/api/app/read/all', reqQuery);
+async function read(id: AppSchema['id']): Promise<AppSchema[] | undefined> {
+  const params = { id };
+  const response = await httpGET('/api/app', params);
   return response.apps;
 }
 
-/**
- * 
- * @returns 
- */
-async function readByRoomId(roomId: AppSchema['roomId']): Promise<AppSchema[] | undefined> {
-  const reqQuery = { roomId } as AppHTTP.ReadByRoomIdRequest;
-  const response = await httpGET<AppHTTP.ReadByRoomIdRequest, AppHTTP.ReadByRoomIdResponse>('/api/app/read/roomid', reqQuery);
+async function readAll(): Promise<AppSchema[] | undefined> {
+  const response = await httpGET('/api/app');
   return response.apps;
 }
 
-/**
- * 
- * @returns 
- */
-async function readByBoardId(boardId: AppSchema['boardId']): Promise<AppSchema[] | undefined> {
-  const reqQuery = { boardId } as AppHTTP.ReadByBoardIdRequest;
-  const response = await httpGET<AppHTTP.ReadByBoardIdRequest, AppHTTP.ReadByBoardIdResponse>('/api/app/read/boardid', reqQuery);
+async function query(query: Partial<AppSchema>): Promise<AppSchema[] | undefined> {
+  const params = { ...query };
+  const response = await httpGET('/api/app', params);
   return response.apps;
 }
 
-/**
- * 
- * @param name 
- * @returns 
- */
-async function updateName(id: AppSchema['id'], name: AppSchema['name']): Promise<boolean> {
-  const reqBody = { id, name } as AppHTTP.UpdateNameRequest;
-  const response = await httpPOST<AppHTTP.UpdateNameRequest, AppHTTP.UpdateResponse>('/api/app/update/name', reqBody);
+async function update(id: AppSchema['id'], update: Partial<AppSchema>): Promise<boolean> {
+  const params = { id } as Partial<AppSchema>;
+  const response = await httpPUT('/api/app', params, update);
   return response.success;
 }
 
-/**
- * 
- * @param description 
- * @returns 
- */
-async function updateDescription(id: AppSchema['id'], description: AppSchema['description']): Promise<boolean> {
-  const reqBody = { id, description } as AppHTTP.UpdateDescriptionRequest;
-  const response = await httpPOST<AppHTTP.UpdateDescriptionRequest, AppHTTP.UpdateResponse>('/api/app/update/description', reqBody);
-  return response.success;
-}
-
-
-/**
- * 
- * @param ownerId 
- * @returns 
- */
-async function updateOwnerId(id: AppSchema['id'], ownerId: AppSchema['ownerId']): Promise<boolean> {
-  const reqBody = { id, ownerId } as AppHTTP.UpdateOwnerIdRequest;
-  const response = await httpPOST<AppHTTP.UpdateOwnerIdRequest, AppHTTP.UpdateResponse>('/api/app/update/ownerid', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param roomId 
- * @returns 
- */
-async function updateRoomId(id: AppSchema['id'], roomId: AppSchema['roomId']): Promise<boolean> {
-  const reqBody = { id, roomId } as AppHTTP.UpdateRoomIdRequest;
-  const response = await httpPOST<AppHTTP.UpdateRoomIdRequest, AppHTTP.UpdateResponse>('/api/app/update/roomid', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param boardId 
- * @returns 
- */
-async function updateBoardId(id: AppSchema['id'], boardId: AppSchema['boardId']): Promise<boolean> {
-  const reqBody = { id, boardId } as AppHTTP.UpdateBoardIdRequest;
-  const response = await httpPOST<AppHTTP.UpdateBoardIdRequest, AppHTTP.UpdateResponse>('/api/app/update/boardid', reqBody);
-  return response.success;
-}
-
-/**
- * 
- * @param boardId 
- * @returns 
- */
 async function updateState(id: AppSchema['id'], state: Partial<AppStates>): Promise<boolean> {
-  const reqBody = { id, state } as AppHTTP.UpdateState;
-  const response = await httpPOST<AppHTTP.UpdateState, AppHTTP.UpdateResponse>('/api/app/update/state', reqBody);
+  const body = { id } as Partial<AppSchema>;
+  const response = await httpPUT('/api/app/state', state, body);
   return response.success;
 }
 
-
-/**
- * 
- * @param id 
- * @returns 
- */
-async function deleteApp(id: AppSchema['id']): Promise<boolean> {
-  const reqBody = { id } as AppHTTP.DeleteRequest;
-  const response = await httpDELETE<AppHTTP.DeleteRequest, AppHTTP.DeleteResponse>('/api/app/delete', reqBody);
+async function del(id: AppSchema['id']): Promise<boolean> {
+  const params = { id };
+  const response = await httpDELETE('/api/app', params);
   return response.success;
 }
 
-/**
- * App HTTP Service.
- * Provides POST, GET, DELETE requests to the backend.
- */
 export const AppHTTPService = {
-  createApp,
-  readApp,
-  readAllApps,
-  readByRoomId,
-  readByBoardId,
-  updateName,
-  updateDescription,
-  updateOwnerId,
-  updateRoomId,
-  updateBoardId,
+  create,
+  read,
+  readAll,
+  query,
+  update,
   updateState,
-  deleteApp
+  del
 };

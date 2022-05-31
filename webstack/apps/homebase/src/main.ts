@@ -37,7 +37,7 @@ import { expressAPIRouter, wsAPIRouter } from './controllers';
 import { loadModels } from './models';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
-import { APIWSMessage, serverConfiguration } from '@sage3/shared/types';
+import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -101,7 +101,7 @@ async function startServer() {
     const subCache = new SubscriptionCache();
 
     socket.on('message', (msg) => {
-      const message = JSON.parse(msg.toString()) as APIWSMessage;
+      const message = JSON.parse(msg.toString()) as APIClientWSMessage;
       wsAPIRouter(socket, request, message, subCache);
     });
 

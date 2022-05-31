@@ -6,8 +6,7 @@
  *
  */
 
-export * from './app-schema';
-export * from './user-schema';
-export * from './board-schema';
-export * from './room-schema';
-export * from './asset-schema';
+export * from './user';
+export * from './board';
+export * from './room';
+export * from './asset';
