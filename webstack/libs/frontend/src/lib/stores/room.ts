@@ -58,9 +58,10 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // Socket Subscribe Message
       const route = '/api/room/subscribe';
       const body = {}
-
+      console.log('whatwhatwhat')
       // Socket Listenting to updates from server about the current user
       roomSub = socket.subscribe<RoomSchema>(route, body, (message) => {
+        console.log(message)
         switch (message.type) {
           case 'CREATE': {
             set({ rooms: [...get().rooms, message.doc.data] })
@@ -88,6 +89,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
     }
   }
 })
+
 
 // Convert the Zustand JS store to Zustand React Store
 export const useRoomStore = createReact(RoomStore);

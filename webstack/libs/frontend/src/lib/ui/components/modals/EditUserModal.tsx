@@ -26,6 +26,7 @@ import { useUserStore } from '../../../stores';
 
 interface EditUserModalProps {
   isOpen: boolean;
+  onOpen: () => void;
   onClose: () => void;
 }
 

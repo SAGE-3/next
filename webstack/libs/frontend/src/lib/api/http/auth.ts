@@ -84,8 +84,7 @@ async function verifyAuth(): Promise<{ success: boolean, authentication: boolean
     },
   });
   if (!res.ok) return { success: false, authentication: false };
-  const json = await res.json()
-  return json;
+  return res.json();
 }
 
 export const AuthHTTPService = {

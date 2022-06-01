@@ -17,7 +17,6 @@ import {
   InputGroup,
   InputLeftElement,
   Input,
-  useToast,
   Button,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
@@ -26,11 +25,11 @@ import { useUserStore } from '../../../stores';
 
 interface CreateUserModalProps {
   isOpen: boolean;
+  onOpen: () => void;
   onClose: () => void;
 }
 
 export function CreateUserModal(props: CreateUserModalProps): JSX.Element {
-  const toast = useToast();
 
   const createUser = useUserStore(state => state.create);
 
@@ -57,27 +56,16 @@ export function CreateUserModal(props: CreateUserModalProps): JSX.Element {
     }
   };
 
-  const createAccount = () => {
+  function createAccount() {
     if (name && email) {
-      // remove leading and trailing space, and limit name length to 20
-      const cleanedName = name.trim().substring(0, 19);
-
-      if (cleanedName.split(' ').join('').length === 0) {
-        toast({
-          title: 'Name must have at least one character',
-          status: 'error',
-          duration: 2 * 1000,
-          isClosable: true,
-        });
-      } else {
-        createUser(cleanedName, email);
-        props.onClose();
-      }
+      createUser(name, email);
+      props.onClose();
     }
-  };
+  }
+
 
   return (
-    <Modal isCentered isOpen={props.isOpen} closeOnEsc={false} closeOnOverlayClick={false} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} closeOnEsc={false} closeOnOverlayClick={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Create User Account</ModalHeader>

@@ -19,6 +19,9 @@ export function HomePage() {
   const rooms = useRoomStore((state) => state.rooms);
   const deleteRoom = useRoomStore((state) => state.delete);
   const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
+  useEffect(() => {
+    subToAllRooms()
+  }, [])
 
   const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
@@ -27,16 +30,6 @@ export function HomePage() {
   const [newRoomModal, setNewRoomModal] = useState(false);
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<RoomSchema | null>(null);
-
-  useEffect(() => {
-    async function subRooms() {
-      await subToAllRooms()
-    }
-    if (rooms.length === 0) {
-      subRooms();
-    }
-
-  }, []);
 
   return (
     <div>

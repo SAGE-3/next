@@ -13,8 +13,7 @@
  * @version 1.0.0
  */
 
-import React, { createContext, useContext } from 'react';
-import { useAsync } from 'react-async';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import { AuthHTTPService } from '../api';
 
@@ -29,23 +28,20 @@ const AuthContext = createContext({
 export function useAuth() {
   return useContext(AuthContext);
 }
-const authPromise = AuthHTTPService.verifyAuth();
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const { data } = useAsync({
-    promise: authPromise,
-  });
+  const [auth, setAuth] = useState<{ isAuthenticated: boolean }>({ isAuthenticated: false })
+
+  useEffect(() => {
+    async function fetchAuth() {
+      const auth = await AuthHTTPService.verifyAuth();
+      setAuth({ isAuthenticated: auth.authentication })
+    }
+    fetchAuth()
+  }, [])
   return (
     <AuthContext.Provider
-      value={
-        data && data.authentication
-          ? {
-            isAuthenticated: true,
-          }
-          : {
-            isAuthenticated: false,
-          }
-      }
+      value={auth}
     >
       {props.children}
     </AuthContext.Provider>

@@ -35,7 +35,8 @@ const UserStore = createVanilla<UserState>((set, get) => {
   return {
     user: undefined,
     create: async (name: UserSchema['name'], email: UserSchema['email']) => {
-      UserHTTPService.create(name, email);
+      await UserHTTPService.create(name, email);
+      get().subscribeToUser()
     },
     update: async (updates: Partial<UserSchema>) => {
       const user = get().user;
@@ -43,10 +44,11 @@ const UserStore = createVanilla<UserState>((set, get) => {
       UserHTTPService.update(user.id, updates);
     },
     subscribeToUser: async () => {
-      const currUser = await UserHTTPService.readCurrent();
-
-      if (!currUser) return;
-      set({ user: currUser[0] })
+      const response = await UserHTTPService.readCurrent();
+      let currUser = undefined;
+      if (response) currUser = response[0]
+      set({ user: currUser })
+      if (currUser === undefined) return;
       if (userSub) {
         userSub();
         userSub = null;
@@ -54,7 +56,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
 
       // Socket Subscribe Message
       const route = '/api/user/subscribe/:id';
-      const body = { id: currUser[0].id }
+      const body = { id: currUser.id }
 
       // Socket Listenting to updates from server about the current user
       userSub = socket.subscribe<UserSchema>(route, body, (message) => {
@@ -75,6 +77,8 @@ const UserStore = createVanilla<UserState>((set, get) => {
     }
   }
 })
+
+UserStore.getState().subscribeToUser();
 
 // Convert the Zustand JS store to Zustand React Store
 export const useUserStore = createReact(UserStore);
