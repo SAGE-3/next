@@ -6,7 +6,8 @@
  *
  */
 
-import axios from 'axios';
+// import axios from 'axios';
+import { httpGET } from './http';
 
 // limited response from server to the configuration request, for security reasons
 export type serverConfiguration = {
@@ -25,17 +26,15 @@ export type serverConfiguration = {
  * @returns {string}
  */
 export async function GetServerName(): Promise<string | null> {
-  return axios.get('/api/configuration').then((value) => {
-    const config = value.data as serverConfiguration;
-    return config.serverName || null;
-  });
+  const value = await httpGET('/api/configuration');
+  const config = value.data as serverConfiguration;
+  return config.serverName || null;
 }
 
 export async function GetPort(): Promise<number | null> {
-  return axios.get('/api/configuration').then((value) => {
-    const config = value.data as serverConfiguration;
-    return config.port || null;
-  });
+  const value = await httpGET('/api/configuration');
+  const config = value.data as serverConfiguration;
+  return config.port || null;
 }
 
 /**
@@ -43,8 +42,7 @@ export async function GetPort(): Promise<number | null> {
  * @returns serverConfiguration
  */
 export async function GetConfiguration(): Promise<serverConfiguration> {
-  return axios.get('/api/configuration').then((value) => {
-    const config = value.data as serverConfiguration;
-    return config;
-  });
+  const value = await httpGET('/api/configuration');
+  const config = value.data as serverConfiguration;
+  return config;
 }

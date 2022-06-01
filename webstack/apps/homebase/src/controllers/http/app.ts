@@ -71,7 +71,7 @@ export function appExpressRouter(): express.Router {
   // Custom routes
 
   // xxx
-  router.put('/state/id/:id', async ({ params, body }, res) => {
+  router.put('/state/:id', async ({ params, body }, res) => {
     const update = await AppService.updateState(params.id, body);
     if (update) res.status(200).send({ success: true });
     else res.status(500).send({ success: false });
