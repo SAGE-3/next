@@ -15,6 +15,7 @@
 
 import { niceCollection } from './nice-collection';
 import { AssetType } from '@sage3/shared/types';
+import { SBDocument } from '@sage3/sagebase';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../processors';
@@ -86,6 +87,16 @@ class SAGE3AssetModel {
         });
       }
     });
+  }
+
+  public async getAsset(id: string): Promise<SBDocument<AssetType> | undefined> {
+    return this.assetCollection.getItem(id);
+  }
+  public async delAsset(id: string): Promise<boolean> {
+    return this.assetCollection.deleteItem(id);
+  }
+  public getAllAssets(): Promise<SBDocument<AssetType>[]> {
+    return this.assetCollection.getAllItems();
   }
 
   /**

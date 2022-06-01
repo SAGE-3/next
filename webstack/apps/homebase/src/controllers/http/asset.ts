@@ -37,6 +37,29 @@ export function assetExpressRouter(): express.Router {
   // Upload files: POST /api/assets/upload
   router.post('/upload', uploadHandler);
 
+  // CRUD routes
+
+  // Get all the assets: GET /api/assets
+  router.get('/', async (req, res) => {
+    const data = await AssetModel.getAllAssets();
+    if (data) res.status(200).send({ success: true, data });
+    else res.status(500).send({ success: false });
+  });
+
+  // Get one asset: GET /api/assets/:id
+  router.get('/:id', async ({ params }, res) => {
+    const data = await AssetModel.getAsset(params.id);
+    if (data) res.status(200).send({ success: true, data });
+    else res.status(500).send({ success: false });
+  });
+
+  // Delete one asset: DEL /api/assets/:id
+  router.delete('/:id', async ({ params }, res) => {
+    const data = await AssetModel.delAsset(params.id);
+    if (data) res.status(200).send({ success: true, data });
+    else res.status(500).send({ success: false });
+  });
+
   // Access to uploaded files: GET /api/assets/static/:filename
   const assetFolder = config.assets;
   router.use('/static', express.static(assetFolder));
