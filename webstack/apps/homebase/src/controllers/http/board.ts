@@ -36,21 +36,21 @@ export function boardExpressRouter(): express.Router {
   // Create a new board: POST /api/boards
   router.post('/', async ({ user, body }, res) => {
     const board = await BoardService.create(body.name, body.description, user.id, body.roomId);
-    if (board) res.status(200).send({ success: true, boards: [board] });
+    if (board) res.status(200).send({ success: true, data: board });
     else res.status(500).send({ success: false });
   });
 
   // Get all the boards: GET /api/boards
   router.get('/', async (req, res) => {
     const boards = await BoardService.readAll();
-    if (boards) res.status(200).send({ success: true, boards });
+    if (boards) res.status(200).send({ success: true, data: boards });
     else res.status(500).send({ success: false });
   });
 
   // Get one board: GET /api/boards/:id
   router.get('/:id', async ({ params }, res) => {
     const board = await BoardService.read(params.id);
-    if (board) res.status(200).send({ success: true, boards: [board] });
+    if (board) res.status(200).send({ success: true, data: board });
     else res.status(500).send({ success: false });
   });
 
@@ -73,7 +73,7 @@ export function boardExpressRouter(): express.Router {
   // xxx
   router.get('/roomId/:roomId', async ({ params }, res) => {
     const boards = await BoardService.query('roomId', params);
-    if (boards) res.status(200).send({ success: true, boards });
+    if (boards) res.status(200).send({ success: true, data: boards });
     else res.status(500).send({ success: false });
   });
 

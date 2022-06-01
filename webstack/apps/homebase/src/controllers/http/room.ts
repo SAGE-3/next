@@ -36,21 +36,21 @@ export function roomExpressRouter(): express.Router {
   // Create a new room: POST /api/rooms
   router.post('/', async ({ user, body }, res) => {
     const room = await RoomService.create(body.name, body.description, user.id);
-    if (room) res.status(200).send({ success: true, rooms: [room] });
+    if (room) res.status(200).send({ success: true, data: room });
     else res.status(500).send({ success: false });
   });
 
   // Get all the rooms: GET /api/rooms
   router.get('/', async (req, res) => {
     const rooms = await RoomService.readAll();
-    if (rooms) res.status(200).send({ success: true, rooms });
+    if (rooms) res.status(200).send({ success: true, data: rooms });
     else res.status(500).send({ success: false });
   });
 
   // Get one room: GET /api/rooms/:id
   router.get('/:id', async ({ params }, res) => {
     const room = await RoomService.read(params.id);
-    if (room) res.status(200).send({ success: true, rooms: [room] });
+    if (room) res.status(200).send({ success: true, data: room });
     else res.status(500).send({ success: false });
   });
 

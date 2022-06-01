@@ -38,21 +38,21 @@ export function userExpressRouter(): express.Router {
   router.post('/', async ({ user, body }, res) => {
     const role = user.provider === 'guest' ? ('guest' as UserRole) : ('user' as UserRole);
     const u = await UserService.create(user.id, body.name, body.email, role);
-    if (u) res.status(200).send({ success: true, users: [u] });
+    if (u) res.status(200).send({ success: true, data: u });
     else res.status(500).send({ success: false });
   });
 
   // Get all the users: GET /api/users
   router.get('/', async (req, res) => {
     const users = await UserService.readAll();
-    if (users) res.status(200).send({ success: true, users });
+    if (users) res.status(200).send({ success: true, data: users });
     else res.status(500).send({ success: false });
   });
 
   // Get one user: GET /api/users/:id
   router.get('/:id', async ({ params }, res) => {
     const user = await UserService.read(params.id);
-    if (user) res.status(200).send({ success: true, users: [user] });
+    if (user) res.status(200).send({ success: true, data: user });
     else res.status(500).send({ success: false });
   });
 
@@ -75,7 +75,7 @@ export function userExpressRouter(): express.Router {
   // xxx
   router.get('/current', async ({ user }, res) => {
     const u = await UserService.read(user.id);
-    if (u) res.status(200).send({ success: true, users: [u] });
+    if (u) res.status(200).send({ success: true, data: u });
     else res.status(500).send({ success: false });
   });
 

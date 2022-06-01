@@ -6,23 +6,25 @@
  *
  */
 
-// External Imports 
-import { IncomingMessage } from "http";
+// External Imports
+import { IncomingMessage } from 'http';
 import { WebSocket } from 'ws';
 
 // App Imports
-import { boardWSRouter, roomWSRouter, userWSRouter, appWSRouter } from "../ws";
+import { boardWSRouter, roomWSRouter, userWSRouter, appWSRouter } from '../ws';
 
 // Lib Imports
-import { SubscriptionCache } from "@sage3/backend";
-import { APIClientWSMessage } from "@sage3/shared/types";
+import { SubscriptionCache } from '@sage3/backend';
+import { APIClientWSMessage } from '@sage3/shared/types';
 
 const wsRoutes = {
   '/app': appWSRouter,
   '/user': userWSRouter,
   '/room': roomWSRouter,
-  '/board': boardWSRouter
-} as { [key: string]: (socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void> }
+  '/board': boardWSRouter,
+} as {
+  [key: string]: (socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void>;
+};
 
 export function wsAPIRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): void {
   const route = '/' + message.route.split('/')[2];

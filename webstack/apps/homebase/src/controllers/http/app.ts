@@ -36,21 +36,21 @@ export function appExpressRouter(): express.Router {
   // Create a new app: POST /api/apps
   router.post('/', async ({ user, body }, res) => {
     const app = await AppService.create(body.name, body.description, user.id, body.roomId, body.boardId, body.type, body.state);
-    if (app) res.status(200).send({ success: true, apps: [app] });
+    if (app) res.status(200).send({ success: true, data: app });
     else res.status(500).send({ success: false });
   });
 
   // Get all the apps: GET /api/apps
   router.get('/', async (req, res) => {
     const apps = await AppService.readAll();
-    if (apps) res.status(200).send({ success: true, apps });
+    if (apps) res.status(200).send({ success: true, data: apps });
     else res.status(500).send({ success: false });
   });
 
   // Get one app: GET /api/apps/:id
   router.get('/:id', async ({ params }, res) => {
     const app = await AppService.read(params.id);
-    if (app) res.status(200).send({ success: true, apps: [app] });
+    if (app) res.status(200).send({ success: true, data: app });
     else res.status(500).send({ success: false });
   });
 
@@ -80,14 +80,14 @@ export function appExpressRouter(): express.Router {
   // xxx
   router.get('/roomId/:roomId', async ({ params }, res) => {
     const apps = await AppService.query('roomId', params);
-    if (apps) res.status(200).send({ success: true, apps });
+    if (apps) res.status(200).send({ success: true, data: apps });
     else res.status(500).send({ success: false });
   });
 
   // xxx
   router.get('/boarId/:boardId', async ({ params }, res) => {
     const apps = await AppService.query('boardId', params);
-    if (apps) res.status(200).send({ success: true, apps });
+    if (apps) res.status(200).send({ success: true, data: apps });
     else res.status(500).send({ success: false });
   });
 
