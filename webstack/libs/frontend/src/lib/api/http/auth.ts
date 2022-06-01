@@ -13,7 +13,6 @@
  * @version 1.0.0
  */
 
-
 /**
  * Endpoint to login with Google OAuth
  */
@@ -35,10 +34,10 @@ function loginWithGuest() {
     },
     body: JSON.stringify({ username: 'guest-username', password: 'guest-pass' }),
   }).then((response) => {
-    if (response.status == 200) {
+    if (response.status === 200) {
       window.location.reload();
     }
-  })
+  });
 }
 
 /**
