@@ -8,12 +8,12 @@
 
 /**
  * The BoardService for SAGE3
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -21,21 +21,19 @@
 import { BoardModel } from '../models';
 import { BoardSchema } from '@sage3/shared/types';
 import { SBDocumentMessage } from '@sage3/sagebase';
-import { randomSAGEColor, genId } from '@sage3/shared'
-
+import { randomSAGEColor, genId } from '@sage3/shared';
 
 /**
  * The SAGE3 BoardService that interfaces with the BoardModel
  */
 class SAGE3BoardService {
-
   /**
    * Check if a board exists in the database
    * @returns {boolean} true if the user exists in the database, false otherwise.
    */
   public async boardCheck(id: string): Promise<boolean> {
     const board = await BoardModel.readBoard(id);
-    const reponse = (board) ? true : false;
+    const reponse = board ? true : false;
     return reponse;
   }
 
@@ -55,12 +53,12 @@ class SAGE3BoardService {
       color: randomSAGEColor().name,
       roomId,
       ownerId: ownerId,
-      isPrivate: false
+      isPrivate: false,
     } as BoardSchema;
 
     try {
       const doc = await BoardModel.createBoard(id, newBoard);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('BoardService createBoard error> ', error);
       return undefined;
@@ -75,13 +73,12 @@ class SAGE3BoardService {
   public async read(id: string): Promise<BoardSchema | undefined> {
     try {
       const doc = await BoardModel.readBoard(id);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('BoardService readBoard error: ', error);
       return undefined;
     }
   }
-
 
   /**
    * Read all boards.
@@ -90,8 +87,8 @@ class SAGE3BoardService {
   public async readAll(): Promise<BoardSchema[] | undefined> {
     try {
       const docArray = await BoardModel.readAllBoards();
-      const docs = docArray.map(doc => doc.data) as BoardSchema[];
-      return (docs) ? docs : undefined;
+      const docs = docArray.map((doc) => doc.data) as BoardSchema[];
+      return docs ? docs : undefined;
     } catch (error) {
       console.log('BoardService readAllBoards error: ', error);
       return undefined;
@@ -99,21 +96,20 @@ class SAGE3BoardService {
   }
 
   /**
-* Query the Boards.
-* @return {BoardSchema[] | undefined} Returns an array of apps if the query was sucessful.
-*/
+   * Query the Boards.
+   * @return {BoardSchema[] | undefined} Returns an array of apps if the query was sucessful.
+   */
   public async query(field: keyof BoardSchema, query: Partial<BoardSchema>): Promise<BoardSchema[] | undefined> {
     try {
       const docArray = await BoardModel.queryBoards(field, query);
       if (docArray === undefined) return undefined;
-      const boards = docArray.map(doc => doc.data) as BoardSchema[];
+      const boards = docArray.map((doc) => doc.data) as BoardSchema[];
       return boards;
     } catch (error) {
       console.log('AppService query error: ', error);
       return undefined;
     }
   }
-
 
   /**
    * Update the board's name.
@@ -132,10 +128,10 @@ class SAGE3BoardService {
   }
 
   /**
- * Delete a board in the database.
- * @param {string} id The id of the board.
- * @returns {boolean} Returns true if delete was successful
- */
+   * Delete a board in the database.
+   * @param {string} id The id of the board.
+   * @returns {boolean} Returns true if delete was successful
+   */
   public async delete(id: string): Promise<boolean> {
     try {
       const success = await BoardModel.deleteBoard(id);
@@ -147,11 +143,14 @@ class SAGE3BoardService {
   }
 
   /**
-  * Subscribe to a board in the database.
-  * @param {string} id The id of the board
-  * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
-  */
-  public async subscribeToBoard(id: string, callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to a board in the database.
+   * @param {string} id The id of the board
+   * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
+   */
+  public async subscribeToBoard(
+    id: string,
+    callback: (message: SBDocumentMessage<BoardSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await BoardModel.subscribeToBoard(id, callback);
       return subscription;
@@ -162,10 +161,12 @@ class SAGE3BoardService {
   }
 
   /**
-  * Subscribe to all boards in the database.
-  * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
-  */
-  public async subscribetoAllBoards(callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to all boards in the database.
+   * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
+   */
+  public async subscribetoAllBoards(
+    callback: (message: SBDocumentMessage<BoardSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await BoardModel.subscribeToBoards(callback);
       return subscription;
@@ -176,10 +177,13 @@ class SAGE3BoardService {
   }
 
   /**
-* Subscribe to all boards if a specific room.
-* @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
-*/
-  public async subscribeByRoomId(roomId: string, callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to all boards if a specific room.
+   * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
+   */
+  public async subscribeByRoomId(
+    roomId: string,
+    callback: (message: SBDocumentMessage<BoardSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await BoardModel.subscribeByRoomId(roomId, callback);
       return subscription;
@@ -188,8 +192,6 @@ class SAGE3BoardService {
       return undefined;
     }
   }
-
 }
-
 
 export const BoardService = new SAGE3BoardService();
