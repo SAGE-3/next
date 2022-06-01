@@ -18,8 +18,9 @@ import { genId } from '@sage3/shared';
 // The observable websocket and HTTP
 import { AppHTTPService } from "../api";
 import { SocketAPI } from "../utils";
-import { AppSchema } from "@sage3/applications/schema";
-import { AppStates } from "@sage3/applications/types";
+
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { AppStates, AppSchema } from "@sage3/applications/types";
 
 interface AppState {
   apps: AppSchema[];

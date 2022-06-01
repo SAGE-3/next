@@ -6,10 +6,8 @@
  *
  */
 
-export * from './NoteApp';
-
-export type NoteState = {
-  text: string;
+export type CounterState = {
+  count: number,
 }
 
-export const NoteName = "Note";
+export const CounterName = "Counter";

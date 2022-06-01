@@ -9,12 +9,12 @@
 
 // eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../../schema/app";
+import { AppSchema } from "../types";
 
 import { NoteState } from "./";
 import './styles.css';
 
-export function NoteApp(props: AppSchema): JSX.Element {
+function NoteApp(props: AppSchema): JSX.Element {
 
   const s = props.state as NoteState;
 
@@ -32,9 +32,11 @@ export function NoteApp(props: AppSchema): JSX.Element {
   return (
     <div className="Note-Container">
       <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
-      <textarea id="story" name="story" onChange={handleTextChange}>
+      <textarea value={s.text} onChange={handleTextChange}>
         {s.text}
       </textarea>
     </div>
   )
 }
+
+export default NoteApp;

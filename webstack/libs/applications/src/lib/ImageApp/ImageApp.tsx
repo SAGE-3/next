@@ -8,24 +8,20 @@
 
 // eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../../schema/app";
+import { AppSchema } from "../types";
 
-import { CounterState } from "./index";
+import { ImageState } from "./";
 import './styles.css';
 
-export function CounterApp(props: AppSchema): JSX.Element {
+function ImageApp(props: AppSchema): JSX.Element {
 
-  const s = props.state as CounterState;
+  const s = props.state as ImageState;
 
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);
 
-  function handleAddClick() {
-    updateState(props.id, { count: s.count + 1 })
-  }
-
-  function handleSubClick() {
-    updateState(props.id, { count: s.count - 1 })
+  function handleTextChange(ev: React.ChangeEvent<HTMLInputElement>) {
+    updateState(props.id, { url: ev.target.value })
   }
 
   function handleClose() {
@@ -33,11 +29,14 @@ export function CounterApp(props: AppSchema): JSX.Element {
   }
 
   return (
-    <div className="Counter-Container">
+    <div className="Image-Container">
       <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
-      <p>{s.count}</p>
-      <button onClick={handleAddClick}>Add</button>
-      <button onClick={handleSubClick}>Sub</button>
+      <p>URL:</p>
+      <input type="text" onChange={handleTextChange} />
+      <hr />
+      <img src={s.url} width="200px" alt={"ImageApp"}></img>
     </div>
   )
 }
+
+export default ImageApp;

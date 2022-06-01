@@ -32,16 +32,13 @@ export function useAuth() {
 const authPromise = AuthHTTPService.verifyAuth();
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const { isFulfilled, isRejected, isPending } = useAsync({
+  const { data } = useAsync({
     promise: authPromise,
-    initialValue: null,
-    suspense: true,
   });
-
   return (
     <AuthContext.Provider
       value={
-        isFulfilled && !isRejected
+        data && data.authentication
           ? {
             isAuthenticated: true,
           }

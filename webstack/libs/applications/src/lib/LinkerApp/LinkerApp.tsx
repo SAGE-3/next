@@ -8,13 +8,13 @@
 
 // eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../../schema/app";
+import { AppSchema } from "../types";
 
 import { LinkerState } from "./";
 import './styles.css';
 
 
-export function LinkerApp(props: AppSchema): JSX.Element {
+function LinkerApp(props: AppSchema): JSX.Element {
 
   const s = props.state as LinkerState;
 
@@ -36,3 +36,5 @@ export function LinkerApp(props: AppSchema): JSX.Element {
     </div>
   )
 }
+
+export default LinkerApp;

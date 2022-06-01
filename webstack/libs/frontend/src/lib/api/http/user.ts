@@ -30,7 +30,6 @@ async function read(id: UserSchema['id']): Promise<UserSchema[] | undefined> {
 
 async function readCurrent(): Promise<UserSchema[] | undefined> {
   const response = await httpGET('/api/user/current');
-  console.log(response)
   return response.users;
 }
 

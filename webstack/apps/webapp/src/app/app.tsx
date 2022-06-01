@@ -11,22 +11,24 @@ import { AuthProvider, useAuth } from '@sage3/frontend';
 export function App() {
   return (
     <ChakraProvider theme={theme}>
-      <Suspense fallback={<div>An issue has occured.</div>}>
-        <AuthProvider>
+      <AuthProvider>
+        <Suspense fallback={<div>An issue has occured.</div>}>
+
           <Routes>
             <Route path="/" element={<LoginPage />} />
-
+            <Route path="/login" element={<LoginPage />} />
             <Route
               path="/home"
               element={
-                <PrivateRoute>
+                <ProtectedRoute>
                   <HomePage />
-                </PrivateRoute>
+                </ProtectedRoute>
               }
             />
           </Routes>
-        </AuthProvider>
-      </Suspense>
+        </Suspense>
+      </AuthProvider>
+
     </ChakraProvider>
   );
 }
@@ -38,7 +40,8 @@ export default App;
  * @param props RouteProps
  * @returns JSX.React.ReactNode
  */
-export const PrivateRoute = (props: RouteProps): JSX.Element => {
+export const ProtectedRoute = (props: RouteProps): JSX.Element => {
   const user = useAuth();
-  return user.isAuthenticated ? <> {props.children}</> : <Navigate to="/" />;
+  console.log(user)
+  return user.isAuthenticated ? <> {props.children}</> : <Navigate to="/" replace />;
 };

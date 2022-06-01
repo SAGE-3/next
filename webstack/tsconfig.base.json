@@ -21,9 +21,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@sage3/applications": ["libs/applications/src/lib/apps"],
-      "@sage3/applications/schema": ["libs/applications/src/lib/schema"],
-      "@sage3/applications/types": ["libs/applications/src/lib/types"],
+      "@sage3/applications/apps": ["libs/applications/src/lib/apps.ts"],
+      "@sage3/applications/types": ["libs/applications/src/lib/types.ts"],
       "@sage3/backend": ["libs/backend/src/index.ts"],
       "@sage3/frontend": ["libs/frontend/src/index.ts"],
       "@sage3/sagebase": ["libs/sagebase/src/index.ts"],

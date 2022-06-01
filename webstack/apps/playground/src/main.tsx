@@ -6,6 +6,8 @@
  *
  */
 
+import { ChakraProvider } from '@chakra-ui/react';
+import { theme } from '@sage3/frontend';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -19,7 +21,9 @@ if (container) {
   root.render(
     <StrictMode>
       <BrowserRouter>
-        <App />
+        <ChakraProvider theme={theme}>
+          <App />
+        </ChakraProvider>
       </BrowserRouter>
     </StrictMode>);
 }

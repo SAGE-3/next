@@ -7,7 +7,8 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Applications } from '@sage3/applications';
+import { Applications } from '@sage3/applications/apps';
+import { Button } from '@chakra-ui/react';
 
 export function App() {
   const apps = useAppStore((state) => state.apps);
@@ -39,11 +40,11 @@ export function App() {
   return (
     <div>
       <h1>SAGE3 Application Playground</h1>
-      <button onClick={handleNoteClick}>Note App</button>
-      <button onClick={handleCounterClick}>Counter App</button>
-      <button onClick={handleImageClick}>Image App</button>
-      <button onClick={handleSliderClick}>Slider App</button>
-      <button onClick={handleLinkerClick}>Linker App</button>
+      <Button onClick={handleNoteClick}>Note App</Button>
+      <Button onClick={handleCounterClick}>Counter App</Button>
+      <Button onClick={handleImageClick}>Image App</Button>
+      <Button onClick={handleSliderClick}>Slider App</Button>
+      <Button onClick={handleLinkerClick}>Linker App</Button>
       <hr />
       {apps.map((app) => {
         const Component = Applications[app.type];

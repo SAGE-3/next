@@ -8,21 +8,25 @@
 
 // eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../../schema/app";
+import { Button } from '@chakra-ui/react';
+import { AppSchema } from "../types";
 
-import { SliderState } from "./";
+import { CounterState } from "./index";
 import './styles.css';
 
+function CounterApp(props: AppSchema): JSX.Element {
 
-export function SliderApp(props: AppSchema): JSX.Element {
-
-  const s = props.state as SliderState;
+  const s = props.state as CounterState;
 
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);
 
-  function handleSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
-    updateState(props.id, { value: Number(event.target.value) })
+  function handleAddClick() {
+    updateState(props.id, { count: s.count + 1 })
+  }
+
+  function handleSubClick() {
+    updateState(props.id, { count: s.count - 1 })
   }
 
   function handleClose() {
@@ -30,10 +34,12 @@ export function SliderApp(props: AppSchema): JSX.Element {
   }
 
   return (
-    <div className="Slider-Container">
+    <div className="Counter-Container">
       <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
-      <h3>{s.value}</h3>
-      <input type="range" min="1" max="100" value={s.value} onChange={handleSliderChange} />
+      <Button onClick={handleAddClick} colorScheme="green">Add</Button>
+      <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
     </div>
   )
 }
+
+export default CounterApp;

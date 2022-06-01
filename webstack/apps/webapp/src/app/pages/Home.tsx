@@ -1,17 +1,12 @@
 // import create from "zustand";
 
-import { Box, Button, Divider, Tag, TagCloseButton, TagLabel, VStack } from '@chakra-ui/react';
+import { Box, Button, Divider } from '@chakra-ui/react';
 import {
-  AuthHTTPService,
-  CreateUserModal,
-  useUserStore,
-  EditUserModal,
+
   CreateRoomModal,
   useRoomStore,
   useBoardStore,
   CreateBoardModal,
-  useAppStore,
-  useAuth,
   BoardCard,
   RoomCard,
 } from '@sage3/frontend';
@@ -41,12 +36,11 @@ export function HomePage() {
       subRooms();
     }
 
-  }, [subToAllRooms, rooms]);
+  }, []);
 
   return (
     <div>
       <Header title="HomePage"></Header>
-
 
       <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
 

@@ -9,7 +9,7 @@ import { theme } from '@sage3/frontend';
 
 const container = document.getElementById('root');
 if (container) {
-  const root = createRoot(container); // createRoot(container!) if you use TypeScript
+  const root = createRoot(container);
   root.render(
     <StrictMode>
       <HashRouter>

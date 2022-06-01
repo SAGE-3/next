@@ -6,13 +6,8 @@
  *
  */
 
-export * from './LinkerApp';
-
-export type LinkerState = {
-  toAppId: string;
-  toAppField: string;
-  fromAppId: string;
-  fromAppField: string;
+export type ImageState = {
+  url: string;
 }
 
-export const LinkerName = "Linker";
+export const ImageName = "Image";

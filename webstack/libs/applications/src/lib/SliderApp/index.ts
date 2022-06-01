@@ -6,8 +6,6 @@
  *
  */
 
-export * from './SliderApp';
-
 export type SliderState = {
   value: number;
 }

@@ -46,7 +46,6 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       RoomHTTPService.del(id);
     },
     subscribeToAllRooms: async () => {
-      console.log('what')
       const rooms = await RoomHTTPService.readAll();
       if (rooms) {
         set({ rooms })
@@ -62,7 +61,6 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
 
       // Socket Listenting to updates from server about the current user
       roomSub = socket.subscribe<RoomSchema>(route, body, (message) => {
-        console.log('arh', message)
         switch (message.type) {
           case 'CREATE': {
             set({ rooms: [...get().rooms, message.doc.data] })
