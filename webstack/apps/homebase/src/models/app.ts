@@ -8,12 +8,12 @@
 
 /**
  * The Board database model.
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -27,7 +27,7 @@ import { AppStates } from '@sage3/applications/types';
  */
 class SAGE3AppModel {
   private appCollection!: SBCollectionRef<AppSchema>;
-  private collectionName = "APPS";
+  private collectionName = 'APPS';
 
   /**
    * Contructor initializing the BoardModel.
@@ -37,7 +37,7 @@ class SAGE3AppModel {
       name: '',
       ownerId: '',
       roomId: '',
-      boardId: ''
+      boardId: '',
     } as AppSchema;
     this.appCollection = await SAGEBase.Database.collection<AppSchema>(this.collectionName, indexObj);
   }
@@ -78,27 +78,26 @@ class SAGE3AppModel {
     }
   }
 
-
   /**
-  * Returns all apps for this SAGE3 server.
-  * @returns {Array<SBDocument<AppSchema>>} AppSchema array of all boards
-  */
+   * Returns all apps for this SAGE3 server.
+   * @returns {Array<SBDocument<AppSchema>>} AppSchema array of all boards
+   */
   public async readAllApps(): Promise<SBDocument<AppSchema>[]> {
     try {
       const users = await this.appCollection.getAllDocs();
       return users;
     } catch (error) {
-      console.log('AppModel readAllApps error> ')
+      console.log('AppModel readAllApps error> ');
       return [];
     }
   }
 
   /**
- * Query Apps
- * @param {string} field Field to query on AppSchema
- * @param {string | number} query The Query
-  * @returns {Array<SBDocument<AppSchema>>} AppSchema array of all apps
- */
+   * Query Apps
+   * @param {string} field Field to query on AppSchema
+   * @param {string | number} query The Query
+   * @returns {Array<SBDocument<AppSchema>>} AppSchema array of all apps
+   */
   public async queryApps(field: keyof AppSchema, query: Partial<AppSchema>): Promise<SBDocument<AppSchema>[] | undefined> {
     try {
       const q = query[field];
@@ -110,7 +109,6 @@ class SAGE3AppModel {
       return undefined;
     }
   }
-
 
   /**
    * Update the app doc in the database.
@@ -129,17 +127,17 @@ class SAGE3AppModel {
   }
 
   /**
- * Update the app doc in the database.
- * @param {string} id The app's unique id.
- * @param {Partial<AppStates>} update The update values for the state.
- * @return {Promise<boolean>} Returns true if update was succesful.
- */
+   * Update the app doc in the database.
+   * @param {string} id The app's unique id.
+   * @param {Partial<AppStates>} update The update values for the state.
+   * @return {Promise<boolean>} Returns true if update was succesful.
+   */
   public async updateState(id: string, update: Partial<AppStates>): Promise<boolean> {
     try {
       const currentState = await this.appCollection.docRef(id).read();
       if (!currentState) return false;
-      const updatedState = { ...currentState.data.state, ...update }
-      const response = await this.appCollection.docRef(id).update({ 'state': updatedState });
+      const updatedState = { ...currentState.data.state, ...update };
+      const response = await this.appCollection.docRef(id).update({ state: updatedState });
       return response.success;
     } catch (error) {
       console.log('BoardModel updateBoard error: ', error);
@@ -162,7 +160,6 @@ class SAGE3AppModel {
     }
   }
 
-
   /**
  * Subscribe to a specific app
  * @param {string} id the id of the app
@@ -170,66 +167,72 @@ class SAGE3AppModel {
  * @return {() => void | undefined} The unsubscribe function.
  
  */
-  public async subscribeToApp(id: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeToApp(
+    id: string,
+    callback: (message: SBDocumentMessage<AppSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const board = this.appCollection.docRef(id);
       const unsubscribe = await board.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('AppModel subscribeToBoard error>', error)
+      console.log('AppModel subscribeToBoard error>', error);
       return undefined;
     }
   }
 
   /**
- * Subscribe to the Apps Collection
- * @param {() = void} callback The callback function for subscription events.
- * @return {() => void | undefined} The unsubscribe function.
- */
+   * Subscribe to the Apps Collection
+   * @param {() = void} callback The callback function for subscription events.
+   * @return {() => void | undefined} The unsubscribe function.
+   */
   public async subscribeToApps(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.appCollection.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('AppModel subscribeToApps error>', error)
+      console.log('AppModel subscribeToApps error>', error);
       return undefined;
     }
   }
 
   /**
- * Subscribe to a room's apps
- * @param {string} id the id of the room
- * @param {() = void} callback The callback function for subscription events.
- * @return {() => void | undefined} The unsubscribe function.
- */
-  public async subscribeByRoomId(id: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to a room's apps
+   * @param {string} id the id of the room
+   * @param {() = void} callback The callback function for subscription events.
+   * @return {() => void | undefined} The unsubscribe function.
+   */
+  public async subscribeByRoomId(
+    id: string,
+    callback: (message: SBDocumentMessage<AppSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = this.appCollection.subscribeToQuery('roomId', id, callback);
       return unsubscribe;
     } catch (error) {
-      console.log('AppModel subscribeByRoomId error>', error)
+      console.log('AppModel subscribeByRoomId error>', error);
       return undefined;
     }
   }
 
   /**
-* Subscribe to a board's apps
-* @param {string} id the id of the board
-* @param {() = void} callback The callback function for subscription events.
-* @return {() => void | undefined} The unsubscribe function.
-*/
-  public async subscribeByBoardId(id: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to a board's apps
+   * @param {string} id the id of the board
+   * @param {() = void} callback The callback function for subscription events.
+   * @return {() => void | undefined} The unsubscribe function.
+   */
+  public async subscribeByBoardId(
+    id: string,
+    callback: (message: SBDocumentMessage<AppSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = this.appCollection.subscribeToQuery('boardId', id, callback);
       return unsubscribe;
     } catch (error) {
-      console.log('AppModel subscribeByBoardId error>', error)
+      console.log('AppModel subscribeByBoardId error>', error);
       return undefined;
     }
   }
-
 }
 
 export const AppModel = new SAGE3AppModel();
-
-

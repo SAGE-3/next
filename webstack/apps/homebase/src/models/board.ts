@@ -8,12 +8,12 @@
 
 /**
  * The Board database model.
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -26,7 +26,7 @@ import { BoardSchema } from '@sage3/shared/types';
  */
 class SAGE3BoardModel {
   private boardCollection!: SBCollectionRef<BoardSchema>;
-  private collectionName = "BOARDS";
+  private collectionName = 'BOARDS';
 
   /**
    * Contructor initializing the BoardModel.
@@ -35,7 +35,7 @@ class SAGE3BoardModel {
     const indexObj = {
       name: '',
       ownerId: '',
-      roomId: ''
+      roomId: '',
     } as BoardSchema;
     this.boardCollection = await SAGEBase.Database.collection<BoardSchema>(this.collectionName, indexObj);
   }
@@ -76,27 +76,25 @@ class SAGE3BoardModel {
     }
   }
 
-
   /**
-  * Returns all boards for this SAGE3 server.
-  * @returns {Array<SBDocument<BoardSchema>>} BoardSchema array of all boards
-  */
+   * Returns all boards for this SAGE3 server.
+   * @returns {Array<SBDocument<BoardSchema>>} BoardSchema array of all boards
+   */
   public async readAllBoards(): Promise<SBDocument<BoardSchema>[]> {
     try {
       const users = await this.boardCollection.getAllDocs();
       return users;
     } catch (error) {
-      console.log('BoardModel readAllBoards error> ')
+      console.log('BoardModel readAllBoards error> ');
       return [];
     }
   }
 
-
   /**
- * Query boards
- * @param {string} id The roomId.
-  * @returns {Array<SBDocument<BoardSchema>>} BoardSchema array of all boards
- */
+   * Query boards
+   * @param {string} id The roomId.
+   * @returns {Array<SBDocument<BoardSchema>>} BoardSchema array of all boards
+   */
   public async queryBoards(field: keyof BoardSchema, query: Partial<BoardSchema>): Promise<SBDocument<BoardSchema>[] | undefined> {
     try {
       const q = query[field];
@@ -108,7 +106,6 @@ class SAGE3BoardModel {
       return undefined;
     }
   }
-
 
   /**
    * Update the board doc in the database.
@@ -142,16 +139,16 @@ class SAGE3BoardModel {
   }
 
   /**
- * Subscribe to the Board Collection
- * @param {() = void} callback The callback function for subscription events.
- * @return {() => void | undefined} The unsubscribe function.
- */
+   * Subscribe to the Board Collection
+   * @param {() = void} callback The callback function for subscription events.
+   * @return {() => void | undefined} The unsubscribe function.
+   */
   public async subscribeToBoards(callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.boardCollection.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('BoardModel subscribeToBoards error>', error)
+      console.log('BoardModel subscribeToBoards error>', error);
       return undefined;
     }
   }
@@ -163,35 +160,38 @@ class SAGE3BoardModel {
    * @return {() => void | undefined} The unsubscribe function.
  
    */
-  public async subscribeToBoard(id: string, callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeToBoard(
+    id: string,
+    callback: (message: SBDocumentMessage<BoardSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const board = this.boardCollection.docRef(id);
       const unsubscribe = await board.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('BoardModel subscribeToBoard error>', error)
+      console.log('BoardModel subscribeToBoard error>', error);
       return undefined;
     }
   }
 
   /**
- * Subscribe to a room's board's
- * @param {string} id the id of the room
- * @param {() = void} callback The callback function for subscription events.
- * @return {() => void | undefined} The unsubscribe function.
- */
-  public async subscribeByRoomId(id: string, callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to a room's board's
+   * @param {string} id the id of the room
+   * @param {() = void} callback The callback function for subscription events.
+   * @return {() => void | undefined} The unsubscribe function.
+   */
+  public async subscribeByRoomId(
+    id: string,
+    callback: (message: SBDocumentMessage<BoardSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = this.boardCollection.subscribeToQuery('roomId', id, callback);
       return unsubscribe;
     } catch (error) {
-      console.log('BoardModel subscribeToRoomBoards error>', error)
+      console.log('BoardModel subscribeToRoomBoards error>', error);
       return undefined;
     }
   }
-
 }
 
 export const BoardModel = new SAGE3BoardModel();
-
-
