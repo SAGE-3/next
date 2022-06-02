@@ -8,12 +8,12 @@
 
 /**
  * The User database model.
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -26,7 +26,7 @@ import { UserSchema } from '@sage3/shared/types';
  */
 class SAGE3UserModel {
   private userCollection!: SBCollectionRef<UserSchema>;
-  private collectionName = "USERS";
+  private collectionName = 'USERS';
 
   /**
    * Contructor initializing the UserModel.
@@ -34,7 +34,7 @@ class SAGE3UserModel {
   public async initialize(): Promise<void> {
     const indexObj = {
       name: '',
-      email: ''
+      email: '',
     } as UserSchema;
     this.userCollection = await SAGEBase.Database.collection<UserSchema>(this.collectionName, indexObj);
   }
@@ -75,15 +75,15 @@ class SAGE3UserModel {
   }
 
   /**
-  * Returns all users for this SAGE3 server.
-  * @returns {Array<UserSchema>} UserSchema array of all users
-  */
+   * Returns all users for this SAGE3 server.
+   * @returns {Array<UserSchema>} UserSchema array of all users
+   */
   public async readAllUsers(): Promise<SBDocument<UserSchema>[]> {
     try {
       const users = await this.userCollection.getAllDocs();
       return users;
     } catch (error) {
-      console.log('UserModel readAllUsers error>')
+      console.log('UserModel readAllUsers error>');
       return [];
     }
   }
@@ -129,7 +129,7 @@ class SAGE3UserModel {
       const unsubscribe = await this.userCollection.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('UserModel subscribeToUsers error>', error)
+      console.log('UserModel subscribeToUsers error>', error);
       return undefined;
     }
   }
@@ -140,13 +140,16 @@ class SAGE3UserModel {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeToUser(id: string, callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeToUser(
+    id: string,
+    callback: (message: SBDocumentMessage<UserSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const user = this.userCollection.docRef(id);
       const unsubscribe = await user.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('UserModel subscribeToUser error>', error)
+      console.log('UserModel subscribeToUser error>', error);
       return undefined;
     }
   }

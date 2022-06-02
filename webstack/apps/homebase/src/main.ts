@@ -99,7 +99,7 @@ async function startServer() {
   apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
-
+    console.log('apiWebSocketServer> connection');
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
       wsAPIRouter(socket, request, message, subCache);
@@ -124,14 +124,13 @@ async function startServer() {
     if (!pathname) return;
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
-
     SAGEBase.Auth.sessionParser(request, {}, () => {
-      if (!request.session.passport?.user) {
-        // console.log('not authorized');
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-        socket.destroy();
-        return;
-      }
+      // if (!request.session.passport?.user) {
+      //   // console.log('not authorized');
+      //   socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      //   socket.destroy();
+      //   return;
+      // }
       if (wsPath === 'api') {
         apiWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
           apiWebSocketServer.emit('connection', ws, request);

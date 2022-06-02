@@ -48,13 +48,13 @@ export class niceCollection<T extends SBJSON> {
     return undefined;
   }
 
+  async subQuery(prop: string, value: string, callback: callbackFunc): returnCallback {
+    return await this.db.subscribeToQuery(prop, value, callback);
+  }
+
   async getAllItems(): Promise<SBDocument<T>[]> {
     // Get all items
     return this.db.getAllDocs();
-  }
-
-  async subQuery(prop: string, value: string, callback: callbackFunc): returnCallback {
-    return await this.db.subscribeToQuery(prop, value, callback);
   }
 
   async getItem(id: string): Promise<SBDocument<T> | undefined> {

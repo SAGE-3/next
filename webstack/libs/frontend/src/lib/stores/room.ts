@@ -7,17 +7,17 @@
  */
 
 // The JS version of Zustand
-import createVanilla from "zustand/vanilla";
+import createVanilla from 'zustand/vanilla';
 
 // The React Version of Zustand
-import createReact from "zustand";
+import createReact from 'zustand';
 
 // Application specific schema
 import { RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
-import { RoomHTTPService } from "../api";
-import { SocketAPI } from "../utils";
+import { RoomHTTPService } from '../api';
+import { SocketAPI } from '../utils';
 
 interface RoomState {
   rooms: RoomSchema[];
@@ -48,7 +48,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
     subscribeToAllRooms: async () => {
       const rooms = await RoomHTTPService.readAll();
       if (rooms) {
-        set({ rooms })
+        set({ rooms });
       }
       if (roomSub) {
         roomSub();
@@ -58,37 +58,36 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // Socket Subscribe Message
       const route = '/api/room/subscribe';
       const body = {}
-      console.log('whatwhatwhat')
       // Socket Listenting to updates from server about the current user
       roomSub = socket.subscribe<RoomSchema>(route, body, (message) => {
         console.log(message)
         switch (message.type) {
           case 'CREATE': {
-            set({ rooms: [...get().rooms, message.doc.data] })
+            set({ rooms: [...get().rooms, message.doc.data] });
             break;
           }
           case 'UPDATE': {
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex(el => el.id === message.doc.data.id);
+            const idx = rooms.findIndex((el) => el.id === message.doc.data.id);
             if (idx > -1) {
               rooms[idx] = message.doc.data;
             }
-            set({ rooms: rooms })
+            set({ rooms: rooms });
             break;
           }
           case 'DELETE': {
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex(el => el.id === message.doc.data.id);
+            const idx = rooms.findIndex((el) => el.id === message.doc.data.id);
             if (idx > -1) {
               rooms.splice(idx, 1);
             }
-            set({ rooms: rooms })
+            set({ rooms: rooms });
           }
         }
       });
-    }
-  }
-})
+    },
+  };
+});
 
 
 // Convert the Zustand JS store to Zustand React Store

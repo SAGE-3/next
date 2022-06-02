@@ -4,7 +4,6 @@ import { APIClientWSMessage } from "@sage3/shared/types";
 
 
 export class SocketAPI {
-
   private static instance: SocketAPI;
   private socket: WebSocket;
   private subscriptions: Record<string, (message: any) => void>;
@@ -27,7 +26,7 @@ export class SocketAPI {
     if (this.subscriptions[msg.subId]) {
       this.subscriptions[msg.subId](msg.doc);
     } else {
-      console.log("WS Mesage with no Sub> ", message);
+      console.log('WS Mesage with no Sub> ', message);
     }
   }
 
@@ -45,8 +44,8 @@ export class SocketAPI {
       route,
       body: {
         subId,
-        ...body
-      }
+        ...body,
+      },
     } as APIClientWSMessage;
     this.subscriptions[subId] = callback;
     this.sendMessage(JSON.stringify(subMessage));
@@ -57,12 +56,12 @@ export class SocketAPI {
         id: genId(),
         route,
         body: {
-          subId
-        }
+          subId,
+        },
       } as APIClientWSMessage;
       this.sendMessage(JSON.stringify(unsubMessage));
       delete this.subscriptions[id];
-    }
+    };
   }
 
   public static getInstance(): SocketAPI {

@@ -8,12 +8,12 @@
 
 /**
  * The AppService for SAGE3
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -27,7 +27,6 @@ import { AppSchema, AppStates, AppTypes } from '@sage3/applications/types';
  * The SAGE3 AppService that interfaces with the AppModel
  */
 class SAGE3AppService {
-
   /**
    * Create a new app in the database.
    * @param {string} name The name of the app.
@@ -38,7 +37,15 @@ class SAGE3AppService {
    * @param {string} type the type of app
    * @returns {AppSchema | undefined} Returns the AppSchema or undefined if unsuccessful
    */
-  public async create(name: string, description: string, ownerId: string, roomId: string, boardId: string, type: AppTypes, state: AppStates): Promise<AppSchema | undefined> {
+  public async create(
+    name: string,
+    description: string,
+    ownerId: string,
+    roomId: string,
+    boardId: string,
+    type: AppTypes,
+    state: AppStates
+  ): Promise<AppSchema | undefined> {
     const id = genId();
     const newApp = {
       id: id,
@@ -48,11 +55,11 @@ class SAGE3AppService {
       ownerId,
       boardId,
       type,
-      state
+      state,
     } as AppSchema;
     try {
       const doc = await AppModel.createApp(id, newApp);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('AppService create error> ', error);
       return undefined;
@@ -67,13 +74,12 @@ class SAGE3AppService {
   public async read(id: string): Promise<AppSchema | undefined> {
     try {
       const doc = await AppModel.readApp(id);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('AppService read error: ', error);
       return undefined;
     }
   }
-
 
   /**
    * Read all apps.
@@ -82,8 +88,8 @@ class SAGE3AppService {
   public async readAll(): Promise<AppSchema[] | undefined> {
     try {
       const docArray = await AppModel.readAllApps();
-      const docs = docArray.map(doc => doc.data) as AppSchema[];
-      return (docs) ? docs : undefined;
+      const docs = docArray.map((doc) => doc.data) as AppSchema[];
+      return docs ? docs : undefined;
     } catch (error) {
       console.log('AppService readAll error: ', error);
       return undefined;
@@ -91,14 +97,14 @@ class SAGE3AppService {
   }
 
   /**
- * Query the apps.
- * @return {AppSchema[] | undefined} Returns an array of apps if the query was sucessful.
- */
+   * Query the apps.
+   * @return {AppSchema[] | undefined} Returns an array of apps if the query was sucessful.
+   */
   public async query(field: keyof AppSchema, query: Partial<AppSchema>): Promise<AppSchema[] | undefined> {
     try {
       const docArray = await AppModel.queryApps(field, query);
       if (docArray === undefined) return undefined;
-      const boards = docArray.map(doc => doc.data) as AppSchema[];
+      const boards = docArray.map((doc) => doc.data) as AppSchema[];
       return boards;
     } catch (error) {
       console.log('AppService query error: ', error);
@@ -106,13 +112,12 @@ class SAGE3AppService {
     }
   }
 
-
   /**
- * Update the app's name.
- * @param {string} id The app's unique id.
- * @param {string} name The new name.
- * @return {Promise<boolean>} Returns true if update was successful.
- */
+   * Update the app's name.
+   * @param {string} id The app's unique id.
+   * @param {string} name The new name.
+   * @return {Promise<boolean>} Returns true if update was successful.
+   */
   public async update(id: string, updates: Partial<AppSchema>): Promise<boolean> {
     try {
       const success = await AppModel.updateApp(id, updates);
@@ -124,11 +129,11 @@ class SAGE3AppService {
   }
 
   /**
-* Update the app's boardId. This is transferring ownership to a new board.
-* @param {string} id The app's unique id.
-* @param {string} roomId The id of the new room.
-* @return {Promise<boolean>} Returns true if action was succesful.
-*/
+   * Update the app's boardId. This is transferring ownership to a new board.
+   * @param {string} id The app's unique id.
+   * @param {string} roomId The id of the new room.
+   * @return {Promise<boolean>} Returns true if action was succesful.
+   */
   public async updateState(id: string, state: Partial<AppStates>): Promise<boolean> {
     try {
       const success = await AppModel.updateState(id, state);
@@ -140,10 +145,10 @@ class SAGE3AppService {
   }
 
   /**
- * Delete a app in the database.
- * @param {string} id The id of the app.
- * @returns {boolean} Returns true if delete was successful
- */
+   * Delete a app in the database.
+   * @param {string} id The id of the app.
+   * @returns {boolean} Returns true if delete was successful
+   */
   public async delete(id: string): Promise<boolean> {
     try {
       const success = await AppModel.deleteApp(id);
@@ -155,11 +160,14 @@ class SAGE3AppService {
   }
 
   /**
-  * Subscribe to a app in the database.
-  * @param {string} id The id of the app
-  * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
-  */
-  public async subscribeToApp(id: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to a app in the database.
+   * @param {string} id The id of the app
+   * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
+   */
+  public async subscribeToApp(
+    id: string,
+    callback: (message: SBDocumentMessage<AppSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await AppModel.subscribeToApp(id, callback);
       return subscription;
@@ -170,9 +178,9 @@ class SAGE3AppService {
   }
 
   /**
-  * Subscribe to all apps in the database.
-  * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
-  */
+   * Subscribe to all apps in the database.
+   * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
+   */
   public async subscribeToAllApps(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await AppModel.subscribeToApps(callback);
@@ -184,10 +192,13 @@ class SAGE3AppService {
   }
 
   /**
-* Subscribe to all apps in a specific room.
-* @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
-*/
-  public async subscribeByRoomId(roomId: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to all apps in a specific room.
+   * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
+   */
+  public async subscribeByRoomId(
+    roomId: string,
+    callback: (message: SBDocumentMessage<AppSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await AppModel.subscribeByRoomId(roomId, callback);
       return subscription;
@@ -198,10 +209,13 @@ class SAGE3AppService {
   }
 
   /**
-* Subscribe to all apps in a specific board.
-* @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
-*/
-  public async subscribeByBoardId(roomId: string, callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to all apps in a specific board.
+   * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
+   */
+  public async subscribeByBoardId(
+    roomId: string,
+    callback: (message: SBDocumentMessage<AppSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await AppModel.subscribeByBoardId(roomId, callback);
       return subscription;
@@ -210,8 +224,6 @@ class SAGE3AppService {
       return undefined;
     }
   }
-
 }
-
 
 export const AppService = new SAGE3AppService();

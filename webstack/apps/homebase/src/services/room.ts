@@ -8,12 +8,12 @@
 
 /**
  * The RoomService for SAGE3
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -26,14 +26,13 @@ import { genId, randomSAGEColor } from '@sage3/shared';
  * The SAGE3 RoomService that interfaces with the UserModel
  */
 class SAGE3RoomService {
-
   /**
    * Check if a room exists in the database
    * @returns {boolean} true if the user exists in the database, false otherwise.
    */
   public async roomCheck(id: string): Promise<boolean> {
     const room = await RoomModel.readRoom(id);
-    const reponse = (room) ? true : false;
+    const reponse = room ? true : false;
     return reponse;
   }
 
@@ -52,12 +51,12 @@ class SAGE3RoomService {
       description,
       color: randomSAGEColor().name,
       ownerId: ownerId,
-      isPrivate: false
+      isPrivate: false,
     } as RoomSchema;
 
     try {
       const doc = await RoomModel.createRoom(id, newRoom);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('RoomService createRoom error: ', error);
       return undefined;
@@ -72,13 +71,12 @@ class SAGE3RoomService {
   public async read(id: string): Promise<RoomSchema | undefined> {
     try {
       const doc = await RoomModel.readRoom(id);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('RoomService readUser error: ', error);
       return undefined;
     }
   }
-
 
   /**
    * Read all rooms.
@@ -87,8 +85,8 @@ class SAGE3RoomService {
   public async readAll(): Promise<RoomSchema[] | undefined> {
     try {
       const docArray = await RoomModel.readAllRooms();
-      const docs = docArray.map(doc => doc.data) as RoomSchema[];
-      return (docs) ? docs : undefined;
+      const docs = docArray.map((doc) => doc.data) as RoomSchema[];
+      return docs ? docs : undefined;
     } catch (error) {
       console.log('RoomService readAllRooms error: ', error);
       return undefined;
@@ -112,10 +110,10 @@ class SAGE3RoomService {
   }
 
   /**
- * Delete a room in the database.
- * @param {string} id The id of the room.
- * @returns {boolean} Returns true if delete was successful
- */
+   * Delete a room in the database.
+   * @param {string} id The id of the room.
+   * @returns {boolean} Returns true if delete was successful
+   */
   public async delete(id: string): Promise<boolean> {
     try {
       const success = await RoomModel.deleteRoom(id);
@@ -127,11 +125,14 @@ class SAGE3RoomService {
   }
 
   /**
-  * Subscribe to a room in the database.
-  * @param {string} id The id of the user
-  * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
-  */
-  public async subscribeToRoom(id: string, callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to a room in the database.
+   * @param {string} id The id of the user
+   * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
+   */
+  public async subscribeToRoom(
+    id: string,
+    callback: (message: SBDocumentMessage<RoomSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await RoomModel.subscribeToRoom(id, callback);
       return subscription;
@@ -142,9 +143,9 @@ class SAGE3RoomService {
   }
 
   /**
-  * Subscribe to all rooms in the database.
-  * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
-  */
+   * Subscribe to all rooms in the database.
+   * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
+   */
   public async subscribeToAllRooms(callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await RoomModel.subscribeToRooms(callback);
@@ -154,8 +155,6 @@ class SAGE3RoomService {
       return undefined;
     }
   }
-
 }
-
 
 export const RoomService = new SAGE3RoomService();

@@ -41,13 +41,21 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
   }, [])
   return (
     <AuthContext.Provider
+<<<<<<< HEAD
       value={auth}
+=======
+      value={
+        isFulfilled && !isRejected
+          ? {
+              isAuthenticated: true,
+            }
+          : {
+              isAuthenticated: false,
+            }
+      }
+>>>>>>> dev-server
     >
       {props.children}
     </AuthContext.Provider>
   );
 }
-
-
-
-

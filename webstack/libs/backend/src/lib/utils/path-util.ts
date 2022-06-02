@@ -25,7 +25,7 @@ import * as fs from 'fs';
  * @returns {string}
  */
 export function getStaticAssetUrl(filename: string): string {
-  return `api/assets/${filename}`;
+  return `api/assets/static/${filename}`;
 }
 
 /**

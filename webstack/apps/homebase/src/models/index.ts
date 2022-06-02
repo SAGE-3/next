@@ -8,7 +8,6 @@
 
 import { BoardModel, RoomModel, UserModel, AppModel, AssetModel } from '../models';
 
-
 export * from './app';
 export * from './board';
 export * from './room';

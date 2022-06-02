@@ -16,40 +16,47 @@
 import { BoardSchema } from '@sage3/shared/types';
 import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 
-
-async function create(name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']): Promise<BoardSchema[] | undefined> {
+// CRUD operations
+async function create(
+  name: BoardSchema['name'],
+  description: BoardSchema['description'],
+  roomId: BoardSchema['roomId']
+): Promise<BoardSchema[] | undefined> {
   const body = { name, description, roomId };
   const res = await httpPOST('/api/board', body);
-  return res.boards;
+  return res.data;
 }
 
 async function read(id: BoardSchema['id']): Promise<BoardSchema[] | undefined> {
-  const params = { id };
-  const response = await httpGET('/api/board', params);
-  return response.boards;
+  const response = await httpGET('/api/boards/' + id);
+  return response.data;
 }
 
 async function readAll(): Promise<BoardSchema[] | undefined> {
-  const response = await httpGET('/api/board');
-  return response.boards;
-}
-
-async function query(query: Partial<BoardSchema>): Promise<BoardSchema[] | undefined> {
-  const params = { ...query };
-  const response = await httpGET('/api/board', params);
-  return response.boards;
+  const response = await httpGET('/api/boards');
+  return response.data;
 }
 
 async function update(id: BoardSchema['id'], update: Partial<BoardSchema>): Promise<boolean> {
-  const params = { id } as Partial<BoardSchema>;
-  const response = await httpPUT('/api/board', params, update);
+  const response = await httpPUT('/api/boards/' + id, update);
   return response.success;
 }
 
 async function del(id: BoardSchema['id']): Promise<boolean> {
-  const params = { id };
-  const response = await httpDELETE('/api/board', params);
+  const response = await httpDELETE('/api/boards/' + id);
   return response.success;
+}
+
+// Custom operations
+async function query(query: Partial<BoardSchema>): Promise<BoardSchema[] | undefined> {
+  let params = '';
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      params += `/${key}/${value}`;
+    }
+  }
+  const response = await httpGET('/api/boards' + params);
+  return response.data;
 }
 
 /**
@@ -62,5 +69,5 @@ export const BoardHTTPService = {
   readAll,
   query,
   update,
-  del
+  del,
 };

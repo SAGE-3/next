@@ -8,12 +8,12 @@
 
 /**
  * The UserService for SAGE3
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -26,14 +26,13 @@ import { randomSAGEColor } from '@sage3/shared';
  * The SAGE3 UserService that interfaces with the UserModel
  */
 class SAGE3UserService {
-
   /**
    * Check if user exists in the database
    * @returns {boolean} true if the user exists in the database, false otherwise.
    */
   public async userCheck(id: string): Promise<boolean> {
     const user = await UserModel.readUser(id);
-    const reponse = (user) ? true : false;
+    const reponse = user ? true : false;
     return reponse;
   }
 
@@ -53,12 +52,12 @@ class SAGE3UserService {
       emailVerified: false,
       profilePicture: '',
       userType: 'client',
-      userRole: role
+      userRole: role,
     } as UserSchema;
 
     try {
       const doc = await UserModel.createUser(id, newUser);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('UserService create error: ', error);
       return undefined;
@@ -73,7 +72,7 @@ class SAGE3UserService {
   public async read(id: string): Promise<UserSchema | undefined> {
     try {
       const doc = await UserModel.readUser(id);
-      return (doc) ? doc.data : undefined;
+      return doc ? doc.data : undefined;
     } catch (error) {
       console.log('UserService read error: ', error);
       return undefined;
@@ -81,14 +80,14 @@ class SAGE3UserService {
   }
 
   /**
- * Read all users.
- * @return {UserSchema[] | undefined} Returns an array of users if the read was sucessful.
- */
+   * Read all users.
+   * @return {UserSchema[] | undefined} Returns an array of users if the read was sucessful.
+   */
   public async readAll(): Promise<UserSchema[] | undefined> {
     try {
       const docArray = await UserModel.readAllUsers();
-      const docs = docArray.map(doc => doc.data) as UserSchema[];
-      return (docs) ? docs : undefined;
+      const docs = docArray.map((doc) => doc.data) as UserSchema[];
+      return docs ? docs : undefined;
     } catch (error) {
       console.log('UserService readAll error: ', error);
       return undefined;
@@ -112,10 +111,10 @@ class SAGE3UserService {
   }
 
   /**
- * Delete a user in the database.
- * @param {string} id The id of the user
- * @returns {boolean} Returns true if delete was successful
- */
+   * Delete a user in the database.
+   * @param {string} id The id of the user
+   * @returns {boolean} Returns true if delete was successful
+   */
   public async delete(id: string): Promise<boolean> {
     try {
       const success = await UserModel.deleteUser(id);
@@ -127,11 +126,14 @@ class SAGE3UserService {
   }
 
   /**
-* Subscribe to a user in the database.
-* @param {string} id The id of the user
-* @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
-*/
-  public async subscribeToUser(id: string, callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+   * Subscribe to a user in the database.
+   * @param {string} id The id of the user
+   * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
+   */
+  public async subscribeToUser(
+    id: string,
+    callback: (message: SBDocumentMessage<UserSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await UserModel.subscribeToUser(id, callback);
       return subscription;
@@ -142,9 +144,9 @@ class SAGE3UserService {
   }
 
   /**
-  * Subscribe to all users in the database.
-  * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
-  */
+   * Subscribe to all users in the database.
+   * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
+   */
   public async subscribeToAllUsers(callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const subscription = await UserModel.subscribeToUsers(callback);
@@ -155,6 +157,5 @@ class SAGE3UserService {
     }
   }
 }
-
 
 export const UserService = new SAGE3UserService();

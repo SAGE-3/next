@@ -8,12 +8,12 @@
 
 /**
  * The Room database model.
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -28,7 +28,7 @@ import { RoomSchema } from '@sage3/shared/types';
  */
 class SAGE3RoomModel {
   private roomCollection!: SBCollectionRef<RoomSchema>;
-  private collectionName = "ROOMS";
+  private collectionName = 'ROOMS';
 
   /**
    * Contructor initializing the RoomModle.
@@ -36,7 +36,7 @@ class SAGE3RoomModel {
   public async initialize(): Promise<void> {
     const indexObj = {
       name: '',
-      ownerId: ''
+      ownerId: '',
     } as RoomSchema;
     this.roomCollection = await SAGEBase.Database.collection<RoomSchema>(this.collectionName, indexObj);
   }
@@ -78,24 +78,24 @@ class SAGE3RoomModel {
   }
 
   /**
-  * Returns all rooms for this SAGE3 server.
-  * @returns {Array<RoomSchema>} UserSchema array of all users
-  */
+   * Returns all rooms for this SAGE3 server.
+   * @returns {Array<RoomSchema>} UserSchema array of all users
+   */
   public async readAllRooms(): Promise<SBDocument<RoomSchema>[]> {
     try {
       const users = await this.roomCollection.getAllDocs();
       return users;
     } catch (error) {
-      console.log('RoomModel readAllRooms error>')
+      console.log('RoomModel readAllRooms error>');
       return [];
     }
   }
 
   /**
-  * Query rooms
-  * @param {string} id The roomId.
-  * @returns {Array<SBDocument<RoomSchema>>} RoomSchema array of all rooms that satisfy the query
-  */
+   * Query rooms
+   * @param {string} id The roomId.
+   * @returns {Array<SBDocument<RoomSchema>>} RoomSchema array of all rooms that satisfy the query
+   */
   public async queryRooms(field: keyof RoomSchema, query: Partial<RoomSchema>): Promise<SBDocument<RoomSchema>[] | undefined> {
     try {
       const q = query[field];
@@ -107,7 +107,6 @@ class SAGE3RoomModel {
       return undefined;
     }
   }
-
 
   /**
    *  Update the room doc in the database.
@@ -141,16 +140,16 @@ class SAGE3RoomModel {
   }
 
   /**
- * Subscribe to the Room Collection
- * @param {() = void} callback The callback function for subscription events.
- * @return {() => void | undefined} The unsubscribe function.
- */
+   * Subscribe to the Room Collection
+   * @param {() = void} callback The callback function for subscription events.
+   * @return {() => void | undefined} The unsubscribe function.
+   */
   public async subscribeToRooms(callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.roomCollection.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('RoomModel subscribeToRooms error>', error)
+      console.log('RoomModel subscribeToRooms error>', error);
       return undefined;
     }
   }
@@ -162,17 +161,19 @@ class SAGE3RoomModel {
    * @return {() => void | undefined} The unsubscribe function.
 
    */
-  public async subscribeToRoom(id: string, callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeToRoom(
+    id: string,
+    callback: (message: SBDocumentMessage<RoomSchema>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const room = this.roomCollection.docRef(id);
       const unsubscribe = await room.subscribe(callback);
       return unsubscribe;
     } catch (error) {
-      console.log('RoomModel subscribeToRoom error>', error)
+      console.log('RoomModel subscribeToRoom error>', error);
       return undefined;
     }
   }
-
 }
 
 export const RoomModel = new SAGE3RoomModel();

@@ -13,8 +13,8 @@ import { Strategy } from 'passport-local';
 import { v4 } from 'uuid';
 
 export type SBAuthGuestConfig = {
-  routeEndpoint: string,
-}
+  routeEndpoint: string;
+};
 
 /**
  * Setup function of the Local Passport Strategy.
