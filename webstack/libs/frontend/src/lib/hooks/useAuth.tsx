@@ -40,21 +40,7 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
     fetchAuth()
   }, [])
   return (
-    <AuthContext.Provider
-<<<<<<< HEAD
-      value={auth}
-=======
-      value={
-        isFulfilled && !isRejected
-          ? {
-              isAuthenticated: true,
-            }
-          : {
-              isAuthenticated: false,
-            }
-      }
->>>>>>> dev-server
-    >
+    <AuthContext.Provider value={auth}>
       {props.children}
     </AuthContext.Provider>
   );

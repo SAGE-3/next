@@ -169,16 +169,12 @@ export class SBAuth {
    * Log the current user out of the session.
    */
   public logout(req: any, res: Response): void {
-<<<<<<< HEAD
     const user = req.user;
     if (!user) {
       res.send({ success: true });
-      return
+      return;
     }
     if (req.user.provider == 'guest') {
-=======
-    if (req.user.provider === 'guest') {
->>>>>>> dev-server
       this._database.deleteAuth(req.user.provider, req.user.providerId);
     }
     req.session.destroy();
