@@ -6,7 +6,7 @@
  *
  */
 
-import { createClient, RedisClientOptions, RedisClientType, RedisModules } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { Express } from 'express';
 
 // SAGEBase Module Imports
@@ -17,11 +17,10 @@ export type SAGEBaseConfig = {
   redisUrl?: string;
   projectName: string;
   authConfig?: SBAuthConfig;
-}
+};
 
 // The core SAGEBase class that allows access to the various modules. (Database, PubSub, Auth...etc)
 class SAGEBaseCore {
-
   private _client!: RedisClientType;
   private _redisPrefix!: string;
   private _redisUrl!: string;
@@ -32,22 +31,18 @@ class SAGEBaseCore {
   private _auth!: SBAuth;
 
   public async init(config: SAGEBaseConfig, express?: Express) {
-
-    // Config options for the Redis CreateClient
-    const redisClientConfig = {} as RedisClientOptions<RedisModules, Record<string, never>>;
-
-    // PREFIX for keys/channels in REDIS
-    // ex. $PROJECTNAME:$COLLECTION:$DOCID
+    // Set the redis url
     if (config.redisUrl) {
       this._redisUrl = config.redisUrl;
-      redisClientConfig.url = this._redisUrl;
+    } else {
+      this._redisUrl = 'redis://localhost:6379';
     }
 
     // SAGEBase prefix stuff for Redis keys
-    this._redisPrefix = `${config.projectName}`
+    this._redisPrefix = `${config.projectName}`;
 
     // Create the Redis Client and connect
-    this._client = createClient(redisClientConfig);
+    this._client = createClient({ url: this._redisUrl });
     await this._client.connect();
 
     // Init the SAGEBase Database
@@ -63,7 +58,6 @@ class SAGEBaseCore {
       this._auth = new SBAuth();
       await this._auth.init(this._client, this._redisPrefix, config.authConfig, express);
     }
-
   }
 
   /**
@@ -89,7 +83,6 @@ class SAGEBaseCore {
   public get Auth(): SBAuth {
     return this._auth;
   }
-
 }
 
 export const SAGEBase = new SAGEBaseCore();
