@@ -8,7 +8,7 @@
 
 import { Box, Button, useDisclosure } from "@chakra-ui/react";
 import { useUserStore, AuthHTTPService, CreateUserModal, EditUserModal, useAuth } from "@sage3/frontend";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 export type HeaderProps = {
   title: string
