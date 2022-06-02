@@ -41,7 +41,7 @@ import { genId } from '@sage3/shared';
 export async function boardWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
 
   switch (message.route) {
-    case '/api/board/subscribe': {
+    case '/api/boards/subscribe': {
       const sub = await BoardService.subscribetoAllBoards((doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -49,7 +49,7 @@ export async function boardWSRouter(socket: WebSocket, request: IncomingMessage,
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/board/subscribe/:id': {
+    case '/api/boards/subscribe/:id': {
       const sub = await BoardService.subscribeToBoard(message.body.id, (doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -57,7 +57,7 @@ export async function boardWSRouter(socket: WebSocket, request: IncomingMessage,
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/board/subscribe/:roomId': {
+    case '/api/boards/subscribe/:roomId': {
       const sub = await BoardService.subscribeByRoomId(message.body.roomId, (doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -65,7 +65,7 @@ export async function boardWSRouter(socket: WebSocket, request: IncomingMessage,
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/board/unsubscribe': {
+    case '/api/boards/unsubscribe': {
       cache.delete(message.body.subId)
       break;
     }

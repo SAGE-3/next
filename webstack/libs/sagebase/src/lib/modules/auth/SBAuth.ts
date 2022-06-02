@@ -15,7 +15,7 @@ const session = require('express-session');
 // eslint-disable-next-line
 const connectRedis = require('connect-redis');
 
-import { SBAuthDatabase, SBAuthDB } from './SBAuthDatabase';
+import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
 import {
   passportGoogleSetup,
@@ -138,7 +138,8 @@ export class SBAuth {
 
     // Route to quickly verify authentication
     express.get('/auth/verify', this.authenticate, (req, res) => {
-      res.status(200).send({ success: true, authentication: true });
+      const user = req.user as SBAuthSchema;
+      res.status(200).send({ success: true, authentication: true, auth: user });
     });
 
     return this;
@@ -147,12 +148,12 @@ export class SBAuth {
    * Express Middleware to Authenticate users
    */
   public async authenticate(req: Request, res: Response, next: NextFunction) {
-    const user = req.user;
+    const user = req.user as SBAuthSchema;
     if (user) {
       next();
     } else {
       res.status(403);
-      res.send({ success: false, authentication: false });
+      res.send({ success: false, authentication: false, auth: null });
     }
   }
 

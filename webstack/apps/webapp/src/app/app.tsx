@@ -42,6 +42,5 @@ export default App;
  */
 export const ProtectedRoute = (props: RouteProps): JSX.Element => {
   const user = useAuth();
-  console.log(user)
   return user.isAuthenticated ? <> {props.children}</> : <Navigate to="/" replace />;
 };

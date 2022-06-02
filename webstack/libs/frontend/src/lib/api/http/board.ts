@@ -23,7 +23,7 @@ async function create(
   roomId: BoardSchema['roomId']
 ): Promise<BoardSchema[] | undefined> {
   const body = { name, description, roomId };
-  const res = await httpPOST('/api/board', body);
+  const res = await httpPOST('/api/boards', body);
   return res.data;
 }
 

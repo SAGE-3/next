@@ -18,10 +18,10 @@ import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 
 const wsRoutes = {
-  '/app': appWSRouter,
-  '/user': userWSRouter,
-  '/room': roomWSRouter,
-  '/board': boardWSRouter,
+  '/apps': appWSRouter,
+  '/users': userWSRouter,
+  '/rooms': roomWSRouter,
+  '/boards': boardWSRouter,
 } as {
   [key: string]: (socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void>;
 };

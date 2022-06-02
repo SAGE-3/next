@@ -23,7 +23,7 @@ interface UserState {
   user: UserSchema | undefined;
   create: (name: UserSchema['name'], email: UserSchema['email']) => Promise<void>;
   update: (updates: Partial<UserSchema>) => Promise<void>;
-  subscribeToUser: () => Promise<void>;
+  subscribeToUser: (id: UserSchema['id']) => Promise<void>;
 }
 
 /**
@@ -31,35 +31,36 @@ interface UserState {
  */
 const UserStore = createVanilla<UserState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let userSub: (() => void) | null;
+  let userSub: (() => Promise<void>) | null;
   return {
     user: undefined,
     create: async (name: UserSchema['name'], email: UserSchema['email']) => {
-      await UserHTTPService.create(name, email);
-      get().subscribeToUser()
+      const user = await UserHTTPService.create(name, email);
+      if (user) {
+        get().subscribeToUser(user.id)
+      }
     },
     update: async (updates: Partial<UserSchema>) => {
       const user = get().user;
       if (!user) return;
       UserHTTPService.update(user.id, updates);
     },
-    subscribeToUser: async () => {
-      const response = await UserHTTPService.readCurrent();
-      let currUser = undefined;
-      if (response) currUser = response[0]
-      set({ user: currUser })
-      if (currUser === undefined) return;
+    subscribeToUser: async (id: UserSchema['id']) => {
+      const response = await UserHTTPService.read(id);
+      if (!response) return;
+
+      set({ user: response })
+      console.log(userSub)
       if (userSub) {
-        userSub();
+        await userSub();
         userSub = null;
       }
-
       // Socket Subscribe Message
-      const route = '/api/user/subscribe/:id';
-      const body = { id: currUser.id }
-
+      const route = '/api/users/subscribe/:id';
+      const body = { id: response.id }
       // Socket Listenting to updates from server about the current user
-      userSub = socket.subscribe<UserSchema>(route, body, (message) => {
+      userSub = await socket.subscribe<UserSchema>(route, body, (message) => {
+
         switch (message.type) {
           case 'CREATE': {
             set({ user: message.doc.data })
@@ -77,8 +78,6 @@ const UserStore = createVanilla<UserState>((set, get) => {
     }
   }
 })
-
-UserStore.getState().subscribeToUser();
 
 // Convert the Zustand JS store to Zustand React Store
 export const useUserStore = createReact(UserStore);

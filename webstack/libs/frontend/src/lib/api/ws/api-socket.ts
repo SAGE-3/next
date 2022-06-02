@@ -6,37 +6,47 @@ import { APIClientWSMessage } from "@sage3/shared/types";
 export class SocketAPI {
   private static instance: SocketAPI;
   private socket: WebSocket;
-  private subscriptions: Record<string, (message: any) => void>;
+  private subscriptions: Record<string, (message: SBDocumentMessage<any>) => void>;
 
   private constructor() {
     this.subscriptions = {};
     const socketType = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
     this.socket = new WebSocket(`${socketType}//${window.location.hostname}:${window.location.port}/api`);
     this.socket.addEventListener('open', (event) => {
-      this.socket.addEventListener('message', this.processServerMessage);
+      console.log('WS Connected');
+      this.socket.addEventListener('message', (message: MessageEvent<any>) => this.processServerMessage(message));
     });
     this.socket.addEventListener('close', (event) => {
-      this.socket.removeEventListener('message', this.processServerMessage);
+      this.subscriptions = {};
+      this.socket.removeEventListener('message', (message: MessageEvent<any>) => this.processServerMessage(message));
     });
 
   }
 
   private processServerMessage(message: MessageEvent<any>) {
     const msg = JSON.parse(message.data);
+    console.log(msg);
     if (this.subscriptions[msg.subId]) {
       this.subscriptions[msg.subId](msg.doc);
     } else {
-      console.log('WS Mesage with no Sub> ', message);
+      console.log('WS Messsage with no Sub> ', message);
     }
   }
 
-  private sendMessage(message: string) {
-    if (this.socket.readyState === this.socket.OPEN) {
-      this.socket.send(message);
-    }
+  private sendMessage(message: string): Promise<void> {
+    return new Promise(resolve => {
+      if (this.socket.readyState === this.socket.OPEN) {
+        this.socket.send(message);
+        resolve();
+      } else {
+        console.log('Socket net ready, message not sent, retrying.... ');
+        setTimeout(() => this.sendMessage(message), 1000);
+      }
+    })
   }
 
-  public subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): () => void {
+  public async subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): Promise<() => Promise<void>> {
+
     const id = genId();
     const subId = genId();
     const subMessage = {
@@ -49,19 +59,25 @@ export class SocketAPI {
     } as APIClientWSMessage;
     this.subscriptions[subId] = callback;
     this.sendMessage(JSON.stringify(subMessage));
+
     return () => {
-      const parts = subMessage.route.split('/');
-      const route = `/api/${parts[2]}/unsubscribe`;
-      const unsubMessage = {
-        id: genId(),
-        route,
-        body: {
-          subId,
-        },
-      } as APIClientWSMessage;
-      this.sendMessage(JSON.stringify(unsubMessage));
-      delete this.subscriptions[id];
-    };
+      return new Promise((resolve) => {
+        const parts = subMessage.route.split('/');
+        const route = `/api/${parts[2]}/unsubscribe`;
+        const unsubMessage = {
+          id: genId(),
+          route,
+          body: {
+            subId,
+          },
+        } as APIClientWSMessage;
+        this.sendMessage(JSON.stringify(unsubMessage)).then(() => {
+          delete this.subscriptions[id];
+          resolve()
+        });
+      });
+    }
+
   }
 
   public static getInstance(): SocketAPI {

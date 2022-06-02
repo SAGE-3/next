@@ -39,7 +39,7 @@ import { genId } from '@sage3/shared';
  */
 export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   switch (message.route) {
-    case '/api/room/subscribe': {
+    case '/api/rooms/subscribe': {
       const sub = await RoomService.subscribeToAllRooms((doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -47,7 +47,7 @@ export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, 
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/room/subscribe/:id': {
+    case '/api/rooms/subscribe/:id': {
       const sub = await RoomService.subscribeToRoom(message.body.id, (doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -55,10 +55,9 @@ export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, 
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/room/unsubscribe': {
+    case '/api/rooms/unsubscribe': {
       cache.delete(message.body.subId)
       break;
     }
   }
-
 }

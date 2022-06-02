@@ -7,7 +7,7 @@
  */
 
 import { Box, Button, useDisclosure } from "@chakra-ui/react";
-import { useUserStore, AuthHTTPService, CreateUserModal, EditUserModal } from "@sage3/frontend";
+import { useUserStore, AuthHTTPService, CreateUserModal, EditUserModal, useAuth } from "@sage3/frontend";
 import { useState, useEffect } from "react";
 
 export type HeaderProps = {
@@ -15,18 +15,27 @@ export type HeaderProps = {
 }
 
 export function Header(props: HeaderProps) {
+  const auth = useAuth();
+
   const user = useUserStore((state) => state.user);
+  const sub = useUserStore((state) => state.subscribeToUser);
+
 
   const { isOpen: createIsOpen, onOpen: createOnOpen, onClose: createOnClose } = useDisclosure()
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure()
 
   useEffect(() => {
     if (!user) {
+      if (auth.auth) {
+        sub(auth.auth?.id);
+      }
+
       createOnOpen()
     } else {
+      console.log('what')
       createOnClose()
     }
-  }, [createOnClose, createOnOpen, user]);
+  }, [createOnClose, createOnOpen, user, sub]);
 
   return (
     <Box display="flex" flexDirection="row" flexWrap="nowrap" width="100vw">

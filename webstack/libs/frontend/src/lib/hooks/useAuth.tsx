@@ -19,10 +19,12 @@ import { AuthHTTPService } from '../api';
 
 type AuthenticatedType = {
   isAuthenticated: boolean;
+  auth: { id: string } | null;
 };
 
 const AuthContext = createContext({
   isAuthenticated: false,
+  auth: null
 } as AuthenticatedType);
 
 export function useAuth() {
@@ -30,12 +32,12 @@ export function useAuth() {
 }
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const [auth, setAuth] = useState<{ isAuthenticated: boolean }>({ isAuthenticated: false })
+  const [auth, setAuth] = useState<AuthenticatedType>({ isAuthenticated: false, auth: null })
 
   useEffect(() => {
     async function fetchAuth() {
       const auth = await AuthHTTPService.verifyAuth();
-      setAuth({ isAuthenticated: auth.authentication })
+      setAuth({ isAuthenticated: auth.authentication, auth: auth.auth })
     }
     fetchAuth()
   }, [])

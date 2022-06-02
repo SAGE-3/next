@@ -17,13 +17,13 @@ import { UserSchema } from '@sage3/shared/types';
 import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 
 // CRUD operations
-async function create(name: UserSchema['name'], email: UserSchema['email']): Promise<UserSchema[] | undefined> {
+async function create(name: UserSchema['name'], email: UserSchema['email']): Promise<UserSchema | undefined> {
   const body = { name, email };
   const res = await httpPOST('/api/users', body);
   return res.users;
 }
 
-async function read(id: UserSchema['id']): Promise<UserSchema[] | undefined> {
+async function read(id: UserSchema['id']): Promise<UserSchema | undefined> {
   const response = await httpGET('/api/users/' + id);
   return response.data;
 }

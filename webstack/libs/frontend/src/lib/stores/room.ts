@@ -32,7 +32,7 @@ interface RoomState {
  */
 const RoomStore = createVanilla<RoomState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let roomSub: (() => void) | null;
+  let roomSub: (() => Promise<void>) | null;
   return {
     currentRoom: undefined,
     rooms: [],
@@ -50,16 +50,18 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       if (rooms) {
         set({ rooms });
       }
+      console.log(roomSub)
       if (roomSub) {
-        roomSub();
+        await roomSub();
         roomSub = null;
       }
 
       // Socket Subscribe Message
-      const route = '/api/room/subscribe';
+      const route = '/api/rooms/subscribe';
       const body = {}
       // Socket Listenting to updates from server about the current user
-      roomSub = socket.subscribe<RoomSchema>(route, body, (message) => {
+      console.log(3)
+      roomSub = await socket.subscribe<RoomSchema>(route, body, (message) => {
         console.log(message)
         switch (message.type) {
           case 'CREATE': {
@@ -85,6 +87,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
           }
         }
       });
+      console.log(4)
     },
   };
 });

@@ -73,7 +73,7 @@ function logout() {
  * Verify the authentication of the current user.
  * @returns {boolean} returns true if the user if authenticated
  */
-async function verifyAuth(): Promise<{ success: boolean, authentication: boolean }> {
+async function verifyAuth(): Promise<{ success: boolean, authentication: boolean, auth: { id: string } | null }> {
   const res = await fetch('/auth/verify', {
     method: 'GET',
     credentials: 'include',
@@ -82,7 +82,7 @@ async function verifyAuth(): Promise<{ success: boolean, authentication: boolean
       'Content-Type': 'application/json',
     },
   });
-  if (!res.ok) return { success: false, authentication: false };
+  if (!res.ok) return { success: false, authentication: false, auth: null };
   return res.json();
 }
 
