@@ -14,6 +14,7 @@
     "nx": "nx",
     "start": "nx serve",
     "build": "nx build",
+    "buildall": "nx run-many --target=build --all",
     "homebase": "nx serve homebase",
     "webapp": "nx serve webapp",
     "playground": "nx serve playground",
