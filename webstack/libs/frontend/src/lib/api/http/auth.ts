@@ -54,8 +54,12 @@ function logout() {
     },
   })
     .then((response) => {
-      console.log(response);
+      if (response.status === 403) throw new Error('Error Verifying Auth');
       return response.json();
+    }).catch((error) => {
+      console.log(error)
+      window.location.reload();
+      return Promise.reject(false);
     })
     .then((responseJson) => {
       if (responseJson.success) {
@@ -69,25 +73,17 @@ function logout() {
  * Verify the authentication of the current user.
  * @returns {boolean} returns true if the user if authenticated
  */
-async function verifyAuth(): Promise<boolean> {
-  return fetch('/auth/verify', {
+async function verifyAuth(): Promise<{ success: boolean, authentication: boolean, auth: { id: string } | null }> {
+  const res = await fetch('/auth/verify', {
     method: 'GET',
     credentials: 'include',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-  })
-    .then((response) => {
-      return response.json();
-    })
-    .then((responseJson) => {
-      if (responseJson.authentication) {
-        return Promise.resolve(true);
-      } else {
-        return Promise.reject();
-      }
-    });
+  });
+  if (!res.ok) return { success: false, authentication: false, auth: null };
+  return res.json();
 }
 
 export const AuthHTTPService = {

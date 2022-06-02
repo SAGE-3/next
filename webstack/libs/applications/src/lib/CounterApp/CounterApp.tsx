@@ -6,13 +6,15 @@
  *
  */
 
-import { useAppStore } from "@sage3/frontend";
-import { AppSchema } from "../../schema/app";
-import { CounterState } from "../../types";
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { useAppStore } from '@sage3/frontend';
+import { Button } from '@chakra-ui/react';
+import { AppSchema } from "../types";
+
+import { CounterState } from "./index";
 import './styles.css';
 
-
-export function CounterApp(props: AppSchema): JSX.Element {
+function CounterApp(props: AppSchema): JSX.Element {
 
   const s = props.state as CounterState;
 
@@ -34,9 +36,10 @@ export function CounterApp(props: AppSchema): JSX.Element {
   return (
     <div className="Counter-Container">
       <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
-      <p>{s.count}</p>
-      <button onClick={handleAddClick}>Add</button>
-      <button onClick={handleSubClick}>Sub</button>
+      <Button onClick={handleAddClick} colorScheme="green">Add</Button>
+      <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
     </div>
   )
 }
+
+export default CounterApp;

@@ -38,7 +38,7 @@ import { genId } from '@sage3/shared';
  */
 export async function userWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   switch (message.route) {
-    case '/api/user/subscribe': {
+    case '/api/users/subscribe': {
       const sub = await UserService.subscribeToAllUsers((doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -46,15 +46,16 @@ export async function userWSRouter(socket: WebSocket, request: IncomingMessage, 
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/user/subscribe/:id': {
+    case '/api/users/subscribe/:id': {
       const sub = await UserService.subscribeToUser(message.body.id, (doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
+
       });
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/user/unsubscribe': {
+    case '/api/users/unsubscribe': {
       cache.delete(message.body.subId)
       break;
     }

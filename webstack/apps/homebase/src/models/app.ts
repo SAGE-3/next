@@ -20,8 +20,7 @@
 
 import { SAGEBase, SBCollectionRef, SBDocument, SBDocumentMessage, SBDocumentUpdate } from '@sage3/sagebase';
 
-import { AppSchema } from '@sage3/applications/schema';
-import { AppStates } from '@sage3/applications/types';
+import { AppSchema, AppStates } from '@sage3/applications/types';
 /**
  * The database model for SAGE3 Apps.
  */

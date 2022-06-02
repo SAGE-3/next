@@ -40,7 +40,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 export async function appWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
 
   switch (message.route) {
-    case '/api/app/subscribe': {
+    case '/api/apps/subscribe': {
       const sub = await AppService.subscribeToAllApps((doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -48,7 +48,7 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/app/subscribe/:id': {
+    case '/api/apps/subscribe/:id': {
       const sub = await AppService.subscribeToApp(message.body.id, (doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -56,7 +56,7 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/app/subscribe/:roomId': {
+    case '/api/apps/subscribe/:roomId': {
       const sub = await AppService.subscribeByRoomId(message.body.roomId, (doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -64,7 +64,7 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/app/subscribe/:boardId': {
+    case '/api/apps/subscribe/:boardId': {
       const sub = await AppService.subscribeByRoomId(message.body.boardId, (doc) => {
         const msg = { id: genId(), subId: message.body.subId, doc }
         socket.send(JSON.stringify(msg));
@@ -72,7 +72,7 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
       if (sub) cache.add(message.body.subId, sub)
       break;
     }
-    case '/api/app/unsubscribe': {
+    case '/api/apps/unsubscribe': {
       cache.delete(message.body.subId)
       break;
     }

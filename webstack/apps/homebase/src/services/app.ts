@@ -20,9 +20,8 @@
 
 import { AppModel } from '../models';
 import { SBDocumentMessage } from '@sage3/sagebase';
-import { genId } from '@sage3/shared';
-import { AppStates, AppTypes } from '@sage3/applications/types';
-import { AppSchema } from '@sage3/applications/schema';
+import { genId } from '@sage3/shared'
+import { AppSchema, AppStates, AppTypes } from '@sage3/applications/types';
 
 /**
  * The SAGE3 AppService that interfaces with the AppModel

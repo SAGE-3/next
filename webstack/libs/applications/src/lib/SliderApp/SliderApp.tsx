@@ -6,14 +6,15 @@
  *
  */
 
-import { useAppStore } from "@sage3/frontend";
-import { AppSchema } from "../../schema/app";
-import { SliderState } from "../../types";
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { useAppStore } from '@sage3/frontend';
+import { AppSchema } from "../types";
 
+import { SliderState } from "./";
 import './styles.css';
 
 
-export function SliderApp(props: AppSchema): JSX.Element {
+function SliderApp(props: AppSchema): JSX.Element {
 
   const s = props.state as SliderState;
 
@@ -36,3 +37,5 @@ export function SliderApp(props: AppSchema): JSX.Element {
     </div>
   )
 }
+
+export default SliderApp;

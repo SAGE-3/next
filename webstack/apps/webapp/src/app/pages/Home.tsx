@@ -1,17 +1,12 @@
 // import create from "zustand";
 
-import { Box, Button, Divider, Tag, TagCloseButton, TagLabel, VStack } from '@chakra-ui/react';
+import { Box, Button, Divider } from '@chakra-ui/react';
 import {
-  AuthHTTPService,
-  CreateUserModal,
-  useUserStore,
-  EditUserModal,
+
   CreateRoomModal,
   useRoomStore,
   useBoardStore,
   CreateBoardModal,
-  useAppStore,
-  useAuth,
   BoardCard,
   RoomCard,
 } from '@sage3/frontend';
@@ -24,6 +19,9 @@ export function HomePage() {
   const rooms = useRoomStore((state) => state.rooms);
   const deleteRoom = useRoomStore((state) => state.delete);
   const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
+  useEffect(() => {
+    subToAllRooms()
+  }, [])
 
   const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
@@ -33,20 +31,9 @@ export function HomePage() {
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<RoomSchema | null>(null);
 
-  useEffect(() => {
-    async function subRooms() {
-      await subToAllRooms()
-    }
-    if (rooms.length === 0) {
-      subRooms();
-    }
-
-  }, [subToAllRooms, rooms]);
-
   return (
     <div>
       <Header title="HomePage"></Header>
-
 
       <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
 

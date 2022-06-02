@@ -23,7 +23,7 @@ interface UserState {
   user: UserSchema | undefined;
   create: (name: UserSchema['name'], email: UserSchema['email']) => Promise<void>;
   update: (updates: Partial<UserSchema>) => Promise<void>;
-  subscribeToUser: () => Promise<void>;
+  subscribeToUser: (id: UserSchema['id']) => Promise<void>;
 }
 
 /**
@@ -31,33 +31,35 @@ interface UserState {
  */
 const UserStore = createVanilla<UserState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let userSub: (() => void) | null;
+  let userSub: (() => Promise<void>) | null = null;
   return {
     user: undefined,
     create: async (name: UserSchema['name'], email: UserSchema['email']) => {
-      UserHTTPService.create(name, email);
+      const user = await UserHTTPService.create(name, email);
+      if (user) {
+        get().subscribeToUser(user.id)
+      }
     },
     update: async (updates: Partial<UserSchema>) => {
       const user = get().user;
       if (!user) return;
       UserHTTPService.update(user.id, updates);
     },
-    subscribeToUser: async () => {
-      const currUser = await UserHTTPService.readCurrent();
+    subscribeToUser: async (id: UserSchema['id']) => {
+      const response = await UserHTTPService.read(id);
+      if (!response) return;
 
-      if (!currUser) return;
-      set({ user: currUser[0] })
+      set({ user: response })
       if (userSub) {
-        userSub();
+        await userSub();
         userSub = null;
       }
-
       // Socket Subscribe Message
-      const route = '/api/user/subscribe/:id';
-      const body = { id: currUser[0].id }
-
+      const route = '/api/users/subscribe/:id';
+      const body = { id: response.id }
       // Socket Listenting to updates from server about the current user
-      userSub = socket.subscribe<UserSchema>(route, body, (message) => {
+      userSub = await socket.subscribe<UserSchema>(route, body, (message) => {
+
         switch (message.type) {
           case 'CREATE': {
             set({ user: message.doc.data })

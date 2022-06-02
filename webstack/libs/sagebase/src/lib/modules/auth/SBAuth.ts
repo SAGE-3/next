@@ -15,7 +15,7 @@ const session = require('express-session');
 // eslint-disable-next-line
 const connectRedis = require('connect-redis');
 
-import { SBAuthDatabase, SBAuthDB } from './SBAuthDatabase';
+import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
 import {
   passportGoogleSetup,
@@ -138,7 +138,8 @@ export class SBAuth {
 
     // Route to quickly verify authentication
     express.get('/auth/verify', this.authenticate, (req, res) => {
-      res.status(200).send({ success: true, authentication: true });
+      const user = req.user as SBAuthSchema;
+      res.status(200).send({ success: true, authentication: true, auth: user });
     });
 
     return this;
@@ -147,12 +148,12 @@ export class SBAuth {
    * Express Middleware to Authenticate users
    */
   public async authenticate(req: Request, res: Response, next: NextFunction) {
-    const user = req.user;
+    const user = req.user as SBAuthSchema;
     if (user) {
       next();
     } else {
       res.status(403);
-      res.send({ success: false, authentication: false });
+      res.send({ success: false, authentication: false, auth: null });
     }
   }
 
@@ -169,7 +170,12 @@ export class SBAuth {
    * Log the current user out of the session.
    */
   public logout(req: any, res: Response): void {
-    if (req.user.provider === 'guest') {
+    const user = req.user;
+    if (!user) {
+      res.send({ success: true });
+      return;
+    }
+    if (req.user.provider == 'guest') {
       this._database.deleteAuth(req.user.provider, req.user.providerId);
     }
     req.session.destroy();

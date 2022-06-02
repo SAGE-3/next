@@ -6,48 +6,45 @@
  *
  */
 
-import { Box, Button } from "@chakra-ui/react";
-import { useUserStore, AuthHTTPService, CreateUserModal, EditUserModal } from "@sage3/frontend";
-import { useState, useEffect } from "react";
+import { Box, Button, useDisclosure } from "@chakra-ui/react";
+import { useUserStore, AuthHTTPService, CreateUserModal, EditUserModal, useAuth } from "@sage3/frontend";
+import { useEffect } from "react";
 
 export type HeaderProps = {
   title: string
 }
 
 export function Header(props: HeaderProps) {
-  const user = useUserStore((state) => state.user);
-  const subToUser = useUserStore((state) => state.subscribeToUser);
+  const auth = useAuth();
 
-  const [newUserModal, setNewUserModal] = useState(false);
-  const [editAccountModal, setEditAccountModal] = useState(false);
+  const user = useUserStore((state) => state.user);
+  const sub = useUserStore((state) => state.subscribeToUser);
+
+  const { isOpen: createIsOpen, onOpen: createOnOpen, onClose: createOnClose } = useDisclosure()
+  const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure()
 
   useEffect(() => {
-    async function subUser() {
-      await subToUser();
-      if (user === undefined) {
-        setNewUserModal(true);
-      } else {
-        setNewUserModal(false);
-      }
-    }
     if (!user) {
-      subUser();
+      if (auth.auth) {
+        sub(auth.auth?.id);
+      }
+      createOnOpen()
     } else {
-      setNewUserModal(false);
+      createOnClose();
     }
-  }, [subToUser, user, newUserModal]);
+  }, [createOnClose, createOnOpen, user, sub, auth.auth]);
 
   return (
     <Box display="flex" flexDirection="row" flexWrap="nowrap" width="100vw">
       <h3>
-        {props.title}
+        {props.title} - {user?.name}
       </h3>
 
-      <Button onClick={() => setEditAccountModal(true)}>EDIT</Button>
+      <Button onClick={editOnOpen}>EDIT</Button>
 
       <Button onClick={AuthHTTPService.logout}>Logout</Button>
-      <CreateUserModal isOpen={newUserModal} onClose={() => setNewUserModal(false)}></CreateUserModal>
-      <EditUserModal isOpen={editAccountModal} onClose={() => setEditAccountModal(false)}></EditUserModal>
+      <CreateUserModal isOpen={createIsOpen} onOpen={createOnOpen} onClose={createOnClose} ></CreateUserModal>
+      <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
     </Box>
   )
 

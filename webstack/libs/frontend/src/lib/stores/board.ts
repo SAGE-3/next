@@ -32,7 +32,7 @@ interface BoardState {
  */
 const BoardStore = createVanilla<BoardState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let boardsSub: (() => void) | null;
+  let boardsSub: (() => Promise<void>) | null = null;
   return {
     boards: [],
     create(name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) {
@@ -50,16 +50,16 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
         set({ boards })
       }
       if (boardsSub) {
-        boardsSub();
+        await boardsSub();
         boardsSub = null;
       }
 
       // Socket Subscribe Message
-      const route = '/api/board/subscribe/:roomId';
+      const route = '/api/boards/subscribe/:roomId';
       const body = { roomId }
 
       // Socket Listenting to updates from server about the current user
-      boardsSub = socket.subscribe<BoardSchema>(route, body, (message) => {
+      boardsSub = await socket.subscribe<BoardSchema>(route, body, (message) => {
         console.log('what', message)
         switch (message.type) {
           case 'CREATE': {

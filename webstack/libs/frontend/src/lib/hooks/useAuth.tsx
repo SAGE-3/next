@@ -13,43 +13,36 @@
  * @version 1.0.0
  */
 
-import React, { createContext, useContext } from 'react';
-import { useAsync } from 'react-async';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import { AuthHTTPService } from '../api';
 
 type AuthenticatedType = {
   isAuthenticated: boolean;
+  auth: { id: string } | null;
 };
 
 const AuthContext = createContext({
   isAuthenticated: false,
+  auth: null
 } as AuthenticatedType);
 
 export function useAuth() {
   return useContext(AuthContext);
 }
-const authPromise = AuthHTTPService.verifyAuth();
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const { isFulfilled, isRejected, isPending } = useAsync({
-    promise: authPromise,
-    initialValue: null,
-    suspense: true,
-  });
+  const [auth, setAuth] = useState<AuthenticatedType>({ isAuthenticated: false, auth: null })
 
+  useEffect(() => {
+    async function fetchAuth() {
+      const auth = await AuthHTTPService.verifyAuth();
+      setAuth({ isAuthenticated: auth.authentication, auth: auth.auth })
+    }
+    fetchAuth()
+  }, [])
   return (
-    <AuthContext.Provider
-      value={
-        isFulfilled && !isRejected
-          ? {
-              isAuthenticated: true,
-            }
-          : {
-              isAuthenticated: false,
-            }
-      }
-    >
+    <AuthContext.Provider value={auth}>
       {props.children}
     </AuthContext.Provider>
   );

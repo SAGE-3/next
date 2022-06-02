@@ -1,28 +1,51 @@
-import { SBDocumentMessage, SBJSON } from '@sage3/sagebase';
-import { genId } from '@sage3/shared';
-import { APIClientWSMessage } from '@sage3/shared/types';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { SBDocumentMessage, SBJSON } from "@sage3/sagebase";
+import { genId } from "@sage3/shared";
+import { APIClientWSMessage } from "@sage3/shared/types";
+
 
 export class SocketAPI {
   private static instance: SocketAPI;
-  private socketObserver: apiSocketObserver;
-  private subscriptions: Record<string, (message: any) => void>;
+  private socket: WebSocket;
+  private subscriptions: Record<string, (message: SBDocumentMessage<any>) => void>;
 
   private constructor() {
-    this.socketObserver = apiSocketObserver.getInstance();
     this.subscriptions = {};
-    this.socketObserver.observeSocket.subscribe((message: unknown) => this.processServerMessage(message as any));
+    const socketType = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
+    this.socket = new WebSocket(`${socketType}//${window.location.hostname}:${window.location.port}/api`);
+    this.socket.addEventListener('open', (event) => {
+      console.log('WS Connected');
+      this.socket.addEventListener('message', (message: MessageEvent<any>) => this.processServerMessage(message));
+    });
+    this.socket.addEventListener('close', (event) => {
+      this.subscriptions = {};
+      this.socket.removeEventListener('message', (message: MessageEvent<any>) => this.processServerMessage(message));
+    });
+
   }
 
-  private processServerMessage(message: any) {
-    if (this.subscriptions[message.subId]) {
-      this.subscriptions[message.subId](message.doc);
+  private processServerMessage(message: MessageEvent<any>) {
+    const msg = JSON.parse(message.data);
+    if (this.subscriptions[msg.subId]) {
+      this.subscriptions[msg.subId](msg.doc);
     } else {
-      console.log('WS Mesage with no Sub> ', message);
+      console.log('WS Messsage with no Sub> ', message);
     }
   }
 
-  public subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): () => void {
+  private sendMessage(message: string): Promise<void> {
+    return new Promise(resolve => {
+      if (this.socket.readyState === this.socket.OPEN) {
+        this.socket.send(message);
+        resolve();
+      } else {
+        console.log('Socket net ready, message not sent, retrying... ');
+        setTimeout(() => this.sendMessage(message), 1000);
+      }
+    })
+  }
+
+  public async subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): Promise<() => Promise<void>> {
+
     const id = genId();
     const subId = genId();
     const subMessage = {
@@ -34,20 +57,26 @@ export class SocketAPI {
       },
     } as APIClientWSMessage;
     this.subscriptions[subId] = callback;
-    this.socketObserver.send(subMessage);
+    this.sendMessage(JSON.stringify(subMessage));
+
     return () => {
-      const parts = subMessage.route.split('/');
-      const route = `/api/${parts[2]}/unsubscribe`;
-      const unsubMessage = {
-        id: genId(),
-        route,
-        body: {
-          subId,
-        },
-      } as APIClientWSMessage;
-      this.socketObserver.send(unsubMessage);
-      delete this.subscriptions[id];
-    };
+      return new Promise((resolve) => {
+        const parts = subMessage.route.split('/');
+        const route = `/api/${parts[2]}/unsubscribe`;
+        const unsubMessage = {
+          id: genId(),
+          route,
+          body: {
+            subId,
+          },
+        } as APIClientWSMessage;
+        this.sendMessage(JSON.stringify(unsubMessage)).then(() => {
+          delete this.subscriptions[id];
+          resolve()
+        });
+      });
+    }
+
   }
 
   public static getInstance(): SocketAPI {
@@ -59,29 +88,3 @@ export class SocketAPI {
   }
 }
 
-class apiSocketObserver {
-  // The singleton instance
-  private static instance: apiSocketObserver;
-  public observeSocket: WebSocketSubject<unknown>;
-
-  private constructor() {
-    console.log('wsObserve> opening socket');
-    // Open a socket.
-    const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-    // this.observeSocket = webSocket(`${socketType}//${window.location.hostname}:${window.location.port}/api`);
-    this.observeSocket = webSocket('ws://localhost:3333/api');
-  }
-
-  public send(message: any): void {
-    this.observeSocket.next(message);
-  }
-
-  public static getInstance(): apiSocketObserver {
-    if (!apiSocketObserver.instance) {
-      // Create the singleton
-      apiSocketObserver.instance = new apiSocketObserver();
-    }
-    return apiSocketObserver.instance;
-  }
-}

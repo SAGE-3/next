@@ -18,8 +18,9 @@ import { genId } from '@sage3/shared';
 // The observable websocket and HTTP
 import { AppHTTPService } from "../api";
 import { SocketAPI } from "../utils";
-import { AppSchema } from "@sage3/applications/schema";
-import { AppStates } from "@sage3/applications/types";
+
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import { AppStates, AppSchema } from "@sage3/applications/types";
 
 interface AppState {
   apps: AppSchema[];
@@ -35,7 +36,7 @@ interface AppState {
  */
 const AppStore = createVanilla<AppState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let appsSub: (() => void) | null;
+  let appsSub: (() => Promise<void>) | null = null;
   return {
     apps: [],
     create: async (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => {
@@ -56,14 +57,15 @@ const AppStore = createVanilla<AppState>((set, get) => {
         set({ apps })
       }
       if (appsSub) {
-        appsSub();
+        await appsSub();
         appsSub = null;
       }
 
-      const route = '/api/app/subscribe/:boardId';
-      const body = { boardId }
+
+      const route = '/api/apps/subscribe/:boardId';
+      const body = { boardId };
       // Socket Listenting to updates from server about the current user
-      appsSub = socket.subscribe<AppSchema>(route, body, (message) => {
+      appsSub = await socket.subscribe<AppSchema>(route, body, (message) => {
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, message.doc.data] })

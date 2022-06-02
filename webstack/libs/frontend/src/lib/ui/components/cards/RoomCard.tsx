@@ -18,7 +18,7 @@ export type RoomCardProps = {
 
 export function RoomCard(props: RoomCardProps) {
   return (
-    <Box borderWidth='2px' borderRadius='lg' overflow='hidden' width="250px" height="225px" onClick={props.onEnter}>
+    <Box borderWidth='2px' borderRadius='lg' overflow='hidden' width="250px" height="225px">
 
       <Box p='6'>
         <Box display='flex' alignItems='baseline'>

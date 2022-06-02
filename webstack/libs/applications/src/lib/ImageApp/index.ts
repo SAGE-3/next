@@ -6,9 +6,8 @@
  *
  */
 
-
-export type CounterState = {
-  count: number;
+export type ImageState = {
+  url: string;
 }
 
-export const CounterName = "Counter";
+export const ImageName = "Image";
