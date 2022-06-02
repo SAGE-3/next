@@ -32,7 +32,7 @@ interface BoardState {
  */
 const BoardStore = createVanilla<BoardState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let boardsSub: (() => Promise<void>) | null;
+  let boardsSub: (() => Promise<void>) | null = null;
   return {
     boards: [],
     create(name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) {

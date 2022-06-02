@@ -25,7 +25,6 @@ export class SocketAPI {
 
   private processServerMessage(message: MessageEvent<any>) {
     const msg = JSON.parse(message.data);
-    console.log(msg);
     if (this.subscriptions[msg.subId]) {
       this.subscriptions[msg.subId](msg.doc);
     } else {
@@ -39,7 +38,7 @@ export class SocketAPI {
         this.socket.send(message);
         resolve();
       } else {
-        console.log('Socket net ready, message not sent, retrying.... ');
+        console.log('Socket net ready, message not sent, retrying... ');
         setTimeout(() => this.sendMessage(message), 1000);
       }
     })

@@ -31,7 +31,7 @@ interface UserState {
  */
 const UserStore = createVanilla<UserState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let userSub: (() => Promise<void>) | null;
+  let userSub: (() => Promise<void>) | null = null;
   return {
     user: undefined,
     create: async (name: UserSchema['name'], email: UserSchema['email']) => {
@@ -50,7 +50,6 @@ const UserStore = createVanilla<UserState>((set, get) => {
       if (!response) return;
 
       set({ user: response })
-      console.log(userSub)
       if (userSub) {
         await userSub();
         userSub = null;

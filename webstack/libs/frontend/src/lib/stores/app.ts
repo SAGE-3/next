@@ -36,7 +36,7 @@ interface AppState {
  */
 const AppStore = createVanilla<AppState>((set, get) => {
   const socket = SocketAPI.getInstance();
-  let appsSub: (() => Promise<void>) | null;
+  let appsSub: (() => Promise<void>) | null = null;
   return {
     apps: [],
     create: async (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => {

@@ -20,7 +20,6 @@ export function Header(props: HeaderProps) {
   const user = useUserStore((state) => state.user);
   const sub = useUserStore((state) => state.subscribeToUser);
 
-
   const { isOpen: createIsOpen, onOpen: createOnOpen, onClose: createOnClose } = useDisclosure()
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure()
 
@@ -29,13 +28,11 @@ export function Header(props: HeaderProps) {
       if (auth.auth) {
         sub(auth.auth?.id);
       }
-
       createOnOpen()
     } else {
-      console.log('what')
-      createOnClose()
+      createOnClose();
     }
-  }, [createOnClose, createOnOpen, user, sub]);
+  }, [createOnClose, createOnOpen, user, sub, auth.auth]);
 
   return (
     <Box display="flex" flexDirection="row" flexWrap="nowrap" width="100vw">
