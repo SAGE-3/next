@@ -1,7 +1,7 @@
 import { Button, ButtonGroup, IconButton } from '@chakra-ui/react';
 import { AuthHTTPService, BgColor, useAuth } from '@sage3/frontend';
-import { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
@@ -24,7 +24,7 @@ export function LoginPage() {
 
   return (
     <div>
-      <h1>LOGIN PAGE</h1> <Link to="/home">GO TO HOME</Link>
+      <h1>LOGIN PAGE</h1>
       {/* Google Auth Service */}
       <ButtonGroup isAttached width="17rem" size="lg">
         <IconButton

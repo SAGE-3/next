@@ -61,8 +61,9 @@ const AppStore = createVanilla<AppState>((set, get) => {
         appsSub = null;
       }
 
+
       const route = '/api/app/subscribe/:boardId';
-      const body = { boardId }
+      const body = { boardId };
       // Socket Listenting to updates from server about the current user
       appsSub = socket.subscribe<AppSchema>(route, body, (message) => {
         switch (message.type) {
