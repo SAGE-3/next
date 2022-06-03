@@ -20,7 +20,6 @@ import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 async function create(name: UserSchema['name'], email: UserSchema['email']): Promise<UserSchema | undefined> {
   const body = { name, email };
   const res = await httpPOST('/api/users', body);
-  console.log(res)
   return res.data;
 }
 

@@ -48,3 +48,8 @@ export const SAGEColors = [
 export function randomSAGEColor() {
   return SAGEColors[Math.floor(Math.random() * SAGEColors.length)];
 }
+
+export function sageColorByName(name: string) {
+  const color = SAGEColors.find(el => el.name === name);
+  return (color) ? color.value : '#FFFFFFF';
+}

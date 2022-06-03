@@ -6,40 +6,51 @@
  *
  */
 
-import { Badge, Box, Button } from "@chakra-ui/react";
+import { Badge, Box, Text, Tooltip } from "@chakra-ui/react";
 import { RoomSchema } from "@sage3/shared/types";
+import { sageColorByName } from "@sage3/shared";
 
 export type RoomCardProps = {
   room: RoomSchema;
+  selected: boolean;
   onEnter: () => void;
   onDelete: () => void;
   onEdit: () => void;
 }
 
-export function RoomCard(props: RoomCardProps) {
+function RoomToolTip(props: { room: RoomSchema }) {
   return (
-    <Box borderWidth='2px' borderRadius='lg' overflow='hidden' width="250px" height="225px">
+    <div>
+      <p>{props.room.name}</p>
+      <p>{props.room.description}</p>
+    </div>
+  )
+}
+export function RoomCard(props: RoomCardProps) {
 
-      <Box p='6'>
-        <Box display='flex' alignItems='baseline'>
-          <Badge colorScheme={props.room.color}>{props.room.name}</Badge>
-        </Box>
 
-        <Box
-          mt='1'
-          fontWeight='semibold'
-          as='h4'
-          lineHeight='tight'
-        >
-          {props.room.description}
-        </Box>
 
-        <Box display='flex' flexDirection='column' width="200px">
-          <Button size="sm" onClick={props.onEnter} colorScheme="teal" mt='2'>Enter</Button>
-          <Button size="sm" onClick={props.onEdit} colorScheme="green" mt='2'>Edit</Button>
-          <Button size="sm" onClick={props.onDelete} colorScheme="red" mt='2'>Delete</Button>
-        </Box>
+  return (
+    <Tooltip label={<RoomToolTip room={props.room} />} hasArrow placement="right">
+      <Box
+        display="flex"
+        justifyContent="center"
+        borderWidth='2px'
+        borderRadius='lg'
+        overflow='hidden'
+        border={`solid ${(props.selected) ? sageColorByName(props.room.color) : 'white'} 2px`}
+        fontWeight="bold"
+        width="60px"
+        height="60px"
+        m="2"
+        cursor="pointer"
+        alignItems='baseline'
+        color={(props.selected) ? sageColorByName(props.room.color) : 'white'}
+        transition="color 1s"
+        _hover={{ transform: "scale(1.1)", color: sageColorByName(props.room.color) }}
+        onClick={props.onEnter}>
+        <Text fontSize='4xl'>{props.room.name.charAt(0).toLocaleUpperCase()}</Text>
       </Box>
-    </Box>
+    </Tooltip>
   );
 }

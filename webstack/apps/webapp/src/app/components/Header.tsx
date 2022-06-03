@@ -6,7 +6,7 @@
  *
  */
 
-import { Box, Button, useDisclosure } from "@chakra-ui/react";
+import { Box, Button, useDisclosure, Text } from "@chakra-ui/react";
 import { useUserStore, AuthHTTPService, CreateUserModal, EditUserModal, useAuth } from "@sage3/frontend";
 import { useEffect } from "react";
 
@@ -35,14 +35,16 @@ export function Header(props: HeaderProps) {
   }, [createOnClose, createOnOpen, user, sub, auth.auth]);
 
   return (
-    <Box display="flex" flexDirection="row" flexWrap="nowrap" width="100vw">
-      <h3>
-        {props.title} - {user?.name}
-      </h3>
-
-      <Button onClick={editOnOpen}>EDIT</Button>
-
-      <Button onClick={AuthHTTPService.logout}>Logout</Button>
+    <Box display="flex" flexFlow="row nowrap" justifyContent="space-between" alignItems="baseline" mx="2" backgroundColor="#171717">
+      <Box display="flex" flex="1 1 0" justifyContent="flex-start" alignItems="baseline"></Box>
+      <Box display="flex" flex="1 1 0" justifyContent="center" alignItems="baseline">
+        <Text fontSize='4xl' >{props.title}</Text>
+      </Box>
+      <Box display="flex" flex="1 1 0" justifyContent="flex-end" alignItems="baseline">
+        {user?.name}
+        <Button onClick={editOnOpen}>EDIT</Button>
+        <Button onClick={AuthHTTPService.logout}>Logout</Button>
+      </Box>
       <CreateUserModal isOpen={createIsOpen} onOpen={createOnOpen} onClose={createOnClose} ></CreateUserModal>
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
     </Box>

@@ -6,8 +6,10 @@
  *
  */
 
-import { Badge, Box, Button } from "@chakra-ui/react";
+import { Box, Button, Divider, IconButton, Text } from "@chakra-ui/react";
+import { sageColorByName } from "@sage3/shared";
 import { BoardSchema } from "@sage3/shared/types";
+import { MdPerson, MdSettings } from "react-icons/md";
 
 export type BoardCardProps = {
   board: BoardSchema;
@@ -18,28 +20,40 @@ export type BoardCardProps = {
 
 export function BoardCard(props: BoardCardProps) {
   return (
-    <Box borderWidth='2px' borderRadius='lg' overflow='hidden' width="250px" height="225px">
+    <Box
+      borderWidth='2px'
+      borderRadius='lg'
+      overflow='hidden'
+      height="80px"
+      my="2"
+      pt="2"
+      border={`solid ${sageColorByName(props.board.color)} 2px`}
+      transition="transform .2s"
+      cursor="pointer"
+      _hover={{ transform: "scale(1.1)" }}
+      style={{ background: `linear-gradient(${sageColorByName(props.board.color)} 10%, transparent 10% ) no-repeat` }}
+      onClick={props.onEnter}>
 
-      <Box p='6'>
-        <Box display='flex' alignItems='baseline'>
-          <Badge colorScheme={props.board.color}>{props.board.name}</Badge>
+      <Box px="2" display='flex' flexDirection="row" justifyContent="space-between" alignContent="center">
+        <Box display='flex' flexDirection="column">
+          <Text fontSize='2xl'>{props.board.name}
+          </Text>
+          <Text fontSize='1xl'>{props.board.description}
+          </Text>
         </Box>
+        <Box display='flex' mt='2' alignItems='center'>
+          <Text fontSize='1xl' mx="2">{Math.floor(Math.random() * 20)}
+          </Text>
+          <MdPerson
+            size="18"
+            color={'white'}
+          />
 
-        <Box
-          mt='1'
-          fontWeight='semibold'
-          as='h4'
-          lineHeight='tight'
-        >
-          {props.board.description}
-        </Box>
+          <Box as='span' ml='2' color='gray.600' fontSize='sm'>
 
-        <Box display='flex' flexDirection='column' width="200px">
-          <Button size="sm" onClick={props.onEnter} colorScheme="teal" mt='2'>Enter</Button>
-          <Button size="sm" onClick={props.onEdit} colorScheme="green" mt='2'>Edit</Button>
-          <Button size="sm" onClick={props.onDelete} colorScheme="red" mt='2'>Delete</Button>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </Box >
   );
 }
