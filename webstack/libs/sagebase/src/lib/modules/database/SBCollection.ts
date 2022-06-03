@@ -6,16 +6,16 @@
  *
  */
 
-import { RedisClientType, RediSearchSchema, SchemaFieldTypes, SearchOptions } from 'redis';
+import { RedisClientType, SchemaFieldTypes, SearchOptions } from 'redis';
 import { generateSBDocumentTemplate, SBDocument, SBDocumentMessage, SBDocumentRef, SBJSON } from './SBDocument';
 
 /**
  * Conversion from JS primitive names to RedisSearch SchmeField Types
  */
 const IndexTypes = {
-  "number": SchemaFieldTypes.NUMERIC,
-  "string": SchemaFieldTypes.TAG
-}
+  number: SchemaFieldTypes.NUMERIC,
+  string: SchemaFieldTypes.TAG,
+};
 
 /**
  * A Reference to a SAGEBase Collection in the database.
@@ -28,7 +28,7 @@ export class SBCollectionRef<Type extends SBJSON> {
   private _indexName: string;
 
   /**
-   * 
+   *
    * @param name The name of the collection
    * @param path The "collections" path in the database
    * @param redisClient The redis client
@@ -64,7 +64,6 @@ export class SBCollectionRef<Type extends SBJSON> {
     }
   }
 
-
   /**
    * Get a document refernce from the collection by id.
    * @param {string} id The id of the document within the collection
@@ -79,20 +78,20 @@ export class SBCollectionRef<Type extends SBJSON> {
   /**
    * Subscribe to every event that happens on this collection
    * @param callback The callback function to be called when an even happens.
-   * @returns {Promise<() => Promise<void>>} 
+   * @returns {Promise<() => Promise<void>>}
    */
   public async subscribe(callback: (message: SBDocumentMessage<Type>) => void): Promise<() => Promise<void>> {
     const subscriber = this._redisClient.duplicate();
     await subscriber.connect();
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      callback(parseMsg)
+      callback(parseMsg);
     });
 
     return async () => {
       await subscriber.pUnsubscribe(`${this._path}:*`);
       await subscriber.disconnect();
-    }
+    };
   }
 
   /**
@@ -101,9 +100,13 @@ export class SBCollectionRef<Type extends SBJSON> {
    * @param {string} propertyName The top level property name to match
    * @param {string} value The value to match
    * @param callback The callback function to be called when an even happens.
-   * @returns {Promise<() => Promise<void>>} 
+   * @returns {Promise<() => Promise<void>>}
    */
-  public async subscribeToQuery(propertyName: string, value: string, callback: (message: SBDocumentMessage<Type>) => void): Promise<() => Promise<void>> {
+  public async subscribeToQuery(
+    propertyName: string,
+    value: string,
+    callback: (message: SBDocumentMessage<Type>) => void
+  ): Promise<() => Promise<void>> {
     const subscriber = this._redisClient.duplicate();
     await subscriber.connect();
 
@@ -118,7 +121,7 @@ export class SBCollectionRef<Type extends SBJSON> {
     return async () => {
       await subscriber.pUnsubscribe(`${this._path}:*`);
       await subscriber.disconnect();
-    }
+    };
   }
 
   /**
@@ -127,13 +130,13 @@ export class SBCollectionRef<Type extends SBJSON> {
    */
   public async getAllDocs(): Promise<SBDocument<Type>[]> {
     const docRefs = await this.getAllDocRefs();
-    const promises = docRefs.map(docRef => docRef.read());
+    const promises = docRefs.map((docRef) => docRef.read());
     const docs = await Promise.all(promises);
     if (docs) {
       const returnList = [] as SBDocument<Type>[];
-      docs.forEach(doc => {
+      docs.forEach((doc) => {
         if (doc !== undefined) returnList.push(doc);
-      })
+      });
       return returnList;
     } else {
       return [];
@@ -148,11 +151,11 @@ export class SBCollectionRef<Type extends SBJSON> {
     try {
       const redisRes = await this._redisClient.keys(`${this._path}:*`);
       const docRefList = [] as SBDocumentRef<Type>[];
-      redisRes.forEach(key => {
+      redisRes.forEach((key) => {
         const id = key.split(':')[key.split(':').length - 1];
         const docRef = new SBDocumentRef<Type>(id, key, this._redisClient);
         docRefList.push(docRef);
-      })
+      });
       return docRefList;
     } catch (error) {
       this.ERRORLOG(error);
@@ -163,7 +166,7 @@ export class SBCollectionRef<Type extends SBJSON> {
   /**
    * Creates an index of the collection from the provided object shape.
    * @param indexFields A Partial object of the Collection's Type. The Collection will be queryable by the provided props.
-   * @returns 
+   * @returns
    */
   public async createQueryIndex(indexFields: Partial<Type>): Promise<boolean> {
     this._indexName = `idx:${this._name}`;
@@ -176,37 +179,33 @@ export class SBCollectionRef<Type extends SBJSON> {
       const schema = {
         '$._id': {
           type: SchemaFieldTypes.TAG,
-          AS: '_id'
+          AS: '_id',
         },
         '$._createdAt': {
           type: SchemaFieldTypes.NUMERIC,
-          AS: '_createdAt'
+          AS: '_createdAt',
         },
         '$._updatedAt': {
           type: SchemaFieldTypes.NUMERIC,
-          AS: '_updatedAt'
+          AS: '_updatedAt',
         },
-      } as RediSearchSchema;
-      Object.keys(indexFields).forEach(prop => {
-        const type = (typeof indexFields[prop]);
+      } as { [key: string]: any };
+      Object.keys(indexFields).forEach((prop) => {
+        const type = typeof indexFields[prop];
         if (Object.prototype.hasOwnProperty.call(IndexTypes, type)) {
           const schemaType = IndexTypes[type as 'string' | 'number'];
           schema[`$.data.${prop}`] = {
             type: schemaType,
-            AS: prop
-          }
+            AS: prop,
+          };
         }
-      })
+      });
       const options = {
-        ON: "JSON",
+        ON: 'JSON',
         PREFIX: `${this._path}`,
       } as SearchOptions;
-      const redisRes = await this._redisClient.ft.create(
-        this._indexName,
-        schema,
-        options
-      )
-      const res = (redisRes === 'OK') ? true : false;
+      const redisRes = await this._redisClient.ft.create(this._indexName, schema, options);
+      const res = redisRes === 'OK' ? true : false;
       return res;
     } catch (error) {
       this.ERRORLOG(error);
@@ -226,15 +225,17 @@ export class SBCollectionRef<Type extends SBJSON> {
       // THIS IS A FIX FOR UUIDS. REDIS DOESNT LIKE DASHES
       // ** https://redis.io/docs/stack/search/reference/escaping/
       // ** https://redis.io/docs/stack/search/reference/tags/
-      if (typeof query === "string") query = `{${query.replace(/[#-]/g, '\\$&')}}`;
-      if (typeof query === "number") query = `[${query} ${query}]`;
+      if (typeof query === 'string') query = `{${query.replace(/[#-]/g, '\\$&')}}`;
+      if (typeof query === 'number') query = `[${query} ${query}]`;
       const response = await this._redisClient.ft.search(this._indexName, `@${propertyName}:${query}`); //, { LIMIT: { from: 0, size: 1000 } }
-      const docRefPromises = response.documents.map(el => new SBDocumentRef<Type>(el.value["_id"] as string, el.id, this._redisClient).read());
+      const docRefPromises = response.documents.map((el) =>
+        new SBDocumentRef<Type>(el.value['_id'] as string, el.id, this._redisClient).read()
+      );
       const docs = await Promise.all([...docRefPromises]);
       const a = [] as SBDocument<Type>[];
-      docs.forEach(el => {
+      docs.forEach((el) => {
         if (el !== undefined) a.push(el);
-      })
+      });
       return a;
     } catch (error) {
       this.ERRORLOG(error);
@@ -244,17 +245,17 @@ export class SBCollectionRef<Type extends SBJSON> {
 
   /**
    * Prints errors related to SBCollection
-   * @param {unknown} error 
+   * @param {unknown} error
    */
   private ERRORLOG(error: unknown) {
-    console.log("SAGEBase SBCollection ERROR: ", error);
+    console.log('SAGEBase SBCollection ERROR: ', error);
   }
 
   /**
- * Prints info related to SBCollection
- * @param {unknown} error 
- */
+   * Prints info related to SBCollection
+   * @param {unknown} error
+   */
   private INFOLOG(error: unknown) {
-    console.log("SAGEBase SBCollection INFO: ", error);
+    console.log('SAGEBase SBCollection INFO: ', error);
   }
 }
