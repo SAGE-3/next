@@ -30,7 +30,7 @@ export function BoardCard(props: BoardCardProps) {
       border={`solid ${sageColorByName(props.board.color)} 2px`}
       transition="transform .2s"
       cursor="pointer"
-      _hover={{ transform: "scale(1.1)" }}
+      _hover={{ transform: "scale(1.05)" }}
       style={{ background: `linear-gradient(${sageColorByName(props.board.color)} 10%, transparent 10% ) no-repeat` }}
       onClick={props.onEnter}>
 
@@ -41,12 +41,11 @@ export function BoardCard(props: BoardCardProps) {
           <Text fontSize='1xl'>{props.board.description}
           </Text>
         </Box>
-        <Box display='flex' mt='2' alignItems='center'>
-          <Text fontSize='1xl' mx="2">{Math.floor(Math.random() * 20)}
+        <Box display='flex' mt='2' alignItems='center' flexShrink="3">
+          <Text fontSize='1xl' mx="2" >{Math.floor(Math.random() * 20)}
           </Text>
           <MdPerson
             size="18"
-            color={'white'}
           />
 
           <Box as='span' ml='2' color='gray.600' fontSize='sm'>

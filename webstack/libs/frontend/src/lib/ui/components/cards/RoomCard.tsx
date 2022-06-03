@@ -6,7 +6,7 @@
  *
  */
 
-import { Badge, Box, Text, Tooltip } from "@chakra-ui/react";
+import { Badge, Box, Text, Tooltip, useColorModeValue } from "@chakra-ui/react";
 import { RoomSchema } from "@sage3/shared/types";
 import { sageColorByName } from "@sage3/shared";
 
@@ -28,7 +28,8 @@ function RoomToolTip(props: { room: RoomSchema }) {
 }
 export function RoomCard(props: RoomCardProps) {
 
-
+  const borderColor = useColorModeValue("#A0AEC0", "#4A5568");
+  const textColor = useColorModeValue("#2D3748", "#E2E8F0");
 
   return (
     <Tooltip label={<RoomToolTip room={props.room} />} hasArrow placement="right">
@@ -38,16 +39,16 @@ export function RoomCard(props: RoomCardProps) {
         borderWidth='2px'
         borderRadius='lg'
         overflow='hidden'
-        border={`solid ${(props.selected) ? sageColorByName(props.room.color) : 'white'} 2px`}
+        border={`solid ${(props.selected) ? sageColorByName(props.room.color) : borderColor} 2px`}
         fontWeight="bold"
         width="60px"
         height="60px"
         m="2"
         cursor="pointer"
         alignItems='baseline'
-        color={(props.selected) ? sageColorByName(props.room.color) : 'white'}
-        transition="color 1s"
-        _hover={{ transform: "scale(1.1)", color: sageColorByName(props.room.color) }}
+        color={(props.selected) ? sageColorByName(props.room.color) : textColor}
+        transition=" transform .2s"
+        _hover={{ transform: "scale(1.2)" }}
         onClick={props.onEnter}>
         <Text fontSize='4xl'>{props.room.name.charAt(0).toLocaleUpperCase()}</Text>
       </Box>
