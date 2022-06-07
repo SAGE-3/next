@@ -10,4 +10,8 @@ export type state = {
   url: string;
 };
 
+export const init: Partial<state> = {
+  url: 'https://picsum.photos/id/236/200/300',
+};
+
 export const name = 'Image';

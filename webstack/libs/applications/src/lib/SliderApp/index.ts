@@ -10,4 +10,8 @@ export type state = {
   value: number;
 };
 
+export const init: Partial<state> = {
+  value: 55,
+};
+
 export const name = 'Slider';

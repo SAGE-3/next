@@ -26,7 +26,7 @@ async function create(
   size: AppSchema['size'],
   rotation: AppSchema['rotation'],
   type: AppSchema['type'],
-  state: AppSchema['state']
+  state: Partial<AppSchema['state']>
 ): Promise<AppSchema[] | undefined> {
   const body = { name, description, roomId, boardId, position, size, rotation, type, state };
   const res = await httpPOST('/api/apps', body);

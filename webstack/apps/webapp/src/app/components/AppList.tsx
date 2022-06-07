@@ -9,8 +9,9 @@
 import { Button, useColorModeValue } from "@chakra-ui/react";
 import { useAppStore } from "@sage3/frontend";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
+
 import React, { Suspense, useEffect } from "react";
-import { Applications } from '@sage3/applications/apps';
+import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppWindow } from "./AppWindow";
 
 type AppListProps = {
@@ -23,10 +24,8 @@ export function AppList(props: AppListProps) {
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
   const subToBoard = useAppStore((state) => state.subscribeByBoardId);
-
-  // const borderColor = useColorModeValue("#718096", "#A0AEC0");
   function handleCounterClick() {
-    createApp(
+   createApp(
       'Counter',
       'Counter Description',
       props.selectedRoom.id,
@@ -35,7 +34,20 @@ export function AppList(props: AppListProps) {
       { width: 0, height: 0, depth: 0 },
       { x: 0, y: 0, z: 0 },
       'Counter',
-      { count: 5 });
+     initialValues['Counter']);
+  }
+    
+  function handleImageClick() {
+    createApp(
+      'Image', 
+      'Image Description', 
+      props.selectedRoom.id,
+      props.selectedBoard.id, 
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Image', 
+      initialValues['Image']);
   }
 
   useEffect(() => {
@@ -56,6 +68,7 @@ export function AppList(props: AppListProps) {
       })}
 
       <Button onClick={handleCounterClick}>Counter App</Button>
+      <Button onClick={handleImageClick}>Image App</Button>
 
     </>
   )

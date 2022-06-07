@@ -10,4 +10,8 @@ export type state = {
   count: number;
 };
 
+export const init: Partial<state> = {
+  count: 42,
+};
+
 export const name = 'Counter';
