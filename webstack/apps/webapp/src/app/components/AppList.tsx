@@ -11,6 +11,7 @@ import { useAppStore } from "@sage3/frontend";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
 import React, { Suspense, useEffect } from "react";
 import { Applications } from '@sage3/applications/apps';
+import { AppWindow } from "./AppWindow";
 
 type AppListProps = {
   selectedRoom: RoomSchema;
@@ -25,7 +26,16 @@ export function AppList(props: AppListProps) {
 
   // const borderColor = useColorModeValue("#718096", "#A0AEC0");
   function handleCounterClick() {
-    createApp('Counter', 'Counter Description', props.selectedRoom.id, props.selectedBoard.id, 'Counter', { count: 5 });
+    createApp(
+      'Counter',
+      'Counter Description',
+      props.selectedRoom.id,
+      props.selectedBoard.id,
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Counter',
+      { count: 5 });
   }
 
   useEffect(() => {
@@ -38,9 +48,9 @@ export function AppList(props: AppListProps) {
         const Component = Applications[app.type];
         return (
           <Suspense key={app.id} fallback={<div>Loading App</div>}>
-            <div key={app.id} style={{ margin: 3 }}>
+            <AppWindow key={app.id} app={app}>
               <Component key={app.id} {...app}></Component>
-            </div>
+            </AppWindow>
           </Suspense>
         );
       })}

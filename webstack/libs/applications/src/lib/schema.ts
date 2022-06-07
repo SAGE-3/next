@@ -7,6 +7,7 @@
  */
 
 // import and re-export all the apps
+import { Position, Rotation, Size } from '@sage3/shared/types';
 import { AppName, AppState } from './types';
 export { AppName, AppState } from './types';
 
@@ -18,6 +19,9 @@ export type AppSchema = {
   roomId: string;
   boardId: string;
   ownerId: string;
+  position: Position;
+  size: Size;
+  rotation: Rotation;
   type: AppName;
   state: AppState;
 };

@@ -16,7 +16,6 @@ import './styles.css';
 function CounterApp(props: AppSchema): JSX.Element {
 
   const s = props.state as AppState;
-
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);
 
@@ -33,11 +32,11 @@ function CounterApp(props: AppSchema): JSX.Element {
   }
 
   return (
-    <div className="Counter-Container">
+    <>
       <h3>{props.name} - {s.count} <button onClick={handleClose}>X</button></h3>
       <Button onClick={handleAddClick} colorScheme="green">Add</Button>
       <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
-    </div>
+    </>
   )
 }
 

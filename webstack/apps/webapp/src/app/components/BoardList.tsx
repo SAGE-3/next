@@ -61,7 +61,7 @@ export function BoardList(props: BoardListProps) {
 
       {
         props.selectedRoom ? (
-          (filterBoards ? filterBoards : boards).map((board) => {
+          (filterBoards ? filterBoards : boards).sort((a, b) => a.name.localeCompare(b.name)).map((board) => {
             return (
               <BoardCard
                 key={board.id}

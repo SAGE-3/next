@@ -28,6 +28,9 @@ interface Applications {
     description: AppSchema['description'],
     roomId: AppSchema['roomId'],
     boardId: AppSchema['boardId'],
+    position: AppSchema['position'],
+    size: AppSchema['size'],
+    rotation: AppSchema['rotation'],
     type: AppSchema['type'],
     state: AppSchema['state']
   ) => Promise<void>;
@@ -50,11 +53,14 @@ const AppStore = createVanilla<Applications>((set, get) => {
       description: AppSchema['description'],
       roomId: AppSchema['roomId'],
       boardId: AppSchema['boardId'],
+      position: AppSchema['position'],
+      size: AppSchema['size'],
+      rotation: AppSchema['rotation'],
       type: AppSchema['type'],
       state: AppSchema['state']
     ) => {
       console.log('hello');
-      AppHTTPService.create(name, description, roomId, boardId, type, state);
+      AppHTTPService.create(name, description, roomId, boardId, position, size, rotation, type, state);
     },
     update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
       AppHTTPService.update(id, updates);
@@ -118,6 +124,9 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
       description: AppSchema['description'],
       roomId: AppSchema['roomId'],
       boardId: AppSchema['boardId'],
+      position: AppSchema['position'],
+      size: AppSchema['size'],
+      rotation: AppSchema['rotation'],
       type: AppSchema['type'],
       state: AppSchema['state']
     ) => {
@@ -128,6 +137,9 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
         roomId: genId(),
         boardId: genId(),
         ownerId: genId(),
+        position,
+        size,
+        rotation,
         type,
         state,
       } as AppSchema;
