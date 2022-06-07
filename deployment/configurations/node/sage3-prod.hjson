@@ -55,10 +55,9 @@
       "callbackURL": ""
     },
     "jwtConfig": {
-      // found in the 'keys' folder
-      "publicKey": "jwt_public.pem",
       "issuer": "sage3app@gmail.com",
       "audience": "sage3.app",
+      "publicKey": "./keys/jwt_public.pem",
       "routeEndpoint": "/auth/jwt"
     },
     "cilogonConfig": {
