@@ -25,6 +25,7 @@ export function HomePage() {
 
   function handleRoomClick(room: RoomSchema) {
     setSelectedRoom(room);
+    setSelectedBoard(null);
   }
 
   function handleBoardClick(board: BoardSchema) {
@@ -62,8 +63,6 @@ export function HomePage() {
         </Box>
 
       </Box>
-
-
 
       {/* The Corner SAGE3 Image */}
       <div style={{ position: 'absolute', bottom: '0.5rem', left: '0.5rem', opacity: 0.8 }}>

@@ -26,12 +26,12 @@ export function RoomList(props: RoomListProps) {
 
   useEffect(() => {
     subToAllRooms()
-  }, [subToAllRooms]);
+  }, [subToAllRooms, rooms]);
 
   const [newRoomModal, setNewRoomModal] = useState(false);
   return (
     <>
-      {rooms.map((room) => {
+      {rooms.sort((a, b) => a.name.localeCompare(b.name)).map((room) => {
         return (
           <RoomCard
             key={room.id}

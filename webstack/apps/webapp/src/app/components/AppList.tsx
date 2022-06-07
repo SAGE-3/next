@@ -9,8 +9,10 @@
 import { Button, useColorModeValue } from "@chakra-ui/react";
 import { useAppStore } from "@sage3/frontend";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
-import { Suspense, useEffect } from "react";
+
+import React, { Suspense, useEffect } from "react";
 import { Applications, initialValues } from '@sage3/applications/apps';
+import { AppWindow } from "./AppWindow";
 
 type AppListProps = {
   selectedRoom: RoomSchema;
@@ -22,12 +24,30 @@ export function AppList(props: AppListProps) {
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
   const subToBoard = useAppStore((state) => state.subscribeByBoardId);
-
   function handleCounterClick() {
-    createApp('Counter', 'Counter Description', props.selectedRoom.id, props.selectedBoard.id, 'Counter', initialValues['Counter']);
+   createApp(
+      'Counter',
+      'Counter Description',
+      props.selectedRoom.id,
+      props.selectedBoard.id,
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Counter',
+     initialValues['Counter']);
   }
+    
   function handleImageClick() {
-    createApp('Image', 'Image Description', props.selectedRoom.id, props.selectedBoard.id, 'Image', initialValues['Image']);
+    createApp(
+      'Image', 
+      'Image Description', 
+      props.selectedRoom.id,
+      props.selectedBoard.id, 
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Image', 
+      initialValues['Image']);
   }
 
   useEffect(() => {
@@ -40,9 +60,9 @@ export function AppList(props: AppListProps) {
         const Component = Applications[app.type];
         return (
           <Suspense key={app.id} fallback={<div>Loading App</div>}>
-            <div key={app.id} style={{ margin: 3 }}>
+            <AppWindow key={app.id} app={app}>
               <Component key={app.id} {...app}></Component>
-            </div>
+            </AppWindow>
           </Suspense>
         );
       })}

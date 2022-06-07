@@ -22,10 +22,13 @@ async function create(
   description: AppSchema['description'],
   roomId: AppSchema['roomId'],
   boardId: AppSchema['boardId'],
+  position: AppSchema['position'],
+  size: AppSchema['size'],
+  rotation: AppSchema['rotation'],
   type: AppSchema['type'],
   state: Partial<AppSchema['state']>
 ): Promise<AppSchema[] | undefined> {
-  const body = { name, description, roomId, boardId, type, state };
+  const body = { name, description, roomId, boardId, position, size, rotation, type, state };
   const res = await httpPOST('/api/apps', body);
   return res.data;
 }

@@ -47,9 +47,9 @@ class SAGE3AppModel {
    * @param {BoardSchema} newBoard The new board to add to the database
    * @returns {Promise<boolean>} Returns true if board was succesfully created.
    */
-  public async createApp(id: string, newRoom: AppSchema): Promise<SBDocument<AppSchema> | undefined> {
+  public async createApp(id: string, newApp: AppSchema): Promise<SBDocument<AppSchema> | undefined> {
     try {
-      const docRef = await this.appCollection.addDoc(newRoom, id);
+      const docRef = await this.appCollection.addDoc(newApp, id);
       if (docRef) {
         const doc = await docRef.read();
         return doc;

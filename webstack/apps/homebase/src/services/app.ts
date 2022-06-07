@@ -21,7 +21,7 @@
 import { AppModel } from '../models';
 import { SBDocumentMessage } from '@sage3/sagebase';
 import { genId } from '@sage3/shared';
-import { AppSchema, AppState, AppName } from '@sage3/applications/schema';
+import { AppSchema, AppState } from '@sage3/applications/schema';
 
 /**
  * The SAGE3 AppService that interfaces with the AppModel
@@ -38,13 +38,16 @@ class SAGE3AppService {
    * @returns {AppSchema | undefined} Returns the AppSchema or undefined if unsuccessful
    */
   public async create(
-    name: string,
-    description: string,
-    ownerId: string,
-    roomId: string,
-    boardId: string,
-    type: AppName,
-    state: AppState
+    name: AppSchema['name'],
+    description: AppSchema['description'],
+    ownerId: AppSchema['ownerId'],
+    roomId: AppSchema['roomId'],
+    boardId: AppSchema['boardId'],
+    position: AppSchema['position'],
+    size: AppSchema['size'],
+    rotation: AppSchema['rotation'],
+    type: AppSchema['type'],
+    state: AppSchema['state']
   ): Promise<AppSchema | undefined> {
     const id = genId();
     const newApp = {
@@ -54,6 +57,9 @@ class SAGE3AppService {
       roomId,
       ownerId,
       boardId,
+      position,
+      size,
+      rotation,
       type,
       state,
     } as AppSchema;
