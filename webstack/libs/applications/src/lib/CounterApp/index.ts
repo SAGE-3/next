@@ -6,8 +6,8 @@
  *
  */
 
-export type CounterState = {
-  count: number,
-}
+export type state = {
+  count: number;
+};
 
-export const CounterName = "Counter";
+export const name = 'Counter';

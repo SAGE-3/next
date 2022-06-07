@@ -20,7 +20,7 @@
 
 import { SAGEBase, SBCollectionRef, SBDocument, SBDocumentMessage, SBDocumentUpdate } from '@sage3/sagebase';
 
-import { AppSchema, AppStates } from '@sage3/applications/types';
+import { AppSchema, AppState } from '@sage3/applications/schema';
 /**
  * The database model for SAGE3 Apps.
  */
@@ -131,7 +131,7 @@ class SAGE3AppModel {
    * @param {Partial<AppStates>} update The update values for the state.
    * @return {Promise<boolean>} Returns true if update was succesful.
    */
-  public async updateState(id: string, update: Partial<AppStates>): Promise<boolean> {
+  public async updateState(id: string, update: Partial<AppState>): Promise<boolean> {
     try {
       const currentState = await this.appCollection.docRef(id).read();
       if (!currentState) return false;

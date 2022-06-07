@@ -6,17 +6,16 @@
  *
  */
 
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { useAppStore } from '@sage3/frontend';
 import { Button } from '@chakra-ui/react';
-import { AppSchema } from "../types";
+import { AppSchema } from "../schema";
 
-import { CounterState } from "./index";
+import { state as AppState } from "./index";
 import './styles.css';
 
 function CounterApp(props: AppSchema): JSX.Element {
 
-  const s = props.state as CounterState;
+  const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);

@@ -6,11 +6,11 @@
  *
  */
 
-export type LinkerState = {
+export type state = {
   toAppId: string;
   toAppField: string;
   fromAppId: string;
   fromAppField: string;
-}
+};
 
-export const LinkerName = "Linker";
+export const name = 'Linker';
