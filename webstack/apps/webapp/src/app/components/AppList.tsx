@@ -9,7 +9,7 @@
 import { Button, useColorModeValue } from "@chakra-ui/react";
 import { useAppStore } from "@sage3/frontend";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
-import { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Applications } from '@sage3/applications/apps';
 
 type AppListProps = {
@@ -37,9 +37,11 @@ export function AppList(props: AppListProps) {
       {apps.map((app) => {
         const Component = Applications[app.type];
         return (
-          <div key={app.id} style={{ margin: 3 }}>
-            <Component key={app.id} {...app}></Component>
-          </div>
+          <Suspense key={app.id} fallback={<div>Loading App</div>}>
+            <div key={app.id} style={{ margin: 3 }}>
+              <Component key={app.id} {...app}></Component>
+            </div>
+          </Suspense>
         );
       })}
 

@@ -6,8 +6,12 @@
  *
  */
 
+import * as React from 'react';
+
 export type CounterState = {
   count: number,
 }
 
 export const CounterName = "Counter";
+
+export const CounterApp = React.lazy(() => import('./CounterApp'));

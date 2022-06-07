@@ -67,7 +67,6 @@ const AppStore = createVanilla<AppState>((set, get) => {
       const body = { boardId };
       // Socket Listenting to updates from server about the current user
       appsSub = await socket.subscribe<AppSchema>(route, body, (message) => {
-        console.timeLog('hi')
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, message.doc.data] })
