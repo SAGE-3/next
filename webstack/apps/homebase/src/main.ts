@@ -80,6 +80,7 @@ async function startServer() {
       strategies: {
         guestConfig: config.auth.guestConfig,
         googleConfig: config.auth.googleConfig,
+        jwtConfig: config.auth.jwtConfig,
       },
     },
   };
