@@ -49,6 +49,13 @@ export function userExpressRouter(): express.Router {
     else res.status(500).send({ success: false });
   });
 
+  // Get info about current user: GET /api/users/current
+  router.get('/current', async ({ user }, res) => {
+    const u = await UserService.read(user.id);
+    if (u) res.status(200).send({ success: true, data: u });
+    else res.status(500).send({ success6: false });
+  });
+
   // Get one user: GET /api/users/:id
   router.get('/:id', async ({ params }, res) => {
     const user = await UserService.read(params.id);
@@ -67,15 +74,6 @@ export function userExpressRouter(): express.Router {
   router.delete('/:id', async ({ params }, res) => {
     const del = await UserService.delete(params.id);
     if (del) res.status(200).send({ success: true });
-    else res.status(500).send({ success: false });
-  });
-
-  // Custom routes
-
-  // xxx
-  router.get('/current', async ({ user }, res) => {
-    const u = await UserService.read(user.id);
-    if (u) res.status(200).send({ success: true, data: u });
     else res.status(500).send({ success: false });
   });
 

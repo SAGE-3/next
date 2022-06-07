@@ -58,7 +58,6 @@
       "callbackURL": "/auth/google/redirect"
     },
     "jwtConfig": {
-      // found in the 'keys' folder
       "issuer": "sage3app@gmail.com",
       "audience": "sage3.app",
       "publicKey": "./keys/jwt_public.pem",

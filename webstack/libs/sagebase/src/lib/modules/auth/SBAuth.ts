@@ -149,8 +149,12 @@ export class SBAuth {
    */
   public async authenticate(req: Request, res: Response, next: NextFunction) {
     const user = req.user as SBAuthSchema;
+    const headerToken = req.headers['authorization'];
     if (user) {
       next();
+    } else if (headerToken) {
+      // if there's a header token, try JWT strategy
+      passport.authenticate('jwt', { session: false })(req, res, next);
     } else {
       res.status(403);
       res.send({ success: false, authentication: false, auth: null });
