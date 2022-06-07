@@ -12,9 +12,7 @@
  * @version 1.0.0
  */
 
-
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import { AppSchema, AppStates } from '@sage3/applications/types';
+import { AppSchema, AppState } from '@sage3/applications/schema';
 
 import { httpDELETE, httpGET, httpPOST, httpPUT } from './http';
 
@@ -64,7 +62,7 @@ async function query(query: Partial<AppSchema>): Promise<AppSchema[] | undefined
   return response.data;
 }
 
-async function updateState(id: AppSchema['id'], state: Partial<AppStates>): Promise<boolean> {
+async function updateState(id: AppSchema['id'], state: Partial<AppState>): Promise<boolean> {
   const response = await httpPUT('/api/apps/state/' + id, state);
   return response.success;
 }

@@ -7,16 +7,15 @@
  */
 
 
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../types";
+import { AppSchema } from "../schema";
 
-import { NoteState } from "./";
+import { state as AppState } from "./";
 import './styles.css';
 
 function NoteApp(props: AppSchema): JSX.Element {
 
-  const s = props.state as NoteState;
+  const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);
