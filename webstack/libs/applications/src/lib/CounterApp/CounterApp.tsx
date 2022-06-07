@@ -35,7 +35,7 @@ function CounterApp(props: AppSchema): JSX.Element {
 
   return (
     <div className="Counter-Container">
-      <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
+      <h3>{props.name} - {s.count} <button onClick={handleClose}>X</button></h3>
       <Button onClick={handleAddClick} colorScheme="green">Add</Button>
       <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
     </div>

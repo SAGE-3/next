@@ -85,7 +85,7 @@ export function appExpressRouter(): express.Router {
   });
 
   // xxx
-  router.get('/boarId/:boardId', async ({ params }, res) => {
+  router.get('/boardId/:boardId', async ({ params }, res) => {
     const apps = await AppService.query('boardId', params);
     if (apps) res.status(200).send({ success: true, data: apps });
     else res.status(500).send({ success: false });

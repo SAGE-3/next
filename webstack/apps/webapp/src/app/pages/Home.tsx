@@ -10,6 +10,7 @@ import { Box, useColorModeValue } from '@chakra-ui/react';
 
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { useState } from 'react';
+import { AppList } from '../components/AppList';
 
 import { BoardList } from '../components/BoardList';
 import { Header } from '../components/Header';
@@ -18,6 +19,7 @@ import { RoomList } from '../components/RoomList';
 export function HomePage() {
 
   const [selectedRoom, setSelectedRoom] = useState<RoomSchema | null>(null);
+  const [selectedBoard, setSelectedBoard] = useState<BoardSchema | null>(null);
 
   const imageUrl = useColorModeValue("/assets/SAGE3LightMode.png", "/assets/SAGE3DarkMode.png");
 
@@ -26,7 +28,7 @@ export function HomePage() {
   }
 
   function handleBoardClick(board: BoardSchema) {
-    console.log('board clicked', board);
+    setSelectedBoard(board);
   }
 
   return (
@@ -51,6 +53,8 @@ export function HomePage() {
             </Box>
 
             <Box display="flex" flexWrap="wrap" flexDirection="row" p="10">
+              {/* TEMP APPS AREA */}
+              {(selectedBoard && selectedRoom) ? <AppList selectedBoard={selectedBoard} selectedRoom={selectedRoom}></AppList> : null}
 
             </Box>
 

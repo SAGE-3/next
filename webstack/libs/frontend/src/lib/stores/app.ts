@@ -28,7 +28,7 @@ interface AppState {
   update: (id: AppSchema['id'], updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: AppSchema['id'], state: Partial<AppStates>) => Promise<void>;
   delete: (id: AppSchema['id']) => Promise<void>;
-  subscribeByBoardId?: (boardId: AppSchema['boardId']) => Promise<void>;
+  subscribeByBoardId: (boardId: AppSchema['boardId']) => Promise<void>;
 }
 
 /**
@@ -40,6 +40,7 @@ const AppStore = createVanilla<AppState>((set, get) => {
   return {
     apps: [],
     create: async (name: AppSchema['name'], description: AppSchema['description'], roomId: AppSchema['roomId'], boardId: AppSchema['boardId'], type: AppSchema['type'], state: AppSchema['state']) => {
+      console.log('hello')
       AppHTTPService.create(name, description, roomId, boardId, type, state);
     },
     update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
@@ -66,6 +67,7 @@ const AppStore = createVanilla<AppState>((set, get) => {
       const body = { boardId };
       // Socket Listenting to updates from server about the current user
       appsSub = await socket.subscribe<AppSchema>(route, body, (message) => {
+        console.timeLog('hi')
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, message.doc.data] })
@@ -126,6 +128,9 @@ const AppPlaygroundStore = createVanilla<AppState>((set, get) => {
     delete: async (id: AppSchema['id']) => {
       set({ apps: get().apps.filter(app => app.id !== id) })
     },
+    subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
+      console.log('Subscribing to apps by boardId not required in the playground');
+    }
   }
 })
 

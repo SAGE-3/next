@@ -213,11 +213,11 @@ class SAGE3AppService {
    * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
    */
   public async subscribeByBoardId(
-    roomId: string,
+    boardId: string,
     callback: (message: SBDocumentMessage<AppSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await AppModel.subscribeByBoardId(roomId, callback);
+      const subscription = await AppModel.subscribeByBoardId(boardId, callback);
       return subscription;
     } catch (error) {
       console.log('AppService subscribeByBoardId error> ', error);
