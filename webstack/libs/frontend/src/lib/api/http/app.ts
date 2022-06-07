@@ -23,7 +23,7 @@ async function create(
   roomId: AppSchema['roomId'],
   boardId: AppSchema['boardId'],
   type: AppSchema['type'],
-  state: AppSchema['state']
+  state: Partial<AppSchema['state']>
 ): Promise<AppSchema[] | undefined> {
   const body = { name, description, roomId, boardId, type, state };
   const res = await httpPOST('/api/apps', body);

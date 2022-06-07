@@ -9,8 +9,8 @@
 import { Button, useColorModeValue } from "@chakra-ui/react";
 import { useAppStore } from "@sage3/frontend";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
-import React, { Suspense, useEffect } from "react";
-import { Applications } from '@sage3/applications/apps';
+import { Suspense, useEffect } from "react";
+import { Applications, initialValues } from '@sage3/applications/apps';
 
 type AppListProps = {
   selectedRoom: RoomSchema;
@@ -23,9 +23,11 @@ export function AppList(props: AppListProps) {
   const createApp = useAppStore((state) => state.create);
   const subToBoard = useAppStore((state) => state.subscribeByBoardId);
 
-  // const borderColor = useColorModeValue("#718096", "#A0AEC0");
   function handleCounterClick() {
-    createApp('Counter', 'Counter Description', props.selectedRoom.id, props.selectedBoard.id, 'Counter', { count: 5 });
+    createApp('Counter', 'Counter Description', props.selectedRoom.id, props.selectedBoard.id, 'Counter', initialValues['Counter']);
+  }
+  function handleImageClick() {
+    createApp('Image', 'Image Description', props.selectedRoom.id, props.selectedBoard.id, 'Image', initialValues['Image']);
   }
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export function AppList(props: AppListProps) {
       })}
 
       <Button onClick={handleCounterClick}>Counter App</Button>
+      <Button onClick={handleImageClick}>Image App</Button>
 
     </>
   )

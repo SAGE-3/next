@@ -10,4 +10,8 @@ export type state = {
   text: string;
 };
 
+export const init: Partial<state> = {
+  text: 'empty note',
+};
+
 export const name = 'Note';

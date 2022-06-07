@@ -29,7 +29,7 @@ interface Applications {
     roomId: AppSchema['roomId'],
     boardId: AppSchema['boardId'],
     type: AppSchema['type'],
-    state: AppSchema['state']
+    state: Partial<AppSchema['state']>
   ) => Promise<void>;
   update: (id: AppSchema['id'], updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: AppSchema['id'], state: Partial<AppState>) => Promise<void>;
@@ -51,7 +51,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       roomId: AppSchema['roomId'],
       boardId: AppSchema['boardId'],
       type: AppSchema['type'],
-      state: AppSchema['state']
+      state: Partial<AppSchema['state']>
     ) => {
       console.log('hello');
       AppHTTPService.create(name, description, roomId, boardId, type, state);
@@ -119,7 +119,7 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
       roomId: AppSchema['roomId'],
       boardId: AppSchema['boardId'],
       type: AppSchema['type'],
-      state: AppSchema['state']
+      state: Partial<AppSchema['state']>
     ) => {
       const newApp = {
         id: genId(),

@@ -6,11 +6,11 @@
  *
  */
 
-import { name as CounterName } from './CounterApp';
-import { name as ImageName } from './ImageApp';
-import { name as LinkerName } from './LinkerApp';
-import { name as NoteName } from './NoteApp';
-import { name as SliderName } from './SliderApp';
+import { name as CounterName, init as defaultCounter } from './CounterApp';
+import { name as ImageName, init as defaultImage } from './ImageApp';
+import { name as LinkerName, init as defaultLinker } from './LinkerApp';
+import { name as NoteName, init as defaultNote } from './NoteApp';
+import { name as SliderName, init as defaultSlider } from './SliderApp';
 
 import CounterApp from './CounterApp/CounterApp';
 import ImageApp from './ImageApp/ImageApp';
@@ -25,3 +25,11 @@ export const Applications = {
   [NoteName]: NoteApp,
   [SliderName]: SliderApp,
 } as unknown as Record<string, () => JSX.Element>;
+
+export const initialValues = {
+  [CounterName]: defaultCounter,
+  [ImageName]: defaultImage,
+  [LinkerName]: defaultLinker,
+  [NoteName]: defaultNote,
+  [SliderName]: defaultSlider,
+};

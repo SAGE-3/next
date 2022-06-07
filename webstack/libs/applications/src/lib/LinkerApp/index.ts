@@ -13,4 +13,11 @@ export type state = {
   fromAppField: string;
 };
 
+export const init: Partial<state> = {
+  toAppId: '',
+  toAppField: '',
+  fromAppId: '',
+  fromAppField: '',
+};
+
 export const name = 'Linker';
