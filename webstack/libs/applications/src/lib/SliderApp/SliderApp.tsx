@@ -6,17 +6,16 @@
  *
  */
 
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../types";
+import { AppSchema } from "../schema";
 
-import { SliderState } from "./";
+import { state as AppState } from "./";
 import './styles.css';
 
 
 function SliderApp(props: AppSchema): JSX.Element {
 
-  const s = props.state as SliderState;
+  const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);

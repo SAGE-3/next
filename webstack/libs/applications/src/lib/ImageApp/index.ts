@@ -6,8 +6,8 @@
  *
  */
 
-export type ImageState = {
+export type state = {
   url: string;
-}
+};
 
-export const ImageName = "Image";
+export const name = 'Image';

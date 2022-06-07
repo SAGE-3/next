@@ -6,8 +6,8 @@
  *
  */
 
-export type SliderState = {
+export type state = {
   value: number;
-}
+};
 
-export const SliderName = "Slider";
+export const name = 'Slider';

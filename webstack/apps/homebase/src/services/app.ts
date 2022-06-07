@@ -20,8 +20,8 @@
 
 import { AppModel } from '../models';
 import { SBDocumentMessage } from '@sage3/sagebase';
-import { genId } from '@sage3/shared'
-import { AppSchema, AppStates, AppTypes } from '@sage3/applications/types';
+import { genId } from '@sage3/shared';
+import { AppSchema, AppState, AppName } from '@sage3/applications/schema';
 
 /**
  * The SAGE3 AppService that interfaces with the AppModel
@@ -43,8 +43,8 @@ class SAGE3AppService {
     ownerId: string,
     roomId: string,
     boardId: string,
-    type: AppTypes,
-    state: AppStates
+    type: AppName,
+    state: AppState
   ): Promise<AppSchema | undefined> {
     const id = genId();
     const newApp = {
@@ -134,7 +134,7 @@ class SAGE3AppService {
    * @param {string} roomId The id of the new room.
    * @return {Promise<boolean>} Returns true if action was succesful.
    */
-  public async updateState(id: string, state: Partial<AppStates>): Promise<boolean> {
+  public async updateState(id: string, state: Partial<AppState>): Promise<boolean> {
     try {
       const success = await AppModel.updateState(id, state);
       return success;

@@ -6,8 +6,8 @@
  *
  */
 
-export type NoteState = {
+export type state = {
   text: string;
-}
+};
 
-export const NoteName = "Note";
+export const name = 'Note';

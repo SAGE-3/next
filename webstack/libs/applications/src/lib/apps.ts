@@ -6,12 +6,13 @@
  *
  */
 
-import { CounterApp, CounterName } from './CounterApp';
-import { ImageName } from './ImageApp';
-import { LinkerName } from './LinkerApp';
-import { NoteName } from './NoteApp';
-import { SliderName } from './SliderApp';
+import { name as CounterName } from './CounterApp';
+import { name as ImageName } from './ImageApp';
+import { name as LinkerName } from './LinkerApp';
+import { name as NoteName } from './NoteApp';
+import { name as SliderName } from './SliderApp';
 
+import CounterApp from './CounterApp/CounterApp';
 import ImageApp from './ImageApp/ImageApp';
 import LinkerApp from './LinkerApp/LinkerApp';
 import NoteApp from './NoteApp/NoteApp';
@@ -22,5 +23,5 @@ export const Applications = {
   [ImageName]: ImageApp,
   [LinkerName]: LinkerApp,
   [NoteName]: NoteApp,
-  [SliderName]: SliderApp
-} as unknown as Record<string, () => JSX.Element>
+  [SliderName]: SliderApp,
+} as unknown as Record<string, () => JSX.Element>;

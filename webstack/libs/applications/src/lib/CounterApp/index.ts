@@ -6,12 +6,8 @@
  *
  */
 
-import * as React from 'react';
+export type state = {
+  count: number;
+};
 
-export type CounterState = {
-  count: number,
-}
-
-export const CounterName = "Counter";
-
-export const CounterApp = React.lazy(() => import('./CounterApp'));
+export const name = 'Counter';
