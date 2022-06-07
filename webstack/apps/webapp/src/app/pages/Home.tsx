@@ -46,7 +46,7 @@ export function HomePage() {
 
           <Box display="flex" flexWrap="wrap" flexDirection="row">
 
-            <Box display="flex" flexWrap="wrap" flexDirection="column" width="400px">
+            <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 500]}>
               <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
             </Box>
 
