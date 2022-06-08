@@ -7,7 +7,7 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Applications } from '@sage3/applications/apps';
+import { Applications, initialValues } from '@sage3/applications/apps';
 import { Button } from '@chakra-ui/react';
 
 export function App() {
@@ -16,25 +16,65 @@ export function App() {
   const createApp = useAppStore((state) => state.create);
 
   function handleNoteClick() {
-    createApp('Note', 'Note Description', '1', '1', 'Note', { text: 'Hello' });
+    createApp(
+      'Note',
+      'Note Description',
+      `1`,
+      '1',
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Note',
+      initialValues['Note']);
   }
-
   function handleCounterClick() {
-    createApp('Counter', 'Counter Description', '1', '1', 'Counter', { count: 5 });
+    createApp(
+      'Counter',
+      'Counter Description',
+      `1`,
+      '1',
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Counter',
+      initialValues['Counter']);
   }
-
   function handleImageClick() {
-    createApp('Image', 'Image Description', '1', '1', 'Image', {
-      url: 'https://www.denofgeek.com/wp-content/uploads/2015/11/yoda-main.jpg?resize=620%2C349',
-    });
+    createApp(
+      'Image',
+      'Image Description',
+      `1`,
+      '1',
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Image',
+      initialValues['Image']);
   }
-
   function handleSliderClick() {
-    createApp('Slider', 'Image Description', '1', '1', 'Slider', { value: 50 });
+    createApp(
+      'Slider',
+      'Slider Description',
+      `1`,
+      '1',
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Slider',
+      initialValues['Slider']);
   }
 
   function handleLinkerClick() {
-    createApp('Linker', 'Linker Description', '1', '1', 'Linker', { toAppId: '', toAppField: '', fromAppField: '', fromAppId: '' });
+    createApp(
+      'Linker',
+      'Linker Description',
+      `1`,
+      '1',
+      { x: 0, y: 0, z: 0 },
+      { width: 0, height: 0, depth: 0 },
+      { x: 0, y: 0, z: 0 },
+      'Linker',
+      initialValues['Linker']);
   }
 
   return (
