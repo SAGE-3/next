@@ -58,7 +58,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // Socket Subscribe Message
       const route = '/api/rooms/subscribe';
       const body = {}
-      // Socket Listenting to updates from server about the current user
+      // Socket Listenting to updates from server about the current rooms
       roomSub = await socket.subscribe<RoomSchema>(route, body, (message) => {
         console.log(message)
         switch (message.type) {

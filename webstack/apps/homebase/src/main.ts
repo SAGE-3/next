@@ -100,7 +100,7 @@ async function startServer() {
   apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
-    console.log('apiWebSocketServer> connection');
+    console.log('apiWebSocketServer> connection open');
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
       wsAPIRouter(socket, request, message, subCache);

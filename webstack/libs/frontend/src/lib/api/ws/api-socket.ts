@@ -24,7 +24,6 @@ export class SocketAPI {
   }
 
   private processServerMessage(message: MessageEvent<any>) {
-    console.log(message.data)
     const msg = JSON.parse(message.data);
     if (this.subscriptions[msg.subId]) {
       this.subscriptions[msg.subId](msg.event);
@@ -40,13 +39,12 @@ export class SocketAPI {
         resolve();
       } else {
         console.log('Socket net ready, message not sent, retrying... ');
-        setTimeout(() => this.sendMessage(message), 2000);
+        setTimeout(() => resolve(this.sendMessage(message)), 1000);
       }
     })
   }
 
   public async subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): Promise<() => Promise<void>> {
-    console.log('sub call')
     const id = genId();
     const subId = genId();
     const subMessage = {
@@ -60,8 +58,8 @@ export class SocketAPI {
     this.subscriptions[subId] = callback;
     this.sendMessage(JSON.stringify(subMessage));
 
-    return () => {
-      return new Promise((resolve) => {
+    return () =>
+      new Promise((resolve) => {
         const parts = subMessage.route.split('/');
         const route = `/api/${parts[2]}/unsubscribe`;
         const unsubMessage = {
@@ -71,13 +69,11 @@ export class SocketAPI {
             subId,
           },
         } as APIClientWSMessage;
-        this.sendMessage(JSON.stringify(unsubMessage)).then(() => {
+        return this.sendMessage(JSON.stringify(unsubMessage)).then(() => {
           delete this.subscriptions[id];
-          resolve()
+          return resolve()
         });
       });
-    }
-
   }
 
   public static getInstance(): SocketAPI {

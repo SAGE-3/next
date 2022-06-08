@@ -11,7 +11,7 @@ export type state = {
 };
 
 export const init: Partial<state> = {
-  text: 'empty note',
+  text: "empty note",
 };
 
 export const name = 'Note';

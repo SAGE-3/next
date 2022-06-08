@@ -23,7 +23,6 @@ export class SubscriptionCache {
   public delete(subId: string) {
     if (this.cache[subId]) {
       try {
-        console.log('delete', subId)
         this.cache[subId]();
       } catch (e) {
         console.log(e);
@@ -33,7 +32,6 @@ export class SubscriptionCache {
   }
 
   public deleteAll() {
-    console.log(Object.keys(this.cache))
     Object.keys(this.cache).forEach(id => {
       this.delete(id);
     })
