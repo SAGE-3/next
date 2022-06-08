@@ -16,6 +16,7 @@ import './styles.css';
 function CounterApp(props: AppSchema): JSX.Element {
 
   const s = props.state as AppState;
+
   const updateState = useAppStore(state => state.updateState);
   const deleteApp = useAppStore(state => state.delete);
 

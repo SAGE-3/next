@@ -47,7 +47,7 @@ export function RoomCard(props: RoomCardProps) {
         cursor="pointer"
         alignItems='baseline'
         color={(props.selected) ? sageColorByName(props.room.color) : textColor}
-        transition=" transform .2s"
+        transition="transform .2s"
         _hover={{ transform: "scale(1.2)" }}
         onClick={props.onEnter}>
         <Text fontSize='4xl'>{props.room.name.charAt(0).toLocaleUpperCase()}</Text>

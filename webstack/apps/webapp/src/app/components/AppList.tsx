@@ -24,6 +24,7 @@ export function AppList(props: AppListProps) {
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
   const subToBoard = useAppStore((state) => state.subscribeByBoardId);
+  
   function handleCounterClick() {
    createApp(
       'Counter',
