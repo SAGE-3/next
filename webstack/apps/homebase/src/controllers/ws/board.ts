@@ -43,7 +43,7 @@ export async function boardWSRouter(socket: WebSocket, request: IncomingMessage,
   switch (message.route) {
     case '/api/boards/subscribe': {
       const sub = await BoardService.subscribetoAllBoards((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.body.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
       if (sub) cache.add(message.body.subId, sub)
@@ -51,7 +51,7 @@ export async function boardWSRouter(socket: WebSocket, request: IncomingMessage,
     }
     case '/api/boards/subscribe/:id': {
       const sub = await BoardService.subscribeToBoard(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.body.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
       if (sub) cache.add(message.body.subId, sub)
@@ -59,7 +59,7 @@ export async function boardWSRouter(socket: WebSocket, request: IncomingMessage,
     }
     case '/api/boards/subscribe/:roomId': {
       const sub = await BoardService.subscribeByRoomId(message.body.roomId, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.body.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
       if (sub) cache.add(message.body.subId, sub)

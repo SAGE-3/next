@@ -41,7 +41,7 @@ export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, 
   switch (message.route) {
     case '/api/rooms/subscribe': {
       const sub = await RoomService.subscribeToAllRooms((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.body.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
       if (sub) cache.add(message.body.subId, sub)
@@ -49,7 +49,7 @@ export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, 
     }
     case '/api/rooms/subscribe/:id': {
       const sub = await RoomService.subscribeToRoom(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.body.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
       if (sub) cache.add(message.body.subId, sub)

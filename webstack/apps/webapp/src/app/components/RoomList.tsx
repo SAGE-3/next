@@ -26,7 +26,7 @@ export function RoomList(props: RoomListProps) {
 
   useEffect(() => {
     subToAllRooms()
-  }, [subToAllRooms, rooms]);
+  }, [subToAllRooms]);
 
   const [newRoomModal, setNewRoomModal] = useState(false);
   return (

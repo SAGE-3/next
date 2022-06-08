@@ -24,9 +24,10 @@ export class SocketAPI {
   }
 
   private processServerMessage(message: MessageEvent<any>) {
+    console.log(message.data)
     const msg = JSON.parse(message.data);
     if (this.subscriptions[msg.subId]) {
-      this.subscriptions[msg.subId](msg.doc);
+      this.subscriptions[msg.subId](msg.event);
     } else {
       console.log('WS Messsage with no Sub> ', message);
     }
@@ -39,13 +40,13 @@ export class SocketAPI {
         resolve();
       } else {
         console.log('Socket net ready, message not sent, retrying... ');
-        setTimeout(() => this.sendMessage(message), 1000);
+        setTimeout(() => this.sendMessage(message), 2000);
       }
     })
   }
 
   public async subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): Promise<() => Promise<void>> {
-
+    console.log('sub call')
     const id = genId();
     const subId = genId();
     const subMessage = {

@@ -156,7 +156,7 @@ async def main():
     # loop to receive messages
     async for msg in ws:
       event = json.loads(msg)
-      processBoardMessage(event['doc'])
+      processBoardMessage(event['event'])
 
 if __name__ == '__main__':
   asyncio.run(main())

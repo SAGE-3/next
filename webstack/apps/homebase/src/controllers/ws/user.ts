@@ -40,7 +40,7 @@ export async function userWSRouter(socket: WebSocket, request: IncomingMessage, 
   switch (message.route) {
     case '/api/users/subscribe': {
       const sub = await UserService.subscribeToAllUsers((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.body.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
       if (sub) cache.add(message.body.subId, sub)
@@ -48,7 +48,7 @@ export async function userWSRouter(socket: WebSocket, request: IncomingMessage, 
     }
     case '/api/users/subscribe/:id': {
       const sub = await UserService.subscribeToUser(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.body.subId, event: doc }
         socket.send(JSON.stringify(msg));
 
       });

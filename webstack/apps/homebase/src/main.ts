@@ -107,8 +107,11 @@ async function startServer() {
     });
 
     socket.on('close', () => {
+      console.log('apiWebSocketServer> connection closed');
       subCache.deleteAll();
     });
+
+    socket.on('error', () => { console.log('apiWebSocketServer> error'); });
   });
 
   // Websocket API for YJS
@@ -126,12 +129,6 @@ async function startServer() {
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
     SAGEBase.Auth.sessionParser(request, {}, () => {
-      // if (!request.session.passport?.user) {
-      //   // console.log('not authorized');
-      //   socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-      //   socket.destroy();
-      //   return;
-      // }
       if (wsPath === 'api') {
         apiWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
           apiWebSocketServer.emit('connection', ws, request);
