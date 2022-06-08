@@ -20,7 +20,8 @@ export function AppWindow(props: WindowProps) {
   const update = useAppStore(state => state.update);
 
   function handleDrag() {
-    console.log('update pos')
+    // console.log('update pos')
+    // need to make sure app still exists
     update(props.app.id, { position: { ...props.app.position, x: props.app.position.x + 1 } });
   }
 

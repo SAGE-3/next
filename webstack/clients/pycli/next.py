@@ -23,7 +23,6 @@ with open('token1.json') as f:
   token = data['token']
 print('Token:', token)
 
-
 def jwtLogin():
   """Post to login, return user UUID
   """
@@ -129,7 +128,7 @@ async def main():
     board0 = boards[0]
 
   # Info about an app: counter
-  oneApp = '49e9b5e5-3d24-4490-a563-08ea29158de2'
+  oneApp = '77c717d3-d7de-4024-be25-c1ed7fae33de'
   result = getAppInfo(oneApp)
   jsondata = result.json()
   if jsondata['success']:
@@ -137,18 +136,19 @@ async def main():
     print('Counter app:', appInfo['state'])
     r = moveApp(oneApp, 120, 193)
     print('moveApp:', r.json())
-    r = changeStateCounter(oneApp, 56)
+    r = changeStateCounter(oneApp, 156)
     print('changeStateCounter:', r.json())
 
   # Info about an app: image
-  oneApp = '04811025-ab0c-4a98-8b70-a0897d61e61f'
+  oneApp = '9d8ae882-ab2c-4a77-94c4-a1be39db0f91'
   result = getAppInfo(oneApp)
   jsondata = result.json()
   if jsondata['success']:
     appInfo = jsondata['data']
     print('Image app:', appInfo['state'])
 
-  async with websockets.connect(socket_server + socket_path) as ws:
+  # connect with the JSON web token
+  async with websockets.connect(socket_server + socket_path, extra_headers={"Authorization": f"Bearer {token}"}) as ws:
     # subscribe to the collection: id is subscription identifier
     boardId = board0['id']
     await subscribeToAppUpdateInBoard(ws, boardId)

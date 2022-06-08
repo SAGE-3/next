@@ -18,6 +18,7 @@
  * Node Modules
  */
 import * as path from 'path';
+import * as fs from 'fs';
 import { IncomingMessage, Server } from 'http';
 
 // Websocket
@@ -27,6 +28,9 @@ import { SubscriptionCache } from '@sage3/backend';
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
 import { loadCredentials, listenSecureApp } from './web';
+
+// Check the token on websocket connection
+import * as jwt from 'jsonwebtoken';
 
 /**
  * SAGE3 Libs
@@ -111,7 +115,9 @@ async function startServer() {
       subCache.deleteAll();
     });
 
-    socket.on('error', () => { console.log('apiWebSocketServer> error'); });
+    socket.on('error', () => {
+      console.log('apiWebSocketServer> error');
+    });
   });
 
   // Websocket API for YJS
@@ -128,7 +134,33 @@ async function startServer() {
     if (!pathname) return;
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
+
     SAGEBase.Auth.sessionParser(request, {}, () => {
+      let token = request.headers.authorization;
+      if (config.auth.jwtConfig && token) {
+        // extract the token from the header
+        token = token.split(' ')[1];
+        // Read the public key
+        const keyFile = config.auth.jwtConfig?.publicKey || 'jwt_public.pem';
+        const pubkey = fs.readFileSync(keyFile);
+        // Check is token valid
+        jwt.verify(token, pubkey, { algorithms: ['RS256'] }, (err, decoded) => {
+          if (err) {
+            console.log('not authorized');
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.destroy();
+            return;
+          } else {
+            console.log('Authorization> ws ok', decoded?.sub);
+          }
+        });
+      } else if (!request.session.passport?.user) {
+        // Auth coming from a logged user
+        console.log('Authorization> ws failed');
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
       if (wsPath === 'api') {
         apiWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
           apiWebSocketServer.emit('connection', ws, request);
