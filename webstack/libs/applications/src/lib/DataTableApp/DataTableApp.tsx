@@ -13,17 +13,9 @@ import { AppSchema } from "../schema";
 import { state as AppState } from "./index";
 import './styles.css';
 
-import {
-    Alert,
-    AlertIcon,
-    AlertTitle,
-    AlertDescription,
-    Stack,
-
-} from '@chakra-ui/react'
-
 import { Tags } from "./components/Tags"
 import { DataTable } from "./components/DataTable"
+import { MessageCenter } from "./components/MessageCenter"
 
 export function DataTableApp(props: AppSchema): JSX.Element {
 
@@ -55,11 +47,7 @@ export function DataTableApp(props: AppSchema): JSX.Element {
         <DataTable data={s.data}></DataTable>
 
         <div className="Message-Container">
-        <Stack spacing={3}>
-            <Alert status='success' variant='subtle'>
-                Data uploaded to the server. Fire on!
-            </Alert>
-        </Stack>
+            <MessageCenter data={s.data}></MessageCenter>
         </div>
 
     </div>

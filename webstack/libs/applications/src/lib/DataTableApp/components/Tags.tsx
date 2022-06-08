@@ -18,6 +18,7 @@ export const Tags = ({data}:Props) => {
 
     return (
         <HStack spacing={4}>
+            {['filter1', 'filter2', 'filter3', 'filter4', 'filter5'].map((tags) => (
                 <Tag
                     size='md'
                     key='md'
@@ -25,9 +26,10 @@ export const Tags = ({data}:Props) => {
                     variant='solid'
                     colorScheme='green'
                 >
-                    <TagLabel>Green</TagLabel>
+                    <TagLabel>{tags}</TagLabel>
                     <TagCloseButton />
                 </Tag>
+            ))}
         </HStack>
     )
 }
