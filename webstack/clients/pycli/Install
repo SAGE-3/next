@@ -1,7 +1,0 @@
-#!/bin/sh
-
-
-/usr/bin/python3 -m pip install \
-	"python-socketio[asyncio_client]" "python-socketio[client]"\
-	requests websocket-client websockets
-

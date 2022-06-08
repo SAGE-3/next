@@ -1,7 +1,3 @@
-python-socketio
 requests
 websockets
 websocket-client
-pillow
-pyexiftool
-fluent-logger
