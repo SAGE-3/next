@@ -10,9 +10,8 @@ import { RedisClientType } from 'redis';
 import { v4 } from 'uuid';
 import { PathValue, DotNestedKeys } from './Util';
 
-
 // The Supported primitives and types in the Database
-export type SBJSON = { [prop: string]: SBPrimitive; }
+export type SBJSON = { [prop: string]: SBPrimitive };
 type SBArray = Array<SBPrimitive>;
 export type SBPrimitive = null | boolean | number | string | SBArray | SBJSON;
 
@@ -23,40 +22,42 @@ export type SBDocument<Type extends SBJSON> = {
   _createdAt: number;
   _updatedAt: number;
   data: Type;
-}
+};
 
-export type SBDocumentUpdate<Type> = Partial<{ [Key in DotNestedKeys<Type>]: PathValue<Type, Key> }> & Partial<Type>
+export type SBDocumentUpdate<Type> = Partial<{ [Key in DotNestedKeys<Type>]: PathValue<Type, Key> }> & Partial<Type>;
 
 export type SBDocWriteResult = {
-  success: boolean,
-  writetime: number
-}
+  success: boolean;
+  writetime: number;
+};
 
 export type SBDocumentCreateMessage<Type extends SBJSON> = {
-  type: "CREATE",
-  key: string,
-  doc: SBDocument<Type>
-}
+  type: 'CREATE';
+  key: string;
+  doc: SBDocument<Type>;
+};
 
 export type SBDocumentUpdateMessage<Type extends SBJSON> = {
-  type: "UPDATE",
-  key: string,
-  doc: SBDocument<Type>
-}
+  type: 'UPDATE';
+  key: string;
+  doc: SBDocument<Type>;
+};
 
 export type SBDocumentDeleteMessage<Type extends SBJSON> = {
-  type: "DELETE",
-  key: string,
-  doc: SBDocument<Type>
-}
+  type: 'DELETE';
+  key: string;
+  doc: SBDocument<Type>;
+};
 
-export type SBDocumentMessage<Type extends SBJSON> = SBDocumentCreateMessage<Type> | SBDocumentUpdateMessage<Type> | SBDocumentDeleteMessage<Type>;
+export type SBDocumentMessage<Type extends SBJSON> =
+  | SBDocumentCreateMessage<Type>
+  | SBDocumentUpdateMessage<Type>
+  | SBDocumentDeleteMessage<Type>;
 
 /**
  * A database reference to the SAGEBase Document.
  */
 export class SBDocumentRef<Type extends SBJSON> {
-
   private _id: string;
   private _path: string;
   private _redisClient: RedisClientType;
@@ -77,7 +78,7 @@ export class SBDocumentRef<Type extends SBJSON> {
     return this._path;
   }
 
-  // 
+  //
   private get redis(): RedisClientType {
     return this._redisClient;
   }
@@ -99,14 +100,14 @@ export class SBDocumentRef<Type extends SBJSON> {
   /**
    * Set this document in the database. Overwrites the current data.
    * @param data The data
-   * @returns 
+   * @returns
    */
   public async set(data: Type): Promise<SBDocWriteResult> {
     try {
       const doc = generateSBDocumentTemplate<Type>(data);
       doc._id = this.id;
       const redisRes = await this._redisClient.json.set(this.path, '.', doc);
-      const response = (redisRes == "OK") ? generateWriteResult(true) : generateWriteResult(false);
+      const response = redisRes == 'OK' ? generateWriteResult(true) : generateWriteResult(false);
       await this.publishCreateAction(doc);
       return response;
     } catch (error) {
@@ -116,9 +117,9 @@ export class SBDocumentRef<Type extends SBJSON> {
   }
 
   /**
-   * 
-   * @param update 
-   * @returns 
+   *
+   * @param update
+   * @returns
    */
   public async update(update: SBDocumentUpdate<Type>): Promise<SBDocWriteResult> {
     if (update === undefined) return generateWriteResult(false);
@@ -131,14 +132,14 @@ export class SBDocumentRef<Type extends SBJSON> {
     const oldValue = await this.read();
     try {
       let updated = false;
-      const updatePromises = Object.keys(update).map(async key => {
+      const updatePromises = Object.keys(update).map(async (key) => {
         const value = update[key] as Type[string];
         const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value);
-        const res = (redisRes === "OK") ? true : false;
+        const res = redisRes === 'OK' ? true : false;
         if (res === true) {
           updated = true;
         }
-      })
+      });
       await Promise.all(updatePromises);
       if (updated) {
         await this.refreshUpdateTime();
@@ -157,12 +158,11 @@ export class SBDocumentRef<Type extends SBJSON> {
   private async refreshUpdateTime(): Promise<SBDocWriteResult> {
     const updatedAt = Date.now();
     const redisRes = await this._redisClient.json.set(`${this.path}`, `._updatedAt`, updatedAt);
-    if (redisRes == "OK") {
+    if (redisRes == 'OK') {
       return generateWriteResult(true);
     } else {
       return generateWriteResult(false);
     }
-
   }
 
   public async delete(): Promise<SBDocWriteResult> {
@@ -172,14 +172,14 @@ export class SBDocumentRef<Type extends SBJSON> {
         return generateWriteResult(false);
       }
       const redisRes = await this._redisClient.json.del(`${this.path}`);
-      const res = (redisRes === undefined || redisRes === 0) ? false : true;
+      const res = redisRes === undefined || redisRes === 0 ? false : true;
       if (res === true) {
         await this.publishDeleteAction(oldValue);
       }
       return generateWriteResult(res);
     } catch (error) {
       this.ERRORLOG(error);
-      return generateWriteResult(false);;
+      return generateWriteResult(false);
     }
   }
 
@@ -189,22 +189,22 @@ export class SBDocumentRef<Type extends SBJSON> {
 
     await subscriber.subscribe(`${this.path}`, (message: string) => {
       const parsedMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      callback(parsedMsg)
+      callback(parsedMsg);
     });
 
     return async () => {
       await subscriber.unsubscribe(`${this.path}`);
       await subscriber.disconnect();
-    }
+    };
   }
 
   private async publishCreateAction(doc: SBDocument<Type>): Promise<void> {
     const action = {
       type: 'CREATE',
       key: this.path,
-      doc: doc
+      doc: doc,
     } as SBDocumentCreateMessage<Type>;
-    await this._redisClient.publish(`${this._path}`, JSON.stringify(action))
+    await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }
 
@@ -212,7 +212,7 @@ export class SBDocumentRef<Type extends SBJSON> {
     const action = {
       type: 'UPDATE',
       key: this.path,
-      doc: doc
+      doc: doc,
     } as SBDocumentUpdateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
@@ -221,23 +221,21 @@ export class SBDocumentRef<Type extends SBJSON> {
     const action = {
       type: 'DELETE',
       key: this.path,
-      doc: doc
+      doc: doc,
     } as SBDocumentDeleteMessage<Type>;
-    await this._redisClient.publish(`${this._path}`, JSON.stringify(action))
+    await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }
 
-
   private ERRORLOG(error: unknown) {
-    console.log("SAGEBase SBDocumentRef ERROR: ", error);
+    console.log('SAGEBase SBDocumentRef ERROR: ', error);
   }
-
 }
 
 function generateWriteResult(success: boolean): SBDocWriteResult {
   const result = {
     success,
-    writetime: Date.now()
+    writetime: Date.now(),
   } as SBDocWriteResult;
   return result;
 }

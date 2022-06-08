@@ -59,7 +59,6 @@ const AppStore = createVanilla<Applications>((set, get) => {
       type: AppSchema['type'],
       state: Partial<AppSchema['state']>
     ) => {
-      console.log('hello');
       AppHTTPService.create(name, description, roomId, boardId, position, size, rotation, type, state);
     },
     update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
