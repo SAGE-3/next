@@ -1,0 +1,11 @@
+.Table-Container {
+  border: solid red 2px;
+  padding: 10px 10px;
+}
+
+.Message-Container{
+  border: solid green 2px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px 10px;
+}

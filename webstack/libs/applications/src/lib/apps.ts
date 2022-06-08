@@ -11,12 +11,16 @@ import { name as ImageName, init as defaultImage } from './ImageApp';
 import { name as LinkerName, init as defaultLinker } from './LinkerApp';
 import { name as NoteName, init as defaultNote } from './NoteApp';
 import { name as SliderName, init as defaultSlider } from './SliderApp';
+import { name as PlotsName, init as defaultPlots } from './PlotsApp';
+import { name as DataTableName, init as defaultDataTable } from './DataTableApp';
 
 import CounterApp from './CounterApp/CounterApp';
 import ImageApp from './ImageApp/ImageApp';
 import LinkerApp from './LinkerApp/LinkerApp';
 import NoteApp from './NoteApp/NoteApp';
 import SliderApp from './SliderApp/SliderApp';
+import PlotsApp from "./PlotsApp/PlotsApp";
+import DataTableApp from "./DataTableApp/DataTableApp"
 
 export const Applications = {
   [CounterName]: CounterApp,
@@ -24,6 +28,9 @@ export const Applications = {
   [LinkerName]: LinkerApp,
   [NoteName]: NoteApp,
   [SliderName]: SliderApp,
+  [PlotsName]: PlotsApp,
+  [DataTableName]: DataTableApp,
+
 } as unknown as Record<string, () => JSX.Element>;
 
 export const initialValues = {
@@ -32,4 +39,6 @@ export const initialValues = {
   [LinkerName]: defaultLinker,
   [NoteName]: defaultNote,
   [SliderName]: defaultSlider,
+  [PlotsName]: defaultPlots,
+  [DataTableName]: defaultDataTable,
 };
