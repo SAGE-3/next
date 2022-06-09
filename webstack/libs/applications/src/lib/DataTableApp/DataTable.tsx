@@ -7,17 +7,19 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
+// import { Button } from '@chakra-ui/react';
 import { AppSchema } from "../schema";
 
 import { state as AppState } from "./index";
 import './styles.css';
 
+import { FetchData } from "./components/FetchData"
 import { Tags } from "./components/Tags"
-import { DataTable } from "./components/DataTable"
+import { DataViz } from "./components/DataViz"
 import { MessageCenter } from "./components/MessageCenter"
+// import { FileLoad } from "./components/FileLoad"
 
-export function DataTableApp(props: AppSchema): JSX.Element {
+export function DataTable(props: AppSchema): JSX.Element {
 
   const s = props.state as AppState;
 
@@ -40,18 +42,21 @@ export function DataTableApp(props: AppSchema): JSX.Element {
     <div className="Table-Container">
         <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
 
+        <FetchData url={s.data}/>
+        <button>Submit</button>
+
         <div className="Message-Container">
-            <Tags data={s.data}></Tags>
+            <Tags data={s.data}/>
         </div>
 
-        <DataTable data={s.data}></DataTable>
+        <DataViz data={s.data}/>
 
         <div className="Message-Container">
-            <MessageCenter data={s.data}></MessageCenter>
+            <MessageCenter data={s.data}/>
         </div>
 
     </div>
   )
 }
 
-export default DataTableApp;
+export default DataTable;

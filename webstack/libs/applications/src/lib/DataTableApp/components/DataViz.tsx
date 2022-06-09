@@ -16,8 +16,7 @@ interface Props{
     data:any;
 }
 
-
-export const DataTable = ({data}:Props) => {
+export const DataViz = ({data}:Props) => {
 
     return (
         <TableContainer>

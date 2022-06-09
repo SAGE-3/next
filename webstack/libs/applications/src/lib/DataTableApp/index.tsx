@@ -1,4 +1,4 @@
-export { DataTableApp as App } from './DataTableApp';
+export { DataTable as App } from './DataTable';
 
 export type state = {
   data: any;
