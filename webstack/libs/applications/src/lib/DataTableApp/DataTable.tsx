@@ -17,7 +17,6 @@ import { FetchData } from "./components/FetchData"
 import { Tags } from "./components/Tags"
 import { DataViz } from "./components/DataViz"
 import { MessageCenter } from "./components/MessageCenter"
-// import { FileLoad } from "./components/FileLoad"
 
 export function DataTable(props: AppSchema): JSX.Element {
 
@@ -29,30 +28,31 @@ export function DataTable(props: AppSchema): JSX.Element {
   // function handleAddClick() {
   //   updateState(props.id, { count: s.count + 1 })
   // }
-  //
-  // function handleSubClick() {
-  //   updateState(props.id, { count: s.count - 1 })
-  // }
 
   function handleClose() {
     deleteApp(props.id);
   }
 
+  // function handleCallback () {
+  //     updateState(props.id, {data: childData})
+  //   }
+
   return (
     <div className="Table-Container">
         <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
 
-        <FetchData url={s.data}/>
+        <FetchData heady={s.filler}/>
         <button>Submit</button>
 
         <div className="Message-Container">
-            <Tags data={s.data}/>
+            <Tags data={s.filler}/>
         </div>
 
-        <DataViz data={s.data}/>
+        {/*<DataViz data={handleCallback}/>*/}
+        <DataViz data={s.filler}/>
 
         <div className="Message-Container">
-            <MessageCenter data={s.data}/>
+            <MessageCenter data={s.filler}/>
         </div>
 
     </div>

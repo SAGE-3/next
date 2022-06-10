@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useEffect, useRef, useState} from "react";
+import {useState} from "react";
 import {
     Button,
     Input,
@@ -8,27 +8,16 @@ import {
 import './styles.css'
 
 interface Props{
-    url:any;
+    heady:any;
 }
 
-export const FetchData = ({url}:Props) =>  {
-    const [inputVal, setInputVal] = useState('')
+export const FetchData = ({heady}:Props) =>  {
+    const [inputVal, setInputVal] = useState('');
     const [items, setItems] = useState<any[]>([]);
     const [loaded, setLoaded] = useState(false);
+    const [headers, setHeaders] = useState<any[]>([]);
 
-    // useEffect(() => {
-    //     fetch(
-    //         inputVal)
-    //         .then((res) => res.json())
-    //         .then((json) => {
-    //             setItems(json);
-    //             setLoaded(true)
-    //         })
-    //     }
-    // )
-
-    function handleSubmit(e: any) {
-        console.log(e)
+    function handleSubmit() {
         console.log(inputVal)
         fetch(
             inputVal)
@@ -38,6 +27,9 @@ export const FetchData = ({url}:Props) =>  {
                 setLoaded(true)
             })
         setInputVal('')
+        setHeaders(Object.keys(items[0]))
+        // {(!Array.isArray(items) || !items.length) ? <h1>Invalid json file, can't find headers</h1>: setHeaders(Object.keys(items[0]))}
+        // console.log(headers)
     }
 
     return (
@@ -50,17 +42,6 @@ export const FetchData = ({url}:Props) =>  {
                 onChange={(e) => setInputVal(e.target.value)}
             />
             <Button size='sm' variant='outline' onClick={handleSubmit}>Submit</Button>
-            {
-            items.map((item) => (
-            <ol key = { item.id } >
-                headerNames = { item.keys },
-                User_Name: { item.username },
-                Full_Name: { item.name },
-                User_Email: { item.email }
-            </ol>
-
-            ))
-        }
         </div>
 
     )

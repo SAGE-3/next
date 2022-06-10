@@ -12,6 +12,8 @@ import {
 
 import './styles.css'
 
+import {FetchData} from "./FetchData";
+
 interface Props{
     data:any;
 }
