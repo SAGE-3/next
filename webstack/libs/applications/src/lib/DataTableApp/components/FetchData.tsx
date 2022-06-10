@@ -1,5 +1,7 @@
-import React, {useEffect, useState} from "react";
+import * as React from "react";
+import {useEffect, useRef, useState} from "react";
 import {
+    Button,
     Input,
 } from '@chakra-ui/react'
 
@@ -10,32 +12,53 @@ interface Props{
 }
 
 export const FetchData = ({url}:Props) =>  {
+    const [inputVal, setInputVal] = useState('')
     const [items, setItems] = useState<any[]>([]);
     const [loaded, setLoaded] = useState(false);
 
-    useEffect(() => {
+    // useEffect(() => {
+    //     fetch(
+    //         inputVal)
+    //         .then((res) => res.json())
+    //         .then((json) => {
+    //             setItems(json);
+    //             setLoaded(true)
+    //         })
+    //     }
+    // )
+
+    function handleSubmit(e: any) {
+        console.log(e)
+        console.log(inputVal)
         fetch(
-            "https://jsonplaceholder.typicode.com/users")
+            inputVal)
             .then((res) => res.json())
             .then((json) => {
                 setItems(json);
                 setLoaded(true)
             })
-        }
-    )
+        setInputVal('')
+    }
 
     return (
         <div>
             {!loaded ? <h1>Not loaded</h1>:<h1>Loaded</h1>}
-            <Input placeholder={'Fetch data from API'}/>  {
+            <Input
+                type="text"
+                value={inputVal}
+                placeholder={'Fetch data from API'}
+                onChange={(e) => setInputVal(e.target.value)}
+            />
+            <Button size='sm' variant='outline' onClick={handleSubmit}>Submit</Button>
+            {
             items.map((item) => (
-                <ol key = { item.id } >
-                    headerNames = { item.keys }
+            <ol key = { item.id } >
+                headerNames = { item.keys },
+                User_Name: { item.username },
+                Full_Name: { item.name },
+                User_Email: { item.email }
+            </ol>
 
-                    User_Name: { item.username },
-                    Full_Name: { item.name },
-                    User_Email: { item.email }
-                </ol>
             ))
         }
         </div>
