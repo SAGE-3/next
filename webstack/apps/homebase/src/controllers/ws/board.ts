@@ -40,7 +40,7 @@ import { genId } from '@sage3/shared';
  */
 export async function boardWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   // Subscribe Message by Property Value (roomId)
-  if (message.route.startsWith('/api/boards/subscribebyroomid')) {
+  if (message.route.startsWith('/api/boards/subscribe/room/')) {
     const roomId = message.route.split('/').at(-1);
     if (!roomId) return;
     const sub = await BoardService.subscribeByRoomId(roomId, (doc) => {

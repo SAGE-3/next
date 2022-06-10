@@ -39,7 +39,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
  */
 export async function appWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   // Subscribe Message by Property Value (roomId)
-  if (message.route.startsWith('/api/apps/subscribebyroomid')) {
+  if (message.route.startsWith('/api/apps/subscribe/room/')) {
     const roomId = message.route.split('/').at(-1);
     if (!roomId) return;
     const sub = await AppService.subscribeByRoomId(roomId, (doc) => {
@@ -49,7 +49,7 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
     if (sub) cache.add(message.subId, sub)
   }
   // Subscribe Message by Property Value (boardId)
-  else if (message.route.startsWith('/api/apps/subscribebyboardid')) {
+  else if (message.route.startsWith('/api/apps/subscribe/board/')) {
     const boardId = message.route.split('/').at(-1);
     if (!boardId) return;
     const sub = await AppService.subscribeByBoardId(boardId, (doc) => {

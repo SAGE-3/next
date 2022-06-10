@@ -30,8 +30,8 @@ interface UserState {
  * The UserStore of the current user.
  */
 const UserStore = createVanilla<UserState>((set, get) => {
-  const socket = SocketAPI.getInstance();
-  let userSub: (() => Promise<void>) | null = null;
+  let userSub: (() => void) | null = null;
+  SocketAPI.init()
   return {
     user: undefined,
     create: async (name: UserSchema['name'], email: UserSchema['email']) => {
@@ -52,13 +52,13 @@ const UserStore = createVanilla<UserState>((set, get) => {
 
       // Unsubscribe old subscription
       if (userSub) {
-        await userSub();
+        userSub();
         userSub = null;
       }
       // Socket Subscribe Message
       const route = `/api/users/subscribe/${response.id}`;
       // Socket Listenting to updates from server about the current user
-      userSub = await socket.subscribe<UserSchema>(route, (message) => {
+      userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
 
         switch (message.type) {
           case 'CREATE': {

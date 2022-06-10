@@ -31,8 +31,7 @@ interface RoomState {
  * The RoomStore.
  */
 const RoomStore = createVanilla<RoomState>((set, get) => {
-  const socket = SocketAPI.getInstance();
-  let roomSub: (() => Promise<void>) | null = null;
+  let roomSub: (() => void) | null = null;
   return {
     currentRoom: undefined,
     rooms: [],
@@ -52,14 +51,14 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       }
       // Unsubscribe old subscription
       if (roomSub) {
-        await roomSub();
+        roomSub();
         roomSub = null;
       }
 
       // Socket Subscribe Message
       const route = '/api/rooms/subscribe';
       // Socket Listenting to updates from server about the current rooms
-      roomSub = await socket.subscribe<RoomSchema>(route, (message) => {
+      roomSub = await SocketAPI.subscribe<RoomSchema>(route, (message) => {
         console.log(message)
         switch (message.type) {
           case 'CREATE': {

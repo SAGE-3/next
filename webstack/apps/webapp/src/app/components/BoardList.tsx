@@ -6,7 +6,7 @@
  *
  */
 
-import { Button, Input, InputGroup, InputLeftElement, InputRightElement, Text, useColorModeValue } from "@chakra-ui/react";
+import { Button, Input, InputGroup, InputRightElement, Text, useColorModeValue } from "@chakra-ui/react";
 import { BoardCard, CreateBoardModal, useBoardStore } from "@sage3/frontend";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
 import { useEffect, useState } from "react";

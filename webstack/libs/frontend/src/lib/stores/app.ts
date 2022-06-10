@@ -44,8 +44,7 @@ interface Applications {
  * The AppStore.
  */
 const AppStore = createVanilla<Applications>((set, get) => {
-  const socket = SocketAPI.getInstance();
-  let appsSub: (() => Promise<void>) | null = null;
+  let appsSub: (() => void) | null = null;
   return {
     apps: [],
     create: async (
@@ -78,13 +77,13 @@ const AppStore = createVanilla<Applications>((set, get) => {
 
       // Unsubscribe old subscription
       if (appsSub) {
-        await appsSub();
+        appsSub();
         appsSub = null;
       }
 
       const route = `/api/apps/subscribebyboardid/${boardId}`;
       // Socket Listenting to updates from server about the current user
-      appsSub = await socket.subscribe<AppSchema>(route, (message) => {
+      appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, message.doc.data] });
