@@ -18,7 +18,7 @@
  */
 function loginWithGoogle(): void {
   // return to host with the same protocol (http/https)
-  window.location.replace(`${window.location.protocol}/${window.location.host}/auth/google`);
+  window.location.replace(`${window.location.protocol}//${window.location.host}/auth/google`);
 }
 
 /**
@@ -56,8 +56,9 @@ function logout() {
     .then((response) => {
       if (response.status === 403) throw new Error('Error Verifying Auth');
       return response.json();
-    }).catch((error) => {
-      console.log(error)
+    })
+    .catch((error) => {
+      console.log(error);
       window.location.reload();
       return Promise.reject(false);
     })
@@ -73,7 +74,7 @@ function logout() {
  * Verify the authentication of the current user.
  * @returns {boolean} returns true if the user if authenticated
  */
-async function verifyAuth(): Promise<{ success: boolean, authentication: boolean, auth: { id: string } | null }> {
+async function verifyAuth(): Promise<{ success: boolean; authentication: boolean; auth: { id: string } | null }> {
   const res = await fetch('/auth/verify', {
     method: 'GET',
     credentials: 'include',

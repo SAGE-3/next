@@ -33,7 +33,7 @@ function ImageApp(props: AppSchema): JSX.Element {
       <p>URL:</p>
       <input type="text" onChange={handleTextChange} />
       <hr />
-      <img src={s.url} width="200px" alt={"ImageApp"}></img>
+      <img src={s.url} crossOrigin="anonymous" width="200px" alt={"ImageApp"}></img>
     </div>
   )
 }
