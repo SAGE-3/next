@@ -20,15 +20,17 @@ export class SubscriptionCache {
     this.cache[subId] = sub;
   }
 
-  public delete(subId: string) {
+  public async delete(subId: string) {
+
     if (this.cache[subId]) {
       try {
-        this.cache[subId]();
+        await this.cache[subId]();
       } catch (e) {
         console.log(e);
       }
     }
     delete this.cache[subId];
+    return;
   }
 
   public deleteAll() {

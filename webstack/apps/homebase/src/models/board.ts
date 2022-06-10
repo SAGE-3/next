@@ -185,7 +185,7 @@ class SAGE3BoardModel {
     callback: (message: SBDocumentMessage<BoardSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const unsubscribe = this.boardCollection.subscribeToQuery('roomId', id, callback);
+      const unsubscribe = await this.boardCollection.subscribeToQuery('roomId', id, callback);
       return unsubscribe;
     } catch (error) {
       console.log('BoardModel subscribeToRoomBoards error>', error);

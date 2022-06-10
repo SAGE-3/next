@@ -28,7 +28,7 @@ class SocketAPISingleton {
 
   private sendMessage(message: string): void {
     if (this._socket && this._socket.readyState === WebSocket.OPEN) {
-      //this._socket.send(message);
+      this._socket.send(message);
     } else {
       this.printWarn('Socket still connecting...');
       setTimeout(() => this.sendMessage(message), 1000);
@@ -53,8 +53,8 @@ class SocketAPISingleton {
         route,
         subId
       } as APIClientWSMessage;
-      this.sendMessage(JSON.stringify(unsubMessage))
       delete this._subscriptions[id];
+      this.sendMessage(JSON.stringify(unsubMessage))
       return;
     }
 
@@ -62,7 +62,7 @@ class SocketAPISingleton {
       callback,
       unsub
     }
-    await this.sendMessage(JSON.stringify(subMessage));
+    this.sendMessage(JSON.stringify(subMessage));
 
     return unsub;
   }
@@ -74,21 +74,21 @@ class SocketAPISingleton {
     this._socket = new WebSocket(`${this._socketType}//${window.location.hostname}:${window.location.port}/api`);
 
     this._socket.addEventListener('open', (event) => {
-      this.print('WS Connected');
+      this.print('Connection Open');
     });
 
-    this._socket.addEventListener('message', this.processServerMessage);
+    this._socket.addEventListener('message', (ev) => this.processServerMessage(ev));
 
     this._socket.addEventListener('close', (event) => {
-      this.printWarn('WS API Connection Closed');
+      this.printWarn('Connection Closed');
       this._subscriptions = {};
-      this._socket.removeEventListener('message', this.processServerMessage);
+      this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
     });
 
     this._socket.addEventListener('error', (event) => {
-      this.printError('Connection Closed');
+      this.printError('Connection Error');
       this._subscriptions = {};
-      this._socket.removeEventListener('message', this.processServerMessage);
+      this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
     });
 
   }

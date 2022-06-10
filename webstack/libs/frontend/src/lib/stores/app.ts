@@ -37,6 +37,7 @@ interface Applications {
   update: (id: AppSchema['id'], updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: AppSchema['id'], state: Partial<AppState>) => Promise<void>;
   delete: (id: AppSchema['id']) => Promise<void>;
+  unsub: () => void;
   subscribeByBoardId: (boardId: AppSchema['boardId']) => Promise<void>;
 }
 
@@ -69,6 +70,13 @@ const AppStore = createVanilla<Applications>((set, get) => {
     delete: async (id: AppSchema['id']) => {
       AppHTTPService.del(id);
     },
+    unsub: () => {
+      // Unsubscribe old subscription
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
+      }
+    },
     subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
       const apps = await AppHTTPService.query({ boardId });
       if (apps) {
@@ -81,7 +89,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
         appsSub = null;
       }
 
-      const route = `/api/apps/subscribebyboardid/${boardId}`;
+      const route = `/api/apps/subscribe/board/${boardId}`;
       // Socket Listenting to updates from server about the current user
       appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
         switch (message.type) {
@@ -156,8 +164,11 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     delete: async (id: AppSchema['id']) => {
       set({ apps: get().apps.filter((app) => app.id !== id) });
     },
+    unsub: () => {
+      console.log('Unsubscribing to apps is not required in the playground');
+    },
     subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
-      console.log('Subscribing to apps by boardId not required in the playground');
+      console.log('Subscribing to apps is not required in the playground');
     },
   };
 });

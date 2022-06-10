@@ -39,7 +39,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
  */
 export async function appWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   // Subscribe Message by Property Value (roomId)
-  if (message.route.startsWith('/api/apps/subscribe/room/')) {
+  if (message.route.startsWith('/api/apps/subscribe/room')) {
     const roomId = message.route.split('/').at(-1);
     if (!roomId) return;
     const sub = await AppService.subscribeByRoomId(roomId, (doc) => {
@@ -49,18 +49,17 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
     if (sub) cache.add(message.subId, sub)
   }
   // Subscribe Message by Property Value (boardId)
-  else if (message.route.startsWith('/api/apps/subscribe/board/')) {
+  else if (message.route.startsWith('/api/apps/subscribe/board')) {
     const boardId = message.route.split('/').at(-1);
     if (!boardId) return;
     const sub = await AppService.subscribeByBoardId(boardId, (doc) => {
-      console.log('msg')
       const msg = { id: genId(), subId: message.subId, event: doc }
       socket.send(JSON.stringify(msg));
     });
     if (sub) cache.add(message.subId, sub)
   }
   // Subscribe Message
-  if (message.route.startsWith('/api/apps/subscribe')) {
+  else if (message.route.startsWith('/api/apps/subscribe')) {
     // Subscribe All
     if (message.route === '/api/apps/subscribe') {
       const sub = await AppService.subscribeToAllApps((doc) => {

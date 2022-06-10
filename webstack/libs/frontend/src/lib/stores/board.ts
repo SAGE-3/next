@@ -51,14 +51,13 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
 
       // Unsubscribe old subscription
       if (boardsSub) {
-        await boardsSub();
+        boardsSub();
         boardsSub = null;
       }
 
       // Socket Subscribe Message
       // Subscribe to the boards with property 'roomId' matching the given id
-      const route = `/api/boards/subscribebyroomid/${roomId}`
-
+      const route = `/api/boards/subscribe/room/${roomId}`
       // Socket Listenting to updates from server about the current user
       boardsSub = await SocketAPI.subscribe<BoardSchema>(route, (message) => {
         switch (message.type) {
