@@ -48,17 +48,17 @@ const UserStore = createVanilla<UserState>((set, get) => {
     subscribeToUser: async (id: UserSchema['id']) => {
       const response = await UserHTTPService.read(id);
       if (!response) return;
-
       set({ user: response })
+
+      // Unsubscribe old subscription
       if (userSub) {
         await userSub();
         userSub = null;
       }
       // Socket Subscribe Message
-      const route = '/api/users/subscribe/:id';
-      const body = { id: response.id }
+      const route = `/api/users/subscribe/${response.id}`;
       // Socket Listenting to updates from server about the current user
-      userSub = await socket.subscribe<UserSchema>(route, body, (message) => {
+      userSub = await socket.subscribe<UserSchema>(route, (message) => {
 
         switch (message.type) {
           case 'CREATE': {

@@ -39,35 +39,38 @@ import { genId } from '@sage3/shared';
  * @param cache 
  */
 export async function boardWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-
-  switch (message.route) {
-    case '/api/boards/subscribe': {
+  // Subscribe Message by Property Value (roomId)
+  if (message.route.startsWith('/api/boards/subscribebyroomid')) {
+    const roomId = message.route.split('/').at(-1);
+    if (!roomId) return;
+    const sub = await BoardService.subscribeByRoomId(roomId, (doc) => {
+      const msg = { id: genId(), subId: message.subId, event: doc }
+      socket.send(JSON.stringify(msg));
+    });
+    if (sub) cache.add(message.subId, sub)
+  }
+  else if (message.route.startsWith('/api/boards/subscribe')) {
+    // Subscribe All
+    if (message.route === '/api/boards/subscribe') {
       const sub = await BoardService.subscribetoAllBoards((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/boards/subscribe/:id': {
-      const sub = await BoardService.subscribeToBoard(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
+    // Subscribe To One
+    else {
+      const id = message.route.split('/').at(-1);
+      if (!id) return;
+      const sub = await BoardService.subscribeToBoard(id, (doc) => {
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/boards/subscribe/:roomId': {
-      const sub = await BoardService.subscribeByRoomId(message.body.roomId, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
-    }
-    case '/api/boards/unsubscribe': {
-      cache.delete(message.body.subId)
-      break;
-    }
+  }
+  // Unsubscribe Message
+  else if (message.route.startsWith('/api/boards/unsubscribe')) {
+    cache.delete(message.subId);
   }
 }

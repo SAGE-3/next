@@ -75,15 +75,16 @@ const AppStore = createVanilla<Applications>((set, get) => {
       if (apps) {
         set({ apps });
       }
+
+      // Unsubscribe old subscription
       if (appsSub) {
         await appsSub();
         appsSub = null;
       }
 
-      const route = '/api/apps/subscribe/:boardId';
-      const body = { boardId };
+      const route = `/api/apps/subscribebyboardid/${boardId}`;
       // Socket Listenting to updates from server about the current user
-      appsSub = await socket.subscribe<AppSchema>(route, body, (message) => {
+      appsSub = await socket.subscribe<AppSchema>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, message.doc.data] });

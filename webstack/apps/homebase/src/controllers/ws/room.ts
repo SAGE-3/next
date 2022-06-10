@@ -38,26 +38,29 @@ import { genId } from '@sage3/shared';
  * @param cache 
  */
 export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  switch (message.route) {
-    case '/api/rooms/subscribe': {
+  // Subscribe Message
+  if (message.route.includes('/api/rooms/subscribe')) {
+    // Subscribe All
+    if (message.route === '/api/rooms/subscribe') {
       const sub = await RoomService.subscribeToAllRooms((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/rooms/subscribe/:id': {
-      const sub = await RoomService.subscribeToRoom(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
+    // Subscribe To One
+    else {
+      const id = message.route.split('/').at(-1);
+      if (!id) return;
+      const sub = await RoomService.subscribeToRoom(id, (doc) => {
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/rooms/unsubscribe': {
-      cache.delete(message.body.subId)
-      break;
-    }
+  }
+  // Unsubscribe Message
+  if (message.route.includes('/api/rooms/unsubscribe')) {
+    cache.delete(message.subId);
   }
 }

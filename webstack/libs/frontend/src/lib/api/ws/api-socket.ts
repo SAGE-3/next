@@ -44,16 +44,13 @@ export class SocketAPI {
     })
   }
 
-  public async subscribe<T extends SBJSON>(route: string, body: any, callback: (message: SBDocumentMessage<T>) => void): Promise<() => Promise<void>> {
+  public async subscribe<T extends SBJSON>(route: string, callback: (message: SBDocumentMessage<T>) => void): Promise<() => Promise<void>> {
     const id = genId();
     const subId = genId();
     const subMessage = {
       id,
       route,
-      body: {
-        subId,
-        ...body,
-      },
+      subId
     } as APIClientWSMessage;
     this.subscriptions[subId] = callback;
     this.sendMessage(JSON.stringify(subMessage));
@@ -65,14 +62,12 @@ export class SocketAPI {
         const unsubMessage = {
           id: genId(),
           route,
-          body: {
-            subId,
-          },
+          subId
         } as APIClientWSMessage;
-        return this.sendMessage(JSON.stringify(unsubMessage)).then(() => {
-          delete this.subscriptions[id];
-          return resolve()
-        });
+        this.sendMessage(JSON.stringify(unsubMessage))
+        delete this.subscriptions[id];
+        return resolve()
+
       });
   }
 

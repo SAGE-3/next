@@ -9,8 +9,5 @@
 export type APIClientWSMessage = {
   id: string,
   route: string,
-  body: {
-    subId: string,
-    [key: string]: string
-  }
+  subId: string
 }

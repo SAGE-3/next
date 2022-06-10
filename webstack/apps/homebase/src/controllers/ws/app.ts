@@ -38,43 +38,50 @@ import { APIClientWSMessage } from '@sage3/shared/types';
  * @param cache 
  */
 export async function appWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  switch (message.route) {
-    case '/api/apps/subscribe': {
+  // Subscribe Message by Property Value (roomId)
+  if (message.route.startsWith('/api/apps/subscribebyroomid')) {
+    const roomId = message.route.split('/').at(-1);
+    if (!roomId) return;
+    const sub = await AppService.subscribeByRoomId(roomId, (doc) => {
+      const msg = { id: genId(), subId: message.subId, event: doc }
+      socket.send(JSON.stringify(msg));
+    });
+    if (sub) cache.add(message.subId, sub)
+  }
+  // Subscribe Message by Property Value (boardId)
+  else if (message.route.startsWith('/api/apps/subscribebyboardid')) {
+    const boardId = message.route.split('/').at(-1);
+    if (!boardId) return;
+    const sub = await AppService.subscribeByBoardId(boardId, (doc) => {
+      console.log('msg')
+      const msg = { id: genId(), subId: message.subId, event: doc }
+      socket.send(JSON.stringify(msg));
+    });
+    if (sub) cache.add(message.subId, sub)
+  }
+  // Subscribe Message
+  if (message.route.startsWith('/api/apps/subscribe')) {
+    // Subscribe All
+    if (message.route === '/api/apps/subscribe') {
       const sub = await AppService.subscribeToAllApps((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, doc }
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/apps/subscribe/:id': {
-      const sub = await AppService.subscribeToApp(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
+    // Subscribe To One App
+    else {
+      const id = message.route.split('/').at(-1);
+      if (!id) return;
+      const sub = await AppService.subscribeToApp(id, (doc) => {
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/apps/subscribe/:roomId': {
-      const sub = await AppService.subscribeByRoomId(message.body.roomId, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
-    }
-    case '/api/apps/subscribe/:boardId': {
-      const sub = await AppService.subscribeByBoardId(message.body.boardId, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
-    }
-    case '/api/apps/unsubscribe': {
-      cache.delete(message.body.subId)
-      break;
-    }
-
+  }
+  // Unsubscribe Message
+  if (message.route.startsWith('/api/apps/unsubscribe')) {
+    cache.delete(message.subId);
   }
 }

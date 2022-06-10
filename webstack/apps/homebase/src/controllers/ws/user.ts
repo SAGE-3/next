@@ -37,27 +37,29 @@ import { genId } from '@sage3/shared';
  * @param cache 
  */
 export async function userWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  switch (message.route) {
-    case '/api/users/subscribe': {
+  // Subscribe Message
+  if (message.route.includes('/api/users/subscribe')) {
+    // Subscribe All
+    if (message.route === '/api/users/subscribe') {
       const sub = await UserService.subscribeToAllUsers((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/users/subscribe/:id': {
-      const sub = await UserService.subscribeToUser(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
+    // Subscribe To One
+    else {
+      const id = message.route.split('/').at(-1);
+      if (!id) return;
+      const sub = await UserService.subscribeToUser(id, (doc) => {
+        const msg = { id: genId(), subId: message.subId, event: doc }
         socket.send(JSON.stringify(msg));
-
       });
-      if (sub) cache.add(message.body.subId, sub)
-      break;
+      if (sub) cache.add(message.subId, sub)
     }
-    case '/api/users/unsubscribe': {
-      cache.delete(message.body.subId)
-      break;
-    }
+  }
+  // Unsubscribe Message
+  if (message.route.includes('/api/users/unsubscribe')) {
+    cache.delete(message.subId);
   }
 }

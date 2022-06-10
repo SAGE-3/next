@@ -103,7 +103,7 @@ export class SBCollectionRef<Type extends SBJSON> {
    * @returns {Promise<() => Promise<void>>}
    */
   public async subscribeToQuery(
-    propertyName: string,
+    propertyName: keyof Type,
     value: string,
     callback: (message: SBDocumentMessage<Type>) => void
   ): Promise<() => Promise<void>> {
