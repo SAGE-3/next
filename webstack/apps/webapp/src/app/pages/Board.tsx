@@ -47,7 +47,7 @@ export function BoardPage() {
       locationState.roomId,
       locationState.boardId,
       { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
+      { width: 300, height: 300, depth: 0 },
       { x: 0, y: 0, z: 0 },
       'Note',
       initialValues['Note']);
@@ -60,7 +60,7 @@ export function BoardPage() {
       locationState.roomId,
       locationState.boardId,
       { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
+      { width: 300, height: 300, depth: 0 },
       { x: 0, y: 0, z: 0 },
       'Counter',
       initialValues['Counter']);
@@ -73,7 +73,7 @@ export function BoardPage() {
       locationState.roomId,
       locationState.boardId,
       { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
+      { width: 300, height: 300, depth: 0 },
       { x: 0, y: 0, z: 0 },
       'Image',
       initialValues['Image']);
@@ -86,7 +86,7 @@ export function BoardPage() {
       locationState.roomId,
       locationState.boardId,
       { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
+      { width: 300, height: 300, depth: 0 },
       { x: 0, y: 0, z: 0 },
       'Slider',
       initialValues['Slider']);
@@ -99,7 +99,7 @@ export function BoardPage() {
       locationState.roomId,
       locationState.boardId,
       { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
+      { width: 300, height: 300, depth: 0 },
       { x: 0, y: 0, z: 0 },
       'Linker',
       initialValues['Linker']);

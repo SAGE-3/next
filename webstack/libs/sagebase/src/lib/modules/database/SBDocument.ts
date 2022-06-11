@@ -34,21 +34,21 @@ export type SBDocWriteResult = {
 export type SBDocumentCreateMessage<Type extends SBJSON> = {
   type: 'CREATE';
   key: string;
-  collection: string;
+  col: string;
   doc: SBDocument<Type>;
 };
 
 export type SBDocumentUpdateMessage<Type extends SBJSON> = {
   type: 'UPDATE';
   key: string;
-  collection: string;
+  col: string;
   doc: SBDocument<Type>;
 };
 
 export type SBDocumentDeleteMessage<Type extends SBJSON> = {
   type: 'DELETE';
   key: string;
-  collection: string;
+  col: string;
   doc: SBDocument<Type>;
 };
 

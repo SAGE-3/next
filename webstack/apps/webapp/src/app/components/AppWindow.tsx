@@ -9,6 +9,8 @@
 import { Box } from "@chakra-ui/react";
 import { AppSchema } from "@sage3/applications/schema";
 import { useAppStore } from "@sage3/frontend";
+import { useRef } from "react";
+import Draggable, { DraggableEventHandler } from 'react-draggable';
 
 type WindowProps = {
   app: AppSchema;
@@ -16,19 +18,33 @@ type WindowProps = {
 }
 
 export function AppWindow(props: WindowProps) {
-
+  const nodeRef = useRef(null);
   const update = useAppStore(state => state.update);
 
-  function handleDrag() {
-    // console.log('update pos')
-    // need to make sure app still exists
-    update(props.app.id, { position: { ...props.app.position, x: props.app.position.x + 1 } });
+  function eventControl(event: any, info: any) {
+    console.log('Event name: ', event.type);
+    console.log(event, info);
+    update(props.app.id, { position: { x: info.x, y: info.y, z: 0 } });
   }
 
   return (
-    <Box border={`solid 2px red}`} onClick={handleDrag}>
-      {props.children}
-    </Box>
+    <Draggable
+      nodeRef={nodeRef}
+      position={{ x: props.app.position.x, y: props.app.position.y }}
+      onStop={eventControl}>
+      <div ref={nodeRef} style={{ width: "100px", backgroundColor: "red" }}>
+        <Box border={`solid 2px red}`} style={{
+          width: props.app.size.width,
+          height: props.app.size.height,
+          left: props.app.position.x,
+          top: props.app.position.y,
+          backgroundColor: 'gray'
+        }} >
+          Drag here
+          {props.children}
+        </Box>
+      </div>
+    </Draggable>
   )
 
 }

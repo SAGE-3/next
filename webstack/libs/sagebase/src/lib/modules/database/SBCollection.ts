@@ -85,7 +85,7 @@ export class SBCollectionRef<Type extends SBJSON> {
     await subscriber.connect();
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      parseMsg.collection = this._name;
+      parseMsg.col = this._name;
       callback(parseMsg);
     });
 
@@ -113,7 +113,7 @@ export class SBCollectionRef<Type extends SBJSON> {
 
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      parseMsg.collection = this._name;
+      parseMsg.col = this._name;
       const propValue = parseMsg.doc.data[propertyName];
       if (propValue === value) {
         callback(parseMsg);
