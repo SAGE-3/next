@@ -18,7 +18,6 @@ function CounterApp(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.delete);
 
   function handleAddClick() {
     updateState(props.id, { count: s.count + 1 })
@@ -28,13 +27,9 @@ function CounterApp(props: AppSchema): JSX.Element {
     updateState(props.id, { count: s.count - 1 })
   }
 
-  function handleClose() {
-    deleteApp(props.id);
-  }
-
   return (
     <>
-      <h3>{props.name} - {s.count} <button onClick={handleClose}>X</button></h3>
+      <h3>{props.name} - {s.count}</h3>
       <Button onClick={handleAddClick} colorScheme="green">Add</Button>
       <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
     </>

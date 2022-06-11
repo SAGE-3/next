@@ -18,19 +18,16 @@ function SliderApp(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.delete);
 
   function handleSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
     updateState(props.id, { value: Number(event.target.value) })
   }
 
-  function handleClose() {
-    deleteApp(props.id);
-  }
+
 
   return (
     <div className="Slider-Container">
-      <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
+      <h3>{props.name} </h3>
       <h3>{s.value}</h3>
       <input type="range" min="1" max="100" value={s.value} onChange={handleSliderChange} />
     </div>

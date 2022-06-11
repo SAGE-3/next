@@ -29,7 +29,6 @@ function NoteApp(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
-  const deleteApp = useAppStore((state) => state.delete);
 
   // The text of the sticky for React
   const [note, setNote] = useState(s.text);
@@ -53,16 +52,12 @@ function NoteApp(props: AppSchema): JSX.Element {
     debounceFunc.current(inputValue);
   }
 
-  // delete the app
-  function handleClose() {
-    deleteApp(props.id);
-  }
 
   // React component
   return (
     <div className="Note-Container">
       <h3>
-        {props.name} - <button onClick={handleClose}>X</button>
+        {props.name}
       </h3>
       <textarea value={note} onChange={handleTextChange} />
     </div>

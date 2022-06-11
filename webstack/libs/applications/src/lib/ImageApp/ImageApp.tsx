@@ -17,19 +17,14 @@ function ImageApp(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.delete);
 
   function handleTextChange(ev: React.ChangeEvent<HTMLInputElement>) {
     updateState(props.id, { url: ev.target.value })
   }
 
-  function handleClose() {
-    deleteApp(props.id);
-  }
-
   return (
     <div className="Image-Container">
-      <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
+      <h3>{props.name} </h3>
       <p>URL:</p>
       <input type="text" onChange={handleTextChange} />
       <hr />

@@ -123,7 +123,6 @@ export function BoardPage() {
           </AppWindow>
         );
       })}
-
     </>
   );
 }

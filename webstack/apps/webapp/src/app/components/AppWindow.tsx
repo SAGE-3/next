@@ -20,29 +20,28 @@ type WindowProps = {
 export function AppWindow(props: WindowProps) {
   const nodeRef = useRef(null);
   const update = useAppStore(state => state.update);
+  const deleteApp = useAppStore(state => state.delete);
 
   function eventControl(event: any, info: any) {
-    console.log('Event name: ', event.type);
-    console.log(event, info);
     update(props.app.id, { position: { x: info.x, y: info.y, z: 0 } });
   }
-
+  function handleClose() {
+    deleteApp(props.app.id);
+  }
   return (
     <Draggable
       nodeRef={nodeRef}
       position={{ x: props.app.position.x, y: props.app.position.y }}
       onStop={eventControl}>
-      <div ref={nodeRef} style={{ width: "100px", backgroundColor: "red" }}>
-        <Box border={`solid 2px red}`} style={{
-          width: props.app.size.width,
-          height: props.app.size.height,
-          left: props.app.position.x,
-          top: props.app.position.y,
-          backgroundColor: 'gray'
-        }} >
-          Drag here
-          {props.children}
-        </Box>
+      <div ref={nodeRef} style={{
+        width: props.app.size.width,
+        height: props.app.size.height,
+        backgroundColor: 'gray',
+        border: '2px solid red',
+        position: 'absolute'
+      }}>
+        <button onClick={handleClose}>X</button>
+        {props.children}
       </div>
     </Draggable>
   )
