@@ -10,6 +10,7 @@ import { Applications, initialValues } from '@sage3/applications/apps';
 import { useAppStore } from '@sage3/frontend';
 
 import { useEffect } from 'react';
+import Draggable from 'react-draggable';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppWindow } from '../components/AppWindow';
 
@@ -122,6 +123,7 @@ export function BoardPage() {
           </AppWindow>
         );
       })}
+
     </>
   );
 }
