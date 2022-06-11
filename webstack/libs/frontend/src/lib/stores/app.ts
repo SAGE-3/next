@@ -76,8 +76,10 @@ const AppStore = createVanilla<Applications>((set, get) => {
         appsSub();
         appsSub = null;
       }
+      set({ apps: [] });
     },
     subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
+      set({ apps: [] });
       const apps = await AppHTTPService.query({ boardId });
       if (apps) {
         set({ apps });

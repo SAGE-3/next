@@ -10,13 +10,13 @@
 import { useState, useRef, useEffect } from 'react';
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from '../schema';
+import { AppSchema } from '../../schema';
 
 import { state as AppState } from './';
-import './styles.css';
 
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
+import { AppWindow } from '../../components';
 
 /**
  * NoteApp SAGE3 application
@@ -55,12 +55,11 @@ function NoteApp(props: AppSchema): JSX.Element {
 
   // React component
   return (
-    <div className="Note-Container">
-      <h3>
-        {props.name}
-      </h3>
-      <textarea value={note} onChange={handleTextChange} />
-    </div>
+    <AppWindow app={props}>
+      <>
+        <textarea style={{ width: props.size.width, height: props.size.height }} value={note} onChange={handleTextChange} />
+      </>
+    </AppWindow>
   );
 }
 

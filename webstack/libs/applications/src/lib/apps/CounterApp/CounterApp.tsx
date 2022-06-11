@@ -8,10 +8,10 @@
 
 import { useAppStore } from '@sage3/frontend';
 import { Button } from '@chakra-ui/react';
-import { AppSchema } from "../schema";
+import { AppSchema } from "../../schema";
 
 import { state as AppState } from "./index";
-import './styles.css';
+import { AppWindow } from '../../components';
 
 function CounterApp(props: AppSchema): JSX.Element {
 
@@ -28,11 +28,13 @@ function CounterApp(props: AppSchema): JSX.Element {
   }
 
   return (
-    <>
-      <h3>{props.name} - {s.count}</h3>
-      <Button onClick={handleAddClick} colorScheme="green">Add</Button>
-      <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
-    </>
+    <AppWindow app={props}>
+      <>
+        <h1>Count: {s.count}</h1>
+        <Button onClick={handleAddClick} colorScheme="green">Add</Button>
+        <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
+      </>
+    </AppWindow>
   )
 }
 

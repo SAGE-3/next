@@ -6,17 +6,17 @@
  *
  */
 
-import { name as CounterName, init as defaultCounter } from './CounterApp';
-import { name as ImageName, init as defaultImage } from './ImageApp';
-import { name as LinkerName, init as defaultLinker } from './LinkerApp';
-import { name as NoteName, init as defaultNote } from './NoteApp';
-import { name as SliderName, init as defaultSlider } from './SliderApp';
+import { name as CounterName, init as defaultCounter } from './apps/CounterApp';
+import { name as ImageName, init as defaultImage } from './apps/ImageApp';
+import { name as LinkerName, init as defaultLinker } from './apps/LinkerApp';
+import { name as NoteName, init as defaultNote } from './apps/NoteApp';
+import { name as SliderName, init as defaultSlider } from './apps/SliderApp';
 
-import CounterApp from './CounterApp/CounterApp';
-import ImageApp from './ImageApp/ImageApp';
-import LinkerApp from './LinkerApp/LinkerApp';
-import NoteApp from './NoteApp/NoteApp';
-import SliderApp from './SliderApp/SliderApp';
+import CounterApp from './apps/CounterApp/CounterApp';
+import ImageApp from './apps/ImageApp/ImageApp';
+import LinkerApp from './apps/LinkerApp/LinkerApp';
+import NoteApp from './apps/NoteApp/NoteApp';
+import SliderApp from './apps/SliderApp/SliderApp';
 
 export const Applications = {
   [CounterName]: CounterApp,

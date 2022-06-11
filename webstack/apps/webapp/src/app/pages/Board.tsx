@@ -5,14 +5,13 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { Button } from '@chakra-ui/react';
+import { Box, Button } from '@chakra-ui/react';
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { useAppStore } from '@sage3/frontend';
 
 import { useEffect } from 'react';
 import Draggable from 'react-draggable';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AppWindow } from '../components/AppWindow';
 
 type LocationParams = {
   boardId: string;
@@ -108,21 +107,21 @@ export function BoardPage() {
 
   return (
     <>
-      <Button colorScheme="red" onClick={handleHomeClick}>Home</Button>
+      <Button colorScheme="green" onClick={handleHomeClick}>Home</Button>
       <Button onClick={handleNoteClick}>Note App</Button>
       <Button onClick={handleCounterClick}>Counter App</Button>
       <Button onClick={handleImageClick}>Image App</Button>
       <Button onClick={handleSliderClick}>Slider App</Button>
       <Button onClick={handleLinkerClick}>Linker App</Button>
 
+
       {apps.map((app) => {
         const Component = Applications[app.type];
         return (
-          <AppWindow key={app.id} app={app}>
-            <Component key={app.id} {...app}></Component>
-          </AppWindow>
+          <Component key={app.id} {...app}></Component>
         );
       })}
+
     </>
   );
 }

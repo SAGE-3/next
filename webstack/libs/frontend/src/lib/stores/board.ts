@@ -44,6 +44,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       BoardHTTPService.del(id);
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
+      set({ boards: [] })
       const boards = await BoardHTTPService.query({ roomId });
       if (boards) {
         set({ boards })
