@@ -1,8 +1,9 @@
 import {
+    Button,
+    Input,
     Table,
     Thead,
     Tbody,
-    Tfoot,
     Tr,
     Th,
     Td,
@@ -11,51 +12,69 @@ import {
 } from '@chakra-ui/react'
 
 import './styles.css'
-
-import {FetchData} from "./FetchData";
+import * as React from "react";
+import {useState} from "react";
 
 interface Props{
     data:any;
 }
 
 export const DataViz = ({data}:Props) => {
+    const [inputVal, setInputVal] = useState('');
+    const [items, setItems] = useState<any[]>([]);
+    const [loaded, setLoaded] = useState(false);
+    const [headers, setHeaders] = useState<any[]>([]);
+
+    function handleSubmit() {
+        console.log(inputVal)
+        fetch(
+            inputVal)
+            .then((res) => res.json())
+            .then((json) => {
+                setItems(json)
+                setLoaded(true)
+                setHeaders(Object.keys(json[0]))
+
+            })
+        setInputVal('')
+        // {(!Array.isArray(items) || !items.length) ? <h1>Invalid json file, can't find headers</h1>: setHeaders(Object.keys(items[0]))}
+    }
 
     return (
+        <div>
+            {!loaded ? <h1>Not loaded</h1>:<h1>Loaded</h1>}
+            <Input
+                type="text"
+                value={inputVal}
+                placeholder={'Fetch data from API'}
+                onChange={(e) => setInputVal(e.target.value)}
+            />
+            <Button size='sm' variant='outline' onClick={handleSubmit}>Submit</Button>
         <TableContainer>
             <Table colorScheme="facebook" variant='simple'>
-                <TableCaption>Imperial to metric conversion factors</TableCaption>
+                <TableCaption>Data loaded from API</TableCaption>
                 <Thead>
                     <Tr>
-                        <Th>To convert</Th>
-                        <Th>into</Th>
-                        <Th isNumeric>multiply by</Th>
+                        {
+                            headers.map((header) => (
+                                <Th> {header} </Th>
+                            ))
+                        }
                     </Tr>
                 </Thead>
-                <Tbody>
-                    <Tr>
-                        <Td>inches</Td>
-                        <Td>millimetres (mm)</Td>
-                        <Td isNumeric>25.4</Td>
-                    </Tr>
-                    <Tr>
-                        <Td>feet</Td>
-                        <Td>centimetres (cm)</Td>
-                        <Td isNumeric>30.48</Td>
-                    </Tr>
-                    <Tr>
-                        <Td>yards</Td>
-                        <Td>metres (m)</Td>
-                        <Td isNumeric>0.91444</Td>
-                    </Tr>
-                </Tbody>
-                <Tfoot>
-                    <Tr>
-                        <Th>To convert</Th>
-                        <Th>into</Th>
-                        <Th isNumeric>multiply by</Th>
-                    </Tr>
-                </Tfoot>
+                {/*<Tbody>*/}
+                {/*        {*/}
+                {/*            items.map((item) => (*/}
+                {/*                <Tr>*/}
+                {/*                    {Object.values(item).map((itemChild: any) => (*/}
+                {/*                        <Td> {itemChild} </Td>*/}
+                {/*                    ))}*/}
+                {/*                </Tr>*/}
+                {/*            ))*/}
+                {/*        }*/}
+                {/*</Tbody>*/}
             </Table>
         </TableContainer>
+        </div>
     )
 }

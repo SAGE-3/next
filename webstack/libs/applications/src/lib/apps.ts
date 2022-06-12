@@ -20,7 +20,7 @@ import LinkerApp from './LinkerApp/LinkerApp';
 import NoteApp from './NoteApp/NoteApp';
 import SliderApp from './SliderApp/SliderApp';
 import PlotsApp from "./PlotsApp/PlotsApp";
-import DataTable from "./DataTableApp/DataTable"
+import DataTableApp from "./DataTableApp/DataTableApp"
 
 export const Applications = {
   [CounterName]: CounterApp,
@@ -29,7 +29,7 @@ export const Applications = {
   [NoteName]: NoteApp,
   [SliderName]: SliderApp,
   [PlotsName]: PlotsApp,
-  [DataTableName]: DataTable,
+  [DataTableName]: DataTableApp,
 
 } as unknown as Record<string, () => JSX.Element>;
 

@@ -1,13 +1,17 @@
-export { DataTable as App } from './DataTable';
+// export { DataTableApp as App } from './DataTableApp';
 
 export type state = {
-  data: any;
-  filler: any;
-
+    rows: any;
+    filler: any;
+    filled: any;
+    filly: any;
 }
 
 export const init: Partial<state> = {
-    data: null,
+    rows: [],
+    filler: '',
+    filled: '',
+    filly: ','
 };
 
 export const name = "DataTable";
