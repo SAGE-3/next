@@ -26,10 +26,9 @@ const CMAP_PACKED = true;
 import { createCanvas } from 'canvas';
 import { getStaticAssetUrl } from '@sage3/backend';
 
-
 ////////////////////////////////////////////////////////////////////////////////
 function NodeCanvasFactory() {
-  // something
+  // pass
 }
 
 NodeCanvasFactory.prototype = {
@@ -125,7 +124,6 @@ export class PDFProcessor {
   }
 }
 
-
 /**
  * Process a file
  *
@@ -176,7 +174,8 @@ async function pdfProcessing(job: any): Promise<any> {
           // Finally, get the viewport with the calculated scale
           const viewport = page.getViewport({ scale: scale });
 
-          const canvasFactory = NodeCanvasFactory() as any;
+          // @ts-ignore
+          const canvasFactory = new NodeCanvasFactory();
           const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
           const maxWidth = Math.floor(viewport.width);
@@ -239,4 +238,3 @@ async function pdfProcessing(job: any): Promise<any> {
     });
   });
 }
-

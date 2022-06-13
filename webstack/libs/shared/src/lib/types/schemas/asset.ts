@@ -9,6 +9,15 @@
 // Typing library
 import { z } from 'zod';
 
+// SAGEBase base schema
+export const SBSchema = z.object({
+  _id: z.string(),
+  _createdAt: z.date(),
+  _updatedAt: z.date(),
+});
+// Create the Typescript type
+export type SBElement = z.infer<typeof SBSchema>;
+
 // information for derived images
 export const ExtraImageSchema = z.object({
   fullSize: z.string(),
@@ -35,3 +44,6 @@ export const AssetSchema = z.object({
 
 // Create the Typescript type
 export type AssetType = z.infer<typeof AssetSchema>;
+
+// TS type for sagebase
+export type AssetSB = SBElement & { data: AssetType };
