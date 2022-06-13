@@ -11,17 +11,24 @@ from utils.generic_utils import import_cls
 from utils.wall_utils import Sage3Communication
 
 
-class Wall():
-    cls_root = "smartbits"
+class Board():
+    # cls_root = "smartbits"
 
-    def __init__(self, data=None, config=None):
+    def __init__(self, data):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
-        self.communication = Sage3Communication.instance(config)
+        # self.communication = Sage3Communication.instance(config)
+        self.id = data["id"]
+        self.name = data["name"]
+        self.description = data["description"]
+        self.color = data["color"]
+        self.ownerId = data["ownerId"]
+
         self.smartbits = SmartBitsCollection()
         self.smartbit_factory = SmartBitFactory()
-        if data:
-            for app_uuid, app_data in data["state"]["apps"].items():
-                self.create_smartbit(app_uuid, app_data)
+
+        # if data:
+        #     for app_uuid, app_data in data["state"]["apps"].items():
+        #         self.create_smartbit(app_uuid, app_data)
 
 
     def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
