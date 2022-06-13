@@ -36,13 +36,13 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
     currentRoom: undefined,
     rooms: [],
     create: async (name: RoomSchema['name'], description: RoomSchema['description']) => {
-      RoomHTTPService.create(name, description);
+      SocketAPI.sendRESTMessage(`/api/rooms/`, 'POST', { name, description });
     },
     update: async (id: RoomSchema['id'], updates: Partial<RoomSchema>) => {
-      RoomHTTPService.update(id, updates);
+      SocketAPI.sendRESTMessage(`/api/rooms/${id}`, 'PUT', updates);
     },
     delete: async (id: RoomSchema['id']) => {
-      RoomHTTPService.del(id);
+      SocketAPI.sendRESTMessage(`/api/rooms/${id}`, 'DELETE');
     },
     subscribeToAllRooms: async () => {
       const rooms = await RoomHTTPService.readAll();
@@ -56,7 +56,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = '/api/rooms/subscribe';
+      const route = '/api/rooms';
       // Socket Listenting to updates from server about the current rooms
       roomSub = await SocketAPI.subscribe<RoomSchema>(route, (message) => {
         console.log(message)

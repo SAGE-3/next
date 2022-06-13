@@ -10,21 +10,21 @@
  * A Subscription cache to keep track of client subscriptions on the server.
  */
 export class SubscriptionCache {
-  private cache: { [id: string]: () => Promise<void> }
+  private cache: { [id: string]: (() => Promise<void>)[] }
 
   constructor() {
     this.cache = {};
   }
 
-  public add(subId: string, sub: () => Promise<void>) {
-    this.cache[subId] = sub;
+  public add(subId: string, subs: (() => Promise<void>)[]) {
+    this.cache[subId] = subs;
   }
 
   public async delete(subId: string) {
 
     if (this.cache[subId]) {
       try {
-        await this.cache[subId]();
+        await Promise.all(this.cache[subId].map(sub => sub()));
       } catch (e) {
         console.log(e);
       }

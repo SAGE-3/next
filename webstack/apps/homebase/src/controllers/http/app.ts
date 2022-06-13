@@ -35,7 +35,7 @@ export function appExpressRouter(): express.Router {
 
   // Create a new app: POST /api/apps
   router.post('/', async ({ user, body }, res) => {
-    const app = await AppService.create(body.name, body.description, user.id, body.roomId, body.boardId, body.position, body.size, body.rotation, body.type, body.state);
+    const app = await AppService.create(user.id, body);
     if (app) res.status(200).send({ success: true, data: app });
     else res.status(500).send({ success: false });
   });

@@ -143,7 +143,7 @@ class SAGE3BoardModel {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeToBoards(callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<BoardSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.boardCollection.subscribe(callback);
       return unsubscribe;
@@ -160,7 +160,7 @@ class SAGE3BoardModel {
    * @return {() => void | undefined} The unsubscribe function.
  
    */
-  public async subscribeToBoard(
+  public async subscribe(
     id: string,
     callback: (message: SBDocumentMessage<BoardSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {

@@ -35,7 +35,8 @@ export function boardExpressRouter(): express.Router {
 
   // Create a new board: POST /api/boards
   router.post('/', async ({ user, body }, res) => {
-    const board = await BoardService.create(body.name, body.description, user.id, body.roomId);
+
+    const board = await BoardService.create(user.id, body);
     if (board) res.status(200).send({ success: true, data: board });
     else res.status(500).send({ success: false });
   });

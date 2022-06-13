@@ -2,7 +2,6 @@ import { SBDocumentMessage, SBJSON } from "@sage3/sagebase";
 import { genId } from "@sage3/shared";
 import { APIClientWSMessage } from "@sage3/shared/types";
 
-
 class SocketAPISingleton {
 
   private _socketType: string;
@@ -12,17 +11,24 @@ class SocketAPISingleton {
     unsub: (message: SBDocumentMessage<any>) => void
   }>;
 
+  private _restmessages: Record<string, any>;
+
   public constructor() {
     this._subscriptions = {};
+    this._restmessages = {};
     this._socketType = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
   }
 
   private processServerMessage(message: MessageEvent<any>) {
     const msg = JSON.parse(message.data);
-    if (this._subscriptions[msg.subId]) {
-      this._subscriptions[msg.subId].callback(msg.event);
-    } else {
-      this.print('Message received with no subscription.');
+    if (this._subscriptions[msg.id]) {
+      this._subscriptions[msg.id].callback(msg.event);
+    } else if (this._restmessages[msg.id]) {
+      this._restmessages[msg.id](msg);
+      delete this._restmessages[msg.id];
+    }
+    else {
+      this.print('Message received but has no owner.');
     }
   }
 
@@ -35,30 +41,43 @@ class SocketAPISingleton {
     }
   }
 
-  public async subscribe<T extends SBJSON>(route: string, callback: (message: SBDocumentMessage<T>) => void): Promise<() => void> {
-    const id = genId();
-    const subId = genId();
-
-    const subMessage = {
-      id,
+  public async sendRESTMessage(route: APIClientWSMessage['route'], method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>, body?: Record<string, unknown>): Promise<unknown> {
+    const message = {
+      id: genId(),
       route,
-      subId
+      method,
+    } as APIClientWSMessage;
+    if (body) message.body = body;
+    let promiseResolve;
+    const promise = new Promise((resolve, reject) => {
+      promiseResolve = resolve;
+    });
+    this._restmessages[message.id] = promiseResolve;
+    this.sendMessage(JSON.stringify(message));
+    return promise;
+  }
+
+  public async subscribe<T extends SBJSON>(route: string, callback: (message: SBDocumentMessage<T>) => void): Promise<() => void> {
+    const subMessage = {
+      id: genId(),
+      route,
+      method: 'SUB'
     } as APIClientWSMessage;
 
     const unsub = () => {
       const parts = subMessage.route.split('/');
-      const route = `/api/${parts[2]}/unsubscribe`;
+      const route = `/api/${parts[2]}`;
       const unsubMessage = {
-        id: genId(),
+        id: subMessage.id,
         route,
-        subId
+        method: 'UNSUB'
       } as APIClientWSMessage;
-      delete this._subscriptions[id];
+      delete this._subscriptions[subMessage.id];
       this.sendMessage(JSON.stringify(unsubMessage))
       return;
     }
 
-    this._subscriptions[subId] = {
+    this._subscriptions[subMessage.id] = {
       callback,
       unsub
     }
@@ -82,12 +101,14 @@ class SocketAPISingleton {
     this._socket.addEventListener('close', (event) => {
       this.printWarn('Connection Closed');
       this._subscriptions = {};
+      this._restmessages = {};
       this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
     });
 
     this._socket.addEventListener('error', (event) => {
       this.printError('Connection Error');
       this._subscriptions = {};
+      this._restmessages = {};
       this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
     });
 

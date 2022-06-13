@@ -20,6 +20,7 @@ import { AppHTTPService } from '../api';
 import { SocketAPI } from '../utils';
 
 import { AppState, AppSchema } from '@sage3/applications/schema';
+import { BoardSchema } from '@sage3/shared/types';
 
 interface Applications {
   apps: AppSchema[];
@@ -59,16 +60,16 @@ const AppStore = createVanilla<Applications>((set, get) => {
       type: AppSchema['type'],
       state: Partial<AppSchema['state']>
     ) => {
-      AppHTTPService.create(name, description, roomId, boardId, position, size, rotation, type, state);
+      SocketAPI.sendRESTMessage('/api/apps', 'POST', { name, description, roomId, boardId, position, size, rotation, type, state });
     },
     update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
-      AppHTTPService.update(id, updates);
+      SocketAPI.sendRESTMessage('/api/apps/' + id, 'PUT', updates);
     },
     updateState: async (id: AppSchema['id'], state: Partial<AppState>) => {
       AppHTTPService.updateState(id, state);
     },
     delete: async (id: AppSchema['id']) => {
-      AppHTTPService.del(id);
+      SocketAPI.sendRESTMessage('/api/apps/' + id, 'DELETE');
     },
     unsub: () => {
       // Unsubscribe old subscription
@@ -91,26 +92,28 @@ const AppStore = createVanilla<Applications>((set, get) => {
         appsSub = null;
       }
 
-      const route = `/api/apps/subscribe/board/${boardId}`;
+      const route = `/api/subscription/boards/${boardId}`;
       // Socket Listenting to updates from server about the current user
-      appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
+      appsSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
+        if (message.col !== 'APPS') return;
+        const doc = message.doc.data as AppSchema;
         switch (message.type) {
           case 'CREATE': {
-            set({ apps: [...get().apps, message.doc.data] });
+            set({ apps: [...get().apps, doc] });
             break;
           }
           case 'UPDATE': {
             const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el.id === message.doc.data.id);
+            const idx = apps.findIndex((el) => el.id === doc.id);
             if (idx > -1) {
-              apps[idx] = message.doc.data;
+              apps[idx] = doc;
             }
             set({ apps: apps });
             break;
           }
           case 'DELETE': {
             const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el.id === message.doc.data.id);
+            const idx = apps.findIndex((el) => el.id === doc.id);
             if (idx > -1) {
               apps.splice(idx, 1);
             }

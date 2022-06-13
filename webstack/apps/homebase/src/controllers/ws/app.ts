@@ -27,8 +27,8 @@ import { AppService } from '../../services';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
-import { genId } from '@sage3/shared';
 import { APIClientWSMessage } from '@sage3/shared/types';
+import { AppSchema } from '@sage3/applications/schema';
 
 /**
  * 
@@ -38,49 +38,85 @@ import { APIClientWSMessage } from '@sage3/shared/types';
  * @param cache 
  */
 export async function appWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  // Subscribe Message by Property Value (roomId)
-  if (message.route.startsWith('/api/apps/subscribe/room')) {
-    const roomId = message.route.split('/').at(-1);
-    if (!roomId) return;
-    const sub = await AppService.subscribeByRoomId(roomId, (doc) => {
-      const msg = { id: genId(), subId: message.subId, event: doc }
-      socket.send(JSON.stringify(msg));
-    });
-    if (sub) cache.add(message.subId, sub)
-  }
-  // Subscribe Message by Property Value (boardId)
-  else if (message.route.startsWith('/api/apps/subscribe/board')) {
-    const boardId = message.route.split('/').at(-1);
-    if (!boardId) return;
-    const sub = await AppService.subscribeByBoardId(boardId, (doc) => {
-      const msg = { id: genId(), subId: message.subId, event: doc }
-      socket.send(JSON.stringify(msg));
-    });
-    if (sub) cache.add(message.subId, sub)
-  }
-  // Subscribe Message
-  else if (message.route.startsWith('/api/apps/subscribe')) {
-    // Subscribe All
-    if (message.route === '/api/apps/subscribe') {
-      const sub = await AppService.subscribeToAllApps((doc) => {
-        const msg = { id: genId(), subId: message.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.subId, sub)
+  const auth = request.session.passport.user;
+  switch (message.method) {
+    case 'POST': {
+      // CREATE APP
+      const body = message.body as Partial<AppSchema>;
+      if (body === undefined) {
+        socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
+        return;
+      } else {
+        const app = await AppService.create(auth.id, body);
+        if (app) socket.send(JSON.stringify({ id: message.id, success: true, data: app }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create app.' }));
+      }
+      break;
     }
-    // Subscribe To One App
-    else {
-      const id = message.route.split('/').at(-1);
-      if (!id) return;
-      const sub = await AppService.subscribeToApp(id, (doc) => {
-        const msg = { id: genId(), subId: message.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.subId, sub)
+    case 'GET': {
+      // READ ALL APPS
+      if (message.route.startsWith('/api/apps')) {
+        const apps = await AppService.readAll();
+        if (apps) socket.send(JSON.stringify({ id: message.id, success: true, data: apps }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get apps.' }));
+      }
+      // READ ONE APP 
+      else if (message.route.startsWith('/api/apps/')) {
+        const appId = message.route.split('/').at(-1) as string;
+        const app = await AppService.read(appId);
+        if (app) socket.send(JSON.stringify({ id: message.id, success: true, data: app }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get app.' }));
+      }
+      break;
     }
-  }
-  // Unsubscribe Message
-  if (message.route.startsWith('/api/apps/unsubscribe')) {
-    cache.delete(message.subId);
+    case 'PUT': {
+      const appId = message.route.split('/').at(-1) as string;
+      const body = message.body as Partial<AppSchema>;
+      const update = await AppService.update(appId, body);
+      if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
+      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update app.' }));
+      break;
+    }
+    case 'DELETE': {
+      const appId = message.route.split('/').at(-1) as string;
+      const del = await AppService.delete(appId);
+      if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
+      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete app.' }));
+      break;
+    }
+    case 'SUB': {
+      // Subscribe to all apps
+      if (message.route.startsWith('/api/apps')) {
+        const sub = await AppService.subscribeAll((doc) => {
+          const msg = { id: message.id, event: doc }
+          socket.send(JSON.stringify(msg));
+        });
+        if (sub) cache.add(message.id, [sub])
+      }
+      // Subscribe To One App
+      else if (message.route.startsWith('/api/apps/')) {
+        const id = message.route.split('/').at(-1);
+        if (!id) {
+          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          return;
+        }
+        const sub = await AppService.subscribe(id, (doc) => {
+          const msg = { id: message.id, event: doc }
+          socket.send(JSON.stringify(msg));
+        });
+        if (sub) cache.add(message.id, [sub])
+      }
+      break;
+    }
+    case 'UNSUB': {
+      // Unsubscribe Message
+      cache.delete(message.id);
+      break;
+    }
+    default: {
+      socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method.' }));
+    }
+
+
   }
 }

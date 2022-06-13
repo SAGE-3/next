@@ -27,8 +27,7 @@ import { BoardService } from '../../services';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
-import { APIClientWSMessage } from '@sage3/shared/types';
-import { genId } from '@sage3/shared';
+import { APIClientWSMessage, BoardSchema } from '@sage3/shared/types';
 
 
 /**
@@ -39,38 +38,86 @@ import { genId } from '@sage3/shared';
  * @param cache 
  */
 export async function boardWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  // Subscribe Message by Property Value (roomId)
-  if (message.route.startsWith('/api/boards/subscribe/room/')) {
-    const roomId = message.route.split('/').at(-1);
-    if (!roomId) return;
-    const sub = await BoardService.subscribeByRoomId(roomId, (doc) => {
-      const msg = { id: genId(), subId: message.subId, event: doc }
-      socket.send(JSON.stringify(msg));
-    });
-    if (sub) cache.add(message.subId, sub)
-  }
-  else if (message.route.startsWith('/api/boards/subscribe')) {
-    // Subscribe All
-    if (message.route === '/api/boards/subscribe') {
-      const sub = await BoardService.subscribetoAllBoards((doc) => {
-        const msg = { id: genId(), subId: message.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.subId, sub)
+  const auth = request.session.passport.user;
+  switch (message.method) {
+    case 'POST': {
+      // CREATE BOARD
+      const body = message.body as Partial<BoardSchema>;
+      if (body === undefined) {
+        socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
+        return;
+      } else {
+        const board = await BoardService.create(auth.id, body);
+        if (board) socket.send(JSON.stringify({ id: message.id, success: true, data: board }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create board.' }));
+      }
+      break;
     }
-    // Subscribe To One
-    else {
-      const id = message.route.split('/').at(-1);
-      if (!id) return;
-      const sub = await BoardService.subscribeToBoard(id, (doc) => {
-        const msg = { id: genId(), subId: message.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.subId, sub)
+    case 'GET': {
+      // READ ALL BOARDS
+      if (message.route.startsWith('/api/boards')) {
+        const boards = await BoardService.readAll();
+        if (boards) socket.send(JSON.stringify({ id: message.id, success: true, data: boards }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get boards.' }));
+      }
+      // READ ONE BOARD 
+      else if (message.route.startsWith('/api/boards/')) {
+        const boardId = message.route.split('/').at(-1) as string;
+        const board = await BoardService.read(boardId);
+        if (board) socket.send(JSON.stringify({ id: message.id, success: true, data: board }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get board.' }));
+      }
+      break;
+    }
+    // UPDATE BOARD
+    case 'PUT': {
+      const boardId = message.route.split('/').at(-1) as string;
+      const body = message.body as Partial<BoardSchema>;
+      const update = await BoardService.update(boardId, body);
+      if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
+      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update board.' }));
+      break;
+    }
+    // DELETE BOARD
+    case 'DELETE': {
+      const boardId = message.route.split('/').at(-1) as string;
+      const del = await BoardService.delete(boardId);
+      if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
+      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete board.' }));
+      break;
+    }
+    case 'SUB': {
+      // Subscribe to all boards
+      if (message.route.startsWith('/api/boards')) {
+        const sub = await BoardService.subscribeAll((doc) => {
+          const msg = { id: message.id, event: doc }
+          socket.send(JSON.stringify(msg));
+        });
+        if (sub) cache.add(message.id, [sub])
+      }
+      // Subscribe to one board
+      else if (message.route.startsWith('/api/boards/')) {
+        const id = message.route.split('/').at(-1);
+        if (!id) {
+          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          return;
+        }
+        const sub = await BoardService.subscribe(id, (doc) => {
+          const msg = { id: message.id, event: doc }
+          socket.send(JSON.stringify(msg));
+        });
+        if (sub) cache.add(message.id, [sub])
+      }
+      break;
+    }
+    case 'UNSUB': {
+      // Unsubscribe Message
+      cache.delete(message.id);
+      break;
+    }
+    default: {
+      socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method.' }));
     }
   }
-  // Unsubscribe Message
-  else if (message.route.startsWith('/api/boards/unsubscribe')) {
-    cache.delete(message.subId);
-  }
+
 }

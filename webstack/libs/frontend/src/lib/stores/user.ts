@@ -56,10 +56,9 @@ const UserStore = createVanilla<UserState>((set, get) => {
         userSub = null;
       }
       // Socket Subscribe Message
-      const route = `/api/users/subscribe/${response.id}`;
+      const route = `/api/users/${response.id}`;
       // Socket Listenting to updates from server about the current user
       userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-
         switch (message.type) {
           case 'CREATE': {
             set({ user: message.doc.data })

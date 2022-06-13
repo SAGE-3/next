@@ -166,7 +166,7 @@ class SAGE3AppModel {
  * @return {() => void | undefined} The unsubscribe function.
  
  */
-  public async subscribeToApp(
+  public async subscribe(
     id: string,
     callback: (message: SBDocumentMessage<AppSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
@@ -185,7 +185,7 @@ class SAGE3AppModel {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeToApps(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.appCollection.subscribe(callback);
       return unsubscribe;
