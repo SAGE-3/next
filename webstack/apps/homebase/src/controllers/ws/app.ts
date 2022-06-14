@@ -28,7 +28,7 @@ import { AppService } from '../../services';
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
-import { AppSchema } from '@sage3/applications/schema';
+import { AppSchema, AppState } from '@sage3/applications/schema';
 
 /**
  * 
@@ -71,8 +71,14 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
     }
     case 'PUT': {
       const appId = message.route.split('/').at(-1) as string;
-      const body = message.body as Partial<AppSchema>;
-      const update = await AppService.update(appId, body);
+      let update;
+      if (message.route.startsWith('/api/apps/state/')) {
+        const body = message.body as Partial<AppState>;
+        update = await AppService.updateState(appId, body);
+      } else {
+        const body = message.body as Partial<AppSchema>;
+        update = await AppService.update(appId, body);
+      }
       if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
       else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update app.' }));
       break;

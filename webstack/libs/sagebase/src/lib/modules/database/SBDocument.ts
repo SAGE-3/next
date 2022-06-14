@@ -132,7 +132,6 @@ export class SBDocumentRef<Type extends SBJSON> {
       this.ERRORLOG(`Doc does not exists.`);
       return generateWriteResult(false);
     }
-    const oldValue = await this.read();
     try {
       let updated = false;
       const updatePromises = Object.keys(update).map(async (key) => {
