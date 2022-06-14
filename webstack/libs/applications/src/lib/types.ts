@@ -6,11 +6,11 @@
  *
  */
 
-import { state as CounterState, name as CounterName } from './CounterApp';
-import { state as ImageState, name as ImageName } from './ImageApp';
-import { state as LinkerState, name as LinkerName } from './LinkerApp';
-import { state as NoteState, name as NoteName } from './NoteApp';
-import { state as SliderState, name as SliderName } from './SliderApp';
+import { state as CounterState, name as CounterName } from './apps/CounterApp';
+import { state as ImageState, name as ImageName } from './apps/ImageApp';
+import { state as LinkerState, name as LinkerName } from './apps/LinkerApp';
+import { state as NoteState, name as NoteName } from './apps/NoteApp';
+import { state as SliderState, name as SliderName } from './apps/SliderApp';
 
 export type AppState = CounterState | ImageState | LinkerState | NoteState | SliderState;
 

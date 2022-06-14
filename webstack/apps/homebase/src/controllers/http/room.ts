@@ -35,7 +35,7 @@ export function roomExpressRouter(): express.Router {
 
   // Create a new room: POST /api/rooms
   router.post('/', async ({ user, body }, res) => {
-    const room = await RoomService.create(body.name, body.description, user.id);
+    const room = await RoomService.create(user.id, body);
     if (room) res.status(200).send({ success: true, data: room });
     else res.status(500).send({ success: false });
   });

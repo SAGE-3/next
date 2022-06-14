@@ -6,11 +6,10 @@
  *
  */
 
-export type APIClientWSMessage = {
-  id: string,
-  route: string,
-  body: {
-    subId: string,
-    [key: string]: string
-  }
-}
+export type APIClientWSMessage =
+  {
+    id: string,
+    route: string,
+    method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB',
+    body?: Record<string, unknown>
+  };

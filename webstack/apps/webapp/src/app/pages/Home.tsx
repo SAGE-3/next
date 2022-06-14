@@ -6,11 +6,11 @@
  *
  */
 
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue } from '@chakra-ui/react';
 
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { useState } from 'react';
-import { AppList } from '../components/AppList';
+import { Navigate, useNavigate } from 'react-router';
 
 import { BoardList } from '../components/BoardList';
 import { Header } from '../components/Header';
@@ -23,6 +23,8 @@ export function HomePage() {
 
   const imageUrl = useColorModeValue("/assets/SAGE3LightMode.png", "/assets/SAGE3DarkMode.png");
 
+  const navigate = useNavigate();
+
   function handleRoomClick(room: RoomSchema) {
     setSelectedRoom(room);
     setSelectedBoard(null);
@@ -30,6 +32,12 @@ export function HomePage() {
 
   function handleBoardClick(board: BoardSchema) {
     setSelectedBoard(board);
+  }
+
+  function handleEnterBoard() {
+    if (selectedBoard && selectedRoom) {
+      navigate('/board', { state: { roomId: selectedRoom.id, boardId: selectedBoard.id } });
+    }
   }
 
   return (
@@ -54,8 +62,7 @@ export function HomePage() {
             </Box>
 
             <Box display="flex" flexWrap="wrap" flexDirection="row" p="10">
-              {/* TEMP APPS AREA */}
-              {(selectedBoard && selectedRoom) ? <AppList selectedBoard={selectedBoard} selectedRoom={selectedRoom}></AppList> : null}
+              {selectedBoard ? <Button onClick={handleEnterBoard}>Enter Board</Button> : null}
 
             </Box>
 

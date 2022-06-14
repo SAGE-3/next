@@ -19,7 +19,6 @@
  */
 
 // External Imports
-import { UserRole } from '@sage3/shared/types';
 import * as express from 'express';
 
 // App Imports
@@ -36,8 +35,8 @@ export function userExpressRouter(): express.Router {
 
   // Create a new user: POST /api/users
   router.post('/', async ({ user, body }, res) => {
-    const role = user.provider === 'guest' ? ('guest' as UserRole) : ('user' as UserRole);
-    const u = await UserService.create(user.id, body.name, body.email, role);
+
+    const u = await UserService.create(user, body);
     if (u) res.status(200).send({ success: true, data: u });
     else res.status(500).send({ success: false });
   });

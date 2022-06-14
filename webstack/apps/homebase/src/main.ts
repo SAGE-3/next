@@ -102,9 +102,13 @@ async function startServer() {
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+
+    console.log('apiWebSocketServer> connection open');
+
+    // Create a subscription cache for this connection.
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
-    console.log('apiWebSocketServer> connection open');
+
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
       wsAPIRouter(socket, request, message, subCache);
@@ -117,6 +121,7 @@ async function startServer() {
 
     socket.on('error', () => {
       console.log('apiWebSocketServer> error');
+      subCache.deleteAll();
     });
   });
 
@@ -129,6 +134,7 @@ async function startServer() {
 
   // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
+
     // get url path
     const pathname = request.url;
     if (!pathname) return;

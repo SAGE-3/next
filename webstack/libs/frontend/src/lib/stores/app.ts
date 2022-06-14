@@ -20,6 +20,7 @@ import { AppHTTPService } from '../api';
 import { SocketAPI } from '../utils';
 
 import { AppState, AppSchema } from '@sage3/applications/schema';
+import { BoardSchema } from '@sage3/shared/types';
 
 interface Applications {
   apps: AppSchema[];
@@ -37,6 +38,7 @@ interface Applications {
   update: (id: AppSchema['id'], updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: AppSchema['id'], state: Partial<AppState>) => Promise<void>;
   delete: (id: AppSchema['id']) => Promise<void>;
+  unsub: () => void;
   subscribeByBoardId: (boardId: AppSchema['boardId']) => Promise<void>;
 }
 
@@ -44,8 +46,7 @@ interface Applications {
  * The AppStore.
  */
 const AppStore = createVanilla<Applications>((set, get) => {
-  const socket = SocketAPI.getInstance();
-  let appsSub: (() => Promise<void>) | null = null;
+  let appsSub: (() => void) | null = null;
   return {
     apps: [],
     create: async (
@@ -59,48 +60,60 @@ const AppStore = createVanilla<Applications>((set, get) => {
       type: AppSchema['type'],
       state: Partial<AppSchema['state']>
     ) => {
-      AppHTTPService.create(name, description, roomId, boardId, position, size, rotation, type, state);
+      SocketAPI.sendRESTMessage('/api/apps', 'POST', { name, description, roomId, boardId, position, size, rotation, type, state });
     },
     update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
-      AppHTTPService.update(id, updates);
+      SocketAPI.sendRESTMessage('/api/apps/' + id, 'PUT', updates);
     },
     updateState: async (id: AppSchema['id'], state: Partial<AppState>) => {
       AppHTTPService.updateState(id, state);
     },
     delete: async (id: AppSchema['id']) => {
-      AppHTTPService.del(id);
+      SocketAPI.sendRESTMessage('/api/apps/' + id, 'DELETE');
+    },
+    unsub: () => {
+      // Unsubscribe old subscription
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
+      }
+      set({ apps: [] });
     },
     subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
+      set({ apps: [] });
       const apps = await AppHTTPService.query({ boardId });
       if (apps) {
         set({ apps });
       }
+
+      // Unsubscribe old subscription
       if (appsSub) {
-        await appsSub();
+        appsSub();
         appsSub = null;
       }
 
-      const route = '/api/apps/subscribe/:boardId';
-      const body = { boardId };
+      const route = `/api/subscription/boards/${boardId}`;
       // Socket Listenting to updates from server about the current user
-      appsSub = await socket.subscribe<AppSchema>(route, body, (message) => {
+      appsSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
+        if (message.col !== 'APPS') return;
+        const doc = message.doc.data as AppSchema;
         switch (message.type) {
           case 'CREATE': {
-            set({ apps: [...get().apps, message.doc.data] });
+            set({ apps: [...get().apps, doc] });
             break;
           }
           case 'UPDATE': {
             const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el.id === message.doc.data.id);
+            const idx = apps.findIndex((el) => el.id === doc.id);
             if (idx > -1) {
-              apps[idx] = message.doc.data;
+              apps[idx] = doc;
             }
             set({ apps: apps });
             break;
           }
           case 'DELETE': {
             const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el.id === message.doc.data.id);
+            const idx = apps.findIndex((el) => el.id === doc.id);
             if (idx > -1) {
               apps.splice(idx, 1);
             }
@@ -156,8 +169,11 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     delete: async (id: AppSchema['id']) => {
       set({ apps: get().apps.filter((app) => app.id !== id) });
     },
+    unsub: () => {
+      console.log('Unsubscribing to apps is not required in the playground');
+    },
     subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
-      console.log('Subscribing to apps by boardId not required in the playground');
+      console.log('Subscribing to apps is not required in the playground');
     },
   };
 });
