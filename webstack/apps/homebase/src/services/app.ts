@@ -37,31 +37,12 @@ class SAGE3AppService {
    * @param {string} type the type of app
    * @returns {AppSchema | undefined} Returns the AppSchema or undefined if unsuccessful
    */
-  public async create(
-    name: AppSchema['name'],
-    description: AppSchema['description'],
-    ownerId: AppSchema['ownerId'],
-    roomId: AppSchema['roomId'],
-    boardId: AppSchema['boardId'],
-    position: AppSchema['position'],
-    size: AppSchema['size'],
-    rotation: AppSchema['rotation'],
-    type: AppSchema['type'],
-    state: AppSchema['state']
-  ): Promise<AppSchema | undefined> {
+  public async create(ownerId: string, app: Partial<AppSchema>): Promise<AppSchema | undefined> {
     const id = genId();
     const newApp = {
+      ...app,
       id: id,
-      name: name,
-      description: description,
-      roomId,
-      ownerId,
-      boardId,
-      position,
-      size,
-      rotation,
-      type,
-      state,
+      ownerId
     } as AppSchema;
     try {
       const doc = await AppModel.createApp(id, newApp);
@@ -170,12 +151,12 @@ class SAGE3AppService {
    * @param {string} id The id of the app
    * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
    */
-  public async subscribeToApp(
+  public async subscribe(
     id: string,
     callback: (message: SBDocumentMessage<AppSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await AppModel.subscribeToApp(id, callback);
+      const subscription = await AppModel.subscribe(id, callback);
       return subscription;
     } catch (error) {
       console.log('AppService subscribeToApp error> ', error);
@@ -187,9 +168,9 @@ class SAGE3AppService {
    * Subscribe to all apps in the database.
    * @returns {(() => Promise<void>) | undefined} Callback function to unsubscribe
    */
-  public async subscribeToAllApps(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await AppModel.subscribeToApps(callback);
+      const subscription = await AppModel.subscribeAll(callback);
       return subscription;
     } catch (error) {
       console.log('AppService subscribeToAllApps error> ', error);

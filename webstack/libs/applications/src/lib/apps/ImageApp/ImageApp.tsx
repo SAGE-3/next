@@ -7,34 +7,30 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../schema";
+import { AppWindow } from '../../components';
+import { AppSchema } from "../../schema";
 
 import { state as AppState } from "./";
-import './styles.css';
 
 function ImageApp(props: AppSchema): JSX.Element {
 
   const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.delete);
 
   function handleTextChange(ev: React.ChangeEvent<HTMLInputElement>) {
     updateState(props.id, { url: ev.target.value })
   }
 
-  function handleClose() {
-    deleteApp(props.id);
-  }
-
   return (
-    <div className="Image-Container">
-      <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
-      <p>URL:</p>
-      <input type="text" onChange={handleTextChange} />
-      <hr />
-      <img src={s.url} crossOrigin="anonymous" width="200px" alt={"ImageApp"}></img>
-    </div>
+    <AppWindow app={props}>
+      <>
+        <p>URL:</p>
+        <input type="text" width="2000px" onChange={handleTextChange} />
+        <hr />
+        <img src={s.url} crossOrigin="anonymous" height={props.size.height + 'px'} alt={"ImageApp"}></img>
+      </>
+    </AppWindow>
   )
 }
 

@@ -11,7 +11,7 @@ import { IncomingMessage } from 'http';
 import { WebSocket } from 'ws';
 
 // App Imports
-import { boardWSRouter, roomWSRouter, userWSRouter, appWSRouter } from '../ws';
+import { boardWSRouter, roomWSRouter, userWSRouter, appWSRouter, subscriptionWSRouter } from '../ws';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
@@ -22,6 +22,7 @@ const wsRoutes = {
   '/users': userWSRouter,
   '/rooms': roomWSRouter,
   '/boards': boardWSRouter,
+  '/subscription': subscriptionWSRouter
 } as {
   [key: string]: (socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void>;
 };

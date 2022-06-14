@@ -124,7 +124,7 @@ class SAGE3UserModel {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeToUsers(callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.userCollection.subscribe(callback);
       return unsubscribe;
@@ -140,7 +140,7 @@ class SAGE3UserModel {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeToUser(
+  public async subscribe(
     id: string,
     callback: (message: SBDocumentMessage<UserSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
