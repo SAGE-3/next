@@ -1,3 +1,7 @@
 .Counter-Container {
   border: solid red 2px;
 }
+
+body:not(.nohover) tbody td:hover {
+  background-color: salmon;
+}
