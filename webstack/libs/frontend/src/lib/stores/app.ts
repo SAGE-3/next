@@ -38,15 +38,15 @@ interface Applications {
   update: (id: AppSchema['id'], updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: AppSchema['id'], state: Partial<AppState>) => Promise<void>;
   delete: (id: AppSchema['id']) => Promise<void>;
-  unsub: () => void;
-  subscribeByBoardId: (boardId: AppSchema['boardId']) => Promise<void>;
+  unsubToBoard: () => void;
+  subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
 }
 
 /**
  * The AppStore.
  */
 const AppStore = createVanilla<Applications>((set, get) => {
-  let appsSub: (() => void) | null = null;
+  let boardSub: (() => void) | null = null;
   return {
     apps: [],
     create: async (
@@ -71,15 +71,15 @@ const AppStore = createVanilla<Applications>((set, get) => {
     delete: async (id: AppSchema['id']) => {
       SocketAPI.sendRESTMessage('/api/apps/' + id, 'DELETE');
     },
-    unsub: () => {
+    unsubToBoard: () => {
       // Unsubscribe old subscription
-      if (appsSub) {
-        appsSub();
-        appsSub = null;
+      if (boardSub) {
+        boardSub();
+        boardSub = null;
       }
       set({ apps: [] });
     },
-    subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
+    subToBoard: async (boardId: AppSchema['boardId']) => {
       set({ apps: [] });
       const apps = await AppHTTPService.query({ boardId });
       if (apps) {
@@ -87,14 +87,14 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
 
       // Unsubscribe old subscription
-      if (appsSub) {
-        appsSub();
-        appsSub = null;
+      if (boardSub) {
+        boardSub();
+        boardSub = null;
       }
 
       const route = `/api/subscription/boards/${boardId}`;
       // Socket Listenting to updates from server about the current user
-      appsSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
+      boardSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
         const doc = message.doc.data as AppSchema;
         switch (message.type) {
@@ -169,10 +169,10 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     delete: async (id: AppSchema['id']) => {
       set({ apps: get().apps.filter((app) => app.id !== id) });
     },
-    unsub: () => {
+    unsubToBoard: () => {
       console.log('Unsubscribing to apps is not required in the playground');
     },
-    subscribeByBoardId: async (boardId: AppSchema['boardId']) => {
+    subToBoard: async (boardId: AppSchema['boardId']) => {
       console.log('Subscribing to apps is not required in the playground');
     },
   };
