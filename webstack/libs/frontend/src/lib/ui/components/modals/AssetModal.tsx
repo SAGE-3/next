@@ -107,9 +107,9 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
           createApp(
             'Image', 'Image Description',
             roomId, boardId,
-            { x: 0, y: 0, z: 0 },
-            { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
             { x: x, y: 0, z: 0 },
+            { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
+            { x: 0, y: 0, z: 0 },
             'Image',
             // state
             {
