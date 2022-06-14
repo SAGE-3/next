@@ -59,12 +59,14 @@ def listBoards():
 async def subscribeToAppUpdateInBoard(sock, boardId):
     """Get new, delete, and update messages for a board
     """
-    subscriptionId = str(uuid.uuid4())
     messageId = str(uuid.uuid4())
     print('Subscribing to board:', boardId,
-          'with subscriptionId:', subscriptionId)
-    msg_sub = {'route': '/api/apps/subscribe/:boardId', 'id': messageId,
-               'body': {'subId': subscriptionId, 'boardId': boardId}}
+          'with subscriptionId:', messageId)
+    msg_sub = {
+        'route': '/api/subscription/boards/' + boardId,
+        'id': messageId,
+        'method': 'SUB'
+    }
     # send the message
     await sock.send(json.dumps(msg_sub))
 
