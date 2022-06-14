@@ -8,7 +8,7 @@
 
 import { Box, Button, useDisclosure, Text, useColorMode } from "@chakra-ui/react";
 import { useUserStore, AuthHTTPService, useAuth } from "@sage3/frontend";
-import { CreateUserModal, EditUserModal, AssetModal } from "@sage3/frontend";
+import { CreateUserModal, EditUserModal } from "@sage3/frontend";
 import { useEffect } from "react";
 
 export type HeaderProps = {
@@ -25,8 +25,6 @@ export function Header(props: HeaderProps) {
 
   const { isOpen: createIsOpen, onOpen: createOnOpen, onClose: createOnClose } = useDisclosure()
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure()
-  // Asset manager button
-  const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure()
 
   useEffect(() => {
     if (!user) {
@@ -47,14 +45,12 @@ export function Header(props: HeaderProps) {
       </Box>
       <Box display="flex" flex="1 1 0" justifyContent="flex-end" alignItems="baseline">
         {user?.name}
-        <Button onClick={assetOnOpen}>Assets</Button>
         <Button onClick={toggleColorMode}>{colorMode === 'light' ? 'Dark' : 'Light'}</Button>
         <Button onClick={editOnOpen}>EDIT</Button>
         <Button onClick={AuthHTTPService.logout}>Logout</Button>
       </Box>
       <CreateUserModal isOpen={createIsOpen} onOpen={createOnOpen} onClose={createOnClose} ></CreateUserModal>
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
-      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose}></AssetModal>
     </Box>
   )
 

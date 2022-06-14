@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
 // Fetcher for the file list
 import useSWR from 'swr'
@@ -17,8 +18,10 @@ import {
 } from '@chakra-ui/react';
 
 import { AssetType, AssetSB } from '@sage3/shared/types';
+import { useAppStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
+
 
 const fetcher = (url: string) => {
   return fetch(url, {
@@ -50,6 +53,7 @@ const fetcher = (url: string) => {
         boardId: '-',
         size: item.size,
         type: fileType,
+        derived: item.derived,
         exif: null,
         selected: false,
       };
@@ -59,11 +63,90 @@ const fetcher = (url: string) => {
   });
 }
 
+
 export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const { data, error } = useSWR('/api/assets', fetcher);
 
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string; };
+  const createApp = useAppStore((state) => state.create);
+
   if (error) { return <div>Failed to load</div> }
   if (!data) { return <div>Loading...</div> }
+
+  const openFiles = (files: FileEntry[]) => {
+    console.log('openFiles: ', files);
+    files.forEach((d) => {
+      let url;
+      if (d.type === 'jpeg') {
+        url = d.derived?.sizes['800'] || d.derived?.fullSize;
+        createApp(
+          'Image', 'Image Description',
+          roomId, boardId,
+          { x: 0, y: 0, z: 0 },
+          { width: 300, height: 24 + 300 / (d.derived?.aspectRatio || 1), depth: 0 },
+          { x: 0, y: 0, z: 0 },
+          'Image',
+          // state
+          {
+            url
+          }
+        );
+      }
+    });
+    onClose();
+  }
+  const onOpenFiles = () => {
+    let x = 0;
+    data.forEach((d) => {
+      if (d.selected) {
+        let url;
+        const w = 200;
+        if (d.type === 'jpeg') {
+          url = d.derived?.sizes['800'] || d.derived?.fullSize;
+          createApp(
+            'Image', 'Image Description',
+            roomId, boardId,
+            { x: 0, y: 0, z: 0 },
+            { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
+            { x: x, y: 0, z: 0 },
+            'Image',
+            // state
+            {
+              url
+            }
+          );
+          x += w + 10;
+          console.log(x)
+        } else if (d.type === 'pdf') {
+          // hack for pdfs
+          if (d.derived) {
+            // @ts-ignore
+            const pages = d.derived as any[];
+            const page1 = pages[0];
+            const k = Object.keys(page1)[0];
+            url = page1[k].url;
+
+            createApp(
+              'Image', 'Image Description',
+              roomId, boardId,
+              { x: 0, y: 0, z: 0 },
+              { width: page1[k].width, height: page1[k].height, depth: 0 },
+              { x: x, y: 0, z: 0 },
+              'Image',
+              // state
+              {
+                url
+              }
+            );
+            x += page1[k].width + 10;
+          }
+        }
+
+      }
+    });
+    onClose();
+  }
 
   return (
     <Modal isCentered isOpen={isOpen} onClose={onClose} size={'6xl'}>
@@ -72,12 +155,12 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
         <ModalHeader>Assets Browser</ModalHeader>
         {/* File manager */}
         <ModalBody userSelect={'none'}>
-          <FileManager files={data} />
+          <FileManager files={data} openFiles={openFiles} />
         </ModalBody>
         <ModalFooter>
-          {/* <Button colorScheme="blue" mr={3} onClick={onOpenFiles}>
+          <Button colorScheme="blue" mr={3} onClick={onOpenFiles}>
             Open File(s)
-          </Button> */}
+          </Button>
           <Button mr={3} onClick={onClose}>
             Close
           </Button>

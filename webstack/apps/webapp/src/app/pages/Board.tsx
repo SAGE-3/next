@@ -5,9 +5,9 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { Box, Button } from '@chakra-ui/react';
+import { Box, Button, useDisclosure } from '@chakra-ui/react';
 import { Applications, initialValues } from '@sage3/applications/apps';
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, AssetModal } from '@sage3/frontend';
 
 import { useEffect } from 'react';
 import Draggable from 'react-draggable';
@@ -28,6 +28,9 @@ export function BoardPage() {
   const createApp = useAppStore((state) => state.create);
   const subToBoard = useAppStore((state) => state.subscribeByBoardId);
   const unsubToApp = useAppStore((state) => state.unsub);
+
+  // Asset manager button
+  const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure()
 
   useEffect(() => {
     subToBoard(locationState.boardId);
@@ -108,12 +111,15 @@ export function BoardPage() {
   return (
     <>
       <Button colorScheme="green" onClick={handleHomeClick}>Home</Button>
+      <Button onClick={assetOnOpen}>Assets</Button>
       <Button onClick={handleNoteClick}>Note App</Button>
       <Button onClick={handleCounterClick}>Counter App</Button>
       <Button onClick={handleImageClick}>Image App</Button>
       <Button onClick={handleSliderClick}>Slider App</Button>
       <Button onClick={handleLinkerClick}>Linker App</Button>
 
+      {/* Asset dialog */}
+      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose}></AssetModal>
 
       {apps.map((app) => {
         const Component = Applications[app.type];

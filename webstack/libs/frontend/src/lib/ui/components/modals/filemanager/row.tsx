@@ -34,7 +34,7 @@ import { ExifViewer } from './exifviewer';
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, style }: RowFileProps) {
+export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
   // clickCB, dbclickCB,
   // check if user is a guest
   const user = useUserStore((state) => state.user);
@@ -57,12 +57,12 @@ export function RowFile({ file, style }: RowFileProps) {
   const onSingleClick = (e: MouseEvent): void => {
     // Flip the value
     setSelected((s) => !s);
-    // clickCB(file);
+    clickCB(file);
     if (showMenu) setShowMenu(false);
   };
   // Select the file when double-clicked
   const onDoubleClick = (e: MouseEvent): void => {
-    // dbclickCB(file);
+    dbclickCB(file);
   };
 
   // Context menu selection handler
@@ -94,11 +94,19 @@ export function RowFile({ file, style }: RowFileProps) {
   };
 
   useEffect(() => {
-    divRef.current?.addEventListener('click', onSingleClick);
+    const button = buttonRef.current;
+    button?.addEventListener('click', onSingleClick);
+    return () => {
+      button?.removeEventListener('click', onSingleClick);
+    }
   }, [divRef]);
-  useEffect(() => {
-    buttonRef.current?.addEventListener('dblclick', onDoubleClick);
-  }, [buttonRef]);
+  // useEffect(() => {
+  //   const button = buttonRef.current;
+  //   button?.addEventListener('dblclick', onDoubleClick);
+  //   return () => {
+  //     button?.removeEventListener('dblclick', onDoubleClick);
+  //   }
+  // }, [buttonRef]);
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {

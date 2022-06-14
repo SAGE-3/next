@@ -24,6 +24,8 @@ export const ExtraImageSchema = z.object({
   aspectRatio: z.number(),
   sizes: z.record(z.string()),
 });
+// Create the Typescript type
+export type ExtraImageType = z.infer<typeof ExtraImageSchema>;
 
 /**
  * @typedef {object} AssetSchema

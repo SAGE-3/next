@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 // React component for efficiently rendering large lists and tabular data
 import { FixedSizeList } from 'react-window';
 
-import { FileManagerProps } from './types';
+import { FileManagerProps, FileEntry } from './types';
 import { RowFile } from './row';
 
 import {
@@ -314,6 +314,25 @@ export function FileManager(props: FileManagerProps): JSX.Element {
     }
   };
 
+  // Select the file when clicked
+  const onClick = (p: FileEntry) => {
+    setList(
+      props.files.map((k) => {
+        if (p.id === k.id) {
+          // Flip the value
+          k.selected = !k.selected;
+        }
+        return k;
+      })
+    );
+  };
+
+  // Open file when double-clicked
+  const onDBClick = (p: FileEntry) => {
+    // Open the file
+    props.openFiles([p]);
+  };
+
   return (
     <>
       {/* Search box */}
@@ -360,9 +379,8 @@ export function FileManager(props: FileManagerProps): JSX.Element {
         itemKey={(i, d) => d[i].id}
       >
         {/* Iterate over the file list */}
-        {({ index, style, data }) => <RowFile file={data[index]}
-          style={style}
-        // clickCB={onClick} dbclickCB={onDBClick}
+        {({ index, style, data }) => <RowFile file={data[index]} style={style}
+          clickCB={onClick} dbclickCB={onDBClick}
         />}
       </FixedSizeList>
     </>);
