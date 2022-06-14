@@ -43,14 +43,13 @@ class SAGE3RoomService {
    * @param {string} ownerId The id of the user who created the board.
    * @returns {SBDocument<UserSchema> | undefined} Returns the UserDoc or undefined if unsuccessful
    */
-  public async create(name: string, description: string, ownerId: string): Promise<RoomSchema | undefined> {
+  public async create(ownerId: string, room: Partial<RoomSchema>): Promise<RoomSchema | undefined> {
     const id = genId();
     const newRoom = {
+      ...room,
       id,
-      name,
-      description,
       color: randomSAGEColor().name,
-      ownerId: ownerId,
+      ownerId,
       isPrivate: false,
     } as RoomSchema;
 
@@ -129,12 +128,9 @@ class SAGE3RoomService {
    * @param {string} id The id of the user
    * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
    */
-  public async subscribeToRoom(
-    id: string,
-    callback: (message: SBDocumentMessage<RoomSchema>) => void
-  ): Promise<(() => Promise<void>) | undefined> {
+  public async subscribe(id: string, callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await RoomModel.subscribeToRoom(id, callback);
+      const subscription = await RoomModel.subscribe(id, callback);
       return subscription;
     } catch (error) {
       console.log('RoomService subscribeToRoom error> ', error);
@@ -146,9 +142,9 @@ class SAGE3RoomService {
    * Subscribe to all rooms in the database.
    * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
    */
-  public async subscribeToAllRooms(callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await RoomModel.subscribeToRooms(callback);
+      const subscription = await RoomModel.subscribeAll(callback);
       return subscription;
     } catch (error) {
       console.log('RoomService subscribeToAllRooms error> ', error);

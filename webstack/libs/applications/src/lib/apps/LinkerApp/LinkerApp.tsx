@@ -7,10 +7,10 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../schema";
+import { AppWindow } from '../../components';
+import { AppSchema } from "../../schema";
 
 import { state as AppState } from "./";
-import './styles.css';
 
 
 function LinkerApp(props: AppSchema): JSX.Element {
@@ -18,21 +18,19 @@ function LinkerApp(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.delete);
   // useEffect(() => {
   //   const newValue = s[s.fromAppField];
   // }, [s])
 
-  function handleClose() {
-    deleteApp(props.id);
-  }
+
 
   return (
-    <div className="Linker-Container">
-      <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
-      <p>{s.fromAppId} - {s.toAppId} </p>
-      <p>{s.fromAppField} - {s.toAppField}</p>
-    </div>
+    <AppWindow app={props}>
+      <>
+        <p>{s.fromAppId} - {s.toAppId} </p>
+        <p>{s.fromAppField} - {s.toAppField}</p>
+      </>
+    </AppWindow>
   )
 }
 

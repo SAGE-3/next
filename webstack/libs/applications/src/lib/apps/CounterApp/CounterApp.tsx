@@ -8,17 +8,16 @@
 
 import { useAppStore } from '@sage3/frontend';
 import { Button } from '@chakra-ui/react';
-import { AppSchema } from "../schema";
+import { AppSchema } from "../../schema";
 
 import { state as AppState } from "./index";
-import './styles.css';
+import { AppWindow } from '../../components';
 
 function CounterApp(props: AppSchema): JSX.Element {
 
   const s = props.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
-  const deleteApp = useAppStore(state => state.delete);
 
   function handleAddClick() {
     updateState(props.id, { count: s.count + 1 })
@@ -28,16 +27,14 @@ function CounterApp(props: AppSchema): JSX.Element {
     updateState(props.id, { count: s.count - 1 })
   }
 
-  function handleClose() {
-    deleteApp(props.id);
-  }
-
   return (
-    <>
-      <h3>{props.name} - {s.count} <button onClick={handleClose}>X</button></h3>
-      <Button onClick={handleAddClick} colorScheme="green">Add</Button>
-      <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
-    </>
+    <AppWindow app={props}>
+      <>
+        <h1>Count: {s.count}</h1>
+        <Button onClick={handleAddClick} colorScheme="green">Add</Button>
+        <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
+      </>
+    </AppWindow>
   )
 }
 

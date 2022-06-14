@@ -7,7 +7,8 @@
  */
 
 import { Box, Button, useDisclosure, Text, useColorMode } from "@chakra-ui/react";
-import { useUserStore, AuthHTTPService, CreateUserModal, EditUserModal, useAuth } from "@sage3/frontend";
+import { useUserStore, AuthHTTPService, useAuth } from "@sage3/frontend";
+import { CreateUserModal, EditUserModal } from "@sage3/frontend";
 import { useEffect } from "react";
 
 export type HeaderProps = {

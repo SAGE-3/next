@@ -144,7 +144,7 @@ class SAGE3RoomModel {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeToRooms(callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<RoomSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.roomCollection.subscribe(callback);
       return unsubscribe;
@@ -161,7 +161,7 @@ class SAGE3RoomModel {
    * @return {() => void | undefined} The unsubscribe function.
 
    */
-  public async subscribeToRoom(
+  public async subscribe(
     id: string,
     callback: (message: SBDocumentMessage<RoomSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {

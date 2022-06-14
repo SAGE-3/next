@@ -19,8 +19,8 @@
  */
 
 import { UserModel } from '../models';
-import { UserSchema } from '@sage3/shared/types';
-import { SBDocumentMessage } from '@sage3/sagebase';
+import { UserRole, UserSchema } from '@sage3/shared/types';
+import { SBAuthSchema, SBDocumentMessage } from '@sage3/sagebase';
 import { randomSAGEColor } from '@sage3/shared';
 /**
  * The SAGE3 UserService that interfaces with the UserModel
@@ -43,11 +43,11 @@ class SAGE3UserService {
    * @param {string} email The email address of the user.
    * @returns {SBDocument<UserSchema> | undefined} Returns the UserDoc or undefined if unsuccessful
    */
-  public async create(id: string, name: string, email: string, role: string): Promise<UserSchema | undefined> {
+  public async create(auth: SBAuthSchema, user: Partial<UserSchema>): Promise<UserSchema | undefined> {
+    const role = auth.provider === 'guest' ? ('guest' as UserRole) : ('user' as UserRole);
     const newUser = {
-      id: id,
-      name: name,
-      email: email,
+      id: auth.id,
+      ...user,
       color: randomSAGEColor().name,
       emailVerified: false,
       profilePicture: '',
@@ -56,7 +56,7 @@ class SAGE3UserService {
     } as UserSchema;
 
     try {
-      const doc = await UserModel.createUser(id, newUser);
+      const doc = await UserModel.createUser(auth.id, newUser);
       return doc ? doc.data : undefined;
     } catch (error) {
       console.log('UserService create error: ', error);
@@ -130,12 +130,9 @@ class SAGE3UserService {
    * @param {string} id The id of the user
    * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
    */
-  public async subscribeToUser(
-    id: string,
-    callback: (message: SBDocumentMessage<UserSchema>) => void
-  ): Promise<(() => Promise<void>) | undefined> {
+  public async subscribe(id: string, callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await UserModel.subscribeToUser(id, callback);
+      const subscription = await UserModel.subscribe(id, callback);
       return subscription;
     } catch (error) {
       console.log('UserService subscribeToUser error> ', error);
@@ -147,9 +144,9 @@ class SAGE3UserService {
    * Subscribe to all users in the database.
    * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
    */
-  public async subscribeToAllUsers(callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<UserSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await UserModel.subscribeToUsers(callback);
+      const subscription = await UserModel.subscribeAll(callback);
       return subscription;
     } catch (error) {
       console.log('UserService subscribeToAllUsers error> ', error);

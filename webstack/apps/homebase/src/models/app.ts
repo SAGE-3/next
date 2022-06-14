@@ -166,13 +166,13 @@ class SAGE3AppModel {
  * @return {() => void | undefined} The unsubscribe function.
  
  */
-  public async subscribeToApp(
+  public async subscribe(
     id: string,
     callback: (message: SBDocumentMessage<AppSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const board = this.appCollection.docRef(id);
-      const unsubscribe = await board.subscribe(callback);
+      const app = this.appCollection.docRef(id);
+      const unsubscribe = await app.subscribe(callback);
       return unsubscribe;
     } catch (error) {
       console.log('AppModel subscribeToBoard error>', error);
@@ -185,7 +185,7 @@ class SAGE3AppModel {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeToApps(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<AppSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.appCollection.subscribe(callback);
       return unsubscribe;
@@ -206,7 +206,7 @@ class SAGE3AppModel {
     callback: (message: SBDocumentMessage<AppSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const unsubscribe = this.appCollection.subscribeToQuery('roomId', id, callback);
+      const unsubscribe = await this.appCollection.subscribeToQuery('roomId', id, callback);
       return unsubscribe;
     } catch (error) {
       console.log('AppModel subscribeByRoomId error>', error);
@@ -225,7 +225,7 @@ class SAGE3AppModel {
     callback: (message: SBDocumentMessage<AppSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const unsubscribe = this.appCollection.subscribeToQuery('boardId', id, callback);
+      const unsubscribe = await this.appCollection.subscribeToQuery('boardId', id, callback);
       return unsubscribe;
     } catch (error) {
       console.log('AppModel subscribeByBoardId error>', error);

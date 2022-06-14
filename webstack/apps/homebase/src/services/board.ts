@@ -44,18 +44,15 @@ class SAGE3BoardService {
    * @param {string} ownerId The id of the user who created the board.
    * @returns {BoardSchema | undefined} Returns the BoardSchema or undefined if unsuccessful
    */
-  public async create(name: string, description: string, ownerId: string, roomId: string): Promise<BoardSchema | undefined> {
+  public async create(ownerId: string, board: Partial<BoardSchema>): Promise<BoardSchema | undefined> {
     const id = genId();
     const newBoard = {
-      id: id,
-      name: name,
-      description: description,
-      color: randomSAGEColor().name,
-      roomId,
-      ownerId: ownerId,
+      ...board,
+      id,
+      ownerId,
       isPrivate: false,
+      color: randomSAGEColor().name,
     } as BoardSchema;
-
     try {
       const doc = await BoardModel.createBoard(id, newBoard);
       return doc ? doc.data : undefined;
@@ -147,12 +144,12 @@ class SAGE3BoardService {
    * @param {string} id The id of the board
    * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
    */
-  public async subscribeToBoard(
+  public async subscribe(
     id: string,
     callback: (message: SBDocumentMessage<BoardSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await BoardModel.subscribeToBoard(id, callback);
+      const subscription = await BoardModel.subscribe(id, callback);
       return subscription;
     } catch (error) {
       console.log('BoardService subscribeToBoard error> ', error);
@@ -164,11 +161,11 @@ class SAGE3BoardService {
    * Subscribe to all boards in the database.
    * @returns {(() => Promise<void>) | undefined} Returns true if delete was successful
    */
-  public async subscribetoAllBoards(
+  public async subscribeAll(
     callback: (message: SBDocumentMessage<BoardSchema>) => void
   ): Promise<(() => Promise<void>) | undefined> {
     try {
-      const subscription = await BoardModel.subscribeToBoards(callback);
+      const subscription = await BoardModel.subscribeAll(callback);
       return subscription;
     } catch (error) {
       console.log('BoardService subscribetoAllBoards error> ', error);

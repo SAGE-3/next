@@ -27,8 +27,7 @@ import { RoomService } from '../../services';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
-import { APIClientWSMessage } from '@sage3/shared/types';
-import { genId } from '@sage3/shared';
+import { APIClientWSMessage, RoomSchema } from '@sage3/shared/types';
 
 /**
  * 
@@ -38,26 +37,85 @@ import { genId } from '@sage3/shared';
  * @param cache 
  */
 export async function roomWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  switch (message.route) {
-    case '/api/rooms/subscribe': {
-      const sub = await RoomService.subscribeToAllRooms((doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.body.subId, sub)
+  const auth = request.session.passport.user;
+  switch (message.method) {
+    case 'POST': {
+      // CREATE ROOM
+      const body = message.body as Partial<RoomSchema>;
+      if (body === undefined) {
+        socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
+        return;
+      } else {
+        const room = await RoomService.create(auth.id, body);
+        if (room) socket.send(JSON.stringify({ id: message.id, success: true, data: room }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create room.' }));
+      }
       break;
     }
-    case '/api/rooms/subscribe/:id': {
-      const sub = await RoomService.subscribeToRoom(message.body.id, (doc) => {
-        const msg = { id: genId(), subId: message.body.subId, event: doc }
-        socket.send(JSON.stringify(msg));
-      });
-      if (sub) cache.add(message.body.subId, sub)
+    case 'GET': {
+      // READ ALL ROOMS
+      if (message.route.startsWith('/api/rooms')) {
+        const rooms = await RoomService.readAll();
+        if (rooms) socket.send(JSON.stringify({ id: message.id, success: true, data: rooms }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get rooms.' }));
+      }
+      // READ ONE ROOM 
+      else if (message.route.startsWith('/api/rooms/')) {
+        const roomId = message.route.split('/').at(-1) as string;
+        const room = await RoomService.read(roomId);
+        if (room) socket.send(JSON.stringify({ id: message.id, success: true, data: room }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get room.' }));
+      }
       break;
     }
-    case '/api/rooms/unsubscribe': {
-      cache.delete(message.body.subId)
+    // UPDATE BOARD
+    case 'PUT': {
+      const boardId = message.route.split('/').at(-1) as string;
+      const body = message.body as Partial<RoomSchema>;
+      const update = await RoomService.update(boardId, body);
+      if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
+      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update room.' }));
       break;
+    }
+    // DELETE BOARD
+    case 'DELETE': {
+      const roomId = message.route.split('/').at(-1) as string;
+      const del = await RoomService.delete(roomId);
+      if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
+      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete room.' }));
+      break;
+    }
+    case 'SUB': {
+      // Subscribe to all boards
+      if (message.route.startsWith('/api/rooms')) {
+        const sub = await RoomService.subscribeAll((doc) => {
+          const msg = { id: message.id, event: doc }
+          socket.send(JSON.stringify(msg));
+        });
+        if (sub) cache.add(message.id, [sub])
+      }
+      // Subscribe to one board
+      else if (message.route.startsWith('/api/rooms/')) {
+        const id = message.route.split('/').at(-1);
+        if (!id) {
+          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          return;
+        }
+        const sub = await RoomService.subscribe(id, (doc) => {
+          const msg = { id: message.id, event: doc }
+          socket.send(JSON.stringify(msg));
+        });
+        if (sub) cache.add(message.id, [sub])
+      }
+      break;
+    }
+    case 'UNSUB': {
+      // Unsubscribe Message
+      cache.delete(message.id);
+      break;
+    }
+    default: {
+      socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method.' }));
     }
   }
 }
