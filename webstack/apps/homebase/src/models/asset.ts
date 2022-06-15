@@ -15,7 +15,7 @@
 
 import { niceCollection } from './nice-collection';
 import { AssetType } from '@sage3/shared/types';
-import { SBDocument } from '@sage3/sagebase';
+import { SBDocument, SBDocumentMessage } from '@sage3/sagebase';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../processors';
@@ -87,6 +87,21 @@ class SAGE3AssetModel {
         });
       }
     });
+  }
+
+  /**
+   * Subscribe to the Apps Collection
+   * @param {() = void} callback The callback function for subscription events.
+   * @return {() => void | undefined} The unsubscribe function.
+   */
+  public async subscribeAll(callback: (message: SBDocumentMessage<AssetType>) => void): Promise<(() => Promise<void>) | undefined> {
+    try {
+      const unsubscribe = await this.assetCollection.subscribe(callback);
+      return unsubscribe;
+    } catch (error) {
+      console.log('Asset subscribeToApps error>', error);
+      return undefined;
+    }
   }
 
   public async getAsset(id: string): Promise<SBDocument<AssetType> | undefined> {

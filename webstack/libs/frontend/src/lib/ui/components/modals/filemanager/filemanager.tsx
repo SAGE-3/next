@@ -316,15 +316,15 @@ export function FileManager(props: FileManagerProps): JSX.Element {
 
   // Select the file when clicked
   const onClick = (p: FileEntry) => {
-    setList(
-      props.files.map((k) => {
-        if (p.id === k.id) {
-          // Flip the value
-          k.selected = !k.selected;
-        }
-        return k;
-      })
-    );
+    // setList(
+    props.files.map((k) => {
+      if (p.id === k.id) {
+        // Flip the value
+        k.selected = !k.selected;
+      }
+      return k;
+    })
+    // );
   };
 
   // Open file when double-clicked

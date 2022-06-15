@@ -6,7 +6,6 @@
  *
  */
 
-// import axios from 'axios';
 import { httpGET } from './http';
 
 // limited response from server to the configuration request, for security reasons

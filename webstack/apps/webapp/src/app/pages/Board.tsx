@@ -11,7 +11,8 @@ import { Avatar, Box, Button, Select, Text, useDisclosure } from '@chakra-ui/rea
 
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
-import { useAppStore, useBoardStore, useUserStore, AssetModal } from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUserStore } from '@sage3/frontend';
+import { AssetModal, UploadModal } from '@sage3/frontend';
 
 type LocationParams = {
   boardId: string;
@@ -35,6 +36,8 @@ export function BoardPage() {
 
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure()
+  // Upload modal
+  const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure()
 
   useEffect(() => {
     subBoard(locationState.boardId);
@@ -68,6 +71,9 @@ export function BoardPage() {
       {/* Asset dialog */}
       <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose}></AssetModal>
 
+      {/* Upload dialog */}
+      <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
+
       {/* Top bar */}
       <Box display="flex" justifyContent="space-between" alignItems="center" p={2}>
         <Button colorScheme="green" onClick={handleHomeClick}>Home</Button>
@@ -97,7 +103,10 @@ export function BoardPage() {
         >
           {Object.keys(Applications).map((appName) => <option key={appName} value={appName}>{appName}</option>)}
         </Select>
+
         <Button colorScheme="green" mx="1" onClick={assetOnOpen}>Asset Manager</Button>
+
+        <Button colorScheme="blue" mx="1" onClick={uploadOnOpen}>Upload</Button>
 
       </Box>
 

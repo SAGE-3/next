@@ -12,8 +12,8 @@ import { z } from 'zod';
 // SAGEBase base schema
 export const SBSchema = z.object({
   _id: z.string(),
-  _createdAt: z.date(),
-  _updatedAt: z.date(),
+  _createdAt: z.string(),
+  _updatedAt: z.string(),
 });
 // Create the Typescript type
 export type SBElement = z.infer<typeof SBSchema>;
