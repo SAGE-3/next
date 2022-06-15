@@ -11,8 +11,11 @@ import { Avatar, Box, Button, Select, Text, useDisclosure } from '@chakra-ui/rea
 
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
+
 import { useAppStore, useBoardStore, useUserStore } from '@sage3/frontend';
 import { AssetModal, UploadModal } from '@sage3/frontend';
+
+import { sageColorByName } from '@sage3/shared';
 
 type LocationParams = {
   boardId: string;
@@ -78,16 +81,18 @@ export function BoardPage() {
       <Box display="flex" justifyContent="space-between" alignItems="center" p={2}>
         <Button colorScheme="green" onClick={handleHomeClick}>Home</Button>
         <Text fontSize="3xl">{board?.name}</Text>
-        <Avatar size='md' name={user?.name} backgroundColor={user?.color} color="black" />
+        <Avatar size='md' name={user?.name} backgroundColor={(user) ? sageColorByName(user.color) : ''} color="black" />
       </Box>
 
       {/* Apps */}
-      {apps.map((app) => {
-        const Component = Applications[app.type];
-        return (
-          <Component key={app.id} {...app}></Component>
-        );
-      })}
+      {
+        apps.map((app) => {
+          const Component = Applications[app.type];
+          return (
+            <Component key={app.id} {...app}></Component>
+          );
+        })
+      }
 
 
       {/* Bottom Bar */}
