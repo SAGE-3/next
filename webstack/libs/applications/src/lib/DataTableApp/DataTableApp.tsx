@@ -16,6 +16,7 @@ import { Tags } from "./components/Tags"
 import { DataViz } from "./components/DataViz"
 import { MessageCenter } from "./components/MessageCenter"
 import * as React from "react";
+import {useState} from "react";
 
 export function DataTableApp(props: AppSchema): JSX.Element {
 
@@ -23,6 +24,9 @@ export function DataTableApp(props: AppSchema): JSX.Element {
 
     const updateState = useAppStore(state => state.updateState);
     const deleteApp = useAppStore(state => state.delete);
+
+    const [tags, setTags] = useState<any>([]);
+    const [messages, setMessages] = useState<any>('...')
 
 
     function handleClose() {
@@ -33,14 +37,14 @@ export function DataTableApp(props: AppSchema): JSX.Element {
     <div className="Table-Container">
         <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
 
-        <div className="Message-Container">
-            <Tags data={s.filler}/>
+        <div className="Subcomponent-Container">
+            <Tags tags={tags}/>
         </div>
 
-        <DataViz data={s.filled}/>
+        <DataViz setTags={setTags} setMessages={setMessages}/>
 
-        <div className="Message-Container">
-            <MessageCenter data={s.filly}/>
+        <div className="Subcomponent-Container">
+            <MessageCenter messages={messages}/>
         </div>
 
     </div>

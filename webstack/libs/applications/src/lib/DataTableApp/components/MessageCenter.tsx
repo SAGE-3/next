@@ -3,29 +3,35 @@ import {
     AlertIcon,
     AlertTitle,
     AlertDescription,
-    Stack,
+    Box,
+    VStack, Th,
 } from '@chakra-ui/react'
 
 import './styles.css'
+import * as React from "react";
 
-interface Props{
-    data:any;
-}
+export const MessageCenter = (props: any) => {
 
-
-export const MessageCenter = ({data}:Props) => {
+    const messages = props.messages;
 
     return (
-        <Stack spacing={3}>
-            <Alert status='success' variant='subtle'>
-                This is where user feedback will be displayed!
+        <VStack spacing={3}>
+            {/*{*/}
+            {/*    messages.map((message: string[], index: number) => (*/}
+            {/*        <Alert key={index} status='success' variant='subtle'> {message} </Alert>*/}
+            {/*    ))*/}
+            {/*}*/}
+            <Box
+                fontWeight='bold'
+            >
+                Message Center
+            </Box>
+            <Alert status='info' variant='solid'>
+                <AlertIcon />
+                <AlertTitle>Feedback: </AlertTitle>
+                <AlertDescription>{ messages }</AlertDescription>
             </Alert>
-            <Alert status='success' variant='subtle'>
-                Cool Message!
-            </Alert>
-            <Alert status='success' variant='subtle'>
-                Maybe old messages will fade away?
-            </Alert>
-        </Stack>
+        </VStack>
+
     )
 }

@@ -1,7 +1,35 @@
-.Counter-Container {
-  border: solid red 2px;
+th {
+  position: sticky;
+  inset-block-start: 0;
+  background-color: black;
+  z-index: 1;
+}
+
+td {
+  position: relative;
+  /*z-index: 3;*/
 }
 
 body:not(.nohover) tbody td:hover {
-  background-color: salmon;
+  background-color: darkslategray;
+}
+
+thead th:not(:empty):hover::after {
+  content: '';
+  opacity: 50%;
+  height: 500px;
+  left: 0;
+  position: absolute;
+  top: -1px;
+  width: 100%;
+  z-index: 2;
+}
+
+th:hover::after {
+  background-color: purple;
+}
+
+.highlight {
+  background: darkblue;
+  text-align: center;
 }
