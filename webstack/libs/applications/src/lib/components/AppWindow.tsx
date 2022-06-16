@@ -48,7 +48,7 @@ export function AppWindow(props: WindowProps) {
   }
 
   function handleResizeStop(e: any, direction: any, ref: any, delta: any, position: any) {
-    setSize({ width: ref.style.width, height: ref.style.width });
+    setSize({ width: ref.style.width, height: ref.style.height });
     setPos({ x: position.x, y: position.y });
     update(props.app.id, {
       position: {
