@@ -2,14 +2,13 @@ import {
     Checkbox,
     CheckboxGroup,
     HStack,
-    Switch,
-    Tag,
-    TagLabel,
-    TagCloseButton,
+    Menu, MenuButton, IconButton, MenuList, MenuItem,
 } from '@chakra-ui/react'
 
 import './styles.css'
 import * as React from "react";
+
+import { GoKebabVertical } from "react-icons/go";
 
 // interface Props{
 //     data:any;
@@ -26,25 +25,24 @@ export const Tags = (props: any) => {
 
     return (
         <div>
-            {/*<HStack spacing='4'>*/}
-            {/*    {['filter1', 'filter2', 'filter3', 'filter4', 'filter5'].map((tags) => (*/}
-            {/*        <Tag*/}
-            {/*            size='md'*/}
-            {/*            key='md'*/}
-            {/*            borderRadius='full'*/}
-            {/*            variant='solid'*/}
-            {/*            colorScheme='green'*/}
-            {/*        >*/}
-            {/*            <TagLabel>{tags}</TagLabel>*/}
-            {/*            <TagCloseButton />*/}
-            {/*        </Tag>*/}
-            {/*    ))}*/}
-            {/*</HStack>*/}
             <CheckboxGroup colorScheme='green'>
-                <HStack spacing='4' display='flex'>
+                <HStack spacing='5' display='flex'>
+                <HStack spacing='10' display='flex'>
                     {tags.map((tag: any) => (
                         <Checkbox value={tag} onChange={(e) => handleChange(tag)}>{tag}</Checkbox>
                     ))}
+                </HStack>
+                    <Menu>
+                        <MenuButton
+                            as={IconButton}
+                            aria-label='Table Operations'
+                            icon={<GoKebabVertical/>}
+                        />
+                        <MenuList>
+                            <MenuItem>Table Operation</MenuItem>
+                        </MenuList>
+                    </Menu>
+
                 </HStack>
             </CheckboxGroup>
         </div>
