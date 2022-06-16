@@ -43,7 +43,7 @@ export function DataTableApp(props: AppSchema): JSX.Element {
 
         <DataViz setTags={setTags} setMessages={setMessages}/>
 
-        <div className="Subcomponent-Container">
+        <div className="Message-Container">
             <MessageCenter messages={messages}/>
         </div>
 

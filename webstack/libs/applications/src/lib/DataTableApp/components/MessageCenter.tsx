@@ -26,7 +26,7 @@ export const MessageCenter = (props: any) => {
             >
                 Message Center
             </Box>
-            <Alert status='info' variant='solid'>
+            <Alert status='info' variant='top-accent' colorScheme='telegram'>
                 <AlertIcon />
                 <AlertTitle>Feedback: </AlertTitle>
                 <AlertDescription>{ messages }</AlertDescription>

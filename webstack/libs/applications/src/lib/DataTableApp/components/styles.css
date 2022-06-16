@@ -2,6 +2,8 @@ th {
   position: sticky;
   inset-block-start: 0;
   background-color: black;
+  flex-direction: row;
+  justify-content: space-between;
   z-index: 1;
 }
 
@@ -16,13 +18,13 @@ body:not(.nohover) tbody td:hover {
 
 thead th:not(:empty):hover::after {
   content: '';
-  opacity: 50%;
+  opacity: 30%;
   height: 500px;
   left: 0;
   position: absolute;
-  top: -1px;
+  top: 65px;
   width: 100%;
-  z-index: 2;
+  /*z-index: 2;*/
 }
 
 th:hover::after {

@@ -1,21 +1,23 @@
 import {
     Badge,
     Button,
+    HStack,
     Input,
     InputGroup,
     InputRightElement,
     Table,
+    TableContainer,
     Thead,
     Tbody,
     Tr,
     Th,
     Td,
-    TableContainer,
 } from '@chakra-ui/react'
 
 import './styles.css'
 import * as React from "react";
 import {useState} from "react";
+import { ColumnMenu } from "./ColumnMenu"
 
 
 export const DataViz = (props: any) => {
@@ -80,11 +82,15 @@ export const DataViz = (props: any) => {
                     <Tr>
                         {
                             headers.map((header: any, index: number) => (
-                                <Th key={index}> {header} </Th>
+                                <Th key={index}>
+                                    {header}
+                                    <ColumnMenu/>
+                                </Th>
                             ))
                         }
                     </Tr>
                 </Thead>
+
                 <Tbody>
                         {
                             items.map((item, index) => (
