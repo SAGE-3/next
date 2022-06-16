@@ -8,13 +8,13 @@
 
 export type state = {
   text: string;
-  fontSize: string;
+  fontSize: number;
   color: string;
 };
 
 export const init: Partial<state> = {
   text: 'stickie note',
-  fontSize: '12px',
+  fontSize: 48,
   color: '#63B3ED',
 };
 

@@ -36,6 +36,7 @@ function Stickie(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const location = useLocation();
   const locationState = location.state as {
@@ -48,6 +49,7 @@ function Stickie(props: AppSchema): JSX.Element {
 
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
+  const [rows, setRows] = useState(5);
 
   // The text of the sticky for React
   const [note, setNote] = useState(s.text);
@@ -55,8 +57,87 @@ function Stickie(props: AppSchema): JSX.Element {
   // Update local value with value from the server
   useEffect(() => { setNote(s.text); }, [s.text]);
 
+
+  // Saving the text after 1sec of inactivity
+  const debounceSave = debounce(1000, (val) => {
+    updateState(props.id, { text: val });
+  });
+  // Keep a copy of the function
+  const debounceFunc = useRef(debounceSave);
+
+  // callback for textarea change
+  function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
+    const inputValue = ev.target.value;
+    // Update the local value
+    setNote(inputValue);
+    // Update the text when not typing
+    debounceFunc.current(inputValue);
+
+    if (textbox.current) {
+      const numlines = Math.ceil(textbox.current.scrollHeight / s.fontSize);
+      if (numlines !== rows) {
+        // change local number of rows
+        setRows(numlines);
+        // update size of the window
+        update(props.id, { size: { width: props.size.width, height: numlines * s.fontSize, depth: props.size.depth } });
+      }
+    }
+  }
+
+  // Key down handler: Tab creates another stickie
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.shiftKey && e.code === 'Tab') {
+      // Create a new stickie
+      createApp(
+        'Stickie',
+        "Description",
+        locationState.roomId,
+        locationState.boardId,
+        { x: props.position.x + props.size.width + 20, y: props.position.y, z: 0 },
+        { width: props.size.width, height: props.size.height, depth: 0 },
+        { x: 0, y: 0, z: 0 },
+        'Stickie',
+        { text: '', color: s.color, fontSize: s.fontSize }
+      );
+    }
+  };
+
+  // React component
+  return (
+    <AppWindow app={props}>
+      <Box bgColor={s.color} color="black" w={props.size.width} h={props.size.height} p={0}>
+        <Textarea
+          ref={textbox}
+          resize={'none'}
+          w="100%"
+          h={props.size.height - 24}
+          variant="outline"
+          borderWidth="0px"
+          p={4}
+          borderRadius="0"
+          style={{ resize: 'none' }}
+          aria-label="Note text"
+          placeholder="Type here..."
+          fontFamily="Arial"
+          focusBorderColor={s.color}
+          overflow={fontSize !== 10 ? 'hidden' : 'auto'}
+          fontSize={fontSize + 'px'}
+          lineHeight="1em"
+          value={note}
+          onChange={handleTextChange}
+          onKeyDown={handleKeyDown}
+        />
+      </Box>
+    </AppWindow>
+  );
+}
+
+export default Stickie;
+
+/*
   // Main effect for styling the text
   useEffect(() => {
+
     // using canvas to calculate width of text
     const tempCanvas = document.createElement('canvas');
     const context = tempCanvas.getContext('2d');
@@ -119,69 +200,6 @@ function Stickie(props: AppSchema): JSX.Element {
       const size = calcFontSize(note);
       setFontSize(size);
     }
-  }, [s.color, note, props.size.width, props.size.height]);
+ }, [s.color, note, props.size.width, props.size.height]);
 
-  // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(1000, (val) => {
-    updateState(props.id, { text: val });
-  });
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
-
-  // callback for textarea change
-  function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
-    const inputValue = ev.target.value;
-    // Update the local value
-    setNote(inputValue);
-    // Update the text when not typing
-    debounceFunc.current(inputValue);
-  }
-
-  // Key down handler: Tab creates another stickie
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.shiftKey && e.code === 'Tab') {
-      // Create a new stickie
-      createApp(
-        'Stickie',
-        "Description",
-        locationState.roomId,
-        locationState.boardId,
-        { x: props.position.x + props.size.width + 20, y: props.position.y, z: 0 },
-        { width: props.size.width, height: props.size.height, depth: 0 },
-        { x: 0, y: 0, z: 0 },
-        'Stickie',
-        { text: '', color: s.color, fontSize: s.fontSize }
-      );
-    }
-  };
-
-  // React component
-  return (
-    <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={props.size.width} h={props.size.height} fontSize="6xl" p={0}>
-        <Textarea
-          ref={textbox}
-          w="100%"
-          h={props.size.height - 24}
-          variant="outline"
-          borderWidth="0px"
-          p={4}
-          borderRadius="0"
-          style={{ resize: 'none' }}
-          aria-label="Note text"
-          placeholder="Type here..."
-          fontFamily="Arial"
-          focusBorderColor={s.color}
-          overflow={fontSize !== '10px' ? 'hidden' : 'auto'}
-          fontSize={fontSize}
-          lineHeight="1em"
-          value={note}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-        />
-      </Box>
-    </AppWindow>
-  );
-}
-
-export default Stickie;
+*/
