@@ -1,11 +1,13 @@
 import {
-    Button, Menu, MenuButton, IconButton, MenuList, MenuItem,
+    Button, Menu, MenuButton, IconButton, MenuList, MenuItem, Th, Tr,
 } from '@chakra-ui/react'
 
 import './styles.css'
 import * as React from "react";
 import {FiChevronDown, FiChevronRight} from "react-icons/fi";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
+
+import { colMenus } from "../colMenus";
 
 // interface Props{
 //     data:any;
@@ -14,18 +16,14 @@ import {useEffect} from "react";
 
 export const ColumnMenu = () => {
 
-    function getData() {
-        fetch(
-            '../colMenus.json')
-            .then((res) => res.json())
-            .then((json) => {
-                console.log(json)
-            })
-    }
+    const [typeMenu, setTypeMenu] = useState<any[]>([]);
+    const [options, setOptions] = useState<any[]>([]);
 
-    function handleChange(info: any) {
-        console.log(info + ' tag selected')
-    }
+
+
+    // function handleChange(info: any) {
+    //
+    // }
 
     return (
             <Menu>
@@ -39,8 +37,14 @@ export const ColumnMenu = () => {
 
                 />
                 <MenuList mt='5px'>
-                    <MenuItem onClick={() => getData()}>
-                        Option 1
+                    <MenuItem ml='30%'>Data type:</MenuItem>
+                        {colMenus.map((data, key) => {
+                            return (
+                                <MenuItem>{data.type}</MenuItem>
+                            )
+                        })
+                        }
+
                         {/*<Menu>*/}
                         {/*    <MenuButton*/}
                         {/*        as={IconButton}*/}
@@ -54,8 +58,6 @@ export const ColumnMenu = () => {
                         {/*        <MenuItem>Sub-Option 1</MenuItem>*/}
                         {/*    </MenuList>*/}
                         {/*</Menu>*/}
-                    </MenuItem>
-                    <MenuItem>Option 2</MenuItem>
                 </MenuList>
             </Menu>
         // <Menu>
