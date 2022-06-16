@@ -122,7 +122,5 @@ export async function appWSRouter(socket: WebSocket, request: IncomingMessage, m
     default: {
       socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method.' }));
     }
-
-
   }
 }
