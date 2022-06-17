@@ -36,7 +36,7 @@ export function AppWindow(props: WindowProps) {
     setPos({ x: props.app.position.x, y: props.app.position.y });
   }, [props.app.position])
 
-  function handleDragStop(event: any, data: DraggableData) {
+  function handleDragStop(_e: any, data: DraggableData) {
     setPos({ x: data.x, y: data.y });
     update(props.app.id, {
       position: {
@@ -47,9 +47,11 @@ export function AppWindow(props: WindowProps) {
     });
   }
 
-  function handleResizeStop(e: MouseEvent | TouchEvent, direction: any, ref: any, delta: ResizableDelta, position: Position) {
-    const width = Number(ref.style.width);
-    const height = Number(ref.style.height);
+  function handleResizeStop(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
+    // const width = Number(ref.style.width);
+    // const height = Number(ref.style.height);
+    const width = Number(ref.offsetWidth);
+    const height = Number(ref.offsetHeight);
     setSize({ width, height });
     setPos({ x: position.x, y: position.y });
     update(props.app.id, {
@@ -81,7 +83,7 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: 'gray',
         overflow: 'hidden'
       }}
-      size={{ width: size.width, height: `${size.height + 16}px` }}
+      size={{ width: size.width, height: size.height }}
       position={pos}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop} >
