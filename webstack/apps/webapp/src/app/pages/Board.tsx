@@ -23,20 +23,26 @@ type LocationParams = {
   roomId: string;
 }
 
+/**
+ * The board page which displays the board and its apps.
+ */
 export function BoardPage() {
 
+  // Navigation and routing
   const location = useLocation();
   const locationState = location.state as LocationParams;
   const navigate = useNavigate();
 
+  // Board and App Store stuff
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
-
-  const user = useUserStore((state) => state.user);
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find(el => el.id === locationState.boardId);
+
+  // User information
+  const user = useUserStore((state) => state.user);
 
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
@@ -46,24 +52,37 @@ export function BoardPage() {
   // Board current position
   const [boardPos, setBoardPos] = useState({ x: 0, y: 0 });
 
+
   useEffect(() => {
+    // Subscribe to the board that was selected
     subBoard(locationState.boardId);
+    // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       unsubBoard();
     }
   }, []);
 
+  // Redirect the user back to the homepage when he clicks the green button in the top left corner
   function handleHomeClick() {
     navigate('/home');
   }
 
+  // Function to handle when a new app is opened.
+  // App is positioned in the middle of the screen for right now.
   const handleNewApp = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    // Check if value is corretly set
     const appName = event.target.value as AppName;
     if (!appName) return;
+
+    // Default width and height
     const width = 300;
     const height = 300;
+
+    // Cacluate X and Y of app based on the current board position and the width and height of the viewport
     const x = boardPos.x + (window.innerWidth / 2) - (width / 2);
     const y = boardPos.y + (window.innerHeight / 2) - (height / 2);
+
+    // Create the new app
     createApp(
       appName,
       `${appName} - Description`,
@@ -76,20 +95,16 @@ export function BoardPage() {
       initialValues[appName]);
   }
 
-  function handleDragStop(event: any, data: DraggableData) {
+  // On a drag stop of the board. Set the board position locally.
+  function handleDragBoardStop(event: any, data: DraggableData) {
     setBoardPos({ x: -data.x, y: -data.y });
   }
 
   return (
     <>
 
-      {/* Asset dialog */}
-      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose}></AssetModal>
-
-      {/* Upload dialog */}
-      <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
-
-      {/* Board */}
+      {/* Board. Uses lib react-rnd for drag events.
+        * Draggable Background below is the actual target for drag events.*/}
       <Rnd
         default={{
           x: 0,
@@ -97,9 +112,10 @@ export function BoardPage() {
           width: 5000,
           height: 5000,
         }}
-        onDragStop={handleDragStop}
+        onDragStop={handleDragBoardStop}
         enableResizing={false}
         dragHandleClassName={'board-handle'}>
+
         {/* Apps */}
         {
           apps.map((app) => {
@@ -109,6 +125,7 @@ export function BoardPage() {
             );
           })
         }
+
         {/* Draggable Background */}
         < Box
           className="board-handle"
@@ -117,9 +134,9 @@ export function BoardPage() {
           backgroundSize={`50px 50px`}
           backgroundImage={
             `linear-gradient(to right, grey 1px, transparent 1px),
-             linear-gradient(to bottom, grey 1px, transparent 1px);`
+            linear-gradient(to bottom, grey 1px, transparent 1px);`
           }
-        ></Box>
+        />
       </Rnd>
 
       {/* Top bar */}
@@ -127,7 +144,10 @@ export function BoardPage() {
         position="absolute"
         top="0"
         width="100%">
+        {/* Home Button */}
         <Button colorScheme="green" onClick={handleHomeClick}>Home</Button>
+
+        {/* Board Name */}
         <Text
           fontSize="3xl"
           background="teal"
@@ -136,7 +156,10 @@ export function BoardPage() {
           color="white">
           {board?.name}
         </Text>
+
+        {/* User Avatar */}
         <Avatar size='md' name={user?.name} backgroundColor={(user) ? sageColorByName(user.color) : ''} color="black" />
+
       </Box>
 
       {/* Bottom Bar */}
@@ -160,11 +183,19 @@ export function BoardPage() {
           {Object.keys(Applications).map((appName) => <option key={appName} value={appName}>{appName}</option>)}
         </Select>
 
+        {/* Open the Asset Manager Dialog */}
         <Button colorScheme="green" mx="1" onClick={assetOnOpen}>Asset Manager</Button>
 
+        {/* Open the Asset Upload Dialog */}
         <Button colorScheme="blue" mx="1" onClick={uploadOnOpen}>Upload</Button>
 
       </Box>
+
+      {/* Asset dialog */}
+      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose}></AssetModal>
+
+      {/* Upload dialog */}
+      <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
 
     </>
   );
