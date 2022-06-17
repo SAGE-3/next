@@ -5,5 +5,11 @@
     "NoteApp",
     "SliderApp",
     "Stickie",
-    "PDFViewer"
+    "PDFViewer",
+    "CodeCell",
+    "ImageViewer",
+    "LeafLet",
+    "Screenshare",
+    "VideoViewer",
+    "Webview"
 ]
