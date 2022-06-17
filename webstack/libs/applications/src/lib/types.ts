@@ -1,17 +1,14 @@
-/**
- * Copyright (c) SAGE3 Development Team
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- *
- */
+// SAGE3 Generated from apps.json file
 
-import { state as CounterState, name as CounterName } from './apps/CounterApp';
-import { state as ImageState, name as ImageName } from './apps/ImageApp';
-import { state as LinkerState, name as LinkerName } from './apps/LinkerApp';
-import { state as NoteState, name as NoteName } from './apps/NoteApp';
-import { state as SliderState, name as SliderName } from './apps/SliderApp';
+import { state as CounterAppState, name as CounterAppName } from './apps/CounterApp';
+import { state as ImageAppState, name as ImageAppName } from './apps/ImageApp';
+import { state as LinkerAppState, name as LinkerAppName } from './apps/LinkerApp';
+import { state as NoteAppState, name as NoteAppName } from './apps/NoteApp';
+import { state as SliderAppState, name as SliderAppName } from './apps/SliderApp';
+import { state as StickieState, name as StickieName } from './apps/Stickie';
+import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
 
-export type AppState = CounterState | ImageState | LinkerState | NoteState | SliderState;
 
-export type AppName = typeof CounterName | typeof ImageName | typeof LinkerName | typeof NoteName | typeof SliderName;
+export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState;
+
+export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName;

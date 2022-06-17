@@ -8,28 +8,26 @@
 
 import { useAppStore } from '@sage3/frontend';
 import { Button } from '@chakra-ui/react';
-import { AppSchema } from "../../schema";
+import { AppSchema } from '../../schema';
 
-import { state as AppState } from "./index";
+import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
 
-
-function <%= name %>(props: AppSchema): JSX.Element {
-
+function PDFViewer(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
 
-  const updateState = useAppStore(state => state.updateState);
+  const updateState = useAppStore((state) => state.updateState);
 
   return (
     <AppWindow app={props}>
       <>
-        <h1> <%= statename  %> : {s.<%= statename  %>}</h1>
+        <h1> page : {s.page}</h1>
       </>
     </AppWindow>
-  )
+  );
 }
 
-export default <%= name %>;
+export default PDFViewer;

@@ -6,71 +6,45 @@
     "name": {
       "type": "string",
       "description": "Application name",
-      "x-prompt": "What name would you like to use for the SAGE3 application?",
-      "$default": {
-        "$source": "argv",
-        "index": 0
-      }
+      "x-prompt": "What name would you like to use for the SAGE3 application?"
     },
     "username": {
       "type": "string",
       "description": "User name",
-      "x-prompt": "What is the name of the developer?",
-      "$default": {
-        "$source": "argv",
-        "index": 1
-      }
+      "x-prompt": "What is the name of the developer?"
     },
-    "type": {
+    "statename": {
       "type": "string",
-      "description": "Provide the main data type of the application (others can be added later)",
+      "description": "State variable",
+      "x-prompt": "Provide the name of the state variable"
+    },
+    "statetype": {
+      "type": "string",
+      "description": "Data type",
       "x-prompt": {
-        "message": "Which data type would your application use?",
+        "message": "Which data type would your application use? (others can be added later)",
         "type": "list",
         "items": [
           {
-            "value": "atom",
-            "label": "Atom"
+            "value": "number",
+            "label": "Number"
           },
           {
-            "value": "reducer",
-            "label": "Reducer"
+            "value": "string",
+            "label": "String"
           },
           {
-            "value": "image",
-            "label": "Image"
-          },
-          {
-            "value": "text",
-            "label": "Text"
-          },
-          {
-            "value": "code",
-            "label": "Code"
-          },
-          {
-            "value": "cell",
-            "label": "Notebook cell"
-          },
-          {
-            "value": "file",
-            "label": "File"
-          },
-          {
-            "value": ".ipynb",
-            "label": "Notebook file (.ipynb)"
-          },
-          {
-            "value": ".pdf",
-            "label": "PDF file"
+            "value": "boolean",
+            "label": "Boolean"
           }
         ]
-      },
-      "$default": {
-        "$source": "argv",
-        "index": 2
       }
+    },
+    "val": {
+      "type": "string",
+      "description": "Provide the default value of the state variable",
+      "x-prompt": "Provide the default value of the state variable?"
     }
   },
-  "required": ["name", "username", "type"]
+  "required": ["name", "username", "statename", "statetype", "val"]
 }
