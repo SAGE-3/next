@@ -19,6 +19,7 @@ function CounterApp(props: AppSchema): JSX.Element {
 
   const updateState = useAppStore(state => state.updateState);
 
+
   function handleAddClick() {
     updateState(props.id, { count: s.count + 1 })
   }
@@ -34,7 +35,7 @@ function CounterApp(props: AppSchema): JSX.Element {
         <Button onClick={handleAddClick} colorScheme="green">Add</Button>
         <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
       </>
-    </AppWindow>
+    </AppWindow >
   )
 }
 

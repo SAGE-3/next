@@ -10,7 +10,7 @@ import { Box, Button, useColorModeValue } from '@chakra-ui/react';
 
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 
 import { BoardList } from '../components/BoardList';
 import { Header } from '../components/Header';
@@ -34,9 +34,10 @@ export function HomePage() {
     setSelectedBoard(board);
   }
 
-  function handleEnterBoard() {
-    if (selectedBoard && selectedRoom) {
-      navigate('/board', { state: { roomId: selectedRoom.id, boardId: selectedBoard.id } });
+  function handleEnterBoard(board: BoardSchema) {
+    setSelectedBoard(board);
+    if (selectedRoom) {
+      navigate('/board', { state: { roomId: selectedRoom.id, boardId: board.id } });
     }
   }
 
@@ -58,12 +59,7 @@ export function HomePage() {
           <Box display="flex" flexWrap="wrap" flexDirection="row">
 
             <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 500]}>
-              <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
-            </Box>
-
-            <Box display="flex" flexWrap="wrap" flexDirection="row" p="10">
-              {selectedBoard ? <Button onClick={handleEnterBoard}>Enter Board</Button> : null}
-
+              <BoardList onBoardClick={handleBoardClick} onEnterClick={handleEnterBoard} selectedRoom={selectedRoom}></BoardList>
             </Box>
 
           </Box>

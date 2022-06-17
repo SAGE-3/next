@@ -6,19 +6,21 @@
  *
  */
 
-import { Box, Button, Divider, IconButton, Text } from "@chakra-ui/react";
+import { Box, Button, Divider, IconButton, Text, useColorModeValue } from "@chakra-ui/react";
 import { sageColorByName } from "@sage3/shared";
 import { BoardSchema } from "@sage3/shared/types";
 import { MdPerson, MdSettings } from "react-icons/md";
 
 export type BoardCardProps = {
   board: BoardSchema;
+  onSelect: () => void;
   onEnter: () => void;
   onDelete: () => void;
   onEdit: () => void;
 }
 
 export function BoardCard(props: BoardCardProps) {
+  const textColor = useColorModeValue("white", "black");
   return (
     <Box
       borderWidth='2px'
@@ -32,7 +34,7 @@ export function BoardCard(props: BoardCardProps) {
       cursor="pointer"
       _hover={{ transform: "scale(1.05)" }}
       style={{ background: `linear-gradient(${sageColorByName(props.board.color)} 10%, transparent 10% ) no-repeat` }}
-      onClick={props.onEnter}>
+      onClick={props.onSelect}>
 
       <Box px="2" display='flex' flexDirection="row" justifyContent="space-between" alignContent="center">
         <Box display='flex' flexDirection="column">
@@ -42,12 +44,20 @@ export function BoardCard(props: BoardCardProps) {
           </Text>
         </Box>
         <Box display='flex' mt='2' alignItems='center' flexShrink="3">
-          <Text fontSize='1xl' mx="2" >{Math.floor(Math.random() * 20)}
-          </Text>
-          <MdPerson
-            size="18"
-          />
-
+          <Button
+            onClick={props.onEnter}
+            background={sageColorByName(props.board.color)}
+            _hover={{ transform: "scale(1.15)" }}
+            transition="transform .2s"
+            mx="2"
+            variant="outline">Enter</Button>
+          <Box width="50px" display='flex' alignItems='center' justifyContent="right" >
+            <Text fontSize='1xl' mx="2" >{Math.floor(Math.random() * 20)}
+            </Text>
+            <MdPerson
+              size="18"
+            />
+          </Box>
           <Box as='span' ml='2' color='gray.600' fontSize='sm'>
 
           </Box>
