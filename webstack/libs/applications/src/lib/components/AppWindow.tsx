@@ -33,13 +33,18 @@ export function AppWindow(props: WindowProps) {
   // Local state
   const [pos, setPos] = useState({ x: props.app.position.x, y: props.app.position.y });
   const [size, setSize] = useState({ width: props.app.size.width, height: props.app.size.height });
-  const [minimized, setMinimized] = useState(false);
+  const [minimized, setMinimized] = useState(props.app.minimized);
 
   // If size or position change update the local state.
   useEffect(() => {
     setSize({ width: props.app.size.width, height: props.app.size.height });
     setPos({ x: props.app.position.x, y: props.app.position.y });
   }, [props.app.size, props.app.position])
+
+  // If size or position change update the local state.
+  useEffect(() => {
+    setMinimized(props.app.minimized);
+  }, [props.app.minimized])
 
   // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
@@ -87,9 +92,8 @@ export function AppWindow(props: WindowProps) {
 
   // Minimize the app. Currently only local.
   function handleMinimize() {
-    setMinimized(!minimized);
+    update(props.app.id, { minimized: !minimized });
   }
-
 
   return (
 

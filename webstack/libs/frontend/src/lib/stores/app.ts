@@ -32,6 +32,7 @@ interface Applications {
     position: AppSchema['position'],
     size: AppSchema['size'],
     rotation: AppSchema['rotation'],
+    minimized: AppSchema['minimized'],
     type: AppSchema['type'],
     state: Partial<AppSchema['state']>
   ) => Promise<void>;
@@ -57,10 +58,11 @@ const AppStore = createVanilla<Applications>((set, get) => {
       position: AppSchema['position'],
       size: AppSchema['size'],
       rotation: AppSchema['rotation'],
+      minimized: AppSchema['minimized'],
       type: AppSchema['type'],
       state: Partial<AppSchema['state']>
     ) => {
-      SocketAPI.sendRESTMessage('/api/apps', 'POST', { name, description, roomId, boardId, position, size, rotation, type, state });
+      SocketAPI.sendRESTMessage('/api/apps', 'POST', { name, description, roomId, boardId, position, size, rotation, minimized, type, state });
     },
     update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
       SocketAPI.sendRESTMessage('/api/apps/' + id, 'PUT', updates);
@@ -139,6 +141,7 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
       position: AppSchema['position'],
       size: AppSchema['size'],
       rotation: AppSchema['rotation'],
+      minimized: AppSchema['minimized'],
       type: AppSchema['type'],
       state: Partial<AppSchema['state']>
     ) => {

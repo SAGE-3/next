@@ -24,4 +24,5 @@ export type AppSchema = {
   rotation: Rotation;
   type: AppName;
   state: AppState;
+  minimized: boolean;
 };

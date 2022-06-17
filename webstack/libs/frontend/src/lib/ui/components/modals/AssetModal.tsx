@@ -75,6 +75,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
           { x: 0, y: 0, z: 0 },
           { width: 300, height: 24 + 300 / (d.derived?.aspectRatio || 1), depth: 0 },
           { x: 0, y: 0, z: 0 },
+          false,
           'Image',
           // state
           {
@@ -101,6 +102,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             { x: x, y: 0, z: 0 },
             { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
             { x: 0, y: 0, z: 0 },
+            false,
             'Image',
             // state
             {
@@ -125,6 +127,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
               { x: 0, y: 0, z: 0 },
               { width: page1[k].width, height: page1[k].height, depth: 0 },
               { x: x, y: 0, z: 0 },
+              false,
               'Image',
               // state
               {

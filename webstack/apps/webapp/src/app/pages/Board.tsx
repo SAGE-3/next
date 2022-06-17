@@ -91,6 +91,7 @@ export function BoardPage() {
       { x, y, z: 0 },
       { width, height, depth: 0 },
       { x: 0, y: 0, z: 0 },
+      false,
       appName,
       initialValues[appName]);
   }

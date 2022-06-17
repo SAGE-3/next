@@ -96,6 +96,7 @@ function Stickie(props: AppSchema): JSX.Element {
         { x: props.position.x + props.size.width + 20, y: props.position.y, z: 0 },
         { width: props.size.width, height: props.size.height, depth: 0 },
         { x: 0, y: 0, z: 0 },
+        false,
         'Stickie',
         { text: '', color: s.color, fontSize: s.fontSize }
       );
