@@ -15,6 +15,7 @@ import { MdSearch } from "react-icons/md";
 
 type BoardListProps = {
   onBoardClick: (board: BoardSchema) => void;
+  onEnterClick: (board: BoardSchema) => void;
   selectedRoom: RoomSchema | null;
 }
 
@@ -66,8 +67,9 @@ export function BoardList(props: BoardListProps) {
               <BoardCard
                 key={board.id}
                 board={board}
+                onSelect={() => props.onBoardClick(board)}
                 onEdit={() => { console.log('edit board') }}
-                onEnter={() => props.onBoardClick(board)}
+                onEnter={() => props.onEnterClick(board)}
                 onDelete={() => deleteBoard(board.id)} />
             );
           })

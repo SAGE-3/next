@@ -6,12 +6,12 @@
  *
  */
 
-import { Box, Text } from "@chakra-ui/react";
+import { Box, calc, Text, useColorModeValue } from "@chakra-ui/react";
 import { AppSchema } from "@sage3/applications/schema";
 import { useAppStore } from "@sage3/frontend";
 
 import { useEffect, useState } from "react";
-import { Rnd } from 'react-rnd'
+import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd'
 
 import { MdOutlineClose } from 'react-icons/md'
 
@@ -36,19 +36,21 @@ export function AppWindow(props: WindowProps) {
     setPos({ x: props.app.position.x, y: props.app.position.y });
   }, [props.app.position])
 
-  function handleDragStop(event: any, info: any) {
-    setPos({ x: info.x, y: info.y });
+  function handleDragStop(event: any, data: DraggableData) {
+    setPos({ x: data.x, y: data.y });
     update(props.app.id, {
       position: {
-        x: info.x,
-        y: info.y,
+        x: data.x,
+        y: data.y,
         z: props.app.position.z
       }
     });
   }
 
-  function handleResizeStop(e: any, direction: any, ref: any, delta: any, position: any) {
-    setSize({ width: ref.style.width, height: ref.style.height });
+  function handleResizeStop(e: MouseEvent | TouchEvent, direction: any, ref: any, delta: ResizableDelta, position: Position) {
+    const width = Number(ref.style.width);
+    const height = Number(ref.style.height);
+    setSize({ width, height });
     setPos({ x: position.x, y: position.y });
     update(props.app.id, {
       position: {
@@ -57,8 +59,8 @@ export function AppWindow(props: WindowProps) {
         z: props.app.position.z
       },
       size: {
-        width: ref.style.width,
-        height: ref.style.height,
+        width,
+        height,
         depth: props.app.size.depth
       }
     });
@@ -68,18 +70,18 @@ export function AppWindow(props: WindowProps) {
     deleteApp(props.app.id);
   }
 
+
   return (
     <Rnd
       disableDragging={false}
-      bounds="body"
+      bounds="parent"
       dragHandleClassName={'handle'}
       style={{
         boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-        border: '2px solid teal',
-        overflow: 'hidden',
         backgroundColor: 'gray',
+        overflow: 'hidden'
       }}
-      size={size}
+      size={{ width: size.width, height: `${size.height + 16}px` }}
       position={pos}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop} >
@@ -97,7 +99,7 @@ export function AppWindow(props: WindowProps) {
         height="1.5rem"
       >
         {/* App Name */}
-        < Text > {props.app.name}</Text >
+        < Text color="white"> {props.app.name}</Text >
         {/* Close Button Name */}
         < MdOutlineClose
           cursor="pointer"
@@ -106,7 +108,9 @@ export function AppWindow(props: WindowProps) {
           onClick={handleClose}
         />
       </Box >
+
       {props.children}
+
     </Rnd >
   )
 
