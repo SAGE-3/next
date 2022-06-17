@@ -18,7 +18,8 @@
     "homebase": "nx serve homebase",
     "webapp": "nx serve webapp",
     "playground": "nx serve playground",
-    "stage": "rimraf dist && yarn build homebase && yarn build webapp && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp"
+    "stage": "rimraf dist && yarn build homebase && yarn build webapp && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
+    "newapp": "nx workspace-generator newapp"
   },
   "private": true,
   "dependencies": {

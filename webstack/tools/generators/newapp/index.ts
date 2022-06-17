@@ -7,8 +7,8 @@
  */
 
 import { Tree, formatFiles, installPackagesTask, generateFiles } from '@nrwl/devkit';
-import { libraryGenerator } from '@nrwl/workspace/generators';
-import { getProjectConfig } from '@nrwl/workspace';
+// import { libraryGenerator } from '@nrwl/workspace/generators';
+// import { getProjectConfig } from '@nrwl/workspace';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 
@@ -19,7 +19,9 @@ interface Schema {
   // Main developer
   username: string;
   // primary type handled by the app
-  type: string;
+  statetype: string;
+  statename: string;
+  val: string;
 }
 
 /**
@@ -38,9 +40,9 @@ var camalize = function camalize(str: string) {
  */
 async function addApplication(root: string, name: string) {
   console.log('App> adding app', name);
-  const filePath = join(root, 'libs/applications/src/apps.json');
+  const filePath = join(root, 'libs', 'applications', 'src', 'lib', 'apps.json');
   const filedata = await fs.readFile(filePath);
-  // Parse the existing json file
+  // Parse the xisting json file
   const apps = JSON.parse(filedata.toString());
   // Create a set from it (to get unique app names)
   const appSet = new Set(apps);
@@ -56,30 +58,45 @@ async function addApplication(root: string, name: string) {
  *
  * @param {string} root
  */
-async function updateIndex(root: string) {
+async function updateApps(root: string) {
   console.log('App> updating index file');
-  const filePath = join(root, 'libs/applications/src/apps.json');
-  const indexPath = join(root, 'libs/applications/src/index.ts');
+  const filePath = join(root, 'libs', 'applications', 'src', 'lib', 'apps.json');
+  const indexPath = join(root, 'libs', 'applications', 'src', 'lib', 'apps.ts');
   // Read apps.json file
   const filedata = await fs.readFile(filePath);
   // Parse it as an array
   const apps = Array.from(JSON.parse(filedata.toString())) as string[];
-  let output = '// Generated from apps.json file\n\n';
-  let exporting = 'export { ';
+  let output = '// SAGE3 Generated from apps.json file\n\n';
   for (let i in apps) {
     const it = apps[i];
-    let obj = camalize(it);
-    // Import each application
-    output += `import ${obj} from './${it}';\n`;
-    const idx = Number(i);
-    if (idx == apps.length - 1) {
-      exporting += `${obj} }; `;
-    } else {
-      exporting += `${obj}, `;
-    }
+    output += `import { name as ${it}Name, init as default${it} } from './apps/${it}';\n`;
   }
+  output += `\n`;
+  output += `\n`;
+  for (let i in apps) {
+    const it = apps[i];
+    output += `import ${it} from './apps/${it}/${it}';\n`;
+  }
+  output += `\n`;
+  output += `\n`;
+  output += `export const Applications = {\n`;
+  for (let i in apps) {
+    const it = apps[i];
+    output += `  [${it}Name]: ${it},\n`;
+  }
+  output += `} as unknown as Record<string, () => JSX.Element>;\n`;
+
+  output += `\n`;
+  output += `\n`;
+  output += `export const initialValues = {\n`;
+  for (let i in apps) {
+    const it = apps[i];
+    output += `  [${it}Name]: default${it},\n`;
+  }
+  output += `};\n`;
+
   // Export all the applications and save
-  await fs.writeFile(indexPath, output + '\n' + exporting);
+  await fs.writeFile(indexPath, output);
   console.log('App> ', indexPath, 'updated');
 }
 
@@ -88,31 +105,49 @@ async function updateIndex(root: string) {
  *
  * @param {string} root
  */
-async function updateMeta(root: string) {
-  console.log('App> updating meta file');
-  const filePath = join(root, 'libs/applications/src/apps.json');
-  const metaPath = join(root, 'libs/applications/src/metadata.ts');
-  // Read the apps.json file
+async function updateTypes(root: string) {
+  console.log('App> updating types file');
+  const filePath = join(root, 'libs', 'applications', 'src', 'lib', 'apps.json');
+  const indexPath = join(root, 'libs', 'applications', 'src', 'lib', 'types.ts');
+  // Read apps.json file
   const filedata = await fs.readFile(filePath);
-  // Build an array from it
+
+  // Parse it as an array
   const apps = Array.from(JSON.parse(filedata.toString())) as string[];
-  let output = '// Generated from apps.json file\n\n';
-  let exporting = 'export { ';
+  let output = '// SAGE3 Generated from apps.json file\n\n';
   for (let i in apps) {
     const it = apps[i];
-    let obj = camalize(it);
-    // Import the metadata for each application
-    output += `import { meta as ${obj} } from './${it}/metadata';\n`;
+    output += `import { state as ${it}State, name as ${it}Name } from './apps/${it}';\n`;
+  }
+  output += `\n`;
+  output += `\n`;
+  output += `export type AppState = `;
+  for (let i in apps) {
+    const it = apps[i];
     const idx = Number(i);
     if (idx == apps.length - 1) {
-      exporting += `${obj} }; `;
+      output += `${it}State;`;
     } else {
-      exporting += `${obj}, `;
+      output += `${it}State | `;
     }
   }
+
+  output += `\n`;
+  output += `\n`;
+  output += `export type AppName = `;
+  for (let i in apps) {
+    const it = apps[i];
+    const idx = Number(i);
+    if (idx == apps.length - 1) {
+      output += `typeof ${it}Name;`;
+    } else {
+      output += `typeof ${it}Name | `;
+    }
+  }
+
   // Export all the applications and save
-  await fs.writeFile(metaPath, output + '\n' + exporting);
-  console.log('App> ', metaPath, 'updated');
+  await fs.writeFile(indexPath, output);
+  console.log('App> ', indexPath, 'updated');
 }
 
 /**
@@ -126,7 +161,10 @@ async function updateMeta(root: string) {
 export default async function (host: Tree, schema: Schema) {
   console.log('Schema>', schema);
   console.log('Folder>', host.root);
-  const camel = camalize(schema.name);
+
+  // const camel = camalize(schema.name);
+  const camel = schema.name;
+
   try {
     // Copy the files
     await generateFiles(
@@ -134,16 +172,16 @@ export default async function (host: Tree, schema: Schema) {
       // source files (inside generator folder)
       join(__dirname, 'files'),
       // destination
-      join('./libs/applications/src', schema.name),
+      join('.', 'libs', 'applications', 'src', 'lib', 'apps', schema.name),
       // substitution variables (filenames and content of files)
-      { tmpl: '', name: camel, username: schema.username, type: schema.type }
+      { tmpl: '', name: camel, username: schema.username, statename: schema.statename, statetype: schema.statetype, val: schema.val }
     );
     // update apps.json
     await addApplication(host.root, schema.name);
     // update index.ts
-    await updateIndex(host.root);
+    await updateApps(host.root);
     // update metadata.ts
-    await updateMeta(host.root);
+    await updateTypes(host.root);
   } catch (err) {
     console.log('generateFiles error', err);
   }
