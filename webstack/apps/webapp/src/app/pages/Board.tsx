@@ -79,8 +79,8 @@ export function BoardPage() {
     const height = 300;
 
     // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-    const x = boardPos.x + (window.innerWidth / 2) - (width / 2);
-    const y = boardPos.y + (window.innerHeight / 2) - (height / 2);
+    const x = Math.floor(boardPos.x + (window.innerWidth / 2) - (width / 2));
+    const y = Math.floor(boardPos.y + (window.innerHeight / 2) - (height / 2));
 
     // Create the new app
     createApp(

@@ -13,7 +13,8 @@ import { useAppStore } from "@sage3/frontend";
 import { useEffect, useState } from "react";
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd'
 
-import { MdOutlineClose } from 'react-icons/md'
+import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md'
+import { sageColorByName } from "@sage3/shared";
 
 type WindowProps = {
   app: AppSchema;
@@ -22,20 +23,25 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
 
+  // Height of the title bar
+  const titleBarHeight = 24;
+
+  // App Store
   const update = useAppStore(state => state.update);
   const deleteApp = useAppStore(state => state.delete);
 
+  // Local state
   const [pos, setPos] = useState({ x: props.app.position.x, y: props.app.position.y });
   const [size, setSize] = useState({ width: props.app.size.width, height: props.app.size.height });
+  const [minimized, setMinimized] = useState(false);
 
+  // If size or position change update the local state.
   useEffect(() => {
     setSize({ width: props.app.size.width, height: props.app.size.height });
-  }, [props.app.size])
-
-  useEffect(() => {
     setPos({ x: props.app.position.x, y: props.app.position.y });
-  }, [props.app.position])
+  }, [props.app.size, props.app.position])
 
+  // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
     setPos({ x: data.x, y: data.y });
     update(props.app.id, {
@@ -47,71 +53,112 @@ export function AppWindow(props: WindowProps) {
     });
   }
 
+  // Handle when the app is resized
   function handleResizeStop(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
-    // const width = Number(ref.style.width);
-    // const height = Number(ref.style.height);
-    const width = Number(ref.offsetWidth);
-    const height = Number(ref.offsetHeight);
+
+    // Get the width and height of the app after the resize
+    const width = parseInt(ref.offsetWidth);
+    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
+    const height = parseInt(ref.offsetHeight) - titleBarHeight;
+
+    // Set local state
+    setPos({ x: position.x, y: position.y })
     setSize({ width, height });
-    setPos({ x: position.x, y: position.y });
+
+    // Update the size and position of the app in the server
     update(props.app.id, {
       position: {
+        ...props.app.position,
         x: position.x,
         y: position.y,
-        z: props.app.position.z
       },
       size: {
+        ...props.app.size,
         width,
         height,
-        depth: props.app.size.depth
       }
     });
   }
 
+  // Close the app and delete from server
   function handleClose() {
     deleteApp(props.app.id);
   }
 
+  // Minimize the app. Currently only local.
+  function handleMinimize() {
+    setMinimized(!minimized);
+  }
+
 
   return (
+
+    // react-rnd Library for drag and resize events.
     <Rnd
-      disableDragging={false}
       bounds="parent"
       dragHandleClassName={'handle'}
-      style={{
-        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-        backgroundColor: 'gray',
-        overflow: 'hidden'
-      }}
-      size={{ width: size.width, height: size.height }}
+      size={{ width: size.width, height: `${size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
       position={pos}
       onDragStop={handleDragStop}
-      onResizeStop={handleResizeStop} >
+      onResizeStop={handleResizeStop}
+      style={{
+        boxShadow: `${(minimized) ? '' : '0 4px 16px rgba(0,0,0,0.2)'}`,
+        backgroundColor: `${(minimized) ? 'transparent' : 'gray'}`,
+        overflow: 'hidden'
+      }}
+    >
 
       {/* Title Bar */}
       < Box
-        className="handle"
+        className="handle" // The CSS name react-rnd latches on to for the drag events
         display="flex"
         flexDirection="row"
         flexWrap="nowrap"
         justifyContent="space-between"
         alignItems="center"
-        backgroundColor="teal"
+        backgroundColor={(minimized) ? sageColorByName('orange') : 'teal'}
         px="1"
-        height="1.5rem"
+        height={titleBarHeight + 'px'} // The height of the title bar
       >
-        {/* App Name */}
-        < Text color="white"> {props.app.name}</Text >
-        {/* Close Button Name */}
-        < MdOutlineClose
-          cursor="pointer"
-          color="white"
-          fontSize="1.25rem"
-          onClick={handleClose}
-        />
-      </Box >
+        {/* Left Title Bar Elements */}
+        <Box
+          display="flex"
+          alignItems="center">
+          < Text color="white">{props.app.name}</Text >
+        </Box>
 
-      {props.children}
+        {/* Right Title bar Elements */}
+        <Box
+          display="flex"
+          alignItems="center">
+          {/* Minimize Buttons */}
+          {(minimized) ?
+            < MdOpenInFull
+              cursor="pointer"
+              color="white"
+              onClick={handleMinimize}
+            /> :
+            < MdOutlineCloseFullscreen
+              cursor="pointer"
+              color="white"
+              onClick={handleMinimize}
+            />
+          }
+          {/* Close Button Name */}
+          < MdOutlineClose
+            cursor="pointer"
+            color="white"
+            fontSize="1.25rem"
+            onClick={handleClose}
+          />
+        </Box>
+      </Box >
+      {/* End Title Bar */}
+
+      {/* The Application */}
+      <Box display={(minimized) ? 'none' : 'inherit'}>
+        {props.children}
+      </Box>
 
     </Rnd >
   )
