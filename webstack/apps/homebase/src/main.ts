@@ -38,7 +38,7 @@ import * as jwt from 'jsonwebtoken';
 import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './controllers';
-import { loadModels } from './models';
+import { loadCollections } from './collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -91,7 +91,7 @@ async function startServer() {
   await SAGEBase.init(sbConfig, app);
 
   // Load all the models: user, board, ...
-  await loadModels();
+  await loadCollections();
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());

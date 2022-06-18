@@ -18,16 +18,16 @@ import { AssetType } from '@sage3/shared/types';
 import { SBDocument, SBDocumentMessage } from '@sage3/sagebase';
 
 // Queue for tasks
-import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../processors';
+import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
 
-import { config } from '../config';
+import { config } from '../../config';
 
 /**
  * The database model for SAGE3 rooms.
  * This class must be initilized at least once.
  * This is handled in ./loaders/models-loader.ts
  */
-class SAGE3AssetModel {
+class SAGE3AssetsCollection {
   private assetCollection!: niceCollection<AssetType>;
   private collectionName = 'assets';
 
@@ -124,4 +124,4 @@ class SAGE3AssetModel {
   }
 }
 
-export const AssetModel = new SAGE3AssetModel();
+export const AssetsCollection = new SAGE3AssetsCollection();

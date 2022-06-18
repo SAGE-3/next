@@ -22,7 +22,16 @@ import { config } from '../../config';
 import { uploadMiddleware } from '../../connectors/upload-connector';
 
 // Asset model
-import { AssetModel } from '../../models';
+import { AssetsCollection } from '../collections';
+
+// External Imports
+import { WebSocket } from 'ws';
+import { IncomingMessage } from 'http';
+
+
+// Lib Imports
+import { SubscriptionCache } from '@sage3/backend';
+import { APIClientWSMessage } from '@sage3/shared/types';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -41,7 +50,7 @@ export function assetExpressRouter(): express.Router {
 
   // Get all the assets: GET /api/assets
   router.get('/', async (req, res) => {
-    const docs = await AssetModel.getAllAssets();
+    const docs = await AssetsCollection.getAllAssets();
     const data = docs.map((doc) => doc.data);
     if (data) res.status(200).send({ success: true, data });
     else res.status(500).send({ success: false });
@@ -49,14 +58,14 @@ export function assetExpressRouter(): express.Router {
 
   // Get one asset: GET /api/assets/:id
   router.get('/:id', async ({ params }, res) => {
-    const data = await AssetModel.getAsset(params.id);
+    const data = await AssetsCollection.getAsset(params.id);
     if (data) res.status(200).send({ success: true, data: data.data });
     else res.status(500).send({ success: false });
   });
 
   // Delete one asset: DEL /api/assets/:id
   router.delete('/:id', async ({ params }, res) => {
-    const data = await AssetModel.delAsset(params.id);
+    const data = await AssetsCollection.delAsset(params.id);
     if (data) res.status(200).send({ success: true, data });
     else res.status(500).send({ success: false });
   });
@@ -93,7 +102,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     files.forEach((elt) => {
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Put the new file into the collection
-      AssetModel.addAsset({
+      AssetsCollection.addAsset({
         file: elt.filename,
         owner: 'luc',
         originalfilename: elt.originalname,
@@ -109,6 +118,69 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     res.status(200).send(files);
   });
 }
+
+
+/**
+ *
+ * @param socket
+ * @param request
+ * @param message
+ * @param cache
+ */
+export async function assetWSRouter(
+  socket: WebSocket,
+  request: IncomingMessage,
+  message: APIClientWSMessage,
+  cache: SubscriptionCache
+): Promise<void> {
+  // const auth = request.session.passport.user;
+  switch (message.method) {
+    case 'GET': {
+      // READ ALL
+      if (message.route.startsWith('/api/assets')) {
+        const assets = await AssetsCollection.getAllAssets();
+        if (assets) socket.send(JSON.stringify({ id: message.id, success: true, data: assets }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get assets.' }));
+      }
+      // READ ONE
+      else if (message.route.startsWith('/api/assets/')) {
+        const id = message.route.split('/').at(-1) as string;
+        const asset = await AssetsCollection.getAsset(id);
+        if (asset) socket.send(JSON.stringify({ id: message.id, success: true, data: asset }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get asset.' }));
+      }
+      break;
+    }
+    // DELETE
+    case 'DELETE': {
+      const id = message.route.split('/').at(-1) as string;
+      const del = await AssetsCollection.delAsset(id);
+      if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
+      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete asset.' }));
+      break;
+    }
+    case 'SUB': {
+      // Subscribe to all
+      if (message.route === '/api/assets') {
+        const sub = await AssetsCollection.subscribeAll((doc) => {
+          const msg = { id: message.id, event: doc };
+          socket.send(JSON.stringify(msg));
+        });
+        if (sub) cache.add(message.id, [sub]);
+      }
+      break;
+    }
+    case 'UNSUB': {
+      // Unsubscribe Message
+      cache.delete(message.id);
+      break;
+    }
+    default: {
+      socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method.' }));
+    }
+  }
+}
+
 
 //
 // Metadata from multer for each storage engine

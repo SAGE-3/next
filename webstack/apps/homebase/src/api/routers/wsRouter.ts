@@ -13,12 +13,15 @@ import { WebSocket } from 'ws';
 // App Imports
 import { boardWSRouter, roomWSRouter, userWSRouter, appWSRouter, assetWSRouter, subscriptionWSRouter } from '../ws';
 
+// Collection Imports
+import { AppsCollection, BoardsCollection, RoomsCollection, UsersCollection } from '../collections';
+
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 
 const wsRoutes = {
-  '/apps': appWSRouter,
+  '/apps': AppsCollection.wsRouter,
   '/users': userWSRouter,
   '/rooms': roomWSRouter,
   '/boards': boardWSRouter,
