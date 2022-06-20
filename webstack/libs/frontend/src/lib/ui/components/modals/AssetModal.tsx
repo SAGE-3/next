@@ -65,7 +65,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const openFiles = (files: FileEntry[]) => {
     files.forEach((d) => {
       let url;
-      if (d.type === 'jpeg') {
+      if (d.type === 'jpeg' || d.type === 'png') {
         url = d.derived?.sizes['800'] || d.derived?.fullSize;
         createApp(
           'Image',
@@ -91,7 +91,8 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
       if (d.selected) {
         let url;
         const w = 200;
-        if (d.type === 'jpeg') {
+        console.log('openFiles', d);
+        if (d.type === 'jpeg' || d.type === 'png') {
           url = d.derived?.sizes['800'] || d.derived?.fullSize;
           createApp(
             'Image',
@@ -118,14 +119,14 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             url = page1[k].url;
 
             createApp(
-              'Image',
-              'Image Description',
+              'PDFViewer',
+              'PDF Description',
               roomId,
               boardId,
               { x: 0, y: 0, z: 0 },
               { width: page1[k].width, height: page1[k].height, depth: 0 },
               { x: x, y: 0, z: 0 },
-              'Image',
+              'PDFViewer',
               // state
               {
                 url,
