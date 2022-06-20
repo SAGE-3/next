@@ -15,6 +15,8 @@ import { useAppStore, useAssetStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
+import { initialValues } from '@sage3/applications/apps';
+
 export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
@@ -77,9 +79,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
           { x: 0, y: 0, z: 0 },
           'Image',
           // state
-          {
-            url,
-          }
+          { ...initialValues['Image'], url }
         );
       }
     });
@@ -104,36 +104,23 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             { x: 0, y: 0, z: 0 },
             'Image',
             // state
-            {
-              url,
-            }
+            { ...initialValues['Image'], url }
           );
           x += w + 10;
         } else if (d.type === 'pdf') {
-          // hack for pdfs
-          if (d.derived) {
-            // @ts-ignore
-            const pages = d.derived as any[];
-            const page1 = pages[0];
-            const k = Object.keys(page1)[0];
-            url = page1[k].url;
-
-            createApp(
-              'PDFViewer',
-              'PDF Description',
-              roomId,
-              boardId,
-              { x: 0, y: 0, z: 0 },
-              { width: page1[k].width, height: page1[k].height, depth: 0 },
-              { x: x, y: 0, z: 0 },
-              'PDFViewer',
-              // state
-              {
-                url,
-              }
-            );
-            x += page1[k].width + 10;
-          }
+          createApp(
+            'PDFViewer',
+            'PDF Description',
+            roomId,
+            boardId,
+            { x: 0, y: 0, z: 0 },
+            { width: 400, height: 400 * (22 / 17), depth: 0 },
+            { x: x, y: 0, z: 0 },
+            'PDFViewer',
+            // state
+            { ...initialValues['PDFViewer'], filename: d.filename }
+          );
+          x += 400 + 10;
         }
       }
     });
