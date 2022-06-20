@@ -1,22 +1,24 @@
-import { SBDocumentMessage, SBJSON } from "@sage3/sagebase";
-import { genId } from "@sage3/shared";
-import { APIClientWSMessage } from "@sage3/shared/types";
+import { SBDocumentMessage, SBJSON } from '@sage3/sagebase';
+import { genId } from '@sage3/shared';
+import { APIClientWSMessage } from '@sage3/shared/types';
 
 class SocketAPISingleton {
-
   private _socketType: string;
   private _socket!: WebSocket;
-  private _subscriptions: Record<string, {
-    callback: (message: SBDocumentMessage<any>) => void,
-    unsub: (message: SBDocumentMessage<any>) => void
-  }>;
+  private _subscriptions: Record<
+    string,
+    {
+      callback: (message: SBDocumentMessage<any>) => void;
+      unsub: (message: SBDocumentMessage<any>) => void;
+    }
+  >;
 
   private _restmessages: Record<string, any>;
 
   public constructor() {
     this._subscriptions = {};
     this._restmessages = {};
-    this._socketType = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
+    this._socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   }
 
   private processServerMessage(message: MessageEvent<any>) {
@@ -26,9 +28,8 @@ class SocketAPISingleton {
     } else if (this._restmessages[msg.id]) {
       this._restmessages[msg.id](msg);
       delete this._restmessages[msg.id];
-    }
-    else {
-      this.print('Message received but has no owner.');
+    } else {
+      this.print('Message received but has no owner:' + msg.event);
     }
   }
 
@@ -41,7 +42,11 @@ class SocketAPISingleton {
     }
   }
 
-  public async sendRESTMessage(route: APIClientWSMessage['route'], method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>, body?: Record<string, unknown>): Promise<unknown> {
+  public async sendRESTMessage(
+    route: APIClientWSMessage['route'],
+    method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>,
+    body?: Record<string, unknown>
+  ): Promise<unknown> {
     const message = {
       id: genId(),
       route,
@@ -61,7 +66,7 @@ class SocketAPISingleton {
     const subMessage = {
       id: genId(),
       route,
-      method: 'SUB'
+      method: 'SUB',
     } as APIClientWSMessage;
 
     const unsub = () => {
@@ -70,17 +75,17 @@ class SocketAPISingleton {
       const unsubMessage = {
         id: subMessage.id,
         route,
-        method: 'UNSUB'
+        method: 'UNSUB',
       } as APIClientWSMessage;
       delete this._subscriptions[subMessage.id];
-      this.sendMessage(JSON.stringify(unsubMessage))
+      this.sendMessage(JSON.stringify(unsubMessage));
       return;
-    }
+    };
 
     this._subscriptions[subMessage.id] = {
       callback,
-      unsub
-    }
+      unsub,
+    };
     this.sendMessage(JSON.stringify(subMessage));
 
     return unsub;
@@ -111,7 +116,6 @@ class SocketAPISingleton {
       this._restmessages = {};
       this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
     });
-
   }
 
   private printWarn(message: string): void {
@@ -125,7 +129,6 @@ class SocketAPISingleton {
   private print(message: string): void {
     console.log('SocketAPI> ', message);
   }
-
 }
 
 export const SocketAPI = new SocketAPISingleton();
