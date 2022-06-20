@@ -120,7 +120,7 @@ export function AppWindow(props: WindowProps) {
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center" >
-          <Text color="white"><b>{props.app.description}</b></Text>
+          <Text color="white">{props.app.description}</Text>
         </Box>
         {/* Right Title bar Elements */}
         <Box display="flex" alignItems="center">

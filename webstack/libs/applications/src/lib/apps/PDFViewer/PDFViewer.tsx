@@ -10,6 +10,7 @@ import { Button } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 import { AppSchema } from '../../schema';
+import { AssetType } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -24,30 +25,38 @@ function PDFViewer(props: AppSchema): JSX.Element {
   const assets = useAssetStore((state) => state.assets);
   const s = props.state as AppState;
   const [url, setUrl] = useState('');
-  const [originalfilename, setOriginalFilename] = useState('');
+  const [file, setFile] = useState<AssetType>();
 
   useEffect(() => {
-    console.log('PDFViewer>', s);
-    console.log('assets>', assets);
     const myasset = assets.find((a) => a.file === s.filename);
-    console.log('assets>', myasset);
     if (myasset) {
-      setOriginalFilename(myasset.originalfilename);
-
-      // @ts-ignore
-      const pages = myasset.derived as any[];
-      if (pages) {
-        const page1 = pages[0];
-        const k = Object.keys(page1)[0];
-        setUrl(page1[k].url);
-
-        // Update the app
-        update(props.id, { description: 'PDF ' + myasset?.originalfilename });
-        // Updte the state of the app
-        updateState(props.id, { numPages: pages.length, currentPage: 0 });
+      setFile(myasset);
+      // Update the app
+      update(props.id, { description: 'PDF ' + myasset?.originalfilename });
+      // Updte the state of the app
+      if (myasset.derived) {
+        // @ts-ignore
+        const pages = myasset.derived as any[];
+        updateState(props.id, { numPages: pages.length });
       }
     }
   }, [s.filename, assets]);
+
+  useEffect(() => {
+    if (file) {
+      // @ts-ignore
+      const pages = file.derived as any[];
+      if (pages) {
+        const page = pages[s.currentPage];
+        const k = Object.keys(page)[0];
+        setUrl(page[k].url);
+        if (pages.length > 1) {
+          const pageInfo = " - " + (s.currentPage + 1) + " of " + pages.length;
+          update(props.id, { description: 'PDF ' + file.originalfilename + pageInfo });
+        }
+      }
+    }
+  }, [file, s.currentPage]);
 
   function handlePrev() {
     if (s.currentPage === 0) return;
@@ -65,31 +74,9 @@ function PDFViewer(props: AppSchema): JSX.Element {
         <img src={url} />
         <Button onClick={handlePrev} colorScheme="green">Prev</Button>
         <Button onClick={handleNext} colorScheme="red">Next</Button>
-        <h1> page : {s.currentPage + 1}</h1>
       </>
     </AppWindow>
   );
 }
 
 export default PDFViewer;
-
-/*
-            const pages = d.derived as any[];
-            const page1 = pages[0];
-            const k = Object.keys(page1)[0];
-            url = page1[k].url;
-
-            createApp(
-              'PDFViewer',
-              'PDF Description',
-              roomId,
-              boardId,
-              { x: 0, y: 0, z: 0 },
-              { width: page1[k].width, height: page1[k].height, depth: 0 },
-              { x: x, y: 0, z: 0 },
-              'PDFViewer',
-              // state
-              {
-                url: d.id,
-              }
-*/
