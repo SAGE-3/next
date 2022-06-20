@@ -43,7 +43,7 @@ export function HomePage() {
 
   return (
     <div>
-      <Header title={(selectedRoom) ? selectedRoom.name : "Select a Room"}></Header>
+      <Header title={(selectedRoom) ? 'Room: ' + selectedRoom.name : "Rooms"}></Header>
 
       <Box display="flex" flexDirection="row" flexWrap="nowrap">
 

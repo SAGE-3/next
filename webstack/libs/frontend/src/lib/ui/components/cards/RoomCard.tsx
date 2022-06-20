@@ -21,8 +21,8 @@ export type RoomCardProps = {
 function RoomToolTip(props: { room: RoomSchema }) {
   return (
     <div>
-      <p>{props.room.name}</p>
-      <p>{props.room.description}</p>
+      <p><b>Room</b>: {props.room.name}</p>
+      <p>Description: {props.room.description}</p>
     </div>
   )
 }
