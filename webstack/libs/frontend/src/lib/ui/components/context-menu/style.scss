@@ -1,0 +1,21 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+ .menu {
+  font-size: 100%;
+  border-radius: 7px;
+  width: 150px;
+  height: auto;
+  cursor: pointer;
+  margin: 0;
+  outline: 1px solid black;
+  position: absolute;
+  list-style: none;
+  opacity: 1;
+  transition: opacity 0.5s linear;
+}

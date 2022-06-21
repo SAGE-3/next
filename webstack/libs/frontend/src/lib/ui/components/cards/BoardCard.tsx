@@ -9,7 +9,7 @@
 import { Box, Button, Tooltip, Text } from "@chakra-ui/react";
 import { sageColorByName } from "@sage3/shared";
 import { BoardSchema } from "@sage3/shared/types";
-import { MdPerson, MdSettings } from "react-icons/md";
+import { MdPerson } from "react-icons/md";
 
 export type BoardCardProps = {
   board: BoardSchema;
