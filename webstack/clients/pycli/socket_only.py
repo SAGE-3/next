@@ -58,7 +58,7 @@ async def main():
         # async with websockets.connect(socket_server + socket_path) as ws:
         print('connected')
         # subscribe to the collection: id is subscription identifier
-        await subscribeToAppUpdateInBoard(ws, "5a660c88-6f03-47b9-ac61-280609740a23")
+        await subscribeToAppUpdateInBoard(ws, "f53f6062-8bee-426e-a81a-f9ebb88371ba")
 
         # loop to receive messages
         async for msg in ws:
