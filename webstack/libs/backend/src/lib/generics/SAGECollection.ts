@@ -12,13 +12,13 @@ import { Router } from 'express';
 import { SubscriptionCache } from '../utils';
 import { sageRouter } from './SAGERouter';
 import { sageWSRouter } from './SAGEWSRouter';
-
+import { WebSocket } from 'ws';
 
 ///////////////////////////////////////////////////////////////////////////////
-// SAGEBase collection
+// SAGE3 Collection collection
 ///////////////////////////////////////////////////////////////////////////////
 
-export class SAGECollection<T extends SBJSON> {
+export class SAGE3Collection<T extends SBJSON> {
 
   private _collection!: SBCollectionRef<T>;
   private _name: string;
@@ -129,7 +129,7 @@ export class SAGECollection<T extends SBJSON> {
     }
   }
 
-  public async subscribeByBoardId(field: keyof T, value: string, callback: (message: SBDocumentMessage<T>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeByQuery(field: keyof T, value: string, callback: (message: SBDocumentMessage<T>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this._collection.subscribeToQuery(field, value, callback);
       return unsubscribe;
@@ -143,20 +143,20 @@ export class SAGECollection<T extends SBJSON> {
     return sageRouter<T>(this);
   }
 
-  public wsRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache) {
+  public wsRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
     return sageWSRouter<T>(this, socket, message, cache);
   }
 
   protected printMessage(message: string) {
-    console.log(`SAGECollection ${this.name}> ${message}`);
+    console.log(`SAGE3Collection ${this.name}> ${message}`);
   }
 
   protected printError(message: string) {
-    console.error(`SAGECollection ${this.name}> ${message}`);
+    console.error(`SAGE3Collection ${this.name}> ${message}`);
   }
 
   protected printWarn(message: string) {
-    console.warn(`SAGECollection ${this.name}> ${message}`);
+    console.warn(`SAGE3Collection ${this.name}> ${message}`);
   }
 
 }

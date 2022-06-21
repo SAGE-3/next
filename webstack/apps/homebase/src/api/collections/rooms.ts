@@ -7,9 +7,9 @@
  */
 
 import { RoomSchema } from "@sage3/shared/types";
-import { SAGECollection } from "@sage3/backend";
+import { SAGE3Collection } from "@sage3/backend";
 
-class SAGE3RoomsCollection extends SAGECollection<RoomSchema> {
+class SAGE3RoomsCollection extends SAGE3Collection<RoomSchema> {
   constructor() {
     super("ROOMS", {
       name: '',

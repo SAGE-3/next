@@ -16,14 +16,15 @@ import createReact from "zustand";
 import { UserSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
-import { UserHTTPService } from "../api";
+import { APIHttp } from "../api";
 import { SocketAPI } from "../utils";
+import { SBDocument } from "@sage3/sagebase";
 
 interface UserState {
-  user: UserSchema | undefined;
-  create: (name: UserSchema['name'], email: UserSchema['email']) => Promise<void>;
+  user: SBDocument<UserSchema> | undefined;
+  create: (newuser: UserSchema) => Promise<void>;
   update: (updates: Partial<UserSchema>) => Promise<void>;
-  subscribeToUser: (id: UserSchema['id']) => Promise<void>;
+  subscribeToUser: (id: string) => Promise<void>;
 }
 
 /**
@@ -34,21 +35,22 @@ const UserStore = createVanilla<UserState>((set, get) => {
   SocketAPI.init()
   return {
     user: undefined,
-    create: async (name: UserSchema['name'], email: UserSchema['email']) => {
-      const user = await UserHTTPService.create(name, email);
-      if (user) {
-        get().subscribeToUser(user.id)
+    create: async (newuser: UserSchema) => {
+      const user = await APIHttp.POST<UserSchema>('/api/users', newuser);
+      if (user.data) {
+        get().subscribeToUser(user.data._id)
       }
     },
     update: async (updates: Partial<UserSchema>) => {
       const user = get().user;
       if (!user) return;
-      UserHTTPService.update(user.id, updates);
+      APIHttp.PUT<UserSchema>(`/api/users/${user._id}`, updates);
     },
-    subscribeToUser: async (id: UserSchema['id']) => {
-      const response = await UserHTTPService.read(id);
-      if (!response) return;
-      set({ user: response })
+    subscribeToUser: async (id: string) => {
+      const response = await APIHttp.GET<UserSchema>(`/api/users/${id}`);
+      if (!response.data) return;
+      const user = response.data[0];
+      set({ user })
 
       // Unsubscribe old subscription
       if (userSub) {
@@ -56,16 +58,17 @@ const UserStore = createVanilla<UserState>((set, get) => {
         userSub = null;
       }
       // Socket Subscribe Message
-      const route = `/api/users/${response.id}`;
+      const route = `/api/users/${user._id}`;
       // Socket Listenting to updates from server about the current user
       userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
+        const doc = message.doc as SBDocument<UserSchema>;
         switch (message.type) {
           case 'CREATE': {
-            set({ user: message.doc.data })
+            set({ user: doc })
             break;
           }
           case 'UPDATE': {
-            set({ user: message.doc.data })
+            set({ user: doc })
             break;
           }
           case 'DELETE': {

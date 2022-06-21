@@ -8,12 +8,13 @@
 
 import { Button, Text, useColorModeValue } from "@chakra-ui/react";
 import { CreateRoomModal, RoomCard, useRoomStore } from "@sage3/frontend";
+import { SBDocument } from "@sage3/sagebase";
 import { RoomSchema } from "@sage3/shared/types";
 import { useEffect, useState } from "react";
 
 type RoomListProps = {
-  onRoomClick: (room: RoomSchema) => void;
-  selectedRoom: RoomSchema | null;
+  onRoomClick: (room: SBDocument<RoomSchema>) => void;
+  selectedRoom: SBDocument<RoomSchema> | null;
 }
 
 export function RoomList(props: RoomListProps) {
@@ -31,15 +32,15 @@ export function RoomList(props: RoomListProps) {
   const [newRoomModal, setNewRoomModal] = useState(false);
   return (
     <>
-      {rooms.sort((a, b) => a.name.localeCompare(b.name)).map((room) => {
+      {rooms.sort((a, b) => a.data.name.localeCompare(b.data.name)).map((room) => {
         return (
           <RoomCard
-            key={room.id}
+            key={room._id}
             room={room}
-            selected={(props.selectedRoom) ? room.id === props.selectedRoom.id : false}
+            selected={(props.selectedRoom) ? room._id === props.selectedRoom._id : false}
             onEnter={() => props.onRoomClick(room)}
             onEdit={() => console.log('edit room')}
-            onDelete={() => deleteRoom(room.id)}
+            onDelete={() => deleteRoom(room._id)}
           ></RoomCard>
         )
       })}

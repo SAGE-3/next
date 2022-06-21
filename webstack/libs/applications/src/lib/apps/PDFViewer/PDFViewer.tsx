@@ -7,17 +7,15 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
 import { AppSchema } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { SBDocument } from '@sage3/sagebase';
 
-// Styling
-import './styling.css';
 
-function PDFViewer(props: AppSchema): JSX.Element {
-  const s = props.state as AppState;
+function PDFViewer(props: SBDocument<AppSchema>): JSX.Element {
+  const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
 

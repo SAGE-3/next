@@ -13,11 +13,10 @@ import { AppSchema } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-// Styling
-import './styling.css';
+import { SBDocument } from '@sage3/sagebase';
 
-function Webview(props: AppSchema): JSX.Element {
-  const s = props.state as AppState;
+function Webview(props: SBDocument<AppSchema>): JSX.Element {
+  const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
 

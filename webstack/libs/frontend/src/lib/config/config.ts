@@ -6,7 +6,6 @@
  *
  */
 
-import { httpGET } from './http';
 
 // limited response from server to the configuration request, for security reasons
 export type serverConfiguration = {
@@ -25,14 +24,29 @@ export type serverConfiguration = {
  * @returns {string}
  */
 export async function GetServerName(): Promise<string | null> {
-  const value = await httpGET('/api/configuration');
-  const config = value.data as serverConfiguration;
+  const response = await fetch('/api/configuration', {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    }
+  });
+  const config = await response.json() as serverConfiguration;
   return config.serverName || null;
 }
 
 export async function GetPort(): Promise<number | null> {
-  const value = await httpGET('/api/configuration');
-  const config = value.data as serverConfiguration;
+  const response = await fetch('/api/configuration', {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    }
+  });
+
+  const config = await response.json() as serverConfiguration;
   return config.port || null;
 }
 
@@ -41,7 +55,14 @@ export async function GetPort(): Promise<number | null> {
  * @returns serverConfiguration
  */
 export async function GetConfiguration(): Promise<serverConfiguration> {
-  const value = await httpGET('/api/configuration');
-  const config = value.data as serverConfiguration;
+  const response = await fetch('/api/configuration', {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    }
+  });
+  const config = await response.json() as serverConfiguration;
   return config;
 }

@@ -13,8 +13,6 @@ import { z } from "zod";
  * Defines the Schema for the BoardModel.
  */
 export const BoardSchema = z.object({
-  // Id of the board
-  id: z.string(),
   // Name of the board
   name: z.string(),
   // Description of the board.

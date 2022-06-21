@@ -8,10 +8,11 @@
 
 import { SubscriptionCache } from "../utils/subscription-cache";
 import { APIClientWSMessage } from '@sage3/shared/types';
-import { SAGECollection } from "./SAGECollection";
+import { SAGE3Collection } from "./SAGECollection";
 import { SBDocumentUpdate, SBJSON } from "@sage3/sagebase";
+import { WebSocket } from 'ws';
 
-export async function sageWSRouter<T extends SBJSON>(collection: SAGECollection<T>, socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
+export async function sageWSRouter<T extends SBJSON>(collection: SAGE3Collection<T>, socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   const path = '/api' + collection.name.toLowerCase();
   switch (message.method) {
     case 'POST': {

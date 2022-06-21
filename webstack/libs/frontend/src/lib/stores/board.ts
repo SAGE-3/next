@@ -13,18 +13,19 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { BoardSchema, RoomSchema, UserSchema } from '@sage3/shared/types';
+import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
-import { BoardHTTPService } from "../api";
+import { APIHttp } from "../api";
 import { SocketAPI } from "../utils";
 import { AppSchema } from "@sage3/applications/schema";
+import { SBDocument } from "@sage3/sagebase";
 
 interface BoardState {
-  boards: BoardSchema[];
-  create: (name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) => void;
-  update: (id: BoardSchema['id'], updates: Partial<BoardSchema>) => void;
-  delete: (id: BoardSchema['id']) => void;
+  boards: SBDocument<BoardSchema>[];
+  create: (newBoard: BoardSchema) => void;
+  update: (id: string, updates: Partial<BoardSchema>) => void;
+  delete: (id: string) => void;
   subscribeByRoomId: (id: BoardSchema['roomId']) => Promise<void>;
 }
 
@@ -35,20 +36,20 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
   let boardsSub: (() => void) | null = null;
   return {
     boards: [],
-    create(name: BoardSchema['name'], description: BoardSchema['description'], roomId: BoardSchema['roomId']) {
-      SocketAPI.sendRESTMessage('/api/boards', 'POST', { name, description, roomId });
+    create(newBoard: BoardSchema) {
+      SocketAPI.sendRESTMessage('/api/boards', 'POST', newBoard);
     },
-    update(id: BoardSchema['id'], updates: Partial<BoardSchema>) {
+    update(id: string, updates: Partial<BoardSchema>) {
       SocketAPI.sendRESTMessage(`/api/boards/${id}`, 'PUT', updates);
     },
-    delete: (id: BoardSchema['id']) => {
+    delete: (id: string) => {
       SocketAPI.sendRESTMessage(`/api/boards/${id}`, 'DELETE');
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
       set({ boards: [] })
-      const boards = await BoardHTTPService.query({ roomId });
-      if (boards) {
-        set({ boards })
+      const boards = await APIHttp.GET<BoardSchema>('/api/boards', { roomId });
+      if (boards.success) {
+        set({ boards: boards.data })
       }
 
       // Unsubscribe old subscription
@@ -63,7 +64,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       // Socket Listenting to updates from server about the current user
       boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema>(route, (message) => {
         if (message.col !== 'BOARDS') return;
-        const doc = message.doc.data as BoardSchema;
+        const doc = message.doc as SBDocument<BoardSchema>;
         switch (message.type) {
           case 'CREATE': {
             set({ boards: [...get().boards, doc] })
@@ -71,7 +72,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
           }
           case 'UPDATE': {
             const boards = [...get().boards];
-            const idx = boards.findIndex(el => el.id === doc.id);
+            const idx = boards.findIndex(el => el._id === doc._id);
             if (idx > -1) {
               boards[idx] = doc;
             }
@@ -80,7 +81,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
           }
           case 'DELETE': {
             const boards = [...get().boards];
-            const idx = boards.findIndex(el => el.id === doc.id);
+            const idx = boards.findIndex(el => el._id === doc._id);
             if (idx > -1) {
               boards.splice(idx, 1);
             }

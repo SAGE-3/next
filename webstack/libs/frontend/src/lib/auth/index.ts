@@ -6,7 +6,5 @@
  *
  */
 
-export * from './user';
-export * from './board';
-export * from './app';
-export * from './room';
+
+export * from './auth';

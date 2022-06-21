@@ -17,7 +17,7 @@
 import * as express from 'express';
 
 // Asset imports
-import { assetExpressRouter } from './asset';
+import { assetExpressRouter } from './custom/asset';
 
 // Collection Imports
 import { AppsCollection, BoardsCollection, RoomsCollection, UsersCollection } from '../collections';

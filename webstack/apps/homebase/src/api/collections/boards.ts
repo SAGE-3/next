@@ -7,9 +7,9 @@
  */
 
 import { BoardSchema } from "@sage3/shared/types";
-import { SAGECollection } from "@sage3/backend";
+import { SAGE3Collection } from "@sage3/backend";
 
-class SAGE3BoardsCollection extends SAGECollection<BoardSchema> {
+class SAGE3BoardsCollection extends SAGE3Collection<BoardSchema> {
   constructor() {
     super("BOARDS", {
       name: '',

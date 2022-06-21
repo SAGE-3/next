@@ -13,17 +13,19 @@
  * @version 1.0.0
  */
 
+import { SBDocument } from '@sage3/sagebase';
 import { AssetType } from '@sage3/shared/types';
-import { httpDELETE, httpGET } from './http';
+import { APIHttp } from './api-http';
 
 // async function read(id: AssetType['id']): Promise<AssetType[] | undefined> {
 //   const response = await httpGET('/api/assets/' + id);
 //   return response.data;
 // }
 
-async function readAll(): Promise<AssetType[] | undefined> {
-  const response = await httpGET('/api/assets');
+async function readAll(): Promise<SBDocument<AssetType>[] | undefined> {
+  const response = await APIHttp.GET<AssetType>('/api/assets');
   return response.data;
+
 }
 
 // async function del(id: AssetType['id']): Promise<boolean> {

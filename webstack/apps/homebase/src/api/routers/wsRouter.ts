@@ -7,12 +7,11 @@
  */
 
 // External Imports
-import { IncomingMessage } from 'http';
 import { WebSocket } from 'ws';
 
-// App Imports
-import { boardWSRouter, roomWSRouter, userWSRouter, appWSRouter, assetWSRouter, subscriptionWSRouter } from '../ws';
-
+// Custom Routes
+import { assetWSRouter } from './custom/asset';
+import { subscriptionWSRouter } from './custom/subscription';
 // Collection Imports
 import { AppsCollection, BoardsCollection, RoomsCollection, UsersCollection } from '../collections';
 
@@ -22,18 +21,19 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 const wsRoutes = {
   '/apps': AppsCollection.wsRouter,
-  '/users': userWSRouter,
-  '/rooms': roomWSRouter,
-  '/boards': boardWSRouter,
+  '/users': UsersCollection.wsRouter,
+  '/rooms': RoomsCollection.wsRouter,
+  '/boards': BoardsCollection.wsRouter,
   '/assets': assetWSRouter,
-  '/subscription': subscriptionWSRouter,
+  '/subscription': subscriptionWSRouter
 } as {
-  [key: string]: (socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void>;
+  [key: string]: (socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void>;
 };
 
-export function wsAPIRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): void {
+export function wsAPIRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): void {
   const route = '/' + message.route.split('/')[2];
   if (wsRoutes[route] != undefined) {
-    wsRoutes[route](socket, request, message, cache);
+    wsRoutes[route](socket, message, cache);
   }
 }
+

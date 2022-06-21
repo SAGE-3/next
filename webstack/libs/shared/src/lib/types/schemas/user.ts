@@ -19,8 +19,6 @@ export type UserRole = z.infer<typeof UserRole>;
  * @interface UserSchema
  */
 export const UserSchema = z.object({
-  // Id of the user
-  id: z.string(),
   // Name of the user
   name: z.string(),
   // Email address of the user.

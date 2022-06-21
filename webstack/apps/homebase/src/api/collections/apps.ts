@@ -7,9 +7,9 @@
  */
 
 import { AppSchema, AppState } from "@sage3/applications/schema";
-import { SAGECollection } from "@sage3/backend";
+import { SAGE3Collection } from "@sage3/backend";
 
-class SAGE3AppsCollection extends SAGECollection<AppSchema> {
+class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
 
   constructor() {
     super("APPS", {

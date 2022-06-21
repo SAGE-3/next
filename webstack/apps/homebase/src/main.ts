@@ -37,8 +37,8 @@ import * as jwt from 'jsonwebtoken';
  */
 import { loadConfig } from './config';
 // import { AssetService } from './services';
-import { expressAPIRouter, wsAPIRouter } from './controllers';
-import { loadCollections } from './collections';
+import { expressAPIRouter, wsAPIRouter } from './api/routers';
+import { loadCollections } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -101,7 +101,7 @@ async function startServer() {
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
 
   // Websocket API for sagebase
-  apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+  apiWebSocketServer.on('connection', (socket: WebSocket) => {
 
     console.log('apiWebSocketServer> connection open');
 
@@ -111,7 +111,7 @@ async function startServer() {
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, request, message, subCache);
+      wsAPIRouter(socket, message, subCache);
     });
 
     socket.on('close', () => {

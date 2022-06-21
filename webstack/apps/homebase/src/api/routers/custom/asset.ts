@@ -16,18 +16,16 @@
 // Express web server framework
 import * as express from 'express';
 
-import { config } from '../../config';
+import { config } from '../../../config';
 
 // Local storage
-import { uploadMiddleware } from '../../connectors/upload-connector';
+import { uploadMiddleware } from '../../../connectors/upload-connector';
 
 // Asset model
-import { AssetsCollection } from '../collections';
+import { AssetsCollection } from '../../collections';
 
 // External Imports
 import { WebSocket } from 'ws';
-import { IncomingMessage } from 'http';
-
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
@@ -129,7 +127,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
  */
 export async function assetWSRouter(
   socket: WebSocket,
-  request: IncomingMessage,
   message: APIClientWSMessage,
   cache: SubscriptionCache
 ): Promise<void> {

@@ -9,8 +9,6 @@ import { z } from "zod";
 
 
 export const RoomSchema = z.object({
-  // Id of the room
-  id: z.string(),
   // Name of the Room
   name: z.string(),
   // Description of the room.

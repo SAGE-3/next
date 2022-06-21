@@ -6,4 +6,5 @@
  *
  */
 
-/* CSS definitions for the app VideoViewer */
+
+export * from './config';

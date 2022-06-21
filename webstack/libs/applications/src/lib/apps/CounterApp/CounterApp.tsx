@@ -12,20 +12,21 @@ import { AppSchema } from "../../schema";
 
 import { state as AppState } from "./index";
 import { AppWindow } from '../../components';
+import { SBDocument } from '@sage3/sagebase';
 
-function CounterApp(props: AppSchema): JSX.Element {
+function CounterApp(props: SBDocument<AppSchema>): JSX.Element {
 
-  const s = props.state as AppState;
+  const s = props.data.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
 
 
   function handleAddClick() {
-    updateState(props.id, { count: s.count + 1 })
+    updateState(props._id, { count: s.count + 1 })
   }
 
   function handleSubClick() {
-    updateState(props.id, { count: s.count - 1 })
+    updateState(props._id, { count: s.count - 1 })
   }
 
   return (

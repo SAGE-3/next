@@ -20,10 +20,9 @@
 
 // External Imports
 import { WebSocket } from 'ws';
-import { IncomingMessage } from 'http';
 
-// App Imports
-import { AppService, BoardService, RoomService } from '../../services';
+// Collection Imports
+import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collections';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
@@ -36,7 +35,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
  * @param message 
  * @param cache 
  */
-export async function subscriptionWSRouter(socket: WebSocket, request: IncomingMessage, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
+export async function subscriptionWSRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   switch (message.method) {
     case 'SUB': {
       // Subscribe to a room and all its children (Boards, apps)
@@ -46,15 +45,15 @@ export async function subscriptionWSRouter(socket: WebSocket, request: IncomingM
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const roomSub = await RoomService.subscribe(roomId, (doc) => {
+        const roomSub = await RoomsCollection.subscribe(roomId, (doc) => {
           const msg = { id: message.id, event: doc }
           socket.send(JSON.stringify(msg));
         });
-        const boardsSub = await BoardService.subscribeByRoomId(roomId, (doc) => {
+        const boardsSub = await BoardsCollection.subscribeByQuery('roomId', roomId, (doc) => {
           const msg = { id: message.id, event: doc }
           socket.send(JSON.stringify(msg));
         });
-        const appsSub = await AppService.subscribeByRoomId(roomId, (doc) => {
+        const appsSub = await AppsCollection.subscribeByQuery('roomId', roomId, (doc) => {
           const msg = { id: message.id, event: doc }
           socket.send(JSON.stringify(msg));
         })
@@ -72,11 +71,11 @@ export async function subscriptionWSRouter(socket: WebSocket, request: IncomingM
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const boardSub = await BoardService.subscribe(boardId, (doc) => {
+        const boardSub = await BoardsCollection.subscribe(boardId, (doc) => {
           const msg = { id: message.id, event: doc }
           socket.send(JSON.stringify(msg));
         });
-        const appsSub = await AppService.subscribeByBoardId(boardId, (doc) => {
+        const appsSub = await AppsCollection.subscribeByQuery('boardId', boardId, (doc) => {
           const msg = { id: message.id, event: doc }
           socket.send(JSON.stringify(msg));
         })

@@ -6,14 +6,15 @@
  *
  */
 
+import { SBDocument } from '@sage3/sagebase';
 import { AppWindow } from '../../components';
 import { AppSchema } from "../../schema";
 
 import { state as AppState } from "./";
 
-function ImageApp(props: AppSchema): JSX.Element {
+function ImageApp(props: SBDocument<AppSchema>): JSX.Element {
 
-  const s = props.state as AppState;
+  const s = props.data.state as AppState;
 
   return (
     <AppWindow app={props}>

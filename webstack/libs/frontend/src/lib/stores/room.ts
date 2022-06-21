@@ -16,14 +16,15 @@ import createReact from 'zustand';
 import { RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
-import { RoomHTTPService } from '../api';
+import { APIHttp } from '../api';
 import { SocketAPI } from '../utils';
+import { SBDocument } from '@sage3/sagebase';
 
 interface RoomState {
-  rooms: RoomSchema[];
-  create: (name: RoomSchema['name'], description: RoomSchema['description']) => Promise<void>;
-  update: (id: RoomSchema['id'], updates: Partial<RoomSchema>) => Promise<void>;
-  delete: (id: RoomSchema['id']) => Promise<void>;
+  rooms: SBDocument<RoomSchema>[];
+  create: (newRoom: RoomSchema) => Promise<void>;
+  update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
+  delete: (id: string) => Promise<void>;
   subscribeToAllRooms: () => Promise<void>;
 }
 
@@ -33,21 +34,20 @@ interface RoomState {
 const RoomStore = createVanilla<RoomState>((set, get) => {
   let roomSub: (() => void) | null = null;
   return {
-    currentRoom: undefined,
     rooms: [],
-    create: async (name: RoomSchema['name'], description: RoomSchema['description']) => {
-      SocketAPI.sendRESTMessage(`/api/rooms/`, 'POST', { name, description });
+    create: async (newRoom: RoomSchema) => {
+      SocketAPI.sendRESTMessage(`/api/rooms/`, 'POST', newRoom);
     },
-    update: async (id: RoomSchema['id'], updates: Partial<RoomSchema>) => {
+    update: async (id: string, updates: Partial<RoomSchema>) => {
       SocketAPI.sendRESTMessage(`/api/rooms/${id}`, 'PUT', updates);
     },
-    delete: async (id: RoomSchema['id']) => {
+    delete: async (id: string) => {
       SocketAPI.sendRESTMessage(`/api/rooms/${id}`, 'DELETE');
     },
     subscribeToAllRooms: async () => {
-      const rooms = await RoomHTTPService.readAll();
-      if (rooms) {
-        set({ rooms });
+      const rooms = await APIHttp.GET<RoomSchema>('/api/rooms');
+      if (rooms.success) {
+        set({ rooms: rooms.data });
       }
       // Unsubscribe old subscription
       if (roomSub) {
@@ -59,24 +59,24 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       const route = '/api/rooms';
       // Socket Listenting to updates from server about the current rooms
       roomSub = await SocketAPI.subscribe<RoomSchema>(route, (message) => {
-        console.log(message)
+        const doc = message.doc as SBDocument<RoomSchema>;
         switch (message.type) {
           case 'CREATE': {
-            set({ rooms: [...get().rooms, message.doc.data] });
+            set({ rooms: [...get().rooms, doc] });
             break;
           }
           case 'UPDATE': {
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex((el) => el.id === message.doc.data.id);
+            const idx = rooms.findIndex((el) => el._id === doc._id);
             if (idx > -1) {
-              rooms[idx] = message.doc.data;
+              rooms[idx] = doc;
             }
             set({ rooms: rooms });
             break;
           }
           case 'DELETE': {
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex((el) => el.id === message.doc.data.id);
+            const idx = rooms.findIndex((el) => el._id === doc._id);
             if (idx > -1) {
               rooms.splice(idx, 1);
             }

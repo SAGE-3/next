@@ -7,6 +7,7 @@
  */
 
 import { Box, Button, useColorModeValue } from '@chakra-ui/react';
+import { SBDocument } from '@sage3/sagebase';
 
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { useState } from 'react';
@@ -18,32 +19,32 @@ import { RoomList } from '../components/RoomList';
 
 export function HomePage() {
 
-  const [selectedRoom, setSelectedRoom] = useState<RoomSchema | null>(null);
-  const [selectedBoard, setSelectedBoard] = useState<BoardSchema | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<SBDocument<RoomSchema> | null>(null);
+  const [selectedBoard, setSelectedBoard] = useState<SBDocument<BoardSchema> | null>(null);
 
   const imageUrl = useColorModeValue("/assets/SAGE3LightMode.png", "/assets/SAGE3DarkMode.png");
 
   const navigate = useNavigate();
 
-  function handleRoomClick(room: RoomSchema) {
+  function handleRoomClick(room: SBDocument<RoomSchema>) {
     setSelectedRoom(room);
     setSelectedBoard(null);
   }
 
-  function handleBoardClick(board: BoardSchema) {
+  function handleBoardClick(board: SBDocument<BoardSchema>) {
     setSelectedBoard(board);
   }
 
-  function handleEnterBoard(board: BoardSchema) {
+  function handleEnterBoard(board: SBDocument<BoardSchema>) {
     setSelectedBoard(board);
     if (selectedRoom) {
-      navigate('/board', { state: { roomId: selectedRoom.id, boardId: board.id } });
+      navigate('/board', { state: { roomId: selectedRoom._id, boardId: board._id } });
     }
   }
 
   return (
     <div>
-      <Header title={(selectedRoom) ? selectedRoom.name : "Select a Room"}></Header>
+      <Header title={(selectedRoom) ? selectedRoom.data.name : "Select a Room"}></Header>
 
       <Box display="flex" flexDirection="row" flexWrap="nowrap">
 

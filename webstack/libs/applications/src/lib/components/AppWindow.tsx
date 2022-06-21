@@ -15,9 +15,10 @@ import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd'
 
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md'
 import { sageColorByName } from "@sage3/shared";
+import { SBDocument } from "@sage3/sagebase";
 
 type WindowProps = {
-  app: AppSchema;
+  app: SBDocument<AppSchema>;
   children: JSX.Element;
 }
 
@@ -31,24 +32,24 @@ export function AppWindow(props: WindowProps) {
   const deleteApp = useAppStore(state => state.delete);
 
   // Local state
-  const [pos, setPos] = useState({ x: props.app.position.x, y: props.app.position.y });
-  const [size, setSize] = useState({ width: props.app.size.width, height: props.app.size.height });
+  const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
+  const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(false);
 
   // If size or position change update the local state.
   useEffect(() => {
-    setSize({ width: props.app.size.width, height: props.app.size.height });
-    setPos({ x: props.app.position.x, y: props.app.position.y });
-  }, [props.app.size, props.app.position])
+    setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
+    setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
+  }, [props.app.data.size, props.app.data.position])
 
   // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
     setPos({ x: data.x, y: data.y });
-    update(props.app.id, {
+    update(props.app._id, {
       position: {
         x: data.x,
         y: data.y,
-        z: props.app.position.z
+        z: props.app.data.position.z
       }
     });
   }
@@ -66,14 +67,14 @@ export function AppWindow(props: WindowProps) {
     setSize({ width, height });
 
     // Update the size and position of the app in the server
-    update(props.app.id, {
+    update(props.app._id, {
       position: {
-        ...props.app.position,
+        ...props.app.data.position,
         x: position.x,
         y: position.y,
       },
       size: {
-        ...props.app.size,
+        ...props.app.data.size,
         width,
         height,
       }
@@ -82,7 +83,7 @@ export function AppWindow(props: WindowProps) {
 
   // Close the app and delete from server
   function handleClose() {
-    deleteApp(props.app.id);
+    deleteApp(props.app._id);
   }
 
   // Minimize the app. Currently only local.
@@ -124,7 +125,7 @@ export function AppWindow(props: WindowProps) {
         <Box
           display="flex"
           alignItems="center">
-          < Text color="white">{props.app.name}</Text >
+          < Text color="white">{props.app.data.name}</Text >
         </Box>
 
         {/* Right Title bar Elements */}

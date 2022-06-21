@@ -6,7 +6,32 @@
  *
  */
 
-export async function httpPOST(url: string, body: any): Promise<any> {
+import { SBDocument, SBJSON } from "@sage3/sagebase";
+import { URLSearchParams } from "url";
+
+type POSTResponse<T extends SBJSON> = {
+  success: boolean,
+  message?: string;
+  data?: SBDocument<T>
+}
+
+type GETResponse<T extends SBJSON> = {
+  success: boolean,
+  message?: string;
+  data?: SBDocument<T>[];
+}
+
+type PUTResponse = {
+  success: boolean,
+  message?: string;
+}
+
+type DELResponse = {
+  success: boolean;
+  message?: string;
+}
+
+async function POST<T extends SBJSON>(url: string, body: T): Promise<POSTResponse<T>> {
   const response = await fetch(url, {
     method: 'POST',
     credentials: 'include',
@@ -19,19 +44,19 @@ export async function httpPOST(url: string, body: any): Promise<any> {
   return await response.json();
 }
 
-export async function httpGET(url: string): Promise<any> {
-  const response = await fetch(url, {
+async function GET<T extends SBJSON>(url: string, query?: Partial<T>): Promise<GETResponse<T>> {
+  const response = await fetch(url + new URLSearchParams(query as Record<string, string>), {
     method: 'GET',
     credentials: 'include',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-    },
+    }
   });
   return await response.json();
 }
 
-export async function httpPUT(url: string, body: any): Promise<any> {
+async function PUT<T extends SBJSON>(url: string, body: Partial<T>): Promise<PUTResponse> {
   const response = await fetch(url, {
     method: 'PUT',
     credentials: 'include',
@@ -44,7 +69,7 @@ export async function httpPUT(url: string, body: any): Promise<any> {
   return await response.json();
 }
 
-export async function httpDELETE(url: string): Promise<any> {
+async function DELETE(url: string): Promise<DELResponse> {
   const response = await fetch(url, {
     method: 'DELETE',
     credentials: 'include',
@@ -54,4 +79,11 @@ export async function httpDELETE(url: string): Promise<any> {
     },
   });
   return await response.json();
+}
+
+export const APIHttp = {
+  POST,
+  GET,
+  PUT,
+  DELETE
 }
