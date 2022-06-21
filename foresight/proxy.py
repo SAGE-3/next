@@ -23,6 +23,7 @@ import argparse
 from board import Board
 import uuid
 from multiprocessing import Queue
+import requests
 
 from threading import Thread
 
@@ -37,23 +38,14 @@ class Room:
 
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
-    message_id = str(uuid.uuid4())
-    print('Subscribing to board:', room_id, 'with subscriptionId:', subscription_id)
+    # message_id = str(uuid.uuid4())
+    print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
     msg_sub = {
-        'route': '/api/apps/subscribe/:roomId', 'id': message_id,
-        'body': {'subId': subscription_id, 'roomId': room_id}
-    }
-    await sock.send(json.dumps(msg_sub))
-    msg_sub = {
-        'route': '/api/boards/subscribe/:roomId', 'id': message_id,
-        'body': {'subId': subscription_id, 'roomId': room_id}
+        'route': f'/api/subscription/rooms/{room_id}',
+        'id': subscription_id, 'method': 'SUB'
     }
     await sock.send(json.dumps(msg_sub))
 
-    # # send the message
-    # msg_sub = {'route': '/api/apps/subscribe/:roomId', 'id': message_id,
-    #            'body': {'subId': subscription_id, 'roomId': room_id}}
-    # await sock.send(json.dumps(msg_sub))
 
 
 class BoardProxy():
@@ -70,9 +62,14 @@ class BoardProxy():
             "UPDATE": self.__handle_update,
         }
 
+    def authenticat_new_user(self):
+        head = {'Authorization': f"Bearer {self.__config['token']}"}
+        r = requests.post( self.__config['server']+ '/auth/jwt', headers=head)
+        response = r.json()
+
     def receive_messages(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
-
+        # self.authenticat_new_user()
         async def _run(self):
             async with websockets.connect(self.__config["socket_server"],
                                           extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
@@ -93,10 +90,9 @@ class BoardProxy():
         while True:
             msg = self.__message_queue.get()
             print(f"Handling message: {msg}")
-            message_type = msg["event"]["type"]
-            print(f'Working on {msg["id"]} type is:{message_type}')
-            self.__OBJECT_CREATION_METHODS[message_type](msg)
-            print(f'Finished processing {msg["id"]}')
+            print(f'Working on {msg}')
+            # self.__OBJECT_CREATION_METHODS[message_type](msg)
+            # print(f'Finished processing {msg["id"]}')
 
     def clean_up(self):
         print("cleaning up the queue")
@@ -132,7 +128,7 @@ if __name__ == "__main__":
     # multiprocessing.set_start_method("fork")
     # parser = get_cmdline_parser()
     # args = parser.parse_args()
-    board_proxy = BoardProxy("config.json", "08d37fb0-b0a7-475e-a007-6d9dd35538ad")
+    board_proxy = BoardProxy("config.json", "18b94448-7698-4124-9d70-f3a78d0b41f3")
 
     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
     # board_proxy = BoardProxy(args.config_file, args.room_id)

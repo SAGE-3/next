@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   redis-server:
-    image: "redis/redis-stack-server:latest"
+    image: "redis/redis-stack-server:7.0.0-RC5"
     volumes:
       - ./configurations/redis/data:/data
       - ./configurations/redis/conf:/conf
