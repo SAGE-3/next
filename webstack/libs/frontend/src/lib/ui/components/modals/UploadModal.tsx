@@ -27,6 +27,15 @@ import { useUserStore } from '../../../stores';
 
 import { MdAttachFile } from 'react-icons/md';
 
+// Fix the missing attribute 'webkitdirectory' to upload folders
+declare module 'react' {
+  interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+    // extends React's HTMLAttributes
+    directory?: string;
+    webkitdirectory?: string;
+  }
+}
+
 interface UploadModalProps {
   isOpen: boolean;
   onOpen: () => void;
@@ -36,40 +45,41 @@ interface UploadModalProps {
 export function UploadModal(props: UploadModalProps): JSX.Element {
   const user = useUserStore((state) => state.user);
 
-  // Keyboard handler: press enter to activate command
-  // const onSubmit = (e: React.KeyboardEvent) => {
-  //   // Keyboard instead of pressing the button
-  //   if (e.key === 'Enter') {
-  //     updateAccount();
-  //   }
-  // };
-
   // selected files
-  const [input, setInput] = useState<FileList[]>([]);
+  const [input, setInput] = useState<File[]>([]);
 
+  // Files have been selected
   const handleInputChange = (e: any) => {
-    setInput(e.target.files);
+    const files = Object.values(e.target.files) as File[];
+    // Ignore .DS_Store and empty files
+    const filteredList = files.filter((f: File) => (f.name !== '.DS_Store') || f.size === 0);
+    setInput(filteredList);
   };
 
+  // Perform the actual upload
   const upload = () => {
-    const fileArray = input;
-    const fd = new FormData();
-    for (const file of fileArray) {
-      // @ts-ignore
-      fd.append('files', file);
-    }
-
-    fetch('/api/assets/upload', {
-      method: 'POST',
-      body: fd,
-    })
-      .catch((error: Error) => {
-        console.log('Upload> Error: ', error);
+    if (input) {
+      // Uploaded with a Form object
+      const fd = new FormData();
+      // Add each file to the form
+      const fileListLength = input.length;
+      for (let i = 0; i < fileListLength; i++) {
+        fd.append('files', input[i]);
+      }
+      // Upload with a POST request
+      fetch('/api/assets/upload', {
+        method: 'POST',
+        body: fd,
       })
-      .finally(() => {
-        props.onClose();
-      });
-  };
+        .catch((error: Error) => {
+          console.log('Upload> Error: ', error);
+        })
+        .finally(() => {
+          // Close the modal UI
+          props.onClose();
+        });
+    }
+  }
 
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
@@ -86,6 +96,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
                 type="file"
                 accept={'image/*, video/*, application/pdf'}
                 multiple
+                webkitdirectory="true"
                 onChange={handleInputChange}
                 onClick={() => setInput([])}
               />
