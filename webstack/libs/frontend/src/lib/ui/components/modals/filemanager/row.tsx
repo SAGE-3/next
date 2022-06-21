@@ -47,7 +47,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
   // Modal showing file information
   const { isOpen, onOpen, onClose } = useDisclosure({ id: 'exif' });
   // show the context menu
-  // const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // dark/light modes
   const { colorMode } = useColorMode();
@@ -57,7 +57,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
     // Flip the value
     setSelected((s) => !s);
     clickCB(file);
-    // if (showMenu) setShowMenu(false);
+    if (showMenu) setShowMenu(false);
   };
   // Select the file when double-clicked
   // const onDoubleClick = (e: MouseEvent): void => {
@@ -69,7 +69,8 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
     const id = e.currentTarget.id;
     if (id === 'down') {
       // download a file
-      downloadFile('api/assets/' + file.filename, file.originalfilename);
+      console.log('File', file)
+      downloadFile('api/assets/static/' + file.filename, file.originalfilename);
     } else if (id === 'del') {
       if (user?.userRole !== 'guest') {
         // Delete a file
@@ -89,7 +90,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
     // deselect file selection
     setSelected(false);
     // hide context menu
-    // setShowMenu(false);
+    setShowMenu(false);
   };
 
   useEffect(() => {
@@ -109,15 +110,16 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {
+    console.log('contextmenu');
     // deselect file selection
     setSelected(false);
     // hide context menu
-    // setShowMenu(false);
+    setShowMenu(false);
     if (divRef.current?.contains(e.target as any)) {
       // capture the cursor position to show the menu
       setAnchorPoint({ x: e.pageX, y: e.pageY });
       // show context menu
-      // setShowMenu(true);
+      setShowMenu(true);
       setSelected(true);
     }
     e.preventDefault();
@@ -172,7 +174,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
           {humanFileSize(file.size)}
         </Box>
       </Flex>
-      {/* {showMenu ? (
+      {showMenu ? (
         <Portal>
           <ul
             className="s3contextmenu"
@@ -197,7 +199,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
         </Portal>
       ) : (
         <> </>
-      )} */}
+      )}
 
       {/* EXIF info */}
       <Modal closeOnEsc={true} closeOnOverlayClick={true} isOpen={isOpen} onClose={onClose} size={'3xl'} isCentered>

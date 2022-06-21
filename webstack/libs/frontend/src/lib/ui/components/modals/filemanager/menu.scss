@@ -1,0 +1,31 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+.s3contextmenu {
+  font-size: 14px;
+  font-family: Menlo, Monaco, Consolas, monospace;
+  border-radius: 4px;
+  padding: 5px 5px 5px 5px;
+  width: 150px;
+  height: auto;
+  margin: 1;
+  position: absolute;
+  list-style: none;
+  opacity: 1;
+  transition: opacity 0.5s linear;
+  z-index: 10000;
+}
+
+ul li.s3contextmenuitem {
+  display: block;
+}
+
+ul li.s3contextmenuitem:hover,
+ul li.s3contextmenuitem:focus {
+  background-color: teal;
+}

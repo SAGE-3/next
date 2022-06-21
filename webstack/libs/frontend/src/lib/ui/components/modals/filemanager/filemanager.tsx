@@ -24,6 +24,8 @@ import {
   Spacer
 } from '@chakra-ui/react';
 
+import "./menu.scss";
+
 export function FileManager(props: FileManagerProps): JSX.Element {
   // The data list
   const [filesList, setList] = useState(props.files);
