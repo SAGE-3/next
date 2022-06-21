@@ -32,7 +32,7 @@ type DELResponse = {
 }
 
 async function POST<T extends SBJSON>(url: string, body: T): Promise<POSTResponse<T>> {
-  const response = await fetch(url, {
+  const response = await fetch('/api' + url, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -46,7 +46,7 @@ async function POST<T extends SBJSON>(url: string, body: T): Promise<POSTRespons
 
 async function GET<T extends SBJSON>(url: string, query?: Partial<T>): Promise<GETResponse<T>> {
   if (query) url = url + '?' + new URLSearchParams(query as Record<string, string>);
-  const response = await fetch(url, {
+  const response = await fetch('/api' + url, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -58,7 +58,7 @@ async function GET<T extends SBJSON>(url: string, query?: Partial<T>): Promise<G
 }
 
 async function PUT<T extends SBJSON>(url: string, body: Partial<T>): Promise<PUTResponse> {
-  const response = await fetch(url, {
+  const response = await fetch('/api' + url, {
     method: 'PUT',
     credentials: 'include',
     headers: {
@@ -71,7 +71,7 @@ async function PUT<T extends SBJSON>(url: string, body: Partial<T>): Promise<PUT
 }
 
 async function DELETE(url: string): Promise<DELResponse> {
-  const response = await fetch(url, {
+  const response = await fetch('/api' + url, {
     method: 'DELETE',
     credentials: 'include',
     headers: {

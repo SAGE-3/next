@@ -41,16 +41,16 @@ const AppStore = createVanilla<Applications>((set, get) => {
   return {
     apps: [],
     create: async (newApp: AppSchema) => {
-      SocketAPI.sendRESTMessage('/api/apps', 'POST', newApp);
+      SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
     },
     update: async (id: string, updates: Partial<AppSchema>) => {
-      SocketAPI.sendRESTMessage('/api/apps/' + id, 'PUT', updates);
+      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
     },
     updateState: async (id: string, state: Partial<AppState>) => {
-      SocketAPI.sendRESTMessage('/api/apps/state/' + id, 'PUT', state);
+      SocketAPI.sendRESTMessage('/apps/state/' + id, 'PUT', state);
     },
     delete: async (id: string) => {
-      SocketAPI.sendRESTMessage('/api/apps/' + id, 'DELETE');
+      SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
     },
     unsubToBoard: () => {
       // Unsubscribe old subscription
@@ -62,7 +62,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
       set({ apps: [] });
-      const apps = await APIHttp.GET<AppSchema>('/api/apps', { boardId });
+      const apps = await APIHttp.GET<AppSchema>('/apps', { boardId });
       if (apps.success) {
         set({ apps: apps.data });
       }
@@ -73,7 +73,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
         boardSub = null;
       }
 
-      const route = `/api/subscription/boards/${boardId}`;
+      const route = `/subscription/boards/${boardId}`;
       // Socket Listenting to updates from server about the current user
       boardSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
         if (message.col !== 'APPS') return;

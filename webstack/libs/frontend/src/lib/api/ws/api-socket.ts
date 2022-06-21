@@ -44,7 +44,7 @@ class SocketAPISingleton {
   public async sendRESTMessage(route: APIClientWSMessage['route'], method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>, body?: Record<string, unknown>): Promise<unknown> {
     const message = {
       id: genId(),
-      route,
+      route: '/api' + route,
       method,
     } as APIClientWSMessage;
     if (body) message.body = body;
@@ -60,7 +60,7 @@ class SocketAPISingleton {
   public async subscribe<T extends SBJSON>(route: string, callback: (message: SBDocumentMessage<T>) => void): Promise<() => void> {
     const subMessage = {
       id: genId(),
-      route,
+      route: '/api' + route,
       method: 'SUB'
     } as APIClientWSMessage;
 

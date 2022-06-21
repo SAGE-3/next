@@ -36,16 +36,16 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
   return {
     rooms: [],
     create: async (newRoom: RoomSchema) => {
-      SocketAPI.sendRESTMessage(`/api/rooms/`, 'POST', newRoom);
+      SocketAPI.sendRESTMessage(`/rooms/`, 'POST', newRoom);
     },
     update: async (id: string, updates: Partial<RoomSchema>) => {
-      SocketAPI.sendRESTMessage(`/api/rooms/${id}`, 'PUT', updates);
+      SocketAPI.sendRESTMessage(`/rooms/${id}`, 'PUT', updates);
     },
     delete: async (id: string) => {
-      SocketAPI.sendRESTMessage(`/api/rooms/${id}`, 'DELETE');
+      SocketAPI.sendRESTMessage(`/rooms/${id}`, 'DELETE');
     },
     subscribeToAllRooms: async () => {
-      const rooms = await APIHttp.GET<RoomSchema>('/api/rooms');
+      const rooms = await APIHttp.GET<RoomSchema>('/rooms');
       if (rooms.success) {
         set({ rooms: rooms.data });
       }
@@ -56,7 +56,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = '/api/rooms';
+      const route = '/rooms';
       // Socket Listenting to updates from server about the current rooms
       roomSub = await SocketAPI.subscribe<RoomSchema>(route, (message) => {
         const doc = message.doc as SBDocument<RoomSchema>;

@@ -37,7 +37,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
   return {
     user: undefined,
     create: async (newuser: UserSchema) => {
-      const user = await APIHttp.POST<UserSchema>('/api/users', newuser);
+      const user = await APIHttp.POST<UserSchema>('/users', newuser);
       if (user.data) {
         get().subscribeToUser(user.data[0]._id)
       }
@@ -45,11 +45,11 @@ const UserStore = createVanilla<UserState>((set, get) => {
     update: async (updates: Partial<UserSchema>) => {
       const user = get().user;
       if (!user) return;
-      const putResponse = await APIHttp.PUT<UserSchema>(`/api/users/${user._id}`, updates);
+      const putResponse = await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
       console.log(putResponse);
     },
     subscribeToUser: async (id: string) => {
-      const getResponse = await APIHttp.GET<UserSchema>(`/api/users/${id}`);
+      const getResponse = await APIHttp.GET<UserSchema>(`/users/${id}`);
       let user = null;
       if (getResponse.data) {
         user = getResponse.data[0];
@@ -63,7 +63,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
           userType: 'client',
           profilePicture: ''
         } as UserSchema;
-        const postResponse = await APIHttp.POST<UserSchema>(`/api/users`, newuser);
+        const postResponse = await APIHttp.POST<UserSchema>(`/users`, newuser);
         if (postResponse.data) {
           user = postResponse.data[0];
           set({ user })
@@ -77,7 +77,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
         userSub = null;
       }
       // Socket Subscribe Message
-      const route = `/api/users/${user._id}`;
+      const route = `/users/${user._id}`;
       // Socket Listenting to updates from server about the current user
       userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
         const doc = message.doc as SBDocument<UserSchema>;

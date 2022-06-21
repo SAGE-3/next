@@ -37,17 +37,17 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
   return {
     boards: [],
     create(newBoard: BoardSchema) {
-      SocketAPI.sendRESTMessage('/api/boards', 'POST', newBoard);
+      SocketAPI.sendRESTMessage('/boards', 'POST', newBoard);
     },
     update(id: string, updates: Partial<BoardSchema>) {
-      SocketAPI.sendRESTMessage(`/api/boards/${id}`, 'PUT', updates);
+      SocketAPI.sendRESTMessage(`/boards/${id}`, 'PUT', updates);
     },
     delete: (id: string) => {
-      SocketAPI.sendRESTMessage(`/api/boards/${id}`, 'DELETE');
+      SocketAPI.sendRESTMessage(`/boards/${id}`, 'DELETE');
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
       set({ boards: [] })
-      const boards = await APIHttp.GET<BoardSchema>('/api/boards', { roomId });
+      const boards = await APIHttp.GET<BoardSchema>('/boards', { roomId });
       if (boards.success) {
         set({ boards: boards.data })
       }
@@ -60,7 +60,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
 
       // Socket Subscribe Message
       // Subscribe to the boards with property 'roomId' matching the given id
-      const route = `/api/subscription/rooms/${roomId}`;
+      const route = `/subscription/rooms/${roomId}`;
       // Socket Listenting to updates from server about the current user
       boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema>(route, (message) => {
         if (message.col !== 'BOARDS') return;
