@@ -10,7 +10,7 @@ import { Button } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 import { AppSchema } from '../../schema';
-import { AssetType } from '@sage3/shared/types';
+import { AssetType, ExtraPDFType } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -35,8 +35,7 @@ function PDFViewer(props: AppSchema): JSX.Element {
       update(props.id, { description: 'PDF ' + myasset?.originalfilename });
       // Updte the state of the app
       if (myasset.derived) {
-        // @ts-ignore
-        const pages = myasset.derived as any[];
+        const pages = myasset.derived as ExtraPDFType;
         updateState(props.id, { numPages: pages.length });
       }
     }
@@ -44,12 +43,16 @@ function PDFViewer(props: AppSchema): JSX.Element {
 
   useEffect(() => {
     if (file) {
-      // @ts-ignore
-      const pages = file.derived as any[];
+      const pages = file.derived as ExtraPDFType;
       if (pages) {
         const page = pages[s.currentPage];
-        const k = Object.keys(page)[0];
-        setUrl(page[k].url);
+
+        // find the smallest image for this page (multi-resolution)
+        const res = page.reduce(function (p: any, v: any) {
+          return (p.width < v.width ? p : v);
+        });
+
+        setUrl(res.url);
         if (pages.length > 1) {
           const pageInfo = " - " + (s.currentPage + 1) + " of " + pages.length;
           update(props.id, { description: 'PDF ' + file.originalfilename + pageInfo });
@@ -71,7 +74,7 @@ function PDFViewer(props: AppSchema): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <img src={url} />
+        <img src={url} width="100%" />
         <Button onClick={handlePrev} colorScheme="green">Prev</Button>
         <Button onClick={handleNext} colorScheme="red">Next</Button>
       </>

@@ -5,13 +5,14 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-
-import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
-import { AppSchema } from '../../schema';
-
-import { state as AppState } from './index';
+import { useEffect, useState } from 'react';
 import { AppWindow } from '../../components';
+
+import { AppSchema } from '../../schema';
+import { AssetType, ExtraImageType } from '@sage3/shared/types';
+import { useAssetStore } from '@sage3/frontend';
+import { state as AppState } from './index';
+
 
 // Styling
 import './styling.css';
@@ -19,13 +20,34 @@ import './styling.css';
 function ImageViewer(props: AppSchema): JSX.Element {
   const s = props.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<AssetType>();
+  const [url, setUrl] = useState('');
+
+  useEffect(() => {
+    const myasset = assets.find((a) => a.file === s.filename);
+    if (myasset) {
+      setFile(myasset);
+    }
+  }, [s.filename, assets]);
+
+  useEffect(() => {
+    if (file) {
+      const extra = file.derived as ExtraImageType;
+      if (extra) {
+        // find the smallest image for this page (multi-resolution)
+        const res = extra.sizes.reduce(function (p, v) {
+          return (p.width < v.width ? p : v);
+        });
+        setUrl(res.url);
+      }
+    }
+  }, [file]);
+
 
   return (
     <AppWindow app={props}>
-      <>
-        <h1> url : {s.url}</h1>
-      </>
+      <img src={url} width="100%" />
     </AppWindow>
   );
 }

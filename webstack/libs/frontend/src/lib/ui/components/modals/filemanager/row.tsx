@@ -34,7 +34,7 @@ import { ExifViewer } from './exifviewer';
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
+export function RowFile({ file, style, clickCB }: RowFileProps) {
   // check if user is a guest
   const user = useUserStore((state) => state.user);
 
@@ -60,9 +60,9 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
     // if (showMenu) setShowMenu(false);
   };
   // Select the file when double-clicked
-  const onDoubleClick = (e: MouseEvent): void => {
-    dbclickCB(file);
-  };
+  // const onDoubleClick = (e: MouseEvent): void => {
+  //   dbclickCB(file);
+  // };
 
   // Context menu selection handler
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {

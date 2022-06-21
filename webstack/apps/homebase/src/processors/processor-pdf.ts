@@ -25,6 +25,7 @@ const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
 import { createCanvas } from 'canvas';
 import { getStaticAssetUrl } from '@sage3/backend';
+import { ExtraPDFType } from '@sage3/shared/types';
 
 ////////////////////////////////////////////////////////////////////////////////
 function NodeCanvasFactory() {
@@ -123,7 +124,7 @@ export class PDFProcessor {
  * @method file
  * @param filename {String} name of the file to be tested
  */
-async function pdfProcessing(job: any): Promise<any> {
+async function pdfProcessing(job: any): Promise<ExtraPDFType> {
   return new Promise((resolve, _reject) => {
     const filename: string = job.data.filename;
     const pathname: string = path.join(job.data.pathname, filename);
@@ -209,12 +210,13 @@ async function pdfProcessing(job: any): Promise<any> {
             ]);
           });
           // combine all the results for that page
-          return options.map(({ width }) => ({
-            // url of the page image
-            url: getStaticAssetUrl(`${filenameWithoutExt}-${i}-${width}.webp`),
+          return options.map(({ width }) => {
             // information from sharp
-            info: renderResult.find((r: any) => r.width === width),
-          }));
+            const info = renderResult.find((r: any) => r.width === width);
+            // url of the page image
+            const url = getStaticAssetUrl(`${filenameWithoutExt}-${i}-${width}.webp`);
+            return { url, ...info };
+          });
         });
       });
       return Promise.all(arr).then((pdfres) => {

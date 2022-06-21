@@ -6,7 +6,7 @@
  *
  */
 
-import { ExtraImageType } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
 /**
  * One row per file
@@ -22,7 +22,7 @@ export type FileEntry = {
   size: number;
   type: string;
   metadata: any;
-  derived?: ExtraImageType;
+  derived?: ExtraImageType | ExtraPDFType;
   selected: boolean;
 };
 
@@ -30,7 +30,7 @@ export type RowFileProps = {
   file: FileEntry;
   style: React.CSSProperties; // for react-window
   clickCB: (p: FileEntry) => void;
-  dbclickCB: (p: FileEntry) => void;
+  // dbclickCB: (p: FileEntry) => void;
 };
 
 export interface AssetModalProps {
@@ -46,8 +46,5 @@ export interface ExifViewerProps {
 
 export interface FileManagerProps {
   files: FileEntry[];
-  openFiles: (f: FileEntry[]) => void;
-  // isOpen: boolean;
-  // onOpen: () => void;
-  // onClose: () => void;
+  // openFiles: (f: FileEntry[]) => void;
 }

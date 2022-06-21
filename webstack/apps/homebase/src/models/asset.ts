@@ -29,7 +29,7 @@ import { config } from '../config';
  */
 class SAGE3AssetModel {
   private assetCollection!: niceCollection<AssetType>;
-  private collectionName = 'assets';
+  private collectionName = 'ASSETS';
 
   /**
    * Contructor initializing the RoomModel.

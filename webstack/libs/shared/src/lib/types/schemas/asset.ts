@@ -18,14 +18,34 @@ export const SBSchema = z.object({
 // Create the Typescript type
 export type SBElement = z.infer<typeof SBSchema>;
 
+export const ImageInfoSchema = z.object({
+  url: z.string(),
+  format: z.string(),
+  size: z.number(),
+  width: z.number(),
+  height: z.number(),
+  channels: z.number(),
+  premultiplied: z.boolean(),
+});
+// Create the Typescript type
+export type ImageInfoType = z.infer<typeof ImageInfoSchema>;
+
 // information for derived images
 export const ExtraImageSchema = z.object({
   fullSize: z.string(),
   aspectRatio: z.number(),
-  sizes: z.record(z.string()),
+  filename: z.string(),
+  url: z.string(),
+  sizes: z.array(ImageInfoSchema),
 });
 // Create the Typescript type
 export type ExtraImageType = z.infer<typeof ExtraImageSchema>;
+
+// information for derived PDF:
+//   array of pages with array of images
+export const ExtraPDFSchema = z.array(z.array(ImageInfoSchema));
+// Create the Typescript type
+export type ExtraPDFType = z.infer<typeof ExtraPDFSchema>;
 
 /**
  * @typedef {object} AssetSchema
@@ -41,7 +61,7 @@ export const AssetSchema = z.object({
   destination: z.string(),
   size: z.number(),
   metadata: z.string().optional(),
-  derived: ExtraImageSchema.optional(),
+  derived: z.union([ExtraImageSchema, ExtraPDFSchema]).optional(),
 });
 
 // Create the Typescript type

@@ -16,6 +16,7 @@ import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
 import { initialValues } from '@sage3/applications/apps';
+import { ExtraImageType } from '@sage3/shared/types';
 
 export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const subscribe = useAssetStore((state) => state.subscribe);
@@ -64,47 +65,24 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const location = useLocation();
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
-  const openFiles = (files: FileEntry[]) => {
-    files.forEach((d) => {
-      let url;
-      if (d.type === 'jpeg' || d.type === 'png') {
-        url = d.derived?.sizes['800'] || d.derived?.fullSize;
-        createApp(
-          'Image',
-          'Image Description',
-          roomId,
-          boardId,
-          { x: 0, y: 0, z: 0 },
-          { width: 300, height: 24 + 300 / (d.derived?.aspectRatio || 1), depth: 0 },
-          { x: 0, y: 0, z: 0 },
-          'Image',
-          // state
-          { ...initialValues['Image'], url }
-        );
-      }
-    });
-    onClose();
-  };
   const onOpenFiles = () => {
     let x = 0;
     assetsList.forEach((d) => {
       if (d.selected) {
-        let url;
         const w = 200;
-        console.log('openFiles', d);
         if (d.type === 'jpeg' || d.type === 'png') {
-          url = d.derived?.sizes['800'] || d.derived?.fullSize;
+          const extras = d.derived as ExtraImageType;
           createApp(
-            'Image',
+            'ImageViewer',
             'Image Description',
             roomId,
             boardId,
             { x: x, y: 0, z: 0 },
-            { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
+            { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
             { x: 0, y: 0, z: 0 },
-            'Image',
+            'ImageViewer',
             // state
-            { ...initialValues['Image'], url }
+            { ...initialValues['ImageViewer'], filename: d.filename }
           );
           x += w + 10;
         } else if (d.type === 'pdf') {
@@ -134,7 +112,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
         <ModalHeader>Assets Browser</ModalHeader>
         {/* File manager */}
         <ModalBody userSelect={'none'}>
-          <FileManager files={assetsList} openFiles={openFiles} />
+          <FileManager files={assetsList} />
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="blue" mr={3} onClick={onOpenFiles}>
