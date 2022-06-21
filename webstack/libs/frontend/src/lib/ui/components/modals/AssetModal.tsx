@@ -11,7 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUserStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
@@ -22,6 +22,9 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
 
   const [assetsList, setAssetsList] = React.useState<FileEntry[]>([]);
   const createApp = useAppStore((state) => state.create);
+
+  // User information
+  const user = useUserStore((state) => state.user);
 
   useEffect(() => {
     subscribe();
@@ -37,20 +40,20 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
     setAssetsList(
       keys.map((k, idx) => {
         const item = assets[idx];
-        const id = item.file;
-        const fileType = item.mimetype.split('/')[1];
+        const id = item.data.file;
+        const fileType = item.data.mimetype.split('/')[1];
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
           owner: '-',
-          filename: item.file,
-          originalfilename: item.originalfilename,
+          filename: item.data.file,
+          originalfilename: item.data.originalfilename,
           date: new Date().getTime(),
-          dateAdded: new Date(item.dateAdded).getTime(),
+          dateAdded: new Date(item.data.dateAdded).getTime(),
           boardId: '-',
-          size: item.size,
+          size: item.data.size,
           type: fileType,
-          derived: item.derived,
+          derived: item.data.derived,
           exif: null,
           selected: false,
         };
@@ -63,22 +66,24 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
   const openFiles = (files: FileEntry[]) => {
+    if (!user) return;
     files.forEach((d) => {
       let url;
       if (d.type === 'jpeg') {
         url = d.derived?.sizes['800'] || d.derived?.fullSize;
+        url = (url) ? url : '';
         createApp(
-          'Image',
-          'Image Description',
-          roomId,
-          boardId,
-          { x: 0, y: 0, z: 0 },
-          { width: 300, height: 24 + 300 / (d.derived?.aspectRatio || 1), depth: 0 },
-          { x: 0, y: 0, z: 0 },
-          'Image',
-          // state
           {
-            url,
+            name: 'Image',
+            description: 'Image Description',
+            ownerId: user._id,
+            roomId,
+            boardId,
+            position: { x: 0, y: 0, z: 0 },
+            size: { width: 300, height: 24 + 300 / (d.derived?.aspectRatio || 1), depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'Image',
+            state: { url }
           }
         );
       }
@@ -86,6 +91,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
     onClose();
   };
   const onOpenFiles = () => {
+    if (!user) return;
     let x = 0;
     assetsList.forEach((d) => {
       if (d.selected) {
@@ -93,19 +99,19 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
         const w = 200;
         if (d.type === 'jpeg') {
           url = d.derived?.sizes['800'] || d.derived?.fullSize;
-          createApp(
-            'Image',
-            'Image Description',
+          url = (url) ? url : '';
+          createApp({
+            name: 'Image',
+            description: 'Image Description',
             roomId,
             boardId,
-            { x: x, y: 0, z: 0 },
-            { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
-            { x: 0, y: 0, z: 0 },
-            'Image',
-            // state
-            {
-              url,
-            }
+            ownerId: user._id,
+            position: { x: x, y: 0, z: 0 },
+            size: { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'Image',
+            state: { url }
+          }
           );
           x += w + 10;
         } else if (d.type === 'pdf') {
@@ -116,20 +122,19 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             const page1 = pages[0];
             const k = Object.keys(page1)[0];
             url = page1[k].url;
-
-            createApp(
-              'Image',
-              'Image Description',
+            url = (url) ? url : '';
+            createApp({
+              name: 'Image',
+              description: 'Image Description',
               roomId,
               boardId,
-              { x: 0, y: 0, z: 0 },
-              { width: page1[k].width, height: page1[k].height, depth: 0 },
-              { x: x, y: 0, z: 0 },
-              'Image',
-              // state
-              {
-                url,
-              }
+              ownerId: user._id,
+              position: { x: 0, y: 0, z: 0 },
+              size: { width: page1[k].width, height: page1[k].height, depth: 0 },
+              rotation: { x: x, y: 0, z: 0 },
+              type: 'Image',
+              state: { url }
+            }
             );
             x += page1[k].width + 10;
           }

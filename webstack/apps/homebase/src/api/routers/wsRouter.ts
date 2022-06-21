@@ -20,11 +20,11 @@ import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 
 const wsRoutes = {
-  '/apps': AppsCollection.wsRouter,
-  '/users': UsersCollection.wsRouter,
-  '/rooms': RoomsCollection.wsRouter,
-  '/boards': BoardsCollection.wsRouter,
   '/assets': assetWSRouter,
+  '/apps': (socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache) => AppsCollection.wsRouter(socket, message, cache),
+  '/boards': (socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache) => BoardsCollection.wsRouter(socket, message, cache),
+  '/rooms': (socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache) => RoomsCollection.wsRouter(socket, message, cache),
+  '/users': (socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache) => UsersCollection.wsRouter(socket, message, cache),
   '/subscription': subscriptionWSRouter
 } as {
   [key: string]: (socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache) => Promise<void>;

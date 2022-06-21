@@ -72,6 +72,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           isClosable: true,
         });
       } else {
+        console.log('new room')
         createRoom({
           name: cleanedName,
           description,
@@ -117,7 +118,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>
+          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description || !user}>
             Create
           </Button>
         </ModalFooter>

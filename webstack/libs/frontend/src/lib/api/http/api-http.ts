@@ -7,12 +7,12 @@
  */
 
 import { SBDocument, SBJSON } from "@sage3/sagebase";
-import { URLSearchParams } from "url";
+// import { URLSearchParams } from "url";
 
 type POSTResponse<T extends SBJSON> = {
   success: boolean,
   message?: string;
-  data?: SBDocument<T>
+  data?: SBDocument<T>[]
 }
 
 type GETResponse<T extends SBJSON> = {
@@ -45,7 +45,8 @@ async function POST<T extends SBJSON>(url: string, body: T): Promise<POSTRespons
 }
 
 async function GET<T extends SBJSON>(url: string, query?: Partial<T>): Promise<GETResponse<T>> {
-  const response = await fetch(url + new URLSearchParams(query as Record<string, string>), {
+  if (query) url = url + '?' + new URLSearchParams(query as Record<string, string>);
+  const response = await fetch(url, {
     method: 'GET',
     credentials: 'include',
     headers: {

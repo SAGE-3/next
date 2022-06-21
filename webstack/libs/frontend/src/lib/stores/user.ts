@@ -19,6 +19,7 @@ import { UserSchema } from '@sage3/shared/types';
 import { APIHttp } from "../api";
 import { SocketAPI } from "../utils";
 import { SBDocument } from "@sage3/sagebase";
+import { randomSAGEColor } from "@sage3/shared";
 
 interface UserState {
   user: SBDocument<UserSchema> | undefined;
@@ -38,20 +39,38 @@ const UserStore = createVanilla<UserState>((set, get) => {
     create: async (newuser: UserSchema) => {
       const user = await APIHttp.POST<UserSchema>('/api/users', newuser);
       if (user.data) {
-        get().subscribeToUser(user.data._id)
+        get().subscribeToUser(user.data[0]._id)
       }
     },
     update: async (updates: Partial<UserSchema>) => {
       const user = get().user;
       if (!user) return;
-      APIHttp.PUT<UserSchema>(`/api/users/${user._id}`, updates);
+      const putResponse = await APIHttp.PUT<UserSchema>(`/api/users/${user._id}`, updates);
+      console.log(putResponse);
     },
     subscribeToUser: async (id: string) => {
-      const response = await APIHttp.GET<UserSchema>(`/api/users/${id}`);
-      if (!response.data) return;
-      const user = response.data[0];
-      set({ user })
+      const getResponse = await APIHttp.GET<UserSchema>(`/api/users/${id}`);
+      let user = null;
+      if (getResponse.data) {
+        user = getResponse.data[0];
+        set({ user })
+      } else {
+        const newuser = {
+          name: `Anonymous`,
+          email: 'anon@anon.com',
+          color: randomSAGEColor().name,
+          userRole: 'user',
+          userType: 'client',
+          profilePicture: ''
+        } as UserSchema;
+        const postResponse = await APIHttp.POST<UserSchema>(`/api/users`, newuser);
+        if (postResponse.data) {
+          user = postResponse.data[0];
+          set({ user })
+        }
+      }
 
+      if (!user) return;
       // Unsubscribe old subscription
       if (userSub) {
         userSub();

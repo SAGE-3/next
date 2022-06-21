@@ -76,12 +76,10 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async query(field: keyof T, query: Partial<T>): Promise<SBDocument<T>[] | undefined> {
+  public async query(field: keyof T, query: string | number): Promise<SBDocument<T>[] | undefined> {
     try {
-      const q = query[field];
-      if (typeof q !== 'string' || typeof q !== typeof 'number') return undefined;
-      const boards = await this._collection.query(field, q);
-      return boards;
+      const docs = await this._collection.query(field, query);
+      return docs;
     } catch (error) {
       this.printError(error);
       return undefined;

@@ -13,7 +13,7 @@ import { SBDocumentUpdate, SBJSON } from "@sage3/sagebase";
 import { WebSocket } from 'ws';
 
 export async function sageWSRouter<T extends SBJSON>(collection: SAGE3Collection<T>, socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-  const path = '/api' + collection.name.toLowerCase();
+  const path = '/api/' + collection.name.toLowerCase();
   switch (message.method) {
     case 'POST': {
       // POST: Add new document
