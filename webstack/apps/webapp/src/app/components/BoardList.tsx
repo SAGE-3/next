@@ -6,7 +6,7 @@
  *
  */
 
-import { Button, Input, InputGroup, InputRightElement, Text, useColorModeValue } from "@chakra-ui/react";
+import { Button, Input, InputGroup, InputRightElement, Text, Tooltip, useColorModeValue } from "@chakra-ui/react";
 import { BoardCard, CreateBoardModal, useBoardStore } from "@sage3/frontend";
 import { SBDocument } from "@sage3/sagebase";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
@@ -79,21 +79,23 @@ export function BoardList(props: BoardListProps) {
         )}
       {
         props.selectedRoom ?
-          <Button
-            border={`solid ${borderColor} 2px`}
-            borderColor={borderColor}
-            my="2"
-            height="60px"
-            transition="transform .1s"
-            _hover={{ transform: "scale(1.1)" }}
-            onClick={() => setNewBoardModal(true)}>
-            <Text
-              fontSize='4xl'
-              fontWeight="bold"
-              transform={`translateY(-3px)`}>
-              +
-            </Text>
-          </Button>
+          <Tooltip label="Create a board" openDelay={400}>
+            <Button
+              border={`solid ${borderColor} 2px`}
+              borderColor={borderColor}
+              my="2"
+              height="60px"
+              transition="transform .1s"
+              _hover={{ transform: "scale(1.1)" }}
+              onClick={() => setNewBoardModal(true)}>
+              <Text
+                fontSize='4xl'
+                fontWeight="bold"
+                transform={`translateY(-3px)`}>
+                +
+              </Text>
+            </Button>
+          </Tooltip>
           : null
       }
       {props.selectedRoom ? (

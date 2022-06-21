@@ -6,7 +6,7 @@
  *
  */
 
-import { Box, Button, Divider, IconButton, Text, useColorModeValue } from "@chakra-ui/react";
+import { Box, Button, Tooltip, Text } from "@chakra-ui/react";
 import { SBDocument } from "@sage3/sagebase";
 import { sageColorByName } from "@sage3/shared";
 import { BoardSchema } from "@sage3/shared/types";
@@ -21,7 +21,7 @@ export type BoardCardProps = {
 }
 
 export function BoardCard(props: BoardCardProps) {
-  const textColor = useColorModeValue("white", "black");
+  // const textColor = useColorModeValue("white", "black");
   return (
     <Box
       borderWidth='2px'
@@ -45,13 +45,15 @@ export function BoardCard(props: BoardCardProps) {
           </Text>
         </Box>
         <Box display='flex' mt='2' alignItems='center' flexShrink="3">
-          <Button
-            onClick={props.onEnter}
-            background={sageColorByName(props.board.data.color)}
-            _hover={{ transform: "scale(1.15)" }}
-            transition="transform .2s"
-            mx="2"
-            variant="outline">Enter</Button>
+          <Tooltip label="Enter this board" openDelay={400}>
+            <Button
+              onClick={props.onEnter}
+              background={sageColorByName(props.board.data.color)}
+              _hover={{ transform: "scale(1.15)" }}
+              transition="transform .2s"
+              mx="2"
+              variant="outline">Enter</Button>
+          </Tooltip>
           <Box width="50px" display='flex' alignItems='center' justifyContent="right" >
             <Text fontSize='1xl' mx="2" >{Math.floor(Math.random() * 20)}
             </Text>
@@ -60,7 +62,6 @@ export function BoardCard(props: BoardCardProps) {
             />
           </Box>
           <Box as='span' ml='2' color='gray.600' fontSize='sm'>
-
           </Box>
         </Box>
       </Box>
