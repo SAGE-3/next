@@ -6,7 +6,7 @@
  *
  */
 
-import { AssetSB, ExtraImageType } from '@sage3/shared/types';
+import { ExtraImageType } from '@sage3/shared/types';
 
 /**
  * One row per file
@@ -21,7 +21,7 @@ export type FileEntry = {
   boardId: string;
   size: number;
   type: string;
-  exif: any;
+  metadata: any;
   derived?: ExtraImageType;
   selected: boolean;
 };

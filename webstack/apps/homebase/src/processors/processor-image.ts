@@ -77,8 +77,6 @@ export class ImageProcessor {
   }
 }
 
-
-
 /**
  * Process a file, using exec method
  *
@@ -133,7 +131,7 @@ async function sharpProcessing(job: any): Promise<any> {
             // save the image aspect ratio
             aspectRatio: imgWidth / imgHeight,
             // create the size map for the images
-            sizes: Object.fromEntries(options.map(({ width }) => [+width, getStaticAssetUrl(`${filenameWithoutExt}-${width}.webp`)])),
+            sizes: options.map(({ width }) => ({ width, url: getStaticAssetUrl(`${filenameWithoutExt}-${width}.webp`) })),
           };
           resolve(imageData);
         })

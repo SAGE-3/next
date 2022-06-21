@@ -53,7 +53,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
           size: item.size,
           type: fileType,
           derived: item.derived,
-          exif: null,
+          metadata: item.metadata,
           selected: false,
         };
         return entry;

@@ -20,11 +20,12 @@ import { ExifViewerProps } from './types';
 
 
 export function ExifViewer(props: ExifViewerProps): JSX.Element {
+  // props.file.metadata is a file - need a GET request to get the metadata
   return <AceEditor
     mode={'json'}
     theme={props.colorMode === 'light' ? 'github' : 'monokai'}
     name="ace-editor"
-    value={JSON.stringify(props.file.exif, null, 2)}
+    value={JSON.stringify(props.file.metadata, null, 2)}
     readOnly={true}
     focus={true}
     setOptions={{
