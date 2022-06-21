@@ -21,13 +21,12 @@ import { DraggableData, Rnd } from 'react-rnd';
 type LocationParams = {
   boardId: string;
   roomId: string;
-}
+};
 
 /**
  * The board page which displays the board and its apps.
  */
 export function BoardPage() {
-
   // Navigation and routing
   const location = useLocation();
   const locationState = location.state as LocationParams;
@@ -39,7 +38,7 @@ export function BoardPage() {
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const boards = useBoardStore((state) => state.boards);
-  const board = boards.find(el => el.id === locationState.boardId);
+  const board = boards.find((el) => el.id === locationState.boardId);
 
   // User information
   const user = useUserStore((state) => state.user);
@@ -52,14 +51,13 @@ export function BoardPage() {
   // Board current position
   const [boardPos, setBoardPos] = useState({ x: 0, y: 0 });
 
-
   useEffect(() => {
     // Subscribe to the board that was selected
     subBoard(locationState.boardId);
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       unsubBoard();
-    }
+    };
   }, []);
 
   // Redirect the user back to the homepage when he clicks the green button in the top left corner
@@ -79,8 +77,8 @@ export function BoardPage() {
     const height = 300;
 
     // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-    const x = Math.floor(boardPos.x + (window.innerWidth / 2) - (width / 2));
-    const y = Math.floor(boardPos.y + (window.innerHeight / 2) - (height / 2));
+    const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+    const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
 
     // Create the new app
     createApp(
@@ -92,8 +90,9 @@ export function BoardPage() {
       { width, height, depth: 0 },
       { x: 0, y: 0, z: 0 },
       appName,
-      initialValues[appName]);
-  }
+      initialValues[appName]
+    );
+  };
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: any, data: DraggableData) {
@@ -102,9 +101,8 @@ export function BoardPage() {
 
   return (
     <>
-
       {/* Board. Uses lib react-rnd for drag events.
-        * Draggable Background below is the actual target for drag events.*/}
+       * Draggable Background below is the actual target for drag events.*/}
       <Rnd
         default={{
           x: 0,
@@ -114,81 +112,62 @@ export function BoardPage() {
         }}
         onDragStop={handleDragBoardStop}
         enableResizing={false}
-        dragHandleClassName={'board-handle'}>
-
+        dragHandleClassName={'board-handle'}
+      >
         {/* Apps */}
-        {
-          apps.map((app) => {
-            const Component = Applications[app.type];
-            return (
-              <Component key={app.id} {...app}></Component>
-            );
-          })
-        }
+        {apps.map((app) => {
+          const Component = Applications[app.type];
+          return <Component key={app.id} {...app}></Component>;
+        })}
 
         {/* Draggable Background */}
-        < Box
+        <Box
           className="board-handle"
           width={5000}
           height={5000}
           backgroundSize={`50px 50px`}
-          backgroundImage={
-            `linear-gradient(to right, grey 1px, transparent 1px),
-            linear-gradient(to bottom, grey 1px, transparent 1px);`
-          }
+          backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
+            linear-gradient(to bottom, grey 1px, transparent 1px);`}
         />
       </Rnd>
 
       {/* Top bar */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" p={2}
-        position="absolute"
-        top="0"
-        width="100%">
+      <Box display="flex" justifyContent="space-between" alignItems="center" p={2} position="absolute" top="0" width="100%">
         {/* Home Button */}
-        <Button colorScheme="green" onClick={handleHomeClick}>Home</Button>
+        <Button colorScheme="green" onClick={handleHomeClick}>
+          Home
+        </Button>
 
         {/* Board Name */}
-        <Text
-          fontSize="3xl"
-          background="teal"
-          px={6}
-          borderRadius="16"
-          color="white">
+        <Text fontSize="3xl" background="teal" px={6} borderRadius="16" color="white">
           {board?.name}
         </Text>
 
         {/* User Avatar */}
-        <Avatar size='md' name={user?.name} backgroundColor={(user) ? sageColorByName(user.color) : ''} color="black" />
-
+        <Avatar size="md" name={user?.name} backgroundColor={user ? sageColorByName(user.color) : ''} color="black" />
       </Box>
 
       {/* Bottom Bar */}
-      <Box
-        display="flex"
-        justifyContent="left"
-        alignItems="center"
-        p={2}
-        position="absolute"
-        bottom="0">
-
+      <Box display="flex" justifyContent="left" alignItems="center" p={2} position="absolute" bottom="0">
         {/* App Create Menu */}
-        <Select
-          colorScheme="green"
-          placeholder='Open Application'
-          onChange={handleNewApp}
-          width="200px"
-          mx="1"
-          background="darkgray"
-        >
-          {Object.keys(Applications).map((appName) => <option key={appName} value={appName}>{appName}</option>)}
+        <Select colorScheme="green" width="200px" mx="1" background="darkgray"
+          placeholder="Open Application" onChange={handleNewApp} value={0}>
+          {Object.keys(Applications).map((appName) => (
+            <option key={appName} value={appName}>
+              {appName}
+            </option>
+          ))}
         </Select>
 
         {/* Open the Asset Manager Dialog */}
-        <Button colorScheme="green" mx="1" onClick={assetOnOpen}>Asset Manager</Button>
+        <Button colorScheme="green" mx="1" onClick={assetOnOpen}>
+          Asset Manager
+        </Button>
 
         {/* Open the Asset Upload Dialog */}
-        <Button colorScheme="blue" mx="1" onClick={uploadOnOpen}>Upload</Button>
-
+        <Button colorScheme="blue" mx="1" onClick={uploadOnOpen}>
+          Upload
+        </Button>
       </Box>
 
       {/* Asset dialog */}
@@ -196,7 +175,6 @@ export function BoardPage() {
 
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
-
     </>
   );
 }
