@@ -13,14 +13,14 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { AssetType } from '@sage3/shared/types';
+import { Asset, AssetSchema } from '@sage3/shared/types';
 
 // The observable websocket
 import { SocketAPI } from '../utils';
 import { AssetHTTPService } from '../api';
 
 interface AssetState {
-  assets: AssetType[];
+  assets: Asset[];
   subscribe: () => Promise<void>;
   unsubscribe: () => void;
 }
@@ -51,26 +51,27 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = '/api/assets';
+      const route = '/assets';
       // Socket Listenting to updates from server about the current assets
-      assetSub = await SocketAPI.subscribe<AssetType>(route, (message) => {
+      assetSub = await SocketAPI.subscribe<AssetSchema>(route, (message) => {
+        const doc = message.doc as Asset;
         switch (message.type) {
           case 'CREATE': {
-            set({ assets: [...get().assets, message.doc.data] });
+            set({ assets: [...get().assets, doc] });
             break;
           }
           case 'UPDATE': {
             const files = [...get().assets];
-            const idx = files.findIndex((el) => el.file === message.doc.data.file);
+            const idx = files.findIndex((el) => el._id === doc._id);
             if (idx > -1) {
-              files[idx] = message.doc.data;
+              files[idx] = doc;
             }
             set({ assets: files });
             break;
           }
           case 'DELETE': {
             const files = [...get().assets];
-            const idx = files.findIndex((el) => el.file === message.doc.data.file);
+            const idx = files.findIndex((el) => el._id === doc._id);
             if (idx > -1) {
               files.splice(idx, 1);
             }

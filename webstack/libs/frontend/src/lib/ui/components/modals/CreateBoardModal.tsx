@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
+
 import {
   Modal,
   ModalOverlay,
@@ -20,13 +21,15 @@ import {
   useToast,
   Button,
 } from '@chakra-ui/react';
+
 import { MdPerson } from 'react-icons/md';
 import { RoomSchema } from '@sage3/shared/types';
-import { useBoardStore } from '../../../stores';
+import { useBoardStore, useUserStore } from '../../../stores';
+import { randomSAGEColor } from '@sage3/shared';
 
 interface CreateBoardModalProps {
   isOpen: boolean;
-  roomId: RoomSchema['id'];
+  roomId: string;
   onClose: () => void;
 }
 
@@ -35,11 +38,13 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const createBoard = useBoardStore(state => state.create);
 
+  const user = useUserStore(state => state.user);
+
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
 
-  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
-  const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value)
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
+  const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
 
   // the input element
   // When the modal panel opens, select the text for quick replacing
@@ -60,7 +65,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
 
   const create = () => {
-    if (name && description) {
+    if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
 
@@ -72,7 +77,14 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           isClosable: true,
         });
       } else {
-        createBoard(cleanedName, description, props.roomId);
+        createBoard({
+          name: cleanedName,
+          description,
+          roomId: props.roomId,
+          ownerId: user._id,
+          isPrivate: false,
+          color: randomSAGEColor().name
+        });
         props.onClose();
       }
     }

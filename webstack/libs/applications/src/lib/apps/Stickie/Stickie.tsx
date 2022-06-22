@@ -11,8 +11,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Textarea } from '@chakra-ui/react';
 
-import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from '../../schema';
+import { useAppStore, useUserStore } from '@sage3/frontend';
+import { App } from '../../schema';
 
 import { state as AppState } from './';
 
@@ -31,13 +31,15 @@ const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed'
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function Stickie(props: AppSchema): JSX.Element {
+function Stickie(props: App): JSX.Element {
   // Get the data for this app from the props
-  const s = props.state as AppState;
+  const s = props.data.state as AppState;
+  console.log(s);
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
+  const user = useUserStore((state) => state.user);
   const location = useLocation();
   const locationState = location.state as {
     boardId: string;
@@ -60,7 +62,7 @@ function Stickie(props: AppSchema): JSX.Element {
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(1000, (val) => {
-    updateState(props.id, { text: val });
+    updateState(props._id, { text: val });
   });
   // Keep a copy of the function
   const debounceFunc = useRef(debounceSave);
@@ -79,25 +81,30 @@ function Stickie(props: AppSchema): JSX.Element {
         // change local number of rows
         setRows(numlines);
         // update size of the window
-        update(props.id, { size: { width: props.size.width, height: numlines * s.fontSize, depth: props.size.depth } });
+        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
       }
     }
   }
 
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!user) return;
     if (e.shiftKey && e.code === 'Tab') {
       // Create a new stickie
       createApp(
-        'Stickie',
-        "Description",
-        locationState.roomId,
-        locationState.boardId,
-        { x: props.position.x + props.size.width + 20, y: props.position.y, z: 0 },
-        { width: props.size.width, height: props.size.height, depth: 0 },
-        { x: 0, y: 0, z: 0 },
-        'Stickie',
-        { text: '', color: s.color, fontSize: s.fontSize }
+        {
+          name: 'Stickie',
+          description: "Description",
+          roomId: locationState.roomId,
+          boardId: locationState.boardId,
+          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'Stickie',
+          state: { text: '', color: s.color, fontSize: s.fontSize },
+          ownerId: user._id,
+          minimized: false,
+        }
       );
     }
   };
@@ -105,12 +112,12 @@ function Stickie(props: AppSchema): JSX.Element {
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={props.size.width} h={props.size.height} p={0}>
+      <Box bgColor={s.color} color="black" w={props.data.size.width} h={props.data.size.height} p={0}>
         <Textarea
           ref={textbox}
           resize={'none'}
           w="100%"
-          h={props.size.height - 24}
+          h={props.data.size.height - 24}
           variant="outline"
           borderWidth="0px"
           p={4}

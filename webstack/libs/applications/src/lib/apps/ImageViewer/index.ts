@@ -12,11 +12,11 @@
  */
 
 export type state = {
-  filename: string;
+  id: string;
 };
 
 export const init: Partial<state> = {
-  filename: '',
+  id: '',
 };
 
 export const name = 'ImageViewer';

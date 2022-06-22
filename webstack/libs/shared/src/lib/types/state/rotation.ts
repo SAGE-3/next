@@ -6,21 +6,17 @@
  *
  */
 
+import { z } from "zod";
+
 /**
  * @typedef {object} Rotation
- * Represents the rotation of any object in euler angles.
+ * Represents the position of an object.
  */
-export type Rotation = {
-  /**
- * @property {number} width Rotation on the x axis
- */
-  x: number,
-  /**
-* @property {number} height Rotation on the y axis
-*/
-  y: number,
-  /**
-* @property {number} depth Rotation on the z axis
-*/
-  z: number,
-}
+export const RotationSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  z: z.number(),
+});
+
+// extract the inferred type like this
+export type Rotation = z.infer<typeof RotationSchema>;

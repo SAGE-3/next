@@ -12,13 +12,13 @@
  */
 
 export type state = {
-  filename: string;
+  id: string;
   currentPage: number;
   numPages: number;
 };
 
 export const init: Partial<state> = {
-  filename: '',
+  id: '',
   currentPage: 0,
   numPages: 1,
 };

@@ -11,7 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUserStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
@@ -25,6 +25,9 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
 
   const [assetsList, setAssetsList] = React.useState<FileEntry[]>([]);
   const createApp = useAppStore((state) => state.create);
+
+  // User information
+  const user = useUserStore((state) => state.user);
 
   useEffect(() => {
     subscribe();
@@ -40,22 +43,22 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
     setAssetsList(
       keys.map((k, idx) => {
         const item = assets[idx];
-        const id = item.file;
-        let fileType = item.mimetype.split('/')[1];
+        const id = item._id;
+        let fileType = item.data.mimetype.split('/')[1];
         if (fileType === 'octet-stream') fileType = 'data';
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
           owner: '-',
-          filename: item.file,
-          originalfilename: item.originalfilename,
+          filename: item.data.file,
+          originalfilename: item.data.originalfilename,
           date: new Date().getTime(),
-          dateAdded: new Date(item.dateAdded).getTime(),
+          dateAdded: new Date(item.data.dateAdded).getTime(),
           boardId: '-',
-          size: item.size,
+          size: item.data.size,
           type: fileType,
-          derived: item.derived,
-          metadata: item.metadata,
+          derived: item.data.derived,
+          metadata: item.data.metadata,
           selected: false,
         };
         return entry;
@@ -67,38 +70,41 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
   const onOpenFiles = () => {
+    if (!user) return;
     let x = 0;
     assetsList.forEach((d) => {
       if (d.selected) {
         const w = 200;
         if (d.type === 'jpeg' || d.type === 'png') {
           const extras = d.derived as ExtraImageType;
-          createApp(
-            'ImageViewer',
-            'Image Description',
+          createApp({
+            name: 'ImageViewer',
+            description: 'Image Description',
             roomId,
             boardId,
-            { x: x, y: 0, z: 0 },
-            { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
-            { x: 0, y: 0, z: 0 },
-            'ImageViewer',
-            // state
-            { ...initialValues['ImageViewer'], filename: d.filename }
-          );
+            ownerId: user._id,
+            position: { x: x, y: 0, z: 0 },
+            size: { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'ImageViewer',
+            state: { ...initialValues['ImageViewer'], id: d.id },
+            minimized: false,
+          });
           x += w + 10;
         } else if (d.type === 'pdf') {
-          createApp(
-            'PDFViewer',
-            'PDF Description',
+          createApp({
+            name: 'PDFViewer',
+            description: 'PDF Description',
             roomId,
             boardId,
-            { x: 0, y: 0, z: 0 },
-            { width: 400, height: 400 * (22 / 17), depth: 0 },
-            { x: x, y: 0, z: 0 },
-            'PDFViewer',
-            // state
-            { ...initialValues['PDFViewer'], filename: d.filename }
-          );
+            ownerId: user._id,
+            position: { x: 0, y: 0, z: 0 },
+            size: { width: 400, height: 400 * (22 / 17), depth: 0 },
+            rotation: { x: x, y: 0, z: 0 },
+            type: 'PDFViewer',
+            state: { ...initialValues['PDFViewer'], id: d.id },
+            minimized: false,
+          });
           x += 400 + 10;
         }
       }

@@ -15,7 +15,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-import { AuthHTTPService } from '../api';
+import { AuthHTTPService } from '../auth';
 
 type AuthenticatedType = {
   isAuthenticated: boolean;

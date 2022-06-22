@@ -9,53 +9,51 @@ import { useEffect, useState } from 'react';
 import { Button } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from '../../schema';
-import { AssetType, ExtraPDFType } from '@sage3/shared/types';
+import { App } from '../../schema';
+import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useAssetStore } from '@sage3/frontend';
 
-// Styling
-import './styling.css';
 
-function PDFViewer(props: AppSchema): JSX.Element {
+function PDFViewer(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
-  const s = props.state as AppState;
+  const s = props.data.state as AppState;
   const [url, setUrl] = useState('');
-  const [file, setFile] = useState<AssetType>();
+  const [file, setFile] = useState<Asset>();
 
   useEffect(() => {
-    const myasset = assets.find((a) => a.file === s.filename);
+    const myasset = assets.find((a) => a._id === s.id);
     if (myasset) {
       setFile(myasset);
       // Update the app
-      update(props.id, { description: 'PDF ' + myasset?.originalfilename });
+      update(props._id, { description: 'PDF ' + myasset?.data.originalfilename });
       // Updte the state of the app
-      if (myasset.derived) {
-        const pages = myasset.derived as ExtraPDFType;
-        updateState(props.id, { numPages: pages.length });
+      if (myasset.data.derived) {
+        const pages = myasset.data.derived as ExtraPDFType;
+        updateState(props._id, { numPages: pages.length });
       }
     }
-  }, [s.filename, assets]);
+  }, [s.id, assets]);
 
   useEffect(() => {
     if (file) {
-      const pages = file.derived as ExtraPDFType;
+      const pages = file.data.derived as ExtraPDFType;
       if (pages) {
         const page = pages[s.currentPage];
 
         // find the smallest image for this page (multi-resolution)
-        const res = page.reduce(function (p: any, v: any) {
+        const res = page.reduce(function (p, v) {
           return (p.width < v.width ? p : v);
         });
 
         setUrl(res.url);
         if (pages.length > 1) {
           const pageInfo = " - " + (s.currentPage + 1) + " of " + pages.length;
-          update(props.id, { description: 'PDF ' + file.originalfilename + pageInfo });
+          update(props._id, { description: 'PDF ' + file.data.originalfilename + pageInfo });
         }
       }
     }
@@ -63,12 +61,12 @@ function PDFViewer(props: AppSchema): JSX.Element {
 
   function handlePrev() {
     if (s.currentPage === 0) return;
-    updateState(props.id, { currentPage: s.currentPage - 1 })
+    updateState(props._id, { currentPage: s.currentPage - 1 })
   }
 
   function handleNext() {
     if (s.currentPage === s.numPages - 1) return;
-    updateState(props.id, { currentPage: s.currentPage + 1 })
+    updateState(props._id, { currentPage: s.currentPage + 1 })
   }
 
   return (

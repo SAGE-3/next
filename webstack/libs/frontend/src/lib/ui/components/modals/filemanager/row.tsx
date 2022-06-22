@@ -72,7 +72,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
       console.log('File', file)
       downloadFile('api/assets/static/' + file.filename, file.originalfilename);
     } else if (id === 'del') {
-      if (user?.userRole !== 'guest') {
+      if (user?.data.userRole !== 'guest') {
         // Delete a file
         // httpGET('/api/content/asset/delete/' + file.id);
       } else {
