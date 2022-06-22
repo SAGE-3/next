@@ -14,7 +14,7 @@
  */
 
 import { niceCollection } from './nice-collection';
-import { AssetType } from '@sage3/shared/types';
+import { AssetSchema } from '@sage3/shared/types';
 import { SBDocument, SBDocumentMessage } from '@sage3/sagebase';
 
 // Queue for tasks
@@ -28,7 +28,7 @@ import { config } from '../../config';
  * This is handled in ./loaders/models-loader.ts
  */
 class SAGE3AssetsCollection {
-  private assetCollection!: niceCollection<AssetType>;
+  private assetCollection!: niceCollection<AssetSchema>;
   private collectionName = 'assets';
 
   /**
@@ -50,8 +50,8 @@ class SAGE3AssetsCollection {
     console.log('Queue> pdf initialized', pdfQ.getName());
 
     // Create the collection
-    const indexObj = { file: '' } as AssetType;
-    this.assetCollection = new niceCollection<AssetType>(this.collectionName);
+    const indexObj = { file: '' } as AssetSchema;
+    this.assetCollection = new niceCollection<AssetSchema>(this.collectionName);
     await this.assetCollection.init(indexObj, (updt: any) => {
       console.log('Assets> update', updt);
 
@@ -94,7 +94,7 @@ class SAGE3AssetsCollection {
    * @param {() = void} callback The callback function for subscription events.
    * @return {() => void | undefined} The unsubscribe function.
    */
-  public async subscribeAll(callback: (message: SBDocumentMessage<AssetType>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<AssetSchema>) => void): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this.assetCollection.subscribe(callback);
       return unsubscribe;
@@ -104,13 +104,13 @@ class SAGE3AssetsCollection {
     }
   }
 
-  public async getAsset(id: string): Promise<SBDocument<AssetType> | undefined> {
+  public async getAsset(id: string): Promise<SBDocument<AssetSchema> | undefined> {
     return this.assetCollection.getItem(id);
   }
   public async delAsset(id: string): Promise<boolean> {
     return this.assetCollection.deleteItem(id);
   }
-  public getAllAssets(): Promise<SBDocument<AssetType>[]> {
+  public getAllAssets(): Promise<SBDocument<AssetSchema>[]> {
     return this.assetCollection.getAllItems();
   }
 
@@ -119,7 +119,7 @@ class SAGE3AssetsCollection {
    * @param {AssetType} newAsset The new asset to add to the database
    * @returns {Promise<string | undefined>} Returns id of the asset
    */
-  public async addAsset(newAsset: AssetType): Promise<string | undefined> {
+  public async addAsset(newAsset: AssetSchema): Promise<string | undefined> {
     return this.assetCollection.addItem(newAsset);
   }
 }
