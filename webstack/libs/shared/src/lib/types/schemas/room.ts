@@ -8,7 +8,7 @@
 import { z } from "zod";
 import { SBDoc } from "./SBSchema";
 
-export const RoomSchema = z.object({
+const schema = z.object({
   // Name of the Room
   name: z.string(),
   // Description of the room.
@@ -21,6 +21,6 @@ export const RoomSchema = z.object({
   isPrivate: z.boolean(),
 })
 
-type RoomData = z.infer<typeof RoomSchema>;
+export type RoomSchema = z.infer<typeof schema>;
 
-export type Room = SBDoc & { data: RoomData };
+export type Room = SBDoc & { data: RoomSchema };

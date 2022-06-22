@@ -6,14 +6,14 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   const router = express.Router();
 
   // POST: Add new document
-  router.post('', async ({ body }, res) => {
+  router.post('/', async ({ body }, res) => {
     const doc = await collection.add(body);
     if (doc) res.status(200).send({ success: true, data: [doc] });
     else res.status(500).send({ success: false, message: "Failed to create document." });
   });
 
   // GET: Get all the docs or Query
-  router.get('', async ({ query }, res) => {
+  router.get('/', async ({ query }, res) => {
     let docs = null;
     if (Object.keys(query).length === 0) {
       docs = await collection.getAll();

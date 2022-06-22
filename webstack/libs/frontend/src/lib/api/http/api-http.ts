@@ -6,9 +6,6 @@
  *
  */
 
-import { SBDoc } from "@sage3/shared/types";
-// import { URLSearchParams } from "url";
-
 type POSTResponse<T> = {
   success: boolean,
   message?: string;
@@ -31,7 +28,7 @@ type DELResponse = {
   message?: string;
 }
 
-async function POST<T extends SBDoc>(url: string, body: Partial<T["data"]>): Promise<POSTResponse<T>> {
+async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
   const response = await fetch('/api' + url, {
     method: 'POST',
     credentials: 'include',
@@ -44,8 +41,8 @@ async function POST<T extends SBDoc>(url: string, body: Partial<T["data"]>): Pro
   return await response.json();
 }
 
-async function GET<T extends SBDoc>(url: string, query?: Partial<T["data"]>): Promise<GETResponse<T>> {
-  if (query) url = url + '?' + new URLSearchParams(query as Record<string, string>);
+async function GET<T, K>(url: string, query?: Partial<T>): Promise<GETResponse<K>> {
+  if (query) url = url + '?' + new URLSearchParams(query as any);
   const response = await fetch('/api' + url, {
     method: 'GET',
     credentials: 'include',
@@ -57,7 +54,7 @@ async function GET<T extends SBDoc>(url: string, query?: Partial<T["data"]>): Pr
   return await response.json();
 }
 
-async function PUT<T extends SBDoc>(url: string, body: Partial<T["data"]>): Promise<PUTResponse> {
+async function PUT<T>(url: string, body: Partial<T>): Promise<PUTResponse> {
   const response = await fetch('/api' + url, {
     method: 'PUT',
     credentials: 'include',

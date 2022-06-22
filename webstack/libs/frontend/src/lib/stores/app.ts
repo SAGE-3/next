@@ -19,12 +19,11 @@ import { genId } from '@sage3/shared';
 import { APIHttp } from '../api';
 import { SocketAPI } from '../utils';
 
-import { AppState, AppSchema } from '@sage3/applications/schema';
+import { AppState, AppSchema, App } from '@sage3/applications/schema';
 import { BoardSchema } from '@sage3/shared/types';
-import { SBDocument } from '@sage3/sagebase';
 
 interface Applications {
-  apps: SBDocument<AppSchema>[];
+  apps: App[];
   create: (newApp: AppSchema) => Promise<void>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
@@ -62,7 +61,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
       set({ apps: [] });
-      const apps = await APIHttp.GET<AppSchema>('/apps', { boardId });
+      const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
       if (apps.success) {
         set({ apps: apps.data });
       }
@@ -77,7 +76,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       // Socket Listenting to updates from server about the current user
       boardSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
-        const doc = message.doc as SBDocument<AppSchema>;
+        const doc = message.doc as App;
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, doc] });
@@ -118,7 +117,7 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
         _createdAt: new Date().getTime(),
         _updatedAt: new Date().getTime(),
         data: newApp
-      } as SBDocument<AppSchema>;
+      } as App;
       set({ apps: [...get().apps, app] });
     },
     update: async (id: string, updates: Partial<AppSchema>) => {

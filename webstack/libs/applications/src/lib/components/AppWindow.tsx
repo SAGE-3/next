@@ -7,7 +7,7 @@
  */
 
 import { Box, calc, Text, useColorModeValue } from "@chakra-ui/react";
-import { AppSchema } from "@sage3/applications/schema";
+import { App } from '../schema';
 import { useAppStore } from "@sage3/frontend";
 
 import { useEffect, useState } from "react";
@@ -18,7 +18,7 @@ import { sageColorByName } from "@sage3/shared";
 import { SBDocument } from "@sage3/sagebase";
 
 type WindowProps = {
-  app: SBDocument<AppSchema>;
+  app: App;
   children: JSX.Element;
 }
 

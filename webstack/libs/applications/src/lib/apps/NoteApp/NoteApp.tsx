@@ -10,14 +10,13 @@
 import { useState, useRef, useEffect } from 'react';
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from '../../schema';
+import { App } from '../../schema';
 
 import { state as AppState } from './';
 
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
 import { AppWindow } from '../../components';
-import { SBDocument } from '@sage3/sagebase';
 
 /**
  * NoteApp SAGE3 application
@@ -25,7 +24,7 @@ import { SBDocument } from '@sage3/sagebase';
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function NoteApp(props: SBDocument<AppSchema>): JSX.Element {
+function NoteApp(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
   // Update functions from the store

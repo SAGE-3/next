@@ -13,15 +13,14 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { RoomSchema } from '@sage3/shared/types';
+import { Room, RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
 import { APIHttp } from '../api';
 import { SocketAPI } from '../utils';
-import { SBDocument } from '@sage3/sagebase';
 
 interface RoomState {
-  rooms: SBDocument<RoomSchema>[];
+  rooms: Room[];
   create: (newRoom: RoomSchema) => Promise<void>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
   delete: (id: string) => Promise<void>;
@@ -45,7 +44,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       SocketAPI.sendRESTMessage(`/rooms/${id}`, 'DELETE');
     },
     subscribeToAllRooms: async () => {
-      const rooms = await APIHttp.GET<RoomSchema>('/rooms');
+      const rooms = await APIHttp.GET<RoomSchema, Room>('/rooms');
       if (rooms.success) {
         set({ rooms: rooms.data });
       }
@@ -59,7 +58,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       const route = '/rooms';
       // Socket Listenting to updates from server about the current rooms
       roomSub = await SocketAPI.subscribe<RoomSchema>(route, (message) => {
-        const doc = message.doc as SBDocument<RoomSchema>;
+        const doc = message.doc as Room;
         switch (message.type) {
           case 'CREATE': {
             set({ rooms: [...get().rooms, doc] });

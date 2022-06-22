@@ -13,16 +13,15 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
 import { APIHttp } from "../api";
 import { SocketAPI } from "../utils";
 import { AppSchema } from "@sage3/applications/schema";
-import { SBDocument } from "@sage3/sagebase";
 
 interface BoardState {
-  boards: SBDocument<BoardSchema>[];
+  boards: Board[];
   create: (newBoard: BoardSchema) => void;
   update: (id: string, updates: Partial<BoardSchema>) => void;
   delete: (id: string) => void;
@@ -47,7 +46,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
       set({ boards: [] })
-      const boards = await APIHttp.GET<BoardSchema>('/boards', { roomId });
+      const boards = await APIHttp.GET<BoardSchema, Board>('/boards', { roomId });
       if (boards.success) {
         set({ boards: boards.data })
       }
@@ -64,7 +63,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       // Socket Listenting to updates from server about the current user
       boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema>(route, (message) => {
         if (message.col !== 'BOARDS') return;
-        const doc = message.doc as SBDocument<BoardSchema>;
+        const doc = message.doc as Board;
         switch (message.type) {
           case 'CREATE': {
             set({ boards: [...get().boards, doc] })

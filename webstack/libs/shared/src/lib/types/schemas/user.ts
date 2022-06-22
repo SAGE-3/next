@@ -19,7 +19,7 @@ export type UserRole = z.infer<typeof UserRole>;
  * SAGE3 UserSchema
  * @interface UserSchema
  */
-export const UserSchema = z.object({
+const schema = z.object({
   // Name of the user
   name: z.string(),
   // Email address of the user.
@@ -32,10 +32,9 @@ export const UserSchema = z.object({
   userType: UserType,
   // Role of the user in SAGE3
   userRole: UserRole,
-
 });
 
-type UserData = z.infer<typeof UserSchema>;
+export type UserSchema = z.infer<typeof schema>;
 
-export type User = SBDoc & { data: UserData };
+export type User = SBDoc & { data: UserSchema };
 

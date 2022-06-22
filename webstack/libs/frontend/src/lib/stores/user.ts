@@ -13,16 +13,15 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { UserSchema } from '@sage3/shared/types';
+import { User, UserSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
 import { APIHttp } from "../api";
 import { SocketAPI } from "../utils";
-import { SBDocument } from "@sage3/sagebase";
 import { randomSAGEColor } from "@sage3/shared";
 
 interface UserState {
-  user: SBDocument<UserSchema> | undefined;
+  user: User | undefined;
   create: (newuser: UserSchema) => Promise<void>;
   update: (updates: Partial<UserSchema>) => Promise<void>;
   subscribeToUser: (id: string) => Promise<void>;
@@ -37,7 +36,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
   return {
     user: undefined,
     create: async (newuser: UserSchema) => {
-      const user = await APIHttp.POST<UserSchema>('/users', newuser);
+      const user = await APIHttp.POST<UserSchema, User>('/users', newuser);
       if (user.data) {
         get().subscribeToUser(user.data[0]._id)
       }
@@ -49,7 +48,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
       console.log(putResponse);
     },
     subscribeToUser: async (id: string) => {
-      const getResponse = await APIHttp.GET<UserSchema>(`/users/${id}`);
+      const getResponse = await APIHttp.GET<UserSchema, User>(`/users/${id}`);
       let user = null;
       if (getResponse.data) {
         user = getResponse.data[0];
@@ -63,7 +62,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
           userType: 'client',
           profilePicture: ''
         } as UserSchema;
-        const postResponse = await APIHttp.POST<UserSchema>(`/users`, newuser);
+        const postResponse = await APIHttp.POST<UserSchema, User>(`/users`, newuser);
         if (postResponse.data) {
           user = postResponse.data[0];
           set({ user })
@@ -80,7 +79,7 @@ const UserStore = createVanilla<UserState>((set, get) => {
       const route = `/users/${user._id}`;
       // Socket Listenting to updates from server about the current user
       userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-        const doc = message.doc as SBDocument<UserSchema>;
+        const doc = message.doc as User;
         switch (message.type) {
           case 'CREATE': {
             set({ user: doc })

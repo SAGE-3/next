@@ -7,14 +7,12 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from '../../schema';
+import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-import { SBDocument } from '@sage3/sagebase';
-
-function ImageViewer(props: SBDocument<AppSchema>): JSX.Element {
+function ImageViewer(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);

@@ -6,7 +6,7 @@
  *
  */
 
-import { AppSchema, AppState } from "@sage3/applications/schema";
+import { AppSchema } from "@sage3/applications/schema";
 import { SAGE3Collection } from "@sage3/backend";
 
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
@@ -18,19 +18,6 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
       roomId: "",
       boardId: "",
     });
-  }
-
-  public async updateState(id: string, update: Partial<AppState>): Promise<boolean> {
-    try {
-      const currentState = await this.collection.docRef(id).read();
-      if (!currentState) return false;
-      const updatedState = { ...currentState.data.state, ...update };
-      const response = await this.collection.docRef(id).update({ state: updatedState });
-      return response.success;
-    } catch (error) {
-      this.printError(error);
-      return false;
-    }
   }
 }
 

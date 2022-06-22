@@ -12,7 +12,7 @@ import { useLocation } from 'react-router-dom';
 import { Box, Textarea } from '@chakra-ui/react';
 
 import { useAppStore, useUserStore } from '@sage3/frontend';
-import { AppSchema } from '../../schema';
+import { App } from '../../schema';
 
 import { state as AppState } from './';
 
@@ -22,7 +22,6 @@ import { AppWindow } from '../../components';
 
 // Styling for the placeholder text
 import './styling.css';
-import { SBDocument } from '@sage3/sagebase';
 
 const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed', '#B794F4'];
 
@@ -32,7 +31,7 @@ const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed'
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function Stickie(props: SBDocument<AppSchema>): JSX.Element {
+function Stickie(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
   // Update functions from the store

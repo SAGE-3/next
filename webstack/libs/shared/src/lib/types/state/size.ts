@@ -13,9 +13,9 @@ import { z } from "zod";
  * Represents the size of an object.
  */
 export const SizeSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  z: z.number(),
+  width: z.number(),
+  height: z.number(),
+  depth: z.number(),
 });
 
 // extract the inferred type like this

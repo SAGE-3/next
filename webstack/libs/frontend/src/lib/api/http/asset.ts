@@ -23,7 +23,7 @@ import { APIHttp } from './api-http';
 // }
 
 async function readAll(): Promise<SBDocument<AssetType>[] | undefined> {
-  const response = await APIHttp.GET<AssetType>('/api/assets');
+  const response = await APIHttp.GET<AssetType, any>('/api/assets');
   return response.data;
 
 }

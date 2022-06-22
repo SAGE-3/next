@@ -7,13 +7,12 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { SBDocument } from '@sage3/sagebase';
 import { AppWindow } from '../../components';
-import { AppSchema } from "../../schema";
+import { App } from "../../schema";
 
 import { state as AppState } from "./";
 
-function LinkerApp(props: SBDocument<AppSchema>): JSX.Element {
+function LinkerApp(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
