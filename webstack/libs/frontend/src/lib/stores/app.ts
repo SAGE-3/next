@@ -47,7 +47,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
     },
     updateState: async (id: string, state: Partial<AppState>) => {
-      SocketAPI.sendRESTMessage('/apps/state/' + id, 'PUT', state);
+      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', { state: state });
     },
     delete: async (id: string) => {
       SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');

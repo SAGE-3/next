@@ -7,6 +7,7 @@
  */
 
 import { z } from "zod";
+import { SBDoc } from "./SBSchema";
 
 const UserType = z.enum(["wall", "client"]);
 export type UserType = z.infer<typeof UserType>;
@@ -34,4 +35,7 @@ export const UserSchema = z.object({
 
 });
 
-export type UserSchema = z.infer<typeof UserSchema>;
+type UserData = z.infer<typeof UserSchema>;
+
+export type User = SBDoc & { data: UserData };
+

@@ -6,19 +6,19 @@
  *
  */
 
-import { SBDocument, SBJSON } from "@sage3/sagebase";
+import { SBDoc } from "@sage3/shared/types";
 // import { URLSearchParams } from "url";
 
-type POSTResponse<T extends SBJSON> = {
+type POSTResponse<T> = {
   success: boolean,
   message?: string;
-  data?: SBDocument<T>[]
+  data?: T[]
 }
 
-type GETResponse<T extends SBJSON> = {
+type GETResponse<T> = {
   success: boolean,
   message?: string;
-  data?: SBDocument<T>[];
+  data?: T[];
 }
 
 type PUTResponse = {
@@ -31,7 +31,7 @@ type DELResponse = {
   message?: string;
 }
 
-async function POST<T extends SBJSON>(url: string, body: T): Promise<POSTResponse<T>> {
+async function POST<T extends SBDoc>(url: string, body: Partial<T["data"]>): Promise<POSTResponse<T>> {
   const response = await fetch('/api' + url, {
     method: 'POST',
     credentials: 'include',
@@ -44,7 +44,7 @@ async function POST<T extends SBJSON>(url: string, body: T): Promise<POSTRespons
   return await response.json();
 }
 
-async function GET<T extends SBJSON>(url: string, query?: Partial<T>): Promise<GETResponse<T>> {
+async function GET<T extends SBDoc>(url: string, query?: Partial<T["data"]>): Promise<GETResponse<T>> {
   if (query) url = url + '?' + new URLSearchParams(query as Record<string, string>);
   const response = await fetch('/api' + url, {
     method: 'GET',
@@ -57,7 +57,7 @@ async function GET<T extends SBJSON>(url: string, query?: Partial<T>): Promise<G
   return await response.json();
 }
 
-async function PUT<T extends SBJSON>(url: string, body: Partial<T>): Promise<PUTResponse> {
+async function PUT<T extends SBDoc>(url: string, body: Partial<T["data"]>): Promise<PUTResponse> {
   const response = await fetch('/api' + url, {
     method: 'PUT',
     credentials: 'include',

@@ -6,21 +6,17 @@
  *
  */
 
+import { z } from "zod";
+
 /**
  * @typedef {object} Position
  * Represents the position of an object.
  */
-export type Position = {
-  /**
-* @property {number} x The x position of the object.
-*/
-  x: number,
-  /**
-* @property {number} y The y position of the object.
-*/
-  y: number,
-  /**
-* @property {number} z The z position of the object.
-*/
-  z: number,
-}
+export const PositionSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  z: z.number(),
+});
+
+// extract the inferred type like this
+export type Position = z.infer<typeof PositionSchema>;

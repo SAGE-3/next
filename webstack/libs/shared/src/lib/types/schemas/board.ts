@@ -7,6 +7,7 @@
  */
 
 import { z } from "zod";
+import { SBDoc } from "./SBSchema";
 
 /**
  * @typedef {object} BoardSchema
@@ -27,5 +28,6 @@ export const BoardSchema = z.object({
   isPrivate: z.boolean(),
 })
 
-export type BoardSchema = z.infer<typeof BoardSchema>;
+type BoardData = z.infer<typeof BoardSchema>;
 
+export type Board = SBDoc & { data: BoardData };

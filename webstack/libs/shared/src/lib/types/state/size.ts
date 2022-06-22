@@ -6,21 +6,17 @@
  *
  */
 
+import { z } from "zod";
+
 /**
  * @typedef {object} Size
- * Represents the size of any object.
+ * Represents the size of an object.
  */
-export type Size = {
-  /**
- * @property {number} width The width of the object.
- */
-  width: number,
-  /**
-* @property {number} height The height of the object.
-*/
-  height: number,
-  /**
-* @property {number} depth The depth of the object.
-*/
-  depth: number,
-}
+export const SizeSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  z: z.number(),
+});
+
+// extract the inferred type like this
+export type Size = z.infer<typeof SizeSchema>;
