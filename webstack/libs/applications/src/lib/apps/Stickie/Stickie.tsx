@@ -34,6 +34,7 @@ const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed'
 function Stickie(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
+  console.log(s);
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);

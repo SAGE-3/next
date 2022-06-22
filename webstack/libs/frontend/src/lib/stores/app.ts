@@ -46,7 +46,14 @@ const AppStore = createVanilla<Applications>((set, get) => {
       SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
     },
     updateState: async (id: string, state: Partial<AppState>) => {
-      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', { state: state });
+      // HOT FIX: This is a hack to make the app state update work.
+      // Not really type safe and I need to figure out a way to do nested props properly.
+      const update = {} as any;
+      for (let key in state) {
+        const value = (state as any)[key];
+        update[`state.${key}`] = (state as any)[key];
+      }
+      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', update);
     },
     delete: async (id: string) => {
       SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
@@ -122,11 +129,12 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     },
     update: async (id: string, updates: Partial<AppSchema>) => {
       const apps = [...get().apps];
-      set({ apps: apps.map((app) => (app._id === id ? { ...app, ...updates } : app)) });
+      set({ apps: apps.map((app) => (app._id === id ? { ...app, data: {...app.data,  ...updates} } : app)) });
     },
     updateState: async (id: string, updates: Partial<AppState>) => {
       const apps = [...get().apps];
-      set({ apps: apps.map((app) => (app._id === id ? { ...app, state: { ...app.data.state, ...updates } } : app)) });
+      console.log(id, updates, apps)
+      set({ apps: apps.map((app) => (app._id === id ? { ...app, data: {...app.data, state:{ ...app.data.state, ...updates }} } : app)) });
     },
     delete: async (id: string) => {
       set({ apps: get().apps.filter((app) => app._id !== id) });
