@@ -106,8 +106,8 @@ def changeStateCounter(appId, val):
     """Change an app state values
     """
     head = {'Authorization': 'Bearer {}'.format(token)}
-    r = requests.put(web_server + '/api/apps/state/' + appId,
-                     headers=head, json={'count': val})
+    r = requests.put(web_server + '/api/apps/' + appId,
+                     headers=head, json={'state.count': val})
     return r
 
 
@@ -132,7 +132,7 @@ def processMessage(msg):
     print('>>>', msg)
     type = msg['type']
     collection = msg['col']
-    data = msg['doc']['data']
+    data = msg['doc']
     if type == 'CREATE':
         print('New> ', collection, data)
     if type == 'DEL':
@@ -151,6 +151,7 @@ async def main():
         rooms = jsondata['data']
         print('Rooms:', rooms)
         room0 = rooms[0]
+        print('Going to sub to room', room0['data']['name'])
 
     # Boards
     result = listBoards()
@@ -161,34 +162,35 @@ async def main():
         board0 = boards[0]
 
     # Info about an app: counter
-    oneApp = "fb2575c0-11e1-4387-b12e-0983a5d0261f"
+    oneApp = "94948688-2504-4409-b78b-32da88a7f4ae"
     result = getAppInfo(oneApp)
     jsondata = result.json()
     if jsondata['success']:
-        appInfo = jsondata['data']
-        print('Counter app:', appInfo['state'])
+        # array of one app
+        appInfo = jsondata['data'][0]
+        print('Counter app state:', appInfo['data']['state'])
         r = moveApp(oneApp, 400, 200)
         print('moveApp:', r.json())
         r = changeStateCounter(oneApp, 157)
         print('changeStateCounter:', r.json())
 
     # Info about an app: image
-    oneApp = 'ce5de047-4ad4-43f4-9d94-767eb92ed228'
+    oneApp = '0375cbb0-e3c8-4aca-9253-9e5bea116aa5'
     result = getAppInfo(oneApp)
     jsondata = result.json()
     if jsondata['success']:
-        appInfo = jsondata['data']
-        print('Image app:', appInfo['state'])
+        appInfo = jsondata['data'][0]
+        print('Image app state:', appInfo['data']['state'])
 
     # connect with the JSON web token
     async with websockets.connect(socket_server + socket_path, extra_headers={"Authorization": f"Bearer {token}"}) as ws:
 
         # sub to a board
-        # boardId = board0['id']
+        # boardId = board0['_id']
         # await subscribeToAppUpdateInBoard(ws, boardId)
 
         # sub to a room
-        roomId = room0['id']
+        roomId = room0['_id']
         await subscribeToAppUpdateInRoom(ws, roomId)
 
         # loop to receive messages
