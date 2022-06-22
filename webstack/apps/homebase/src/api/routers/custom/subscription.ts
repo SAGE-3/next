@@ -8,12 +8,12 @@
 
 /**
  * The AppAPI for SAGE3
- * 
+ *
  * Flow Diagram
  * ┌──┐  ┌─────┐  ┌─────────┐  ┌───┐
  * │DB│◄─┤Model│◄─┤ Service │◄─┤API│
  * └──┘  └─────┘  └─────────┘  └───┘
- * 
+ *
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -30,10 +30,10 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 /**
  * This class is for CUSTOM SUBSCRIPTIONS
- * @param socket 
- * @param request 
- * @param message 
- * @param cache 
+ * @param socket
+ * @param request
+ * @param message
+ * @param cache
  */
 export async function subscriptionWSRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   switch (message.method) {
@@ -46,22 +46,22 @@ export async function subscriptionWSRouter(socket: WebSocket, message: APIClient
           return;
         }
         const roomSub = await RoomsCollection.subscribe(roomId, (doc) => {
-          const msg = { id: message.id, event: doc }
+          const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const boardsSub = await BoardsCollection.subscribeByQuery('roomId', roomId, (doc) => {
-          const msg = { id: message.id, event: doc }
+          const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const appsSub = await AppsCollection.subscribeByQuery('roomId', roomId, (doc) => {
-          const msg = { id: message.id, event: doc }
+          const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
-        })
+        });
         const subs = [];
         if (roomSub) subs.push(roomSub);
         if (boardsSub) subs.push(boardsSub);
         if (appsSub) subs.push(appsSub);
-        if (subs) cache.add(message.id, subs)
+        if (subs) cache.add(message.id, subs);
         break;
       }
       // Subscribe to a board and all its children (apps)
@@ -72,17 +72,17 @@ export async function subscriptionWSRouter(socket: WebSocket, message: APIClient
           return;
         }
         const boardSub = await BoardsCollection.subscribe(boardId, (doc) => {
-          const msg = { id: message.id, event: doc }
+          const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const appsSub = await AppsCollection.subscribeByQuery('boardId', boardId, (doc) => {
-          const msg = { id: message.id, event: doc }
+          const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
-        })
+        });
         const subs = [];
         if (boardSub) subs.push(boardSub);
         if (appsSub) subs.push(appsSub);
-        if (subs) cache.add(message.id, subs)
+        if (subs) cache.add(message.id, subs);
       }
       break;
     }
@@ -94,7 +94,5 @@ export async function subscriptionWSRouter(socket: WebSocket, message: APIClient
     default: {
       socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method.' }));
     }
-
-
   }
 }

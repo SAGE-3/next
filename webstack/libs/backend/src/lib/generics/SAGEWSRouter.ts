@@ -6,13 +6,18 @@
  *
  */
 
-import { SubscriptionCache } from "../utils/subscription-cache";
+import { SubscriptionCache } from '../utils/subscription-cache';
 import { APIClientWSMessage } from '@sage3/shared/types';
-import { SAGE3Collection } from "./SAGECollection";
-import { SBDocumentUpdate, SBJSON } from "@sage3/sagebase";
+import { SAGE3Collection } from './SAGECollection';
+import { SBDocumentUpdate, SBJSON } from '@sage3/sagebase';
 import { WebSocket } from 'ws';
 
-export async function sageWSRouter<T extends SBJSON>(collection: SAGE3Collection<T>, socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
+export async function sageWSRouter<T extends SBJSON>(
+  collection: SAGE3Collection<T>,
+  socket: WebSocket,
+  message: APIClientWSMessage,
+  cache: SubscriptionCache
+): Promise<void> {
   const path = '/api/' + collection.name.toLowerCase();
   switch (message.method) {
     case 'POST': {
@@ -65,10 +70,10 @@ export async function sageWSRouter<T extends SBJSON>(collection: SAGE3Collection
       // Subscribe to all docs
       if (message.route.startsWith(path)) {
         const sub = await collection.subscribeAll((doc) => {
-          const msg = { id: message.id, event: doc }
+          const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
-        if (sub) cache.add(message.id, [sub])
+        if (sub) cache.add(message.id, [sub]);
       }
       // Subscribe to one doc
       else if (message.route.startsWith(path + '/')) {
@@ -78,10 +83,10 @@ export async function sageWSRouter<T extends SBJSON>(collection: SAGE3Collection
           return;
         }
         const sub = await collection.subscribe(id, (doc) => {
-          const msg = { id: message.id, event: doc }
+          const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
-        if (sub) cache.add(message.id, [sub])
+        if (sub) cache.add(message.id, [sub]);
       }
       break;
     }
