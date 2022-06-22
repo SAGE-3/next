@@ -16,7 +16,7 @@ function ImageApp(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <img src={s.url} crossOrigin="anonymous" alt={"ImageApp"}></img>
+      <img src={s.url} width="100%" crossOrigin="anonymous" alt={"ImageApp"}></img>
     </AppWindow>
   )
 }
