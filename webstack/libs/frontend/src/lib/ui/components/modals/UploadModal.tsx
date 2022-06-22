@@ -7,21 +7,12 @@
  */
 
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
 import {
-  Checkbox,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  FormControl,
-  Button,
-  Icon,
-  InputGroup,
-  Input,
-  InputLeftElement,
-  FormHelperText,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
+  FormControl, Checkbox, Button, Icon,
+  InputGroup, Input, InputLeftElement, FormHelperText,
 } from '@chakra-ui/react';
 
 import { useUserStore } from '../../../stores';
@@ -45,6 +36,10 @@ interface UploadModalProps {
 
 export function UploadModal(props: UploadModalProps): JSX.Element {
   const user = useUserStore((state) => state.user);
+
+  // Room and board
+  const location = useLocation();
+  const { roomId } = location.state as { boardId: string; roomId: string };
 
   // selected files
   const [input, setInput] = useState<File[]>([]);
@@ -74,6 +69,10 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       for (let i = 0; i < fileListLength; i++) {
         fd.append('files', input[i]);
       }
+
+      // Add fields to the upload form
+      fd.append('room', roomId);
+
       // Upload with a POST request
       fetch('/api/assets/upload', {
         method: 'POST',

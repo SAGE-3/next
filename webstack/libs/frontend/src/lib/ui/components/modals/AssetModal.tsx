@@ -26,6 +26,10 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const [assetsList, setAssetsList] = React.useState<FileEntry[]>([]);
   const createApp = useAppStore((state) => state.create);
 
+  // Room and board
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+
   // User information
   const user = useUserStore((state) => state.user);
 
@@ -37,8 +41,9 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   }, []);
 
   useEffect(() => {
-    // Filter the asset keys for this board
-    const keys = Object.keys(assets); // .filter((k) => assets[k].boardId === boardId);
+    // Filter the asset keys for this room
+    const filterbyRoom = assets.filter((k) => k.data.room === roomId);
+    const keys = Object.keys(filterbyRoom);
     // Create entries
     setAssetsList(
       keys.map((k, idx) => {
@@ -49,12 +54,12 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
-          owner: '-',
+          owner: user?._id || '-',
           filename: item.data.file,
           originalfilename: item.data.originalfilename,
           date: new Date().getTime(),
           dateAdded: new Date(item.data.dateAdded).getTime(),
-          boardId: '-',
+          room: item.data.room,
           size: item.data.size,
           type: fileType,
           derived: item.data.derived,
@@ -65,9 +70,6 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
       })
     );
   }, [assets, isOpen]);
-
-  const location = useLocation();
-  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
   const onOpenFiles = () => {
     if (!user) return;

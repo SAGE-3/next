@@ -72,7 +72,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           isClosable: true,
         });
       } else {
-        console.log('new room')
         createRoom({
           name: cleanedName,
           description,

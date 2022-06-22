@@ -18,12 +18,12 @@ export type FileEntry = {
   owner: string;
   date: number;
   dateAdded: number;
-  boardId: string;
+  room: string;
   size: number;
   type: string;
-  metadata: any;
-  derived?: ExtraImageType | ExtraPDFType;
   selected: boolean;
+  metadata?: string;
+  derived?: ExtraImageType | ExtraPDFType;
 };
 
 export type RowFileProps = {

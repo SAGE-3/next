@@ -30,6 +30,7 @@ import { WebSocket } from 'ws';
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
+import { SBAuthSchema } from '@sage3/sagebase';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -95,13 +96,17 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       }>;
     };
 
+    // Get the current uploader information
+    const user = req.user as SBAuthSchema;
+
     // Do something with the files
     files.forEach((elt) => {
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Put the new file into the collection
       AssetsCollection.addAsset({
         file: elt.filename,
-        owner: 'luc',
+        owner: user.id || '-',
+        room: req.body.room || '-',
         originalfilename: elt.originalname,
         path: elt.path,
         destination: elt.destination,
@@ -116,7 +121,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
   });
 }
 
-
 /**
  *
  * @param socket
@@ -124,11 +128,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
  * @param message
  * @param cache
  */
-export async function assetWSRouter(
-  socket: WebSocket,
-  message: APIClientWSMessage,
-  cache: SubscriptionCache
-): Promise<void> {
+export async function assetWSRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
   // const auth = request.session.passport.user;
   switch (message.method) {
     case 'GET': {
@@ -176,7 +176,6 @@ export async function assetWSRouter(
     }
   }
 }
-
 
 //
 // Metadata from multer for each storage engine

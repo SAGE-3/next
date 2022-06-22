@@ -10,7 +10,6 @@
 import { z } from 'zod';
 import { SBDoc } from './SBSchema';
 
-
 export const ImageInfoSchema = z.object({
   url: z.string(),
   format: z.string(),
@@ -47,6 +46,7 @@ export type ExtraPDFType = z.infer<typeof ExtraPDFSchema>;
 const schema = z.object({
   file: z.string(),
   owner: z.string(),
+  room: z.string(),
   originalfilename: z.string(),
   path: z.string(),
   dateAdded: z.string(),
