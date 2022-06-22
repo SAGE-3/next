@@ -41,7 +41,6 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
     },
     subscribe: async () => {
       const files = await AssetHTTPService.readAll();
-      console.log('store', files)
       if (files) {
         set({ assets: files });
       }

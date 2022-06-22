@@ -15,6 +15,9 @@ import { useAppStore, useAssetStore, useUserStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
+import { initialValues } from '@sage3/applications/apps';
+import { ExtraImageType } from '@sage3/shared/types';
+
 export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
@@ -36,13 +39,13 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   useEffect(() => {
     // Filter the asset keys for this board
     const keys = Object.keys(assets); // .filter((k) => assets[k].boardId === boardId);
-    console.log(keys)
     // Create entries
     setAssetsList(
       keys.map((k, idx) => {
         const item = assets[idx];
-        const id = item.data.file;
-        const fileType = item.data.mimetype.split('/')[1];
+        const id = item._id;
+        let fileType = item.data.mimetype.split('/')[1];
+        if (fileType === 'octet-stream') fileType = 'data';
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
@@ -55,7 +58,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
           size: item.data.size,
           type: fileType,
           derived: item.data.derived,
-          exif: null,
+          metadata: item.data.metadata,
           selected: false,
         };
         return entry;
@@ -66,83 +69,43 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   const location = useLocation();
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
-  const openFiles = (files: FileEntry[]) => {
-    if (!user) return;
-    files.forEach((d) => {
-      let url;
-      if (d.type === 'jpeg') {
-        url = d.derived?.sizes['800'] || d.derived?.fullSize;
-        url = (url) ? url : '';
-        createApp(
-          {
-            name: 'Image',
-            description: 'Image Description',
-            ownerId: user._id,
-            roomId,
-            boardId,
-            position: { x: 0, y: 0, z: 0 },
-            size: { width: 300, height: 24 + 300 / (d.derived?.aspectRatio || 1), depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'Image',
-            state: { url },
-            minimized: false,
-
-          }
-        );
-      }
-    });
-    onClose();
-  };
   const onOpenFiles = () => {
     if (!user) return;
     let x = 0;
     assetsList.forEach((d) => {
       if (d.selected) {
-        let url;
         const w = 200;
-        if (d.type === 'jpeg') {
-          url = d.derived?.sizes['800'] || d.derived?.fullSize;
-          url = (url) ? url : '';
+        if (d.type === 'jpeg' || d.type === 'png') {
+          const extras = d.derived as ExtraImageType;
           createApp({
-            name: 'Image',
+            name: 'ImageViewer',
             description: 'Image Description',
             roomId,
             boardId,
             ownerId: user._id,
             position: { x: x, y: 0, z: 0 },
-            size: { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
+            size: { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            type: 'Image',
-            state: { url },
+            type: 'ImageViewer',
+            state: { ...initialValues['ImageViewer'], id: d.id },
             minimized: false,
-          }
-          );
+          });
           x += w + 10;
         } else if (d.type === 'pdf') {
-          // hack for pdfs
-          if (d.derived) {
-            // @ts-ignore
-            const pages = d.derived as any[];
-            const page1 = pages[0];
-            const k = Object.keys(page1)[0];
-            url = page1[k].url;
-            url = (url) ? url : '';
-            createApp({
-              name: 'Image',
-              description: 'Image Description',
-              roomId,
-              boardId,
-              ownerId: user._id,
-              position: { x: 0, y: 0, z: 0 },
-              size: { width: page1[k].width, height: page1[k].height, depth: 0 },
-              rotation: { x: x, y: 0, z: 0 },
-              type: 'Image',
-              state: { url },
-              minimized: false,
-            }
-            );
-            x += page1[k].width + 10;
-          }
+          createApp({
+            name: 'PDFViewer',
+            description: 'PDF Description',
+            roomId,
+            boardId,
+            ownerId: user._id,
+            position: { x: 0, y: 0, z: 0 },
+            size: { width: 400, height: 400 * (22 / 17), depth: 0 },
+            rotation: { x: x, y: 0, z: 0 },
+            type: 'PDFViewer',
+            state: { ...initialValues['PDFViewer'], id: d.id },
+            minimized: false,
+          });
+          x += 400 + 10;
         }
       }
     });
@@ -156,7 +119,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
         <ModalHeader>Assets Browser</ModalHeader>
         {/* File manager */}
         <ModalBody userSelect={'none'}>
-          <FileManager files={assetsList} openFiles={openFiles} />
+          <FileManager files={assetsList} />
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="blue" mr={3} onClick={onOpenFiles}>

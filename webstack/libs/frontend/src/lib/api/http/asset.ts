@@ -23,9 +23,7 @@ import { APIHttp } from './api-http';
 
 async function readAll(): Promise<Asset[] | undefined> {
   const response = await APIHttp.GET<AssetSchema, Asset>('/assets');
-  console.log(response);
   return response.data;
-
 }
 
 // async function del(id: AssetType['id']): Promise<boolean> {

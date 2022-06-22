@@ -5,23 +5,47 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
+import { useEffect, useState } from 'react';
+import { AppWindow } from '../../components';
 
-import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
+import { Asset, ExtraImageType } from '@sage3/shared/types';
+import { useAssetStore } from '@sage3/frontend';
 
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+
 
 function ImageViewer(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<Asset>();
+  const [url, setUrl] = useState('');
+
+  useEffect(() => {
+    const myasset = assets.find((a) => a._id === s.id);
+    if (myasset) {
+      setFile(myasset);
+    }
+  }, [s.id, assets]);
+
+  useEffect(() => {
+    if (file) {
+      const extra = file.data.derived as ExtraImageType;
+      if (extra) {
+        // find the smallest image for this page (multi-resolution)
+        const res = extra.sizes.reduce(function (p, v) {
+          return (p.width < v.width ? p : v);
+        });
+        setUrl(res.url);
+      }
+    }
+  }, [file]);
+
 
   return (
     <AppWindow app={props}>
-      <>
-        <h1> url : {s.url}</h1>
-      </>
+      <img src={url} width="100%" />
     </AppWindow>
   );
 }

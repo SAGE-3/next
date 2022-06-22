@@ -34,7 +34,7 @@ import { ExifViewer } from './exifviewer';
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
+export function RowFile({ file, style, clickCB }: RowFileProps) {
   // check if user is a guest
   const user = useUserStore((state) => state.user);
 
@@ -47,7 +47,7 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
   // Modal showing file information
   const { isOpen, onOpen, onClose } = useDisclosure({ id: 'exif' });
   // show the context menu
-  // const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // dark/light modes
   const { colorMode } = useColorMode();
@@ -57,19 +57,20 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
     // Flip the value
     setSelected((s) => !s);
     clickCB(file);
-    // if (showMenu) setShowMenu(false);
+    if (showMenu) setShowMenu(false);
   };
   // Select the file when double-clicked
-  const onDoubleClick = (e: MouseEvent): void => {
-    dbclickCB(file);
-  };
+  // const onDoubleClick = (e: MouseEvent): void => {
+  //   dbclickCB(file);
+  // };
 
   // Context menu selection handler
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
     const id = e.currentTarget.id;
     if (id === 'down') {
       // download a file
-      downloadFile('api/assets/' + file.filename, file.originalfilename);
+      console.log('File', file)
+      downloadFile('api/assets/static/' + file.filename, file.originalfilename);
     } else if (id === 'del') {
       if (user?.data.userRole !== 'guest') {
         // Delete a file
@@ -89,7 +90,7 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
     // deselect file selection
     setSelected(false);
     // hide context menu
-    // setShowMenu(false);
+    setShowMenu(false);
   };
 
   useEffect(() => {
@@ -109,15 +110,16 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {
+    console.log('contextmenu');
     // deselect file selection
     setSelected(false);
     // hide context menu
-    // setShowMenu(false);
+    setShowMenu(false);
     if (divRef.current?.contains(e.target as any)) {
       // capture the cursor position to show the menu
       setAnchorPoint({ x: e.pageX, y: e.pageY });
       // show context menu
-      // setShowMenu(true);
+      setShowMenu(true);
       setSelected(true);
     }
     e.preventDefault();
@@ -126,13 +128,13 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
   // pick an icon based on file type (extension string)
   const whichIcon = (type: string) => {
     switch (type) {
-      case 'PDF':
+      case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
-      case 'JPEG':
+      case 'jpeg':
         return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
-      case 'MP4':
+      case 'mp4':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
-      case 'JSON':
+      case 'json':
         return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
       default:
         return <MdOutlineFilePresent size={'20px'} />;
@@ -172,7 +174,7 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
           {humanFileSize(file.size)}
         </Box>
       </Flex>
-      {/* {showMenu ? (
+      {showMenu ? (
         <Portal>
           <ul
             className="s3contextmenu"
@@ -197,7 +199,7 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
         </Portal>
       ) : (
         <> </>
-      )} */}
+      )}
 
       {/* EXIF info */}
       <Modal closeOnEsc={true} closeOnOverlayClick={true} isOpen={isOpen} onClose={onClose} size={'3xl'} isCentered>
