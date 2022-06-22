@@ -8,13 +8,12 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@chakra-ui/react';
 
-import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useAssetStore } from '@sage3/frontend';
+import { useAssetStore, useAppStore } from '@sage3/frontend';
 
 
 function PDFViewer(props: App): JSX.Element {
@@ -29,8 +28,8 @@ function PDFViewer(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.id);
     if (myasset) {
       setFile(myasset);
-      // Update the app
-      update(props._id, { description: 'PDF ' + myasset?.data.originalfilename });
+      // Update the app title
+      update(props._id, { description: 'PDF> ' + myasset?.data.originalfilename });
       // Updte the state of the app
       if (myasset.data.derived) {
         const pages = myasset.data.derived as ExtraPDFType;
@@ -53,7 +52,7 @@ function PDFViewer(props: App): JSX.Element {
         setUrl(res.url);
         if (pages.length > 1) {
           const pageInfo = " - " + (s.currentPage + 1) + " of " + pages.length;
-          update(props._id, { description: 'PDF ' + file.data.originalfilename + pageInfo });
+          update(props._id, { description: 'PDF> ' + file.data.originalfilename + pageInfo });
         }
       }
     }

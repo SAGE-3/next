@@ -10,7 +10,7 @@ import { AppWindow } from '../../components';
 
 import { App } from '../../schema';
 import { Asset, ExtraImageType } from '@sage3/shared/types';
-import { useAssetStore } from '@sage3/frontend';
+import { useAssetStore, useAppStore } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 
@@ -19,6 +19,7 @@ function ImageViewer(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const assets = useAssetStore((state) => state.assets);
+  const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
   const [url, setUrl] = useState('');
 
@@ -26,6 +27,8 @@ function ImageViewer(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.id);
     if (myasset) {
       setFile(myasset);
+      // Update the app title
+      update(props._id, { description: 'Image> ' + myasset?.data.originalfilename });
     }
   }, [s.id, assets]);
 
