@@ -129,7 +129,6 @@ def connect():
 def processMessage(msg):
     """Process an update about a board
     """
-    print('>>>', msg)
     type = msg['type']
     collection = msg['col']
     data = msg['doc']
