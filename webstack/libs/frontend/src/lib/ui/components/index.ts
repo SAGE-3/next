@@ -6,7 +6,6 @@
  *
  */
 
-export * from './modals/CreateUserModal';
 export * from './modals/EditUserModal';
 export * from './modals/CreateRoomModal';
 export * from './modals/CreateBoardModal';

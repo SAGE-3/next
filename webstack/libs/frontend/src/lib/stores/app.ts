@@ -16,28 +16,18 @@ import createReact from 'zustand';
 import { genId } from '@sage3/shared';
 
 // The observable websocket and HTTP
-import { AppHTTPService } from '../api';
+import { APIHttp } from '../api';
 import { SocketAPI } from '../utils';
 
-import { AppState, AppSchema } from '@sage3/applications/schema';
+import { AppState, AppSchema, App } from '@sage3/applications/schema';
 import { BoardSchema } from '@sage3/shared/types';
 
 interface Applications {
-  apps: AppSchema[];
-  create: (
-    name: AppSchema['name'],
-    description: AppSchema['description'],
-    roomId: AppSchema['roomId'],
-    boardId: AppSchema['boardId'],
-    position: AppSchema['position'],
-    size: AppSchema['size'],
-    rotation: AppSchema['rotation'],
-    type: AppSchema['type'],
-    state: Partial<AppSchema['state']>
-  ) => Promise<void>;
-  update: (id: AppSchema['id'], updates: Partial<AppSchema>) => Promise<void>;
-  updateState: (id: AppSchema['id'], state: Partial<AppState>) => Promise<void>;
-  delete: (id: AppSchema['id']) => Promise<void>;
+  apps: App[];
+  create: (newApp: AppSchema) => Promise<void>;
+  update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
+  updateState: (id: string, state: Partial<AppState>) => Promise<void>;
+  delete: (id: string) => Promise<void>;
   unsubToBoard: () => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
 }
@@ -49,27 +39,17 @@ const AppStore = createVanilla<Applications>((set, get) => {
   let boardSub: (() => void) | null = null;
   return {
     apps: [],
-    create: async (
-      name: AppSchema['name'],
-      description: AppSchema['description'],
-      roomId: AppSchema['roomId'],
-      boardId: AppSchema['boardId'],
-      position: AppSchema['position'],
-      size: AppSchema['size'],
-      rotation: AppSchema['rotation'],
-      type: AppSchema['type'],
-      state: Partial<AppSchema['state']>
-    ) => {
-      SocketAPI.sendRESTMessage('/api/apps', 'POST', { name, description, roomId, boardId, position, size, rotation, type, state });
+    create: async (newApp: AppSchema) => {
+      SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
     },
-    update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
-      SocketAPI.sendRESTMessage('/api/apps/' + id, 'PUT', updates);
+    update: async (id: string, updates: Partial<AppSchema>) => {
+      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
     },
-    updateState: async (id: AppSchema['id'], state: Partial<AppState>) => {
-      SocketAPI.sendRESTMessage('/api/apps/state/' + id, 'PUT', state);
+    updateState: async (id: string, state: Partial<AppState>) => {
+      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', { state: state });
     },
-    delete: async (id: AppSchema['id']) => {
-      SocketAPI.sendRESTMessage('/api/apps/' + id, 'DELETE');
+    delete: async (id: string) => {
+      SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
     },
     unsubToBoard: () => {
       // Unsubscribe old subscription
@@ -81,9 +61,9 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
       set({ apps: [] });
-      const apps = await AppHTTPService.query({ boardId });
-      if (apps) {
-        set({ apps });
+      const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
+      if (apps.success) {
+        set({ apps: apps.data });
       }
 
       // Unsubscribe old subscription
@@ -92,11 +72,11 @@ const AppStore = createVanilla<Applications>((set, get) => {
         boardSub = null;
       }
 
-      const route = `/api/subscription/boards/${boardId}`;
+      const route = `/subscription/boards/${boardId}`;
       // Socket Listenting to updates from server about the current user
       boardSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
-        const doc = message.doc.data as AppSchema;
+        const doc = message.doc as App;
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, doc] });
@@ -104,7 +84,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
           }
           case 'UPDATE': {
             const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el.id === doc.id);
+            const idx = apps.findIndex((el) => el._id === doc._id);
             if (idx > -1) {
               apps[idx] = doc;
             }
@@ -113,7 +93,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
           }
           case 'DELETE': {
             const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el.id === doc.id);
+            const idx = apps.findIndex((el) => el._id === doc._id);
             if (idx > -1) {
               apps.splice(idx, 1);
             }
@@ -131,43 +111,25 @@ const AppStore = createVanilla<Applications>((set, get) => {
 const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
   return {
     apps: [],
-    create: async (
-      name: AppSchema['name'],
-      description: AppSchema['description'],
-      roomId: AppSchema['roomId'],
-      boardId: AppSchema['boardId'],
-      position: AppSchema['position'],
-      size: AppSchema['size'],
-      rotation: AppSchema['rotation'],
-      type: AppSchema['type'],
-      state: Partial<AppSchema['state']>
-    ) => {
-      const newApp = {
-        id: genId(),
-        name,
-        description,
-        roomId: genId(),
-        boardId: genId(),
-        ownerId: genId(),
-        position,
-        size,
-        rotation,
-        type,
-        state,
-      } as AppSchema;
-
-      set({ apps: [...get().apps, newApp] });
+    create: async (newApp: AppSchema) => {
+      const app = {
+        _id: genId(),
+        _createdAt: new Date().getTime(),
+        _updatedAt: new Date().getTime(),
+        data: newApp
+      } as App;
+      set({ apps: [...get().apps, app] });
     },
-    update: async (id: AppSchema['id'], updates: Partial<AppSchema>) => {
+    update: async (id: string, updates: Partial<AppSchema>) => {
       const apps = [...get().apps];
-      set({ apps: apps.map((app) => (app.id === id ? { ...app, ...updates } : app)) });
+      set({ apps: apps.map((app) => (app._id === id ? { ...app, ...updates } : app)) });
     },
-    updateState: async (id: AppSchema['id'], updates: Partial<AppState>) => {
+    updateState: async (id: string, updates: Partial<AppState>) => {
       const apps = [...get().apps];
-      set({ apps: apps.map((app) => (app.id === id ? { ...app, state: { ...app.state, ...updates } } : app)) });
+      set({ apps: apps.map((app) => (app._id === id ? { ...app, state: { ...app.data.state, ...updates } } : app)) });
     },
-    delete: async (id: AppSchema['id']) => {
-      set({ apps: get().apps.filter((app) => app.id !== id) });
+    delete: async (id: string) => {
+      set({ apps: get().apps.filter((app) => app._id !== id) });
     },
     unsubToBoard: () => {
       console.log('Unsubscribing to apps is not required in the playground');

@@ -8,15 +8,8 @@
 
 // Typing library
 import { z } from 'zod';
+import { SBDoc } from './SBSchema';
 
-// SAGEBase base schema
-export const SBSchema = z.object({
-  _id: z.string(),
-  _createdAt: z.string(),
-  _updatedAt: z.string(),
-});
-// Create the Typescript type
-export type SBElement = z.infer<typeof SBSchema>;
 
 // information for derived images
 export const ExtraImageSchema = z.object({
@@ -31,7 +24,7 @@ export type ExtraImageType = z.infer<typeof ExtraImageSchema>;
  * @typedef {object} AssetSchema
  * Defines the Schema for the AssetModel.
  */
-export const AssetSchema = z.object({
+const schema = z.object({
   file: z.string(),
   owner: z.string(),
   originalfilename: z.string(),
@@ -45,7 +38,7 @@ export const AssetSchema = z.object({
 });
 
 // Create the Typescript type
-export type AssetType = z.infer<typeof AssetSchema>;
+export type AssetSchema = z.infer<typeof schema>;
 
 // TS type for sagebase
-export type AssetSB = SBElement & { data: AssetType };
+export type Asset = SBDoc & { data: AssetSchema };

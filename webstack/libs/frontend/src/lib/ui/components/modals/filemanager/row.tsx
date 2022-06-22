@@ -71,7 +71,7 @@ export function RowFile({ file, style, clickCB, dbclickCB }: RowFileProps) {
       // download a file
       downloadFile('api/assets/' + file.filename, file.originalfilename);
     } else if (id === 'del') {
-      if (user?.userRole !== 'guest') {
+      if (user?.data.userRole !== 'guest') {
         // Delete a file
         // httpGET('/api/content/asset/delete/' + file.id);
       } else {

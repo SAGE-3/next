@@ -8,14 +8,13 @@
 
 import { useAppStore } from '@sage3/frontend';
 import { AppWindow } from '../../components';
-import { AppSchema } from "../../schema";
+import { App } from "../../schema";
 
 import { state as AppState } from "./";
 
+function LinkerApp(props: App): JSX.Element {
 
-function LinkerApp(props: AppSchema): JSX.Element {
-
-  const s = props.state as AppState;
+  const s = props.data.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
   // useEffect(() => {

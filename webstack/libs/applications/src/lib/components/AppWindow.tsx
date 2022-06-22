@@ -7,7 +7,7 @@
  */
 
 import { Box, calc, Text, useColorModeValue } from "@chakra-ui/react";
-import { AppSchema } from "@sage3/applications/schema";
+import { App } from '../schema';
 import { useAppStore } from "@sage3/frontend";
 
 import { useEffect, useState } from "react";
@@ -15,9 +15,10 @@ import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd'
 
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md'
 import { sageColorByName } from "@sage3/shared";
+import { SBDocument } from "@sage3/sagebase";
 
 type WindowProps = {
-  app: AppSchema;
+  app: App;
   children: JSX.Element;
 }
 
@@ -31,24 +32,29 @@ export function AppWindow(props: WindowProps) {
   const deleteApp = useAppStore(state => state.delete);
 
   // Local state
-  const [pos, setPos] = useState({ x: props.app.position.x, y: props.app.position.y });
-  const [size, setSize] = useState({ width: props.app.size.width, height: props.app.size.height });
-  const [minimized, setMinimized] = useState(false);
+  const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
+  const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
+  const [minimized, setMinimized] = useState(props.app.data.minimized);
 
   // If size or position change update the local state.
   useEffect(() => {
-    setSize({ width: props.app.size.width, height: props.app.size.height });
-    setPos({ x: props.app.position.x, y: props.app.position.y });
-  }, [props.app.size, props.app.position])
+    setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
+    setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
+  }, [props.app.data.size, props.app.data.position])
+
+  // If size or position change update the local state.
+  useEffect(() => {
+    setMinimized(props.app.data.minimized);
+  }, [props.app.data.minimized])
 
   // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
     setPos({ x: data.x, y: data.y });
-    update(props.app.id, {
+    update(props.app._id, {
       position: {
         x: data.x,
         y: data.y,
-        z: props.app.position.z
+        z: props.app.data.position.z
       }
     });
   }
@@ -66,14 +72,14 @@ export function AppWindow(props: WindowProps) {
     setSize({ width, height });
 
     // Update the size and position of the app in the server
-    update(props.app.id, {
+    update(props.app._id, {
       position: {
-        ...props.app.position,
+        ...props.app.data.position,
         x: position.x,
         y: position.y,
       },
       size: {
-        ...props.app.size,
+        ...props.app.data.size,
         width,
         height,
       }
@@ -82,14 +88,13 @@ export function AppWindow(props: WindowProps) {
 
   // Close the app and delete from server
   function handleClose() {
-    deleteApp(props.app.id);
+    deleteApp(props.app._id);
   }
 
   // Minimize the app. Currently only local.
   function handleMinimize() {
-    setMinimized(!minimized);
+    update(props.app._id, { minimized: !minimized });
   }
-
 
   return (
 
@@ -97,7 +102,7 @@ export function AppWindow(props: WindowProps) {
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
-      size={{ width: size.width, height: `${size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
+      size={{ width: size.width, height: `${(minimized) ? titleBarHeight : size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
       position={pos}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
@@ -124,7 +129,7 @@ export function AppWindow(props: WindowProps) {
         <Box
           display="flex"
           alignItems="center">
-          < Text color="white">{props.app.name}</Text >
+          < Text color="white">{props.app.data.name}</Text >
         </Box>
 
         {/* Right Title bar Elements */}
@@ -156,8 +161,8 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box display={(minimized) ? 'none' : 'inherit'}>
-        {props.children}
+      <Box>
+        {(minimized) ? null : props.children}
       </Box>
 
     </Rnd >

@@ -13,17 +13,18 @@ import createVanilla from "zustand/vanilla";
 import createReact from "zustand";
 
 // Application specific schema
-import { UserSchema } from '@sage3/shared/types';
+import { User, UserSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
-import { UserHTTPService } from "../api";
+import { APIHttp } from "../api";
 import { SocketAPI } from "../utils";
+import { randomSAGEColor } from "@sage3/shared";
 
 interface UserState {
-  user: UserSchema | undefined;
-  create: (name: UserSchema['name'], email: UserSchema['email']) => Promise<void>;
+  user: User | undefined;
+  create: (newuser: UserSchema) => Promise<void>;
   update: (updates: Partial<UserSchema>) => Promise<void>;
-  subscribeToUser: (id: UserSchema['id']) => Promise<void>;
+  subscribeToUser: (id: string) => Promise<void>;
 }
 
 /**
@@ -34,38 +35,58 @@ const UserStore = createVanilla<UserState>((set, get) => {
   SocketAPI.init()
   return {
     user: undefined,
-    create: async (name: UserSchema['name'], email: UserSchema['email']) => {
-      const user = await UserHTTPService.create(name, email);
-      if (user) {
-        get().subscribeToUser(user.id)
+    create: async (newuser: UserSchema) => {
+      const user = await APIHttp.POST<UserSchema, User>('/users', newuser);
+      if (user.data) {
+        get().subscribeToUser(user.data[0]._id)
       }
     },
     update: async (updates: Partial<UserSchema>) => {
       const user = get().user;
       if (!user) return;
-      UserHTTPService.update(user.id, updates);
+      const putResponse = await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
+      console.log(putResponse);
     },
-    subscribeToUser: async (id: UserSchema['id']) => {
-      const response = await UserHTTPService.read(id);
-      if (!response) return;
-      set({ user: response })
+    subscribeToUser: async (id: string) => {
+      const getResponse = await APIHttp.GET<UserSchema, User>(`/users/${id}`);
+      let user = null;
+      if (getResponse.data) {
+        user = getResponse.data[0];
+        set({ user })
+      } else {
+        const newuser = {
+          name: `Anonymous`,
+          email: 'anon@anon.com',
+          color: randomSAGEColor().name,
+          userRole: 'user',
+          userType: 'client',
+          profilePicture: ''
+        } as UserSchema;
+        const postResponse = await APIHttp.POST<UserSchema, User>(`/users`, newuser);
+        if (postResponse.data) {
+          user = postResponse.data[0];
+          set({ user })
+        }
+      }
 
+      if (!user) return;
       // Unsubscribe old subscription
       if (userSub) {
         userSub();
         userSub = null;
       }
       // Socket Subscribe Message
-      const route = `/api/users/${response.id}`;
+      const route = `/users/${user._id}`;
       // Socket Listenting to updates from server about the current user
       userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
+        const doc = message.doc as User;
         switch (message.type) {
           case 'CREATE': {
-            set({ user: message.doc.data })
+            set({ user: doc })
             break;
           }
           case 'UPDATE': {
-            set({ user: message.doc.data })
+            set({ user: doc })
             break;
           }
           case 'DELETE': {

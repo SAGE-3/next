@@ -38,7 +38,7 @@ export function BoardPage() {
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el.id === locationState.boardId);
+  const board = boards.find(el => el._id === locationState.boardId);
 
   // User information
   const user = useUserStore((state) => state.user);
@@ -77,22 +77,24 @@ export function BoardPage() {
     const height = 300;
 
     // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-    const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-    const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
-
+    const x = Math.floor(boardPos.x + (window.innerWidth / 2) - (width / 2));
+    const y = Math.floor(boardPos.y + (window.innerHeight / 2) - (height / 2));
+    if (!user) return;
     // Create the new app
-    createApp(
-      appName,
-      `${appName} - Description`,
-      locationState.roomId,
-      locationState.boardId,
-      { x, y, z: 0 },
-      { width, height, depth: 0 },
-      { x: 0, y: 0, z: 0 },
-      appName,
-      initialValues[appName]
-    );
-  };
+    createApp({
+      name: appName,
+      description: `${appName} - Description`,
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x, y, z: 0 },
+      size: { width, height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: appName,
+      ownerId: user._id,
+      state: initialValues[appName] as any,
+      minimized: false,
+    });
+  }
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: any, data: DraggableData) {
@@ -115,10 +117,14 @@ export function BoardPage() {
         dragHandleClassName={'board-handle'}
       >
         {/* Apps */}
-        {apps.map((app) => {
-          const Component = Applications[app.type];
-          return <Component key={app.id} {...app}></Component>;
-        })}
+        {
+          apps.map((app) => {
+            const Component = Applications[app.data.type];
+            return (
+              <Component key={app._id} {...app}></Component>
+            );
+          })
+        }
 
         {/* Draggable Background */}
         <Box
@@ -139,12 +145,18 @@ export function BoardPage() {
         </Button>
 
         {/* Board Name */}
-        <Text fontSize="3xl" background="teal" px={6} borderRadius="16" color="white">
-          {board?.name}
+        <Text
+          fontSize="3xl"
+          background="teal"
+          px={6}
+          borderRadius="16"
+          color="white">
+          {board?.data.name}
         </Text>
 
         {/* User Avatar */}
-        <Avatar size="md" name={user?.name} backgroundColor={user ? sageColorByName(user.color) : ''} color="black" />
+        <Avatar size='md' name={user?.data.name} backgroundColor={(user) ? sageColorByName(user.data.color) : ''} color="black" />
+
       </Box>
 
       {/* Bottom Bar */}
