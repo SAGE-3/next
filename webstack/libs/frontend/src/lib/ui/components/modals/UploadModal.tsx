@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 import {
+  Checkbox,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -47,13 +48,20 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
 
   // selected files
   const [input, setInput] = useState<File[]>([]);
+  const [allowFolder, setAllowFolder] = useState(false);
 
   // Files have been selected
-  const handleInputChange = (e: any) => {
-    const files = Object.values(e.target.files) as File[];
-    // Ignore .DS_Store and empty files
-    const filteredList = files.filter((f: File) => (f.name !== '.DS_Store') || f.size === 0);
-    setInput(filteredList);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Object.values(e.target.files) as File[];
+      // Ignore .DS_Store and empty files
+      const filteredList = files.filter((f: File) => (f.name !== '.DS_Store') || f.size === 0);
+      setInput(filteredList);
+    }
+  };
+  // To enable/disable folder upload
+  const checkFolder = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAllowFolder(e.target.checked);
   };
 
   // Perform the actual upload
@@ -87,23 +95,36 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader>Upload Assets</ModalHeader>
         <ModalBody>
+          <Checkbox onChange={checkFolder}>Enable folder upload (instead of files)</Checkbox>
+          <br />
+          <br />
           <FormControl isRequired>
             <InputGroup>
               <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
-              <Input
-                variant="outline"
-                id="files"
-                type="file"
-                accept={'image/*, video/*, application/pdf'}
-                multiple
-                webkitdirectory="true"
-                onChange={handleInputChange}
-                onClick={() => setInput([])}
-              />
+              {allowFolder ?
+                <Input
+                  variant="outline"
+                  padding={"4px 40px"}
+                  id="files"
+                  type="file"
+                  multiple
+                  webkitdirectory="true"
+                  onChange={handleInputChange}
+                  onClick={() => setInput([])} /> :
+                <Input
+                  variant="outline"
+                  padding={"4px 40px"}
+                  id="files"
+                  type="file"
+                  accept={'image/*, video/*, application/pdf'}
+                  multiple
+                  onChange={handleInputChange}
+                  onClick={() => setInput([])} />
+              }
             </InputGroup>
+            <FormHelperText>Select one or more files</FormHelperText>
 
-            <FormHelperText>Select one or more images</FormHelperText>
-
+            <br />
             <br />
 
             <Button type="submit" onClick={upload}>

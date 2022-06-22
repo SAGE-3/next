@@ -41,7 +41,8 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
       keys.map((k, idx) => {
         const item = assets[idx];
         const id = item.file;
-        const fileType = item.mimetype.split('/')[1];
+        let fileType = item.mimetype.split('/')[1];
+        if (fileType === 'octet-stream') fileType = 'data';
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,

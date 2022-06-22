@@ -128,13 +128,13 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
   // pick an icon based on file type (extension string)
   const whichIcon = (type: string) => {
     switch (type) {
-      case 'PDF':
+      case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
-      case 'JPEG':
+      case 'jpeg':
         return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
-      case 'MP4':
+      case 'mp4':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
-      case 'JSON':
+      case 'json':
         return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
       default:
         return <MdOutlineFilePresent size={'20px'} />;
