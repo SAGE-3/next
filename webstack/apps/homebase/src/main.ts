@@ -134,7 +134,8 @@ async function startServer() {
 
   // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
-
+    // TODO: Declarations file was being funny again
+    const req = request as any;
     // get url path
     const pathname = request.url;
     if (!pathname) return;
@@ -160,7 +161,7 @@ async function startServer() {
             console.log('Authorization> ws ok', decoded?.sub);
           }
         });
-      } else if (!request.session.passport?.user) {
+      } else if (!req.session.passport?.user) {
         // Auth coming from a logged user
         console.log('Authorization> ws failed');
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');

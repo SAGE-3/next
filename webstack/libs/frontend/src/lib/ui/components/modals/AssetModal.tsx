@@ -36,6 +36,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   useEffect(() => {
     // Filter the asset keys for this board
     const keys = Object.keys(assets); // .filter((k) => assets[k].boardId === boardId);
+    console.log(keys)
     // Create entries
     setAssetsList(
       keys.map((k, idx) => {
@@ -83,7 +84,9 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             size: { width: 300, height: 24 + 300 / (d.derived?.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Image',
-            state: { url }
+            state: { url },
+            minimized: false,
+
           }
         );
       }
@@ -110,7 +113,8 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             size: { width: w, height: 24 + w / (d.derived?.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Image',
-            state: { url }
+            state: { url },
+            minimized: false,
           }
           );
           x += w + 10;
@@ -133,7 +137,8 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
               size: { width: page1[k].width, height: page1[k].height, depth: 0 },
               rotation: { x: x, y: 0, z: 0 },
               type: 'Image',
-              state: { url }
+              state: { url },
+              minimized: false,
             }
             );
             x += page1[k].width + 10;

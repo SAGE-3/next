@@ -24,7 +24,7 @@ export type ExtraImageType = z.infer<typeof ExtraImageSchema>;
  * @typedef {object} AssetSchema
  * Defines the Schema for the AssetModel.
  */
-export const AssetSchema = z.object({
+const schema = z.object({
   file: z.string(),
   owner: z.string(),
   originalfilename: z.string(),
@@ -38,7 +38,7 @@ export const AssetSchema = z.object({
 });
 
 // Create the Typescript type
-export type AssetType = z.infer<typeof AssetSchema>;
+export type AssetSchema = z.infer<typeof schema>;
 
 // TS type for sagebase
-export type AssetSB = SBDoc & { data: AssetType };
+export type Asset = SBDoc & { data: AssetSchema };

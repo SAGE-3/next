@@ -49,15 +49,14 @@ export function assetExpressRouter(): express.Router {
   // Get all the assets: GET /api/assets
   router.get('/', async (req, res) => {
     const docs = await AssetsCollection.getAllAssets();
-    const data = docs.map((doc) => doc.data);
-    if (data) res.status(200).send({ success: true, data });
+    if (docs) res.status(200).send({ success: true, data: docs });
     else res.status(500).send({ success: false });
   });
 
   // Get one asset: GET /api/assets/:id
   router.get('/:id', async ({ params }, res) => {
     const data = await AssetsCollection.getAsset(params.id);
-    if (data) res.status(200).send({ success: true, data: data.data });
+    if (data) res.status(200).send({ success: true, data: [data] });
     else res.status(500).send({ success: false });
   });
 

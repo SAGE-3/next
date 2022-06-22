@@ -13,15 +13,14 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { AssetType } from '@sage3/shared/types';
+import { Asset, AssetSchema } from '@sage3/shared/types';
 
 // The observable websocket
 import { SocketAPI } from '../utils';
 import { AssetHTTPService } from '../api';
-import { SBDocument } from '@sage3/sagebase';
 
 interface AssetState {
-  assets: SBDocument<AssetType>[];
+  assets: Asset[];
   subscribe: () => Promise<void>;
   unsubscribe: () => void;
 }
@@ -42,6 +41,7 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
     },
     subscribe: async () => {
       const files = await AssetHTTPService.readAll();
+      console.log('store', files)
       if (files) {
         set({ assets: files });
       }
@@ -52,10 +52,10 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = '/api/assets';
+      const route = '/assets';
       // Socket Listenting to updates from server about the current assets
-      assetSub = await SocketAPI.subscribe<AssetType>(route, (message) => {
-        const doc = message.doc;
+      assetSub = await SocketAPI.subscribe<AssetSchema>(route, (message) => {
+        const doc = message.doc as Asset;
         switch (message.type) {
           case 'CREATE': {
             set({ assets: [...get().assets, doc] });

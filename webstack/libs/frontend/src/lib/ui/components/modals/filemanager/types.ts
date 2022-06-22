@@ -6,7 +6,7 @@
  *
  */
 
-import { AssetSB, ExtraImageType } from '@sage3/shared/types';
+import { Asset, ExtraImageType } from '@sage3/shared/types';
 
 /**
  * One row per file

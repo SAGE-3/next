@@ -13,8 +13,7 @@
  * @version 1.0.0
  */
 
-import { SBDocument } from '@sage3/sagebase';
-import { AssetType } from '@sage3/shared/types';
+import { Asset, AssetSchema } from '@sage3/shared/types';
 import { APIHttp } from './api-http';
 
 // async function read(id: AssetType['id']): Promise<AssetType[] | undefined> {
@@ -22,8 +21,9 @@ import { APIHttp } from './api-http';
 //   return response.data;
 // }
 
-async function readAll(): Promise<SBDocument<AssetType>[] | undefined> {
-  const response = await APIHttp.GET<AssetType, any>('/api/assets');
+async function readAll(): Promise<Asset[] | undefined> {
+  const response = await APIHttp.GET<AssetSchema, Asset>('/assets');
+  console.log(response);
   return response.data;
 
 }

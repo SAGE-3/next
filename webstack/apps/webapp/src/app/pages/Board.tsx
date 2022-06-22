@@ -93,7 +93,8 @@ export function BoardPage() {
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       ownerId: user._id,
-      state: initialValues[appName] as any
+      state: initialValues[appName] as any,
+      minimized: false,
     });
   }
 

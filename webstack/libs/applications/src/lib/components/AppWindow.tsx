@@ -34,13 +34,18 @@ export function AppWindow(props: WindowProps) {
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
-  const [minimized, setMinimized] = useState(false);
+  const [minimized, setMinimized] = useState(props.app.data.minimized);
 
   // If size or position change update the local state.
   useEffect(() => {
     setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
   }, [props.app.data.size, props.app.data.position])
+
+  // If size or position change update the local state.
+  useEffect(() => {
+    setMinimized(props.app.data.minimized);
+  }, [props.app.data.minimized])
 
   // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
@@ -88,9 +93,8 @@ export function AppWindow(props: WindowProps) {
 
   // Minimize the app. Currently only local.
   function handleMinimize() {
-    setMinimized(!minimized);
+    update(props.app._id, { minimized: !minimized });
   }
-
 
   return (
 
@@ -98,7 +102,7 @@ export function AppWindow(props: WindowProps) {
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
-      size={{ width: size.width, height: `${size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
+      size={{ width: size.width, height: `${(minimized) ? titleBarHeight : size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
       position={pos}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
@@ -157,8 +161,8 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box display={(minimized) ? 'none' : 'inherit'}>
-        {props.children}
+      <Box>
+        {(minimized) ? null : props.children}
       </Box>
 
     </Rnd >

@@ -102,6 +102,7 @@ function Stickie(props: App): JSX.Element {
           type: 'Stickie',
           state: { text: '', color: s.color, fontSize: s.fontSize },
           ownerId: user._id,
+          minimized: false,
         }
       );
     }
