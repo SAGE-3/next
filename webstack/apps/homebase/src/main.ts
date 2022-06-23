@@ -37,8 +37,8 @@ import * as jwt from 'jsonwebtoken';
  */
 import { loadConfig } from './config';
 // import { AssetService } from './services';
-import { expressAPIRouter, wsAPIRouter } from './controllers';
-import { loadModels } from './models';
+import { expressAPIRouter, wsAPIRouter } from './api/routers';
+import { loadCollections } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -91,7 +91,7 @@ async function startServer() {
   await SAGEBase.init(sbConfig, app);
 
   // Load all the models: user, board, ...
-  await loadModels();
+  await loadCollections();
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
@@ -101,7 +101,7 @@ async function startServer() {
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
 
   // Websocket API for sagebase
-  apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+  apiWebSocketServer.on('connection', (socket: WebSocket) => {
 
     console.log('apiWebSocketServer> connection open');
 
@@ -111,7 +111,7 @@ async function startServer() {
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, request, message, subCache);
+      wsAPIRouter(socket, message, subCache);
     });
 
     socket.on('close', () => {
@@ -134,7 +134,8 @@ async function startServer() {
 
   // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
-
+    // TODO: Declarations file was being funny again
+    const req = request as any;
     // get url path
     const pathname = request.url;
     if (!pathname) return;
@@ -160,7 +161,7 @@ async function startServer() {
             console.log('Authorization> ws ok', decoded?.sub);
           }
         });
-      } else if (!request.session.passport?.user) {
+      } else if (!req.session.passport?.user) {
         // Auth coming from a logged user
         console.log('Authorization> ws failed');
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');

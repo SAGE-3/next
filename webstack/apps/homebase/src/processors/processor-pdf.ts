@@ -20,11 +20,12 @@ import * as sharp from 'sharp';
 // load legacy pdf build
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
-const CMAP_URL = '../node_modules/pdfjs-dist/cmaps/';
-const FONT_URL = '../node_modules/pdfjs-dist/standard_fonts/';
+const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
+const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
 import { createCanvas } from 'canvas';
 import { getStaticAssetUrl } from '@sage3/backend';
+import { ExtraPDFType } from '@sage3/shared/types';
 
 ////////////////////////////////////////////////////////////////////////////////
 function NodeCanvasFactory() {
@@ -63,13 +64,6 @@ NodeCanvasFactory.prototype = {
   },
 };
 ////////////////////////////////////////////////////////////////////////////////
-
-// const options: { width: number; quality: number }[] = [
-//   { width: 400, quality: 75 },
-//   { width: 800, quality: 80 },
-//   { width: 1600, quality: 80 },
-//   { width: 3200, quality: 70 },
-// ];
 
 /**
  * Converting PDF to multiple resolutions using pdfjs and sharp
@@ -130,7 +124,7 @@ export class PDFProcessor {
  * @method file
  * @param filename {String} name of the file to be tested
  */
-async function pdfProcessing(job: any): Promise<any> {
+async function pdfProcessing(job: any): Promise<ExtraPDFType> {
   return new Promise((resolve, _reject) => {
     const filename: string = job.data.filename;
     const pathname: string = path.join(job.data.pathname, filename);
@@ -216,21 +210,15 @@ async function pdfProcessing(job: any): Promise<any> {
             ]);
           });
           // combine all the results for that page
-          const resultInfos = Object.fromEntries(
-            options.map(({ width }) => [
-              +width,
-              {
-                // url of the page image
-                url: getStaticAssetUrl(`${filenameWithoutExt}-${i}-${width}.webp`),
-                // information from sharp
-                info: renderResult.find((r: any) => r.width === width),
-              },
-            ])
-          );
-          return resultInfos;
+          return options.map(({ width }) => {
+            // information from sharp
+            const info = renderResult.find((r: any) => r.width === width);
+            // url of the page image
+            const url = getStaticAssetUrl(`${filenameWithoutExt}-${i}-${width}.webp`);
+            return { url, ...info };
+          });
         });
       });
-      console.log('Arr', arr);
       return Promise.all(arr).then((pdfres) => {
         console.log('PDF> All done', pdfres);
         resolve(pdfres);

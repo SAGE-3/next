@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from '../../schema';
+import { App } from '../../schema';
 
 import { state as AppState } from './';
 
@@ -24,9 +24,9 @@ import { AppWindow } from '../../components';
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function NoteApp(props: AppSchema): JSX.Element {
+function NoteApp(props: App): JSX.Element {
   // Get the data for this app from the props
-  const s = props.state as AppState;
+  const s = props.data.state as AppState;
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
 
@@ -38,7 +38,7 @@ function NoteApp(props: AppSchema): JSX.Element {
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(1000, (val) => {
-    updateState(props.id, { text: val });
+    updateState(props._id, { text: val });
   });
   // Keep a copy of the function
   const debounceFunc = useRef(debounceSave);
@@ -57,7 +57,7 @@ function NoteApp(props: AppSchema): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <textarea style={{ width: props.size.width, height: props.size.height }} value={note} onChange={handleTextChange} />
+        <textarea style={{ width: props.data.size.width, height: props.data.size.height }} value={note} onChange={handleTextChange} />
       </>
     </AppWindow>
   );

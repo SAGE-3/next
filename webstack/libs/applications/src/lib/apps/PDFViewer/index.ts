@@ -12,11 +12,15 @@
  */
 
 export type state = {
-  page: number;
+  id: string;
+  currentPage: number;
+  numPages: number;
 };
 
 export const init: Partial<state> = {
-  page: 11,
+  id: '',
+  currentPage: 0,
+  numPages: 1,
 };
 
 export const name = 'PDFViewer';

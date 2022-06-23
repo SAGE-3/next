@@ -7,17 +7,13 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
-import { AppSchema } from '../../schema';
+import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-// Styling
-import './styling.css';
-
-function Screenshare(props: AppSchema): JSX.Element {
-  const s = props.state as AppState;
+function Screenshare(props: App): JSX.Element {
+  const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
 
