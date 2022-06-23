@@ -6,7 +6,7 @@
  *
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button } from '@chakra-ui/react';
@@ -18,7 +18,7 @@ import { FileEntry, AssetModalProps } from './filemanager/types';
 import { initialValues } from '@sage3/applications/apps';
 import { ExtraImageType } from '@sage3/shared/types';
 
-export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
+export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.Element {
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
   const assets = useAssetStore((state) => state.assets);
@@ -29,6 +29,26 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
   // Room and board
   const location = useLocation();
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+
+  // Use the center of the board passed through props
+  const [dropPos, setDropPos] = useState(center);
+  // Track the browser window size
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  useEffect(() => {
+    setDropPos({
+      x: Math.floor(center.x + windowSize.width / 2 - 150),
+      y: Math.floor(center.y + windowSize.height / 2 - 150)
+    });
+  }, [center, windowSize]);
+
+  // Listen to the window size changes
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // User information
   const user = useUserStore((state) => state.user);
@@ -85,7 +105,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             roomId,
             boardId,
             ownerId: user._id,
-            position: { x: x, y: 0, z: 0 },
+            position: { ...dropPos, z: 0 },
             size: { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'ImageViewer',
@@ -100,7 +120,7 @@ export function AssetModal({ isOpen, onClose }: AssetModalProps): JSX.Element {
             roomId,
             boardId,
             ownerId: user._id,
-            position: { x: 0, y: 0, z: 0 },
+            position: { ...dropPos, z: 0 },
             size: { width: 400, height: 400 * (22 / 17), depth: 0 },
             rotation: { x: x, y: 0, z: 0 },
             type: 'PDFViewer',
