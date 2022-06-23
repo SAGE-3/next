@@ -21,28 +21,28 @@ export const Tags = (props: any) => {
 
     function handleChange(info: any) {
         console.log(info + ' tag selected')
+
     }
 
     return (
         <div>
             <CheckboxGroup colorScheme='green'>
-                <HStack spacing='5' display='flex'>
                 <HStack spacing='10' display='flex'>
                     {tags.map((tag: any) => (
-                        <Checkbox value={tag} onChange={(e) => handleChange(tag)}>{tag}</Checkbox>
+                        <Checkbox value={tag} onChange={(e) => props.setMessages((tag).charAt(0).toUpperCase() + (tag).slice(1)+ ' tag selected')}>{tag}</Checkbox>
                     ))}
-                </HStack>
                     <Menu>
                         <MenuButton
                             as={IconButton}
                             aria-label='Table Operations'
                             icon={<GoKebabVertical/>}
+                            position='absolute'
+                            right='25px'
                         />
                         <MenuList>
                             <MenuItem>Table Operation</MenuItem>
                         </MenuList>
                     </Menu>
-
                 </HStack>
             </CheckboxGroup>
         </div>

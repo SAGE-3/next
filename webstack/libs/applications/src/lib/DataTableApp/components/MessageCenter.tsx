@@ -30,6 +30,7 @@ export const MessageCenter = (props: any) => {
                 <AlertIcon />
                 <AlertTitle>Feedback: </AlertTitle>
                 <AlertDescription>{ messages }</AlertDescription>
+                <AlertDescription></AlertDescription>
             </Alert>
         </VStack>
 

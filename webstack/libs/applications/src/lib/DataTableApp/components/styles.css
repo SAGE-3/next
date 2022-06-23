@@ -16,7 +16,7 @@ body:not(.nohover) tbody td:hover {
   background-color: darkslategray;
 }
 
-thead th:not(:empty):hover::after {
+thead th:not(:empty):active::after {
   content: '';
   opacity: 30%;
   height: 500px;
@@ -27,7 +27,7 @@ thead th:not(:empty):hover::after {
   /*z-index: 2;*/
 }
 
-th:hover::after {
+th:active::after {
   background-color: purple;
 }
 

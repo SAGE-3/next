@@ -27,7 +27,7 @@ export function DataTableApp(props: AppSchema): JSX.Element {
 
     const [tags, setTags] = useState<any>([]);
     const [messages, setMessages] = useState<any>('...')
-
+    
 
     function handleClose() {
     deleteApp(props.id);
@@ -38,7 +38,7 @@ export function DataTableApp(props: AppSchema): JSX.Element {
         <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
 
         <div className="Subcomponent-Container">
-            <Tags tags={tags}/>
+            <Tags tags={tags} setMessages={setMessages}/>
         </div>
 
         <DataViz setTags={setTags} setMessages={setMessages}/>

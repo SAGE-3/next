@@ -1,7 +1,6 @@
 import {
     Badge,
     Button,
-    HStack,
     Input,
     InputGroup,
     InputRightElement,
