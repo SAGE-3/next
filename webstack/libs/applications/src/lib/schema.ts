@@ -7,13 +7,13 @@
  */
 
 // import and re-export all the apps
-import { Position, Rotation, Size } from '@sage3/shared/types';
+import { Position, Rotation, SBDoc, Size } from '@sage3/shared/types';
+import { z } from 'zod';
 import { AppName, AppState } from './types';
 export { AppName, AppState } from './types';
 
 // build the main schema
 export type AppSchema = {
-  id: string;
   name: string;
   description: string;
   roomId: string;
@@ -24,4 +24,8 @@ export type AppSchema = {
   rotation: Rotation;
   type: AppName;
   state: AppState;
+  minimized: boolean;
 };
+
+
+export type App = SBDoc & { data: AppSchema };

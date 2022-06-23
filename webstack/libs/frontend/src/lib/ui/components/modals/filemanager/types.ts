@@ -6,7 +6,7 @@
  *
  */
 
-import { AssetSB, ExtraImageType } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
 /**
  * One row per file
@@ -18,23 +18,24 @@ export type FileEntry = {
   owner: string;
   date: number;
   dateAdded: number;
-  boardId: string;
+  room: string;
   size: number;
   type: string;
-  exif: any;
-  derived?: ExtraImageType;
   selected: boolean;
+  metadata?: string;
+  derived?: ExtraImageType | ExtraPDFType;
 };
 
 export type RowFileProps = {
   file: FileEntry;
   style: React.CSSProperties; // for react-window
   clickCB: (p: FileEntry) => void;
-  dbclickCB: (p: FileEntry) => void;
+  // dbclickCB: (p: FileEntry) => void;
 };
 
 export interface AssetModalProps {
   isOpen: boolean;
+  center: { x: number; y: number };
   onOpen: () => void;
   onClose: () => void;
 }
@@ -46,8 +47,5 @@ export interface ExifViewerProps {
 
 export interface FileManagerProps {
   files: FileEntry[];
-  openFiles: (f: FileEntry[]) => void;
-  // isOpen: boolean;
-  // onOpen: () => void;
-  // onClose: () => void;
+  // openFiles: (f: FileEntry[]) => void;
 }

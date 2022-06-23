@@ -7,6 +7,7 @@
  */
 
 import { z } from "zod";
+import { SBDoc } from "./SBSchema";
 
 const UserType = z.enum(["wall", "client"]);
 export type UserType = z.infer<typeof UserType>;
@@ -18,9 +19,7 @@ export type UserRole = z.infer<typeof UserRole>;
  * SAGE3 UserSchema
  * @interface UserSchema
  */
-export const UserSchema = z.object({
-  // Id of the user
-  id: z.string(),
+const schema = z.object({
   // Name of the user
   name: z.string(),
   // Email address of the user.
@@ -33,7 +32,9 @@ export const UserSchema = z.object({
   userType: UserType,
   // Role of the user in SAGE3
   userRole: UserRole,
-
 });
 
-export type UserSchema = z.infer<typeof UserSchema>;
+export type UserSchema = z.infer<typeof schema>;
+
+export type User = SBDoc & { data: UserSchema };
+

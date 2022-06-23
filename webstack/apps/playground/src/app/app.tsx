@@ -8,92 +8,97 @@
 
 import { useAppStore } from '@sage3/frontend';
 import { Applications, initialValues } from '@sage3/applications/apps';
-import { Button } from '@chakra-ui/react';
+import { Box, Button, Select } from '@chakra-ui/react';
+import { AppName } from '@sage3/applications/schema';
+import { DraggableData, Rnd } from 'react-rnd';
+import { useState } from 'react';
 
 export function App() {
   const apps = useAppStore((state) => state.apps);
 
   const createApp = useAppStore((state) => state.create);
+  // Board current position
+  const [boardPos, setBoardPos] = useState({ x: 0, y: 0 });
 
-  function handleNoteClick() {
-    createApp(
-      'Note',
-      'Note Description',
-      `1`,
-      '1',
-      { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
-      { x: 0, y: 0, z: 0 },
-      'Note',
-      initialValues['Note']);
-  }
-  function handleCounterClick() {
-    createApp(
-      'Counter',
-      'Counter Description',
-      `1`,
-      '1',
-      { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
-      { x: 0, y: 0, z: 0 },
-      'Counter',
-      initialValues['Counter']);
-  }
-  function handleImageClick() {
-    createApp(
-      'Image',
-      'Image Description',
-      `1`,
-      '1',
-      { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
-      { x: 0, y: 0, z: 0 },
-      'Image',
-      initialValues['Image']);
-  }
-  function handleSliderClick() {
-    createApp(
-      'Slider',
-      'Slider Description',
-      `1`,
-      '1',
-      { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
-      { x: 0, y: 0, z: 0 },
-      'Slider',
-      initialValues['Slider']);
+  // On a drag stop of the board. Set the board position locally.
+  function handleDragBoardStop(event: any, data: DraggableData) {
+    setBoardPos({ x: -data.x, y: -data.y });
   }
 
-  function handleLinkerClick() {
-    createApp(
-      'Linker',
-      'Linker Description',
-      `1`,
-      '1',
-      { x: 0, y: 0, z: 0 },
-      { width: 0, height: 0, depth: 0 },
-      { x: 0, y: 0, z: 0 },
-      'Linker',
-      initialValues['Linker']);
-  }
+  const handleNewApp = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    // Check if value is corretly set
+    const appName = event.target.value as AppName;
+    if (!appName) return;
+
+    // Default width and height
+    const width = 300;
+    const height = 300;
+    // Cacluate X and Y of app based on the current board position and the width and height of the viewport
+    const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+    const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+    // Create the new app
+    createApp({
+      name: appName,
+      description: `${appName} - Description`,
+      roomId: '1234',
+      boardId: '1234',
+      position: { x, y, z: 0 },
+      size: { width, height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: appName,
+      ownerId: '1234',
+      state: initialValues[appName] as any,
+      minimized: false,
+    });
+  };
 
   return (
     <div>
       <h1>SAGE3 Application Playground</h1>
-      <Button onClick={handleNoteClick}>Note App</Button>
-      <Button onClick={handleCounterClick}>Counter App</Button>
-      <Button onClick={handleImageClick}>Image App</Button>
-      <Button onClick={handleSliderClick}>Slider App</Button>
-      <Button onClick={handleLinkerClick}>Linker App</Button>
+
       <hr />
-      {apps.map((app) => {
-        const Component = Applications[app.type];
-        return (
-          <div key={app.id} style={{ margin: 3 }}>
-            <Component key={app.id} {...app}></Component>
-          </div>
-        );
-      })}
+      <Rnd
+        default={{
+          x: 0,
+          y: 0,
+          width: 5000,
+          height: 5000,
+        }}
+        onDragStop={handleDragBoardStop}
+        enableResizing={false}
+        dragHandleClassName={'board-handle'}
+      >
+        {apps.map((app) => {
+          const Component = Applications[app.data.type];
+          return <Component key={app._id} {...app}></Component>;
+        })}
+        
+        {/* Draggable Background */}
+        <Box
+          className="board-handle"
+          width={5000}
+          height={5000}
+          backgroundSize={`50px 50px`}
+          backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
+            linear-gradient(to bottom, grey 1px, transparent 1px);`}
+        />
+      </Rnd>
+
+      <Select
+        colorScheme="green"
+        width="200px"
+        mx="1"
+        background="darkgray"
+        placeholder="Open Application"
+        onChange={handleNewApp}
+        value={0}
+      >
+        {Object.keys(Applications).map((appName) => (
+          <option key={appName} value={appName}>
+            {appName}
+          </option>
+        ))}
+      </Select>
     </div>
   );
 }

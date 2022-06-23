@@ -13,16 +13,16 @@
  * @version 1.0.0
  */
 
-import { AssetType } from '@sage3/shared/types';
-import { httpDELETE, httpGET } from './http';
+import { Asset, AssetSchema } from '@sage3/shared/types';
+import { APIHttp } from './api-http';
 
 // async function read(id: AssetType['id']): Promise<AssetType[] | undefined> {
 //   const response = await httpGET('/api/assets/' + id);
 //   return response.data;
 // }
 
-async function readAll(): Promise<AssetType[] | undefined> {
-  const response = await httpGET('/api/assets');
+async function readAll(): Promise<Asset[] | undefined> {
+  const response = await APIHttp.GET<AssetSchema, Asset>('/assets');
   return response.data;
 }
 

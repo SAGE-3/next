@@ -24,6 +24,8 @@ import {
   Spacer
 } from '@chakra-ui/react';
 
+import "./menu.scss";
+
 export function FileManager(props: FileManagerProps): JSX.Element {
   // The data list
   const [filesList, setList] = useState(props.files);
@@ -328,10 +330,10 @@ export function FileManager(props: FileManagerProps): JSX.Element {
   };
 
   // Open file when double-clicked
-  const onDBClick = (p: FileEntry) => {
-    // Open the file
-    props.openFiles([p]);
-  };
+  // const onDBClick = (p: FileEntry) => {
+  //   // Open the file
+  //   props.openFiles([p]);
+  // };
 
   return (
     <>
@@ -380,7 +382,8 @@ export function FileManager(props: FileManagerProps): JSX.Element {
       >
         {/* Iterate over the file list */}
         {({ index, style, data }) => <RowFile file={data[index]} style={style}
-          clickCB={onClick} dbclickCB={onDBClick}
+          clickCB={onClick}
+        // dbclickCB={onDBClick}
         />}
       </FixedSizeList>
     </>);

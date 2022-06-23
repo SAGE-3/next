@@ -22,7 +22,8 @@ import {
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { RoomSchema } from '@sage3/shared/types';
-import { useRoomStore } from '../../../stores';
+import { useRoomStore, useUserStore } from '../../../stores';
+import { randomSAGEColor } from '@sage3/shared';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   const toast = useToast();
 
   const createRoom = useRoomStore(state => state.create);
+  const user = useUserStore(state => state.user);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
@@ -58,7 +60,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   };
 
   const create = () => {
-    if (name && description) {
+    if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
 
@@ -70,7 +72,13 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           isClosable: true,
         });
       } else {
-        createRoom(cleanedName, description);
+        createRoom({
+          name: cleanedName,
+          description,
+          color: randomSAGEColor().name,
+          ownerId: user._id,
+          isPrivate: false
+        });
         props.onClose();
       }
     }
@@ -109,7 +117,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>
+          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description || !user}>
             Create
           </Button>
         </ModalFooter>
