@@ -18,6 +18,7 @@
  * Node Modules
  */
 import * as path from 'path';
+import * as fs from 'fs';
 import { IncomingMessage, Server } from 'http';
 
 // Websocket
@@ -28,13 +29,16 @@ import { SubscriptionCache } from '@sage3/backend';
 import { createApp, listenApp, serveApp } from './web';
 import { loadCredentials, listenSecureApp } from './web';
 
+// Check the token on websocket connection
+import * as jwt from 'jsonwebtoken';
+
 /**
  * SAGE3 Libs
  */
 import { loadConfig } from './config';
 // import { AssetService } from './services';
-import { expressAPIRouter, wsAPIRouter } from './controllers';
-import { loadModels } from './models';
+import { expressAPIRouter, wsAPIRouter } from './api/routers';
+import { loadCollections } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -87,7 +91,7 @@ async function startServer() {
   await SAGEBase.init(sbConfig, app);
 
   // Load all the models: user, board, ...
-  await loadModels();
+  await loadCollections();
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
@@ -97,16 +101,26 @@ async function startServer() {
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
 
   // Websocket API for sagebase
-  apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+  apiWebSocketServer.on('connection', (socket: WebSocket) => {
+
+    console.log('apiWebSocketServer> connection open');
+
+    // Create a subscription cache for this connection.
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
-    console.log('apiWebSocketServer> connection');
+
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, request, message, subCache);
+      wsAPIRouter(socket, message, subCache);
     });
 
     socket.on('close', () => {
+      console.log('apiWebSocketServer> connection closed');
+      subCache.deleteAll();
+    });
+
+    socket.on('error', () => {
+      console.log('apiWebSocketServer> error');
       subCache.deleteAll();
     });
   });
@@ -120,18 +134,40 @@ async function startServer() {
 
   // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
+    // TODO: Declarations file was being funny again
+    const req = request as any;
     // get url path
     const pathname = request.url;
     if (!pathname) return;
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
+
     SAGEBase.Auth.sessionParser(request, {}, () => {
-      // if (!request.session.passport?.user) {
-      //   // console.log('not authorized');
-      //   socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-      //   socket.destroy();
-      //   return;
-      // }
+      let token = request.headers.authorization;
+      if (config.auth.jwtConfig && token) {
+        // extract the token from the header
+        token = token.split(' ')[1];
+        // Read the public key
+        const keyFile = config.auth.jwtConfig?.publicKey || 'jwt_public.pem';
+        const pubkey = fs.readFileSync(keyFile);
+        // Check is token valid
+        jwt.verify(token, pubkey, { algorithms: ['RS256'] }, (err, decoded) => {
+          if (err) {
+            console.log('not authorized');
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.destroy();
+            return;
+          } else {
+            console.log('Authorization> ws ok', decoded?.sub);
+          }
+        });
+      } else if (!req.session.passport?.user) {
+        // Auth coming from a logged user
+        console.log('Authorization> ws failed');
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
       if (wsPath === 'api') {
         apiWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
           apiWebSocketServer.emit('connection', ws, request);

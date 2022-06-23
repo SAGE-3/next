@@ -85,6 +85,7 @@ export class SBCollectionRef<Type extends SBJSON> {
     await subscriber.connect();
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
+      parseMsg.col = this._name;
       callback(parseMsg);
     });
 
@@ -103,7 +104,7 @@ export class SBCollectionRef<Type extends SBJSON> {
    * @returns {Promise<() => Promise<void>>}
    */
   public async subscribeToQuery(
-    propertyName: string,
+    propertyName: keyof Type,
     value: string,
     callback: (message: SBDocumentMessage<Type>) => void
   ): Promise<() => Promise<void>> {
@@ -112,6 +113,7 @@ export class SBCollectionRef<Type extends SBJSON> {
 
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
+      parseMsg.col = this._name;
       const propValue = parseMsg.doc.data[propertyName];
       if (propValue === value) {
         callback(parseMsg);
@@ -170,10 +172,14 @@ export class SBCollectionRef<Type extends SBJSON> {
    */
   public async createQueryIndex(indexFields: Partial<Type>): Promise<boolean> {
     this._indexName = `idx:${this._name}`;
-    try {
-      await this._redisClient.ft.dropIndex(this._indexName);
-    } catch (error) {
-      this.INFOLOG(error);
+    const indexList = await this._redisClient.ft._LIST();
+    if (indexList.indexOf(this._indexName) !== -1) {
+      try {
+        await this._redisClient.ft.dropIndex(this._indexName);
+        this._redisClient.ft.INFO
+      } catch (error) {
+        this.INFOLOG(error);
+      }
     }
     try {
       const schema = {

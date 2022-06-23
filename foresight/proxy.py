@@ -1,9 +1,9 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # TODO: CRITICAL, I am a proxy -- ignore my own messages.
 
@@ -12,130 +12,143 @@
 #  and no unknwon fields
 
 # TODO: call this class something else?
-
-import time
-import socketio
+import asyncio
 import json
-import os
-from wall import Wall
-import requests
+import time
+import multiprocessing
+import threading
+import websockets
 import argparse
-import urllib3
+# import urllib3
+from board import Board
+import uuid
+from multiprocessing import Queue
+import requests
 
-urllib3.disable_warnings()
+from threading import Thread
+
+
+# urllib3.disable_warnings()
+
+class Room:
+    def __init__(self, room_id):
+        self.room_id = room_id
+        self.boards = {}
+
+
+async def subscribe(sock, room_id):
+    subscription_id = str(uuid.uuid4())
+    # message_id = str(uuid.uuid4())
+    print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
+    msg_sub = {
+        'route': f'/api/subscription/rooms/{room_id}',
+        'id': subscription_id, 'method': 'SUB'
+    }
+    await sock.send(json.dumps(msg_sub))
+
 
 
 class BoardProxy():
-    def __init__(self, config_file):
-        NB_TRIALS = 5
-        self.wall = None
-        try:
-            self.__config = json.load(open(config_file, 'r'))
-            # Loop to wait for node server to be up
-            while NB_TRIALS:
-                try:
-                    response = requests.get(self.__config['server'], timeout=5)
-                    if response.status_code != 500:
-                        print(f'Server ready {response.status_code}')
-                        break
-                except requests.exceptions.RequestException as e:
-                    print('Server not ready, trying again', e)
-                    time.sleep(1)
-                    NB_TRIALS -= 1
 
-            # UUID of the board to track
-            self.board_uuid = self.__config["board_uuid"]
+    def __init__(self, config_file, room_id):
+        self.room = Room(room_id)
+        # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
+        # NB_TRIALS = 5
+        self.__config = json.load(open(config_file))
+        self.__headers = {'Authorization': f"Bearer {self.__config['token']}"}
+        self.__message_queue = Queue()
+        self.__OBJECT_CREATION_METHODS = {
+            "CREATE": self.__handle_create,
+            "UPDATE": self.__handle_update,
+        }
 
-            #  Build header with auth token
-            self.__head = {'Authorization': 'Bearer {}'.format(self.__config["token"])}
+    def authenticat_new_user(self):
+        head = {'Authorization': f"Bearer {self.__config['token']}"}
+        r = requests.post( self.__config['server']+ '/auth/jwt', headers=head)
+        response = r.json()
 
-        except Exception as e:
-            print(f"Error in the proxy: {e}")
-            raise e
+    def receive_messages(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        # self.authenticat_new_user()
+        async def _run(self):
+            async with websockets.connect(self.__config["socket_server"],
+                                          extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
+                await subscribe(ws, self.room.room_id)
+                async for msg in ws:
+                    msg = json.loads(msg)
+                    print(f"I receive the follwing messages and I'm adding it to the queue\n {msg}")
+                    self.__message_queue.put(msg)
 
-    def setup(self):
-        self.sio = socketio.Client(ssl_verify=False)
-        self.call_backs()
-        print(self.__config["server"])
-        print(self.__config["path"])
-        print({'token': self.__config["token"]})
-        self.sio.connect(self.__config["server"],
-                         socketio_path=self.__config["path"],
-                         auth={'token': self.__config["token"]})
+        asyncio.get_event_loop().run_until_complete(_run(self))
 
-    def loop(self):
-        if self.__config['production']:
-            self.sio.wait()
-        else:
-            pass
+    def process_messages(self):
+        """
+        Running this in the main thread to not deal with sharing variables right.
+        potentially work on a multiprocessing version where threads are processed separately
+        Messages needs to be numbered to avoid received out of sequences messages.
+        """
+        while True:
+            msg = self.__message_queue.get()
+            print(f"Handling message: {msg}")
+            print(f'Working on {msg}')
+            # self.__OBJECT_CREATION_METHODS[message_type](msg)
+            # print(f'Finished processing {msg["id"]}')
 
-    def call_backs(self):
-        @self.sio.event
-        def connect():
-            self.sio.emit('board-connect', {'boardId': self.board_uuid})
-            print('connection established')
+    def clean_up(self):
+        print("cleaning up the queue")
+        if self.__message_queue.qsize() > 0:
+            print("Queue was not empty")
+        self.__message_queue.close()
 
-        @self.sio.on("data")
-        def raw_data(data):
-            print(f"Received msg: {data}")
-            if len(data['updates']['apps']) == 0 and len(data['updates']['data']) == 0:
-                # just connected and got a wall state message
-                # to make sure nothing weired is happending here
-                # data["state"]["apps"]
-                self.wall = Wall(data, self.__config)
-            elif len(data['updates']['apps']) > 0:
-                # an app was created or deleted or changes its features (ex. pos)
-                app_uuid = list(data["updates"]["apps"].keys())[0]
-                if app_uuid not in data["state"]["apps"]:
-                    # the app was deleted. Handle app delete
-                    print(f"app {app_uuid} was deleted")
-                    self.wall.remove_smartbit(app_uuid)
-                else:
-                    if app_uuid in self.wall.smartbits:
-                        # TODO: handle changes to the app features(position)
-                        #  or addition of a new element for collection type smartbits (ex.ImageViewer)
-                        smartbit = self.wall.smartbits[app_uuid]
-                        # check if smartbit exist for this app type
-                        if smartbit:
-                            smartbit.update_from_msg(
-                                data["state"]["apps"][app_uuid])
-                    else:
-                        print(f"app {app_uuid} was added")
-                        # the app was added. Handle app addition
-                        app_data = data["state"]["apps"][app_uuid]
-                        self.wall.create_smartbit(app_uuid, app_data)
+    def __handle_create(self, msg):
+        collection = msg["event"]["key"].split(":")[2]
+        if collection == "BOARDS":
+            print("Yes, I am adding a new board to the boards collection")
+            new_board = Board(msg["event"]["doc"]["data"])
+            print(new_board)
+            print(f"Room is of type {type(self.room)}")
+            self.room.boards[new_board.id] = new_board
+            self.room.boards[1] = 2
+            print(f"self.boards is now: {self.room.boards}")
+            print("Done adding the new board")
 
-            elif len(data['updates']['data']) > 0:
-                # an app changed its data.
-                state_uuid = list(data['updates']['data'].keys())[0]
-                result = [app_uuid for app_uuid,
-                                       app in self.wall.smartbits if app and (app.state_uuid == state_uuid)]
-                if len(result) == 1:
-                    app_uuid = result[0]
-                    print(f"App {app_uuid} changed data")
-                    new_data = self.wall.smartbits[app_uuid].get_state()
-                    self.wall.smartbits[app_uuid].apply_new_state(
-                        new_data["data"])
-            else:
-                raise Exception(f"Unhandled situation in the proxy. {data}")
-
-        @self.sio.event
-        def disconnect():
-            print('Disconnecting from the server')
-
-    def run(self):
-        self.setup()
-        self.loop()
+    def __handle_update(self, msg):
+        pass
 
 
 def get_cmdline_parser():
     parser = argparse.ArgumentParser(description='Sage3 Python Proxy Server')
     parser.add_argument('-c', '--config_file', type=str, required=True, help="Configuration file path")
+    parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
     return parser
 
 
 if __name__ == "__main__":
-    parser = get_cmdline_parser()
-    args = parser.parse_args()
-    board_proxy = BoardProxy(config_file=args.config_file)
-    board_proxy.run()
+    # The below is needed in running in iPython -- need to dig into this more
+    # multiprocessing.set_start_method("fork")
+    # parser = get_cmdline_parser()
+    # args = parser.parse_args()
+    board_proxy = BoardProxy("config.json", "18b94448-7698-4124-9d70-f3a78d0b41f3")
+
+    # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
+    # board_proxy = BoardProxy(args.config_file, args.room_id)
+    # listening_process = multiprocessing.Process(target=board_proxy.receive_messages)
+    # worker_process = multiprocessing.Process(target=board_proxy.process_messages)
+
+    listening_process = threading.Thread(target=board_proxy.receive_messages)
+    worker_process = threading.Thread(target=board_proxy.process_messages)
+
+    try:
+        # start the process responsible for listening to messages and adding them to the queue
+        listening_process.start()
+        # start the process responsible for handling message added to the queue.
+        worker_process.start()
+
+        # while True:
+        #     time.sleep(100)
+    except (KeyboardInterrupt, SystemExit):
+        print('\n! Received keyboard interrupt, quitting threads.\n')
+        board_proxy.clean_up()
+        listening_process.st
+        # worker_process.join()
+        print("I am here")

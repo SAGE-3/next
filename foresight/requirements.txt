@@ -1,10 +1,10 @@
 ipython
-matplotlib
-pandas
+# matplotlib
+# pandas
 python-socketio
 requests
 websockets
 websocket-client
-pillow
-pyexiftool
-fluent-logger
+# pillow
+# pyexiftool
+# fluent-logger

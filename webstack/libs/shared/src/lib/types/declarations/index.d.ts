@@ -19,7 +19,7 @@ namespace Express {
 declare module 'http' {
   interface IncomingMessage {
     user: import('@sage3/sagebase').SBAuthSchema
-    session?: any;
+    session: any;
     res?: any;
   }
 }

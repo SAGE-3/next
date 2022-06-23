@@ -7,6 +7,7 @@ import { theme } from '@sage3/frontend';
 import { LoginPage } from './pages/Login';
 import { HomePage } from './pages/Home';
 import { AuthProvider, useAuth } from '@sage3/frontend';
+import { BoardPage } from './pages/Board';
 
 export function App() {
   return (
@@ -17,11 +18,21 @@ export function App() {
           <Routes>
             <Route path="/" element={<LoginPage />} />
             <Route path="/login" element={<LoginPage />} />
+
             <Route
               path="/home"
               element={
                 <ProtectedRoute>
                   <HomePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/board"
+              element={
+                <ProtectedRoute>
+                  <BoardPage />
                 </ProtectedRoute>
               }
             />

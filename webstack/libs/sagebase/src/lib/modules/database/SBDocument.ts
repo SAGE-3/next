@@ -33,19 +33,19 @@ export type SBDocWriteResult = {
 
 export type SBDocumentCreateMessage<Type extends SBJSON> = {
   type: 'CREATE';
-  key: string;
+  col: string;
   doc: SBDocument<Type>;
 };
 
 export type SBDocumentUpdateMessage<Type extends SBJSON> = {
   type: 'UPDATE';
-  key: string;
+  col: string;
   doc: SBDocument<Type>;
 };
 
 export type SBDocumentDeleteMessage<Type extends SBJSON> = {
   type: 'DELETE';
-  key: string;
+  col: string;
   doc: SBDocument<Type>;
 };
 
@@ -129,7 +129,6 @@ export class SBDocumentRef<Type extends SBJSON> {
       this.ERRORLOG(`Doc does not exists.`);
       return generateWriteResult(false);
     }
-    const oldValue = await this.read();
     try {
       let updated = false;
       const updatePromises = Object.keys(update).map(async (key) => {
@@ -201,7 +200,6 @@ export class SBDocumentRef<Type extends SBJSON> {
   private async publishCreateAction(doc: SBDocument<Type>): Promise<void> {
     const action = {
       type: 'CREATE',
-      key: this.path,
       doc: doc,
     } as SBDocumentCreateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
@@ -211,7 +209,6 @@ export class SBDocumentRef<Type extends SBJSON> {
   private async publishUpdateAction(doc: SBDocument<Type>): Promise<void> {
     const action = {
       type: 'UPDATE',
-      key: this.path,
       doc: doc,
     } as SBDocumentUpdateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
@@ -220,7 +217,6 @@ export class SBDocumentRef<Type extends SBJSON> {
   private async publishDeleteAction(doc: SBDocument<Type>): Promise<void> {
     const action = {
       type: 'DELETE',
-      key: this.path,
       doc: doc,
     } as SBDocumentDeleteMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));

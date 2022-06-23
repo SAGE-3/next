@@ -16,6 +16,7 @@ import * as sharp from 'sharp';
 
 // SAGEBase queue
 import { SBQueue } from '../connectors';
+import { ExtraImageType } from '@sage3/shared/types';
 
 const options: { width: number; quality: number }[] = [
   { width: 400, quality: 75 },
@@ -77,15 +78,13 @@ export class ImageProcessor {
   }
 }
 
-
-
 /**
  * Process a file, using exec method
  *
  * @method file
  * @param filename {String} name of the file to be tested
  */
-async function sharpProcessing(job: any): Promise<any> {
+async function sharpProcessing(job: any): Promise<ExtraImageType> {
   return new Promise((resolve, reject) => {
     const filename: string = job.data.filename;
     const pathname: string = path.join(job.data.pathname, filename);
@@ -97,8 +96,10 @@ async function sharpProcessing(job: any): Promise<any> {
       // preserve SVG type images
       resolve({
         filename: pathname,
-        src: getStaticAssetUrl(filename),
+        url: getStaticAssetUrl(filename),
+        fullSize: getStaticAssetUrl(filename),
         aspectRatio: 1, // TODO: get real aspect ratio
+        sizes: [],
       });
     } else {
       const sharpStream = sharp({
@@ -124,16 +125,20 @@ async function sharpProcessing(job: any): Promise<any> {
       ])
         .then((res) => {
           const { width: imgWidth, height: imgHeight } = res[0];
-          const imageData = {
+          const imageData: ExtraImageType = {
             filename: pathname,
             // the default source
-            src: getStaticAssetUrl(`${filenameWithoutExt}-${options[0].width}.webp`),
+            url: getStaticAssetUrl(`${filenameWithoutExt}-${options[0].width}.webp`),
             // full size image
             fullSize: getStaticAssetUrl(`${filenameWithoutExt}-full.jpg`),
             // save the image aspect ratio
             aspectRatio: imgWidth / imgHeight,
             // create the size map for the images
-            sizes: Object.fromEntries(options.map(({ width }) => [+width, getStaticAssetUrl(`${filenameWithoutExt}-${width}.webp`)])),
+            sizes: options.map(({ width }, idx) => {
+              const url = getStaticAssetUrl(`${filenameWithoutExt}-${width}.webp`);
+              const info = res[idx];
+              return { url, ...info };
+            }),
           };
           resolve(imageData);
         })

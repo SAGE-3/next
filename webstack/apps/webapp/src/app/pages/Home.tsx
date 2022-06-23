@@ -6,11 +6,12 @@
  *
  */
 
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue } from '@chakra-ui/react';
+import { SBDocument } from '@sage3/sagebase';
 
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { useState } from 'react';
-import { AppList } from '../components/AppList';
+import { useNavigate } from 'react-router';
 
 import { BoardList } from '../components/BoardList';
 import { Header } from '../components/Header';
@@ -18,23 +19,32 @@ import { RoomList } from '../components/RoomList';
 
 export function HomePage() {
 
-  const [selectedRoom, setSelectedRoom] = useState<RoomSchema | null>(null);
-  const [selectedBoard, setSelectedBoard] = useState<BoardSchema | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<SBDocument<RoomSchema> | null>(null);
+  const [selectedBoard, setSelectedBoard] = useState<SBDocument<BoardSchema> | null>(null);
 
   const imageUrl = useColorModeValue("/assets/SAGE3LightMode.png", "/assets/SAGE3DarkMode.png");
 
-  function handleRoomClick(room: RoomSchema) {
+  const navigate = useNavigate();
+
+  function handleRoomClick(room: SBDocument<RoomSchema>) {
     setSelectedRoom(room);
     setSelectedBoard(null);
   }
 
-  function handleBoardClick(board: BoardSchema) {
+  function handleBoardClick(board: SBDocument<BoardSchema>) {
     setSelectedBoard(board);
+  }
+
+  function handleEnterBoard(board: SBDocument<BoardSchema>) {
+    setSelectedBoard(board);
+    if (selectedRoom) {
+      navigate('/board', { state: { roomId: selectedRoom._id, boardId: board._id } });
+    }
   }
 
   return (
     <div>
-      <Header title={(selectedRoom) ? selectedRoom.name : "Select a Room"}></Header>
+      <Header title={(selectedRoom) ? 'Room: ' + selectedRoom.data.name : "Rooms"}></Header>
 
       <Box display="flex" flexDirection="row" flexWrap="nowrap">
 
@@ -50,13 +60,7 @@ export function HomePage() {
           <Box display="flex" flexWrap="wrap" flexDirection="row">
 
             <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 500]}>
-              <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
-            </Box>
-
-            <Box display="flex" flexWrap="wrap" flexDirection="row" p="10">
-              {/* TEMP APPS AREA */}
-              {(selectedBoard && selectedRoom) ? <AppList selectedBoard={selectedBoard} selectedRoom={selectedRoom}></AppList> : null}
-
+              <BoardList onBoardClick={handleBoardClick} onEnterClick={handleEnterBoard} selectedRoom={selectedRoom}></BoardList>
             </Box>
 
           </Box>

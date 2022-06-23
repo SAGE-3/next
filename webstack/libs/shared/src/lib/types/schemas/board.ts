@@ -7,14 +7,13 @@
  */
 
 import { z } from "zod";
+import { SBDoc } from "./SBSchema";
 
 /**
  * @typedef {object} BoardSchema
  * Defines the Schema for the BoardModel.
  */
-export const BoardSchema = z.object({
-  // Id of the board
-  id: z.string(),
+const schema = z.object({
   // Name of the board
   name: z.string(),
   // Description of the board.
@@ -29,5 +28,6 @@ export const BoardSchema = z.object({
   isPrivate: z.boolean(),
 })
 
-export type BoardSchema = z.infer<typeof BoardSchema>;
+export type BoardSchema = z.infer<typeof schema>;
 
+export type Board = SBDoc & { data: BoardSchema };

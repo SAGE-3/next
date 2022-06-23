@@ -36,7 +36,7 @@ export const SAGEColors = [
     value: '#76E4F7',
   },
   {
-    name: 'pruple',
+    name: 'purple',
     value: '#B794F4',
   },
   {

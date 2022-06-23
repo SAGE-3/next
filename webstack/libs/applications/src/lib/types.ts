@@ -1,19 +1,20 @@
-/**
- * Copyright (c) SAGE3 Development Team
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- *
- */
+// SAGE3 Generated from apps.json file
 
-import { state as CounterState, name as CounterName } from './CounterApp';
-import { state as ImageState, name as ImageName } from './ImageApp';
-import { state as LinkerState, name as LinkerName } from './LinkerApp';
-import { state as NoteState, name as NoteName } from './NoteApp';
-import { state as SliderState, name as SliderName } from './SliderApp';
-import { state as PlotsState, name as PlotsName } from './PlotsApp';
-import { state as DataTableState, name as DataTableName } from './DataTableApp';
+import { state as CounterAppState, name as CounterAppName } from './apps/CounterApp';
+import { state as ImageAppState, name as ImageAppName } from './apps/ImageApp';
+import { state as LinkerAppState, name as LinkerAppName } from './apps/LinkerApp';
+import { state as NoteAppState, name as NoteAppName } from './apps/NoteApp';
+import { state as SliderAppState, name as SliderAppName } from './apps/SliderApp';
+import { state as StickieState, name as StickieName } from './apps/Stickie';
+import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
+import { state as CodeCellState, name as CodeCellName } from './apps/CodeCell';
+import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
+import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
+import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
+import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
+import { state as WebviewState, name as WebviewName } from './apps/Webview';
 
-export type AppState = CounterState | ImageState | LinkerState | NoteState | SliderState | PlotsState | DataTableState;
 
-export type AppName = typeof CounterName | typeof ImageName | typeof LinkerName | typeof NoteName | typeof SliderName | typeof PlotsName | typeof DataTableName;
+export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState;
+
+export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName;

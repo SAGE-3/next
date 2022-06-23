@@ -63,10 +63,10 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   };
 
   const updateAccount = () => {
-    if (name !== user?.name) {
+    if (name !== user?.data.name) {
       update({ name });
     }
-    if (email !== user?.email) {
+    if (email !== user?.data.email) {
       update({ email });
     }
     props.onClose();
@@ -83,7 +83,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <Input
               ref={initialRef}
               type="string"
-              placeholder={user?.name}
+              placeholder={user?.data.name}
               mr={4}
               value={name}
               onChange={handleNameChange}
@@ -95,7 +95,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               type="email"
-              placeholder={user?.email}
+              placeholder={user?.data.email}
               mr={4}
               value={email}
               onChange={handleEmailChange}
