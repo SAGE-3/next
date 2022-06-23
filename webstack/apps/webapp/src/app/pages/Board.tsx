@@ -208,9 +208,9 @@ export function BoardPage() {
       </Rnd>
 
       {/* Top bar */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" p={2} position="absolute" top="0" width="100%">
+      <Box display="flex" pointerEvents={"none"} justifyContent="space-between" alignItems="center" p={2} position="absolute" top="0" width="100%">
         {/* Home Button */}
-        <Button colorScheme="green" onClick={handleHomeClick}>
+        <Button pointerEvents={"all"} colorScheme="green" onClick={handleHomeClick}>
           Home
         </Button>
 
@@ -220,7 +220,7 @@ export function BoardPage() {
         </Text>
 
         {/* User Avatar */}
-        <Avatar size="md" name={user?.data.name} backgroundColor={user ? sageColorByName(user.data.color) : ''} color="black" />
+        <Avatar size="md" pointerEvents={"all"} name={user?.data.name} backgroundColor={user ? sageColorByName(user.data.color) : ''} color="black" />
       </Box>
 
       {/* Bottom Bar */}
