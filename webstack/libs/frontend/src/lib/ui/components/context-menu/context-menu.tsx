@@ -16,22 +16,21 @@ import './style.scss';
  * @param props children divId
  * @returns JSX.Element
  */
-export const ContextMenu = (props: { children: JSX.Element; divId: string }) => {
+export const ContextMenu = (props: { children: JSX.Element; divId: string, boardPosition: { x: number, y: number } }) => {
+  // Cursor position
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
-  // hide menu
+  // Hide menu
   const [showContextMenu, setShowContextMenu] = useState(false);
 
-  const handleContextMenu = useCallback(
-    (event: any) => {
-      event.preventDefault();
-      //check if right div ID is clicked
-      if (event.target.id === props.divId) {
-        setContextMenuPos({ x: event.pageX, y: event.pageY });
-        setShowContextMenu(true);
-      }
-    },
-    [setContextMenuPos]
-  );
+  const handleContextMenu = useCallback((event: any) => {
+    event.preventDefault();
+    // Check if right div ID is clicked
+    if (event.target.id === props.divId) {
+      // local position plus board position
+      setContextMenuPos({ x: event.clientX + props.boardPosition.x, y: event.clientY + props.boardPosition.y });
+      setShowContextMenu(true);
+    }
+  }, [setContextMenuPos, props.divId, props.boardPosition]);
 
   const handleClick = useCallback(() => (showContextMenu ? setShowContextMenu(false) : null), [showContextMenu]);
 
