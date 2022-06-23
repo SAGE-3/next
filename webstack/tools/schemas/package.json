@@ -1,0 +1,21 @@
+{
+  "name": "schemas",
+  "version": "1.0.0",
+  "main": "./src/generate.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node ./src/generate.ts",
+    "build": "tsc",
+    "runbuild": "node dist/tools/schemas/src/generate.js",
+    "clean": "tsc --build --clean"
+  },
+  "dependencies": {
+    "zod": "^3.17.3",
+    "zod-to-json-schema": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.4"
+  }
+}

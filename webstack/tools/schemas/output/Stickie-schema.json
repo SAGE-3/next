@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Stickie",
+  "definitions": {
+    "Stickie": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_createdAt": {
+          "type": "number"
+        },
+        "_updatedAt": {
+          "type": "number"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "number"
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "text",
+            "fontSize",
+            "color"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "_id",
+        "_createdAt",
+        "_updatedAt",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

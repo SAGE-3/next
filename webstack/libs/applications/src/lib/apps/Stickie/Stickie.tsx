@@ -39,7 +39,9 @@ function Stickie(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
+  // Information about the user
   const user = useUserStore((state) => state.user);
+  // Get the current room and board
   const location = useLocation();
   const locationState = location.state as {
     boardId: string;
