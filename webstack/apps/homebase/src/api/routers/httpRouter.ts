@@ -40,13 +40,13 @@ export function expressAPIRouter(): express.Router {
 
   router.use('/assets', assetExpressRouter());
 
-  router.use('/apps', AppsCollection.httpRouter());
+  router.use('/apps', AppsCollection.router());
 
-  router.use('/boards', BoardsCollection.httpRouter());
+  router.use('/boards', BoardsCollection.router());
 
-  router.use('/rooms', RoomsCollection.httpRouter());
+  router.use('/rooms', RoomsCollection.router());
 
-  router.use('/users', UsersCollection.httpRouter());
+  router.use('/users', UsersCollection.router());
 
   return router;
 }

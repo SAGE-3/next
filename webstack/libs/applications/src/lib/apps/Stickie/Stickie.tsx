@@ -11,7 +11,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Textarea } from '@chakra-ui/react';
 
-import { useAppStore, useUserStore } from '@sage3/frontend';
+import { useAppStore, useUser } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './';
@@ -34,12 +34,12 @@ const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed'
 function Stickie(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
-  console.log(s);
+
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
   const location = useLocation();
   const locationState = location.state as {
     boardId: string;

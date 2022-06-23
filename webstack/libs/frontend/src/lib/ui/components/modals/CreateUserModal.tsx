@@ -21,18 +21,16 @@ import {
   Button,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
-import { UserSchema } from '@sage3/shared/types';
-import { useUser } from '../../../hooks';
+import { User, UserSchema } from '@sage3/shared/types';
+import { randomSAGEColor } from '@sage3/shared';
+import { APIHttp } from '../../../api';
+import { useNavigate } from 'react-router';
+import { AuthHTTPService } from '../../../auth';
 
 
-interface EditUserModalProps {
-  isOpen: boolean;
-  onOpen: () => void;
-  onClose: () => void;
-}
+export function CreateUserModal(): JSX.Element {
 
-export function EditUserModal(props: EditUserModalProps): JSX.Element {
-  const { user, update } = useUser();
+  const navigate = useNavigate();
 
   const [name, setName] = useState<UserSchema['name']>('');
   const [email, setEmail] = useState<UserSchema['email']>('');
@@ -43,9 +41,6 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-  // useEffect(() => {
-  //   initialRef.current?.select();
-  // }, [initialRef.current]);
 
   const setRef = useCallback((_node: HTMLInputElement) => {
     if (initialRef.current) {
@@ -57,32 +52,42 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
-      updateAccount();
+      createAccount();
     }
   };
 
-  const updateAccount = () => {
-    if (name !== user?.data.name && update) {
-      update({ name });
+  const createAccount = async () => {
+    if (name && email) {
+      const newuser = {
+        name,
+        email,
+        color: randomSAGEColor().name,
+        userRole: 'user',
+        userType: 'client',
+        profilePicture: ''
+      } as UserSchema;
+      const createResponse = await APIHttp.POST<UserSchema, User>('/users/create', newuser);
+      if (createResponse.success && createResponse.data) {
+        navigate('/home')
+      }
+
     }
-    if (email !== user?.data.email && update) {
-      update({ email });
-    }
-    props.onClose();
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={true} closeOnOverlayClick={false} onClose={() => {
+      console.log('dont close me')
+    }}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Edit User Account</ModalHeader>
+        <ModalHeader>Create User Account</ModalHeader>
         <ModalBody>
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}
               type="string"
-              placeholder={user?.data.name}
+              placeholder="Name"
               mr={4}
               value={name}
               onChange={handleNameChange}
@@ -94,7 +99,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               type="email"
-              placeholder={user?.data.email}
+              placeholder="Email"
               mr={4}
               value={email}
               onChange={handleEmailChange}
@@ -104,8 +109,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name || !email}>
-            Update
+          <Button colorScheme="red" onClick={AuthHTTPService.logout}>Cancel</Button>
+          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
+            Create Account
           </Button>
         </ModalFooter>
       </ModalContent>

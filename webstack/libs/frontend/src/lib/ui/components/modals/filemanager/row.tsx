@@ -23,8 +23,8 @@ import {
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 import { RowFileProps } from './types';
 
-import { useUserStore } from '../../../../stores';
-import { humanFileSize, downloadFile } from '@sage3/frontend';
+
+import { humanFileSize, downloadFile, useUser } from '@sage3/frontend';
 import { ExifViewer } from './exifviewer';
 
 /**
@@ -36,7 +36,7 @@ import { ExifViewer } from './exifviewer';
  */
 export function RowFile({ file, style, clickCB }: RowFileProps) {
   // check if user is a guest
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
 
   const toast = useToast();
   // Store if the file is selected or not

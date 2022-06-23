@@ -12,7 +12,7 @@ import { Avatar, Box, Button, Select, Text, useDisclosure, useToast } from '@cha
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
 
-import { useAppStore, useBoardStore, useUserStore } from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUser } from '@sage3/frontend';
 import { AssetModal, UploadModal } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
@@ -41,7 +41,7 @@ export function BoardPage() {
   const board = boards.find((el) => el._id === locationState.boardId);
 
   // User information
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
 
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();

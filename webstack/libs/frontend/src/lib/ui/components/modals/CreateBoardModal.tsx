@@ -24,8 +24,9 @@ import {
 
 import { MdPerson } from 'react-icons/md';
 import { RoomSchema } from '@sage3/shared/types';
-import { useBoardStore, useUserStore } from '../../../stores';
+import { useBoardStore } from '../../../stores';
 import { randomSAGEColor } from '@sage3/shared';
+import { useUser } from '../../../hooks';
 
 interface CreateBoardModalProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const createBoard = useBoardStore(state => state.create);
 
-  const user = useUserStore(state => state.user);
+  const { user } = useUser();
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
@@ -131,3 +132,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     </Modal>
   );
 }
+function userUser() {
+  throw new Error('Function not implemented.');
+}
+

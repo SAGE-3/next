@@ -7,7 +7,7 @@
  */
 
 /**
- * User Provider
+ * Auth Provider
  * @file User Provider
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
@@ -37,7 +37,7 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
   useEffect(() => {
     async function fetchAuth() {
       const auth = await AuthHTTPService.verifyAuth();
-      setAuth({ isAuthenticated: auth.authentication, auth: auth.auth })
+      setAuth({ isAuthenticated: auth.authentication, auth: auth.auth });
     }
     fetchAuth()
   }, [])

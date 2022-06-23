@@ -19,6 +19,7 @@ import { User, UserSchema } from '@sage3/shared/types';
 import { APIHttp } from "../api";
 import { SocketAPI } from "../utils";
 import { randomSAGEColor } from "@sage3/shared";
+import { useAuth, useUser } from "../hooks";
 
 interface UserState {
   user: User | undefined;
@@ -28,72 +29,21 @@ interface UserState {
 }
 
 /**
- * The UserStore of the current user.
+ * The UserStore of users.
+ * Current user is a hook useUser
  */
 const UserStore = createVanilla<UserState>((set, get) => {
-  let userSub: (() => void) | null = null;
-  SocketAPI.init()
+  // let userSub: (() => void) | null = null;
   return {
     user: undefined,
     create: async (newuser: UserSchema) => {
-      const user = await APIHttp.POST<UserSchema, User>('/users', newuser);
-      if (user.data) {
-        get().subscribeToUser(user.data[0]._id)
-      }
+      // TODO
     },
     update: async (updates: Partial<UserSchema>) => {
-      const user = get().user;
-      if (!user) return;
-      const putResponse = await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
-      console.log(putResponse);
+      // TODO
     },
     subscribeToUser: async (id: string) => {
-      const getResponse = await APIHttp.GET<UserSchema, User>(`/users/${id}`);
-      let user = null;
-      if (getResponse.data) {
-        user = getResponse.data[0];
-        set({ user })
-      } else {
-        const newuser = {
-          name: `Anonymous`,
-          email: 'anon@anon.com',
-          color: randomSAGEColor().name,
-          userRole: 'user',
-          userType: 'client',
-          profilePicture: ''
-        } as UserSchema;
-        const postResponse = await APIHttp.POST<UserSchema, User>(`/users`, newuser);
-        if (postResponse.data) {
-          user = postResponse.data[0];
-          set({ user })
-        }
-      }
-
-      if (!user) return;
-      // Unsubscribe old subscription
-      if (userSub) {
-        userSub();
-        userSub = null;
-      }
-      // Socket Subscribe Message
-      const route = `/users/${user._id}`;
-      // Socket Listenting to updates from server about the current user
-      userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-        const doc = message.doc as User;
-        switch (message.type) {
-          case 'CREATE': {
-            set({ user: doc })
-            break;
-          }
-          case 'UPDATE': {
-            set({ user: doc })
-            break;
-          }
-          case 'DELETE': {
-            set({ user: undefined })
-          }
-        }
-      });
+      // TODO
     }
   }
 })

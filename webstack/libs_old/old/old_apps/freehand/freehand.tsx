@@ -44,7 +44,7 @@ import { useStore } from '.';
 export const Appsfreehand: React.FC<freehandProps> = (props) => {
   // Shared data: an array of stroke
   const { data: strokes, dispatch, isPending } = useSageStateReducer(props.state.strokes, strokesReducer);
-  const user = useUser();
+  const { user } = useUser();
 
   const penColor = useStore((state: any) => state.color[props.id])
   const setSVG = useStore((state: any) => state.setSVG)
