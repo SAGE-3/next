@@ -6,16 +6,29 @@
  *
  */
 
- .menu {
-  font-size: 100%;
-  border-radius: 7px;
-  width: 150px;
+ .contextmenu {
+  font-size: 16px;
+  font-family: Menlo, Monaco, Consolas, monospace;
+  border-radius: 4px;
+  padding: 1px 1px 1px 1px;
+  width: auto;
   height: auto;
-  cursor: pointer;
   margin: 0;
-  outline: 1px solid black;
   position: absolute;
   list-style: none;
   opacity: 1;
   transition: opacity 0.5s linear;
+  z-index: 10000;
+}
+
+
+.contextmenuitem {
+  display: block;
+  padding: 2px 4px 2px 4px;
+  margin: 0;
+}
+
+.contextmenuitem:hover,
+.contextmenuitem:focus {
+  background-color: teal;
 }

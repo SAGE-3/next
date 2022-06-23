@@ -44,18 +44,21 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string, board
   });
 
   // const bgColor = menuBgColor();
-  const bgColor = useColorModeValue("#A0AEC0", "#4A5568");
+  // const bgColor = useColorModeValue("#A0AEC0", "#4A5568");
   // const borderColor = useColorModeValue("#A0AEC0", "#4A5568");
   // const textColor = useColorModeValue("#2D3748", "#E2E8F0");
+  const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
+  const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
 
   return (
     showContextMenu ? (
       <div
-        className="menu"
+        className="contextmenu"
         style={{
           top: contextMenuPos.y + 2,
           left: contextMenuPos.x + 2,
           backgroundColor: bgColor,
+          border: border,
         }}
       >
         {props.children}

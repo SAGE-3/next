@@ -216,13 +216,14 @@ export function BoardPage() {
         {/* Context-menu for the board */}
         <ContextMenu divId="board" boardPosition={boardPos}>
           <Menu>
-            <MenuGroup>
-              <MenuItem className="contextMenuItem">Fit View to Board</MenuItem>
-              <MenuItem className="contextMenuItem">Show all Apps</MenuItem>
-              <MenuItem className="contextMenuItem">Show UI</MenuItem>
-              <MenuItem className="contextMenuItem">Hide UI</MenuItem>
-              <MenuItem className="contextMenuItem" onClick={onOpen}>Clear Board</MenuItem>
-              <MenuItem className="contextMenuItem"
+            <MenuGroup >
+              <MenuItem className="contextmenuitem">Fit View to Board</MenuItem>
+              <MenuItem className="contextmenuitem">Show all Apps</MenuItem>
+              <MenuItem className="contextmenuitem">Show UI</MenuItem>
+              <MenuItem className="contextmenuitem">Hide UI</MenuItem>
+              <MenuItem className="contextmenuitem" onClick={onOpen}>Clear Board</MenuItem>
+              <hr className="divider" />
+              <MenuItem className="contextmenuitem"
                 onClick={() => {
                   const width = 600;
                   const height = 800;
@@ -260,7 +261,7 @@ export function BoardPage() {
         </Button>
 
         {/* Board Name */}
-        <Text fontSize="3xl" background="teal" px={6} borderRadius="16" color="white">
+        <Text fontSize="2xl" background="teal" px={6} borderRadius="4" color="white">
           {board?.data.name}
         </Text>
 
