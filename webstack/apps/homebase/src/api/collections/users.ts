@@ -21,7 +21,6 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
 
     router.post('/create', async ({ body, user }, res) => {
       let doc = null;
-      console.log(body, user)
       if (user) { doc = await this.add(body, (user as any).id); }
       if (doc) res.status(200).send({ success: true, data: [doc] });
       else res.status(500).send({ success: false, message: "Failed to create user." });

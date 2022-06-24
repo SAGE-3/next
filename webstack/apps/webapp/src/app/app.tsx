@@ -69,7 +69,6 @@ export default App;
  */
 export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
   const auth = useAuth();
-  SocketAPI.init()
   return auth.isAuthenticated ? <> {props.children}</> : <Navigate to="/" replace />;
 };
 
@@ -80,6 +79,5 @@ export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
  */
 export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
   const { user } = useUser();
-  console.log(user)
   return user ? <> {props.children}</> : <Navigate to="/createuser" replace />;
 };

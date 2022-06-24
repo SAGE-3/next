@@ -18,7 +18,11 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
 
-const UserContext = createContext({ user: undefined as User | undefined, update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null });
+const UserContext = createContext({
+  user: undefined as User | undefined,
+  update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
+  create: null as ((user: UserSchema) => Promise<void>) | null,
+});
 
 export function useUser() {
   return useContext(UserContext);
@@ -27,16 +31,18 @@ export function useUser() {
 export function UserProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const auth = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined)
+
   useEffect(() => {
     let userSub: (() => void) | null = null;
     async function fetchUser() {
 
+      // Check if user account exists
       const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth.auth?.id}`);
-      console.log(userResponse)
-      if (userResponse.data) {
-        setUser(userResponse.data[0])
-        const route = `/users/${userResponse.data[0]._id}`;
 
+      // If account exists, set the user context and subscribe to updates
+      if (userResponse.data) {
+        setUser(userResponse.data[0]);
+        const route = `/users/${userResponse.data[0]._id}`;
         userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
           const doc = message.doc as User;
           switch (message.type) {
@@ -53,10 +59,10 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
             }
           }
         });
+
       } else {
         setUser(undefined)
       }
-
     }
 
     if (auth.isAuthenticated) {
@@ -69,16 +75,34 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     }
   }, [auth])
 
+  /**
+   * Create a new user account
+   * @param user User to create
+   */
+  async function create(user: UserSchema): Promise<void> {
+    if (auth.auth) {
+      const reponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
+      if (reponse.data) {
+        setUser(reponse.data[0]);
+      }
+    }
+  }
+
+  /**
+   * Update the current user
+   * @param updates Updates to apply to the user
+   * @returns 
+   */
   async function update(updates: Partial<UserSchema>): Promise<void> {
     if (user) {
-      const response = await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
+      await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
       return;
     }
     return;
   }
 
   return (
-    <UserContext.Provider value={{ user, update }}>
+    <UserContext.Provider value={{ user, update, create }}>
       {props.children}
     </UserContext.Provider>
   );

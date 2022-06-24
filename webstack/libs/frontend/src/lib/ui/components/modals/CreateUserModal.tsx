@@ -6,7 +6,7 @@
  *
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -17,20 +17,19 @@ import {
   InputGroup,
   InputLeftElement,
   Input,
-  useToast,
   Button,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
-import { User, UserSchema } from '@sage3/shared/types';
+import { UserSchema } from '@sage3/shared/types';
 import { randomSAGEColor } from '@sage3/shared';
-import { APIHttp } from '../../../api';
-import { useNavigate } from 'react-router';
 import { AuthHTTPService } from '../../../auth';
 
+type CreateUserProps = {
+  createUser: (user: UserSchema) => void;
+}
 
-export function CreateUserModal(): JSX.Element {
 
-  const navigate = useNavigate();
+export function CreateUserModal(props: CreateUserProps): JSX.Element {
 
   const [name, setName] = useState<UserSchema['name']>('');
   const [email, setEmail] = useState<UserSchema['email']>('');
@@ -56,9 +55,9 @@ export function CreateUserModal(): JSX.Element {
     }
   };
 
-  const createAccount = async () => {
+  function createAccount() {
     if (name && email) {
-      const newuser = {
+      const newUser = {
         name,
         email,
         color: randomSAGEColor().name,
@@ -66,18 +65,12 @@ export function CreateUserModal(): JSX.Element {
         userType: 'client',
         profilePicture: ''
       } as UserSchema;
-      const createResponse = await APIHttp.POST<UserSchema, User>('/users/create', newuser);
-      if (createResponse.success && createResponse.data) {
-        navigate('/home')
-      }
-
+      props.createUser(newUser);
     }
   };
 
   return (
-    <Modal isCentered isOpen={true} closeOnOverlayClick={false} onClose={() => {
-      console.log('dont close me')
-    }}>
+    <Modal isCentered isOpen={true} closeOnOverlayClick={false} onClose={() => { console.log('dont close me') }}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Create User Account</ModalHeader>
@@ -109,7 +102,7 @@ export function CreateUserModal(): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" onClick={AuthHTTPService.logout}>Cancel</Button>
+          <Button colorScheme="red" mx={2} onClick={AuthHTTPService.logout}>Cancel</Button>
           <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
             Create Account
           </Button>

@@ -6,31 +6,31 @@
  *
  */
 
-import { useDisclosure } from '@chakra-ui/react';
 import { CreateUserModal, useUser } from '@sage3/frontend';
-import { useEffect, useCallback } from 'react';
+import { UserSchema } from '@sage3/shared/types';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export function AccountPage() {
-  const { user } = useUser();
+  const { user, create } = useUser();
   const navigate = useNavigate();
 
-  const authNavCheck = useCallback(() => {
+  useEffect(() => {
     if (user) {
       navigate('/home');
     }
   }, [user, navigate]);
 
-
-  useEffect(() => {
-    authNavCheck();
-  }, [authNavCheck]);
-
+  const handleCreateUser = (user: UserSchema) => {
+    if (create) {
+      create(user);
+    }
+  }
 
   return (
     <div>
       <h1>Account Creation Page</h1>
-      <CreateUserModal />
+      <CreateUserModal createUser={handleCreateUser} />
     </div>
   );
 }

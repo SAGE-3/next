@@ -29,11 +29,11 @@ interface UserState {
 }
 
 /**
- * The UserStore of users.
- * Current user is a hook useUser
+ * TODO
+ * The UserStore of others users.
+ * The current user is a hook useUser.
  */
 const UserStore = createVanilla<UserState>((set, get) => {
-  // let userSub: (() => void) | null = null;
   return {
     user: undefined,
     create: async (newuser: UserSchema) => {
