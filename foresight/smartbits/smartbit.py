@@ -5,30 +5,56 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 from enum import Enum
-
-from utils.wall_utils import Sage3Communication
-from collections import defaultdict
-# from json import JSONEncoder
-#
-# def _default(self, obj):
-#     return getattr(obj.__class__, "jsonify", _default.default)(obj)
-#
-# _default.default = JSONEncoder.default
-# JSONEncoder.default = _default
-
+from treelib import Node, Tree
+from typing import Optional
 from pydantic import BaseModel, Field,  validator
 
-class Position(BaseModel):
+class TrackedBaseModel(BaseModel):
+
+    path: Optional[int]
+    touched: Optional[list] = []
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __setattr__(self, name, value):
+        if self.path is not None:
+            print(f"setting {self.path+'.'+ name} to {value}. I am in class {self.__class__}")
+            self.touched.append(f"{self.path}.{name}"[1:])
+        return super().__setattr__(name, value)
+
+    def copy_touched(self):
+        touched = self.touched
+        fields = [("self", self)]
+        while fields:
+            field = fields.pop(0)
+            for child in [(i,field[1].__dict__[i]) for i in field[1].__fields__.keys()]:
+                if isinstance(child[1], BaseModel) and child[0] != "_":
+                    child[1].touched = touched
+                    fields.append(child)
+
+    def set_path(self):
+        self.path = ""
+        fields = [("self", self)]
+        while fields:
+            field = fields.pop(0)
+            path = field[1].path
+            for child in [(i,field[1].__dict__[i]) for i in field[1].__fields__.keys()]:
+                if isinstance(child[1], BaseModel) and child[0] != "_":
+                    child[1].path = path + "." + child[0]
+                    fields.append(child)
+
+class Position(TrackedBaseModel):
     x: int
     y: int
     z: int
 
-class Size(BaseModel):
+class Size(TrackedBaseModel):
     width: int
-    height:int
+    height: int
     depth: int
 
-class Rotation(BaseModel):
+class Rotation(TrackedBaseModel):
     x: int
     y: int
     z: int
@@ -37,8 +63,7 @@ class AppTypes(Enum):
     counter = "Counter"
     note = "Note"
 
-class SmartBit(BaseModel):
-    id: str
+class Doc(TrackedBaseModel):
     name: str
     description: str
     position: Position
@@ -47,25 +72,14 @@ class SmartBit(BaseModel):
     type: AppTypes
     owner_id: str = Field(alias='ownerId')
 
-    class Config:
-        validate_assignment = True
-        # need to field when obj was initialized to keep track of touched fields
-        initialized = False
-        touched_fields = set()
+
+class SmartBit(TrackedBaseModel):
+    app_id: str = Field(alias='_id')
+    _createdAt: int
+    _updatedAt: Position
+    data: Doc
 
     def __init__(self, **kwargs):
-            self.__config__.initialized = False
-        self.__config__.touched_fields = set()
         super().__init__(**kwargs)
-        self.__config__.initialized = True
-
-    @validator("*")
-    def validate(cls, value, values, config, field):
-        if config.initialized:
-            print(f"field name is {field}")
-            config.touched_fields.add(field.name)
-        return value
-
-    # def update(self):
-    #     print(f"updating fields {self.__config__.touched_fields}")
-
+        self.copy_touched()
+        self.set_path()

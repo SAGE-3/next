@@ -135,7 +135,7 @@ def get_cmdline_parser():
 
 
 
-board_proxy = BoardProxy("config.json", "8723076c-d28f-4b11-8931-e15be5613c34")
+board_proxy = BoardProxy("config.json", "028e4432-9a3f-458c-b56a-19678cd1c12b")
 listening_process = threading.Thread(target=board_proxy.receive_messages)
 worker_process = threading.Thread(target=board_proxy.process_messages)
 listening_process.start()

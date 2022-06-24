@@ -14,7 +14,7 @@ class CounterState(BaseModel):
 
 class Counter(SmartBit):
     # the key that is assigned to this in state is
-    state: CounterState
+    data.state: CounterState
 
 
 
