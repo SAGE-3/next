@@ -6,14 +6,13 @@
  *
  */
 
-import { Box, Text } from '@chakra-ui/react';
-import { App } from '../schema';
-import { useAppStore } from '@sage3/frontend';
-
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-
+import { Box, Text } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
+
+import { App } from '../schema';
+import { useAppStore, useUIStore } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
@@ -22,6 +21,9 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // UI store for global setting
+  const scale = useUIStore((state) => state.scale);
+
   // Height of the title bar
   const titleBarHeight = 24;
 
@@ -106,7 +108,7 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         overflow: 'hidden',
       }}
-      scale={1}
+      scale={scale}
     >
       {/* Title Bar */}
       <Box

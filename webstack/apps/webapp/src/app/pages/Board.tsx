@@ -12,7 +12,7 @@ import { Avatar, Box, Button, Select, Text, useDisclosure, useToast } from '@cha
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
 
-import { useAppStore, useBoardStore, useUserStore } from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUserStore, useUIStore } from '@sage3/frontend';
 import { AssetModal, UploadModal } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
@@ -39,6 +39,11 @@ export function BoardPage() {
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === locationState.boardId);
+
+  // UI store for global setting
+  const scale = useUIStore((state) => state.scale);
+  const zoomInDelta = useUIStore((state) => state.zoomInDelta);
+  const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
 
   // User information
   const user = useUserStore((state) => state.user);
@@ -171,11 +176,10 @@ export function BoardPage() {
       console.log('drop_handler: no files');
     }
   }
-  const [scaleValue, setScaleValue] = useState(1);
 
   return (
     <>
-      <div style={{ transform: `scale(${scaleValue})` }}>
+      <div style={{ transform: `scale(${scale})` }}>
         {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
         <Rnd
@@ -188,7 +192,7 @@ export function BoardPage() {
           onDragStop={handleDragBoardStop}
           enableResizing={false}
           dragHandleClassName={'board-handle'}
-          scale={scaleValue}
+          scale={scale}
         >
           {/* Apps */}
           {apps.map((app) => {
@@ -210,15 +214,17 @@ export function BoardPage() {
             // Drag and drop event handlers
             onDrop={OnDrop}
             onDragOver={OnDragOver}
-            onWheel={(event: any) => {
-              if (event.deltaY < 0) {
-                // dispatchPanZoom({ type: 'zoom-in', delta: event.deltaY });
-                console.log({ type: 'zoom-in', delta: event.deltaY });
-                setScaleValue(scaleValue * 1.02);
-              } else if (event.deltaY > 0) {
-                // dispatchPanZoom({ type: 'zoom-out', delta: event.deltaY });
-                console.log({ type: 'zoom-out', delta: event.deltaY });
-                setScaleValue(scaleValue / 1.02);
+            onWheel={(evt: any) => {
+              evt.stopPropagation();
+              if ((evt.altKey || evt.ctrlKey || evt.metaKey) && evt.buttons === 0) {
+                // Alt + wheel : Zoom
+              } else {
+                // const cursor = { x: evt.clientX, y: evt.clientY, };
+                if (evt.deltaY < 0) {
+                  zoomInDelta(evt.deltaY);
+                } else if (evt.deltaY > 0) {
+                  zoomOutDelta(evt.deltaY);
+                }
               }
             }}
           />
