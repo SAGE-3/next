@@ -94,7 +94,6 @@ export function AppWindow(props: WindowProps) {
   }
 
   return (
-    // react-rnd Library for drag and resize events.
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
@@ -107,6 +106,7 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         overflow: 'hidden',
       }}
+      scale={1}
     >
       {/* Title Bar */}
       <Box

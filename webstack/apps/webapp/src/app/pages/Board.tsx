@@ -171,41 +171,59 @@ export function BoardPage() {
       console.log('drop_handler: no files');
     }
   }
+  const [scaleValue, setScaleValue] = useState(1);
 
   return (
     <>
-      {/* Board. Uses lib react-rnd for drag events.
+      <div style={{ transform: `scale(${scaleValue})` }}>
+        {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
-      <Rnd
-        default={{
-          x: 0,
-          y: 0,
-          width: 5000,
-          height: 5000,
-        }}
-        onDragStop={handleDragBoardStop}
-        enableResizing={false}
-        dragHandleClassName={'board-handle'}
-      >
-        {/* Apps */}
-        {apps.map((app) => {
-          const Component = Applications[app.data.type];
-          return <Component key={app._id} {...app}></Component>;
-        })}
+        <Rnd
+          default={{
+            x: 0,
+            y: 0,
+            width: 5000,
+            height: 5000,
+          }}
+          onDragStop={handleDragBoardStop}
+          enableResizing={false}
+          dragHandleClassName={'board-handle'}
+          scale={scaleValue}
+        >
+          {/* Apps */}
+          {apps.map((app) => {
+            const Component = Applications[app.data.type];
+            return <Component key={app._id} {...app} ></Component>;
+          })}
 
-        {/* Draggable Background */}
-        <Box
-          className="board-handle"
-          width={5000}
-          height={5000}
-          backgroundSize={`50px 50px`}
-          backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
-            linear-gradient(to bottom, grey 1px, transparent 1px);`}
-          // Drag and drop event handlers
-          onDrop={OnDrop}
-          onDragOver={OnDragOver}
-        />
-      </Rnd>
+          {/* Draggable Background */}
+          <Box
+            className="board-handle"
+            // width={5000}
+            // height={5000}
+            width="100%"
+            height="100%"
+            backgroundSize={`50px 50px`}
+            backgroundImage={
+              `linear-gradient(to right, grey 1px, transparent 1px),
+               linear-gradient(to bottom, grey 1px, transparent 1px);`}
+            // Drag and drop event handlers
+            onDrop={OnDrop}
+            onDragOver={OnDragOver}
+            onWheel={(event: any) => {
+              if (event.deltaY < 0) {
+                // dispatchPanZoom({ type: 'zoom-in', delta: event.deltaY });
+                console.log({ type: 'zoom-in', delta: event.deltaY });
+                setScaleValue(scaleValue * 1.02);
+              } else if (event.deltaY > 0) {
+                // dispatchPanZoom({ type: 'zoom-out', delta: event.deltaY });
+                console.log({ type: 'zoom-out', delta: event.deltaY });
+                setScaleValue(scaleValue / 1.02);
+              }
+            }}
+          />
+        </Rnd>
+      </div>
 
       {/* Top bar */}
       <Box display="flex" pointerEvents={"none"} justifyContent="space-between" alignItems="center" p={2} position="absolute" top="0" width="100%">
@@ -267,8 +285,8 @@ export function BoardPage() {
  *
  * @export
  * @param {DataTransfer} evdt
- * @returns {Promise<File[]>}
- */
+      * @returns {Promise<File[]>}
+      */
 export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
   return new Promise<File[]>((resolve, reject) => {
     const contents: File[] = [];
