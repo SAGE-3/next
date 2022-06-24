@@ -138,7 +138,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
     <Modal isCentered isOpen={isOpen} onClose={onClose} size={'6xl'}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Assets Browser</ModalHeader>
+        <ModalHeader>Asset Browser</ModalHeader>
         {/* File manager */}
         <ModalBody userSelect={'none'}>
           <FileManager files={assetsList} />
