@@ -14,3 +14,5 @@ export * from './modals/UploadModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';
+
+export * from './context-menu/context-menu';

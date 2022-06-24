@@ -7,13 +7,16 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Avatar, Box, Button, Select, Text, useDisclosure, useToast } from '@chakra-ui/react';
+import {
+  Avatar, Box, Button, Select, Text, useDisclosure, useToast, Menu, MenuGroup, MenuItem,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
+} from '@chakra-ui/react';
 
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
 
 import { useAppStore, useBoardStore, useUserStore } from '@sage3/frontend';
-import { AssetModal, UploadModal } from '@sage3/frontend';
+import { AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -35,6 +38,7 @@ export function BoardPage() {
   // Board and App Store stuff
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
+  const deleteApp = useAppStore((state) => state.delete);
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const boards = useBoardStore((state) => state.boards);
@@ -47,6 +51,8 @@ export function BoardPage() {
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
   // Upload modal
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
+  // Clear the board modal
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // display some notifications
   const toast = useToast();
@@ -201,10 +207,50 @@ export function BoardPage() {
           backgroundSize={`50px 50px`}
           backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
             linear-gradient(to bottom, grey 1px, transparent 1px);`}
+          id="board"
           // Drag and drop event handlers
           onDrop={OnDrop}
           onDragOver={OnDragOver}
         />
+
+        {/* Context-menu for the board */}
+        <ContextMenu divId="board" boardPosition={boardPos}>
+          <Menu>
+            <MenuGroup >
+              <MenuItem className="contextmenuitem">Fit View to Board</MenuItem>
+              <MenuItem className="contextmenuitem">Show all Apps</MenuItem>
+              <MenuItem className="contextmenuitem">Show UI</MenuItem>
+              <MenuItem className="contextmenuitem">Hide UI</MenuItem>
+              <MenuItem className="contextmenuitem" onClick={onOpen}>Clear Board</MenuItem>
+              <hr className="divider" />
+              <MenuItem className="contextmenuitem"
+                onClick={() => {
+                  const width = 600;
+                  const height = 800;
+                  // Cacluate X and Y of app based on the current board position and the width and height of the viewport
+                  const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+                  const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+                  const token = '44';
+                  const url = 'http://' + window.location.hostname + ':8888/tree/?token=' + token;
+                  // Open a webview into the SAGE3 builtin Jupyter instance
+                  createApp({
+                    name: 'Webview',
+                    description: 'Webview',
+                    roomId: locationState.roomId,
+                    boardId: locationState.boardId,
+                    position: { x, y, z: 0 },
+                    size: { width, height, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'Webview',
+                    ownerId: user?._id || '-',
+                    state: { ...initialValues['Webview'], url },
+                    minimized: false,
+                  });
+                }}
+              >Open Jupyter</MenuItem>
+            </MenuGroup>
+          </Menu>
+        </ContextMenu>
       </Rnd>
 
       {/* Top bar */}
@@ -215,7 +261,7 @@ export function BoardPage() {
         </Button>
 
         {/* Board Name */}
-        <Text fontSize="3xl" background="teal" px={6} borderRadius="16" color="white">
+        <Text fontSize="2xl" background="teal" px={6} borderRadius="4" color="white">
           {board?.data.name}
         </Text>
 
@@ -258,6 +304,30 @@ export function BoardPage() {
 
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
+
+      {/* Clear the board modal */}
+      <Modal isCentered isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Clear the Board</ModalHeader>
+          <ModalBody>Are you sure you want to DELETE all apps?</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" size="md" variant="outline" mr={3} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              size="md"
+              onClick={() => {
+                apps.forEach(a => deleteApp(a._id));
+                onClose();
+              }}
+            >
+              Yes, Clear the Board
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }
