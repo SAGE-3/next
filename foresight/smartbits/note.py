@@ -8,24 +8,16 @@
 from smartbits.smartbit import SmartBit
 from smartbits.smartbit import TrackedBaseModel
 from pydantic import BaseModel
-import pandas as pd
 
-class CounterState(TrackedBaseModel):
-    data: dict
-    execute: dict = {}
 
-class Counter(SmartBit):
+class NoteState(TrackedBaseModel):
+    text: str
+
+
+class Note(SmartBit):
     # the key that is assigned to this in state is
-    state: CounterState
+    state: NoteState
 
-    def say_hello(self):
-        print("Zeroing requested by te user")
-        # reset execute = 0
-
-    # @action
-    def reset_to_zero(self):
-        print("Zeroing requested by te user")
-        __func = self.execute["function"]
 
 
 

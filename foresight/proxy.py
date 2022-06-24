@@ -1,4 +1,3 @@
-
 # -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
@@ -12,7 +11,8 @@
 #  channel and makes sure it's structurally valid, i.e., has the right required fields
 #  and no unknwon fields
 
-# TODO: call this class something else?
+# TODO prevent apps updates on fields that were touched?
+
 import asyncio
 import json
 import time
@@ -26,6 +26,8 @@ import uuid
 from multiprocessing import Queue
 import requests
 from smartbitfactory import SmartBitFactory
+import httpx
+from utils.sage_communication import SageCommunication
 
 from threading import Thread
 
@@ -36,6 +38,7 @@ class Room:
     def __init__(self, room_id):
         self.room_id = room_id
         self.boards = {}
+
 
 
 async def subscribe(sock, room_id):
@@ -50,7 +53,7 @@ async def subscribe(sock, room_id):
 
 
 
-class BoardProxy():
+class SAGEProxy():
 
     def __init__(self, config_file, room_id):
         self.room = Room(room_id)
@@ -64,15 +67,27 @@ class BoardProxy():
             "UPDATE": self.__handle_update,
             "DELETE": self.__handle_delete,
         }
+        self.httpx_client = httpx.Client()
+        self.s3_comm = SageCommunication(config_file)
 
     def authenticat_new_user(self):
-        headers = {'Authorization': f"Bearer {self.__config['token']}"}
-        r = requests.post( self.__config['server'] + '/auth/jwt', headers=headers)
+        r = self.httpx_client.post( self.__config['server'] + '/auth/jwt', headers=self.__headers)
         response = r.json()
+
+    def populate_exisitng(self):
+        boards_info = self.s3_comm.get_boards(self.room.room_id)
+        for board_info in boards_info:
+            self.__handle_create("BOARDS", board_info)
+
+        apps_info = self.s3_comm.get_apps(self.room.room_id)
+        for app_info in apps_info:
+            print(f"Creating {app_info}")
+            self.__handle_create("APPS", app_info)
+
 
     def receive_messages(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
-        # self.authenticat_new_user()
+
         async def _run(self):
             async with websockets.connect(self.__config["socket_server"],
                                           extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
@@ -94,41 +109,55 @@ class BoardProxy():
         while True:
             msg = self.__message_queue.get()
             msg_type = msg["event"]["type"]
-            self.__OBJECT_CREATION_METHODS[msg_type](msg)
+            collection = msg["event"]['col']
+            doc = msg['event']['doc']
+            self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
 
-    def clean_up(self):
-        print("cleaning up the queue")
-        if self.__message_queue.qsize() > 0:
-            print("Queue was not empty")
-        self.__message_queue.close()
 
     def __handle_exec(self, msg):
         pass
 
-    def __handle_create(self, msg):
+    def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
-        doc = msg['event']['doc']
-        doc["state"] = doc["data"]["state"]
-        del(doc["data"]["state"])
-
-
-        collection = msg["event"]['col']
         if collection == "BOARDS":
             print("BOARD CREATED")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
             print("APP CREATED")
+
+            doc["state"] = doc["data"]["state"]
+            del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
-            self.room.boards[doc["boardId"]].smartbits[smartbit.id] = smartbit
+            self.room.boards[doc["data"]["boardId"]].smartbits[smartbit.app_id] = smartbit
 
-    def __handle_update(self, msg):
-        print("HANDLE UPDATE")
+    def __handle_update(self, collection, doc):
+        # TODO: prevent updates to fields that were touched
+        # TODO: this in a smarter way. For now, just overwrite the comlete object
+        if collection == "BOARDS":
+            print("BOARD UPDATED: UNHANDLED")
+        elif collection == "APPS":
+            print("APP UPDATED")
+            app_id = doc["_id"]
+            board_id = doc['data']["boardId"]
+            sb = self.room.boards[board_id].smartbits[app_id]
+
+            sb.state.count = doc["data"]["state"]["count"]
+
+            if doc["data"]["state"]["execute"] != "":
+                print(f"we are about to call function {doc['data']['state']['execute']}")
+            # for k in ['state', 'position', 'size', 'rotation', 'type', 'ownerId',  'minimized']:
+            #     self.room.boards[board_id].smartbits[app_id][k] = doc["data"][k]
+
+    def __handle_delete(self, collection, doc):
+        print("HANDLE DELETE: UNHANDLED")
         pass
 
-    def __handle_delete(self, msg):
-        print("HANDLE DELETE")
-        pass
+    def clean_up(self):
+        print("cleaning up the queue")
+        if self.__message_queue.qsize() > 0:
+            print("Queue was not empty")
+        self.__message_queue.close()
 
 
 
@@ -140,9 +169,9 @@ def get_cmdline_parser():
 
 
 
-board_proxy = BoardProxy("config.json", "028e4432-9a3f-458c-b56a-19678cd1c12b")
-listening_process = threading.Thread(target=board_proxy.receive_messages)
-worker_process = threading.Thread(target=board_proxy.process_messages)
+sage_proxy = SAGEProxy("config.json", "028e4432-9a3f-458c-b56a-19678cd1c12b")
+listening_process = threading.Thread(target=sage_proxy.receive_messages)
+worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()
 worker_process.start()
 
@@ -152,12 +181,12 @@ worker_process.start()
 #     # multiprocessing.set_start_method("fork")
 #     # parser = get_cmdline_parser()
 #     # args = parser.parse_args()
-#     board_proxy = BoardProxy("config.json", "05828804-d87f-4498-857e-02f288effd3d")
+#     sage_proxy = SAGEProxy("config.json", "05828804-d87f-4498-857e-02f288effd3d")
 #
 #     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
-#     # board_proxy = BoardProxy(args.config_file, args.room_id)
-#     # listening_process = multiprocessing.Process(target=board_proxy.receive_messages)
-#     # worker_process = multiprocessing.Process(target=board_proxy.process_messages)
+#     # sage_proxy = SAGEProxy(args.config_file, args.room_id)
+#     # listening_process = multiprocessing.Process(target=sage_proxy.receive_messages)
+#     # worker_process = multiprocessing.Process(target=sage_proxy.process_messages)
 #
 #     listening_process = threading.Thread(target=board_proxy.receive_messages)
 #     worker_process = threading.Thread(target=board_proxy.process_messages)
@@ -172,7 +201,7 @@ worker_process.start()
 #         #     time.sleep(100)
 #     except (KeyboardInterrupt, SystemExit):
 #         print('\n! Received keyboard interrupt, quitting threads.\n')
-#         board_proxy.clean_up()
+#         sage_proxy.clean_up()
 #         listening_process.st
 #         # worker_process.join()
 #         print("I am here")

@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field,  validator
 class TrackedBaseModel(BaseModel):
 
     path: Optional[int]
-    touched: Optional[list] = []
+    touched: Optional[set] = set()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -20,7 +20,7 @@ class TrackedBaseModel(BaseModel):
     def __setattr__(self, name, value):
         if self.path is not None:
             print(f"setting {self.path+'.'+ name} to {value}. I am in class {self.__class__}")
-            self.touched.append(f"{self.path}.{name}"[1:])
+            self.touched.add(f"{self.path}.{name}"[1:])
         return super().__setattr__(name, value)
 
     def copy_touched(self):

@@ -17,7 +17,8 @@ class Board():
     def __init__(self, doc):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
         # self.communication = Sage3Communication.instance(config)
-        self.id = doc["data"]["id"]
+        # TODO call this board_id
+        self.id = doc["_id"]
         self.name = doc["data"]["name"]
         self.description = doc["data"]["description"]
         self.color = doc["data"]["color"]
