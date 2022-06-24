@@ -16,15 +16,15 @@ class SmartBitFactory:
     class_names = {"Counter": "counter"}
 
     @classmethod
-    def create_smartbit(cls, data):
-        smartbit_type = data["name"]
+    def create_smartbit(cls, doc):
+        smartbit_type = doc["data"]["name"]
         cls_path = ".".join([cls.cls_root, smartbit_type.lower()])
         # print(f"class path is {cls_path}")
         try:
             # create a smartbit for known classes, ignore others
             if smartbit_type in cls.class_names:
                 smartbit_class = import_cls(cls_path, smartbit_type)
-                smartbit_instance = smartbit_class(**data)
+                smartbit_instance = smartbit_class(**doc)
                 return smartbit_instance
             else:
                 # find a better exception

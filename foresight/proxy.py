@@ -106,16 +106,21 @@ class BoardProxy():
         pass
 
     def __handle_create(self, msg):
-        data = msg["event"]["doc"]["data"]
+        # we need state to be at the same level as data
+        doc = msg['event']['doc']
+        doc["state"] = doc["data"]["state"]
+        del(doc["data"]["state"])
+
+
         collection = msg["event"]['col']
         if collection == "BOARDS":
             print("BOARD CREATED")
-            new_board = Board(data)
+            new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
             print("APP CREATED")
-            smartbit = SmartBitFactory.create_smartbit(data)
-            self.room.boards[data["boardId"]].smartbits[smartbit.id] = smartbit
+            smartbit = SmartBitFactory.create_smartbit(doc)
+            self.room.boards[doc["boardId"]].smartbits[smartbit.id] = smartbit
 
     def __handle_update(self, msg):
         print("HANDLE UPDATE")
@@ -135,7 +140,7 @@ def get_cmdline_parser():
 
 
 
-board_proxy = BoardProxy("config.json", "8723076c-d28f-4b11-8931-e15be5613c34")
+board_proxy = BoardProxy("config.json", "028e4432-9a3f-458c-b56a-19678cd1c12b")
 listening_process = threading.Thread(target=board_proxy.receive_messages)
 worker_process = threading.Thread(target=board_proxy.process_messages)
 listening_process.start()

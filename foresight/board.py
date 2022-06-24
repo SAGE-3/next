@@ -14,14 +14,14 @@ from utils.wall_utils import Sage3Communication
 class Board():
     # cls_root = "smartbits"
 
-    def __init__(self, data):
+    def __init__(self, doc):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
         # self.communication = Sage3Communication.instance(config)
-        self.id = data["id"]
-        self.name = data["name"]
-        self.description = data["description"]
-        self.color = data["color"]
-        self.ownerId = data["ownerId"]
+        self.id = doc["data"]["id"]
+        self.name = doc["data"]["name"]
+        self.description = doc["data"]["description"]
+        self.color = doc["data"]["color"]
+        self.ownerId = doc["data"]["ownerId"]
 
         self.smartbits = SmartBitsCollection()
 

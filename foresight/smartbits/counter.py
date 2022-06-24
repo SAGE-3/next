@@ -6,9 +6,11 @@
 #-----------------------------------------------------------------------------
 
 from smartbits.smartbit import SmartBit
+from smartbits.smartbit import TrackedBaseModel
 from pydantic import BaseModel
 
-class CounterState(BaseModel):
+
+class CounterState(TrackedBaseModel):
     count: int
 
 
