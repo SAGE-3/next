@@ -70,7 +70,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={true} closeOnOverlayClick={false} onClose={() => { console.log('dont close me') }}>
+    <Modal isCentered isOpen={true} closeOnOverlayClick={false} onClose={() => { console.log('') }}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Create User Account</ModalHeader>

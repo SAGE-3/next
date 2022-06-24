@@ -158,7 +158,6 @@ export function BoardPage() {
   }
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
-    console.log('Position:', { x: event.clientX, y: event.clientY });
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
