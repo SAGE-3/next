@@ -63,7 +63,7 @@ class AppTypes(Enum):
     counter = "Counter"
     note = "Note"
 
-class Doc(TrackedBaseModel):
+class Data(TrackedBaseModel):
     name: str
     description: str
     position: Position
@@ -77,7 +77,7 @@ class SmartBit(TrackedBaseModel):
     app_id: str = Field(alias='_id')
     _createdAt: int
     _updatedAt: Position
-    data: Doc
+    data: Data
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

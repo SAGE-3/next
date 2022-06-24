@@ -106,16 +106,21 @@ class BoardProxy():
         pass
 
     def __handle_create(self, msg):
-        data = msg["event"]["doc"]["data"]
+        # we need state to be at the same level as data
+        doc = msg['event']['doc']
+        doc["state"] = doc["data"]["state"]
+        del(doc["data"]["state"])
+
+
         collection = msg["event"]['col']
         if collection == "BOARDS":
             print("BOARD CREATED")
-            new_board = Board(data)
+            new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
             print("APP CREATED")
-            smartbit = SmartBitFactory.create_smartbit(data)
-            self.room.boards[data["boardId"]].smartbits[smartbit.id] = smartbit
+            smartbit = SmartBitFactory.create_smartbit(doc)
+            self.room.boards[doc["boardId"]].smartbits[smartbit.id] = smartbit
 
     def __handle_update(self, msg):
         print("HANDLE UPDATE")

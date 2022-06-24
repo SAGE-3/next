@@ -6,15 +6,17 @@
 #-----------------------------------------------------------------------------
 
 from smartbits.smartbit import SmartBit
+from smartbits.smartbit import TrackedBaseModel
 from pydantic import BaseModel
 
-class CounterState(BaseModel):
+
+class CounterState(TrackedBaseModel):
     count: int
 
 
 class Counter(SmartBit):
     # the key that is assigned to this in state is
-    data.state: CounterState
+    state: CounterState
 
 
 
