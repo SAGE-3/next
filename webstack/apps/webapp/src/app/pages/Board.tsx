@@ -248,52 +248,52 @@ export function BoardPage() {
               }
             }}
           />
-
-          {/* Context-menu for the board */}
-          <ContextMenu divId="board" boardPosition={boardPos}>
-            <Menu>
-              <MenuGroup>
-                <MenuItem className="contextmenuitem">Fit View to Board</MenuItem>
-                <MenuItem className="contextmenuitem">Show all Apps</MenuItem>
-                <MenuItem className="contextmenuitem">Show UI</MenuItem>
-                <MenuItem className="contextmenuitem">Hide UI</MenuItem>
-                <MenuItem className="contextmenuitem" onClick={onOpen}>
-                  Clear Board
-                </MenuItem>
-                <hr className="divider" />
-                <MenuItem
-                  className="contextmenuitem"
-                  onClick={() => {
-                    const width = 600;
-                    const height = 800;
-                    // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-                    const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-                    const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
-                    const token = '44';
-                    const url = 'http://' + window.location.hostname + ':8888/tree/?token=' + token;
-                    // Open a webview into the SAGE3 builtin Jupyter instance
-                    createApp({
-                      name: 'Webview',
-                      description: 'Webview',
-                      roomId: locationState.roomId,
-                      boardId: locationState.boardId,
-                      position: { x, y, z: 0 },
-                      size: { width, height, depth: 0 },
-                      rotation: { x: 0, y: 0, z: 0 },
-                      type: 'Webview',
-                      ownerId: user?._id || '-',
-                      state: { ...initialValues['Webview'], url },
-                      minimized: false,
-                    });
-                  }}
-                >
-                  Open Jupyter
-                </MenuItem>
-              </MenuGroup>
-            </Menu>
-          </ContextMenu>
         </Rnd>
       </div>
+
+      {/* Context-menu for the board */}
+      <ContextMenu divId="board">
+        <Menu>
+          <MenuGroup>
+            <MenuItem className="contextmenuitem">Fit View to Board</MenuItem>
+            <MenuItem className="contextmenuitem">Show all Apps</MenuItem>
+            <MenuItem className="contextmenuitem">Show UI</MenuItem>
+            <MenuItem className="contextmenuitem">Hide UI</MenuItem>
+            <MenuItem className="contextmenuitem" onClick={onOpen}>
+              Clear Board
+            </MenuItem>
+            <hr className="divider" />
+            <MenuItem
+              className="contextmenuitem"
+              onClick={() => {
+                const width = 600;
+                const height = 800;
+                // Calculate X and Y of app based on the current board position and the width and height of the viewport
+                const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+                const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+                const token = '44';
+                const url = 'http://' + window.location.hostname + ':8888/tree/?token=' + token;
+                // Open a webview into the SAGE3 builtin Jupyter instance
+                createApp({
+                  name: 'Webview',
+                  description: 'Webview',
+                  roomId: locationState.roomId,
+                  boardId: locationState.boardId,
+                  position: { x, y, z: 0 },
+                  size: { width, height, depth: 0 },
+                  rotation: { x: 0, y: 0, z: 0 },
+                  type: 'Webview',
+                  ownerId: user?._id || '-',
+                  state: { ...initialValues['Webview'], url },
+                  minimized: false,
+                });
+              }}
+            >
+              Open Jupyter
+            </MenuItem>
+          </MenuGroup>
+        </Menu>
+      </ContextMenu>
 
       {/* Top bar */}
       <Box

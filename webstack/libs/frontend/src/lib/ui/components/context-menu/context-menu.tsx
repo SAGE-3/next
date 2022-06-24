@@ -16,7 +16,7 @@ import './style.scss';
  * @param props children divId
  * @returns JSX.Element
  */
-export const ContextMenu = (props: { children: JSX.Element; divId: string, boardPosition: { x: number, y: number } }) => {
+export const ContextMenu = (props: { children: JSX.Element; divId: string }) => {
   // Cursor position
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   // Hide menu
@@ -27,10 +27,10 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string, board
     // Check if right div ID is clicked
     if (event.target.id === props.divId) {
       // local position plus board position
-      setContextMenuPos({ x: event.clientX + props.boardPosition.x, y: event.clientY + props.boardPosition.y });
+      setContextMenuPos({ x: event.clientX, y: event.clientY, });
       setShowContextMenu(true);
     }
-  }, [setContextMenuPos, props.divId, props.boardPosition]);
+  }, [setContextMenuPos, props.divId]);
 
   const handleClick = useCallback(() => (showContextMenu ? setShowContextMenu(false) : null), [showContextMenu]);
 
@@ -43,10 +43,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string, board
     };
   });
 
-  // const bgColor = menuBgColor();
-  // const bgColor = useColorModeValue("#A0AEC0", "#4A5568");
-  // const borderColor = useColorModeValue("#A0AEC0", "#4A5568");
-  // const textColor = useColorModeValue("#2D3748", "#E2E8F0");
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
 
