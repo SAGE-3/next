@@ -7,20 +7,22 @@
 
 from smartbits.smartbit import SmartBit
 from smartbits.smartbit import TrackedBaseModel
-from pydantic import BaseModel
-import pandas as pd
+from pydantic import PrivateAttr
 
 class CounterState(TrackedBaseModel):
-    data: dict
-    execute: dict = {}
+    count: int
+    # execute: str
 
 class Counter(SmartBit):
     # the key that is assigned to this in state is
     state: CounterState
+    _some_private_info: dict = PrivateAttr()
 
-    def say_hello(self):
-        print("Zeroing requested by te user")
-        # reset execute = 0
+    def __init__(self, **kwargs):
+        # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
+        super(Counter, self).__init__(**kwargs)
+        self._some_private_info = {1:2}
+
 
     # @action
     def reset_to_zero(self):

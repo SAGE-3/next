@@ -15,16 +15,16 @@ class SageCommunication:
             "send_update": "/api/apps/{}"
         }
 
-    def send_update(self, app_id, vals):
+    def send_app_update(self, app_id, data):
         """
 
         :param app_id:
-        :param vals: {"field.name.val": value} ex. {"doc.state.count": 23, doc.position.x = 0}
+        :param data: data
         :return:
         """
         r =  self.httpx_client.put(self.__config['server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
-                                   json={'state': {'count': new_count}}
+                                   json=data
                                    )
         return r
     def get_apps(self, room_id=None, board_id=None):

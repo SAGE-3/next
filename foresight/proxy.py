@@ -93,6 +93,7 @@ class SAGEProxy():
                                           extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
                 await subscribe(ws, self.room.room_id)
                 print("completed subscription, checking if boards and apps already there")
+                self.populate_exisitng()
                 async for msg in ws:
                     msg = json.loads(msg)
                     print(f"I receive the follwing messages and I'm adding it to the queue\n {msg}")
