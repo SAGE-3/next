@@ -9,18 +9,15 @@ import './styles.css'
 import * as React from "react";
 
 import { GoKebabVertical } from "react-icons/go";
-
-// interface Props{
-//     data:any;
-// }
+import {useState} from "react";
 
 
 export const Tags = (props: any) => {
 
-    const tags = props.tags;
+    const tags = props.tags
 
-    function handleChange(info: any) {
-        console.log(info + ' tag selected')
+    function handleChange(info: string) {
+        props.setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
 
     }
 
@@ -28,8 +25,8 @@ export const Tags = (props: any) => {
         <div>
             <CheckboxGroup colorScheme='green'>
                 <HStack spacing='10' display='flex'>
-                    {tags.map((tag: any) => (
-                        <Checkbox value={tag} onChange={(e) => props.setMessages((tag).charAt(0).toUpperCase() + (tag).slice(1)+ ' tag selected')}>{tag}</Checkbox>
+                    {tags.map((tag: string) => (
+                        <Checkbox value={tag} onChange={(e) => handleChange(tag)}>{tag}</Checkbox>
                     ))}
                     <Menu>
                         <MenuButton

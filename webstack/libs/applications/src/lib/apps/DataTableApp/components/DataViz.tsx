@@ -95,7 +95,9 @@ export const DataViz = (props: any) => {
                             items.map((item, index) => (
                                     <Tr key={item.id}>
                                         {Object.values(item).map((itemChild: any, index) => (
-                                            <>{(typeof itemChild === 'object') ?<Td key={index}> {handleNesting(itemChild)} </Td> : <Td key={index} onClick={handleCellClick}> {itemChild} </Td>}</>
+                                            <>
+                                                {(typeof itemChild === 'object') ?<Td key={index} data-col={headers[index % headers.length] }> {handleNesting(itemChild)} </Td> : <Td key={index} data-col={headers[index % headers.length] } onClick={handleCellClick}> {itemChild} </Td>}
+                                            </>
                                         ))}
                                     </Tr>
                             ))

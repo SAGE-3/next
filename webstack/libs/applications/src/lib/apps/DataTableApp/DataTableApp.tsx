@@ -7,9 +7,10 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { AppSchema } from "../schema";
+import { App } from "../../schema";
 
 import { state as AppState } from "./index";
+import { AppWindow } from '../../components';
 import './styles.css';
 
 import { Tags } from "./components/Tags"
@@ -18,25 +19,20 @@ import { MessageCenter } from "./components/MessageCenter"
 import * as React from "react";
 import {useState} from "react";
 
-export function DataTableApp(props: AppSchema): JSX.Element {
+function DataTableApp(props: App): JSX.Element {
 
-    const s = props.state as AppState;
+    const s = props.data.state as AppState;
 
     const updateState = useAppStore(state => state.updateState);
-    const deleteApp = useAppStore(state => state.delete);
 
     const [tags, setTags] = useState<any>([]);
     const [messages, setMessages] = useState<any>('...')
-    
 
-    function handleClose() {
-    deleteApp(props.id);
-    }
 
     return (
-    <div className="Table-Container">
-        <h3>{props.name} - <button onClick={handleClose}>X</button></h3>
+    <AppWindow app={props}>
 
+        <>
         <div className="Subcomponent-Container">
             <Tags tags={tags} setMessages={setMessages}/>
         </div>
@@ -46,8 +42,9 @@ export function DataTableApp(props: AppSchema): JSX.Element {
         <div className="Message-Container">
             <MessageCenter messages={messages}/>
         </div>
+        </>
 
-    </div>
+    </AppWindow>
     )
 }
 

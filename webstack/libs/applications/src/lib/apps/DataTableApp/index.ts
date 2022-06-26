@@ -1,17 +1,13 @@
 // export { DataTableApp as App } from './DataTableApp';
 
+// import {SBPrimitive} from "../../../../../sagebase/src/lib/modules";
+
 export type state = {
-    rows: any;
-    filler: any;
-    filled: any;
-    filly: any;
-}
+    data: any;
+};
 
 export const init: Partial<state> = {
-    rows: [],
-    filler: '',
-    filled: '',
-    filly: ','
+    data: [],
 };
 
 export const name = "DataTable";

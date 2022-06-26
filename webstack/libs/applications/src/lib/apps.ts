@@ -13,7 +13,7 @@ import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as ScreenshareName, init as defaultScreenshare } from './apps/Screenshare';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as DataTableName, init as defaultDataTable } from './apps/DataTableApp';
+import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
 
 
 
@@ -30,7 +30,7 @@ import LeafLet from './apps/LeafLet/LeafLet';
 import Screenshare from './apps/Screenshare/Screenshare';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
-import DataTable from './apps/DataTableApp/DataTableApp';
+import DataTableApp from './apps/DataTableApp/DataTableApp';
 
 
 
@@ -48,7 +48,7 @@ export const Applications = {
   [ScreenshareName]: Screenshare,
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
-  [DataTableName]: DataTable,
+  [DataTableAppName]: DataTableApp,
 } as unknown as Record<string, () => JSX.Element>;
 
 
@@ -66,5 +66,5 @@ export const initialValues = {
   [ScreenshareName]: defaultScreenshare,
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
-  [DataTableName]: defaultDataTable,
+  [DataTableAppName]: defaultDataTableApp,
 };

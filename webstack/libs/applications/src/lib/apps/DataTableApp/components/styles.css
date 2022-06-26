@@ -33,5 +33,9 @@ th:active::after {
 
 .highlight {
   background: darkblue;
-  text-align: center;
+  position: relative;
+}
+
+.cont2 {
+  background-color: red;
 }
