@@ -10,6 +10,7 @@
     "clean": "tsc --build --clean"
   },
   "dependencies": {
+    "json-schema-md-doc": "^1.0.0",
     "zod": "^3.17.3",
     "zod-to-json-schema": "^3.17.0"
   },
