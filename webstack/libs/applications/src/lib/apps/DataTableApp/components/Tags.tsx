@@ -2,31 +2,40 @@ import {
     Checkbox,
     CheckboxGroup,
     HStack,
-    Menu, MenuButton, IconButton, MenuList, MenuItem,
+    Menu, MenuButton, IconButton, MenuList, MenuItem, Portal,
 } from '@chakra-ui/react'
 
 import './styles.css'
 import * as React from "react";
 
 import { GoKebabVertical } from "react-icons/go";
-import {useState} from "react";
 
 
 export const Tags = (props: any) => {
 
     const tags = props.tags
 
-    function handleChange(info: string) {
-        props.setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
-
+    function handleChange(e: React.ChangeEvent<HTMLInputElement>, info: string) {
+        const cols = document.querySelectorAll("td[data-col=" + info + "]")
+        console.log(e.target.checked)
+        cols.forEach((cell) => {
+            if (e.target.checked) {
+                props.setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
+                cell.className= "highlight"
+            } else {
+                cell.className = "css-159t4jc"
+                props.setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
+            }
+            }
+        )
     }
 
     return (
         <div>
             <CheckboxGroup colorScheme='green'>
-                <HStack spacing='10' display='flex'>
+                <HStack spacing='10' display='flex' zIndex="dropdown">
                     {tags.map((tag: string) => (
-                        <Checkbox value={tag} onChange={(e) => handleChange(tag)}>{tag}</Checkbox>
+                        <Checkbox value={tag} onChange={(e) => handleChange(e, tag)}>{tag}</Checkbox>
                     ))}
                     <Menu>
                         <MenuButton
@@ -36,9 +45,13 @@ export const Tags = (props: any) => {
                             position='absolute'
                             right='25px'
                         />
+                        <Portal>
                         <MenuList>
-                            <MenuItem>Table Operation</MenuItem>
+                            <MenuItem>Console log col name</MenuItem>
+                            <MenuItem>Sort</MenuItem>
+                            <MenuItem>Compare</MenuItem>
                         </MenuList>
+                        </Portal>
                     </Menu>
                 </HStack>
             </CheckboxGroup>

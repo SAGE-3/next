@@ -24,8 +24,6 @@ export const DataViz = (props: any) => {
     const [items, setItems] = useState<any[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [headers, setHeaders] = useState<any[]>([]);
-    let arr = [[]];
-
 
     function handleSubmit() {
         console.log(inputVal)
@@ -38,19 +36,15 @@ export const DataViz = (props: any) => {
                 setHeaders(Object.keys(json[0]))
                 props.setTags(headers)
             })
-        // setInputVal('')
-        // {(!Array.isArray(items) || !items.length) ? <h1>Invalid json file, can't find headers</h1>: setHeaders(Object.keys(items[0]))}
     }
 
     function handleNesting(child: []) {
         if (typeof Object.keys(child) === 'object') {
-            // console.log("This is a nested element")
             Array.from(child).forEach(element => {
-                // arr.push(element)
                 console.log(Object.keys(element))
             })
         }
-        return arr
+        return ""
     }
 
     function handleCellClick() {
@@ -75,7 +69,7 @@ export const DataViz = (props: any) => {
                     <Button variant='outline' onClick={handleSubmit}>Submit</Button>
                 </InputRightElement>
             </InputGroup>
-        <TableContainer overflowY="auto" maxHeight="500px">
+        <TableContainer overflowY="auto" display="flex" maxHeight="300px">
             <Table colorScheme="facebook" variant='simple'>
                 <Thead>
                     <Tr>
