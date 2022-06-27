@@ -13,7 +13,7 @@ import { GoKebabVertical } from "react-icons/go";
 
 export const Tags = (props: any) => {
 
-    const tags = props.tags
+    const tags = Array.from(props.tags)
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>, info: string) {
         const cols = document.querySelectorAll("td[data-col=" + info + "]")
@@ -34,7 +34,7 @@ export const Tags = (props: any) => {
         <div>
             <CheckboxGroup colorScheme='green'>
                 <HStack spacing='10' display='flex' zIndex="dropdown">
-                    {tags.map((tag: string) => (
+                    {tags?.map((tag: any) => (
                         <Checkbox value={tag} onChange={(e) => handleChange(e, tag)}>{tag}</Checkbox>
                     ))}
                     <Menu>
@@ -43,7 +43,8 @@ export const Tags = (props: any) => {
                             aria-label='Table Operations'
                             icon={<GoKebabVertical/>}
                             position='absolute'
-                            right='25px'
+                            right='15px'
+                            size="xs"
                         />
                         <Portal>
                         <MenuList>
