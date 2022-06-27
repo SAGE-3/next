@@ -20,7 +20,15 @@ function CodeCell(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <h1> code : {s.code}</h1>
+        <h1> Cell</h1>
+        <h2> code: {s.code}</h2>
+        <h2> Execute: {s.execute.name}</h2>
+        <ul>
+          {Object.values(s.execute.params).map((v, i) => (
+            <li key={i}>{v['name'] as string} : {v['val'] as any}</li>
+          ))}
+        </ul>
+        <h2> Output: {s.output}</h2>
       </>
     </AppWindow>
   );
