@@ -35,6 +35,7 @@ export type RowFileProps = {
 
 export interface AssetModalProps {
   isOpen: boolean;
+  center: { x: number; y: number };
   onOpen: () => void;
   onClose: () => void;
 }

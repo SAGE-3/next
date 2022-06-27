@@ -3,6 +3,7 @@ ipython
 requests
 #websockets
 #websocket-client
+httpx
 pydantic
 # matplotlib
 # pandas
