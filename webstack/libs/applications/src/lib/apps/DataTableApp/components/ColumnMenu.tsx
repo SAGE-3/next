@@ -55,7 +55,7 @@ export const ColumnMenu = () => {
                     icon={<FiChevronDown/>}
                     ml='20%'
                 />
-                <MenuItem as={SubMenu}/>
+                {/*<MenuItem as={SubMenu}/>*/}
             </Menu>
 
     )

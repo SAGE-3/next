@@ -13,6 +13,7 @@ export type state = {
     headers: any;
     clicked: any;
     data: any;
+    check: any;
 };
 
 export const init: Partial<state> = {
@@ -24,6 +25,7 @@ export const init: Partial<state> = {
     loaded: false,
     headers: [],
     clicked: false,
+    check: false,
 };
 
 export const name = "DataTable";
