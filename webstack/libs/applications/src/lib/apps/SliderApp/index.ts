@@ -6,9 +6,12 @@
  *
  */
 
-export type state = {
-  value: number;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  value: z.number(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   value: 55,

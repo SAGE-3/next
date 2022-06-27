@@ -11,11 +11,14 @@
  * created by: Luc Renambot
  */
 
-export type state = {
-  id: string;
-  currentPage: number;
-  numPages: number;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  id: z.string(),
+  currentPage: z.number(),
+  numPages: z.number(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   id: '',

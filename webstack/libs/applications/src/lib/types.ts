@@ -14,7 +14,32 @@ import { state as ScreenshareState, name as ScreenshareName } from './apps/Scree
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 
+export type AppState =
+  | CounterAppState
+  | ImageAppState
+  | LinkerAppState
+  | NoteAppState
+  | SliderAppState
+  | StickieState
+  | PDFViewerState
+  | CodeCellState
+  | ImageViewerState
+  | LeafLetState
+  | ScreenshareState
+  | VideoViewerState
+  | WebviewState;
 
-export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState;
-
-export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName;
+export type AppName =
+  | typeof CounterAppName
+  | typeof ImageAppName
+  | typeof LinkerAppName
+  | typeof NoteAppName
+  | typeof SliderAppName
+  | typeof StickieName
+  | typeof PDFViewerName
+  | typeof CodeCellName
+  | typeof ImageViewerName
+  | typeof LeafLetName
+  | typeof ScreenshareName
+  | typeof VideoViewerName
+  | typeof WebviewName;
