@@ -5,7 +5,7 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-from smartbitfactory import SmartBitFactory
+
 from smartbitcollection import SmartBitsCollection
 from utils.generic_utils import import_cls
 from utils.wall_utils import Sage3Communication
@@ -14,59 +14,60 @@ from utils.wall_utils import Sage3Communication
 class Board():
     # cls_root = "smartbits"
 
-    def __init__(self, data):
+    def __init__(self, doc):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
         # self.communication = Sage3Communication.instance(config)
-        self.id = data["id"]
-        self.name = data["name"]
-        self.description = data["description"]
-        self.color = data["color"]
-        self.ownerId = data["ownerId"]
+        # TODO call this board_id
+        self.id = doc["_id"]
+        self.name = doc["data"]["name"]
+        self.description = doc["data"]["description"]
+        self.color = doc["data"]["color"]
+        self.ownerId = doc["data"]["ownerId"]
 
         self.smartbits = SmartBitsCollection()
-        self.smartbit_factory = SmartBitFactory()
+
 
         # if data:
         #     for app_uuid, app_data in data["state"]["apps"].items():
         #         self.create_smartbit(app_uuid, app_data)
 
 
-    def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
-        # intentionally not providing a default to x and y. Easy to get lazy with things that overlap
-        # TODO: create a function that provides a convenient (or radom for now) x and y positions
-        # Launch payload for stickies is: {'stickiesState': {'text': text, 'color': '#ffff97'}}
-        payload = {
-            'type': 'create',
-            'appName': smartbit_cls_name,
-            'id': '',
-            'position': {'x': x, 'y': y},
-            'optionalData': optional_data,
-        }
-        print(f"PAYLOAD IS\n\n {payload}")
-
-        return payload
-
-    def launch_app(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
-        # this launches an application on the wall
-        # The smartbit data structure gets created when message from wall is received
-        payload = self.__get_launch_payload(
-            smartbit_cls_name,  x, y, width, height, optional_data)
-        self.communication.send_payload(payload)
-
-    def close_app(self, app_uuid):
-        payload = {'id': app_uuid, 'type': 'close'}
-        self.communication.send_payload(payload)
-
-    def create_smartbit(self, app_uuid, app_data):
-        smartbit = self.smartbit_factory.create_smartbit(app_data)
-        self.smartbits[app_uuid] = smartbit
-
-    def remove_smartbit(self, smartbit_id):
-        try:
-            del self.smartbits[smartbit_id]
-        except Exception as e:
-            raise Exception(
-                f"{e}\nIn wall: Trying to remove a smartbit {smartbit_id} that does not exist ")
+    # def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
+    #     # intentionally not providing a default to x and y. Easy to get lazy with things that overlap
+    #     # TODO: create a function that provides a convenient (or radom for now) x and y positions
+    #     # Launch payload for stickies is: {'stickiesState': {'text': text, 'color': '#ffff97'}}
+    #     payload = {
+    #         'type': 'create',
+    #         'appName': smartbit_cls_name,
+    #         'id': '',
+    #         'position': {'x': x, 'y': y},
+    #         'optionalData': optional_data,
+    #     }
+    #     print(f"PAYLOAD IS\n\n {payload}")
+    #
+    #     return payload
+    #
+    # def launch_app(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
+    #     # this launches an application on the wall
+    #     # The smartbit data structure gets created when message from wall is received
+    #     payload = self.__get_launch_payload(
+    #         smartbit_cls_name,  x, y, width, height, optional_data)
+    #     self.communication.send_payload(payload)
+    #
+    # def close_app(self, app_uuid):
+    #     payload = {'id': app_uuid, 'type': 'close'}
+    #     self.communication.send_payload(payload)
+    #
+    # def create_smartbit(self, app_uuid, app_data):
+    #     smartbit = self.smartbit_factory.create_smartbit(app_data)
+    #     self.smartbits[app_uuid] = smartbit
+    #
+    # def remove_smartbit(self, smartbit_id):
+    #     try:
+    #         del self.smartbits[smartbit_id]
+    #     except Exception as e:
+    #         raise Exception(
+    #             f"{e}\nIn wall: Trying to remove a smartbit {smartbit_id} that does not exist ")
 
     # @_action(enqueue=False)
     # def create_new_smartbit(self, smartbit_type, smartbit_params, requires_redis=False):
