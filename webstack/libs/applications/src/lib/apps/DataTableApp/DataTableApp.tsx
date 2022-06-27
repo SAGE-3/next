@@ -54,7 +54,7 @@ function DataTableApp(props: App): JSX.Element {
 
     const updateState = useAppStore(state => state.updateState);
 
-    const [tags, setTags] = useState<any[]>(s.tags);
+    // const [tags, setTags] = useState<any[]>(s.tags);
     const [messages, setMessages] = useState<any>(s.messages);
 
     const [inputVal, setInputVal] = useState(s.inputVal);
@@ -63,19 +63,28 @@ function DataTableApp(props: App): JSX.Element {
     const [headers, setHeaders] = useState<any[]>(s.headers);
     const [clicked, setClicked] = useState(s.clicked);
     const [check, setCheck] = useState(s.check);
+    const [style, setStyle] = useState(s.style);
+    const [selected, setSelected] = useState(s.selected);
 
-    // useEffect(() => { setInputVal(s.inputVal); }, [s.inputVal]);
+    useEffect(() => { setInputVal(s.inputVal); }, [s.inputVal]);
     // useEffect(() => { setTags(s.tags); }, [s.tags]);
     useEffect(() => { setMessages(s.messages); }, [s.messages]);
     useEffect(() => { setItems(s.items); }, [s.items]);
     useEffect(() => { setHeaders(s.headers); }, [s.headers]);
+    useEffect(() => { setLoaded(s.loaded); }, [s.loaded]);
     useEffect(() => { setCheck(s.check); }, [s.check]);
+    useEffect(() => { setStyle(s.style); }, [s.style]);
+    useEffect(() => { setSelected(s.selected); }, [s.selected]);
+
 
 
     // Saving the text after 1sec of inactivity
-    const debounceSaveTable = debounce(1000, (val, heads) => {
+    const debounceSaveTable = debounce(1000, (input, val, heads, load) => {
+        updateState(props._id, { inputVal: input });
         updateState(props._id, { items: val });
-        updateState(props._id, { headers: heads })
+        updateState(props._id, { headers: heads });
+        updateState(props._id, { loaded: load });
+
     });
 
     // Saving the text after 1sec of inactivity
@@ -87,6 +96,15 @@ function DataTableApp(props: App): JSX.Element {
         updateState(props._id, { check: info });
     });
 
+    const debounceSaveStyle= debounce(1000, (info) => {
+        updateState(props._id, { style: info });
+    });
+
+    const debounceSaveSelected= debounce(1000, (val) => {
+        // updateState(props._id, { selected: info });
+        updateState(props._id, { check: val });
+    });
+
     // Keep a copy of the function
     const debounceFuncTable = useRef(debounceSaveTable);
 
@@ -95,6 +113,12 @@ function DataTableApp(props: App): JSX.Element {
 
     // Keep a copy of the function
     const debounceFuncCheck = useRef(debounceSaveCheck);
+
+    // Keep a copy of the function
+    const debounceFuncStyle = useRef(debounceSaveStyle);
+
+    // Keep a copy of the function
+    const debounceFuncSelected = useRef(debounceSaveSelected);
 
 
     function handleSubmit() {
@@ -106,8 +130,7 @@ function DataTableApp(props: App): JSX.Element {
                 setItems(json)
                 setLoaded(true)
                 setHeaders(Object.keys(json[0]))
-                debounceFuncTable.current(json, Object.keys(json[0]))
-                // setTags(headers)
+                debounceFuncTable.current(inputVal, json, Object.keys(json[0]), true)
             })
     }
 
@@ -126,28 +149,54 @@ function DataTableApp(props: App): JSX.Element {
         cells.forEach(cell => {
             cell.addEventListener('click', () =>
                 setMessages("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")"))
-                debounceFuncMessage.current(messages)
+                debounceFuncMessage.current("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")")
         })
     }
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>, info: string) {
         const cols = document.querySelectorAll("td[data-col=" + info + "]")
-        console.log(e.target.checked)
-        setCheck(e.target.checked)
-        cols.forEach((cell) => {
-                if (e.target.checked) {
+        // setSelected(cols)
+        // debounceFuncSelected.current(cols)
+        const checked = e.target.checked
+        console.log(e.target.value)
+        // setCheck(checked)
+        // debounceFuncCheck.current(checked)
+        // debounceFuncSelected.current(cols, checked)
+
+        // console.log("selected: " + cols)
+        // console.log("selected type: " + typeof(cols))
+        //
+        // console.log("checked: " + checked)
+        // console.log("checked type: " + typeof(checked))
+
+        cols.forEach((cell: any) => {
+                if (checked) {
                     setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
+                    debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
                     cell.className= "highlight"
+                    setCheck(checked)
+                    debounceFuncCheck.current(checked)
+                    // cell.addEventListener('click', () =>
+                    //     setStyle(cell.className)
+                    // )
+                    // setStyle("highlight")
+                    // debounceFuncStyle.current("highlight")
+                    // console.log("style: " + style)
+                    // console.log(info)
                 } else {
-                    cell.className = "originalChakra"
                     setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
+                    debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
+                    cell.className = "originalChakra"
+                    setCheck(checked)
+                    debounceFuncCheck.current(checked)
+                    // setStyle("originalChakra")
+                    // debounceFuncStyle.current("originalChakra")
+                    // console.log("style: " + style)
+                    // console.log(info)
                 }
             }
         )
-        debounceFuncCheck.current(check)
-        console.log("after debounce " + check)
     }
-
 
     return (
     <AppWindow app={props}>
@@ -223,11 +272,6 @@ function DataTableApp(props: App): JSX.Element {
                 </TableContainer>
         <div className="Message-Container">
             <VStack spacing={3}>
-                {/*{*/}
-                {/*    messages.map((message: string[], index: number) => (*/}
-                {/*        <Alert key={index} status='success' variant='subtle'> {message} </Alert>*/}
-                {/*    ))*/}
-                {/*}*/}
                 <Box
                     fontWeight='bold'
                 >

@@ -1,8 +1,4 @@
-// export { DataTableApp as App } from './DataTableApp';
-
 // import {SBPrimitive} from "../../../../../sagebase/src/lib/modules";
-
-import {useState} from "react";
 
 export type state = {
     tags: any[];
@@ -14,6 +10,8 @@ export type state = {
     clicked: any;
     data: any;
     check: any;
+    style: any;
+    selected: any;
 };
 
 export const init: Partial<state> = {
