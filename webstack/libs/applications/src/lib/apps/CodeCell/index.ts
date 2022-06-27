@@ -6,7 +6,7 @@
  *
  */
 
-import { SBPrimitive, SBJSON } from '@sage3/sagebase';
+import { SBJSON } from '@sage3/sagebase';
 
 /**
  * SAGE3 application: CodeCell
@@ -32,4 +32,3 @@ export const init: Partial<state> = {
 };
 
 export const name = 'CodeCell';
-

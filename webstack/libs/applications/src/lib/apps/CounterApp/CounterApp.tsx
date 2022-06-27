@@ -28,18 +28,12 @@ function CounterApp(props: App): JSX.Element {
     updateState(props._id, { count: s.count - 1 })
   }
 
-  function handleZero() {
-    updateState(props._id, { execute: "reset_to_zero"})
-  }
-
-
   return (
     <AppWindow app={props}>
       <>
         <h1>Count: {s.count}</h1>
         <Button onClick={handleAddClick} colorScheme="green">Add</Button>
         <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
-        <Button onClick={handleZero} colorScheme="blue">Zero</Button>
       </>
     </AppWindow >
   )
