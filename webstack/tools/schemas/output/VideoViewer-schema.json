@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/VideoViewer",
+  "definitions": {
+    "VideoViewer": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_createdAt": {
+          "type": "number"
+        },
+        "_updatedAt": {
+          "type": "number"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "_id",
+        "_createdAt",
+        "_updatedAt",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

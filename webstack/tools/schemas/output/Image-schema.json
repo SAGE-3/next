@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Image",
+  "definitions": {
+    "Image": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_createdAt": {
+          "type": "number"
+        },
+        "_updatedAt": {
+          "type": "number"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "_id",
+        "_createdAt",
+        "_updatedAt",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

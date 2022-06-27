@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Linker",
+  "definitions": {
+    "Linker": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_createdAt": {
+          "type": "number"
+        },
+        "_updatedAt": {
+          "type": "number"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "toAppId": {
+              "type": "string"
+            },
+            "toAppField": {
+              "type": "string"
+            },
+            "fromAppId": {
+              "type": "string"
+            },
+            "fromAppField": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "toAppId",
+            "toAppField",
+            "fromAppId",
+            "fromAppField"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "_id",
+        "_createdAt",
+        "_updatedAt",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
