@@ -17,6 +17,7 @@ const connectRedis = require('connect-redis');
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
+export type { JWTPayload } from './adapters';
 import {
   passportGoogleSetup,
   SBAuthGoogleConfig,
@@ -152,12 +153,10 @@ export class SBAuth {
     const headerToken = req.headers['authorization'];
     if (user) {
       next();
-    }
-    else if (headerToken) {
+    } else if (headerToken) {
       // if there's a header token, try JWT strategy
       passport.authenticate('jwt', { session: false })(req, res, next);
-    }
-    else {
+    } else {
       res.status(403);
       res.send({ success: false, authentication: false, auth: null });
     }

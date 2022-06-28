@@ -176,7 +176,7 @@ export class SBCollectionRef<Type extends SBJSON> {
     if (indexList.indexOf(this._indexName) !== -1) {
       try {
         await this._redisClient.ft.dropIndex(this._indexName);
-        this._redisClient.ft.INFO
+        this._redisClient.ft.INFO;
       } catch (error) {
         this.INFOLOG(error);
       }
@@ -194,6 +194,10 @@ export class SBCollectionRef<Type extends SBJSON> {
         '$._updatedAt': {
           type: SchemaFieldTypes.NUMERIC,
           AS: '_updatedAt',
+        },
+        '$._updatedBy': {
+          type: SchemaFieldTypes.TAG,
+          AS: '_updatedBy',
         },
       } as { [key: string]: any };
       Object.keys(indexFields).forEach((prop) => {
