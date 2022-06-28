@@ -128,7 +128,12 @@ function uploadHandler(req: express.Request, res: express.Response): void {
  * @param message
  * @param cache
  */
-export async function assetWSRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
+export async function assetWSRouter(
+  socket: WebSocket,
+  message: APIClientWSMessage,
+  userId: string,
+  cache: SubscriptionCache
+): Promise<void> {
   // const auth = request.session.passport.user;
   switch (message.method) {
     case 'GET': {

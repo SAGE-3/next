@@ -16,6 +16,7 @@ export async function sageWSRouter<T extends SBJSON>(
   collection: SAGE3Collection<T>,
   socket: WebSocket,
   message: APIClientWSMessage,
+  userId: string,
   cache: SubscriptionCache
 ): Promise<void> {
   const path = '/api/' + collection.name.toLowerCase();
@@ -53,7 +54,7 @@ export async function sageWSRouter<T extends SBJSON>(
     case 'PUT': {
       const id = message.route.split('/').at(-1) as string;
       const body = message.body as SBDocumentUpdate<T>;
-      const update = await collection.update(id, body);
+      const update = await collection.update(id, userId, body);
       if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
       else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update doc.' }));
       break;
