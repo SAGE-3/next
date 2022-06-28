@@ -19,7 +19,7 @@ export type state = {
 export const init: Partial<state> = {
     data: [],
     tags: [],
-    messages: '',
+    // messages: '',
     // inputVal: '',
     items: [],
     loaded: false,
