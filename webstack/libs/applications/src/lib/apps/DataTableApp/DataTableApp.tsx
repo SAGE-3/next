@@ -135,7 +135,7 @@ function DataTableApp(props: App): JSX.Element {
     function handleSubmit() {
         console.log(s.inputVal)
         fetch(
-            s.inputVal)
+            inputVal)
             .then((res) => res.json())
             .then((json) => {
                 setItems(json)

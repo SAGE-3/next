@@ -20,7 +20,7 @@ export const init: Partial<state> = {
     data: [],
     tags: [],
     messages: '',
-    inputVal: '',
+    // inputVal: '',
     items: [],
     loaded: false,
     headers: [],
