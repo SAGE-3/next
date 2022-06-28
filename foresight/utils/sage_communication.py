@@ -22,7 +22,7 @@ class SageCommunication:
         :param data: data
         :return:
         """
-        r =  self.httpx_client.put(self.__config['server'] + self.routes["send_update"].format(app_id),
+        r = self.httpx_client.put(self.__config['server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
                                    json=data
                                    )

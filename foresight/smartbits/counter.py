@@ -11,7 +11,7 @@ from pydantic import PrivateAttr
 
 class CounterState(TrackedBaseModel):
     count: int
-    # execute: str
+    execute: str = ""
 
 class Counter(SmartBit):
     # the key that is assigned to this in state is

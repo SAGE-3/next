@@ -96,7 +96,7 @@ class SAGEProxy():
                 self.populate_exisitng()
                 async for msg in ws:
                     msg = json.loads(msg)
-                    print(f"I receive the follwing messages and I'm adding it to the queue\n {msg}")
+                    print(f"Receive: \n {msg}")
                     self.__message_queue.put(msg)
 
         asyncio.get_event_loop().run_until_complete(_run(self))
@@ -143,10 +143,12 @@ class SAGEProxy():
             board_id = doc['data']["boardId"]
             sb = self.room.boards[board_id].smartbits[app_id]
 
-            sb.state.count = doc["data"]["state"]["count"]
+            # Note that set_data_form_update clear touched field
+            sb.refresh_data_form_update(doc)
 
-            if doc["data"]["state"]["execute"] != "":
-                print(f"we are about to call function {doc['data']['state']['execute']}")
+            exec_func = getattr(sb.state, "execute", None)
+            if exec_func is not None:
+                print(f"we are about to call function {exec_func}")
             # for k in ['state', 'position', 'size', 'rotation', 'type', 'ownerId',  'minimized']:
             #     self.room.boards[board_id].smartbits[app_id][k] = doc["data"][k]
 

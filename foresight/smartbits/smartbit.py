@@ -6,10 +6,11 @@
 #-----------------------------------------------------------------------------
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field,  validator
+from pydantic import BaseModel, Field,  validate_model
 from utils.generic_utils import create_dict
-class TrackedBaseModel(BaseModel):
+from operator import attrgetter
 
+class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
 
@@ -17,11 +18,45 @@ class TrackedBaseModel(BaseModel):
         super().__init__(**kwargs)
 
     def __setattr__(self, name, value):
-        if self.path is not None:
-            if name[0] != "_":
-                print(f"setting {self.path + '.' + name} to {value}. I am in class {self.__class__}")
-                self.touched.add(f"{self.path}.{name}"[1:])
-        return super().__setattr__(name, value)
+        try:
+            if self.path is not None:
+                if name[0] != "_":
+                    print(f"setting {self.path + '.' + name} to {value}. I am in class {self.__class__}")
+                    self.touched.add(f"{self.path}.{name}"[1:])
+            super().__setattr__(name, value)
+        except:
+            self.touched.remove(f"{self.path}.{name}"[1:])
+
+    def refresh_data_form_update(self, update_data):
+        # TODO replace this temp solution, which updates everything with a
+        # solution that updates only necessary fields
+        update_data['state'] = update_data['data']['state']
+        del (update_data['data']['state'])
+        # we don't need to update the following keys:
+        do_not_modify = ["_id", "_createdAt", '_updatedAt']
+        _ = [update_data.pop(key) for key in do_not_modify]
+
+        def attrsetter(name):
+            def setter(obj, val):
+                setattr(obj, name, val)
+
+            return setter
+
+        def recursive_iter(u_data, path=[]):
+            if isinstance(u_data, dict):
+                for k, item in u_data.items():
+                    path.append(k)
+                    yield from recursive_iter(item, path)
+                    path.pop(-1)
+            else:
+                dotted_path = ".".join(path)
+                # attrgetter(dotted_path)(self)
+                attrsetter(dotted_path)(self, u_data)
+
+                # yield u_data, path
+        # for i, v in recursive_iter(update_data, path=[]):
+        #     print(i, v)
+
 
     def copy_touched(self):
         touched = self.touched
@@ -79,13 +114,12 @@ class TrackedBaseModel(BaseModel):
         data["state"][field] = temp
         return data
 
-
     def get_all_touched_fields_dict(self):
         data = {}
         for field in self.touched:
-            if field.starts_with("data"):
+            if field.startswith("data"):
                 data = self.get_touched_data_field_dict(field, data)
-            elif  field.starts_with("state"):
+            elif  field.startswith("state"):
                 data = self.get_touched_state_field_dict(field, data)
         return data
 
@@ -96,7 +130,6 @@ class TrackedBaseModel(BaseModel):
 class Position(TrackedBaseModel):
     x: int
     y: int
-    z: int
 
 class Size(TrackedBaseModel):
     width: int
