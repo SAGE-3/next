@@ -15,8 +15,10 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   const router = express.Router();
 
   // POST: Add new document
-  router.post('/', async ({ body }, res) => {
-    const doc = await collection.add(body);
+  router.post('/', async ({ body, user }, res) => {
+    // @ts-ignore
+    const userId = user.id;
+    const doc = await collection.add(body, userId);
     if (doc) res.status(200).send({ success: true, data: [doc] });
     else res.status(500).send({ success: false, message: 'Failed to create document.' });
   });

@@ -46,13 +46,13 @@ export class SBCollectionRef<Type extends SBJSON> {
    * @param forcedId Optional: Forces the document to use a specific ID
    * @returns {SBDocumentRef<Type> | undefined} A SBDocumentRef that points to the newly added document. Undefined if the operation was unsuccessful
    */
-  public async addDoc(data: Type, forcedId?: string): Promise<SBDocumentRef<Type> | undefined> {
+  public async addDoc(data: Type, by: string, forcedId?: string): Promise<SBDocumentRef<Type> | undefined> {
     try {
-      const doc = generateSBDocumentTemplate<Type>(data);
+      const doc = generateSBDocumentTemplate<Type>(data, by);
       if (forcedId) doc._id = forcedId;
       const docPath = `${this._path}:${doc._id}`;
       const docRef = new SBDocumentRef<Type>(doc._id, docPath, this._redisClient);
-      const redisRes = await docRef.set(data);
+      const redisRes = await docRef.set(data, by);
       if (redisRes.success) {
         return docRef;
       } else {

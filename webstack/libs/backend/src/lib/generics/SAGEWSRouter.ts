@@ -28,7 +28,7 @@ export async function sageWSRouter<T extends SBJSON>(
         socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
         return;
       } else {
-        const doc = await collection.add(body);
+        const doc = await collection.add(body, userId);
         if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
       }

@@ -103,9 +103,9 @@ export class SBDocumentRef<Type extends SBJSON> {
    * @param data The data
    * @returns
    */
-  public async set(data: Type): Promise<SBDocWriteResult> {
+  public async set(data: Type, by: string): Promise<SBDocWriteResult> {
     try {
-      const doc = generateSBDocumentTemplate<Type>(data);
+      const doc = generateSBDocumentTemplate<Type>(data, by);
       doc._id = this.id;
       const redisRes = await this._redisClient.json.set(this.path, '.', doc);
       const response = redisRes == 'OK' ? generateWriteResult(true) : generateWriteResult(false);
@@ -241,7 +241,7 @@ function generateWriteResult(success: boolean): SBDocWriteResult {
   return result;
 }
 
-export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type): SBDocument<Type> {
+export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type, by: string): SBDocument<Type> {
   const id = v4();
   const createdAt = Date.now();
   const updatedAt = createdAt;
@@ -250,7 +250,7 @@ export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type): SBD
     _id: id,
     _createdAt: createdAt,
     _updatedAt: updatedAt,
-    _updatedBy: '-',
+    _updatedBy: by,
     data: { ...dataCopy },
   } as SBDocument<Type>;
   return doc;

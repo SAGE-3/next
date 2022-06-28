@@ -14,7 +14,6 @@ import { state as AppState } from "./index";
 import { AppWindow } from '../../components';
 
 function CounterApp(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);

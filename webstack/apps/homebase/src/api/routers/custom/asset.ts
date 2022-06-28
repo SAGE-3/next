@@ -103,17 +103,20 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     files.forEach((elt) => {
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Put the new file into the collection
-      AssetsCollection.addAsset({
-        file: elt.filename,
-        owner: user.id || '-',
-        room: req.body.room || '-',
-        originalfilename: elt.originalname,
-        path: elt.path,
-        destination: elt.destination,
-        size: elt.size,
-        mimetype: elt.mimetype,
-        dateAdded: new Date().toISOString(),
-      });
+      AssetsCollection.addAsset(
+        {
+          file: elt.filename,
+          owner: user.id || '-',
+          room: req.body.room || '-',
+          originalfilename: elt.originalname,
+          path: elt.path,
+          destination: elt.destination,
+          size: elt.size,
+          mimetype: elt.mimetype,
+          dateAdded: new Date().toISOString(),
+        },
+        user.id
+      );
     });
 
     // Return success with the information

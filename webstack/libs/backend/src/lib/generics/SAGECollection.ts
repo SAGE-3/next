@@ -40,9 +40,9 @@ export class SAGE3Collection<T extends SBJSON> {
     this._collection = await SAGEBase.Database.collection<T>(this.name, this._queryableAttributes);
   }
 
-  public async add(item: T, id?: string): Promise<SBDocument<T> | undefined> {
+  public async add(item: T, by: string, id?: string): Promise<SBDocument<T> | undefined> {
     try {
-      const docRef = await this._collection.addDoc(item, id);
+      const docRef = await this._collection.addDoc(item, by, id);
       if (docRef) {
         const doc = await docRef.read();
         return doc;
