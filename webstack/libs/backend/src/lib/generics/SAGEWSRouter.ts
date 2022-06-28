@@ -35,7 +35,7 @@ export async function sageWSRouter<T extends SBJSON>(
     }
     case 'GET': {
       // GET: Get all the docs.
-      if (message.route.startsWith(path)) {
+      if (message.route === path) {
         const docs = await collection.getAll();
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get docs.' }));
@@ -68,7 +68,7 @@ export async function sageWSRouter<T extends SBJSON>(
     }
     case 'SUB': {
       // Subscribe to all docs
-      if (message.route.startsWith(path)) {
+      if (message.route === path) {
         const sub = await collection.subscribeAll((doc) => {
           const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));

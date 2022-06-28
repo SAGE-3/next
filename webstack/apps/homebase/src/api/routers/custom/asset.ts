@@ -133,7 +133,7 @@ export async function assetWSRouter(socket: WebSocket, message: APIClientWSMessa
   switch (message.method) {
     case 'GET': {
       // READ ALL
-      if (message.route.startsWith('/api/assets')) {
+      if (message.route === '/api/assets') {
         const assets = await AssetsCollection.getAllAssets();
         if (assets) socket.send(JSON.stringify({ id: message.id, success: true, data: assets }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get assets.' }));
