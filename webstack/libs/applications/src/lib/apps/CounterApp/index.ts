@@ -8,12 +8,10 @@
 
 export type state = {
   count: number;
-  execute: string;
 };
 
 export const init: Partial<state> = {
   count: 42,
-  execute: ""
 };
 
 export const name = 'Counter';

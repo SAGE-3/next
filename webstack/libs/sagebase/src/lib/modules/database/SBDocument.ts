@@ -21,6 +21,7 @@ export type SBDocument<Type extends SBJSON> = {
   _id: string;
   _createdAt: number;
   _updatedAt: number;
+  _updatedBy: string;
   data: Type;
 };
 
@@ -121,7 +122,7 @@ export class SBDocumentRef<Type extends SBJSON> {
    * @param update
    * @returns
    */
-  public async update(update: SBDocumentUpdate<Type>): Promise<SBDocWriteResult> {
+  public async update(update: SBDocumentUpdate<Type>, by?: string): Promise<SBDocWriteResult> {
     if (update === undefined) return generateWriteResult(false);
     // Check if Doc exists
     const exists = await this._redisClient.exists(`${this.path}`);
@@ -141,7 +142,7 @@ export class SBDocumentRef<Type extends SBJSON> {
       });
       await Promise.all(updatePromises);
       if (updated) {
-        await this.refreshUpdateTime();
+        await this.refreshUpdate(by);
         const newValue = await this.read();
         if (newValue) {
           await this.publishUpdateAction(newValue);
@@ -154,13 +155,17 @@ export class SBDocumentRef<Type extends SBJSON> {
     }
   }
 
-  private async refreshUpdateTime(): Promise<SBDocWriteResult> {
+  private async refreshUpdate(by?: string): Promise<void> {
     const updatedAt = Date.now();
     const redisRes = await this._redisClient.json.set(`${this.path}`, `._updatedAt`, updatedAt);
-    if (redisRes == 'OK') {
-      return generateWriteResult(true);
-    } else {
-      return generateWriteResult(false);
+    if (redisRes != 'OK') {
+      console.error('refreshUpdate', redisRes);
+    }
+    if (by) {
+      const res = await this._redisClient.json.set(`${this.path}`, `._updatedBy`, by);
+      if (res != 'OK') {
+        console.error('refreshUpdate', res);
+      }
     }
   }
 
@@ -245,6 +250,7 @@ export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type): SBD
     _id: id,
     _createdAt: createdAt,
     _updatedAt: updatedAt,
+    _updatedBy: '-',
     data: { ...dataCopy },
   } as SBDocument<Type>;
   return doc;

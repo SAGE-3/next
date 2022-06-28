@@ -19,7 +19,6 @@ import { WebSocket } from 'ws';
 ///////////////////////////////////////////////////////////////////////////////
 
 export class SAGE3Collection<T extends SBJSON> {
-
   private _collection!: SBCollectionRef<T>;
   private _name: string;
   private _queryableAttributes: Partial<T>;
@@ -86,9 +85,9 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async update(id: string, update: SBDocumentUpdate<T>): Promise<boolean> {
+  public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<boolean> {
     try {
-      const response = await this._collection.docRef(id).update(update);
+      const response = await this._collection.docRef(id).update(update, by);
       return response.success;
     } catch (error) {
       this.printError(error);
@@ -127,7 +126,11 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async subscribeByQuery(field: keyof T, value: string, callback: (message: SBDocumentMessage<T>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeByQuery(
+    field: keyof T,
+    value: string,
+    callback: (message: SBDocumentMessage<T>) => void
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this._collection.subscribeToQuery(field, value, callback);
       return unsubscribe;
@@ -141,8 +144,8 @@ export class SAGE3Collection<T extends SBJSON> {
     return sageRouter<T>(this);
   }
 
-  public wsRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
-    return sageWSRouter<T>(this, socket, message, cache);
+  public wsRouter(socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache): Promise<void> {
+    return sageWSRouter<T>(this, socket, message, userId, cache);
   }
 
   protected printMessage(message: string) {
@@ -156,5 +159,4 @@ export class SAGE3Collection<T extends SBJSON> {
   protected printWarn(message: string) {
     console.warn(`SAGE3Collection ${this.name}> ${message}`);
   }
-
 }
