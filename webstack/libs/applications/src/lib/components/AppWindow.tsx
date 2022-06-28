@@ -144,7 +144,9 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box>{minimized ? null : props.children}</Box>
+      <Box id={'app_' + props.app._id} width={props.app.data.size.width} height={props.app.data.size.height}>
+        {minimized ? null : props.children}
+      </Box>
     </Rnd>
   );
 }
