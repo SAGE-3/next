@@ -11,7 +11,9 @@ export type state = {
     data: any;
     check: any;
     style: any;
+    value: any;
     selected: any;
+    checkedItems: any;
 };
 
 export const init: Partial<state> = {
@@ -24,6 +26,8 @@ export const init: Partial<state> = {
     headers: [],
     clicked: false,
     check: false,
+    selected: [],
+    checkedItems: []
 };
 
 export const name = "DataTable";

@@ -29,6 +29,7 @@ import {
     CheckboxGroup,
     HStack,
     Menu, MenuButton, IconButton, MenuList, MenuItem, Portal,
+    useCheckbox, useCheckboxGroup,
 } from '@chakra-ui/react'
 
 import { GoKebabVertical } from "react-icons/go";
@@ -64,7 +65,16 @@ function DataTableApp(props: App): JSX.Element {
     const [clicked, setClicked] = useState(s.clicked);
     const [check, setCheck] = useState(s.check);
     const [style, setStyle] = useState(s.style);
-    const [selected, setSelected] = useState(s.selected);
+
+    const [checkedItems, setCheckedItems] = useState(s.checkedItems)
+    // const allChecked = checkedItems.every(Boolean)
+    // const isIndeterminate = checkedItems.some(Boolean) && !allChecked
+    const {value, onChange, setValue, getCheckboxProps} = useCheckboxGroup({
+        value: s.value,
+        onChange: handleChange,
+    });
+
+    // const { state, getCheckboxProps, getInputProps, getLabelProps, htmlProps } = useCheckbox(props)
 
     useEffect(() => { setInputVal(s.inputVal); }, [s.inputVal]);
     // useEffect(() => { setTags(s.tags); }, [s.tags]);
@@ -74,7 +84,8 @@ function DataTableApp(props: App): JSX.Element {
     useEffect(() => { setLoaded(s.loaded); }, [s.loaded]);
     useEffect(() => { setCheck(s.check); }, [s.check]);
     useEffect(() => { setStyle(s.style); }, [s.style]);
-    useEffect(() => { setSelected(s.selected); }, [s.selected]);
+    useEffect(() => { setValue(s.value); }, [s.value]);
+    useEffect(() => { setCheckedItems(s.checkedItems); }, [s.checkedItems]);
 
 
 
@@ -96,13 +107,13 @@ function DataTableApp(props: App): JSX.Element {
         updateState(props._id, { check: info });
     });
 
-    const debounceSaveStyle= debounce(1000, (info) => {
-        updateState(props._id, { style: info });
+    const debounceSaveCheckedItems= debounce(1000, (info) => {
+        updateState(props._id, { checkedItems: info });
     });
 
-    const debounceSaveSelected= debounce(1000, (val) => {
+    const debounceSaveValue= debounce(1000, (val) => {
         // updateState(props._id, { selected: info });
-        updateState(props._id, { check: val });
+        updateState(props._id, { value: val });
     });
 
     // Keep a copy of the function
@@ -115,10 +126,10 @@ function DataTableApp(props: App): JSX.Element {
     const debounceFuncCheck = useRef(debounceSaveCheck);
 
     // Keep a copy of the function
-    const debounceFuncStyle = useRef(debounceSaveStyle);
+    const debounceFuncCheckedItems = useRef(debounceSaveCheckedItems);
 
     // Keep a copy of the function
-    const debounceFuncSelected = useRef(debounceSaveSelected);
+    const debounceFuncValue = useRef(debounceSaveValue);
 
 
     function handleSubmit() {
@@ -153,50 +164,71 @@ function DataTableApp(props: App): JSX.Element {
         })
     }
 
-    function handleChange(e: React.ChangeEvent<HTMLInputElement>, info: string) {
+    function handleChange(info: any) {
         const cols = document.querySelectorAll("td[data-col=" + info + "]")
-        // setSelected(cols)
-        // debounceFuncSelected.current(cols)
-        const checked = e.target.checked
-        console.log(e.target.value)
-        // setCheck(checked)
-        // debounceFuncCheck.current(checked)
-        // debounceFuncSelected.current(cols, checked)
-
-        // console.log("selected: " + cols)
-        // console.log("selected type: " + typeof(cols))
-        //
-        // console.log("checked: " + checked)
-        // console.log("checked type: " + typeof(checked))
-
         cols.forEach((cell: any) => {
-                if (checked) {
+                if (!checkedItems.includes(info)) {
+                    setCheckedItems(checkedItems.concat(info))
                     setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
                     debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
                     cell.className= "highlight"
-                    setCheck(checked)
-                    debounceFuncCheck.current(checked)
-                    // cell.addEventListener('click', () =>
-                    //     setStyle(cell.className)
-                    // )
-                    // setStyle("highlight")
-                    // debounceFuncStyle.current("highlight")
-                    // console.log("style: " + style)
-                    // console.log(info)
                 } else {
+                    setCheckedItems((checkedItems: any[]) => checkedItems.filter((item: any) => item != info))
                     setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
                     debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
                     cell.className = "originalChakra"
-                    setCheck(checked)
-                    debounceFuncCheck.current(checked)
-                    // setStyle("originalChakra")
-                    // debounceFuncStyle.current("originalChakra")
-                    // console.log("style: " + style)
-                    // console.log(info)
+
                 }
             }
         )
+        debounceFuncCheckedItems.current(checkedItems.concat(info))
+        console.log(checkedItems)
     }
+
+    // function handleChange(e: React.ChangeEvent<HTMLInputElement>, info: string) {
+    //     const cols = document.querySelectorAll("td[data-col=" + info + "]")
+    //     // setSelected(cols)
+    //     // debounceFuncSelected.current(cols)
+    //     const checked = e.target.checked
+    //     console.log(e.target.value)
+    //     // setCheck(checked)
+    //     // debounceFuncCheck.current(checked)
+    //     // debounceFuncSelected.current(cols, checked)
+    //
+    //     // console.log("selected: " + cols)
+    //     // console.log("selected type: " + typeof(cols))
+    //     //
+    //     // console.log("checked: " + checked)
+    //     // console.log("checked type: " + typeof(checked))
+    //
+    //     cols.forEach((cell: any) => {
+    //             if (checked) {
+    //                 setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
+    //                 debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
+    //                 cell.className= "highlight"
+    //                 setCheck(checked)
+    //                 debounceFuncCheck.current(checked)
+    //                 // cell.addEventListener('click', () =>
+    //                 //     setStyle(cell.className)
+    //                 // )
+    //                 // setStyle("highlight")
+    //                 // debounceFuncStyle.current("highlight")
+    //                 // console.log("style: " + style)
+    //                 // console.log(info)
+    //             } else {
+    //                 setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
+    //                 debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
+    //                 cell.className = "originalChakra"
+    //                 setCheck(checked)
+    //                 debounceFuncCheck.current(checked)
+    //                 // setStyle("originalChakra")
+    //                 // debounceFuncStyle.current("originalChakra")
+    //                 // console.log("style: " + style)
+    //                 // console.log(info)
+    //             }
+    //         }
+    //     )
+    // }
 
     return (
     <AppWindow app={props}>
@@ -205,8 +237,13 @@ function DataTableApp(props: App): JSX.Element {
         <div className="Subcomponent-Container">
             <CheckboxGroup colorScheme='green'>
                 <HStack spacing='10' display='flex' zIndex="dropdown">
-                    {headers.map((tag: any) => (
-                        <Checkbox value={tag} onChange={(e) => handleChange(e, tag)}>{tag}</Checkbox>
+                    {headers.map((tag: any, index) => (
+                        <Checkbox
+                            value={tag}
+                            onChange={(e) => handleChange(tag)}
+                        >
+                            {tag}
+                        </Checkbox>
                     ))}
                     <Menu>
                         <MenuButton
