@@ -53,14 +53,13 @@ function DataTableApp(props: App): JSX.Element {
 
     const updateState = useAppStore(state => state.updateState);
 
-    const [messages, setMessages] = useState<any>(s.messages);
+    const [messages, setMessages] = useState(s.messages);
     const [inputVal, setInputVal] = useState(s.inputVal);
-    const [items, setItems] = useState<any[]>(s.items);
+    const [items, setItems] = useState(s.items);
     const [loaded, setLoaded] = useState(s.loaded);
-    const [headers, setHeaders] = useState<any[]>(s.headers);
+    const [headers, setHeaders] = useState(s.headers);
     const [clicked, setClicked] = useState(s.clicked);
-    const [check, setCheck] = useState(s.check);
-    const [style, setStyle] = useState(s.style);
+    const [selected, setSelected] = useState(s.selected);
     const [checkedItems, setCheckedItems] = useState(s.checkedItems)
 
 
@@ -90,27 +89,27 @@ function DataTableApp(props: App): JSX.Element {
     }
 
     function handleCellClick(clicked: boolean) {
-        setClicked(clicked)
+        // setClicked(clicked)
+        updateState(props._id, {clicked: clicked})
         const cells = document.querySelectorAll('td');
         cells.forEach(cell => {
             cell.addEventListener('click', () => {
                 updateState(props._id, { messages: "(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")" })
-                setMessages("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")")
+                // setMessages("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")")
             })
             // setMessages("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")")
         })
-
     }
 
-    function handleChange(info: any) {
+    function handleChange(info: string) {
         const cols = document.querySelectorAll("td[data-col=" + info + "]")
         cols.forEach((cell: any) => {
-                if (!checkedItems.includes(info)) {
+                if (!checkedItems?.includes(info)) {
                     setCheckedItems(checkedItems.concat(info))
                     updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected' });
                     cell.className= "highlight"
                 } else {
-                    setCheckedItems((checkedItems: any[]) => checkedItems.filter((item: any) => item != info))
+                    setCheckedItems((checkedItems: string[]) => checkedItems.filter((item: string) => item != info))
                     updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected' });
                     cell.className = "originalChakra"
 
@@ -129,7 +128,7 @@ function DataTableApp(props: App): JSX.Element {
         <div className="Subcomponent-Container">
             <CheckboxGroup colorScheme='green'>
                 <HStack spacing='10' display='flex' zIndex="dropdown">
-                    {s.headers.map((tag: any, index: number) => (
+                    {s.headers?.map((tag: any, index: number) => (
                         <Checkbox
                             value={tag}
                             onChange={(e) => handleChange(tag)}
@@ -174,7 +173,7 @@ function DataTableApp(props: App): JSX.Element {
                         <Thead>
                             <Tr>
                                 {
-                                    s.headers?.map((header: any, index: number) => (
+                                    s.headers?.map((header: string, index: number) => (
                                         <Th key={index}>
                                             {header}
                                             <ColumnMenu/>

@@ -1,33 +1,27 @@
 // import {SBPrimitive} from "../../../../../sagebase/src/lib/modules";
 
 export type state = {
-    tags: any[];
-    messages: any;
-    inputVal: any;
+    messages: string;
+    inputVal: string;
     items: any;
-    loaded: any;
-    headers: any;
-    clicked: any;
-    data: any;
-    check: any;
-    style: any;
-    value: any;
-    selected: any;
-    checkedItems: any;
+    loaded: boolean;
+    headers: string[];
+    clicked: boolean;
+    selected: {key: any, value: any};
+    checkedItems: string[];
+    data: {key: any, value: any};
 };
 
+
 export const init: Partial<state> = {
-    data: [],
-    tags: [],
-    // messages: '',
-    // inputVal: '',
     items: [],
     loaded: false,
     headers: [],
     clicked: false,
-    check: false,
-    selected: [],
+    // selected is some dict with column true
+    // selected: {"email": false},
     checkedItems: []
 };
+
 
 export const name = "DataTable";
