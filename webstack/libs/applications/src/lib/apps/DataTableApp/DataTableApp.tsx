@@ -40,11 +40,8 @@ import { state as AppState } from "./index";
 import { AppWindow } from '../../components';
 import './styles.css';
 
-// import { Tags } from "./components/Tags"
-// import { DataViz } from "./components/DataViz"
-// import { MessageCenter } from "./components/MessageCenter"
 import * as React from "react";
-import {useRef, useState} from "react";
+import {useState} from "react";
 import {ColumnMenu} from "./components/ColumnMenu";
 
 function DataTableApp(props: App): JSX.Element {
