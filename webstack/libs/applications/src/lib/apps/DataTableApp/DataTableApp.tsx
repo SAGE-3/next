@@ -69,79 +69,83 @@ function DataTableApp(props: App): JSX.Element {
     const [checkedItems, setCheckedItems] = useState(s.checkedItems)
     // const allChecked = checkedItems.every(Boolean)
     // const isIndeterminate = checkedItems.some(Boolean) && !allChecked
-    const {value, onChange, setValue, getCheckboxProps} = useCheckboxGroup({
-        value: s.value,
-        onChange: handleChange,
-    });
+    // const {value, onChange, setValue, getCheckboxProps} = useCheckboxGroup({
+    //     value: s.value,
+    //     onChange: handleChange,
+    // });
 
     // const { state, getCheckboxProps, getInputProps, getLabelProps, htmlProps } = useCheckbox(props)
 
-    useEffect(() => { setInputVal(s.inputVal); }, [s.inputVal]);
-    // useEffect(() => { setTags(s.tags); }, [s.tags]);
-    useEffect(() => { setMessages(s.messages); }, [s.messages]);
-    useEffect(() => { setItems(s.items); }, [s.items]);
-    useEffect(() => { setHeaders(s.headers); }, [s.headers]);
-    useEffect(() => { setLoaded(s.loaded); }, [s.loaded]);
-    useEffect(() => { setCheck(s.check); }, [s.check]);
-    useEffect(() => { setStyle(s.style); }, [s.style]);
-    useEffect(() => { setValue(s.value); }, [s.value]);
-    useEffect(() => { setCheckedItems(s.checkedItems); }, [s.checkedItems]);
+    // useEffect(() => { setInputVal(s.inputVal); }, [s.inputVal]);
+    // // useEffect(() => { setTags(s.tags); }, [s.tags]);
+    // useEffect(() => { setMessages(s.messages); }, [s.messages]);
+    // useEffect(() => { setItems(s.items); }, [s.items]);
+    // useEffect(() => { setHeaders(s.headers); }, [s.headers]);
+    // useEffect(() => { setLoaded(s.loaded); }, [s.loaded]);
+    // useEffect(() => { setCheck(s.check); }, [s.check]);
+    // useEffect(() => { setStyle(s.style); }, [s.style]);
+    // useEffect(() => { setValue(s.value); }, [s.value]);
+    // useEffect(() => { setCheckedItems(s.checkedItems); }, [s.checkedItems]);
 
 
 
-    // Saving the text after 1sec of inactivity
-    const debounceSaveTable = debounce(1000, (input, val, heads, load) => {
-        updateState(props._id, { inputVal: input });
-        updateState(props._id, { items: val });
-        updateState(props._id, { headers: heads });
-        updateState(props._id, { loaded: load });
+    // // Saving the text after 1sec of inactivity
+    // const debounceSaveTable = debounce(1000, (input, val, heads, load) => {
+    //     updateState(props._id, { inputVal: input });
+    //     updateState(props._id, { items: val });
+    //     updateState(props._id, { headers: heads });
+    //     updateState(props._id, { loaded: load });
+    //
+    // });
 
-    });
-
-    // Saving the text after 1sec of inactivity
-    const debounceSaveMessage = debounce(1000, (info) => {
-        updateState(props._id, { messages: info });
-    });
+    // // Saving the text after 1sec of inactivity
+    // const debounceSaveMessage = debounce(1000, (info) => {
+    //     updateState(props._id, { messages: info });
+    // });
 
     const debounceSaveCheck= debounce(1000, (info) => {
         updateState(props._id, { check: info });
     });
 
-    const debounceSaveCheckedItems= debounce(1000, (info) => {
-        updateState(props._id, { checkedItems: info });
-    });
+    // const debounceSaveCheckedItems= debounce(1000, (info) => {
+    //     updateState(props._id, { checkedItems: info });
+    // });
 
     const debounceSaveValue= debounce(1000, (val) => {
         // updateState(props._id, { selected: info });
         updateState(props._id, { value: val });
     });
 
-    // Keep a copy of the function
-    const debounceFuncTable = useRef(debounceSaveTable);
+    // // Keep a copy of the function
+    // const debounceFuncTable = useRef(debounceSaveTable);
 
-    // Keep a copy of the function
-    const debounceFuncMessage = useRef(debounceSaveMessage);
+    // // Keep a copy of the function
+    // const debounceFuncMessage = useRef(debounceSaveMessage);
 
     // Keep a copy of the function
     const debounceFuncCheck = useRef(debounceSaveCheck);
 
-    // Keep a copy of the function
-    const debounceFuncCheckedItems = useRef(debounceSaveCheckedItems);
+    // // Keep a copy of the function
+    // const debounceFuncCheckedItems = useRef(debounceSaveCheckedItems);
 
     // Keep a copy of the function
     const debounceFuncValue = useRef(debounceSaveValue);
 
 
     function handleSubmit() {
-        console.log(inputVal)
+        console.log(s.inputVal)
         fetch(
-            inputVal)
+            s.inputVal)
             .then((res) => res.json())
             .then((json) => {
                 setItems(json)
                 setLoaded(true)
                 setHeaders(Object.keys(json[0]))
-                debounceFuncTable.current(inputVal, json, Object.keys(json[0]), true)
+                // debounceFuncTable.current(inputVal, json, Object.keys(json[0]), true)
+                updateState(props._id, { inputVal: inputVal });
+                updateState(props._id, { items: json });
+                updateState(props._id, { headers: Object.keys(json[0]) });
+                updateState(props._id, { loaded: true });
             })
     }
 
@@ -160,7 +164,9 @@ function DataTableApp(props: App): JSX.Element {
         cells.forEach(cell => {
             cell.addEventListener('click', () =>
                 setMessages("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")"))
-                debounceFuncMessage.current("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")")
+                updateState(props._id, { messages: "(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")" })
+                // debounceFuncMessage.current("(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")")
+
         })
     }
 
@@ -169,19 +175,22 @@ function DataTableApp(props: App): JSX.Element {
         cols.forEach((cell: any) => {
                 if (!checkedItems.includes(info)) {
                     setCheckedItems(checkedItems.concat(info))
-                    setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
-                    debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
+                    // setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
+                    updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected' });
+                    // debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected')
                     cell.className= "highlight"
                 } else {
                     setCheckedItems((checkedItems: any[]) => checkedItems.filter((item: any) => item != info))
-                    setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
-                    debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
+                    // setMessages((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
+                    updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected' });
+                    // debounceFuncMessage.current((info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected')
                     cell.className = "originalChakra"
 
                 }
             }
         )
-        debounceFuncCheckedItems.current(checkedItems.concat(info))
+        // debounceFuncCheckedItems.current(checkedItems.concat(info))
+        updateState(props._id, { checkedItems: checkedItems.concat(info) });
         console.log(checkedItems)
     }
 
@@ -237,7 +246,7 @@ function DataTableApp(props: App): JSX.Element {
         <div className="Subcomponent-Container">
             <CheckboxGroup colorScheme='green'>
                 <HStack spacing='10' display='flex' zIndex="dropdown">
-                    {headers.map((tag: any, index) => (
+                    {s.headers.map((tag: any, index: number) => (
                         <Checkbox
                             value={tag}
                             onChange={(e) => handleChange(tag)}
@@ -266,7 +275,7 @@ function DataTableApp(props: App): JSX.Element {
             </CheckboxGroup>
         </div>
                 <InputGroup size='md'>
-                    {!loaded ? <Badge fontSize='1.5em' variant='solid' colorScheme='red'>Not loaded</Badge>:<Badge fontSize='1.5em' variant='solid' colorScheme='green'>Loaded</Badge>}
+                    {!s.loaded ? <Badge fontSize='1.5em' variant='solid' colorScheme='red'>Not loaded</Badge>:<Badge fontSize='1.5em' variant='solid' colorScheme='green'>Loaded</Badge>}
                     <Input
                         type="text"
                         value={inputVal}
@@ -282,7 +291,7 @@ function DataTableApp(props: App): JSX.Element {
                         <Thead>
                             <Tr>
                                 {
-                                    headers?.map((header: any, index: number) => (
+                                    s.headers?.map((header: any, index: number) => (
                                         <Th key={index}>
                                             {header}
                                             <ColumnMenu/>
@@ -294,7 +303,7 @@ function DataTableApp(props: App): JSX.Element {
 
                         <Tbody>
                             {
-                                items?.map((item: any, index: number) => (
+                                s.items?.map((item: any, index: number) => (
                                     <Tr key={item.id}>
                                         {Object.values(item)?.map((itemChild: any, index) => (
                                             <>
@@ -317,7 +326,7 @@ function DataTableApp(props: App): JSX.Element {
                 <Alert status='info' variant='top-accent' colorScheme='telegram'>
                     <AlertIcon />
                     <AlertTitle>Feedback: </AlertTitle>
-                    <AlertDescription>{ messages }</AlertDescription>
+                    <AlertDescription>{ s.messages }</AlertDescription>
                     <AlertDescription></AlertDescription>
                 </Alert>
             </VStack>
