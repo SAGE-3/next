@@ -13,24 +13,27 @@ import time
 import sys
 import io
 import json
-import matplotlib.artist
+# import matplotlib.artist
 import base64
 import tempfile
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import os
 import requests
-import pandas as pd
+# import pandas as pd
+from smartbit import TrackedBaseModel
 
+
+class CounterState(TrackedBaseModel):
+    input: int
+    running: bool
+    output: str
 
 class SageCell(SmartBit):
 
-    state_name = "sagecell"
-    # Todo add this somewhere so it's set by default and can be overridden in the child class.
-    state_type = "reducer"
 
     def __init__(self, data):
 
-        super().__init__(self.state_name, data)
+        super().__init__()
 
         # Ipython executor code
         self._ipython = get_ipython()

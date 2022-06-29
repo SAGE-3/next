@@ -27,6 +27,11 @@ function CounterApp(props: App): JSX.Element {
     updateState(props._id, { count: s.count - 1 })
   }
 
+  function handleZero() {
+     updateState(props._id, { executeInfo: {"executeFunc": "reset_to_zero", "params": {}}})
+  }
+
+
   return (
     <AppWindow app={props}>
       <>

@@ -6,12 +6,20 @@
  *
  */
 
+type exec = {
+    executeFunc: string;
+    params: { [key: string]: any };
+}
+
 export type state = {
   count: number;
+  executeInfo: exec;
 };
 
 export const init: Partial<state> = {
   count: 42,
+   executeInfo: {"executeFunc": "", "params": {}}
+
 };
 
 export const name = 'Counter';
