@@ -1,6 +1,13 @@
 // import {SBPrimitive} from "../../../../../sagebase/src/lib/modules";
 
+type exec = {
+    executeFunc: string;
+    params: { [key: string]: any };
+}
+
 export type state = {
+    executeInfo: exec;
+
     messages: string;
     inputVal: string;
     items: any;
@@ -14,14 +21,17 @@ export type state = {
 
 
 export const init: Partial<state> = {
-    // items: [],
+    executeInfo: {"executeFunc": "", "params": {}},
+
     loaded: false,
-    // headers: [],
     clicked: false,
+    checkedItems: [],
+
+    // items: [],
+    // headers: [],
     // selected is some dict with column true
     // selected: {"email": false},
     // selected: [],
-    checkedItems: [],
 };
 
 

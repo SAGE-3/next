@@ -60,6 +60,9 @@ function DataTableApp(props: App): JSX.Element {
 
     const [inputVal, setInputVal] = useState(s.inputVal);
 
+    function handlePrintTag() {
+        updateState(props._id, { executeInfo: {"executeFunc": "print_tag", "params": {}}})
+    }
 
     function handleSubmit() {
         console.log("s.inputVal: " + s.inputVal)
