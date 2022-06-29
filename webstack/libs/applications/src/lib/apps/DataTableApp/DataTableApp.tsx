@@ -58,11 +58,19 @@ function DataTableApp(props: App): JSX.Element {
     // const [selected, setSelected] = useState(s.selected);
     // const [checkedItems, setCheckedItems] = useState(s.checkedItems)
 
+    //TODO: Rename to informative
     const [inputVal, setInputVal] = useState(s.inputVal);
 
     function handlePrintTag() {
-        updateState(props._id, { executeInfo: {"executeFunc": "print_tag", "params": {}}})
+        updateState(props._id,
+            { executeInfo: {"executeFunc": "print_tag", "params": {}}})
     }
+
+    function handleLoadData() {
+        updateState(props._id,
+            { executeInfo: {"executeFunc": "load_data", "params": {"url": s.inputVal}}})
+    }
+
 
     function handleSubmit() {
         console.log("s.inputVal: " + s.inputVal)
