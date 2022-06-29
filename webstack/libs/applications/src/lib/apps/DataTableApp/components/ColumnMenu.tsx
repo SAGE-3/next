@@ -9,11 +9,14 @@ import {FiChevronDown, FiChevronRight} from "react-icons/fi";
 import { colMenus } from "../colMenus";
 
 
-export const ColumnMenu = () => {
+export const ColumnMenu = (props: any) => {
 
-    function handleClick() {
-        console.log("clicked!")
+    const header = props.header;
+
+    function handleClick(header: string) {
+        console.log("clicked! " + header)
     }
+
 
     const SubMenu = () => (
         <MenuList>
@@ -30,7 +33,7 @@ export const ColumnMenu = () => {
                                 size='xs'
                                 variant='link'
                                 // ml='20%'
-                                onClick={handleClick}
+                                onClick={(e) => handleClick(props.header)}
                             >
                             {data.function}
                             </MenuButton>

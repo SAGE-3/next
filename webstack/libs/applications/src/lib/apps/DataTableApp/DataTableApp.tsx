@@ -56,12 +56,13 @@ function DataTableApp(props: App): JSX.Element {
     // const [headers, setHeaders] = useState(s.headers);
     // const [clicked, setClicked] = useState(s.clicked);
     // const [selected, setSelected] = useState(s.selected);
+    // const [checkedItems, setCheckedItems] = useState(s.checkedItems)
+
     const [inputVal, setInputVal] = useState(s.inputVal);
-    const [checkedItems, setCheckedItems] = useState(s.checkedItems)
 
 
     function handleSubmit() {
-        console.log(s.inputVal)
+        console.log("s.inputVal: " + s.inputVal)
         fetch(
             inputVal)
             .then((res) => res.json())
@@ -123,7 +124,7 @@ function DataTableApp(props: App): JSX.Element {
         )
         // updateState(props._id, { checkedItems: checkedItems.concat(info) });
         // updateState(props._id, {checkedItems: s.checkedItems})
-        console.log("s.checktedItems: " + s.checkedItems)
+        console.log("s.checkedItems: " + s.checkedItems)
         console.log("s.selected: " + s.selected)
     }
 
@@ -183,7 +184,7 @@ function DataTableApp(props: App): JSX.Element {
                                     s.headers?.map((header: string, index: number) => (
                                         <Th key={index}>
                                             {header}
-                                            <ColumnMenu/>
+                                            <ColumnMenu header={header}/>
                                         </Th>
                                     ))
                                 }
