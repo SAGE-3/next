@@ -38,6 +38,7 @@ function CounterApp(props: App): JSX.Element {
         <h1>Count: {s.count}</h1>
         <Button onClick={handleAddClick} colorScheme="green">Add</Button>
         <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
+        <Button onClick={handleZero} colorScheme="blue">Sub</Button>
         <h2>Last update by: {props._updatedBy}</h2>
       </>
     </AppWindow >

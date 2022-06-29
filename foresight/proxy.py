@@ -147,13 +147,13 @@ class SAGEProxy():
             sb.refresh_data_form_update(doc)
 
             exec_info = getattr(sb.state, "executeInfo", None)
-            # if exec_info is not None and exec_info["executeFunc"] != "":
-            #     _func = getattr(sb, exec_info["executeFunc"])
-            #     # TODO: validate the params are valid
-            #     if "params" in exec_info:
-            #         _func(**exec_info["params"])
-            #     else:
-            #         _func()
+            if exec_info is not None and exec_info["executeFunc"] != "":
+                _func = getattr(sb, exec_info["executeFunc"])
+                # TODO: validate the params are valid
+                if "params" in exec_info:
+                    _func(**exec_info["params"])
+                else:
+                    _func()
 
     def __handle_delete(self, collection, doc):
         print("HANDLE DELETE: UNHANDLED")
@@ -175,7 +175,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config.json", "0a7ca706-3af7-44c6-9067-fab972a8a26a")
+sage_proxy = SAGEProxy("config.json", "6a3ea938-aae9-4595-90ab-71c466fb6a90")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()
