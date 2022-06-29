@@ -147,13 +147,14 @@ class SAGEProxy():
             sb.refresh_data_form_update(doc)
 
             exec_info = getattr(sb.state, "executeInfo", None)
-            if exec_info is not None and exec_info["executeFunc"] != "":
-                _func = getattr(sb, exec_info["executeFunc"])
-                # TODO: validate the params are valid
-                if "params" in exec_info:
-                    _func(**exec_info["params"])
-                else:
-                    _func()
+
+            if exec_info is not None:
+                func_name =  getattr(exec_info, "executeFunc")
+                if func_name != '':
+                    _func = getattr(sb, func_name)
+                    _params = getattr(exec_info, "params")
+                    # TODO: validate the params are valid
+                    _func(**_params)
 
     def __handle_delete(self, collection, doc):
         print("HANDLE DELETE: UNHANDLED")
