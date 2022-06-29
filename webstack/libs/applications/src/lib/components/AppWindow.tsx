@@ -23,6 +23,7 @@ type WindowProps = {
 export function AppWindow(props: WindowProps) {
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
+  const gridSize = useUIStore((state) => state.gridSize);
 
   // Height of the title bar
   const titleBarHeight = 24;
@@ -36,13 +37,13 @@ export function AppWindow(props: WindowProps) {
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(props.app.data.minimized);
 
-  // If size or position change update the local state.
+  // If size or position change, update the local state.
   useEffect(() => {
     setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
   }, [props.app.data.size, props.app.data.position]);
 
-  // If size or position change update the local state.
+  // If minimized change, update the local state.
   useEffect(() => {
     setMinimized(props.app.data.minimized);
   }, [props.app.data.minimized]);
@@ -109,6 +110,8 @@ export function AppWindow(props: WindowProps) {
         overflow: 'hidden',
       }}
       scale={scale}
+      resizeGrid={[gridSize, gridSize]}
+      dragGrid={[gridSize, gridSize]}
     >
       {/* Title Bar */}
       <Box
@@ -144,7 +147,9 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box>{minimized ? null : props.children}</Box>
+      <Box id={'app_' + props.app._id} width={"100%"} height={props.app.data.size.height}>
+        {minimized ? null : props.children}
+      </Box>
     </Rnd>
   );
 }

@@ -103,17 +103,20 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     files.forEach((elt) => {
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Put the new file into the collection
-      AssetsCollection.addAsset({
-        file: elt.filename,
-        owner: user.id || '-',
-        room: req.body.room || '-',
-        originalfilename: elt.originalname,
-        path: elt.path,
-        destination: elt.destination,
-        size: elt.size,
-        mimetype: elt.mimetype,
-        dateAdded: new Date().toISOString(),
-      });
+      AssetsCollection.addAsset(
+        {
+          file: elt.filename,
+          owner: user.id || '-',
+          room: req.body.room || '-',
+          originalfilename: elt.originalname,
+          path: elt.path,
+          destination: elt.destination,
+          size: elt.size,
+          mimetype: elt.mimetype,
+          dateAdded: new Date().toISOString(),
+        },
+        user.id
+      );
     });
 
     // Return success with the information
@@ -128,12 +131,17 @@ function uploadHandler(req: express.Request, res: express.Response): void {
  * @param message
  * @param cache
  */
-export async function assetWSRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
+export async function assetWSRouter(
+  socket: WebSocket,
+  message: APIClientWSMessage,
+  userId: string,
+  cache: SubscriptionCache
+): Promise<void> {
   // const auth = request.session.passport.user;
   switch (message.method) {
     case 'GET': {
       // READ ALL
-      if (message.route.startsWith('/api/assets')) {
+      if (message.route === '/api/assets') {
         const assets = await AssetsCollection.getAllAssets();
         if (assets) socket.send(JSON.stringify({ id: message.id, success: true, data: assets }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get assets.' }));

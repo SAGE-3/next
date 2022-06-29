@@ -62,6 +62,7 @@ export function BoardPage() {
   const scale = useUIStore((state) => state.scale);
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
+  const gridSize = useUIStore((state) => state.gridSize);
 
   // User information
   const user = useUserStore((state) => state.user);
@@ -105,8 +106,10 @@ export function BoardPage() {
     const height = 300;
 
     // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-    const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-    const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+    let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+    let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+    x = Math.round(x / gridSize) * gridSize; // Snap to grid
+    y = Math.round(y / gridSize) * gridSize;
 
     // Skip if no user is logged in
     if (!user) return;
@@ -227,7 +230,7 @@ export function BoardPage() {
             // height={5000}
             width="100%"
             height="100%"
-            backgroundSize={`50px 50px`}
+            backgroundSize={`${gridSize}px ${gridSize}px`}
             backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
                linear-gradient(to bottom, grey 1px, transparent 1px);`}
             id="board"
@@ -269,8 +272,10 @@ export function BoardPage() {
                 const width = 600;
                 const height = 800;
                 // Calculate X and Y of app based on the current board position and the width and height of the viewport
-                const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-                const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+                let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+                let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+                x = Math.round(x / gridSize) * gridSize; // Snap to grid
+                y = Math.round(y / gridSize) * gridSize;
                 const token = '44';
                 const url = 'http://' + window.location.hostname + ':8888/tree/?token=' + token;
                 // Open a webview into the SAGE3 builtin Jupyter instance
