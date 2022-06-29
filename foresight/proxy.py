@@ -156,6 +156,7 @@ class SAGEProxy():
                     # TODO: validate the params are valid
                     _func(**_params)
 
+
     def __handle_delete(self, collection, doc):
         print("HANDLE DELETE: UNHANDLED")
         pass
