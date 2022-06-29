@@ -37,8 +37,8 @@ export class niceCollection<T extends SBJSON> {
     return unsubscribe;
   }
 
-  async addItem(item: T): Promise<string | undefined> {
-    const itref = await this.db.addDoc(item);
+  async addItem(item: T, by: string): Promise<string | undefined> {
+    const itref = await this.db.addDoc(item, by);
     if (itref) {
       const it = await itref.read();
       if (it) {

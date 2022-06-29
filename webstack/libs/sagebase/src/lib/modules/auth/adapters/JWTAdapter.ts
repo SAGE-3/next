@@ -13,7 +13,7 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 import { SBAuthDB } from '../SBAuthDatabase';
 
 // Return payload from JWT check
-type JWTPayload = {
+export type JWTPayload = {
   sub: string;
   name: string;
   admin: boolean;

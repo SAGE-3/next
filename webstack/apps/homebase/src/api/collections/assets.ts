@@ -119,8 +119,8 @@ class SAGE3AssetsCollection {
    * @param {AssetType} newAsset The new asset to add to the database
    * @returns {Promise<string | undefined>} Returns id of the asset
    */
-  public async addAsset(newAsset: AssetSchema): Promise<string | undefined> {
-    return this.assetCollection.addItem(newAsset);
+  public async addAsset(newAsset: AssetSchema, by: string): Promise<string | undefined> {
+    return this.assetCollection.addItem(newAsset, by);
   }
 }
 

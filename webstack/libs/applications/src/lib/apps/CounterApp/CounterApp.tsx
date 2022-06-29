@@ -14,7 +14,6 @@ import { state as AppState } from "./index";
 import { AppWindow } from '../../components';
 
 function CounterApp(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
@@ -29,7 +28,7 @@ function CounterApp(props: App): JSX.Element {
   }
 
   function handleZero() {
-    updateState(props._id, { execute: "reset_to_zero"})
+     updateState(props._id, { executeInfo: {"executeFunc": "reset_to_zero", "params": {}}})
   }
 
 
@@ -39,7 +38,7 @@ function CounterApp(props: App): JSX.Element {
         <h1>Count: {s.count}</h1>
         <Button onClick={handleAddClick} colorScheme="green">Add</Button>
         <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
-        <Button onClick={handleZero} colorScheme="blue">Zero</Button>
+        <h2>Last update by: {props._updatedBy}</h2>
       </>
     </AppWindow >
   )

@@ -42,6 +42,7 @@ import { loadCollections } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
+import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -101,9 +102,10 @@ async function startServer() {
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
 
   // Websocket API for sagebase
-  apiWebSocketServer.on('connection', (socket: WebSocket) => {
-
-    console.log('apiWebSocketServer> connection open');
+  apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
+    // TODO: Declarations file was being funny again
+    // @ts-ignore
+    const user = req.user;
 
     // Create a subscription cache for this connection.
     // A Subscription Cache to track what subscriptions the user currently has.
@@ -111,7 +113,7 @@ async function startServer() {
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, message, subCache);
+      wsAPIRouter(socket, message, user?.id || '-', subCache);
     });
 
     socket.on('close', () => {
@@ -151,7 +153,7 @@ async function startServer() {
         const keyFile = config.auth.jwtConfig?.publicKey || 'jwt_public.pem';
         const pubkey = fs.readFileSync(keyFile);
         // Check is token valid
-        jwt.verify(token, pubkey, { algorithms: ['RS256'] }, (err, decoded) => {
+        jwt.verify(token, pubkey, { algorithms: ['RS256'] }, async (err, decoded) => {
           if (err) {
             console.log('not authorized');
             socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
@@ -159,23 +161,43 @@ async function startServer() {
             return;
           } else {
             console.log('Authorization> ws ok', decoded?.sub);
+            const payload = decoded as JWTPayload;
+            if (decoded?.sub) {
+              // Find the actual user based on the token information
+              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub);
+              // Add the info to the request
+              req.user = authRecord;
+              if (wsPath === 'api') {
+                apiWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+                  apiWebSocketServer.emit('connection', ws, req);
+                });
+              } else if (wsPath === 'yjs') {
+                yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+                  yjsWebSocketServer.emit('connection', ws, req);
+                });
+              }
+            }
           }
         });
-      } else if (!req.session.passport?.user) {
-        // Auth coming from a logged user
-        console.log('Authorization> ws failed');
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-        socket.destroy();
-        return;
-      }
-      if (wsPath === 'api') {
-        apiWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
-          apiWebSocketServer.emit('connection', ws, request);
-        });
-      } else if (wsPath === 'yjs') {
-        yjsWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
-          yjsWebSocketServer.emit('connection', ws, request);
-        });
+      } else {
+        if (!req.session.passport?.user) {
+          // Auth coming from a logged user
+          console.log('Authorization> ws failed');
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+        if (wsPath === 'api') {
+          apiWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+            // Add the user info from passport to the ws request
+            req.user = req.session.passport?.user;
+            apiWebSocketServer.emit('connection', ws, req);
+          });
+        } else if (wsPath === 'yjs') {
+          yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+            yjsWebSocketServer.emit('connection', ws, req);
+          });
+        }
       }
     });
   });

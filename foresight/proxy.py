@@ -1,3 +1,4 @@
+
 # -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
@@ -96,7 +97,7 @@ class SAGEProxy():
                 self.populate_exisitng()
                 async for msg in ws:
                     msg = json.loads(msg)
-                    print(f"I receive the follwing messages and I'm adding it to the queue\n {msg}")
+                    print(f"Receive: \n {msg}")
                     self.__message_queue.put(msg)
 
         asyncio.get_event_loop().run_until_complete(_run(self))
@@ -126,9 +127,8 @@ class SAGEProxy():
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
             print("APP CREATED")
-
             doc["state"] = doc["data"]["state"]
-            del (doc["data"]["state"])
+            del(doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
             self.room.boards[doc["data"]["boardId"]].smartbits[smartbit.app_id] = smartbit
 
@@ -143,12 +143,17 @@ class SAGEProxy():
             board_id = doc['data']["boardId"]
             sb = self.room.boards[board_id].smartbits[app_id]
 
-            sb.state.count = doc["data"]["state"]["count"]
+            # Note that set_data_form_update clear touched field
+            sb.refresh_data_form_update(doc)
 
-            if doc["data"]["state"]["execute"] != "":
-                print(f"we are about to call function {doc['data']['state']['execute']}")
-            # for k in ['state', 'position', 'size', 'rotation', 'type', 'ownerId',  'minimized']:
-            #     self.room.boards[board_id].smartbits[app_id][k] = doc["data"][k]
+            exec_info = getattr(sb.state, "executeInfo", None)
+            # if exec_info is not None and exec_info["executeFunc"] != "":
+            #     _func = getattr(sb, exec_info["executeFunc"])
+            #     # TODO: validate the params are valid
+            #     if "params" in exec_info:
+            #         _func(**exec_info["params"])
+            #     else:
+            #         _func()
 
     def __handle_delete(self, collection, doc):
         print("HANDLE DELETE: UNHANDLED")
@@ -170,7 +175,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config.json", "028e4432-9a3f-458c-b56a-19678cd1c12b")
+sage_proxy = SAGEProxy("config.json", "0a7ca706-3af7-44c6-9067-fab972a8a26a")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()
