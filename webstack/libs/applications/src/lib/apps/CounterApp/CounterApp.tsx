@@ -29,7 +29,7 @@ function CounterApp(props: App): JSX.Element {
   }
 
   function handleZero() {
-    updateState(props._id, { execute: "reset_to_zero"})
+     updateState(props._id, { executeInfo: {"executeFunc": "reset_to_zero", "params": {}}})
   }
 
 
