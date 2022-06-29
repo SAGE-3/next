@@ -7,20 +7,21 @@ export type state = {
     loaded: boolean;
     headers: string[];
     clicked: boolean;
-    selected: {key: any, value: any};
+    selected: any[];
     checkedItems: string[];
-    data: {key: any, value: any};
+    // data: {key: any, value: any};
 };
 
 
 export const init: Partial<state> = {
-    items: [],
+    // items: [],
     loaded: false,
-    headers: [],
+    // headers: [],
     clicked: false,
     // selected is some dict with column true
     // selected: {"email": false},
-    checkedItems: []
+    // selected: [],
+    checkedItems: [],
 };
 
 

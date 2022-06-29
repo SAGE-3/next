@@ -50,13 +50,13 @@ function DataTableApp(props: App): JSX.Element {
 
     const updateState = useAppStore(state => state.updateState);
 
-    const [messages, setMessages] = useState(s.messages);
+    // const [messages, setMessages] = useState(s.messages);
+    // const [items, setItems] = useState(s.items);
+    // const [loaded, setLoaded] = useState(s.loaded);
+    // const [headers, setHeaders] = useState(s.headers);
+    // const [clicked, setClicked] = useState(s.clicked);
+    // const [selected, setSelected] = useState(s.selected);
     const [inputVal, setInputVal] = useState(s.inputVal);
-    const [items, setItems] = useState(s.items);
-    const [loaded, setLoaded] = useState(s.loaded);
-    const [headers, setHeaders] = useState(s.headers);
-    const [clicked, setClicked] = useState(s.clicked);
-    const [selected, setSelected] = useState(s.selected);
     const [checkedItems, setCheckedItems] = useState(s.checkedItems)
 
 
@@ -66,9 +66,9 @@ function DataTableApp(props: App): JSX.Element {
             inputVal)
             .then((res) => res.json())
             .then((json) => {
-                setItems(json)
-                setLoaded(true)
-                setHeaders(Object.keys(json[0]))
+                // setItems(json)
+                // setLoaded(true)
+                // setHeaders(Object.keys(json[0]))
                 updateState(props._id, { inputVal: inputVal });
                 updateState(props._id, { items: json });
                 updateState(props._id, { headers: Object.keys(json[0]) });
@@ -101,20 +101,30 @@ function DataTableApp(props: App): JSX.Element {
     function handleChange(info: string) {
         const cols = document.querySelectorAll("td[data-col=" + info + "]")
         cols.forEach((cell: any) => {
-                if (!checkedItems?.includes(info)) {
-                    setCheckedItems(checkedItems.concat(info))
+                if (!s.checkedItems?.includes(info)) {
+                    const checked = s.checkedItems.concat(info)
+                    updateState(props._id, {checkedItems: checked})
                     updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected' });
                     cell.className= "highlight"
+
+                    console.log("added: " + cell.cellIndex)
+                    const added = s.selected?.concat(cell.cellIndex)
+                    updateState(props._id, {selected: added})
                 } else {
-                    setCheckedItems((checkedItems: string[]) => checkedItems.filter((item: string) => item != info))
+                    const unchecked = (() => (s.checkedItems?.filter((item: string) => item != info)))()
+                    // setCheckedItems((checkedItems: string[]) => checkedItems.filter((item: string) => item != info))
+                    updateState(props._id, {checkedItems: unchecked})
                     updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected' });
                     cell.className = "originalChakra"
+                    console.log("removed: " + cell.cellIndex)
 
                 }
             }
         )
         // updateState(props._id, { checkedItems: checkedItems.concat(info) });
-        console.log(checkedItems)
+        // updateState(props._id, {checkedItems: s.checkedItems})
+        console.log("s.checktedItems: " + s.checkedItems)
+        console.log("s.selected: " + s.selected)
     }
 
 
@@ -186,7 +196,7 @@ function DataTableApp(props: App): JSX.Element {
                                     <Tr key={item.id}>
                                         {Object.values(item)?.map((itemChild: any, index) => (
                                             <>
-                                                {(typeof itemChild === 'object') ?<Td key={index} data-col={headers[index % headers.length] }> {handleNesting(itemChild)} </Td> : <Td key={index} data-col={headers[index % headers.length] } onClick={() => handleCellClick(!clicked)}> {itemChild} </Td>}
+                                                {(typeof itemChild === 'object') ?<Td key={index} data-col={s.headers[index % s.headers.length] }> {handleNesting(itemChild)} </Td> : <Td key={index} data-col={s.headers[index % s.headers.length] } onClick={() => handleCellClick(!s.clicked)}> {itemChild} </Td>}
                                             </>
                                         ))}
                                     </Tr>

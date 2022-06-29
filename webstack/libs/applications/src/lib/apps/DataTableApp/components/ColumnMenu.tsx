@@ -1,5 +1,5 @@
 import {
-    Menu, MenuButton, IconButton, MenuList, MenuItem,
+    Button, Menu, MenuButton, Portal, IconButton, MenuList, MenuItem,
 } from '@chakra-ui/react'
 
 import './styles.css'
@@ -11,33 +11,51 @@ import { colMenus } from "../colMenus";
 
 export const ColumnMenu = () => {
 
+    function handleClick() {
+        console.log("clicked!")
+    }
+
     const SubMenu = () => (
-        <MenuList mt='5px'>
+        <MenuList>
             {colMenus.map((data, key) => {
                 return (
                         <MenuItem>
-                            {data.type}
-                            <Menu>
-                            <MenuButton
-                                as={IconButton}
-                                aria-label='options'
-                                icon={<FiChevronRight/>}
-                                variant='ghost'
-                                size='xs'
-                                ml='20%'
-                            />
-                            <MenuList>
-                                    {data.actions.map((vals, index) => {
-                                        return (
-                                            <MenuItem>
-                                                <MenuButton>{vals}</MenuButton>
+                            {/*<MenuButton as={Button}>*/}
+                            {/*    {data.function}*/}
+                            {/*</MenuButton>*/}
 
-                                            </MenuItem>
-                                        )
-                                    })
-                                    }
-                            </MenuList>
-                            </Menu>
+                            <MenuButton
+                                as={Button}
+                                aria-label='Actions'
+                                size='xs'
+                                variant='link'
+                                // ml='20%'
+                                onClick={handleClick}
+                            >
+                            {data.function}
+                            </MenuButton>
+
+                            {/*<Menu>*/}
+                            {/*<MenuButton*/}
+                            {/*    as={IconButton}*/}
+                            {/*    aria-label='options'*/}
+                            {/*    icon={<FiChevronRight/>}*/}
+                            {/*    variant='ghost'*/}
+                            {/*    size='xs'*/}
+                            {/*    ml='20%'*/}
+                            {/*/>*/}
+                            {/*<MenuList>*/}
+                            {/*        {data.functions.map((vals, index) => {*/}
+                            {/*            return (*/}
+                            {/*                <MenuItem>*/}
+                            {/*                    <MenuButton>{vals}</MenuButton>*/}
+
+                            {/*                </MenuItem>*/}
+                            {/*            )*/}
+                            {/*        })*/}
+                            {/*        }*/}
+                            {/*</MenuList>*/}
+                            {/*</Menu>*/}
                         </MenuItem>
                 )
             })
@@ -46,17 +64,23 @@ export const ColumnMenu = () => {
     )
 
     return (
-            <Menu>
-                <MenuButton
-                    as={IconButton}
-                    aria-label='Options'
-                    size='md'
-                    variant='ghost'
-                    icon={<FiChevronDown/>}
-                    ml='20%'
-                />
-                {/*<MenuItem as={SubMenu}/>*/}
-            </Menu>
+
+        <Menu>
+            {({ isOpen }) => (
+                <>
+                    <MenuButton
+                        as={IconButton}
+                        aria-label='Options'
+                        size='sm'
+                        variant='ghost'
+                        icon={<FiChevronDown/>}
+                        ml='20%'
+                        isActive={isOpen}
+                    />
+                    <MenuItem as={SubMenu}/>
+                </>
+            )}
+        </Menu>
 
     )
 }
