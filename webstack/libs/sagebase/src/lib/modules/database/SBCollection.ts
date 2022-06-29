@@ -237,7 +237,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       // ** https://redis.io/docs/stack/search/reference/tags/
       if (typeof query === 'string') query = `{${query.replace(/[#-]/g, '\\$&')}}`;
       if (typeof query === 'number') query = `[${query} ${query}]`;
-      const response = await this._redisClient.ft.search(this._indexName, `@${propertyName}:${query}`); //, { LIMIT: { from: 0, size: 1000 } }
+      const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`); //, { LIMIT: { from: 0, size: 1000 } }
       const docRefPromises = response.documents.map((el) =>
         new SBDocumentRef<Type>(el.value['_id'] as string, el.id, this._redisClient).read()
       );
