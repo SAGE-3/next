@@ -8,10 +8,16 @@
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from pydantic import Field
+from typing import Optional
 
 
 class DataTableState(TrackedBaseModel):
-    view_data: dict = Field(alias = "viewData")
+
+    viewData: Optional[dict] = Field(alias = "viewData")
+    loaded: bool
+    clicked: bool
+    checkedItems: list
+
     executeInfo: ExecuteInfo
 
 
@@ -25,10 +31,15 @@ class DataTable(SmartBit):
         super(DataTable, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
-    def load_table(self, url):
-        temp_json = {"col_1": [1,2,3], "col_1": [4,5,6]}
+    # TODO, add a decorator to automatically set executeFunc
+    # and params to ""
+    def load_data(self, url):
+        temp_json = {"col_1": [1,2,3], "col_2": [4,5,6]}
         print(url)
-        self.state.view_data = temp_json
+        self.state.viewData = temp_json
+        self.state.executeInfo.executeFunc=""
+        self.state.executeInfo.params = {}
+
         print("I am sendig this information")
         self.send_updates()
 

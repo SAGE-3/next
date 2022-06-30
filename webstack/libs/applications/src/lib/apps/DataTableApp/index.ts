@@ -6,26 +6,31 @@ type exec = {
 }
 
 export type state = {
-    executeInfo: exec;
+    viewData: any;
+
 
     messages: string;
-    inputVal: string;
     items: any;
     loaded: boolean;
     headers: string[];
     clicked: boolean;
     selected: any[];
     checkedItems: string[];
+    dataUrl: string;
+    executeInfo: exec;
+
     // data: {key: any, value: any};
 };
 
 
 export const init: Partial<state> = {
-    executeInfo: {"executeFunc": "", "params": {}},
 
     loaded: false,
     clicked: false,
     checkedItems: [],
+
+    executeInfo: {"executeFunc": "", "params": {}},
+
 
     // items: [],
     // headers: [],

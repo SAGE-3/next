@@ -41,52 +41,50 @@ import { AppWindow } from '../../components';
 import './styles.css';
 
 import * as React from "react";
-import {useState} from "react";
 import {ColumnMenu} from "./components/ColumnMenu";
 
 function DataTableApp(props: App): JSX.Element {
 
+    // const s = props.data.state as AppState;
     const s = props.data.state as AppState;
 
     const updateState = useAppStore(state => state.updateState);
 
-    // const [messages, setMessages] = useState(s.messages);
-    // const [items, setItems] = useState(s.items);
-    // const [loaded, setLoaded] = useState(s.loaded);
-    // const [headers, setHeaders] = useState(s.headers);
-    // const [clicked, setClicked] = useState(s.clicked);
-    // const [selected, setSelected] = useState(s.selected);
-    // const [checkedItems, setCheckedItems] = useState(s.checkedItems)
 
-    //TODO: Rename to informative
-    const [inputVal, setInputVal] = useState(s.inputVal);
-
-    function handlePrintTag() {
-        updateState(props._id,
-            { executeInfo: {"executeFunc": "print_tag", "params": {}}})
-    }
 
     function handleLoadData() {
+      console.log("in handleLoadData  and updateding the executeInfo")
+
         updateState(props._id,
-            { executeInfo: {"executeFunc": "load_data", "params": {"url": s.inputVal}}})
+            { executeInfo: {"executeFunc": "load_data", "params": {"url": s.dataUrl}}})
+      console.log("new value of executeInfo is ")
+      console.log(s.executeInfo)
+      console.log("----")
+
+      console.log(s)
     }
 
+  function handleUrlChange(ev:any){
+      updateState(props._id, { dataUrl: ev.target.value})
+  }
 
-    function handleSubmit() {
-        console.log("s.inputVal: " + s.inputVal)
-        fetch(
-            inputVal)
-            .then((res) => res.json())
-            .then((json) => {
-                // setItems(json)
-                // setLoaded(true)
-                // setHeaders(Object.keys(json[0]))
-                updateState(props._id, { inputVal: inputVal });
-                updateState(props._id, { items: json });
-                updateState(props._id, { headers: Object.keys(json[0]) });
-                updateState(props._id, { loaded: true });
-            })
-    }
+
+
+    // function handleSubmit() {
+    //     console.log("s.inputVal: " + s.inputVal)
+    //     fetch(
+    //         inputVal)
+    //         .then((res) => res.json())
+    //         .then((json) => {
+    //             // setItems(json)
+    //             // setLoaded(true)
+    //             // setHeaders(Object.keys(json[0]))
+    //             updateState(props._id, { inputVal: inputVal });
+    //             updateState(props._id, { items: json });
+    //             updateState(props._id, { headers: Object.keys(json[0]) });
+    //             updateState(props._id, { loaded: true });
+    //         })
+    // }
 
     function handleNesting(child: []) {
         if (typeof Object.keys(child) === 'object') {
@@ -179,12 +177,14 @@ function DataTableApp(props: App): JSX.Element {
                     {!s.loaded ? <Badge fontSize='1.5em' variant='solid' colorScheme='red'>Not loaded</Badge>:<Badge fontSize='1.5em' variant='solid' colorScheme='green'>Loaded</Badge>}
                     <Input
                         type="text"
-                        value={inputVal}
+                        value={s.dataUrl}
+                        onChange={handleUrlChange}
                         placeholder={'URL here'}
-                        onChange={(e) => setInputVal(e.target.value)}
                     />
                     <InputRightElement width='5rem'>
-                        <Button variant='outline' onClick={handleSubmit}>Submit</Button>
+                        {/*<Button variant='outline' onClick={handleSubmit}>Submit</Button>*/}
+                        <Button variant='outline' onClick={handleLoadData}>Submit</Button>
+
                     </InputRightElement>
                 </InputGroup>
                 <TableContainer overflowY="auto" display="flex" maxHeight="300px">
@@ -217,6 +217,13 @@ function DataTableApp(props: App): JSX.Element {
                         </Tbody>
                     </Table>
                 </TableContainer>
+        <div className="Message-Container">
+          The value of url is {s.dataUrl}.
+
+          The value of viewData is {JSON.stringify(s.viewData)}.
+
+
+        </div>
         <div className="Message-Container">
             <VStack spacing={3}>
                 <Box
