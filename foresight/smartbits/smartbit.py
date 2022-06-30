@@ -41,7 +41,6 @@ class TrackedBaseModel(BaseModel):
 
         def attrsetter(name):
             def setter(obj, val):
-                print(f"Setting filed {name}")
                 fields = name.split(".")
                 for field in fields[0:-1]:
                     obj = getattr(obj, field)
@@ -97,6 +96,14 @@ class TrackedBaseModel(BaseModel):
                 data[field] = attrgetter(field)(self)
         return data
 
+    def action_sends_update(_func):
+        def wrapper(self, *args, **kwargs):
+            _func(self, *args, **kwargs)
+            # clearing the func and the and params
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+        return wrapper
+
 
 class Position(TrackedBaseModel):
     x: int
@@ -119,6 +126,7 @@ class AppTypes(Enum):
     counter = "Counter"
     note = "Note"
     data_table = "DataTable"
+    code_cell = "CodeCell"
 
 
 class Data(TrackedBaseModel):

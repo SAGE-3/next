@@ -37,11 +37,11 @@ class DataTable(SmartBit):
         temp_json = {"col_1": [1,2,3], "col_2": [4,5,6]}
         print(url)
         self.state.viewData = temp_json
-        self.state.executeInfo.executeFunc=""
-        self.state.executeInfo.params = {}
-
         print("I am sendig this information")
         self.send_updates()
 
+
+    def transpose_data(self):
+        pass
 
 
