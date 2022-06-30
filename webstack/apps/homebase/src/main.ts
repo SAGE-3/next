@@ -85,6 +85,7 @@ async function startServer() {
       strategies: {
         guestConfig: config.auth.guestConfig,
         googleConfig: config.auth.googleConfig,
+        cilogonConfig: config.auth.cilogonConfig,
         jwtConfig: config.auth.jwtConfig,
       },
     },

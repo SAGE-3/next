@@ -104,7 +104,7 @@ export function LoginPage() {
               _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
               justifyContent="flex-start"
               disabled={!production}
-              onClick={() => AuthHTTPService.loginWithGuest()}
+              onClick={() => AuthHTTPService.loginWithCILogon()}
             >
               Login with CILogon
             </Button>
