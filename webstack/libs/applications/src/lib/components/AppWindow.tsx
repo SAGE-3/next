@@ -50,12 +50,14 @@ export function AppWindow(props: WindowProps) {
 
   // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
-    setPos({ x: data.x, y: data.y });
+    let x = data.x;
+    let y = data.y;
+    x = Math.round(x / gridSize) * gridSize; // Snap to grid
+    y = Math.round(y / gridSize) * gridSize;
+    setPos({ x, y });
     update(props.app._id, {
       position: {
-        x: data.x,
-        y: data.y,
-        z: props.app.data.position.z,
+        x, y, z: props.app.data.position.z,
       },
     });
   }
