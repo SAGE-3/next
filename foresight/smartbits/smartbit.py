@@ -41,13 +41,15 @@ class TrackedBaseModel(BaseModel):
 
         def attrsetter(name):
             def setter(obj, val):
+                print(f"Setting filed {name}")
                 fields = name.split(".")
                 for field in fields[0:-1]:
                     obj = getattr(obj, field)
                 # using object setattr to avoid adding field to touched
-
-                object.__setattr__(obj, fields[-1], val)
-
+                try:
+                    object.__setattr__(obj, fields[-1], val)
+                except:
+                    obj[fields[-1]] = val
             return setter
 
         def recursive_iter(u_data, path=[]):
@@ -116,6 +118,7 @@ class Rotation(TrackedBaseModel):
 class AppTypes(Enum):
     counter = "Counter"
     note = "Note"
+    data_table = "DataTable"
 
 
 class Data(TrackedBaseModel):

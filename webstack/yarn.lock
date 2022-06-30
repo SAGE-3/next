@@ -2973,6 +2973,13 @@
     "@swc/core-win32-ia32-msvc" "1.2.196"
     "@swc/core-win32-x64-msvc" "1.2.196"
 
+"@tanstack/react-table@^0.0.1-alpha.0":
+  version "0.0.1-alpha.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-0.0.1-alpha.0.tgz#d22fe4960ac14ad8f291e2a4af5e4ea6dcdcd4f5"
+  integrity sha512-5I0sKKJyboRff4eq2YNDCS0/Zh9dvdn3l9Kzyc/m/eDorblccpJu4DeTitjjolaLu/VY5e2NjSKd2NgDhI+Erw==
+  dependencies:
+    ts-toolbelt "^9.6.0"
+
 "@testing-library/dom@^8.5.0":
   version "8.13.0"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-8.13.0.tgz#bc00bdd64c7d8b40841e27a70211399ad3af46f5"
@@ -14122,6 +14129,11 @@ ts-node@~9.1.1:
     make-error "^1.1.1"
     source-map-support "^0.5.17"
     yn "3.1.1"
+
+ts-toolbelt@^9.6.0:
+  version "9.6.0"
+  resolved "https://registry.yarnpkg.com/ts-toolbelt/-/ts-toolbelt-9.6.0.tgz#50a25426cfed500d4a09bd1b3afb6f28879edfd5"
+  integrity sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==
 
 tsconfig-paths-webpack-plugin@3.5.2:
   version "3.5.2"
