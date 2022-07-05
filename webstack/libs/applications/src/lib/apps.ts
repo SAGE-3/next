@@ -14,7 +14,7 @@ import { name as ScreenshareName, init as defaultScreenshare } from './apps/Scre
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
-
+import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 
 
 import CounterApp from './apps/CounterApp/CounterApp';
@@ -31,7 +31,7 @@ import Screenshare from './apps/Screenshare/Screenshare';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
-
+import CSVViewer from './apps/CSVViewer/CSVViewer';
 
 
 export const Applications = {
@@ -49,6 +49,7 @@ export const Applications = {
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
   [DataTableAppName]: DataTableApp,
+  [CSVViewerName]: CSVViewer,
 } as unknown as Record<string, () => JSX.Element>;
 
 
@@ -67,4 +68,5 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
   [DataTableAppName]: defaultDataTableApp,
+  [CSVViewerName]: defaultCSVViewer,
 };
