@@ -11,9 +11,12 @@
  * created by: SAGE3 team
  */
 
-export type state = {
-  id: string;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  id: z.string(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   id: '',

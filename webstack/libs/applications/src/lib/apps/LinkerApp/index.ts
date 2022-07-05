@@ -6,12 +6,15 @@
  *
  */
 
-export type state = {
-  toAppId: string;
-  toAppField: string;
-  fromAppId: string;
-  fromAppField: string;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  toAppId: z.string(),
+  toAppField: z.string(),
+  fromAppId: z.string(),
+  fromAppField: z.string(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   toAppId: '',

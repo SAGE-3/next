@@ -15,8 +15,6 @@ import { name as VideoViewerName, init as defaultVideoViewer } from './apps/Vide
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
 
-
-
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
 import LinkerApp from './apps/LinkerApp/LinkerApp';
@@ -31,8 +29,6 @@ import Screenshare from './apps/Screenshare/Screenshare';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
-
-
 
 export const Applications = {
   [CounterAppName]: CounterApp,
@@ -50,7 +46,6 @@ export const Applications = {
   [WebviewName]: Webview,
   [DataTableAppName]: DataTableApp,
 } as unknown as Record<string, () => JSX.Element>;
-
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,

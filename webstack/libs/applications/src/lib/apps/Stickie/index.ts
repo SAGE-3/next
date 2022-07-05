@@ -6,11 +6,14 @@
  *
  */
 
-export type state = {
-  text: string;
-  fontSize: number;
-  color: string;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  text: z.string(),
+  fontSize: z.number(),
+  color: z.string(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   text: 'stickie note',

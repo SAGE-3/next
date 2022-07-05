@@ -11,12 +11,15 @@
  * created by: SAGE3 Team
  */
 
-export type state = {
-  url: string;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  id: z.string(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  url: 'none',
+  id: '',
 };
 
 export const name = 'VideoViewer';
