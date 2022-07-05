@@ -73,6 +73,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
         const id = item._id;
         let fileType = item.data.mimetype.split('/')[1];
         if (fileType === 'octet-stream') fileType = 'data';
+        if (fileType === 'x-python-script') fileType = 'py';
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
@@ -115,6 +116,50 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             minimized: false,
           });
           x += w + 10;
+        } else if (d.type === 'csv') {
+          createApp({
+            name: 'CVSViewer',
+            description: 'CSV Description',
+            roomId,
+            boardId,
+            ownerId: user._id,
+            position: { ...dropPos, z: 0 },
+            size: { width: 800, height: 400, depth: 0 },
+            rotation: { x: x, y: 0, z: 0 },
+            type: 'CSVViewer',
+            state: { ...initialValues['CSVViewer'], id: d.id },
+            minimized: false,
+          });
+          x += 400 + 10;
+        } else if (d.type === 'plain') {
+          const localurl = '/api/assets/static/' + d.filename;
+          if (localurl) {
+            // Get the content of the file
+            fetch(localurl, {
+              headers: {
+                'Content-Type': 'text/csv',
+                Accept: 'text/csv'
+              },
+            }).then(function (response) {
+              return response.text();
+            }).then(async function (text) {
+              // Create a note from the text
+              createApp({
+                name: 'Stickie',
+                description: 'Stickie',
+                roomId,
+                boardId,
+                ownerId: user._id,
+                position: { ...dropPos, z: 0 },
+                size: { width: 400, height: 400, depth: 0 },
+                rotation: { x: x, y: 0, z: 0 },
+                type: 'Stickie',
+                state: { ...initialValues['Stickie'], text: text, id: d.id },
+                minimized: false,
+              });
+              x += 400 + 10;
+            });
+          }
         } else if (d.type === 'pdf') {
           createApp({
             name: 'PDFViewer',

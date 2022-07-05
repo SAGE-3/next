@@ -12,5 +12,6 @@
   "Screenshare",
   "VideoViewer",
   "Webview",
-  "DataTableApp"
+  "DataTableApp",
+  "CSVViewer"
 ]
