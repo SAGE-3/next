@@ -14,8 +14,11 @@ import { name as ScreenshareName, init as defaultScreenshare } from './apps/Scre
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
+<<<<<<< HEAD
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 
+=======
+>>>>>>> dev
 
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
@@ -51,7 +54,6 @@ export const Applications = {
   [DataTableAppName]: DataTableApp,
   [CSVViewerName]: CSVViewer,
 } as unknown as Record<string, () => JSX.Element>;
-
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,

@@ -6,9 +6,12 @@
  *
  */
 
-export type state = {
-  url: string;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  url: z.string(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   url: 'https://picsum.photos/id/236/200/300',
