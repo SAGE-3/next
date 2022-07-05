@@ -30,22 +30,6 @@ export type AppState =
   | ScreenshareState
   | VideoViewerState
   | WebviewState
-  | DataTableAppState;
-
-export type AppState =
-  | CounterAppState
-  | ImageAppState
-  | LinkerAppState
-  | NoteAppState
-  | SliderAppState
-  | StickieState
-  | PDFViewerState
-  | CodeCellState
-  | ImageViewerState
-  | LeafLetState
-  | ScreenshareState
-  | VideoViewerState
-  | WebviewState
   | DataTableAppState
   | CSVViewerState;
 

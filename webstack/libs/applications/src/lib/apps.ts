@@ -14,11 +14,7 @@ import { name as ScreenshareName, init as defaultScreenshare } from './apps/Scre
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
-<<<<<<< HEAD
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
-
-=======
->>>>>>> dev
 
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
@@ -35,7 +31,6 @@ import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
-
 
 export const Applications = {
   [CounterAppName]: CounterApp,
