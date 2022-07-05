@@ -30,7 +30,7 @@ export type RowFileProps = {
   file: FileEntry;
   clickCB: (p: FileEntry) => void;
   // dbclickCB: (p: FileEntry) => void;
-  style: React.CSSProperties; // for react-window
+  // style: React.CSSProperties; // for react-window
 };
 
 export interface AssetModalProps {

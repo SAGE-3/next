@@ -34,7 +34,7 @@ import { ExifViewer } from './exifviewer';
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, style, clickCB }: RowFileProps) {
+export function RowFile({ file, clickCB }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
 
@@ -150,7 +150,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
 
   return (
-    <div ref={divRef} style={{ ...style }}>
+    <div ref={divRef}>
       <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono" alignItems="center">
         <Box w="30px">{whichIcon(file.type)}</Box>
         <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
