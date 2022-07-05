@@ -46,13 +46,13 @@ export class SBCollectionRef<Type extends SBJSON> {
    * @param forcedId Optional: Forces the document to use a specific ID
    * @returns {SBDocumentRef<Type> | undefined} A SBDocumentRef that points to the newly added document. Undefined if the operation was unsuccessful
    */
-  public async addDoc(data: Type, forcedId?: string): Promise<SBDocumentRef<Type> | undefined> {
+  public async addDoc(data: Type, by: string, forcedId?: string): Promise<SBDocumentRef<Type> | undefined> {
     try {
-      const doc = generateSBDocumentTemplate<Type>(data);
+      const doc = generateSBDocumentTemplate<Type>(data, by);
       if (forcedId) doc._id = forcedId;
       const docPath = `${this._path}:${doc._id}`;
       const docRef = new SBDocumentRef<Type>(doc._id, docPath, this._redisClient);
-      const redisRes = await docRef.set(data);
+      const redisRes = await docRef.set(data, by);
       if (redisRes.success) {
         return docRef;
       } else {
@@ -176,7 +176,7 @@ export class SBCollectionRef<Type extends SBJSON> {
     if (indexList.indexOf(this._indexName) !== -1) {
       try {
         await this._redisClient.ft.dropIndex(this._indexName);
-        this._redisClient.ft.INFO
+        this._redisClient.ft.INFO;
       } catch (error) {
         this.INFOLOG(error);
       }
@@ -194,6 +194,10 @@ export class SBCollectionRef<Type extends SBJSON> {
         '$._updatedAt': {
           type: SchemaFieldTypes.NUMERIC,
           AS: '_updatedAt',
+        },
+        '$._updatedBy': {
+          type: SchemaFieldTypes.TAG,
+          AS: '_updatedBy',
         },
       } as { [key: string]: any };
       Object.keys(indexFields).forEach((prop) => {
@@ -233,7 +237,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       // ** https://redis.io/docs/stack/search/reference/tags/
       if (typeof query === 'string') query = `{${query.replace(/[#-]/g, '\\$&')}}`;
       if (typeof query === 'number') query = `[${query} ${query}]`;
-      const response = await this._redisClient.ft.search(this._indexName, `@${propertyName}:${query}`); //, { LIMIT: { from: 0, size: 1000 } }
+      const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`); //, { LIMIT: { from: 0, size: 1000 } }
       const docRefPromises = response.documents.map((el) =>
         new SBDocumentRef<Type>(el.value['_id'] as string, el.id, this._redisClient).read()
       );

@@ -7,26 +7,41 @@
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-from pydantic import PrivateAttr
+from pydantic import Field
+from typing import Optional
 
 
-class CounterState(TrackedBaseModel):
-    count: int
+class DataTableState(TrackedBaseModel):
+
+    viewData: Optional[dict] = Field(alias = "viewData")
+    loaded: bool
+    clicked: bool
+    checkedItems: list
+
     executeInfo: ExecuteInfo
 
 
-class Counter(SmartBit):
+class DataTable(SmartBit):
     # the key that is assigned to this in state is
-    state: CounterState
-    _some_private_info: dict = PrivateAttr()
+    state: DataTableState
+
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(Counter, self).__init__(**kwargs)
+        super(DataTable, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
-    def reset_to_zero(self):
-        print("Zeroing requested by te user")
-        self.state.count = 0
-        self.state.executeInfo.executeFunc = ""
+    # TODO, add a decorator to automatically set executeFunc
+    # and params to ""
+    def load_data(self, url):
+        temp_json = {"col_1": [1,2,3], "col_2": [4,5,6]}
+        print(url)
+        self.state.viewData = temp_json
+        print("I am sendig this information")
         self.send_updates()
+
+
+    def transpose_data(self):
+        pass
+
+

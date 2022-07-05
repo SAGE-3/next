@@ -13,6 +13,7 @@ import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
+import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 
 export type AppState =
   | CounterAppState
@@ -27,7 +28,8 @@ export type AppState =
   | LeafLetState
   | ScreenshareState
   | VideoViewerState
-  | WebviewState;
+  | WebviewState
+  | DataTableAppState;
 
 export type AppName =
   | typeof CounterAppName
@@ -42,4 +44,5 @@ export type AppName =
   | typeof LeafLetName
   | typeof ScreenshareName
   | typeof VideoViewerName
-  | typeof WebviewName;
+  | typeof WebviewName
+  | typeof DataTableAppName;

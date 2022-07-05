@@ -1,0 +1,77 @@
+.Table-Container {
+  border: solid red 2px;
+  padding: 10px 10px;
+}
+
+.Subcomponent-Container{
+  border: solid green 2px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px 10px;
+}
+
+.Message-Container{
+  margin-top: 50px;
+  margin-bottom: 10px;
+  padding: 10px 10px;
+}
+
+th {
+  position: sticky;
+  inset-block-start: 0;
+  background-color: black;
+  flex-direction: row;
+  justify-content: space-between;
+  z-index: 1;
+}
+
+td {
+  position: relative;
+  /*z-index: 3;*/
+}
+
+body:not(.nohover) tbody td:hover {
+  background-color: darkslategray;
+}
+
+/*thead th:not(:empty):active::after {*/
+/*  content: '';*/
+/*  opacity: 30%;*/
+/*  height: 500px;*/
+/*  left: 0;*/
+/*  position: absolute;*/
+/*  top: 65px;*/
+/*  width: 100%;*/
+/*  !*z-index: 2;*!*/
+/*}*/
+
+/*th:active::after {*/
+/*  background-color: purple;*/
+/*}*/
+
+.highlight {
+  text-align: start;
+  -webkit-padding-start: 1.5rem;
+  padding-inline-start: 1.5rem;
+  -webkit-padding-end: 1.5rem;
+  padding-inline-end: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  line-height: 1.25rem;
+  border-bottom: 1px solid;
+  border-color: #29487D;
+  background-color: purple;
+}
+
+.originalChakra {
+  text-align: start;
+  -webkit-padding-start: 1.5rem;
+  padding-inline-start: 1.5rem;
+  -webkit-padding-end: 1.5rem;
+  padding-inline-end: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  line-height: 1.25rem;
+  border-bottom: 1px solid;
+  border-color: #29487D;
+}

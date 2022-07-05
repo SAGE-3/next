@@ -10,23 +10,17 @@ from smartbits.smartbit import TrackedBaseModel
 from pydantic import PrivateAttr
 
 
-class CounterState(TrackedBaseModel):
-    count: int
+class CodeCellState(TrackedBaseModel):
+    code: str
     executeInfo: ExecuteInfo
 
 
-class Counter(SmartBit):
+class CodeCell(SmartBit):
     # the key that is assigned to this in state is
-    state: CounterState
-    _some_private_info: dict = PrivateAttr()
+    state: CodeCellState
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(Counter, self).__init__(**kwargs)
+        super(CodeCellState, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
-    def reset_to_zero(self):
-        print("Zeroing requested by te user")
-        self.state.count = 0
-        self.state.executeInfo.executeFunc = ""
-        self.send_updates()

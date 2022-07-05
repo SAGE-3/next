@@ -11,7 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore, useUserStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUserStore, useUIStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
@@ -22,6 +22,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
   const assets = useAssetStore((state) => state.assets);
+  const gridSize = useUIStore((state) => state.gridSize);
 
   const [assetsList, setAssetsList] = React.useState<FileEntry[]>([]);
   const createApp = useAppStore((state) => state.create);
@@ -35,11 +36,12 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
   // Track the browser window size
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   useEffect(() => {
-    setDropPos({
-      x: Math.floor(center.x + windowSize.width / 2 - 150),
-      y: Math.floor(center.y + windowSize.height / 2 - 150)
-    });
-  }, [center, windowSize]);
+    let x = Math.floor(center.x + windowSize.width / 2 - 150);
+    let y = Math.floor(center.y + windowSize.height / 2 - 150);
+    x = Math.round(x / gridSize) * gridSize; // Snap to grid
+    y = Math.round(y / gridSize) * gridSize;
+    setDropPos({ x, y });
+  }, [center, windowSize, gridSize]);
 
   // Listen to the window size changes
   useEffect(() => {

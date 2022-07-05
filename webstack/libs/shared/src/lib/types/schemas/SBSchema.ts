@@ -6,7 +6,8 @@ export const SBSchema = z.object({
   _id: z.string(),
   _createdAt: z.number(),
   _updatedAt: z.number(),
-  // data: z.any()
+  _updatedBy: z.string(),
 });
+
 // Create the Typescript type
 export type SBDoc = z.infer<typeof SBSchema>;

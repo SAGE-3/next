@@ -13,7 +13,7 @@ class SmartBitFactory:
     # TODO: move this to configure file since it's also used in wall
     cls_root = "smartbits"
     # TODO: read these names from some conf file; not hardcoded here
-    class_names = {"Counter": "counter", "Note": "note", "Table": "table"}
+    class_names = {"Counter": "counter", "Note": "note", "DataTable": "data_table", "CodeCell": "codecell"}
 
     @classmethod
     def create_smartbit(cls, doc):

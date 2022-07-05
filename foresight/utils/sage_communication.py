@@ -1,10 +1,19 @@
 import json
 import httpx
 
-class SageCommunication:
+class Borg:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
 
-    def __init__(self, config_file):
-        self.__config = json.load(open(config_file))
+class SageCommunication(Borg):
+    # The borg pattern allows us to init the config in the proxy and not have to worry about
+    # passing it in the smartbits, i.e. no need to pass it in the smartbis!
+
+    def __init__(self, config_file=None):
+        Borg.__init__(self)
+        if config_file is not None:
+            self.__config = json.load(open(config_file))
         self.__headers = {'Authorization': f"Bearer {self.__config['token']}"}
         self.httpx_client = httpx.Client()
 
@@ -22,7 +31,7 @@ class SageCommunication:
         :param data: data
         :return:
         """
-        r =  self.httpx_client.put(self.__config['server'] + self.routes["send_update"].format(app_id),
+        r = self.httpx_client.put(self.__config['server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
                                    json=data
                                    )

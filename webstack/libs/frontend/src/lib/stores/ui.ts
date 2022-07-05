@@ -20,6 +20,7 @@ const WheelStepZoom = 0.004;
 // Typescript interface defining the store
 interface UIState {
   scale: number;
+  gridSize: number;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
@@ -31,21 +32,23 @@ interface UIState {
  */
 export const useUIStore = create<UIState>((set) => ({
   scale: 1.0,
-  zoomIn: () => set((state) => ({ scale: state.scale * (1 + StepZoom) })),
-  zoomOut: () => set((state) => ({ scale: state.scale / (1 + StepZoom) })),
+  gridSize: 50,
+  setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
+  zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
+  zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
   zoomInDelta: (d) =>
     set((state) => {
       const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
       const zoomInVal = Math.min(state.scale + step * state.scale, MaxZoom);
       // round off to next 10 value
       // zoomInVal = Math.ceil(zoomInVal * 10) / 10;
-      return { scale: zoomInVal };
+      return { ...state, scale: zoomInVal };
     }),
   zoomOutDelta: (d) =>
     set((state) => {
       const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
       const zoomOutVal = Math.max(state.scale - step * state.scale, MinZoom);
       // zoomOutVal = Math.floor(zoomOutVal * 10) / 10;
-      return { scale: zoomOutVal };
+      return { ...state, scale: zoomOutVal };
     }),
 }));
