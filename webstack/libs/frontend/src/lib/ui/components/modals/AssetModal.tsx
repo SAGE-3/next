@@ -99,7 +99,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
     let x = 0;
     assetsList.forEach((d) => {
       if (d.selected) {
-        const w = 200;
+        const w = 300;
         if (d.type === 'jpeg' || d.type === 'png') {
           const extras = d.derived as ExtraImageType;
           createApp({
@@ -108,7 +108,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             roomId,
             boardId,
             ownerId: user._id,
-            position: { ...dropPos, z: 0 },
+            position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
             size: { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'ImageViewer',
@@ -123,14 +123,14 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             roomId,
             boardId,
             ownerId: user._id,
-            position: { ...dropPos, z: 0 },
+            position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
             size: { width: 800, height: 400, depth: 0 },
             rotation: { x: x, y: 0, z: 0 },
             type: 'CSVViewer',
             state: { ...initialValues['CSVViewer'], id: d.id },
             minimized: false,
           });
-          x += 400 + 10;
+          x += 800 + 10;
         } else if (d.type === 'plain') {
           const localurl = '/api/assets/static/' + d.filename;
           if (localurl) {
@@ -150,7 +150,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
                 roomId,
                 boardId,
                 ownerId: user._id,
-                position: { ...dropPos, z: 0 },
+                position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
                 size: { width: 400, height: 400, depth: 0 },
                 rotation: { x: x, y: 0, z: 0 },
                 type: 'Stickie',
@@ -167,7 +167,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             roomId,
             boardId,
             ownerId: user._id,
-            position: { ...dropPos, z: 0 },
+            position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
             size: { width: 400, height: 400 * (22 / 17), depth: 0 },
             rotation: { x: x, y: 0, z: 0 },
             type: 'PDFViewer',
