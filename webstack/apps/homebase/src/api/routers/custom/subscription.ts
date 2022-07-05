@@ -35,7 +35,12 @@ import { APIClientWSMessage } from '@sage3/shared/types';
  * @param message
  * @param cache
  */
-export async function subscriptionWSRouter(socket: WebSocket, message: APIClientWSMessage, cache: SubscriptionCache): Promise<void> {
+export async function subscriptionWSRouter(
+  socket: WebSocket,
+  message: APIClientWSMessage,
+  userId: string,
+  cache: SubscriptionCache
+): Promise<void> {
   switch (message.method) {
     case 'SUB': {
       // Subscribe to a room and all its children (Boards, apps)

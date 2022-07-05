@@ -11,7 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore, useUser } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUser, useUIStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
@@ -22,6 +22,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
   const assets = useAssetStore((state) => state.assets);
+  const gridSize = useUIStore((state) => state.gridSize);
 
   const [assetsList, setAssetsList] = React.useState<FileEntry[]>([]);
   const createApp = useAppStore((state) => state.create);
@@ -35,11 +36,12 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
   // Track the browser window size
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   useEffect(() => {
-    setDropPos({
-      x: Math.floor(center.x + windowSize.width / 2 - 150),
-      y: Math.floor(center.y + windowSize.height / 2 - 150)
-    });
-  }, [center, windowSize]);
+    let x = Math.floor(center.x + windowSize.width / 2 - 150);
+    let y = Math.floor(center.y + windowSize.height / 2 - 150);
+    x = Math.round(x / gridSize) * gridSize; // Snap to grid
+    y = Math.round(y / gridSize) * gridSize;
+    setDropPos({ x, y });
+  }, [center, windowSize, gridSize]);
 
   // Listen to the window size changes
   useEffect(() => {
@@ -71,6 +73,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
         const id = item._id;
         let fileType = item.data.mimetype.split('/')[1];
         if (fileType === 'octet-stream') fileType = 'data';
+        if (fileType === 'x-python-script') fileType = 'py';
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
@@ -96,7 +99,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
     let x = 0;
     assetsList.forEach((d) => {
       if (d.selected) {
-        const w = 200;
+        const w = 300;
         if (d.type === 'jpeg' || d.type === 'png') {
           const extras = d.derived as ExtraImageType;
           createApp({
@@ -105,7 +108,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             roomId,
             boardId,
             ownerId: user._id,
-            position: { ...dropPos, z: 0 },
+            position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
             size: { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'ImageViewer',
@@ -113,6 +116,50 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             minimized: false,
           });
           x += w + 10;
+        } else if (d.type === 'csv') {
+          createApp({
+            name: 'CVSViewer',
+            description: 'CSV Description',
+            roomId,
+            boardId,
+            ownerId: user._id,
+            position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
+            size: { width: 800, height: 400, depth: 0 },
+            rotation: { x: x, y: 0, z: 0 },
+            type: 'CSVViewer',
+            state: { ...initialValues['CSVViewer'], id: d.id },
+            minimized: false,
+          });
+          x += 800 + 10;
+        } else if (d.type === 'plain') {
+          const localurl = '/api/assets/static/' + d.filename;
+          if (localurl) {
+            // Get the content of the file
+            fetch(localurl, {
+              headers: {
+                'Content-Type': 'text/csv',
+                Accept: 'text/csv'
+              },
+            }).then(function (response) {
+              return response.text();
+            }).then(async function (text) {
+              // Create a note from the text
+              createApp({
+                name: 'Stickie',
+                description: 'Stickie',
+                roomId,
+                boardId,
+                ownerId: user._id,
+                position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
+                size: { width: 400, height: 400, depth: 0 },
+                rotation: { x: x, y: 0, z: 0 },
+                type: 'Stickie',
+                state: { ...initialValues['Stickie'], text: text, id: d.id },
+                minimized: false,
+              });
+              x += 400 + 10;
+            });
+          }
         } else if (d.type === 'pdf') {
           createApp({
             name: 'PDFViewer',
@@ -120,7 +167,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             roomId,
             boardId,
             ownerId: user._id,
-            position: { ...dropPos, z: 0 },
+            position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
             size: { width: 400, height: 400 * (22 / 17), depth: 0 },
             rotation: { x: x, y: 0, z: 0 },
             type: 'PDFViewer',
@@ -138,7 +185,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
     <Modal isCentered isOpen={isOpen} onClose={onClose} size={'6xl'}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Assets Browser</ModalHeader>
+        <ModalHeader>Asset Browser</ModalHeader>
         {/* File manager */}
         <ModalBody userSelect={'none'}>
           <FileManager files={assetsList} />

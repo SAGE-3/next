@@ -1,0 +1,27 @@
+[
+  {
+    "colName": "name",
+    "type":"name",
+    "actions":["get_lastname", "get_firstname", "sort"]
+  },
+  {
+    "colName": "username",
+    "type":"username",
+    "actions": ["check_database", "get_password", "get_status", "sort"]
+  },
+  {
+    "colName": "email",
+    "type":"email",
+    "actions":["get_domains", "sort"]
+  },
+  {
+    "colName": "phone number",
+    "type":"phone",
+    "actions":["get_area-code", "sort"]
+  },
+  {
+    "colName": "address",
+    "type":"address",
+    "actions":["get_street_num", "get_street_name", "zipcode"]
+  }
+]

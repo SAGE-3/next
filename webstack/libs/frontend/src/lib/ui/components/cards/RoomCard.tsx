@@ -6,7 +6,7 @@
  *
  */
 
-import { Badge, Box, Text, Tooltip, useColorModeValue } from "@chakra-ui/react";
+import { Box, Text, Tooltip, useColorModeValue } from "@chakra-ui/react";
 import { RoomSchema } from "@sage3/shared/types";
 import { sageColorByName } from "@sage3/shared";
 import { SBDocument } from "@sage3/sagebase";

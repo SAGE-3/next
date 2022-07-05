@@ -15,7 +15,7 @@
     "strictPropertyInitialization": true,
     "target": "es2015",
     "module": "esnext",
-    "typeRoots": ["node_modules/@types", "libs/shared/types/src/lib"],
+    "typeRoots": ["node_modules/@types", "libs/shared/src/lib/types"],
     "lib": ["es2017", "dom", "es2018", "es2019", "es2020"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,

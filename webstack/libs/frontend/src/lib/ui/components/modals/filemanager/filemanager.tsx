@@ -9,7 +9,7 @@
 import React, { useState } from 'react';
 
 // React component for efficiently rendering large lists and tabular data
-import { FixedSizeList } from 'react-window';
+import { Virtuoso } from 'react-virtuoso'
 
 import { FileManagerProps, FileEntry } from './types';
 import { RowFile } from './row';
@@ -370,21 +370,19 @@ export function FileManager(props: FileManagerProps): JSX.Element {
 
       <Divider mb={1} />
 
-      {/* React-window element: sorted forces a redraw after sort */}
-      <FixedSizeList
-        // {...sorted}
-        height={150}
-        width="100%"
-        itemCount={filesList.length}
-        itemSize={22}
-        itemData={filesList}
-        itemKey={(i, d) => d[i].id}
-      >
-        {/* Iterate over the file list */}
-        {({ index, style, data }) => <RowFile file={data[index]} style={style}
-          clickCB={onClick}
-        // dbclickCB={onDBClick}
-        />}
-      </FixedSizeList>
+      {/* Listing the files in a 'table' */}
+      <Virtuoso
+        style={{
+          height: '150px', width: '100%',
+          borderCollapse: 'collapse',
+        }}
+        data={filesList}
+        totalCount={filesList.length}
+        // Content of the table
+        itemContent={(idx, val) => (
+          <RowFile file={filesList[idx]} clickCB={onClick} />
+        )}
+      />
+
     </>);
 }

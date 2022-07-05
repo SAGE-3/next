@@ -21,7 +21,7 @@ function VideoViewer(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <h1> url : {s.url}</h1>
+        <h1> url : {s.id}</h1>
       </>
     </AppWindow>
   );

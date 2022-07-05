@@ -5,15 +5,32 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Avatar, Box, Button, Select, Text, useDisclosure, useToast } from '@chakra-ui/react';
+import {
+  Avatar,
+  Box,
+  Button,
+  Select,
+  Text,
+  useDisclosure,
+  useToast,
+  Menu,
+  MenuGroup,
+  MenuItem,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from '@chakra-ui/react';
 
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
 
-import { useAppStore, useBoardStore, useUser } from '@sage3/frontend';
-import { AssetModal, UploadModal } from '@sage3/frontend';
+
+import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -35,10 +52,17 @@ export function BoardPage() {
   // Board and App Store stuff
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
+  const deleteApp = useAppStore((state) => state.delete);
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === locationState.boardId);
+
+  // UI store for global setting
+  const scale = useUIStore((state) => state.scale);
+  const zoomInDelta = useUIStore((state) => state.zoomInDelta);
+  const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
+  const gridSize = useUIStore((state) => state.gridSize);
 
   // User information
   const { user } = useUser();
@@ -47,6 +71,8 @@ export function BoardPage() {
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
   // Upload modal
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
+  // Clear the board modal
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // display some notifications
   const toast = useToast();
@@ -80,8 +106,10 @@ export function BoardPage() {
     const height = 300;
 
     // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-    const x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-    const y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+    let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+    let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+    x = Math.round(x / gridSize) * gridSize; // Snap to grid
+    y = Math.round(y / gridSize) * gridSize;
 
     // Skip if no user is logged in
     if (!user) return;
@@ -173,53 +201,133 @@ export function BoardPage() {
 
   return (
     <>
-      {/* Board. Uses lib react-rnd for drag events.
-       * Draggable Background below is the actual target for drag events.*/}
-      <Rnd
-        default={{
-          x: 0,
-          y: 0,
-          width: 5000,
-          height: 5000,
-        }}
-        onDragStop={handleDragBoardStop}
-        enableResizing={false}
-        dragHandleClassName={'board-handle'}
-      >
-        {/* Apps */}
-        {apps.map((app) => {
-          const Component = Applications[app.data.type];
-          return <Component key={app._id} {...app}></Component>;
-        })}
+      <div style={{ transform: `scale(${scale})` }}>
+        {/* Board. Uses lib react-rnd for drag events.
+         * Draggable Background below is the actual target for drag events.*/}
+        <Rnd
+          default={{
+            x: 0,
+            y: 0,
+            width: 5000,
+            height: 5000,
+          }}
+          onDragStop={handleDragBoardStop}
+          enableResizing={false}
+          dragHandleClassName={'board-handle'}
+          scale={scale}
+        >
+          {/* Apps */}
+          {apps.map((app) => {
+            const Component = Applications[app.data.type];
+            return <Component key={app._id} {...app}></Component>;
+          })}
 
-        {/* Draggable Background */}
-        <Box
-          className="board-handle"
-          width={5000}
-          height={5000}
-          backgroundSize={`50px 50px`}
-          backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
-            linear-gradient(to bottom, grey 1px, transparent 1px);`}
-          // Drag and drop event handlers
-          onDrop={OnDrop}
-          onDragOver={OnDragOver}
-        />
-      </Rnd>
+          {/* Draggable Background */}
+          <Box
+            className="board-handle"
+            // width={5000}
+            // height={5000}
+            width="100%"
+            height="100%"
+            backgroundSize={`${gridSize}px ${gridSize}px`}
+            backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
+               linear-gradient(to bottom, grey 1px, transparent 1px);`}
+            id="board"
+            // Drag and drop event handlers
+            onDrop={OnDrop}
+            onDragOver={OnDragOver}
+            onWheel={(evt: any) => {
+              evt.stopPropagation();
+              if ((evt.altKey || evt.ctrlKey || evt.metaKey) && evt.buttons === 0) {
+                // Alt + wheel : Zoom
+              } else {
+                // const cursor = { x: evt.clientX, y: evt.clientY, };
+                if (evt.deltaY < 0) {
+                  zoomInDelta(evt.deltaY);
+                } else if (evt.deltaY > 0) {
+                  zoomOutDelta(evt.deltaY);
+                }
+              }
+            }}
+          />
+        </Rnd>
+      </div>
+
+      {/* Context-menu for the board */}
+      <ContextMenu divId="board">
+        <Menu>
+          <MenuGroup>
+            <MenuItem className="contextmenuitem">Fit View to Board</MenuItem>
+            <MenuItem className="contextmenuitem">Show all Apps</MenuItem>
+            <MenuItem className="contextmenuitem">Show UI</MenuItem>
+            <MenuItem className="contextmenuitem">Hide UI</MenuItem>
+            <MenuItem className="contextmenuitem" onClick={onOpen}>
+              Clear Board
+            </MenuItem>
+            <hr className="divider" />
+            <MenuItem
+              className="contextmenuitem"
+              onClick={() => {
+                const width = 600;
+                const height = 800;
+                // Calculate X and Y of app based on the current board position and the width and height of the viewport
+                let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
+                let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
+                x = Math.round(x / gridSize) * gridSize; // Snap to grid
+                y = Math.round(y / gridSize) * gridSize;
+                const token = '44';
+                const url = 'http://' + window.location.hostname + ':8888/tree/?token=' + token;
+                // Open a webview into the SAGE3 builtin Jupyter instance
+                createApp({
+                  name: 'Webview',
+                  description: 'Webview',
+                  roomId: locationState.roomId,
+                  boardId: locationState.boardId,
+                  position: { x, y, z: 0 },
+                  size: { width, height, depth: 0 },
+                  rotation: { x: 0, y: 0, z: 0 },
+                  type: 'Webview',
+                  ownerId: user?._id || '-',
+                  state: { ...initialValues['Webview'], url },
+                  minimized: false,
+                });
+              }}
+            >
+              Open Jupyter
+            </MenuItem>
+          </MenuGroup>
+        </Menu>
+      </ContextMenu>
 
       {/* Top bar */}
-      <Box display="flex" pointerEvents={"none"} justifyContent="space-between" alignItems="center" p={2} position="absolute" top="0" width="100%">
+      <Box
+        display="flex"
+        pointerEvents={'none'}
+        justifyContent="space-between"
+        alignItems="center"
+        p={2}
+        position="absolute"
+        top="0"
+        width="100%"
+      >
         {/* Home Button */}
-        <Button pointerEvents={"all"} colorScheme="green" onClick={handleHomeClick}>
+        <Button pointerEvents={'all'} colorScheme="green" onClick={handleHomeClick}>
           Home
         </Button>
 
         {/* Board Name */}
-        <Text fontSize="3xl" background="teal" px={6} borderRadius="16" color="white">
+        <Text fontSize="2xl" background="teal" px={6} borderRadius="4" color="white">
           {board?.data.name}
         </Text>
 
         {/* User Avatar */}
-        <Avatar size="md" pointerEvents={"all"} name={user?.data.name} backgroundColor={user ? sageColorByName(user.data.color) : ''} color="black" />
+        <Avatar
+          size="md"
+          pointerEvents={'all'}
+          name={user?.data.name}
+          backgroundColor={user ? sageColorByName(user.data.color) : ''}
+          color="black"
+        />
       </Box>
 
       {/* Bottom Bar */}
@@ -257,6 +365,30 @@ export function BoardPage() {
 
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
+
+      {/* Clear the board modal */}
+      <Modal isCentered isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Clear the Board</ModalHeader>
+          <ModalBody>Are you sure you want to DELETE all apps?</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" size="md" variant="outline" mr={3} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              size="md"
+              onClick={() => {
+                apps.forEach((a) => deleteApp(a._id));
+                onClose();
+              }}
+            >
+              Yes, Clear the Board
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

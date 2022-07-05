@@ -123,7 +123,8 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
         _id: genId(),
         _createdAt: new Date().getTime(),
         _updatedAt: new Date().getTime(),
-        data: newApp
+        _updatedBy: '-',
+        data: newApp,
       } as App;
       set({ apps: [...get().apps, app] });
     },
@@ -133,7 +134,9 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     },
     updateState: async (id: string, updates: Partial<AppState>) => {
       const apps = [...get().apps];
-      set({ apps: apps.map((app) => (app._id === id ? { ...app, data: { ...app.data, state: { ...app.data.state, ...updates } } } : app)) });
+      set({
+        apps: apps.map((app) => (app._id === id ? { ...app, data: { ...app.data, state: { ...app.data.state, ...updates } } } : app)),
+      });
     },
     delete: async (id: string) => {
       set({ apps: get().apps.filter((app) => app._id !== id) });

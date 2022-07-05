@@ -6,18 +6,20 @@
  *
  */
 
+import { z } from 'zod';
+
 /**
  * SAGE3 application: <%= name %>
  * created by: <%= username %>
  */
 
-export type state = {
-  <%= statename %>: <%= statetype %>;
-};
+export const schema = z.object({
+  <%= statename %>: z.<%= statetype %>();
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   <%= statename %>: <%= val %>,
 };
 
 export const name = '<%= name %>';
-

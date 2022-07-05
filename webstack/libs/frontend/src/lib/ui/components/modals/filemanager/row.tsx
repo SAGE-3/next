@@ -69,7 +69,6 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
     const id = e.currentTarget.id;
     if (id === 'down') {
       // download a file
-      console.log('File', file)
       downloadFile('api/assets/static/' + file.filename, file.originalfilename);
     } else if (id === 'del') {
       if (user?.data.userRole !== 'guest') {
@@ -110,7 +109,6 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {
-    console.log('contextmenu');
     // deselect file selection
     setSelected(false);
     // hide context menu

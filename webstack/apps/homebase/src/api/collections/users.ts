@@ -18,7 +18,6 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
 
     const router = sageRouter<UserSchema>(this);
 
-
     router.post('/create', async ({ body, user }, res) => {
       let doc = null;
       if (user) { doc = await this.add(body, (user as any).id); }

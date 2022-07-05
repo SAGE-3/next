@@ -6,14 +6,13 @@
  *
  */
 
-import { Box, Text } from '@chakra-ui/react';
-import { App } from '../schema';
-import { useAppStore } from '@sage3/frontend';
-
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-
+import { Box, Text } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
+
+import { App } from '../schema';
+import { useAppStore, useUIStore } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
@@ -22,6 +21,10 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // UI store for global setting
+  const scale = useUIStore((state) => state.scale);
+  const gridSize = useUIStore((state) => state.gridSize);
+
   // Height of the title bar
   const titleBarHeight = 24;
 
@@ -34,25 +37,27 @@ export function AppWindow(props: WindowProps) {
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(props.app.data.minimized);
 
-  // If size or position change update the local state.
+  // If size or position change, update the local state.
   useEffect(() => {
     setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
   }, [props.app.data.size, props.app.data.position]);
 
-  // If size or position change update the local state.
+  // If minimized change, update the local state.
   useEffect(() => {
     setMinimized(props.app.data.minimized);
   }, [props.app.data.minimized]);
 
   // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
-    setPos({ x: data.x, y: data.y });
+    let x = data.x;
+    let y = data.y;
+    x = Math.round(x / gridSize) * gridSize; // Snap to grid
+    y = Math.round(y / gridSize) * gridSize;
+    setPos({ x, y });
     update(props.app._id, {
       position: {
-        x: data.x,
-        y: data.y,
-        z: props.app.data.position.z,
+        x, y, z: props.app.data.position.z,
       },
     });
   }
@@ -94,7 +99,6 @@ export function AppWindow(props: WindowProps) {
   }
 
   return (
-    // react-rnd Library for drag and resize events.
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
@@ -107,6 +111,9 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         overflow: 'hidden',
       }}
+      scale={scale}
+      resizeGrid={[gridSize, gridSize]}
+      dragGrid={[gridSize, gridSize]}
     >
       {/* Title Bar */}
       <Box
@@ -142,7 +149,9 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box>{minimized ? null : props.children}</Box>
+      <Box id={'app_' + props.app._id} width={"100%"} height={props.app.data.size.height}>
+        {minimized ? null : props.children}
+      </Box>
     </Rnd>
   );
 }

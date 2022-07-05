@@ -22,10 +22,17 @@ function loginWithGoogle(): void {
 }
 
 /**
+ * Endpoint to login with CILogon
+ */
+function loginWithCILogon(): void {
+  // return to host with the same protocol (http/https)
+  window.location.replace(`${window.location.protocol}//${window.location.host}/auth/cilogon`);
+}
+
+/**
  * Endpoint to login with Guest
  */
 function loginWithGuest() {
-  console.log('Login User');
   return fetch('/auth/guest', {
     method: 'POST',
     headers: {
@@ -44,7 +51,6 @@ function loginWithGuest() {
  * Logout the user out of the current session and user
  */
 function logout() {
-  console.log('Logout User');
   return fetch('/auth/logout', {
     method: 'GET',
     credentials: 'include',
@@ -91,5 +97,6 @@ export const AuthHTTPService = {
   verifyAuth,
   logout,
   loginWithGoogle,
+  loginWithCILogon,
   loginWithGuest,
 };
