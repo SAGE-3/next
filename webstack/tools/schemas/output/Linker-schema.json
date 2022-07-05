@@ -14,6 +14,9 @@
         "_updatedAt": {
           "type": "number"
         },
+        "_updatedBy": {
+          "type": "string"
+        },
         "data": {
           "type": "object",
           "properties": {
@@ -43,6 +46,7 @@
         "_id",
         "_createdAt",
         "_updatedAt",
+        "_updatedBy",
         "data"
       ],
       "additionalProperties": false

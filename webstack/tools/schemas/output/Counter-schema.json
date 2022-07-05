@@ -14,15 +14,36 @@
         "_updatedAt": {
           "type": "number"
         },
+        "_updatedBy": {
+          "type": "string"
+        },
         "data": {
           "type": "object",
           "properties": {
             "count": {
               "type": "number"
+            },
+            "executeInfo": {
+              "type": "object",
+              "properties": {
+                "executeFunc": {
+                  "type": "string"
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "executeFunc",
+                "params"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "count"
+            "count",
+            "executeInfo"
           ],
           "additionalProperties": false
         }
@@ -31,6 +52,7 @@
         "_id",
         "_createdAt",
         "_updatedAt",
+        "_updatedBy",
         "data"
       ],
       "additionalProperties": false

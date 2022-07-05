@@ -14,6 +14,8 @@
 		 - Type: `number`
 	 - <b id="#/definitions/Slider/properties/_updatedAt">_updatedAt</b> `required`
 		 - Type: `number`
+	 - <b id="#/definitions/Slider/properties/_updatedBy">_updatedBy</b> `required`
+		 - Type: `string`
 	 - <b id="#/definitions/Slider/properties/data">data</b> `required`
 		 - Type: `object`
 		 - **_Properties_**

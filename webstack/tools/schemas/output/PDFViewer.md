@@ -14,6 +14,8 @@
 		 - Type: `number`
 	 - <b id="#/definitions/PDFViewer/properties/_updatedAt">_updatedAt</b> `required`
 		 - Type: `number`
+	 - <b id="#/definitions/PDFViewer/properties/_updatedBy">_updatedBy</b> `required`
+		 - Type: `string`
 	 - <b id="#/definitions/PDFViewer/properties/data">data</b> `required`
 		 - Type: `object`
 		 - **_Properties_**
