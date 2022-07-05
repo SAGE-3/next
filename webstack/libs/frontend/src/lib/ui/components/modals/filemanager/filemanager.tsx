@@ -6,7 +6,7 @@
  *
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // React component for efficiently rendering large lists and tabular data
 import { Virtuoso } from 'react-virtuoso'
@@ -33,6 +33,11 @@ export function FileManager(props: FileManagerProps): JSX.Element {
   // Element to set the focus to when opening the dialog
   const initialRef = React.useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<string>('file');
+
+  // Update the file list to the list passed through props
+  useEffect(() => {
+    setList(props.files);
+  }, [props.files]);
 
   // Create the column headers. Add arrows indicating sorting.
   let headerFile, headerType, headerModified, headerAdded, headerSize, headerOwner;
