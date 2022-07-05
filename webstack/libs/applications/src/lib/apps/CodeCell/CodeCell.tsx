@@ -6,7 +6,7 @@
  *
  */
 
-import { useAppStore } from '@sage3/frontend';
+// import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -15,7 +15,7 @@ import { AppWindow } from '../../components';
 function CodeCell(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
+  // const updateState = useAppStore((state) => state.updateState);
 
   return (
     <AppWindow app={props}>
@@ -24,9 +24,14 @@ function CodeCell(props: App): JSX.Element {
         <h2> code: {s.code}</h2>
         <h2> Execute: {s.execute.name}</h2>
         <ul>
-          {Object.values(s.execute.params).map((v, i) => (
-            <li key={i}>{v['name'] as string} : {v['val'] as any}</li>
-          ))}
+          {Object.values(s.execute.params).map((v, i: number) => {
+            // Escape hatch
+            const val = v as any;
+            // Extract the value
+            const name = val['name'] as string;
+            const value = val['val'] as any;
+            return (<li key={i}>{name} : {value}</li>)
+          })}
         </ul>
         <h2> Output: {s.output}</h2>
       </>
