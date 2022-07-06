@@ -50,6 +50,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
   // Modal showing file information
   const { isOpen, onOpen, onClose } = useDisclosure({ id: 'exif' });
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
   // show the context menu
   const [showMenu, setShowMenu] = useState(false);
 
@@ -78,7 +79,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
     } else if (id === 'del') {
       if (user?.data.userRole !== 'guest') {
         // Delete a file
-        AssetHTTPService.del(file.id);
+        onDeleteOpen();
       } else {
         toast({
           title: 'Guests cannot delete assets',
@@ -203,6 +204,30 @@ export function RowFile({ file, clickCB }: RowFileProps) {
       ) : (
         <> </>
       )}
+
+      {/* Delete a file modal */}
+      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Asset</ModalHeader>
+          <ModalBody>Are you sure you want to delete "{file.originalfilename}" ?</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" size="md" variant="outline" mr={3} onClick={onDeleteClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              size="md"
+              onClick={() => {
+                AssetHTTPService.del(file.id);
+                onDeleteClose();
+              }}
+            >
+              Yes, Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* EXIF info */}
       <Modal closeOnEsc={true} closeOnOverlayClick={true} isOpen={isOpen} onClose={onClose} size={'3xl'} isCentered>
