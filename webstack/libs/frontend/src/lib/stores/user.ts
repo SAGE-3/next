@@ -7,19 +7,13 @@
  */
 
 // The JS version of Zustand
-import createVanilla from "zustand/vanilla";
+import createVanilla from 'zustand/vanilla';
 
 // The React Version of Zustand
-import createReact from "zustand";
+import createReact from 'zustand';
 
 // Application specific schema
 import { User, UserSchema } from '@sage3/shared/types';
-
-// The observable websocket and HTTP
-import { APIHttp } from "../api";
-import { SocketAPI } from "../utils";
-import { randomSAGEColor } from "@sage3/shared";
-import { useAuth, useUser } from "../hooks";
 
 interface UserState {
   user: User | undefined;
@@ -44,9 +38,9 @@ const UserStore = createVanilla<UserState>((set, get) => {
     },
     subscribeToUser: async (id: string) => {
       // TODO
-    }
-  }
-})
+    },
+  };
+});
 
 // Convert the Zustand JS store to Zustand React Store
 export const useUserStore = createReact(UserStore);
