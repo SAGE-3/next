@@ -10,6 +10,7 @@ import React, { useState, useRef, useEffect } from 'react';
 
 // Date manipulation functions for file manager
 import { format as formatDate } from 'date-fns';
+import { AssetHTTPService } from '@sage3/frontend';
 
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader,
@@ -73,7 +74,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
     } else if (id === 'del') {
       if (user?.data.userRole !== 'guest') {
         // Delete a file
-        // httpGET('/api/content/asset/delete/' + file.id);
+        AssetHTTPService.del(file.id);
       } else {
         toast({
           title: 'Guests cannot delete assets',

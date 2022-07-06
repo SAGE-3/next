@@ -92,7 +92,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
         return entry;
       })
     );
-  }, [assets, isOpen]);
+  }, [assets, isOpen, roomId, user]);
 
   const onOpenFiles = () => {
     if (!user) return;
