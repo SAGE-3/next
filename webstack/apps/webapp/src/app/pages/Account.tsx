@@ -29,7 +29,6 @@ export function AccountPage() {
 
   return (
     <div>
-      <h1>Account Creation Page</h1>
       <CreateUserModal createUser={handleCreateUser} />
     </div>
   );

@@ -18,8 +18,10 @@ import {
   InputLeftElement,
   Input,
   Button,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
-import { MdPerson } from 'react-icons/md';
+import { MdPerson, MdEmail } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { randomSAGEColor } from '@sage3/shared';
 import { AuthHTTPService } from '../../../auth';
@@ -75,31 +77,35 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
       <ModalContent>
         <ModalHeader>Create User Account</ModalHeader>
         <ModalBody>
-          <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
-            <Input
-              ref={initialRef}
-              type="string"
-              placeholder="Name"
-              mr={4}
-              value={name}
-              onChange={handleNameChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
-          <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
-            <Input
-              type="email"
-              placeholder="Email"
-              mr={4}
-              value={email}
-              onChange={handleEmailChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
+          <FormControl isRequired mb={4}>
+            <FormLabel htmlFor='htmlFor'>Username</FormLabel>
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+              <Input
+                ref={initialRef}
+                type="string"
+                id='first-name'
+                placeholder='First name'
+                value={name}
+                onChange={handleNameChange}
+                onKeyDown={onSubmit} />
+            </InputGroup>
+
+          </FormControl>
+          <FormControl isRequired >
+            <FormLabel htmlFor='email'>Email</FormLabel>
+
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<MdEmail size={'1.5rem'} />} />
+              <Input
+                id='email'
+                type='email'
+                value={email}
+                onChange={handleEmailChange}
+                onKeyDown={onSubmit}
+              />
+            </InputGroup>
+          </FormControl>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mx={2} onClick={AuthHTTPService.logout}>Cancel</Button>
