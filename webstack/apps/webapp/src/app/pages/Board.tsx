@@ -29,7 +29,7 @@ import {
 
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
-
+import { initials } from '@sage3/frontend';
 
 import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
@@ -328,6 +328,7 @@ export function BoardPage() {
           size="md"
           pointerEvents={'all'}
           name={user?.data.name}
+          getInitials={initials}
           backgroundColor={user ? sageColorByName(user.data.color) : ''}
           color="black"
         />
