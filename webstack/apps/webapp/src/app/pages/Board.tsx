@@ -24,6 +24,7 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  useColorModeValue,
 } from '@chakra-ui/react';
 
 import { Applications, initialValues } from '@sage3/applications/apps';
@@ -63,6 +64,7 @@ export function BoardPage() {
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
   const gridSize = useUIStore((state) => state.gridSize);
+  const gridColor = useColorModeValue("#E2E8F0", "#2D3748");
 
   // User information
   const { user } = useUser();
@@ -230,8 +232,9 @@ export function BoardPage() {
             width="100%"
             height="100%"
             backgroundSize={`${gridSize}px ${gridSize}px`}
-            backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
-               linear-gradient(to bottom, grey 1px, transparent 1px);`}
+            backgroundImage={
+              `linear-gradient(to right, ${gridColor} 1px, transparent 1px),
+               linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
             id="board"
             // Drag and drop event handlers
             onDrop={OnDrop}

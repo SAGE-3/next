@@ -111,7 +111,12 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         overflow: 'hidden',
       }}
+      // minimum size of the app: 1 grid unit
+      minWidth={gridSize}
+      minHeight={gridSize}
+      // Scaling of the board
       scale={scale}
+      // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
     >
