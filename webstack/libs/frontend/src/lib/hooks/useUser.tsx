@@ -13,7 +13,7 @@
  * @version 1.0.0
  */
 
-import { User, UserSchema } from '@sage3/shared/types';
+import { Presence, PresenceSchema, User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
@@ -83,9 +83,16 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
    */
   async function create(user: UserSchema): Promise<void> {
     if (auth.auth) {
-      const reponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
-      if (reponse.data) {
-        setUser(reponse.data[0]);
+      const userResponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
+      const presenceResponse = await APIHttp.POST<PresenceSchema, Presence>('/presence', {
+        userId: auth.auth.id,
+        status: 'online',
+        roomId: '',
+        boardId: '',
+        cursor: { x: 0, y: 0, z: 0 }
+      });
+      if (userResponse.data) {
+        setUser(userResponse.data[0]);
       }
     }
   }
