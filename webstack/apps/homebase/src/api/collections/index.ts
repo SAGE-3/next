@@ -13,6 +13,7 @@ export * from './boards';
 export * from './rooms';
 export * from './users';
 export * from './assets';
+
 /**
  * Load the various models at startup.
  */
@@ -22,4 +23,41 @@ export async function loadCollections(): Promise<void> {
   await RoomsCollection.initialize();
   await UsersCollection.initialize();
   await AssetsCollection.initialize();
+
+  // Setup default room and board
+  RoomsCollection.getAll().then(async (rooms) => {
+    if (rooms) {
+      if (rooms.length > 0) {
+        console.log(`Rooms> Loaded ${rooms.length} room(s) from store`);
+      } else {
+        const res = await RoomsCollection.add(
+          {
+            name: 'Main Room',
+            description: 'Builtin default room',
+            color: 'green',
+            ownerId: '-',
+            isPrivate: false,
+          },
+          '-'
+        );
+        if (res?._id) {
+          console.log('Rooms> default room added');
+          const res2 = await BoardsCollection.add(
+            {
+              name: 'Main Board',
+              description: 'Builtin default board',
+              color: 'green',
+              roomId: res._id,
+              ownerId: '-',
+              isPrivate: false,
+            },
+            '-'
+          );
+          if (res2?._id) {
+            console.log('Boards> default board addedd');
+          }
+        }
+      }
+    }
+  });
 }
