@@ -16,8 +16,7 @@ import createReact from 'zustand';
 import { Asset, AssetSchema } from '@sage3/shared/types';
 
 // The observable websocket
-import { SocketAPI } from '../utils';
-import { AssetHTTPService } from '../api';
+import { AssetHTTPService, SocketAPI } from '../api';
 
 interface AssetState {
   assets: Asset[];

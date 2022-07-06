@@ -11,7 +11,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Textarea } from '@chakra-ui/react';
 
-import { useAppStore, useUserStore } from '@sage3/frontend';
+import { useAppStore, useUser } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './';
@@ -39,9 +39,7 @@ function Stickie(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
-  // Information about the user
-  const user = useUserStore((state) => state.user);
-  // Get the current room and board
+  const { user } = useUser();
   const location = useLocation();
   const locationState = location.state as {
     boardId: string;

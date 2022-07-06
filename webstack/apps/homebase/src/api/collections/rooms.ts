@@ -7,7 +7,7 @@
  */
 
 import { RoomSchema } from '@sage3/shared/types';
-import { SAGE3Collection } from '@sage3/backend';
+import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
 class SAGE3RoomsCollection extends SAGE3Collection<RoomSchema> {
   constructor() {
@@ -15,6 +15,9 @@ class SAGE3RoomsCollection extends SAGE3Collection<RoomSchema> {
       name: '',
       ownerId: '',
     });
+
+    const router = sageRouter<RoomSchema>(this);
+    this.httpRouter = router;
   }
 }
 

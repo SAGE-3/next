@@ -24,13 +24,14 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  useColorModeValue,
 } from '@chakra-ui/react';
 
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
+import { initials } from '@sage3/frontend';
 
-import { useAppStore, useBoardStore, useUserStore, useUIStore } from '@sage3/frontend';
-import { AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -63,9 +64,10 @@ export function BoardPage() {
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
   const gridSize = useUIStore((state) => state.gridSize);
+  const gridColor = useColorModeValue("#E2E8F0", "#2D3748");
 
   // User information
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
 
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
@@ -186,7 +188,6 @@ export function BoardPage() {
   }
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
-    console.log('Position:', { x: event.clientX, y: event.clientY });
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
@@ -231,8 +232,9 @@ export function BoardPage() {
             width="100%"
             height="100%"
             backgroundSize={`${gridSize}px ${gridSize}px`}
-            backgroundImage={`linear-gradient(to right, grey 1px, transparent 1px),
-               linear-gradient(to bottom, grey 1px, transparent 1px);`}
+            backgroundImage={
+              `linear-gradient(to right, ${gridColor} 1px, transparent 1px),
+               linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
             id="board"
             // Drag and drop event handlers
             onDrop={OnDrop}
@@ -326,6 +328,7 @@ export function BoardPage() {
           size="md"
           pointerEvents={'all'}
           name={user?.data.name}
+          getInitials={initials}
           backgroundColor={user ? sageColorByName(user.data.color) : ''}
           color="black"
         />
