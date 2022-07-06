@@ -91,31 +91,36 @@ class SocketAPISingleton {
     return unsub;
   }
 
-  public init(): void {
-    this.print('Initializating socket...');
-    this._subscriptions = {};
+  public async init(): Promise<void> {
+    return new Promise(resolve => {
+      if (this._socket !== undefined) { return resolve(); }
+      this.print('Initializating socket...');
 
-    this._socket = new WebSocket(`${this._socketType}//${window.location.hostname}:${window.location.port}/api`);
-
-    this._socket.addEventListener('open', (event) => {
-      this.print('Connection Open');
-    });
-
-    this._socket.addEventListener('message', (ev) => this.processServerMessage(ev));
-
-    this._socket.addEventListener('close', (event) => {
-      this.printWarn('Connection Closed');
       this._subscriptions = {};
-      this._restmessages = {};
-      this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
-    });
 
-    this._socket.addEventListener('error', (event) => {
-      this.printError('Connection Error');
-      this._subscriptions = {};
-      this._restmessages = {};
-      this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
-    });
+      this._socket = new WebSocket(`${this._socketType}//${window.location.hostname}:${window.location.port}/api`);
+
+      this._socket.addEventListener('open', (event) => {
+        this.print('Connection Open');
+        return resolve();
+      });
+
+      this._socket.addEventListener('message', (ev) => this.processServerMessage(ev));
+
+      this._socket.addEventListener('close', (event) => {
+        this.printWarn('Connection Closed');
+        this._subscriptions = {};
+        this._restmessages = {};
+        this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
+      });
+
+      this._socket.addEventListener('error', (event) => {
+        this.printError('Connection Error');
+        this._subscriptions = {};
+        this._restmessages = {};
+        this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
+      });
+    })
   }
 
   private printWarn(message: string): void {

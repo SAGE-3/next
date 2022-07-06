@@ -21,14 +21,11 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import {
-  MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent,
-  MdOndemandVideo, MdOutlineStickyNote2
-} from 'react-icons/md';
-
+import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 import { RowFileProps } from './types';
-import { useUserStore } from '../../../../stores';
-import { humanFileSize, downloadFile } from '@sage3/frontend';
+
+
+import { humanFileSize, downloadFile, useUser } from '@sage3/frontend';
 import { ExifViewer } from './exifviewer';
 
 /**
@@ -40,7 +37,7 @@ import { ExifViewer } from './exifviewer';
  */
 export function RowFile({ file, clickCB }: RowFileProps) {
   // check if user is a guest
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
 
   const toast = useToast();
   // Store if the file is selected or not
@@ -74,7 +71,6 @@ export function RowFile({ file, clickCB }: RowFileProps) {
     const id = e.currentTarget.id;
     if (id === 'down') {
       // download a file
-      console.log('File', file)
       downloadFile('api/assets/static/' + file.filename, file.originalfilename);
     } else if (id === 'del') {
       if (user?.data.userRole !== 'guest') {
@@ -156,7 +152,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
 
   return (
-    <div ref={divRef} >
+    <div ref={divRef}>
       <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono" alignItems="center">
         <Box w="30px">{whichIcon(file.type)}</Box>
         <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">

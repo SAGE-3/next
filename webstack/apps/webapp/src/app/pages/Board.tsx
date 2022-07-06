@@ -29,8 +29,8 @@ import {
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
 
-import { useAppStore, useBoardStore, useUserStore, useUIStore } from '@sage3/frontend';
-import { AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
+
+import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -65,7 +65,7 @@ export function BoardPage() {
   const gridSize = useUIStore((state) => state.gridSize);
 
   // User information
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
 
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
@@ -186,7 +186,6 @@ export function BoardPage() {
   }
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
-    console.log('Position:', { x: event.clientX, y: event.clientY });
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();

@@ -7,7 +7,7 @@
  */
 
 import { BoardSchema } from "@sage3/shared/types";
-import { SAGE3Collection } from "@sage3/backend";
+import { SAGE3Collection, sageRouter } from "@sage3/backend";
 
 class SAGE3BoardsCollection extends SAGE3Collection<BoardSchema> {
   constructor() {
@@ -16,6 +16,8 @@ class SAGE3BoardsCollection extends SAGE3Collection<BoardSchema> {
       ownerId: '',
       roomId: '',
     });
+    const router = sageRouter<BoardSchema>(this);
+    this.httpRouter = router;
   }
 }
 

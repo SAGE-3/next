@@ -15,7 +15,6 @@ import {
   InputGroup, Input, InputLeftElement, FormHelperText,
 } from '@chakra-ui/react';
 
-import { useUserStore } from '../../../stores';
 
 import { MdAttachFile } from 'react-icons/md';
 
@@ -35,7 +34,6 @@ interface UploadModalProps {
 }
 
 export function UploadModal(props: UploadModalProps): JSX.Element {
-  const user = useUserStore((state) => state.user);
 
   // Room and board
   const location = useLocation();

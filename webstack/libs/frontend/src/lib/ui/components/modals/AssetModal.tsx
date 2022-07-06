@@ -11,7 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore, useUserStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUser, useUIStore } from '@sage3/frontend';
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
@@ -53,7 +53,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
   }, []);
 
   // User information
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
 
   useEffect(() => {
     subscribe();
