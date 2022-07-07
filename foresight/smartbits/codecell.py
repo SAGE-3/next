@@ -13,6 +13,7 @@ from pydantic import PrivateAttr
 class CodeCellState(TrackedBaseModel):
     code: str
     executeInfo: ExecuteInfo
+    history: dict
 
 
 class CodeCell(SmartBit):

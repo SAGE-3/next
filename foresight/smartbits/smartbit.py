@@ -16,6 +16,7 @@ class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication()
+    _s3_comm
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
