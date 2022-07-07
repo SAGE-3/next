@@ -8,23 +8,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Avatar,
-  Box,
-  Button,
-  Select,
-  Text,
-  useDisclosure,
-  useToast,
-  Menu,
-  MenuGroup,
-  MenuItem,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useColorModeValue,
+  Avatar, Box, Button, Select, Text,
+  useDisclosure, useToast, useColorModeValue,
+  Menu, MenuGroup, MenuItem,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  MenuItemOption, MenuOptionGroup
 } from '@chakra-ui/react';
 
 import { Applications, initialValues } from '@sage3/applications/apps';
@@ -64,6 +52,7 @@ export function BoardPage() {
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
   const gridSize = useUIStore((state) => state.gridSize);
+  const setGridSize = useUIStore((state) => state.setGridSize);
   const gridColor = useColorModeValue("#E2E8F0", "#2D3748");
 
   // User information
@@ -138,7 +127,7 @@ export function BoardPage() {
   }
 
   // Perform the actual upload
-  const uploadFunction = (input: File[]) => {
+  const uploadFunction = (input: File[], dx: number, dy: number) => {
     if (input) {
       // Uploaded with a Form object
       const fd = new FormData();
@@ -152,11 +141,9 @@ export function BoardPage() {
       fd.append('room', locationState.roomId);
       fd.append('board', locationState.boardId);
 
-      // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-      const xdrop = Math.floor(boardPos.x + window.innerWidth / 2 - 150);
-      const ydrop = Math.floor(boardPos.y + window.innerHeight / 2 - 150);
-      fd.append('targetX', xdrop.toString());
-      fd.append('targetY', ydrop.toString());
+      // Position to open the asset
+      fd.append('targetX', dx.toString());
+      fd.append('targetY', dy.toString());
 
       // Upload with a POST request
       fetch('/api/assets/upload', {
@@ -193,14 +180,39 @@ export function BoardPage() {
       event.stopPropagation();
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer).then((files) => {
+        // Cacluate X and Y of app based on the current board position
+        const xdrop = Math.floor(boardPos.x + window.innerWidth / 2 - 150);
+        const ydrop = Math.floor(boardPos.y + window.innerHeight / 2 - 150);
         // do the actual upload
-        uploadFunction(Array.from(files));
+        uploadFunction(Array.from(files), xdrop, ydrop);
       });
     } else {
       console.log('drop_handler: no files');
     }
   }
 
+  // State of the checkboxes in context menu
+  const [radios, setRadios] = useState<string[]>(['ui', 'grid']);
+  // Enable/disable the grid
+  const onGridChange = () => {
+    if (radios.includes('grid')) {
+      setGridSize(1);
+      setRadios(radios.filter(el => el !== 'grid'));
+    } else {
+      setGridSize(50);
+      setRadios([...radios, 'grid']);
+    }
+  };
+  // Show/hide the UI
+  const onUIChange = () => {
+    if (radios.includes('ui')) {
+      setRadios(radios.filter(el => el !== 'ui'));
+    } else {
+      setRadios([...radios, 'ui']);
+    }
+  };
+
+  // Collect all the files dropped into an array
   return (
     <>
       <div style={{ transform: `scale(${scale})` }}>
@@ -259,16 +271,13 @@ export function BoardPage() {
       {/* Context-menu for the board */}
       <ContextMenu divId="board">
         <Menu>
-          <MenuGroup>
+          <MenuGroup m={"2px 3px 0 3px"} title='Actions'>
             <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Fit View to Board</MenuItem>
             <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Show all Apps</MenuItem>
-            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Show UI</MenuItem>
-            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Hide UI</MenuItem>
             <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem" onClick={onOpen}>
               Clear Board
             </MenuItem>
-            <hr className="divider" />
-            <MenuItem p={"1px 3px 1px 3px"}
+            <MenuItem p={"2px 3px 1px 3px"}
               className="contextmenuitem"
               onClick={() => {
                 const width = 600;
@@ -299,6 +308,18 @@ export function BoardPage() {
               Open Jupyter
             </MenuItem>
           </MenuGroup>
+          <hr className="divider" />
+          <MenuOptionGroup m={"2px 3px 0 3px"} title='Options' type='checkbox'
+            defaultValue={radios}>
+            <MenuItemOption m={0} p={"2px 3px 1px 3px"} className="contextmenuitem"
+              value="grid" onClick={onGridChange}>
+              Snap to Grid
+            </MenuItemOption>
+            <MenuItemOption p={"2px 3px 1px 3px"} className="contextmenuitem"
+              value="ui" onClick={onUIChange}>
+              Show Interface
+            </MenuItemOption>
+          </MenuOptionGroup>
         </Menu>
       </ContextMenu>
 
