@@ -26,6 +26,7 @@ import { RowFileProps } from './types';
 
 
 import { humanFileSize, downloadFile, useUser } from '@sage3/frontend';
+import { getExtension } from '@sage3/shared';
 import { ExifViewer } from './exifviewer';
 
 /**
@@ -150,11 +151,12 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const hover = selected ? highlight : colorHover;
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
+  const extension = getExtension(file.type);
 
   return (
     <div ref={divRef}>
       <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono" alignItems="center">
-        <Box w="30px">{whichIcon(file.type)}</Box>
+        <Box w="30px">{whichIcon(extension)}</Box>
         <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
           {file.originalfilename}
         </Box>
@@ -162,7 +164,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
           {file.owner.substring(0, 12)}
         </Box>
         <Box w="110px" textAlign="center">
-          {file.type}
+          {extension}
         </Box>
         <Box w="110px" textAlign="right">
           {modif}

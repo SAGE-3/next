@@ -145,12 +145,12 @@ export function BoardPage() {
       // Add each file to the form
       const fileListLength = input.length;
       for (let i = 0; i < fileListLength; i++) {
-        console.log('Adding file: ', input[i]);
         fd.append('files', input[i]);
       }
 
       // Add fields to the upload form
       fd.append('room', locationState.roomId);
+      fd.append('board', locationState.boardId);
 
       // Cacluate X and Y of app based on the current board position and the width and height of the viewport
       const xdrop = Math.floor(boardPos.x + window.innerWidth / 2 - 150);
@@ -260,15 +260,15 @@ export function BoardPage() {
       <ContextMenu divId="board">
         <Menu>
           <MenuGroup>
-            <MenuItem className="contextmenuitem">Fit View to Board</MenuItem>
-            <MenuItem className="contextmenuitem">Show all Apps</MenuItem>
-            <MenuItem className="contextmenuitem">Show UI</MenuItem>
-            <MenuItem className="contextmenuitem">Hide UI</MenuItem>
-            <MenuItem className="contextmenuitem" onClick={onOpen}>
+            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Fit View to Board</MenuItem>
+            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Show all Apps</MenuItem>
+            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Show UI</MenuItem>
+            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Hide UI</MenuItem>
+            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem" onClick={onOpen}>
               Clear Board
             </MenuItem>
             <hr className="divider" />
-            <MenuItem
+            <MenuItem p={"1px 3px 1px 3px"}
               className="contextmenuitem"
               onClick={() => {
                 const width = 600;

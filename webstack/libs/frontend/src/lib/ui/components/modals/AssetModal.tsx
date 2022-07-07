@@ -17,6 +17,7 @@ import { FileEntry, AssetModalProps } from './filemanager/types';
 
 import { initialValues } from '@sage3/applications/apps';
 import { ExtraImageType } from '@sage3/shared/types';
+import { isImage, isPDF, isCSV, isText } from '@sage3/shared';
 
 export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.Element {
   const subscribe = useAssetStore((state) => state.subscribe);
@@ -71,9 +72,6 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
       keys.map((k, idx) => {
         const item = assets[idx];
         const id = item._id;
-        let fileType = item.data.mimetype.split('/')[1];
-        if (fileType === 'octet-stream') fileType = 'data';
-        if (fileType === 'x-python-script') fileType = 'py';
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
@@ -84,7 +82,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
           dateAdded: new Date(item.data.dateAdded).getTime(),
           room: item.data.room,
           size: item.data.size,
-          type: fileType,
+          type: item.data.mimetype,
           derived: item.data.derived,
           metadata: item.data.metadata,
           selected: false,
@@ -100,7 +98,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
     assetsList.forEach((d) => {
       if (d.selected) {
         const w = 300;
-        if (d.type === 'jpeg' || d.type === 'png') {
+        if (isImage(d.type)) {
           const extras = d.derived as ExtraImageType;
           createApp({
             name: 'ImageViewer',
@@ -116,7 +114,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             minimized: false,
           });
           x += w + 10;
-        } else if (d.type === 'csv') {
+        } else if (isCSV(d.type)) {
           createApp({
             name: 'CVSViewer',
             description: 'CSV Description',
@@ -131,7 +129,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             minimized: false,
           });
           x += 800 + 10;
-        } else if (d.type === 'plain') {
+        } else if (isText(d.type)) {
           const localurl = '/api/assets/static/' + d.filename;
           if (localurl) {
             // Get the content of the file
@@ -154,13 +152,13 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
                 size: { width: 400, height: 400, depth: 0 },
                 rotation: { x: x, y: 0, z: 0 },
                 type: 'Stickie',
-                state: { ...initialValues['Stickie'], text: text, id: d.id },
+                state: { ...initialValues['Stickie'], text: text },
                 minimized: false,
               });
               x += 400 + 10;
             });
           }
-        } else if (d.type === 'pdf') {
+        } else if (isPDF(d.type)) {
           createApp({
             name: 'PDFViewer',
             description: 'PDF Description',
