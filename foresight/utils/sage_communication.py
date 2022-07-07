@@ -26,7 +26,6 @@ class SageCommunication(Borg):
 
     def send_app_update(self, app_id, data):
         """
-
         :param app_id:
         :param data: data
         :return:

@@ -29,6 +29,7 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
+from jupyterkernelproxy import JupyterKernelProxy
 
 from threading import Thread
 
@@ -70,6 +71,7 @@ class SAGEProxy():
         }
         self.httpx_client = httpx.Client()
         self.s3_comm = SageCommunication(config_file)
+        self.jupytr_kernel = JupyterKernelProxy()
 
     def authenticat_new_user(self):
         r = self.httpx_client.post( self.__config['server'] + '/auth/jwt', headers=self.__headers)
