@@ -243,7 +243,8 @@ export function BoardPage() {
             // height={5000}
             width="100%"
             height="100%"
-            backgroundSize={`${gridSize}px ${gridSize}px`}
+            backgroundSize={`50px 50px`}
+            // backgroundSize={`${gridSize}px ${gridSize}px`}
             backgroundImage={
               `linear-gradient(to right, ${gridColor} 1px, transparent 1px),
                linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
