@@ -7,3 +7,4 @@
  */
 
 export * from './gen-id';
+export * from './mime-utils';

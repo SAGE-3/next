@@ -14,13 +14,15 @@
  */
 
 import { niceCollection } from './nice-collection';
-import { AssetSchema } from '@sage3/shared/types';
+import { Asset, AssetSchema } from '@sage3/shared/types';
 import { SBDocument, SBDocumentMessage } from '@sage3/sagebase';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
 
 import { config } from '../../config';
+
+import { isPDF, isImage } from '@sage3/shared';
 
 /**
  * The database model for SAGE3 rooms.
@@ -30,9 +32,12 @@ import { config } from '../../config';
 class SAGE3AssetsCollection {
   private assetCollection!: niceCollection<AssetSchema>;
   private collectionName = 'ASSETS';
+  private metaQ!: MetadataProcessor;
+  private imgQ!: ImageProcessor;
+  private pdfQ!: PDFProcessor;
 
   /**
-   * Contructor initializing the RoomModel.
+   * Contructor initializing the collection.
    */
   public async initialize(): Promise<void> {
     // Get some values from the configuration object
@@ -40,51 +45,55 @@ class SAGE3AssetsCollection {
     const redisUrl = config.redis.url;
 
     // A queue for metadata processing
-    const metaQ = new MetadataProcessor(redisUrl, assetFolder);
-    console.log('Queue> metadata initialized', metaQ.getName());
+    this.metaQ = new MetadataProcessor(redisUrl, assetFolder);
+    console.log('Queue> metadata initialized', this.metaQ.getName());
     // A queue for image processing
-    const imgQ = new ImageProcessor(redisUrl, assetFolder);
-    console.log('Queue> image initialized', imgQ.getName());
+    this.imgQ = new ImageProcessor(redisUrl, assetFolder);
+    console.log('Queue> image initialized', this.imgQ.getName());
     // A queue for PDF processing
-    const pdfQ = new PDFProcessor(redisUrl, assetFolder);
-    console.log('Queue> pdf initialized', pdfQ.getName());
+    this.pdfQ = new PDFProcessor(redisUrl, assetFolder);
+    console.log('Queue> pdf initialized', this.pdfQ.getName());
 
     // Create the collection
     const indexObj = { file: '' } as AssetSchema;
     this.assetCollection = new niceCollection<AssetSchema>(this.collectionName);
-    await this.assetCollection.init(indexObj, (updt: any) => {
-      console.log('Assets> update', updt);
-
+    await this.assetCollection.init(indexObj, async (updt: any) => {
       if (updt.type === 'CREATE') {
-        console.log('Queue> add', updt.doc);
-        const tasks = [] as Promise<any>[];
-        const fileType = updt.doc.data.mimetype;
-        console.log('Task> add', fileType);
-        // extract metadata
-        const t1 = metaQ.addFile(updt.doc._id, updt.doc.data.file);
-        tasks.push(t1);
-        // convert image to multiple sizes
-        if (fileType.startsWith('image/')) {
-          const t2 = imgQ.addFile(updt.doc._id, updt.doc.data.file);
-          tasks.push(t2);
-        }
-        // convert PDF to images
-        if (fileType === 'application/pdf') {
-          const t3 = pdfQ.addFile(updt.doc._id, updt.doc.data.file);
-          tasks.push(t3);
-        }
-        Promise.all(tasks).then(async ([r1, r2, r3]) => {
-          // no await because we want create event before the update events
-          if (r1) {
-            this.assetCollection.updateItem(updt.doc._id, { metadata: r1.result });
-          }
-          if (r2) {
-            this.assetCollection.updateItem(updt.doc._id, { derived: r2.result });
-          }
-          if (r3) {
-            this.assetCollection.updateItem(updt.doc._id, { derived: r3.result });
-          }
-        });
+        console.log('Asset created>', updt.doc.data.originalfilename);
+      }
+    });
+  }
+
+  /**
+   * Process a file for metadata, and pdf/image processing
+   */
+  public async processFile(asset: Asset): Promise<void> {
+    const tasks = [] as Promise<any>[];
+    const id = asset._id;
+    const fileType = asset.data.mimetype;
+    // extract metadata
+    const t1 = this.metaQ.addFile(id, asset.data.file);
+    tasks.push(t1);
+    // convert image to multiple sizes
+    if (isImage(fileType)) {
+      const t2 = this.imgQ.addFile(id, asset.data.file);
+      tasks.push(t2);
+    }
+    // convert PDF to images
+    if (isPDF(fileType)) {
+      const t3 = this.pdfQ.addFile(id, asset.data.file);
+      tasks.push(t3);
+    }
+    await Promise.all(tasks).then(async ([r1, r2, r3]) => {
+      // no await because we want create event before the update events
+      if (r1) {
+        await this.assetCollection.updateItem(id, { metadata: r1.result });
+      }
+      if (r2) {
+        await this.assetCollection.updateItem(id, { derived: r2.result });
+      }
+      if (r3) {
+        await this.assetCollection.updateItem(id, { derived: r3.result });
       }
     });
   }

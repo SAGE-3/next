@@ -220,7 +220,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
         });
       });
       return Promise.all(arr).then((pdfres) => {
-        console.log('PDF> All done', pdfres);
+        console.log('PDF> processing done');
         resolve(pdfres);
       });
     });
