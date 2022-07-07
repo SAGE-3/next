@@ -7,7 +7,7 @@
  */
 
 import { AppSchema } from "@sage3/applications/schema";
-import { SAGE3Collection } from "@sage3/backend";
+import { SAGE3Collection, sageRouter } from "@sage3/backend";
 
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
 
@@ -18,6 +18,8 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
       roomId: "",
       boardId: "",
     });
+    const router = sageRouter<AppSchema>(this);
+    this.httpRouter = router;
   }
 }
 

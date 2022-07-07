@@ -15,6 +15,9 @@
 
 // Express web server framework
 import * as express from 'express';
+// Mime type definitions
+import * as mime from 'mime';
+import * as fs from 'fs';
 
 import { config } from '../../../config';
 
@@ -22,15 +25,16 @@ import { config } from '../../../config';
 import { uploadMiddleware } from '../../../connectors/upload-connector';
 
 // Asset model
-import { AssetsCollection } from '../../collections';
+import { AssetsCollection, AppsCollection } from '../../collections';
 
 // External Imports
 import { WebSocket } from 'ws';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
-import { APIClientWSMessage } from '@sage3/shared/types';
+import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
+import { isCSV, isImage, isPDF, isText } from '@sage3/shared';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -96,14 +100,30 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       }>;
     };
 
+    let openFIles = false;
+    let tx: number, ty: number, tw: number, th: number;
+    let posx: number;
+    if (req.body.targetX && req.body.targetY) {
+      openFIles = true;
+      // Values position and size from the upload form data
+      tx = Number(req.body.targetX);
+      ty = Number(req.body.targetY);
+      tw = Number(req.body.targetWidth);
+      th = Number(req.body.targetHeight);
+      // Position of the first file in the array
+      posx = tx;
+    }
+
     // Get the current uploader information
     const user = req.user as SBAuthSchema;
 
     // Do something with the files
-    files.forEach((elt) => {
+    files.forEach(async (elt) => {
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
+      // Normalize mime types using the mime package
+      elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
       // Put the new file into the collection
-      AssetsCollection.addAsset(
+      const assetID = await AssetsCollection.addAsset(
         {
           file: elt.filename,
           owner: user.id || '-',
@@ -117,6 +137,106 @@ function uploadHandler(req: express.Request, res: express.Response): void {
         },
         user.id
       );
+      if (assetID) {
+        const asset1 = await AssetsCollection.getAsset(assetID);
+        if (asset1) {
+          // Process the file (metadata, image, pdf, etc.)
+          await AssetsCollection.processFile(asset1);
+          // If we need to open the file, do it
+          if (openFIles) {
+            const asset = await AssetsCollection.getAsset(assetID);
+            if (asset) {
+              if (isImage(elt.mimetype)) {
+                // Get metadata information about the image
+                const derived = asset.data.derived as ExtraImageType;
+                const ar = derived.aspectRatio || 1;
+                const width = tw || 300;
+                const height = th || width / ar;
+                AppsCollection.add(
+                  {
+                    name: 'ImageViewer',
+                    description: 'Image Description',
+                    roomId: req.body.room,
+                    boardId: req.body.board,
+                    ownerId: user.id,
+                    position: { x: posx, y: ty, z: 0 },
+                    size: { width, height, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'ImageViewer',
+                    state: { id: assetID },
+                    minimized: false,
+                  },
+                  user.id
+                );
+                posx += width + 10;
+              } else if (isPDF(elt.mimetype)) {
+                // Get metadata information about the PDF
+                const derived = asset.data.derived as ExtraPDFType;
+                const firstPage = derived[0];
+                const ar = firstPage[0].width / firstPage[0].height;
+                const width = tw || 500;
+                const height = th || width / ar;
+                AppsCollection.add(
+                  {
+                    name: 'PDFViewer',
+                    description: 'PDFViewer Description',
+                    roomId: req.body.room,
+                    boardId: req.body.board,
+                    ownerId: user.id,
+                    position: { x: posx, y: ty, z: 0 },
+                    size: { width, height, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'PDFViewer',
+                    state: { id: assetID, currentPage: 0, numPages: derived.length },
+                    minimized: false,
+                  },
+                  user.id
+                );
+                posx += width + 10;
+              } else if (isCSV(elt.mimetype)) {
+                AppsCollection.add(
+                  {
+                    name: 'CSVViewer',
+                    description: 'CSVViewer Description',
+                    roomId: req.body.room,
+                    boardId: req.body.board,
+                    ownerId: user.id,
+                    position: { x: posx, y: ty, z: 0 },
+                    size: { width: tw || 800, height: th || 400, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'CSVViewer',
+                    state: { id: assetID },
+                    minimized: false,
+                  },
+                  user.id
+                );
+                posx += tw || 800;
+                posx += 10;
+              } else if (isText(elt.mimetype)) {
+                const text = fs.readFileSync(elt.path);
+                AppsCollection.add(
+                  {
+                    name: 'Stickie',
+                    description: 'Stickie',
+                    roomId: req.body.room,
+                    boardId: req.body.board,
+                    ownerId: user.id,
+                    position: { x: posx, y: ty, z: 0 },
+                    size: { width: tw || 400, height: th || 400, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'Stickie',
+                    state: { fontSize: 48, color: '#63B3ED', text: text.toString() },
+                    minimized: false,
+                  },
+                  user.id
+                );
+                posx += tw || 400;
+                posx += 10;
+              }
+            }
+          }
+        }
+      }
     });
 
     // Return success with the information

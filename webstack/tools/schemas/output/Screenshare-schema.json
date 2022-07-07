@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Screenshare",
+  "definitions": {
+    "Screenshare": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_createdAt": {
+          "type": "number"
+        },
+        "_updatedAt": {
+          "type": "number"
+        },
+        "_updatedBy": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "owner"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "_id",
+        "_createdAt",
+        "_updatedAt",
+        "_updatedBy",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

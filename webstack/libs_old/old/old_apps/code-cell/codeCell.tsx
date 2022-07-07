@@ -38,7 +38,7 @@ export const AppscodeCell = (props: codeCellProps): JSX.Element => {
   const { data: cellState, dispatch } = useSageStateReducer(props.state.cellState, cellReducer);
   const cellOutput = useSageStateAtom<{ value: string }>(props.state.cellOutput);
   const isLocked = useSageStateAtom<{ value: boolean }>(props.state.isLocked);
-  const user = useUser();
+  const { user } = useUser();
 
   const handleInputChange = (val: string) => {
     const message = { type: 'update', code: val } as CellAction;

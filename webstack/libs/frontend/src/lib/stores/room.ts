@@ -16,8 +16,7 @@ import createReact from 'zustand';
 import { Room, RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
-import { APIHttp } from '../api';
-import { SocketAPI } from '../utils';
+import { APIHttp, SocketAPI } from '../api';
 
 interface RoomState {
   rooms: Room[];
@@ -86,7 +85,6 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
     },
   };
 });
-
 
 // Convert the Zustand JS store to Zustand React Store
 export const useRoomStore = createReact(RoomStore);

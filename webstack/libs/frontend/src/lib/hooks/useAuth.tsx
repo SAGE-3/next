@@ -7,13 +7,14 @@
  */
 
 /**
- * User Provider
+ * Auth Provider
  * @file User Provider
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { SocketAPI } from '../api';
 
 import { AuthHTTPService } from '../auth';
 
@@ -34,10 +35,16 @@ export function useAuth() {
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const [auth, setAuth] = useState<AuthenticatedType>({ isAuthenticated: false, auth: null })
 
+  // const [socketConnected, setSocketConnected] = useState(false);
+
   useEffect(() => {
     async function fetchAuth() {
       const auth = await AuthHTTPService.verifyAuth();
-      setAuth({ isAuthenticated: auth.authentication, auth: auth.auth })
+      if (auth.auth) {
+        // Init the SocketAPI after the Auth is set and before we navigate to the home page
+        await SocketAPI.init();
+      }
+      setAuth({ isAuthenticated: auth.authentication, auth: auth.auth });
     }
     fetchAuth()
   }, [])

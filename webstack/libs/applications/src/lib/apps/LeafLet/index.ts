@@ -11,9 +11,12 @@
  * created by: SAGE3 team
  */
 
-export type state = {
-  center: number;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  center: z.number(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   center: 44,

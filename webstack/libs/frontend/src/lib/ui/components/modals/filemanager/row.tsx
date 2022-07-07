@@ -10,6 +10,7 @@ import React, { useState, useRef, useEffect } from 'react';
 
 // Date manipulation functions for file manager
 import { format as formatDate } from 'date-fns';
+import { AssetHTTPService } from '@sage3/frontend';
 
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader,
@@ -23,8 +24,9 @@ import {
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 import { RowFileProps } from './types';
 
-import { useUserStore } from '../../../../stores';
-import { humanFileSize, downloadFile } from '@sage3/frontend';
+
+import { humanFileSize, downloadFile, useUser } from '@sage3/frontend';
+import { getExtension } from '@sage3/shared';
 import { ExifViewer } from './exifviewer';
 
 /**
@@ -34,9 +36,9 @@ import { ExifViewer } from './exifviewer';
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, style, clickCB }: RowFileProps) {
+export function RowFile({ file, clickCB }: RowFileProps) {
   // check if user is a guest
-  const user = useUserStore((state) => state.user);
+  const { user } = useUser();
 
   const toast = useToast();
   // Store if the file is selected or not
@@ -46,6 +48,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
   // Modal showing file information
   const { isOpen, onOpen, onClose } = useDisclosure({ id: 'exif' });
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
   // show the context menu
   const [showMenu, setShowMenu] = useState(false);
 
@@ -69,12 +72,11 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
     const id = e.currentTarget.id;
     if (id === 'down') {
       // download a file
-      console.log('File', file)
       downloadFile('api/assets/static/' + file.filename, file.originalfilename);
     } else if (id === 'del') {
       if (user?.data.userRole !== 'guest') {
         // Delete a file
-        // httpGET('/api/content/asset/delete/' + file.id);
+        onDeleteOpen();
       } else {
         toast({
           title: 'Guests cannot delete assets',
@@ -110,7 +112,6 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {
-    console.log('contextmenu');
     // deselect file selection
     setSelected(false);
     // hide context menu
@@ -150,11 +151,12 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
   const hover = selected ? highlight : colorHover;
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
+  const extension = getExtension(file.type);
 
   return (
-    <div ref={divRef} style={{ ...style }}>
+    <div ref={divRef}>
       <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono" alignItems="center">
-        <Box w="30px">{whichIcon(file.type)}</Box>
+        <Box w="30px">{whichIcon(extension)}</Box>
         <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
           {file.originalfilename}
         </Box>
@@ -162,7 +164,7 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
           {file.owner.substring(0, 12)}
         </Box>
         <Box w="110px" textAlign="center">
-          {file.type}
+          {extension}
         </Box>
         <Box w="110px" textAlign="right">
           {modif}
@@ -200,6 +202,30 @@ export function RowFile({ file, style, clickCB }: RowFileProps) {
       ) : (
         <> </>
       )}
+
+      {/* Delete a file modal */}
+      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Asset</ModalHeader>
+          <ModalBody>Are you sure you want to delete "{file.originalfilename}" ?</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" size="md" variant="outline" mr={3} onClick={onDeleteClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              size="md"
+              onClick={() => {
+                AssetHTTPService.del(file.id);
+                onDeleteClose();
+              }}
+            >
+              Yes, Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* EXIF info */}
       <Modal closeOnEsc={true} closeOnOverlayClick={true} isOpen={isOpen} onClose={onClose} size={'3xl'} isCentered>

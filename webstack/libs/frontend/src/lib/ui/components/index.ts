@@ -9,6 +9,7 @@
 export * from './modals/EditUserModal';
 export * from './modals/CreateRoomModal';
 export * from './modals/CreateBoardModal';
+export * from './modals/CreateUserModal';
 export * from './modals/AssetModal';
 export * from './modals/UploadModal';
 

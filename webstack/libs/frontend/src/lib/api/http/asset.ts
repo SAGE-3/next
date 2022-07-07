@@ -16,7 +16,7 @@
 import { Asset, AssetSchema } from '@sage3/shared/types';
 import { APIHttp } from './api-http';
 
-// async function read(id: AssetType['id']): Promise<AssetType[] | undefined> {
+// async function read(id: Asset['_id']): Promise<AssetType[] | undefined> {
 //   const response = await httpGET('/api/assets/' + id);
 //   return response.data;
 // }
@@ -26,10 +26,10 @@ async function readAll(): Promise<Asset[] | undefined> {
   return response.data;
 }
 
-// async function del(id: AssetType['id']): Promise<boolean> {
-//   const response = await httpDELETE('/api/assets/' + id);
-//   return response.success;
-// }
+async function del(id: Asset['_id']): Promise<boolean> {
+  const response = await APIHttp.DELETE('/assets/' + id);
+  return response.success;
+}
 
 /**
  * Asset HTTP Service.
@@ -38,5 +38,5 @@ async function readAll(): Promise<Asset[] | undefined> {
 export const AssetHTTPService = {
   // read,
   readAll,
-  // del,
+  del,
 };

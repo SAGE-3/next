@@ -8,4 +8,3 @@
 
 export * from './download';
 export * from './strings';
-export * from '../api/ws/api-socket';

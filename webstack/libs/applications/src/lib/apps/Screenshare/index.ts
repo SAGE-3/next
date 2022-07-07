@@ -11,9 +11,12 @@
  * created by: SAGE3 Team
  */
 
-export type state = {
-  owner: string;
-};
+import { z } from 'zod';
+
+export const schema = z.object({
+  owner: z.string(),
+});
+export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   owner: 'tom',

@@ -23,6 +23,8 @@ export class SAGE3Collection<T extends SBJSON> {
   private _name: string;
   private _queryableAttributes: Partial<T>;
 
+  private _httpRouter!: Router;
+
   constructor(name: string, queryableAttributes: Partial<T>) {
     this._name = name;
     this._queryableAttributes = queryableAttributes;
@@ -140,8 +142,12 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public httpRouter(): Router {
-    return sageRouter<T>(this);
+  protected set httpRouter(router: Router) {
+    this._httpRouter = router;
+  }
+
+  public router(): Router {
+    return this._httpRouter;
   }
 
   public wsRouter(socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache): Promise<void> {

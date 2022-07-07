@@ -16,8 +16,7 @@ import createReact from 'zustand';
 import { genId } from '@sage3/shared';
 
 // The observable websocket and HTTP
-import { APIHttp } from '../api';
-import { SocketAPI } from '../utils';
+import { APIHttp, SocketAPI } from '../api';
 
 import { AppState, AppSchema, App } from '@sage3/applications/schema';
 import { BoardSchema } from '@sage3/shared/types';
@@ -134,7 +133,6 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     },
     updateState: async (id: string, updates: Partial<AppState>) => {
       const apps = [...get().apps];
-      console.log(id, updates, apps);
       set({
         apps: apps.map((app) => (app._id === id ? { ...app, data: { ...app.data, state: { ...app.data.state, ...updates } } } : app)),
       });

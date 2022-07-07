@@ -22,7 +22,8 @@ import {
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
-import { useUserStore } from '../../../stores';
+import { useUser } from '../../../hooks';
+
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -31,9 +32,7 @@ interface EditUserModalProps {
 }
 
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
-  const user = useUserStore(state => state.user);
-
-  const update = useUserStore(state => state.update);
+  const { user, update } = useUser();
 
   const [name, setName] = useState<UserSchema['name']>('');
   const [email, setEmail] = useState<UserSchema['email']>('');
@@ -63,10 +62,10 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   };
 
   const updateAccount = () => {
-    if (name !== user?.data.name) {
+    if (name !== user?.data.name && update) {
       update({ name });
     }
-    if (email !== user?.data.email) {
+    if (email !== user?.data.email && update) {
       update({ email });
     }
     props.onClose();
