@@ -14,7 +14,7 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  <%= statename %>: z.<%= statetype %>();
+  <%= statename %>: z.<%= statetype %>(),
 });
 export type state = z.infer<typeof schema>;
 
