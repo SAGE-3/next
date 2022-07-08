@@ -15,6 +15,7 @@ import { name as VideoViewerName, init as defaultVideoViewer } from './apps/Vide
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
@@ -31,6 +32,7 @@ import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
+import RTCChat from './apps/RTCChat/RTCChat';
 
 export const Applications = {
   [CounterAppName]: CounterApp,
@@ -48,6 +50,7 @@ export const Applications = {
   [WebviewName]: Webview,
   [DataTableAppName]: DataTableApp,
   [CSVViewerName]: CSVViewer,
+  [RTCChatName]: RTCChat,
 } as unknown as Record<string, () => JSX.Element>;
 
 export const initialValues = {
@@ -66,4 +69,5 @@ export const initialValues = {
   [WebviewName]: defaultWebview,
   [DataTableAppName]: defaultDataTableApp,
   [CSVViewerName]: defaultCSVViewer,
+  [RTCChatName]: defaultRTCChat,
 };
