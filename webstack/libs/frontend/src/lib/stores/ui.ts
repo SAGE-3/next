@@ -21,6 +21,7 @@ const WheelStepZoom = 0.004;
 interface UIState {
   scale: number;
   gridSize: number;
+  setGridSize: (gridSize: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
