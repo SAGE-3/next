@@ -5,7 +5,7 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Avatar, Box, Button, Select, Text,
@@ -19,10 +19,14 @@ import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
 import { initials } from '@sage3/frontend';
 
-import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
+import {
+  useAppStore, useBoardStore, useUser, useUIStore, AssetModal,
+  UploadModal, ContextMenu, usePeerStore
+} from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
+
 
 type LocationParams = {
   boardId: string;
@@ -55,6 +59,10 @@ export function BoardPage() {
   const setGridSize = useUIStore((state) => state.setGridSize);
   const gridColor = useColorModeValue("#E2E8F0", "#2D3748");
 
+  // Peer
+  const peer = usePeerStore((state) => state.peer);
+  const peerDestroy = usePeerStore((state) => state.destroy);
+
   // User information
   const { user } = useUser();
 
@@ -74,9 +82,65 @@ export function BoardPage() {
   useEffect(() => {
     // Subscribe to the board that was selected
     subBoard(locationState.boardId);
-    // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
+
+    // const rtcsock = new WebSocket(`ws://${window.location.host}/rtc`);
+    const rtcsock = new WebSocket(`ws://localhost:3333/rtc`);
+    rtcsock.addEventListener('open', (event) => {
+      console.log('RTC> Connection Open');
+    });
+    const processRTCMessage = async (ev: MessageEvent<any>) => {
+      console.log('RTC> Message', ev);
+      const data = JSON.parse(ev.data);
+      if (data.type === 'signal') {
+        console.log('RTC> signal');
+        await peer.signal(data.data);
+      } else if (data.type === 'onicecandidates') {
+        console.log('RTC> onicecandidates');
+        const promises = data.data.map(async (candidate: any) => peer.addIceCandidate(candidate));
+        await Promise.all(promises);
+      }
+    };
+
+    rtcsock.addEventListener('message', processRTCMessage);
+    rtcsock.addEventListener('close', (ev) => {
+      console.log('RTC> Close', ev);
+      rtcsock.removeEventListener('message', processRTCMessage);
+    });
+    rtcsock.addEventListener('error', (ev) => {
+      console.log('RTC> Error', ev);
+      rtcsock.removeEventListener('message', processRTCMessage);
+    });
+    console.log('RTC> Peer', peer);
+    peer.on('signal', async (description) => {
+      rtcsock.send(JSON.stringify({ type: 'signal', data: description }));
+    });
+    peer.on('onicecandidates', async (candidates) => {
+      rtcsock.send(JSON.stringify({ type: 'onicecandidates', data: candidates }));
+    });
+    peer.on('streamLocal', (stream) => {
+      // document.querySelector('#videoLocal').srcObject = stream;
+      console.log('RTC> Local Stream', stream);
+    });
+    peer.on('streamRemote', (stream) => {
+      // document.querySelector('#videoRemote').srcObject = stream;
+      console.log('RTC> Remote Stream', stream);
+    });
+
+    setTimeout(() => {
+      // const stream = await Peer.getUserMedia();
+      // peer.addStream(stream);
+      peer.start();
+      // setInterval(() => {
+      //   peer.send("Hello", 'messages');
+      // }, 2000);
+    }, 1000);
+
+    // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       unsubBoard();
+      rtcsock.removeEventListener('message', processRTCMessage);
+      rtcsock.close();
+      peerDestroy();
     };
   }, []);
 
