@@ -64,6 +64,7 @@
     "passport-local": "^1.0.0",
     "passport-openidconnect": "^0.1.1",
     "pdfjs-dist": "^2.14.305",
+    "peer-lite": "^2.0.1",
     "perfect-freehand": "^1.1.0",
     "plotly.js": "^2.12.1",
     "react": "18.1.0",

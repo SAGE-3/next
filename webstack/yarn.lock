@@ -11614,6 +11614,11 @@ pdfjs-dist@^2.14.305:
     dommatrix "^1.0.1"
     web-streams-polyfill "^3.2.1"
 
+peer-lite@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/peer-lite/-/peer-lite-2.0.1.tgz#cbba77e93bcb88639d14a59353106d3393a3b7d6"
+  integrity sha512-o461Xg0JABEkZm23byxXmEGNE39SB/JyCJ5OZLt+G69vfoQU7fDr9hM1ivfqmnEZYT8SLAjSlJ+RfWgYANPtXA==
+
 pend@~1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/pend/-/pend-1.2.0.tgz#7a57eb550a6783f9115331fcf4663d5c8e007a50"
