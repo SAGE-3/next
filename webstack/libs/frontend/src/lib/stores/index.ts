@@ -11,3 +11,4 @@ export * from './room';
 export * from './board';
 export * from './asset';
 export * from './ui';
+export * from './peer';
