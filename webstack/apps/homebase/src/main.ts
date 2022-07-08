@@ -101,6 +101,7 @@ async function startServer() {
   // Websocket setup
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
+  const rtcWebSocketServer = new WebSocket.Server({ noServer: true });
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
@@ -135,6 +136,41 @@ async function startServer() {
     });
   });
 
+  // Websocket API for WebRTC
+  const clients = new Set<WebSocket>();
+
+  function emit(name: string, socket: WebSocket, data: any) {
+    clients.forEach((user: WebSocket) => {
+      if (user !== socket) {
+        user.send(JSON.stringify({ type: name, data: data }));
+      }
+    });
+  }
+
+  rtcWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
+    clients.add(socket);
+    console.log('RTC> connection', clients.size);
+    socket.on('message', (data) => {
+      const msg = JSON.parse(data.toString());
+      console.log('RTC> message', msg);
+      if (msg.type === 'onicecandidates') {
+        console.log('RTC> onicecandidates', msg.data);
+        emit('onicecandidates', socket, msg.data);
+      } else if (msg.type === 'signal') {
+        console.log('RTC> signal', msg.data);
+        emit('signal', socket, msg.data);
+      }
+    });
+    socket.on('close', (_msg) => {
+      console.log('RTC> close');
+      clients.delete(socket);
+    });
+    socket.on('error', (msg) => {
+      console.log('RTC> error', msg);
+      clients.delete(socket);
+    });
+  });
+
   // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
     // TODO: Declarations file was being funny again
@@ -144,6 +180,14 @@ async function startServer() {
     if (!pathname) return;
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
+
+    // WebRTC socket - noauth for now
+    if (wsPath === 'rtc') {
+      rtcWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+        rtcWebSocketServer.emit('connection', ws, req);
+      });
+      return;
+    }
 
     SAGEBase.Auth.sessionParser(request, {}, () => {
       let token = request.headers.authorization;
@@ -211,6 +255,7 @@ async function startServer() {
     console.log('in exit handler, disconnect sockets');
     apiWebSocketServer.close();
     yjsWebSocketServer.close();
+    rtcWebSocketServer.close();
     process.exit(2);
   }
 
