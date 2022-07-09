@@ -10,13 +10,15 @@ from pydantic import BaseModel, Field, validate_model
 from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
-
+from jupyterkernelproxy import JupyterKernelProxy
 
 class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
-    _s3_comm: SageCommunication = SageCommunication()
-    _s3_comm
+    _s3_comm: SageCommunication = SageCommunication("config/config.json")
+    _jupyter_proxy: JupyterKernelProxy  = JupyterKernelProxy()
+
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -144,7 +146,7 @@ class Data(TrackedBaseModel):
 class SmartBit(TrackedBaseModel):
     app_id: str = Field(alias='_id')
     _createdAt: int
-    _updatedAt: Position
+    _updatedAt: int
     data: Data
 
     def __init__(self, **kwargs):

@@ -1,8 +1,6 @@
-import asyncio
+# TODO: should this have it's own SageComm info or should it use the proxy instead?
 import time
 
-from jupyter_client import AsyncKernelManager
-import threading
 
 import asyncio
 import threading
@@ -29,7 +27,7 @@ class AsyncioEventLoopThread(threading.Thread):
         self.loop.call_soon_threadsafe(self.loop.stop)
         print("waiting for the asyncio loop to stop")
         time.sleep(1)
-        # self.join()
+
 
 
 class Borg:
@@ -44,8 +42,7 @@ class JupyterKernelProxy(Borg):
     """
     Jupyter kernel is responsible for
     """
-
-    def __init__(self, kernel_config="config/kernel-s3-next.json", startup_timeout=60,):
+    def __init__(self, kernel_config="config/kernel-s3-next.json", startup_timeout=60):
         Borg.__init__(self)
         if not hasattr(self, "kernel_config"):
             self.kernel_config = json.load(open(kernel_config))
@@ -53,7 +50,6 @@ class JupyterKernelProxy(Borg):
             # self.kernel_name = kernel_name
             self.thr = AsyncioEventLoopThread()
             self.thr.start()
-            self.iopub_responses = Queue()
             self.callback_info = {}
             self.kc = None
 
@@ -93,15 +89,15 @@ class JupyterKernelProxy(Borg):
     # execut a command
     def execute(self, command_info):
         """
-
         :param command_info: a dict with three keys, 1- uuid, 2-call_fn, a callback function and 3 code to run
         :return:
         """
-        code_uuid = command_info["uuid"]
+        user_passed_uuid = command_info["uuid"]
         callback_fn = command_info["call_fn"]
-        self.callback_info[code_uuid] = callback_fn
         command = command_info["code"]
-        return self.kc.execute(command)
+        execute_uuid = self.kc.execute(command)
+        self.callback_info[execute_uuid] = (user_passed_uuid, callback_fn)
+        return execute_uuid
 
     # TODO make sure to top threads only if it's not running (leads to block)
     @_run_coro
@@ -116,24 +112,33 @@ class JupyterKernelProxy(Borg):
 
 
     @_run_coro
-    async def process_iopub(self):
+    async def process_iopub(self, log_every = 10 ):
+        time_since_logged = 0
         while True:
             if self.stop_thread:
                 print("Stopping thread that checks for messages")
                 break
             try:
                 msg = await self.kc.get_iopub_msg(timeout=1)
-                # print(f"done checking message and msg is {msg}")
                 # ignore messages that report execution_state (busy or idle messages)
                 # also ignore messages that report the code
-                print(f"adding a message {msg}")
 
                 msg_exec_state = msg["content"].get("execution_state", None)
-                if msg_exec_state is not None or msg["content"].get("code", None) is not None:
-                    continue
-                self.iopub_responses.put(msg)
+                # if msg_exec_state is valid, it means the info contained is not necessary
+                if msg_exec_state is None and msg["content"].get("code", None) is None:
+                    print(f"Handling message {msg}")
+                    parent_msg_id = msg['parent_header']['msg_id']
+                    print(f"Calling fuction responsible")
+
+                    #todo: inspect function and make sure it has a first parameter that is ...
+                    self.callback_info[parent_msg_id][1](msg)
+
+                    # self.iopub_responses.put(msg)
             except:
-                print("In except")
+                time_since_logged += 1
+                if time_since_logged == log_every:
+                    print("Still checking")
+                    time_since_logged = 0
         print("Done with the While True loop that check for messages")
         # self.msg_checker.join()
         print("Successfully joined the loop that check for messages")

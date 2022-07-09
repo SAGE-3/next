@@ -17,7 +17,6 @@ class DataTableState(TrackedBaseModel):
     loaded: bool
     clicked: bool
     checkedItems: list
-
     executeInfo: ExecuteInfo
 
 
