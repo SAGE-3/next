@@ -23,8 +23,6 @@ export function HomePage() {
   const [selectedRoom, setSelectedRoom] = useState<SBDocument<RoomSchema> | null>(null);
   const [selectedBoard, setSelectedBoard] = useState<SBDocument<BoardSchema> | null>(null);
 
-  const presence = usePresenceStore(state => state.users);
-
   const imageUrl = useColorModeValue("/assets/SAGE3LightMode.png", "/assets/SAGE3DarkMode.png");
 
   const navigate = useNavigate();
@@ -48,7 +46,6 @@ export function HomePage() {
   return (
     <div>
       <Header title={(selectedRoom) ? 'Room: ' + selectedRoom.data.name : "Rooms"}></Header>
-      <p >Online Users: {presence.length}</p>
 
       <Box display="flex" flexDirection="row" flexWrap="nowrap">
 

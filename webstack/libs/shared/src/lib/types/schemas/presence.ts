@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod";
-import { PositionSchema } from "../state";
+import { PositionSchema, SizeSchema } from "../state";
 import { SBDoc } from "./SBSchema";
 
 const Status = z.enum(["online", "away", "offline"]);
@@ -26,8 +26,13 @@ const schema = z.object({
   roomId: z.string(),
   // The boardId the user is located
   boardId: z.string(),
-  // Picture of the user.
-  cursor: PositionSchema
+  // Cursor of the user
+  cursor: PositionSchema,
+  // Viewport of the user
+  viewport: z.object({
+    position: PositionSchema,
+    size: SizeSchema
+  })
 });
 
 export type PresenceSchema = z.infer<typeof schema>;

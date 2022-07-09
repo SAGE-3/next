@@ -62,10 +62,12 @@ export class SBDocumentRef<Type extends SBJSON> {
   private _id: string;
   private _path: string;
   private _redisClient: RedisClientType;
+  private _colName: string;
 
-  constructor(id: string, path: string, redisClient: RedisClientType) {
+  constructor(id: string, collection: string, path: string, redisClient: RedisClientType) {
     this._id = id;
     this._path = path;
+    this._colName = collection;
     this._redisClient = redisClient;
   }
 
@@ -193,6 +195,7 @@ export class SBDocumentRef<Type extends SBJSON> {
 
     await subscriber.subscribe(`${this.path}`, (message: string) => {
       const parsedMsg = JSON.parse(message) as SBDocumentMessage<Type>;
+      parsedMsg.col = this._colName;
       callback(parsedMsg);
     });
 

@@ -5,7 +5,7 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Avatar, Box, Button, Select, Text,
@@ -17,12 +17,13 @@ import {
 
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
-import { initials } from '@sage3/frontend';
+import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
 import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
+import { throttle } from 'throttle-debounce';
 
 type LocationParams = {
   boardId: string;
@@ -58,6 +59,10 @@ export function BoardPage() {
   // User information
   const { user } = useUser();
 
+  // Presence Information
+  const { presence, update: updatePresence } = usePresence();
+  const presences = usePresenceStore(state => state.presences);
+
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
   // Upload modal
@@ -74,9 +79,15 @@ export function BoardPage() {
   useEffect(() => {
     // Subscribe to the board that was selected
     subBoard(locationState.boardId);
+    if (updatePresence) {
+      updatePresence({ boardId: locationState.boardId });
+    }
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       unsubBoard();
+      if (updatePresence) {
+        updatePresence({ boardId: '' });
+      }
     };
   }, []);
 
@@ -212,12 +223,21 @@ export function BoardPage() {
     }
   };
 
-  // Collect all the files dropped into an array
+  // Update the cursor every second
+  const throttleCursor = throttle(500, (e: React.MouseEvent<HTMLDivElement>) => {
+    if (updatePresence) updatePresence({ cursor: { x: e.clientX, y: e.clientY, z: 0 } })
+  });
+
+  // Keep a copy of the function
+  const throttleCursorFunc = useRef(throttleCursor);
+
   return (
     <>
-      <div style={{ transform: `scale(${scale})` }}>
+      <div style={{ transform: `scale(${scale})` }} >
         {/* Board. Uses lib react-rnd for drag events.
          * Draggable Background below is the actual target for drag events.*/}
+        {/*Cursors */}
+
         <Rnd
           default={{
             x: 0,
@@ -236,6 +256,20 @@ export function BoardPage() {
             return <Component key={app._id} {...app}></Component>;
           })}
 
+          {presences.map((presence) => {
+            return <div
+              key={presence.data.userId}
+              style={{
+                width: "20px",
+                height: "20px",
+                backgroundColor: "red",
+                position: "absolute",
+                left: presence.data.cursor.x + 'px',
+                top: presence.data.cursor.y + 'px',
+              }}></div>
+          })
+          }
+
           {/* Draggable Background */}
           <Box
             className="board-handle"
@@ -249,6 +283,7 @@ export function BoardPage() {
               `linear-gradient(to right, ${gridColor} 1px, transparent 1px),
                linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
             id="board"
+            onMouseMove={throttleCursorFunc.current}
             // Drag and drop event handlers
             onDrop={OnDrop}
             onDragOver={OnDragOver}

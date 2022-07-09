@@ -84,13 +84,6 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   async function create(user: UserSchema): Promise<void> {
     if (auth.auth) {
       const userResponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
-      const presenceResponse = await APIHttp.POST<PresenceSchema, Presence>('/presence', {
-        userId: auth.auth.id,
-        status: 'online',
-        roomId: '',
-        boardId: '',
-        cursor: { x: 0, y: 0, z: 0 }
-      });
       if (userResponse.data) {
         setUser(userResponse.data[0]);
       }

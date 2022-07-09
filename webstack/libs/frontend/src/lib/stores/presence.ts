@@ -17,8 +17,7 @@ import { Presence, PresenceSchema } from '@sage3/shared/types';
 import { APIHttp, SocketAPI } from '../api';
 
 interface PresenceState {
-  users: Presence[];
-  update: (id: string, updates: Partial<PresenceSchema>) => Promise<void>;
+  presences: Presence[];
 }
 
 /**
@@ -28,42 +27,40 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
   APIHttp.GET<PresenceSchema, Presence>('/presence').then((response) => {
     console.log(response)
     if (response.success) {
-      set({ users: response.data });
+      set({ presences: response.data });
     }
   });
   const route = '/presence';
   SocketAPI.subscribe<PresenceSchema>(route, (message) => {
     const doc = message.doc as Presence;
+    console.log(doc);
     switch (message.type) {
       case 'CREATE': {
-        set({ users: [...get().users, doc] });
+        set({ presences: [...get().presences, doc] });
         break;
       }
       case 'UPDATE': {
-        const rooms = [...get().users];
-        const idx = rooms.findIndex((el) => el._id === doc._id);
+        const presences = [...get().presences];
+        const idx = presences.findIndex((el) => el._id === doc._id);
         if (idx > -1) {
-          rooms[idx] = doc;
+          presences[idx] = doc;
         }
-        set({ users: rooms });
+        set({ presences: presences });
         break;
       }
       case 'DELETE': {
-        const rooms = [...get().users];
+        const rooms = [...get().presences];
         const idx = rooms.findIndex((el) => el._id === doc._id);
         if (idx > -1) {
           rooms.splice(idx, 1);
         }
-        set({ users: rooms });
+        set({ presences: rooms });
       }
     }
   });
 
   return {
-    users: [],
-    update: async (id: string, updates: Partial<PresenceSchema>) => {
-      SocketAPI.sendRESTMessage(`/presense/${id}`, 'PUT', updates);
-    },
+    presences: [],
   };
 });
 

@@ -86,6 +86,7 @@ class SocketAPISingleton {
       callback,
       unsub,
     };
+    console.log(this._subscriptions);
     this.sendMessage(JSON.stringify(subMessage));
 
     return unsub;
