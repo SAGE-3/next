@@ -9,22 +9,14 @@
 import React, { useEffect, useState } from 'react';
 
 // React component for efficiently rendering large lists and tabular data
-import { Virtuoso } from 'react-virtuoso'
+import { Virtuoso } from 'react-virtuoso';
 
 import { FileManagerProps, FileEntry } from './types';
 import { RowFile } from './row';
 
-import {
-  Box,
-  Input,
-  InputLeftAddon,
-  InputGroup,
-  Flex,
-  Divider,
-  Spacer
-} from '@chakra-ui/react';
+import { Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer } from '@chakra-ui/react';
 
-import "./menu.scss";
+import './menu.scss';
 
 export function FileManager(props: FileManagerProps): JSX.Element {
   // The data list
@@ -199,7 +191,6 @@ export function FileManager(props: FileManagerProps): JSX.Element {
         })
   */
 
-
   const headerClick = (order: 'name' | 'owner' | 'type' | 'modified' | 'added' | 'size') => {
     if (order === 'name') {
       // Store the list into the state after sorting by filename
@@ -330,7 +321,7 @@ export function FileManager(props: FileManagerProps): JSX.Element {
         k.selected = !k.selected;
       }
       return k;
-    })
+    });
     // );
   };
 
@@ -343,16 +334,13 @@ export function FileManager(props: FileManagerProps): JSX.Element {
   return (
     <>
       {/* Search box */}
-      < InputGroup >
+      <InputGroup>
         <InputLeftAddon children="Search" />
-        <Input ref={initialRef} placeholder="filename..." mb={2}
-          focusBorderColor="gray.500"
-          onChange={handleSearch}
-        />
-      </InputGroup >
+        <Input ref={initialRef} placeholder="filename..." mb={2} focusBorderColor="gray.500" onChange={handleSearch} />
+      </InputGroup>
 
       {/* Headers */}
-      < Flex fontFamily="mono" alignItems="center" >
+      <Flex fontFamily="mono" alignItems="center">
         <Box flex="1" onClick={() => headerClick('name')} pr={4}>
           {headerFile}
         </Box>
@@ -371,23 +359,22 @@ export function FileManager(props: FileManagerProps): JSX.Element {
         <Box w="110px" onClick={() => headerClick('size')} pr={4}>
           {headerSize}
         </Box>
-      </Flex >
+      </Flex>
 
       <Divider mb={1} />
 
       {/* Listing the files in a 'table' */}
       <Virtuoso
         style={{
-          height: '150px', width: '100%',
+          height: '150px',
+          width: '100%',
           borderCollapse: 'collapse',
         }}
         data={filesList}
         totalCount={filesList.length}
         // Content of the table
-        itemContent={(idx, val) => (
-          <RowFile file={filesList[idx]} clickCB={onClick} />
-        )}
+        itemContent={(idx, val) => <RowFile file={filesList[idx]} clickCB={onClick} />}
       />
-
-    </>);
+    </>
+  );
 }
