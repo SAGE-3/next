@@ -30,10 +30,10 @@ class CodeCell(SmartBit):
     def handle_exec_result(self, msg):
         print(" \n\n\n************I am in Code Cell's  function that handles the result of the execution, i.e. updating the client")
         print(f"return message is {msg}************\n\n\n")
-        if "text" in y['content']:
+        if "text" in msg['content']:
             self.state.output  = msg["content"]["text"]
             self.state.output_type  = msg["content"]["name"]
-        elif "data" in y['content']:
+        elif "data" in msg['content']:
             self.state.output  = list(msg['content']['data'].values())[0]
             self.state.output_type  = list(msg['content']['data'].keys())[0]
         self.send_updates()
