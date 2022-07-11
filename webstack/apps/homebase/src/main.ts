@@ -137,7 +137,7 @@ async function startServer() {
   });
 
   // Websocket API for WebRTC
-  let clients: Array<WebSocket> = [];
+  const clients: Record<string, WebSocket> = {};
 
   function emit(name: string, socket: WebSocket, data: any) {
     for (const k in clients) {
@@ -161,20 +161,28 @@ async function startServer() {
         clients[msg.user] = socket;
         emit('join', socket, msg.user);
         console.log('RTC> connection #', Object.keys(clients).length);
-        console.log('RTC> connections', Object.keys(clients));
       }
     });
     socket.on('close', (_msg) => {
       console.log('RTC> close');
-      clients = clients.filter((c) => c !== socket);
+      // Delete the socket from the clients array
+      for (const [key, value] of Object.entries(clients)) {
+        if (value === socket) {
+          delete clients[key];
+          emit('left', socket, key);
+        }
+      }
       console.log('RTC> connection #', Object.keys(clients).length);
-      console.log('RTC> connections', Object.keys(clients));
     });
     socket.on('error', (msg) => {
       console.log('RTC> error', msg);
-      clients = clients.filter((c) => c !== socket);
+      // Delete the socket from the clients array
+      for (const [key, value] of Object.entries(clients)) {
+        if (value === socket) {
+          delete clients[key];
+        }
+      }
       console.log('RTC> connection #', Object.keys(clients).length);
-      console.log('RTC> connections', Object.keys(clients));
     });
   });
 
