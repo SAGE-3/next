@@ -13,7 +13,7 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { Board, BoardSchema, PresenceSchema, RoomSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
@@ -60,7 +60,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       // Subscribe to the boards with property 'roomId' matching the given id
       const route = `/subscription/rooms/${roomId}`;
       // Socket Listenting to updates from server about the current user
-      boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema>(route, (message) => {
+      boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema | PresenceSchema>(route, (message) => {
         if (message.col !== 'BOARDS') return;
         const doc = message.doc as Board;
         switch (message.type) {

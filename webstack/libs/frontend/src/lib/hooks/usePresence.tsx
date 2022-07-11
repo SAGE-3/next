@@ -8,7 +8,7 @@
 
 /**
  * 
- * @file User Provider
+ * @file Presence Provider
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
  */
@@ -19,8 +19,8 @@ import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
 
 const PresenceContext = createContext({
-  presence: undefined as Presence | undefined,
-  update: null as ((updates: Partial<PresenceSchema>) => Promise<void>) | null,
+  presence: {} as Presence,
+  update: (async (id: string, updates: Partial<PresenceSchema>) => Promise<unknown>) as any,
 });
 
 export function usePresence() {
@@ -29,15 +29,15 @@ export function usePresence() {
 
 export function PresenceProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const auth = useAuth();
-  const [presence, setPresence] = useState<Presence | undefined>(undefined)
+  const [presence, setPresence] = useState<Presence>({} as Presence);
 
   useEffect(() => {
 
+    // Subscription to presence updates
     let presenceSub: (() => void) | null = null;
-
-    async function fetchPresence() {
+    async function subscribeToPresence(id: string) {
       // Subscribe to presence updates
-      const route = `/presence/${auth.auth?.id}`;
+      const route = `/presence/${id}`;
       presenceSub = await SocketAPI.subscribe<PresenceSchema>(route, (message) => {
         const doc = message.doc as Presence;
         switch (message.type) {
@@ -50,61 +50,74 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
             break;
           }
           case 'DELETE': {
-            setPresence(undefined)
+            setPresence({} as Presence)
           }
         }
       });
+    }
 
-      if (auth.auth) {
-        // Check if presence doc exists
-        const presenceResponse = await APIHttp.GET<PresenceSchema, Presence>(`/presence/${auth.auth.id}`);
-
-        // If account exists, set the user context and subscribe to updates
-        if (presenceResponse.data) {
-          setPresence(presenceResponse.data[0]);
-        } else {
-          // Else Create doc and set it
-          const presenceResponse = await APIHttp.POST<PresenceSchema, Presence>('/presence/create', {
-            userId: auth.auth.id,
-            status: 'online',
-            roomId: '',
-            boardId: '',
-            cursor: { x: 0, y: 0, z: 0 },
-            viewport: {
-              position: { x: 0, y: 0, z: 0 },
-              size: { width: 0, height: 0, depth: 0 },
-            }
-          });
-          if (presenceResponse.data) {
-            setPresence(presenceResponse.data[0])
+    // Fetch this user's presence information
+    // If it doesn't exist yet, create it
+    async function fetchPresence(id: string): Promise<Presence | null> {
+      // Check if presence doc exists
+      const getResponse = await APIHttp.GET<PresenceSchema, Presence>(`/presence/${id}`);
+      // If account exists return the doc
+      if (getResponse.success && getResponse.data) {
+        return getResponse.data[0];
+      } else {
+        // Else Create doc
+        const postResponse = await APIHttp.POST<PresenceSchema, Presence>('/presence/create', {
+          userId: id,
+          status: 'online',
+          roomId: '',
+          boardId: '',
+          cursor: { x: 0, y: 0, z: 0 },
+          viewport: {
+            position: { x: 0, y: 0, z: 0 },
+            size: { width: 0, height: 0, depth: 0 },
           }
+        });
+        if (postResponse.success && postResponse.data) {
+          return postResponse.data[0];
+        } else {
+          return null;
         }
       }
     }
 
-    if (auth.auth) {
-      fetchPresence()
+    // Get/Create presence doc and subscribe to updates
+    async function setup() {
+      // If authenticated then fetch presence state
+      if (auth.auth) {
+        const presence = await fetchPresence(auth.auth.id);
+        if (presence) {
+          setPresence(presence);
+          subscribeToPresence(auth.auth.id);
+        }
+      }
     }
 
+    // Setup this presence provider
+    setup();
+
+    // Clean up. 
     return () => {
+      // Unsub from presence updates.
       if (presenceSub) {
         presenceSub();
       }
     }
   }, [auth])
 
-
   /**
-   * Update the current user
-   * @param updates Updates to apply to the user
+   * Update presence state
+   * @param id The id of the presence doc to update
+   * @param updates The updates to apply to the presence doc
    * @returns 
    */
-  async function update(updates: Partial<PresenceSchema>): Promise<void> {
-    if (presence) {
-      await APIHttp.PUT<PresenceSchema>(`/presence/${presence.data.userId}`, updates);
-      return;
-    }
-    return;
+  async function update(id: string, updates: Partial<PresenceSchema>) {
+    const res = await APIHttp.PUT<PresenceSchema>(`/presence/${id}`, updates);
+    return res;
   }
 
   return (
