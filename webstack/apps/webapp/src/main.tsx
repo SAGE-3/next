@@ -16,5 +16,6 @@ if (container) {
         <ColorModeScript initialColorMode={theme.config.initialColorMode} />
         <App />
       </HashRouter>
-    </StrictMode>);
+    </StrictMode>
+  );
 }

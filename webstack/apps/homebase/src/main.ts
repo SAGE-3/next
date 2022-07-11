@@ -137,37 +137,44 @@ async function startServer() {
   });
 
   // Websocket API for WebRTC
-  const clients = new Set<WebSocket>();
+  let clients: Array<WebSocket> = [];
 
   function emit(name: string, socket: WebSocket, data: any) {
-    clients.forEach((user: WebSocket) => {
-      if (user !== socket) {
-        user.send(JSON.stringify({ type: name, data: data }));
+    for (const k in clients) {
+      const sock = clients[k];
+      if (sock !== socket) {
+        sock.send(JSON.stringify({ type: name, data: data }));
       }
-    });
+    }
+  }
+  async function send(name: string, socket: WebSocket, data: any) {
+    socket.send(JSON.stringify({ type: name, data: data }));
   }
 
   rtcWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
-    clients.add(socket);
-    console.log('RTC> connection', clients.size);
     socket.on('message', (data) => {
       const msg = JSON.parse(data.toString());
       console.log('RTC> message', msg);
-      if (msg.type === 'onicecandidates') {
-        console.log('RTC> onicecandidates', msg.data);
-        emit('onicecandidates', socket, msg.data);
-      } else if (msg.type === 'signal') {
-        console.log('RTC> signal', msg.data);
-        emit('signal', socket, msg.data);
+      send('clients', socket, Object.keys(clients));
+
+      if (msg.type === 'join') {
+        clients[msg.user] = socket;
+        emit('join', socket, msg.user);
+        console.log('RTC> connection #', Object.keys(clients).length);
+        console.log('RTC> connections', Object.keys(clients));
       }
     });
     socket.on('close', (_msg) => {
       console.log('RTC> close');
-      clients.delete(socket);
+      clients = clients.filter((c) => c !== socket);
+      console.log('RTC> connection #', Object.keys(clients).length);
+      console.log('RTC> connections', Object.keys(clients));
     });
     socket.on('error', (msg) => {
       console.log('RTC> error', msg);
-      clients.delete(socket);
+      clients = clients.filter((c) => c !== socket);
+      console.log('RTC> connection #', Object.keys(clients).length);
+      console.log('RTC> connections', Object.keys(clients));
     });
   });
 
