@@ -7,7 +7,7 @@
  */
 
 import { Button, Input, InputGroup, InputRightElement, Text, Tooltip, useColorModeValue } from "@chakra-ui/react";
-import { BoardCard, CreateBoardModal, useBoardStore } from "@sage3/frontend";
+import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore } from "@sage3/frontend";
 import { SBDocument } from "@sage3/sagebase";
 import { BoardSchema, RoomSchema } from "@sage3/shared/types";
 import { useEffect, useState } from "react";
@@ -29,6 +29,8 @@ export function BoardList(props: BoardListProps) {
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [filterBoards, setFilterBoards] = useState<SBDocument<BoardSchema>[] | null>(null);
   const [search, setSearch] = useState('');
+
+  const presences = usePresenceStore(state => state.presences);
 
   useEffect(() => {
     setFilterBoards(null);
@@ -68,6 +70,7 @@ export function BoardList(props: BoardListProps) {
               <BoardCard
                 key={board._id}
                 board={board}
+                userCount={presences.filter(presence => presence.data.boardId === board._id).length}
                 onSelect={() => props.onBoardClick(board)}
                 onEdit={() => { console.log('edit board') }}
                 onEnter={() => props.onEnterClick(board)}

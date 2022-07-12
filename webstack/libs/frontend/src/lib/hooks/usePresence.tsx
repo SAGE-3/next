@@ -28,7 +28,7 @@ export function usePresence() {
 }
 
 export function PresenceProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const auth = useAuth();
+  const { auth } = useAuth();
   const [presence, setPresence] = useState<Presence>({} as Presence);
 
   useEffect(() => {
@@ -88,11 +88,11 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
     // Get/Create presence doc and subscribe to updates
     async function setup() {
       // If authenticated then fetch presence state
-      if (auth.auth) {
-        const presence = await fetchPresence(auth.auth.id);
+      if (auth) {
+        const presence = await fetchPresence(auth);
         if (presence) {
           setPresence(presence);
-          subscribeToPresence(auth.auth.id);
+          subscribeToPresence(auth);
         }
       }
     }
@@ -115,8 +115,8 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
    * @param updates The updates to apply to the presence doc
    * @returns 
    */
-  async function update(id: string, updates: Partial<PresenceSchema>) {
-    const res = await APIHttp.PUT<PresenceSchema>(`/presence/${id}`, updates);
+  async function update(updates: Partial<PresenceSchema>) {
+    const res = await APIHttp.PUT<PresenceSchema>(`/presence/${auth}`, updates);
     return res;
   }
 

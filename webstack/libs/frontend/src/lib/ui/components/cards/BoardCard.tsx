@@ -14,6 +14,7 @@ import { MdPerson } from "react-icons/md";
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
+  userCount: number;
   onSelect: () => void;
   onEnter: () => void;
   onDelete: () => void;
@@ -55,7 +56,7 @@ export function BoardCard(props: BoardCardProps) {
               variant="outline">Enter</Button>
           </Tooltip>
           <Box width="50px" display='flex' alignItems='center' justifyContent="right" >
-            <Text fontSize='1xl' mx="2" >{Math.floor(Math.random() * 20)}
+            <Text fontSize='1xl' mx="2" >{props.userCount}
             </Text>
             <MdPerson
               size="18"

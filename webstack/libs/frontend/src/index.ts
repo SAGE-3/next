@@ -7,7 +7,6 @@
  */
 
 export * from './lib/api';
-export * from './lib/auth';
 export * from './lib/config';
 export * from './lib/hooks';
 export * from './lib/stores';

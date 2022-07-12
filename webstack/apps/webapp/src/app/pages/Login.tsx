@@ -12,7 +12,7 @@ import {
   Box, useColorMode, Image, Center, Text, VStack
 } from '@chakra-ui/react';
 
-import { AuthHTTPService, BgColor, useAuth } from '@sage3/frontend';
+import { BgColor, useAuth } from '@sage3/frontend';
 import { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,11 +24,11 @@ import sage3LightMode from '../../assets/SAGE3LightMode.png';
 import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
 
 export function LoginPage() {
-  const auth = useAuth();
+  const { auth, googleLogin, ciLogin, guestLogin } = useAuth();
   const navigate = useNavigate();
 
   const authNavCheck = useCallback(() => {
-    if (auth.isAuthenticated) {
+    if (auth) {
       navigate('/home');
     }
   }, [auth, navigate]);
@@ -82,7 +82,7 @@ export function LoginPage() {
               _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
               justifyContent="flex-start"
               disabled={!production}
-              onClick={() => AuthHTTPService.loginWithGoogle()}
+              onClick={googleLogin}
             >
               Login with Google
             </Button>
@@ -104,7 +104,7 @@ export function LoginPage() {
               _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
               justifyContent="flex-start"
               disabled={!production}
-              onClick={() => AuthHTTPService.loginWithCILogon()}
+              onClick={ciLogin}
             >
               Login with CILogon
             </Button>
@@ -125,7 +125,7 @@ export function LoginPage() {
               pl="1rem"
               _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
               justifyContent="flex-start"
-              onClick={() => AuthHTTPService.loginWithGuest()}
+              onClick={guestLogin}
             >
               Login as Guest
             </Button>

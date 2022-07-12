@@ -7,7 +7,7 @@
  */
 
 import { Box, Button, useDisclosure, Text, useColorMode } from "@chakra-ui/react";
-import { AuthHTTPService, usePresenceStore, useUser } from "@sage3/frontend";
+import { useAuth, usePresenceStore, useUser } from "@sage3/frontend";
 import { EditUserModal } from "@sage3/frontend";
 
 export type HeaderProps = {
@@ -18,6 +18,8 @@ export function Header(props: HeaderProps) {
 
   const { user } = useUser();
 
+  const { logout } = useAuth();
+
   const presences = usePresenceStore(state => state.presences);
 
   const { colorMode, toggleColorMode } = useColorMode()
@@ -26,7 +28,7 @@ export function Header(props: HeaderProps) {
 
   return (
     <Box display="flex" flexFlow="row nowrap" justifyContent="space-between" alignItems="baseline" mx="2">
-      <Box display="flex" flex="1 1 0" justifyContent="flex-start" alignItems="baseline">  <Text fontSize='xl' > Online Users: {presences.length}      </Text></Box>
+      <Box display="flex" flex="1 1 0" justifyContent="flex-start" alignItems="baseline">  <Text fontSize='xl' > Online Users: {presences.filter(el => el.data.status !== 'offline').length}      </Text></Box>
       <Box display="flex" flex="1 1 0" justifyContent="center" alignItems="baseline">
         <Text fontSize='4xl' >
           {props.title} :
@@ -36,7 +38,7 @@ export function Header(props: HeaderProps) {
         {user?.data.name}
         <Button onClick={toggleColorMode}>{colorMode === 'light' ? 'Dark' : 'Light'}</Button>
         <Button onClick={editOnOpen}>EDIT</Button>
-        <Button onClick={AuthHTTPService.logout}>Logout</Button>
+        <Button onClick={logout}>Logout</Button>
       </Box>
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
     </Box >

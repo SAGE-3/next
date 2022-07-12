@@ -70,8 +70,8 @@ export default App;
  * @returns JSX.React.ReactNode
  */
 export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
-  const auth = useAuth();
-  return auth.isAuthenticated ? <> {props.children}</> : <Navigate to="/" replace />;
+  const { auth } = useAuth();
+  return auth ? <> {props.children}</> : <Navigate to="/" replace />;
 };
 
 /**

@@ -19,9 +19,7 @@ import { AppSchema } from '@sage3/applications/schema';
 
 interface PresenceState {
   presences: Presence[];
-  subscribeByRoomId: (id: PresenceSchema['roomId']) => Promise<void>;
-  subscribeByBoardId: (id: PresenceSchema['boardId']) => Promise<void>;
-
+  subscribe: () => Promise<void>;
 }
 
 /**
@@ -36,7 +34,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
   let presenceSub: (() => void) | null = null;
   return {
     presences: [],
-    subscribeByRoomId: async (roomId: PresenceSchema['roomId']) => {
+    subscribe: async () => {
       set({ presences: [] });
       const reponse = await APIHttp.GET<PresenceSchema, Presence>('/presence');
       if (reponse.success) {
@@ -49,9 +47,8 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = `/subscription/rooms/${roomId}`;
+      const route = `/presence`;
       presenceSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema | PresenceSchema>(route, (message) => {
-        if (message.col !== 'PRESENCE') return;
         const doc = message.doc as Presence;
         switch (message.type) {
           case 'CREATE': {
@@ -78,48 +75,6 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
         }
       });
     },
-    subscribeByBoardId: async (boardId: PresenceSchema['boardId']) => {
-      set({ presences: [] });
-      const reponse = await APIHttp.GET<PresenceSchema, Presence>('/presence');
-      if (reponse.success) {
-        set({ presences: reponse.data });
-      }
-      // Unsubscribe old subscription
-      if (presenceSub) {
-        presenceSub();
-        presenceSub = null;
-      }
-
-      // Socket Subscribe Message
-      const route = `/subscription/boards/${boardId}`;
-      presenceSub = await SocketAPI.subscribe<BoardSchema | AppSchema | PresenceSchema>(route, (message) => {
-        if (message.col !== 'PRESENCE') return;
-        const doc = message.doc as Presence;
-        switch (message.type) {
-          case 'CREATE': {
-            set({ presences: [...get().presences, doc] });
-            break;
-          }
-          case 'UPDATE': {
-            const presences = [...get().presences];
-            const idx = presences.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              presences[idx] = doc;
-            }
-            set({ presences: presences });
-            break;
-          }
-          case 'DELETE': {
-            const presences = [...get().presences];
-            const idx = presences.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              presences.splice(idx, 1);
-            }
-            set({ presences: presences });
-          }
-        }
-      });
-    }
   };
 });
 

@@ -65,7 +65,6 @@ export function BoardPage() {
   // Presence Information
   const { update: updatePresence } = usePresence();
   const presences = usePresenceStore(state => state.presences);
-  const subscribeToPresence = usePresenceStore(state => state.subscribeByBoardId);
 
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
@@ -83,13 +82,12 @@ export function BoardPage() {
   useEffect(() => {
     // Subscribe to the board that was selected
     subBoard(locationState.boardId);
-    subscribeToPresence(locationState.boardId);
-    updatePresence(user?._id, { boardId: locationState.boardId });
+    updatePresence({ boardId: locationState.boardId });
 
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       unsubBoard();
-      updatePresence(user?._id, { boardId: '' });
+      updatePresence({ boardId: '' });
     };
   }, []);
 
@@ -227,7 +225,7 @@ export function BoardPage() {
 
   // Update the cursor every second
   const throttleCursor = throttle(500, (e: React.MouseEvent<HTMLDivElement>) => {
-    if (updatePresence) updatePresence(user?._id, { cursor: { x: e.clientX, y: e.clientY, z: 0 } })
+    if (updatePresence) updatePresence({ cursor: { x: e.clientX, y: e.clientY, z: 0 } })
   });
 
   // Keep a copy of the function

@@ -38,7 +38,7 @@ import * as jwt from 'jsonwebtoken';
 import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './api/routers';
-import { loadCollections } from './api/collections';
+import { loadCollections, PresenceCollection } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -112,6 +112,9 @@ async function startServer() {
     // A Subscription Cache to track what subscriptions the user currently has.
     const subCache = new SubscriptionCache();
 
+    // Update Presence Collection
+    PresenceCollection.update(user?.id, user?.id, { status: 'online', boardId: '', roomId: '' });
+
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
       wsAPIRouter(socket, message, user?.id || '-', subCache);
@@ -120,11 +123,13 @@ async function startServer() {
     socket.on('close', () => {
       console.log('apiWebSocketServer> connection closed');
       subCache.deleteAll();
+      PresenceCollection.update(user?.id, user?.id, { status: 'offline', boardId: '', roomId: '' });
     });
 
     socket.on('error', () => {
       console.log('apiWebSocketServer> error');
       subCache.deleteAll();
+      PresenceCollection.update(user?.id, user?.id, { status: 'offline', boardId: '', roomId: '' });
     });
   });
 
