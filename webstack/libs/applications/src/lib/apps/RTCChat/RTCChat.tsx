@@ -6,46 +6,68 @@
  *
  */
 
-import { useEffect, useState, useRef } from 'react';
-import { Textarea } from '@chakra-ui/react';
-import { useAppStore, useUser } from '@sage3/frontend';
+import { useEffect, useState, useCallback } from 'react';
+import { Textarea, Text, VStack, UnorderedList, ListItem } from '@chakra-ui/react';
+import { useAppStore, useUser, usePeer } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
-import { Peer, DataConnection } from 'peerjs';
-
 function RTCChat(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+  // const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
-  const [connections, setConnections] = useState<Array<DataConnection>>([]);
   const [chatLines, setChatLines] = useState<string[]>([]);
-  const { user } = useUser();
-  const me = useRef<Peer>();
+  // const { user } = useUser();
 
-  if (!user) return <></>;
+  //  Message from RTC clients
+  const msgHandler = (id: string, data: any) => {
+    console.log('RTC> Callback', data);
+    const remoteUser = id.split('-')[0];
+    setChatLines((prev) => [(remoteUser + '> ' + data), ...prev]);
+  }
+  //  Events from RTC clients
+  const evtHandler = (type: string, data: any) => {
+    console.log('RTC> event', type, data);
+    if (type === 'join') {
+      const userArrived = data.split('-')[0];
+      setChatLines((prev) => [(userArrived + '> ENTERED'), ...prev]);
+    } else if (type === 'leave') {
+      const userLeft = data.split('-')[0];
+      setChatLines((prev) => [(userLeft + '> LEFT'), ...prev]);
+    }
+  }
+
+  const connections = usePeer({
+    messageCallback: msgHandler,
+    eventCallback: evtHandler
+  });
 
   useEffect(() => {
     const numclients = connections.length + 1;
     const newInfo = "RTCChat> " + numclients + " clients connected";
+    console.log(newInfo);
+    for (const c in connections) {
+      console.log('RTC> Update connection', connections[c].peer);
+    }
     update(props._id, { description: newInfo });
   }, [connections]);
 
 
-  const rtcBroadcast = (data: any) => {
+  //  Broadcast message to all RTC clients
+  const rtcBroadcast = useCallback((data: any) => {
     for (const c in connections) {
       connections[c].send(data);
     }
-  }
+  }, [connections]);
+
 
   const handleChat = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       const text = e.currentTarget.value;
-      const newChatLines = [...chatLines, text];
-      setChatLines(newChatLines);
+      setChatLines((prev) => [text, ...prev]);
       e.currentTarget.value = '';
 
       // Send over the RTC connections
@@ -53,94 +75,25 @@ function RTCChat(props: App): JSX.Element {
     }
   };
 
-  useEffect(() => {
-    console.log('RTC> Chat App Started');
-    let rtcsock: WebSocket | null = null;
-
-    const processRTCMessage = async (ev: MessageEvent<any>) => {
-      const data = JSON.parse(ev.data);
-      console.log('RTC> Message', data.type);
-      if (data.type === 'join') {
-        const newpeer = data.data;
-        console.log('RTC> join', newpeer);
-        const conn = peer.connect(newpeer);
-        conn.on("open", () => {
-          setConnections((prev) => [...prev, conn]);
-          setChatLines((prev) => [...prev, (data.data + '> ENTERED')]);
-          console.log('RTC> Connected me', user._id, 'to', newpeer);
-        });
-      } else if (data.type === 'left') {
-        setChatLines((prev) => [...prev, (data.data + '> LEFT')]);
-      } else if (data.type === 'clients') {
-        console.log('RTC> clients', data.data);
-        const existingPeers = data.data;
-        for (const k in existingPeers) {
-          if (existingPeers[k] !== user._id) {
-            const conn = peer.connect(existingPeers[k]);
-            conn.on("open", () => {
-              setConnections((prev) => [...prev, conn]);
-              console.log('RTC> Connected me', user._id, 'to', existingPeers[k]);
-            });
-          }
-        }
-      }
-    };
-
-    const peer = new Peer(user._id);
-    peer.on('open', function (id) {
-      me.current = peer;
-      console.log('RTC> Me Peer', id);
-
-      peer.on('connection', function (conn) {
-        // Receive messages
-        conn.on('data', function (data) {
-          setChatLines((prev) => [...prev, (conn.peer + '> ' + data)]);
-        });
-      });
-
-
-      rtcsock = new WebSocket(`wss://${window.location.host}/rtc`);
-      // rtcsock = new WebSocket(`ws://localhost:3333/rtc`);
-      rtcsock.addEventListener('open', () => {
-        console.log('RTC> Connection Open');
-        if (rtcsock) rtcsock.send(JSON.stringify({ type: 'join', user: user._id }));
-      });
-
-      rtcsock.addEventListener('message', processRTCMessage);
-      rtcsock.addEventListener('close', (ev) => {
-        console.log('RTC> Close', ev);
-        if (rtcsock) rtcsock.removeEventListener('message', processRTCMessage);
-      });
-      rtcsock.addEventListener('error', (ev) => {
-        console.log('RTC> Error', ev);
-        if (rtcsock) rtcsock.removeEventListener('message', processRTCMessage);
-      });
-    });
-
-    return () => {
-      console.log('RTC> Chat App Stopped');
-      if (rtcsock && rtcsock.readyState === WebSocket.OPEN) {
-        rtcsock.removeEventListener('message', processRTCMessage);
-        rtcsock.close();
-      }
-      peer.destroy();
-    };
-  }, []);
-
   return (
     <AppWindow app={props}>
-      <>
-        <h2>Chat</h2>
-        <ul>
+      <VStack alignContent={"left"}
+        align='stretch'
+        height={'100%'}
+      >
+        <Text fontSize="xl">Chat</Text>
+        <hr />
+        <UnorderedList m={0} p={1} maxHeight={"150px"} overflowY="scroll" overflowX="hidden">
           {chatLines.map((line, i) => (
-            <li key={i}>
-              {i} : {line}
-            </li>
+            <ListItem key={i}>
+              {'>'}  {line}
+            </ListItem>
           ))}
-        </ul>
-        <h2>Input</h2>
-        <Textarea placeholder="Type to chat" onKeyDown={handleChat} size="sm" rows={1} />
-      </>
+        </UnorderedList>
+        <hr />
+        <Text fontSize="xl">Type here</Text>
+        <Textarea bg="white" textColor={"black"} placeholder="Type to chat" onKeyDown={handleChat} size="sm" rows={1} />
+      </VStack>
     </AppWindow>
   );
 }

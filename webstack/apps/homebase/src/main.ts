@@ -139,7 +139,7 @@ async function startServer() {
   // Websocket API for WebRTC
   const clients: Record<string, WebSocket> = {};
 
-  function emit(name: string, socket: WebSocket, data: any) {
+  function emitRTC(name: string, socket: WebSocket, data: any) {
     for (const k in clients) {
       const sock = clients[k];
       if (sock !== socket) {
@@ -147,7 +147,7 @@ async function startServer() {
       }
     }
   }
-  async function send(name: string, socket: WebSocket, data: any) {
+  async function sendRTC(name: string, socket: WebSocket, data: any) {
     socket.send(JSON.stringify({ type: name, data: data }));
   }
 
@@ -155,11 +155,11 @@ async function startServer() {
     socket.on('message', (data) => {
       const msg = JSON.parse(data.toString());
       console.log('RTC> message', msg);
-      send('clients', socket, Object.keys(clients));
+      sendRTC('clients', socket, Object.keys(clients));
 
       if (msg.type === 'join') {
         clients[msg.user] = socket;
-        emit('join', socket, msg.user);
+        emitRTC('join', socket, msg.user);
         console.log('RTC> connection #', Object.keys(clients).length);
       }
     });
@@ -169,7 +169,7 @@ async function startServer() {
       for (const [key, value] of Object.entries(clients)) {
         if (value === socket) {
           delete clients[key];
-          emit('left', socket, key);
+          emitRTC('left', socket, key);
         }
       }
       console.log('RTC> connection #', Object.keys(clients).length);

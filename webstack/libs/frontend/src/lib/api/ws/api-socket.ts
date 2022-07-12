@@ -92,8 +92,10 @@ class SocketAPISingleton {
   }
 
   public async init(): Promise<void> {
-    return new Promise(resolve => {
-      if (this._socket !== undefined) { return resolve(); }
+    return new Promise((resolve) => {
+      if (this._socket !== undefined) {
+        return resolve();
+      }
       this.print('Initializating socket...');
 
       this._subscriptions = {};
@@ -120,7 +122,7 @@ class SocketAPISingleton {
         this._restmessages = {};
         this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
       });
-    })
+    });
   }
 
   private printWarn(message: string): void {
