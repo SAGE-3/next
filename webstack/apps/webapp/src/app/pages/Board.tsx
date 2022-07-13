@@ -36,7 +36,10 @@ import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
-import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
+import {
+  useAppStore, useBoardStore, useUser, useUIStore, AssetModal,
+  UploadModal, ContextMenu
+} from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -44,6 +47,7 @@ import { throttle } from 'throttle-debounce';
 import { DraggableEvent } from 'react-draggable';
 
 import { GiArrowCursor } from 'react-icons/gi';
+
 
 type LocationParams = {
   boardId: string;

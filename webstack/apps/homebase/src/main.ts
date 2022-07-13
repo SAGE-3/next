@@ -101,6 +101,7 @@ async function startServer() {
   // Websocket setup
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
+  const rtcWebSocketServer = new WebSocket.Server({ noServer: true });
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
@@ -136,6 +137,64 @@ async function startServer() {
     });
   });
 
+  // Websocket API for WebRTC
+  const clients: Record<string, WebSocket> = {};
+
+  function emitRTC(name: string, socket: WebSocket, data: any) {
+    for (const k in clients) {
+      const sock = clients[k];
+      if (sock !== socket) {
+        sock.send(JSON.stringify({ type: name, data: data }));
+      }
+    }
+  }
+  async function sendRTC(name: string, socket: WebSocket, data: any) {
+    socket.send(JSON.stringify({ type: name, data: data }));
+  }
+
+  rtcWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+    console.log('WebRTC> connection', request.url);
+
+    if (request.url) {
+      const parts = request.url.split('/');
+      const roomID = parts[parts.length - 1];
+      console.log('WebRTC> roomID', roomID);
+    }
+
+    socket.on('message', (data) => {
+      const msg = JSON.parse(data.toString());
+      console.log('RTC> message', msg);
+      sendRTC('clients', socket, Object.keys(clients));
+
+      if (msg.type === 'join') {
+        clients[msg.user] = socket;
+        emitRTC('join', socket, msg.user);
+        console.log('RTC> connection #', Object.keys(clients).length);
+      }
+    });
+    socket.on('close', (_msg) => {
+      console.log('RTC> close');
+      // Delete the socket from the clients array
+      for (const [key, value] of Object.entries(clients)) {
+        if (value === socket) {
+          delete clients[key];
+          emitRTC('left', socket, key);
+        }
+      }
+      console.log('RTC> connection #', Object.keys(clients).length);
+    });
+    socket.on('error', (msg) => {
+      console.log('RTC> error', msg);
+      // Delete the socket from the clients array
+      for (const [key, value] of Object.entries(clients)) {
+        if (value === socket) {
+          delete clients[key];
+        }
+      }
+      console.log('RTC> connection #', Object.keys(clients).length);
+    });
+  });
+
   // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
     // TODO: Declarations file was being funny again
@@ -145,6 +204,14 @@ async function startServer() {
     if (!pathname) return;
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
+
+    // WebRTC socket - noauth for now
+    if (wsPath === 'rtc') {
+      rtcWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+        rtcWebSocketServer.emit('connection', ws, req);
+      });
+      return;
+    }
 
     SAGEBase.Auth.sessionParser(request, {}, () => {
       let token = request.headers.authorization;
@@ -212,6 +279,7 @@ async function startServer() {
     console.log('in exit handler, disconnect sockets');
     apiWebSocketServer.close();
     yjsWebSocketServer.close();
+    rtcWebSocketServer.close();
     process.exit(2);
   }
 

@@ -15,6 +15,7 @@ import { state as VideoViewerState, name as VideoViewerName } from './apps/Video
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
+import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 
 export type AppState =
   | CounterAppState
@@ -31,7 +32,8 @@ export type AppState =
   | VideoViewerState
   | WebviewState
   | DataTableAppState
-  | CSVViewerState;
+  | CSVViewerState
+  | RTCChatState;
 
 export type AppName =
   | typeof CounterAppName
@@ -48,4 +50,5 @@ export type AppName =
   | typeof VideoViewerName
   | typeof WebviewName
   | typeof DataTableAppName
-  | typeof CSVViewerName;
+  | typeof CSVViewerName
+  | typeof RTCChatName;

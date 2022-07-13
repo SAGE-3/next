@@ -13,5 +13,6 @@
   "VideoViewer",
   "Webview",
   "DataTableApp",
-  "CSVViewer"
+  "CSVViewer",
+  "RTCChat"
 ]

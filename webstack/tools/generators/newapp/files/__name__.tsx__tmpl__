@@ -8,7 +8,7 @@
 
 import { useAppStore } from '@sage3/frontend';
 import { Button } from '@chakra-ui/react';
-import { AppSchema } from "../../schema";
+import { App } from "../../schema";
 
 import { state as AppState } from "./index";
 import { AppWindow } from '../../components';
@@ -17,9 +17,9 @@ import { AppWindow } from '../../components';
 import './styling.css';
 
 
-function <%= name %>(props: AppSchema): JSX.Element {
+function <%= name %>(props: App): JSX.Element {
 
-  const s = props.state as AppState;
+  const s = props.data.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
 
