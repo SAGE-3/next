@@ -22,7 +22,7 @@
 import { WebSocket } from 'ws';
 
 // Collection Imports
-import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection } from '../../collections';
+import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collections';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
@@ -62,15 +62,10 @@ export async function subscriptionWSRouter(
           const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
-        const presenceSub = await PresenceCollection.subscribeByQuery('roomId', roomId, (doc) => {
-          const msg = { id: message.id, event: doc };
-          socket.send(JSON.stringify(msg));
-        });
         const subs = [];
         if (roomSub) subs.push(roomSub);
         if (boardsSub) subs.push(boardsSub);
         if (appsSub) subs.push(appsSub);
-        if (presenceSub) subs.push(presenceSub);
         if (subs) cache.add(message.id, subs);
         break;
       }
@@ -89,14 +84,9 @@ export async function subscriptionWSRouter(
           const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
-        const presenceSub = await PresenceCollection.subscribeByQuery('boardId', boardId, (doc) => {
-          const msg = { id: message.id, event: doc };
-          socket.send(JSON.stringify(msg));
-        });
         const subs = [];
         if (boardSub) subs.push(boardSub);
         if (appsSub) subs.push(appsSub);
-        if (presenceSub) subs.push(presenceSub);
         if (subs) cache.add(message.id, subs);
       }
       break;
