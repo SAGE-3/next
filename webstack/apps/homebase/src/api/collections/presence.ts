@@ -6,13 +6,12 @@
  *
  */
 
-import { PresenceSchema } from "@sage3/shared/types";
-import { SAGE3Collection, sageRouter } from "@sage3/backend";
+import { PresenceSchema } from '@sage3/shared/types';
+import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
 class SAGE3PresenceCollection extends SAGE3Collection<PresenceSchema> {
-
   constructor() {
-    super("PRESENCE", {
+    super('PRESENCE', {
       userId: '',
       status: 'online',
       roomId: '',

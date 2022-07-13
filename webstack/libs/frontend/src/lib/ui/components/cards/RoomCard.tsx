@@ -28,6 +28,14 @@ function RoomToolTip(props: { room: SBDocument<RoomSchema> }) {
     </div>
   )
 }
+
+/**
+ * Room card
+ *
+ * @export
+ * @param {RoomCardProps} props
+ * @returns
+ */
 export function RoomCard(props: RoomCardProps) {
 
   const borderColor = useColorModeValue("#A0AEC0", "#4A5568");

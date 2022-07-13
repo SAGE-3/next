@@ -1,15 +1,31 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
 import { Suspense } from 'react';
 import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 
 import { ChakraProvider } from '@chakra-ui/react';
-import { PresenceProvider, SocketAPI, theme, UserProvider, useUser } from '@sage3/frontend';
+import {
+  PresenceProvider, theme, UserProvider,
+  useUser, AuthProvider, useAuth
+} from '@sage3/frontend';
 
 import { LoginPage } from './pages/Login';
 import { HomePage } from './pages/Home';
-import { AuthProvider, useAuth } from '@sage3/frontend';
 import { BoardPage } from './pages/Board';
 import { AccountPage } from './pages/Account';
 
+/**
+ * Main application component
+ *
+ * @export
+ * @returns
+ */
 export function App() {
   return (
     <ChakraProvider theme={theme}>

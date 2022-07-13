@@ -15,7 +15,7 @@
 
 import { Presence, PresenceSchema } from '@sage3/shared/types';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { APIHttp, SocketAPI } from '../api';
+import { SocketAPI } from '../api';
 import { useAuth } from './useAuth';
 
 const PresenceContext = createContext({

@@ -12,7 +12,7 @@ import { WebSocket } from 'ws';
  * A Subscription cache to keep track of client subscriptions on the server.
  */
 export class SubscriptionCache {
-  private cache: { [id: string]: (() => Promise<void>)[] }
+  private cache: { [id: string]: (() => Promise<void>)[] };
   private _socket: WebSocket;
 
   constructor(socket: WebSocket) {
@@ -33,12 +33,11 @@ export class SubscriptionCache {
   }
 
   public async delete(subId: string) {
-
     if (this.cache[subId]) {
       try {
-        await Promise.all(this.cache[subId].map(sub => sub()));
+        await Promise.all(this.cache[subId].map((sub) => sub()));
       } catch (e) {
-        console.log(e);
+        console.log('Error>', e);
       }
     }
     delete this.cache[subId];
@@ -46,9 +45,9 @@ export class SubscriptionCache {
   }
 
   public deleteAll() {
-    Object.keys(this.cache).forEach(id => {
+    Object.keys(this.cache).forEach((id) => {
       this.delete(id);
-    })
+    });
     this.cache = {};
   }
 }

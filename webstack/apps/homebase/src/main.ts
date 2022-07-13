@@ -104,7 +104,6 @@ async function startServer() {
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
-
     // The authSchema of the current user
     const user = req.user;
 

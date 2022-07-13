@@ -6,11 +6,11 @@
  *
  */
 
-import { z } from "zod";
-import { PositionSchema, SizeSchema } from "../state";
-import { SBDoc } from "./SBSchema";
+import { z } from 'zod';
+import { PositionSchema, SizeSchema } from '../state';
+import { SBDoc } from './SBSchema';
 
-const Status = z.enum(["online", "away", "offline"]);
+const Status = z.enum(['online', 'away', 'offline']);
 export type Status = z.infer<typeof Status>;
 
 /**
@@ -31,11 +31,10 @@ const schema = z.object({
   // Viewport of the user
   viewport: z.object({
     position: PositionSchema,
-    size: SizeSchema
-  })
+    size: SizeSchema,
+  }),
 });
 
 export type PresenceSchema = z.infer<typeof schema>;
 
 export type Presence = SBDoc & { data: PresenceSchema };
-

@@ -6,15 +6,14 @@
  *
  */
 
-
+import { useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Button, ButtonGroup, IconButton,
   Box, useColorMode, Image, Center, Text, VStack
 } from '@chakra-ui/react';
 
 import { BgColor, useAuth } from '@sage3/frontend';
-import { useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';

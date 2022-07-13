@@ -6,7 +6,7 @@
  *
  */
 
-import { SAGE3Collection } from "../generics";
+import { SAGE3Collection } from '../generics';
 import { WebSocket } from 'ws';
 import { PresenceSchema } from '@sage3/shared/types';
 
@@ -70,21 +70,21 @@ export class SAGEPresence {
       viewport: {
         position: { x: 0, y: 0, z: 0 },
         size: { width: 0, height: 0, depth: 0 },
-      }
+      },
     } as PresenceSchema;
     const res = await this._collection.add(presence, this._userId, this._userId);
-    return (res !== undefined);
+    return res !== undefined;
   }
 
   // Check if the user's presence already exists
   private async checkPresence(): Promise<boolean> {
     const check = await this._collection.get(this._userId);
-    return (check !== null);
+    return check !== null;
   }
 
   // Remove the doc from the presence collection when the user goes offline
   private async removePresence(): Promise<boolean> {
     const res = await this._collection.delete(this._userId);
-    return (res !== undefined);
+    return res !== undefined;
   }
 }

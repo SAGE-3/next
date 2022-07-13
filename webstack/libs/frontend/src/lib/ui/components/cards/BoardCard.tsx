@@ -21,6 +21,13 @@ export type BoardCardProps = {
   onEdit: () => void;
 }
 
+/**
+ * Board card
+ *
+ * @export
+ * @param {BoardCardProps} props
+ * @returns
+ */
 export function BoardCard(props: BoardCardProps) {
   // const textColor = useColorModeValue("white", "black");
   return (

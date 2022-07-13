@@ -6,11 +6,12 @@
  *
  */
 
+import { useEffect, useState } from "react";
 import { Button, Text, Tooltip, useColorModeValue } from "@chakra-ui/react";
-import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from "@sage3/frontend";
+
 import { SBDocument } from "@sage3/sagebase";
 import { RoomSchema } from "@sage3/shared/types";
-import { useEffect, useState } from "react";
+import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from "@sage3/frontend";
 
 type RoomListProps = {
   onRoomClick: (room: SBDocument<RoomSchema>) => void;
