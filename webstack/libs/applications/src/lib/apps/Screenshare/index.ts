@@ -14,12 +14,12 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  owner: z.string(),
+  running: z.boolean(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  owner: 'tom',
+  running: false,
 };
 
 export const name = 'Screenshare';

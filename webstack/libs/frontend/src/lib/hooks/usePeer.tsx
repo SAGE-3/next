@@ -16,9 +16,15 @@ import { useUser } from '@sage3/frontend';
 type usePeerProps = {
   messageCallback: (id: string, data: any) => void
   eventCallback: (type: string, data: any) => void
+  callCallback: (stream: MediaStream) => void
 }
 
-export function usePeer(props: usePeerProps): DataConnection[] {
+type usePeerReturn = {
+  me: Peer | undefined,
+  connections: DataConnection[],
+};
+
+export function usePeer(props: usePeerProps): usePeerReturn {
   const [connections, setConnections] = useState<Array<DataConnection>>([]);
   const { user } = useUser();
 
@@ -148,6 +154,14 @@ export function usePeer(props: usePeerProps): DataConnection[] {
         });
       });
 
+      peer.on('call', function (call) {
+        console.log('RTC> Peer call');
+        call.on("stream", (remoteStream) => {
+          props.callCallback(remoteStream);
+        });
+        call.answer();
+      });
+
       peer.on('close', function () {
         console.log('RTC> Peer closed');
       });
@@ -192,5 +206,5 @@ export function usePeer(props: usePeerProps): DataConnection[] {
     };
   }, [user, locationState.roomId]);
 
-  return connections;
+  return { me: me.current, connections };
 }

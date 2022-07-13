@@ -49,11 +49,16 @@ function RTCChat(props: App): JSX.Element {
       setChatLines((prev) => [(userLeft + '> LEFT'), ...prev]);
     }
   }
+  //  Events from RTC clients
+  const callHandler = (stream: MediaStream) => {
+    console.log('RTC> call', stream);
+  }
 
   // Use the web RTC hook and pass some data handlers
-  const connections = usePeer({
+  const { connections } = usePeer({
     messageCallback: msgHandler,
-    eventCallback: evtHandler
+    eventCallback: evtHandler,
+    callCallback: callHandler,
   });
 
   // Monitor  the number of connections

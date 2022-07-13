@@ -29,7 +29,7 @@ class SocketAPISingleton {
       this._restmessages[msg.id](msg);
       delete this._restmessages[msg.id];
     } else {
-      this.print('Message received but has no owner:' + msg.event);
+      // this.print('Message received but has no owner:' + msg.event);
     }
   }
 
