@@ -18,7 +18,7 @@ export type Status = z.infer<typeof Status>;
  * @interface PresenceSchema
  */
 const schema = z.object({
-  // Id of the user
+  // Id of the user, Reference to a Auth.id => User => Presence
   userId: z.string(),
   // The status of the user
   status: Status,

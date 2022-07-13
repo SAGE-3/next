@@ -36,7 +36,7 @@ export function HomePage() {
 
   function handleRoomClick(room: SBDocument<RoomSchema>) {
     setSelectedRoom(room);
-    updatePresence({ roomId: room._id });
+    updatePresence({ roomId: room._id, boardId: '' });
     setSelectedBoard(null);
   }
 

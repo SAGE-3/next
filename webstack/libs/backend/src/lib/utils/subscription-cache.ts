@@ -6,14 +6,26 @@
  *
  */
 
+import { WebSocket } from 'ws';
+
 /**
  * A Subscription cache to keep track of client subscriptions on the server.
  */
 export class SubscriptionCache {
   private cache: { [id: string]: (() => Promise<void>)[] }
+  private _socket: WebSocket;
 
-  constructor() {
+  constructor(socket: WebSocket) {
     this.cache = {};
+    this._socket = socket;
+
+    this._socket.on('close', () => {
+      this.deleteAll();
+    });
+
+    this._socket.on('error', () => {
+      this.deleteAll();
+    });
   }
 
   public add(subId: string, subs: (() => Promise<void>)[]) {
@@ -40,6 +52,3 @@ export class SubscriptionCache {
     this.cache = {};
   }
 }
-
-
-

@@ -20,7 +20,7 @@ import { useAuth } from './useAuth';
 
 const PresenceContext = createContext({
   presence: {} as Presence,
-  update: (async (id: string, updates: Partial<PresenceSchema>) => Promise<unknown>) as any,
+  update: (async (updates: Partial<PresenceSchema>) => Promise<unknown>) as any,
 });
 
 export function usePresence() {
@@ -56,49 +56,10 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
       });
     }
 
-    // Fetch this user's presence information
-    // If it doesn't exist yet, create it
-    async function fetchPresence(id: string): Promise<Presence | null> {
-      // Check if presence doc exists
-      const getResponse = await APIHttp.GET<PresenceSchema, Presence>(`/presence/${id}`);
-      // If account exists return the doc
-      if (getResponse.success && getResponse.data) {
-        return getResponse.data[0];
-      } else {
-        // Else Create doc
-        const postResponse = await APIHttp.POST<PresenceSchema, Presence>('/presence/create', {
-          userId: id,
-          status: 'online',
-          roomId: '',
-          boardId: '',
-          cursor: { x: 0, y: 0, z: 0 },
-          viewport: {
-            position: { x: 0, y: 0, z: 0 },
-            size: { width: 0, height: 0, depth: 0 },
-          }
-        });
-        if (postResponse.success && postResponse.data) {
-          return postResponse.data[0];
-        } else {
-          return null;
-        }
-      }
+    // If the user is authenticated now, subscribe to his presence updates.
+    if (auth) {
+      subscribeToPresence(auth);
     }
-
-    // Get/Create presence doc and subscribe to updates
-    async function setup() {
-      // If authenticated then fetch presence state
-      if (auth) {
-        const presence = await fetchPresence(auth);
-        if (presence) {
-          setPresence(presence);
-          subscribeToPresence(auth);
-        }
-      }
-    }
-
-    // Setup this presence provider
-    setup();
 
     // Clean up. 
     return () => {
@@ -116,7 +77,7 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
    * @returns 
    */
   async function update(updates: Partial<PresenceSchema>) {
-    const res = await APIHttp.PUT<PresenceSchema>(`/presence/${auth}`, updates);
+    const res = await SocketAPI.sendRESTMessage(`/presence/${auth}`, 'PUT', updates);
     return res;
   }
 

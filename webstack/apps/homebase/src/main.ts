@@ -23,7 +23,7 @@ import { IncomingMessage, Server } from 'http';
 
 // Websocket
 import { WebSocket } from 'ws';
-import { SubscriptionCache } from '@sage3/backend';
+import { SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
@@ -104,16 +104,17 @@ async function startServer() {
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
-    // TODO: Declarations file was being funny again
-    // @ts-ignore
+
+    // The authSchema of the current user
     const user = req.user;
 
     // Create a subscription cache for this connection.
-    // A Subscription Cache to track what subscriptions the user currently has.
-    const subCache = new SubscriptionCache();
+    // A Subscription Cache to track the subscriptions the user has.
+    const subCache = new SubscriptionCache(socket);
 
-    // Update Presence Collection
-    PresenceCollection.update(user?.id, user?.id, { status: 'online', boardId: '', roomId: '' });
+    // A helper class to track the presence of users.
+    const presence = new SAGEPresence(user.id, socket, PresenceCollection);
+    presence.init();
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
@@ -122,14 +123,10 @@ async function startServer() {
 
     socket.on('close', () => {
       console.log('apiWebSocketServer> connection closed');
-      subCache.deleteAll();
-      PresenceCollection.update(user?.id, user?.id, { status: 'offline', boardId: '', roomId: '' });
     });
 
     socket.on('error', () => {
       console.log('apiWebSocketServer> error');
-      subCache.deleteAll();
-      PresenceCollection.update(user?.id, user?.id, { status: 'offline', boardId: '', roomId: '' });
     });
   });
 

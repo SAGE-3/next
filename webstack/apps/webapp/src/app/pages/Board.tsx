@@ -82,12 +82,14 @@ export function BoardPage() {
   useEffect(() => {
     // Subscribe to the board that was selected
     subBoard(locationState.boardId);
-    updatePresence({ boardId: locationState.boardId });
+    // Update the user's presence information
+    updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
 
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       unsubBoard();
-      updatePresence({ boardId: '' });
+      // Update the user's presence information
+      updatePresence({ boardId: '', roomId: '' });
     };
   }, []);
 
@@ -223,17 +225,18 @@ export function BoardPage() {
     }
   };
 
-  // Update the cursor every second
+  // Update the cursor every half second
+  // TODO: They don't work over apps yet.
   const throttleCursor = throttle(500, (e: React.MouseEvent<HTMLDivElement>) => {
-    if (updatePresence) updatePresence({ cursor: { x: e.clientX, y: e.clientY, z: 0 } })
+    console.log(e);
+    if (updatePresence) updatePresence({ cursor: { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, z: 0 } })
   });
-
   // Keep a copy of the function
   const throttleCursorFunc = useRef(throttleCursor);
 
   return (
     <>
-      <div style={{ transform: `scale(${scale})` }} onMouseMove={throttleCursorFunc.current}>
+      <div style={{ transform: `scale(${scale})` }} >
         {/* Board. Uses lib react-rnd for drag events.
          * Draggable Background below is the actual target for drag events.*/}
         {/*Cursors */}
@@ -249,6 +252,8 @@ export function BoardPage() {
           enableResizing={false}
           dragHandleClassName={'board-handle'}
           scale={scale}
+          id="monkey"
+          onMouseMove={throttleCursorFunc.current}
         >
           {/* Apps */}
           {apps.map((app) => {

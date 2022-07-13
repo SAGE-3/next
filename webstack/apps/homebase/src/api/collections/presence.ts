@@ -19,15 +19,6 @@ class SAGE3PresenceCollection extends SAGE3Collection<PresenceSchema> {
       boardId: '',
     });
     const router = sageRouter<PresenceSchema>(this);
-
-    router.post('/create', async ({ body, user }, res) => {
-      let doc = null;
-      const id = (user as any).id;
-      if (user) { doc = await this.add(body, id, id); }
-      if (doc) res.status(200).send({ success: true, data: [doc] });
-      else res.status(500).send({ success: false, message: "Failed to create presence." });
-    });
-
     this.httpRouter = router;
   }
 }
