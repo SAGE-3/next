@@ -9,6 +9,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Textarea, Text, VStack, UnorderedList, ListItem } from '@chakra-ui/react';
 import { useAppStore, useUser, usePeer } from '@sage3/frontend';
+import { useLocation } from 'react-router-dom';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
@@ -16,10 +17,17 @@ import { state as AppState } from './index';
 
 function RTCChat(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // const updateState = useAppStore((state) => state.updateState);
+  const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const [chatLines, setChatLines] = useState<string[]>([]);
-  // const { user } = useUser();
+
+  const { user } = useUser();
+
+  const location = useLocation();
+  useEffect(() => {
+    const locationState = location.state as { boardId: string; roomId: string; };
+    updateState(props._id, { roomID: locationState.roomId });
+  }, []);
 
   //  Message from RTC clients
   const msgHandler = (id: string, data: any) => {
@@ -66,7 +74,7 @@ function RTCChat(props: App): JSX.Element {
   const handleChat = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const text = e.currentTarget.value;
+      const text = 'Me> ' + e.currentTarget.value;
       setChatLines((prev) => [text, ...prev]);
       e.currentTarget.value = '';
 
@@ -81,7 +89,7 @@ function RTCChat(props: App): JSX.Element {
         align='stretch'
         height={'100%'}
       >
-        <Text fontSize="xl">Chat</Text>
+        <Text fontSize="xl">Chat in room {s.roomID.split('-')[0]} </Text>
         <hr />
         <UnorderedList m={0} p={1} maxHeight={"150px"} overflowY="scroll" overflowX="hidden">
           {chatLines.map((line, i) => (

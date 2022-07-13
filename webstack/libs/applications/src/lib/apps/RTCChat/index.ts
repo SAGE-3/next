@@ -14,12 +14,12 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  newmsg: z.string(),
+  roomID: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  newmsg: '',
+  roomID: '',
 };
 
 export const name = 'RTCChat';

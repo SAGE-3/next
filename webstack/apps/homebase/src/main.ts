@@ -151,7 +151,15 @@ async function startServer() {
     socket.send(JSON.stringify({ type: name, data: data }));
   }
 
-  rtcWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
+  rtcWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+    console.log('WebRTC> connection', request.url);
+
+    if (request.url) {
+      const parts = request.url.split('/');
+      const roomID = parts[parts.length - 1];
+      console.log('WebRTC> roomID', roomID);
+    }
+
     socket.on('message', (data) => {
       const msg = JSON.parse(data.toString());
       console.log('RTC> message', msg);

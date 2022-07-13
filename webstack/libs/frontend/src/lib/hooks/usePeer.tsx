@@ -8,6 +8,7 @@
 
 // React imports
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 // Peerjs module
 import { Peer, DataConnection } from 'peerjs';
 import { useUser } from '@sage3/frontend';
@@ -20,6 +21,9 @@ type usePeerProps = {
 export function usePeer(props: usePeerProps): DataConnection[] {
   const [connections, setConnections] = useState<Array<DataConnection>>([]);
   const { user } = useUser();
+
+  const location = useLocation();
+  const locationState = location.state as { boardId: string; roomId: string; };
 
   // User's identity
   const me = useRef<Peer>();
@@ -154,7 +158,7 @@ export function usePeer(props: usePeerProps): DataConnection[] {
 
       // Open websocket connection to the server
       const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const socketUrl = `${socketType}//${window.location.host}/rtc`;
+      const socketUrl = `${socketType}//${window.location.host}/rtc/${locationState.roomId}`;
       console.log('RTC> Connecting to', socketUrl);
       rtcSock.current = new WebSocket(socketUrl);
       rtcSock.current.addEventListener('open', () => {
@@ -186,7 +190,7 @@ export function usePeer(props: usePeerProps): DataConnection[] {
       peer.disconnect();
       peer.destroy();
     };
-  }, [user]);
+  }, [user, locationState.roomId]);
 
   return connections;
 }
