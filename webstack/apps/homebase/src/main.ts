@@ -23,7 +23,7 @@ import { IncomingMessage, Server } from 'http';
 
 // Websocket
 import { WebSocket } from 'ws';
-import { SubscriptionCache } from '@sage3/backend';
+import { SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
@@ -38,7 +38,7 @@ import * as jwt from 'jsonwebtoken';
 import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './api/routers';
-import { loadCollections } from './api/collections';
+import { loadCollections, PresenceCollection } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -105,13 +105,16 @@ async function startServer() {
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
-    // TODO: Declarations file was being funny again
-    // @ts-ignore
+    // The authSchema of the current user
     const user = req.user;
 
     // Create a subscription cache for this connection.
-    // A Subscription Cache to track what subscriptions the user currently has.
-    const subCache = new SubscriptionCache();
+    // A Subscription Cache to track the subscriptions the user has.
+    const subCache = new SubscriptionCache(socket);
+
+    // A helper class to track the presence of users.
+    const presence = new SAGEPresence(user.id, socket, PresenceCollection);
+    presence.init();
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
@@ -120,12 +123,10 @@ async function startServer() {
 
     socket.on('close', () => {
       console.log('apiWebSocketServer> connection closed');
-      subCache.deleteAll();
     });
 
     socket.on('error', () => {
       console.log('apiWebSocketServer> error');
-      subCache.deleteAll();
     });
   });
 

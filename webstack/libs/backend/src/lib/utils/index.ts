@@ -8,3 +8,4 @@
 
 export * from './path-util';
 export * from './subscription-cache';
+export * from './presence';

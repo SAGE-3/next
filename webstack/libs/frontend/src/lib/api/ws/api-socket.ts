@@ -47,6 +47,7 @@ class SocketAPISingleton {
     method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>,
     body?: Record<string, unknown>
   ): Promise<unknown> {
+    await this.init();
     const message = {
       id: genId(),
       route: '/api' + route,
@@ -68,7 +69,7 @@ class SocketAPISingleton {
       route: '/api' + route,
       method: 'SUB',
     } as APIClientWSMessage;
-
+    await this.init();
     const unsub = () => {
       const parts = subMessage.route.split('/');
       const route = `/api/${parts[2]}`;
@@ -100,7 +101,7 @@ class SocketAPISingleton {
 
       this._subscriptions = {};
 
-      this._socket = new WebSocket(`${this._socketType}//${window.location.hostname}:${window.location.port}/api`);
+      this._socket = new WebSocket(`${this._socketType}//${window.location.host}/api`);
 
       this._socket.addEventListener('open', (event) => {
         this.print('Connection Open');

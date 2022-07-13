@@ -29,7 +29,7 @@ export function useUser() {
 }
 
 export function UserProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const auth = useAuth();
+  const { auth } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined)
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     async function fetchUser() {
 
       // Subscribe to user updates
-      const route = `/users/${auth.auth?.id}`;
+      const route = `/users/${auth}`;
       userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
         const doc = message.doc as User;
         switch (message.type) {
@@ -56,7 +56,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       });
 
       // Check if user account exists
-      const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth.auth?.id}`);
+      const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth}`);
 
       // If account exists, set the user context and subscribe to updates
       if (userResponse.data) {
@@ -66,7 +66,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       }
     }
 
-    if (auth.isAuthenticated) {
+    if (auth) {
       fetchUser()
     }
 
@@ -82,10 +82,10 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
    * @param user User to create
    */
   async function create(user: UserSchema): Promise<void> {
-    if (auth.auth) {
-      const reponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
-      if (reponse.data) {
-        setUser(reponse.data[0]);
+    if (auth) {
+      const userResponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
+      if (userResponse.data) {
+        setUser(userResponse.data[0]);
       }
     }
   }

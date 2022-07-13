@@ -1,0 +1,40 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+import { z } from 'zod';
+import { PositionSchema, SizeSchema } from '../state';
+import { SBDoc } from './SBSchema';
+
+const Status = z.enum(['online', 'away', 'offline']);
+export type Status = z.infer<typeof Status>;
+
+/**
+ * SAGE3 PresenceSchema
+ * @interface PresenceSchema
+ */
+const schema = z.object({
+  // Id of the user, Reference to a Auth.id => User => Presence
+  userId: z.string(),
+  // The status of the user
+  status: Status,
+  // The roomId the user is located
+  roomId: z.string(),
+  // The boardId the user is located
+  boardId: z.string(),
+  // Cursor of the user
+  cursor: PositionSchema,
+  // Viewport of the user
+  viewport: z.object({
+    position: PositionSchema,
+    size: SizeSchema,
+  }),
+});
+
+export type PresenceSchema = z.infer<typeof schema>;
+
+export type Presence = SBDoc & { data: PresenceSchema };

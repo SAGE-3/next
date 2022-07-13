@@ -24,12 +24,11 @@ import {
 import { MdPerson, MdEmail } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { randomSAGEColor } from '@sage3/shared';
-import { AuthHTTPService } from '../../../auth';
+import { useAuth } from '@sage3/frontend';
 
 type CreateUserProps = {
   createUser: (user: UserSchema) => void;
 }
-
 
 export function CreateUserModal(props: CreateUserProps): JSX.Element {
 
@@ -38,6 +37,8 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)
+
+  const { logout } = useAuth();
 
   // the input element
   // When the modal panel opens, select the text for quick replacing
@@ -108,7 +109,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mx={2} onClick={AuthHTTPService.logout}>Cancel</Button>
+          <Button colorScheme="red" mx={2} onClick={logout}>Cancel</Button>
           <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
             Create Account
           </Button>

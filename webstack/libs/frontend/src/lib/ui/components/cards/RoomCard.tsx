@@ -14,6 +14,7 @@ import { SBDocument } from "@sage3/sagebase";
 export type RoomCardProps = {
   room: SBDocument<RoomSchema>;
   selected: boolean;
+  userCount: number;
   onEnter: () => void;
   onDelete: () => void;
   onEdit: () => void;
@@ -27,6 +28,14 @@ function RoomToolTip(props: { room: SBDocument<RoomSchema> }) {
     </div>
   )
 }
+
+/**
+ * Room card
+ *
+ * @export
+ * @param {RoomCardProps} props
+ * @returns
+ */
 export function RoomCard(props: RoomCardProps) {
 
   const borderColor = useColorModeValue("#A0AEC0", "#4A5568");
@@ -39,7 +48,6 @@ export function RoomCard(props: RoomCardProps) {
         justifyContent="center"
         borderWidth='2px'
         borderRadius='lg'
-        overflow='hidden'
         border={`solid ${(props.selected) ? sageColorByName(props.room.data.color) : borderColor} 2px`}
         fontWeight="bold"
         width="60px"
@@ -47,12 +55,30 @@ export function RoomCard(props: RoomCardProps) {
         m="2"
         cursor="pointer"
         alignItems='baseline'
+        position="relative"
         color={(props.selected) ? sageColorByName(props.room.data.color) : textColor}
         transition="transform .2s"
         _hover={{ transform: "scale(1.2)" }}
         onClick={props.onEnter}>
         <Text fontSize='4xl'>{props.room.data.name.charAt(0).toLocaleUpperCase()}</Text>
+        <Box
+          position='absolute'
+          right="-10px"
+          bottom="-10px"
+          backgroundColor={sageColorByName(props.room.data.color)}
+          color="white"
+          borderRadius='100%'
+          width="24px"
+          height="24px"
+          lineHeight={'20px'}
+          display="flex"
+          justifyContent="center"
+          alignItems='center'
+          fontSize='14px'
+        >
+          {props.userCount}
+        </Box>
       </Box>
-    </Tooltip>
+    </Tooltip >
   );
 }
