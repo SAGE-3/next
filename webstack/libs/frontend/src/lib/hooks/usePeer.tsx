@@ -152,8 +152,11 @@ export function usePeer(props: usePeerProps): DataConnection[] {
         console.log('RTC> Peer error', err);
       });
 
-      // rtcSock.current = new WebSocket(`wss://${window.location.host}/rtc`);
-      rtcSock.current = new WebSocket(`ws://localhost:3333/rtc`);
+      // Open websocket connection to the server
+      const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const socketUrl = `${socketType}//${window.location.host}/rtc`;
+      console.log('RTC> Connecting to', socketUrl);
+      rtcSock.current = new WebSocket(socketUrl);
       rtcSock.current.addEventListener('open', () => {
         console.log('RTC> WS Connection Open');
         if (rtcSock.current) rtcSock.current.send(JSON.stringify({ type: 'join', user: user._id }));
