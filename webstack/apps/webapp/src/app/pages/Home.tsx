@@ -6,11 +6,12 @@
  *
  */
 
-import { Box, Button, useColorModeValue } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
+import { usePresence, usePresenceStore } from '@sage3/frontend';
 import { SBDocument } from '@sage3/sagebase';
 
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { BoardList } from '../components/BoardList';
@@ -24,10 +25,18 @@ export function HomePage() {
 
   const imageUrl = useColorModeValue("/assets/SAGE3LightMode.png", "/assets/SAGE3DarkMode.png");
 
+  const subscribeToPresence = usePresenceStore(state => state.subscribe);
+  const { update: updatePresence } = usePresence();
+
+  useEffect(() => {
+    subscribeToPresence();
+  }, [])
+
   const navigate = useNavigate();
 
   function handleRoomClick(room: SBDocument<RoomSchema>) {
     setSelectedRoom(room);
+    updatePresence({ roomId: room._id, boardId: '' });
     setSelectedBoard(null);
   }
 

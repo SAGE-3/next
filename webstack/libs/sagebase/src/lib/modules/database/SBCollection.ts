@@ -51,7 +51,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       const doc = generateSBDocumentTemplate<Type>(data, by);
       if (forcedId) doc._id = forcedId;
       const docPath = `${this._path}:${doc._id}`;
-      const docRef = new SBDocumentRef<Type>(doc._id, docPath, this._redisClient);
+      const docRef = new SBDocumentRef<Type>(doc._id, this._name, docPath, this._redisClient);
       const redisRes = await docRef.set(data, by);
       if (redisRes.success) {
         return docRef;
@@ -71,7 +71,7 @@ export class SBCollectionRef<Type extends SBJSON> {
    */
   public docRef(id: string): SBDocumentRef<Type> {
     const docPath = `${this._path}:${id}`;
-    const docRef = new SBDocumentRef<Type>(id, docPath, this._redisClient);
+    const docRef = new SBDocumentRef<Type>(id, this._name, docPath, this._redisClient);
     return docRef;
   }
 
@@ -155,7 +155,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       const docRefList = [] as SBDocumentRef<Type>[];
       redisRes.forEach((key) => {
         const id = key.split(':')[key.split(':').length - 1];
-        const docRef = new SBDocumentRef<Type>(id, key, this._redisClient);
+        const docRef = new SBDocumentRef<Type>(id, this._name, key, this._redisClient);
         docRefList.push(docRef);
       });
       return docRefList;
@@ -239,7 +239,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       if (typeof query === 'number') query = `[${query} ${query}]`;
       const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`); //, { LIMIT: { from: 0, size: 1000 } }
       const docRefPromises = response.documents.map((el) =>
-        new SBDocumentRef<Type>(el.value['_id'] as string, el.id, this._redisClient).read()
+        new SBDocumentRef<Type>(el.value['_id'] as string, this._name, el.id, this._redisClient).read()
       );
       const docs = await Promise.all([...docRefPromises]);
       const a = [] as SBDocument<Type>[];

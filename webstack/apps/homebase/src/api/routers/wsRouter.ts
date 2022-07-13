@@ -13,7 +13,7 @@ import { WebSocket } from 'ws';
 import { assetWSRouter } from './custom/asset';
 import { subscriptionWSRouter } from './custom/subscription';
 // Collection Imports
-import { AppsCollection, BoardsCollection, RoomsCollection, UsersCollection } from '../collections';
+import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection } from '../collections';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
@@ -29,6 +29,8 @@ const wsRoutes = {
     RoomsCollection.wsRouter(socket, message, userId, cache),
   '/users': (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) =>
     UsersCollection.wsRouter(socket, message, userId, cache),
+  '/presence': (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) =>
+    PresenceCollection.wsRouter(socket, message, userId, cache),
   '/subscription': subscriptionWSRouter,
 } as {
   [key: string]: (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) => Promise<void>;

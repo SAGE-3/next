@@ -5,24 +5,45 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useEffect, useState } from 'react';
+
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
 import {
-  Avatar, Box, Button, Select, Text,
-  useDisclosure, useToast, useColorModeValue,
-  Menu, MenuGroup, MenuItem,
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  MenuItemOption, MenuOptionGroup
+  Avatar,
+  Box,
+  Button,
+  Select,
+  Text,
+  useDisclosure,
+  useToast,
+  useColorModeValue,
+  Menu,
+  MenuGroup,
+  MenuItem,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  MenuItemOption,
+  MenuOptionGroup,
+  Tag,
 } from '@chakra-ui/react';
 
 import { Applications, initialValues } from '@sage3/applications/apps';
-import { AppName } from '@sage3/applications/schema';
-import { initials } from '@sage3/frontend';
+import { AppName, AppState } from '@sage3/applications/schema';
+import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
 import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
+import { throttle } from 'throttle-debounce';
+import { DraggableEvent } from 'react-draggable';
+
+import { GiArrowCursor } from 'react-icons/gi';
 
 type LocationParams = {
   boardId: string;
@@ -53,10 +74,14 @@ export function BoardPage() {
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
   const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
-  const gridColor = useColorModeValue("#E2E8F0", "#2D3748");
+  const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
 
   // User information
   const { user } = useUser();
+
+  // Presence Information
+  const { update: updatePresence } = usePresence();
+  const presences = usePresenceStore((state) => state.presences);
 
   // Asset manager button
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
@@ -74,9 +99,14 @@ export function BoardPage() {
   useEffect(() => {
     // Subscribe to the board that was selected
     subBoard(locationState.boardId);
+    // Update the user's presence information
+    updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
+
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       unsubBoard();
+      // Update the user's presence information
+      updatePresence({ boardId: '', roomId: '' });
     };
   }, []);
 
@@ -116,13 +146,13 @@ export function BoardPage() {
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       ownerId: user._id,
-      state: initialValues[appName] as any,
+      state: initialValues[appName] as AppState,
       minimized: false,
     });
   };
 
   // On a drag stop of the board. Set the board position locally.
-  function handleDragBoardStop(event: any, data: DraggableData) {
+  function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
     setBoardPos({ x: -data.x, y: -data.y });
   }
 
@@ -197,7 +227,7 @@ export function BoardPage() {
   const onGridChange = () => {
     if (radios.includes('grid')) {
       setGridSize(1);
-      setRadios(radios.filter(el => el !== 'grid'));
+      setRadios(radios.filter((el) => el !== 'grid'));
     } else {
       setGridSize(50);
       setRadios([...radios, 'grid']);
@@ -206,18 +236,27 @@ export function BoardPage() {
   // Show/hide the UI
   const onUIChange = () => {
     if (radios.includes('ui')) {
-      setRadios(radios.filter(el => el !== 'ui'));
+      setRadios(radios.filter((el) => el !== 'ui'));
     } else {
       setRadios([...radios, 'ui']);
     }
   };
 
-  // Collect all the files dropped into an array
+  // Update the cursor every half second
+  // TODO: They don't work over apps yet.
+  const throttleCursor = throttle(500, (e: React.MouseEvent<HTMLDivElement>) => {
+    if (updatePresence) updatePresence({ cursor: { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, z: 0 } });
+  });
+  // Keep a copy of the function
+  const throttleCursorFunc = useRef(throttleCursor);
+
   return (
     <>
       <div style={{ transform: `scale(${scale})` }}>
         {/* Board. Uses lib react-rnd for drag events.
          * Draggable Background below is the actual target for drag events.*/}
+        {/*Cursors */}
+
         <Rnd
           default={{
             x: 0,
@@ -229,12 +268,37 @@ export function BoardPage() {
           enableResizing={false}
           dragHandleClassName={'board-handle'}
           scale={scale}
+          id="monkey"
+          onMouseMove={throttleCursorFunc.current}
         >
           {/* Apps */}
           {apps.map((app) => {
             const Component = Applications[app.data.type];
             return <Component key={app._id} {...app}></Component>;
           })}
+
+          {presences
+            .filter((el) => el.data.boardId === locationState.boardId)
+            .map((presence) => {
+              return (
+                <div
+                  key={presence.data.userId}
+                  style={{
+                    position: 'absolute',
+                    left: presence.data.cursor.x + 'px',
+                    top: presence.data.cursor.y + 'px',
+                    transition: 'all 0.5s ease-in-out',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                  }}
+                >
+                  <GiArrowCursor color="red"></GiArrowCursor>
+                  <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
+                    Name Here
+                  </Tag>
+                </div>
+              );
+            })}
 
           {/* Draggable Background */}
           <Box
@@ -245,8 +309,7 @@ export function BoardPage() {
             height="100%"
             backgroundSize={`50px 50px`}
             // backgroundSize={`${gridSize}px ${gridSize}px`}
-            backgroundImage={
-              `linear-gradient(to right, ${gridColor} 1px, transparent 1px),
+            backgroundImage={`linear-gradient(to right, ${gridColor} 1px, transparent 1px),
                linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
             id="board"
             // Drag and drop event handlers
@@ -272,13 +335,18 @@ export function BoardPage() {
       {/* Context-menu for the board */}
       <ContextMenu divId="board">
         <Menu>
-          <MenuGroup m={"2px 3px 0 3px"} title='Actions'>
-            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Fit View to Board</MenuItem>
-            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem">Show all Apps</MenuItem>
-            <MenuItem p={"2px 3px 1px 3px"} className="contextmenuitem" onClick={onOpen}>
+          <MenuGroup m={'2px 3px 0 3px'} title="Actions">
+            <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem">
+              Fit View to Board
+            </MenuItem>
+            <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem">
+              Show all Apps
+            </MenuItem>
+            <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem" onClick={onOpen}>
               Clear Board
             </MenuItem>
-            <MenuItem p={"2px 3px 1px 3px"}
+            <MenuItem
+              p={'2px 3px 1px 3px'}
               className="contextmenuitem"
               onClick={() => {
                 const width = 600;
@@ -310,14 +378,11 @@ export function BoardPage() {
             </MenuItem>
           </MenuGroup>
           <hr className="divider" />
-          <MenuOptionGroup m={"2px 3px 0 3px"} title='Options' type='checkbox'
-            defaultValue={radios}>
-            <MenuItemOption m={0} p={"2px 3px 1px 3px"} className="contextmenuitem"
-              value="grid" onClick={onGridChange}>
+          <MenuOptionGroup m={'2px 3px 0 3px'} title="Options" type="checkbox" defaultValue={radios}>
+            <MenuItemOption m={0} p={'2px 3px 1px 3px'} className="contextmenuitem" value="grid" onClick={onGridChange}>
               Snap to Grid
             </MenuItemOption>
-            <MenuItemOption p={"2px 3px 1px 3px"} className="contextmenuitem"
-              value="ui" onClick={onUIChange}>
+            <MenuItemOption p={'2px 3px 1px 3px'} className="contextmenuitem" value="ui" onClick={onUIChange}>
               Show Interface
             </MenuItemOption>
           </MenuOptionGroup>
