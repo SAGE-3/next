@@ -36,10 +36,7 @@ import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
-import {
-  useAppStore, useBoardStore, useUser, useUIStore, AssetModal,
-  UploadModal, ContextMenu
-} from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -47,7 +44,6 @@ import { throttle } from 'throttle-debounce';
 import { DraggableEvent } from 'react-draggable';
 
 import { GiArrowCursor } from 'react-icons/gi';
-
 
 type LocationParams = {
   boardId: string;
@@ -276,13 +272,17 @@ export function BoardPage() {
           onMouseMove={throttleCursorFunc.current}
         >
           {/* Apps - SORT is to zIndex order them */}
-          {apps.sort((a, b) => a._updatedAt - b._updatedAt).map((app) => {
-            const Component = Applications[app.data.type];
-            return <Component key={app._id} {...app}></Component>;
-          })}
+          {apps
+            .sort((a, b) => a._updatedAt - b._updatedAt)
+            .map((app) => {
+              const Component = Applications[app.data.type];
+              return <Component key={app._id} {...app}></Component>;
+            })}
 
+          {/* Drawe the cursors: filter by board and not myself */}
           {presences
             .filter((el) => el.data.boardId === locationState.boardId)
+            .filter((el) => el.data.userId !== user?._id)
             .map((presence) => {
               return (
                 <div
@@ -298,7 +298,8 @@ export function BoardPage() {
                 >
                   <GiArrowCursor color="red"></GiArrowCursor>
                   <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
-                    Name Here
+                    {/* using the ID before we can get the name */}
+                    {presence.data.userId.split('-')[0]}
                   </Tag>
                 </div>
               );
