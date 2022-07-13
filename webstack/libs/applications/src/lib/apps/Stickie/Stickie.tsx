@@ -112,7 +112,7 @@ function Stickie(props: App): JSX.Element {
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={props.data.size.width} h={props.data.size.height} p={0}>
+      <Box bgColor={s.color} color="black" w={"100%"} h={"100%"} p={0}>
         <Textarea
           ref={textbox}
           resize={'none'}
