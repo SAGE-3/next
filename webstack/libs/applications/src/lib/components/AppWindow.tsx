@@ -98,14 +98,22 @@ export function AppWindow(props: WindowProps) {
     update(props.app._id, { minimized: !minimized });
   }
 
+  // Bring to front function
+  // Have to set something to trigger an update. 
+  function bringToFront() {
+    update(props.app._id, { name: props.app.data.name });
+  }
+
   return (
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
       size={{ width: size.width, height: `${minimized ? titleBarHeight : size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
       position={pos}
+      onResizeStart={bringToFront}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
+      onClick={bringToFront}
       style={{
         boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.2)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
