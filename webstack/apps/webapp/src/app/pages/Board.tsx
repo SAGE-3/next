@@ -230,8 +230,8 @@ export function BoardPage() {
           dragHandleClassName={'board-handle'}
           scale={scale}
         >
-          {/* Apps */}
-          {apps.map((app) => {
+          {/* Apps - SORT is to zIndex order them */}
+          {apps.sort((a, b) => a._updatedAt - b._updatedAt).map((app) => {
             const Component = Applications[app.data.type];
             return <Component key={app._id} {...app}></Component>;
           })}
