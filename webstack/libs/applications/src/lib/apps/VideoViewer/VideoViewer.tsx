@@ -27,4 +27,14 @@ function VideoViewer(props: App): JSX.Element {
   );
 }
 
-export default VideoViewer;
+function VideoViewerToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: VideoViewer, Toolbar: VideoViewerToolbar };

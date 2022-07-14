@@ -190,4 +190,14 @@ function Screenshare(props: App): JSX.Element {
   );
 }
 
-export default Screenshare;
+function ScreenshareToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: Screenshare, Toolbar: ScreenshareToolbar };

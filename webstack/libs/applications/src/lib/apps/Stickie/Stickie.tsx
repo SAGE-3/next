@@ -139,7 +139,18 @@ function Stickie(props: App): JSX.Element {
   );
 }
 
-export default Stickie;
+function StickieToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: Stickie, Toolbar: StickieToolbar };
+
 
 /*
   // Main effect for styling the text

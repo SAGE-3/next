@@ -33,5 +33,14 @@ function SliderApp(props: App): JSX.Element {
     </AppWindow>
   )
 }
+function SliderToolbar(props: App): JSX.Element {
 
-export default SliderApp;
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: SliderApp, Toolbar: SliderToolbar };

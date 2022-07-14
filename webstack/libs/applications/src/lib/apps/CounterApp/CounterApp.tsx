@@ -49,4 +49,27 @@ function CounterApp(props: App): JSX.Element {
   );
 }
 
-export default CounterApp;
+function CounterToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  const updateState = useAppStore((state) => state.updateState);
+
+  function handleAddClick() {
+    updateState(props._id, { count: s.count + 1 });
+  }
+
+  function handleSubClick() {
+    updateState(props._id, { count: s.count - 1 });
+  }
+
+  return (
+    <>
+      <Button onClick={handleAddClick} colorScheme="green" mx="1">Add</Button>
+      <Button onClick={handleSubClick} colorScheme="red" mx="1">Sub</Button>
+    </>
+  )
+}
+
+
+export default { App: CounterApp, Toolbar: CounterToolbar };

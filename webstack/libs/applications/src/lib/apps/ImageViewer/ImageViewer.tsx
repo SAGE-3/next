@@ -53,4 +53,14 @@ function ImageViewer(props: App): JSX.Element {
   );
 }
 
-export default ImageViewer;
+function ImageViewerToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: ImageViewer, Toolbar: ImageViewerToolbar };

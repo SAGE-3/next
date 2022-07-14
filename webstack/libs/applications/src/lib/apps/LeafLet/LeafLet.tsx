@@ -25,5 +25,14 @@ function LeafLet(props: App): JSX.Element {
     </AppWindow>
   );
 }
+function LeafLetToolbar(props: App): JSX.Element {
 
-export default LeafLet;
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: LeafLet, Toolbar: LeafLetToolbar };

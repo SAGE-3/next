@@ -33,4 +33,14 @@ function LinkerApp(props: App): JSX.Element {
   )
 }
 
-export default LinkerApp;
+function LinkerToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: LinkerApp, Toolbar: LinkerToolbar };

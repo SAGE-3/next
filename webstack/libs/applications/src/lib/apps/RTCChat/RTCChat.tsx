@@ -119,5 +119,15 @@ function RTCChat(props: App): JSX.Element {
     </AppWindow>
   );
 }
+function RTCChatToolbar(props: App): JSX.Element {
 
-export default RTCChat;
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: RTCChat, Toolbar: RTCChatToolbar };
+

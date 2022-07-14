@@ -27,4 +27,15 @@ function Webview(props: App): JSX.Element {
   );
 }
 
-export default Webview;
+function WebviewToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: Webview, Toolbar: WebviewToolbar };
+

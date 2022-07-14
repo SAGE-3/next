@@ -39,4 +39,15 @@ function CodeCell(props: App): JSX.Element {
   );
 }
 
-export default CodeCell;
+function CodeCellToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+
+export default { App: CodeCell, Toolbar: CodeCellToolbar };

@@ -32,6 +32,10 @@ export function AppWindow(props: WindowProps) {
   const update = useAppStore((state) => state.update);
   const deleteApp = useAppStore((state) => state.delete);
 
+  // UI Store
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
@@ -88,6 +92,19 @@ export function AppWindow(props: WindowProps) {
     });
   }
 
+  // Set the local state on resize
+  function handleResize(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
+    // Get the width and height of the app after the resize
+    const width = parseInt(ref.offsetWidth);
+    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
+    const height = parseInt(ref.offsetHeight) - titleBarHeight;
+
+    // Set local state
+    setSize({ width, height });
+    setPos({ x: position.x, y: position.y });
+
+  }
+
   // Close the app and delete from server
   function handleClose() {
     deleteApp(props.app._id);
@@ -98,10 +115,15 @@ export function AppWindow(props: WindowProps) {
     update(props.app._id, { minimized: !minimized });
   }
 
-  // Bring to front function
-  // Have to set something to trigger an update. 
-  function bringToFront() {
+
+  function handleAppClick(e: any) {
+    e.stopPropagation();
+    // Set the selected app in the UI store
+    setSelectedApp(props.app._id);
+    // Bring to front function
+    // Have to set something to trigger an update. 
     update(props.app._id, { name: props.app.data.name });
+
   }
 
   return (
@@ -110,14 +132,15 @@ export function AppWindow(props: WindowProps) {
       dragHandleClassName={'handle'}
       size={{ width: size.width, height: `${minimized ? titleBarHeight : size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
       position={pos}
-      onResizeStart={bringToFront}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
-      onClick={bringToFront}
+      onResize={handleResize}
+      onResizeStart={handleAppClick}
+      onClick={handleAppClick}
       style={{
         boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.2)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
-        overflow: 'hidden',
+        // overflow: 'hidden',
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
@@ -128,6 +151,19 @@ export function AppWindow(props: WindowProps) {
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
     >
+      {/* Border Box around app to show it is selected */}
+      {
+        (selectedApp === props.app._id) ? (
+          <Box
+            position="absolute"
+            left="-4px"
+            top="-4px"
+            width={size.width + 8}
+            height={size.height + titleBarHeight + 8}
+            border={`2px solid ${sageColorByName('green')}`}
+            pointerEvents="none"
+          ></Box>) : null
+      }
       {/* Title Bar */}
       <Box
         className="handle" // The CSS name react-rnd latches on to for the drag events
@@ -162,9 +198,10 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      {/* <Box id={'app_' + props.app._id} width={"100%"} height={props.app.data.size.height}> */}
-      {minimized ? null : props.children}
-      {/* </Box> */}
-    </Rnd>
+      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden">
+        {minimized ? null : props.children}
+      </Box>
+
+    </Rnd >
   );
 }

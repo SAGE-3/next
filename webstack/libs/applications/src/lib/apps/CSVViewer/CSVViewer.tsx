@@ -100,7 +100,17 @@ function CSVViewer(props: App): JSX.Element {
   );
 }
 
-export default CSVViewer;
+function CSVViewerToolbar(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { App: CSVViewer, Toolbar: CSVViewerToolbar };
 
 // Convert the csv to an array using the csv-parse library
 async function csvToArray(str: string): Promise<Record<string, string>[]> {

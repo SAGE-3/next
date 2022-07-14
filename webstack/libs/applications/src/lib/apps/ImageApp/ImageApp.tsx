@@ -6,6 +6,7 @@
  *
  */
 
+import { Button } from '@chakra-ui/react';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 import { state as AppState } from "./";
@@ -20,5 +21,19 @@ function ImageApp(props: App): JSX.Element {
     </AppWindow>
   )
 }
+function ImageToolbar(props: App): JSX.Element {
 
-export default ImageApp;
+  const s = props.data.state as AppState;
+
+  function handleCopyUrl() {
+    navigator.clipboard.writeText(s.url);
+  }
+
+  return (
+    <>
+      <Button onClick={handleCopyUrl} colorScheme="green">Copy URL</Button>
+    </>
+  )
+}
+
+export default { App: ImageApp, Toolbar: ImageToolbar };
