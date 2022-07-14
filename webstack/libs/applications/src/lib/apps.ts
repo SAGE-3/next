@@ -51,7 +51,7 @@ export const Applications = {
   [DataTableAppName]: DataTableApp,
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
-} as unknown as Record<string, { App: () => JSX.Element, Toolbar: () => JSX.Element }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,

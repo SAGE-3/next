@@ -19,7 +19,7 @@ import { parse } from 'csv-parse/browser/esm';
 // Styling
 import './styling.css';
 
-function CSVViewer(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   // App state
   const s = props.data.state as AppState;
   // Update the app
@@ -100,7 +100,7 @@ function CSVViewer(props: App): JSX.Element {
   );
 }
 
-function CSVViewerToolbar(props: App): JSX.Element {
+function ToolbarComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
@@ -110,7 +110,7 @@ function CSVViewerToolbar(props: App): JSX.Element {
   )
 }
 
-export default { App: CSVViewer, Toolbar: CSVViewerToolbar };
+export default { AppComponent, ToolbarComponent };
 
 // Convert the csv to an array using the csv-parse library
 async function csvToArray(str: string): Promise<Record<string, string>[]> {

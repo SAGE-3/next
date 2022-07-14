@@ -43,7 +43,7 @@ import './styles.css';
 import * as React from "react";
 import { ColumnMenu } from "./components/ColumnMenu";
 
-function DataTableApp(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
 
     // const s = props.data.state as AppState;
     const s = props.data.state as AppState;
@@ -245,7 +245,7 @@ function DataTableApp(props: App): JSX.Element {
     )
 }
 
-function DataTableToolbar(props: App): JSX.Element {
+function ToolbarComponent(props: App): JSX.Element {
 
     const s = props.data.state as AppState;
 
@@ -255,6 +255,6 @@ function DataTableToolbar(props: App): JSX.Element {
     )
 }
 
-export default { App: DataTableApp, Toolbar: DataTableToolbar };
+export default { AppComponent, ToolbarComponent };
 
 

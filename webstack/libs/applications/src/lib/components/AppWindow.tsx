@@ -24,6 +24,8 @@ export function AppWindow(props: WindowProps) {
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const gridSize = useUIStore((state) => state.gridSize);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   // Height of the title bar
   const titleBarHeight = 24;
@@ -31,10 +33,6 @@ export function AppWindow(props: WindowProps) {
   // App Store
   const update = useAppStore((state) => state.update);
   const deleteApp = useAppStore((state) => state.delete);
-
-  // UI Store
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
@@ -115,15 +113,13 @@ export function AppWindow(props: WindowProps) {
     update(props.app._id, { minimized: !minimized });
   }
 
-
   function handleAppClick(e: any) {
     e.stopPropagation();
     // Set the selected app in the UI store
     setSelectedApp(props.app._id);
     // Bring to front function
     // Have to set something to trigger an update. 
-    update(props.app._id, { name: props.app.data.name });
-
+    update(props.app._id, { raised: true });
   }
 
   return (
@@ -137,10 +133,10 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStart={handleAppClick}
       onClick={handleAppClick}
+      onDoubleClick={handleAppClick}
       style={{
-        boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.2)'}`,
+        boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
-        // overflow: 'hidden',
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
@@ -150,6 +146,8 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
+      disableDragging={minimized}
+      enableResizing={!minimized}
     >
       {/* Border Box around app to show it is selected */}
       {
@@ -159,8 +157,8 @@ export function AppWindow(props: WindowProps) {
             left="-4px"
             top="-4px"
             width={size.width + 8}
-            height={size.height + titleBarHeight + 8}
-            border={`2px solid ${sageColorByName('green')}`}
+            height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
+            border={`2px dashed ${sageColorByName('red')}`}
             pointerEvents="none"
           ></Box>) : null
       }
@@ -198,8 +196,8 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden">
-        {minimized ? null : props.children}
+      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={(minimized) ? 'none' : 'inherit'}>
+        {props.children}
       </Box>
 
     </Rnd >

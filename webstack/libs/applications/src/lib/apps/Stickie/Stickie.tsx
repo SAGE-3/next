@@ -31,7 +31,7 @@ const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed'
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function Stickie(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
 
@@ -104,6 +104,7 @@ function Stickie(props: App): JSX.Element {
           state: { text: '', color: s.color, fontSize: s.fontSize },
           ownerId: user._id,
           minimized: false,
+          raised: true
         }
       );
     }
@@ -139,7 +140,7 @@ function Stickie(props: App): JSX.Element {
   );
 }
 
-function StickieToolbar(props: App): JSX.Element {
+function ToolbarComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
@@ -149,7 +150,7 @@ function StickieToolbar(props: App): JSX.Element {
   )
 }
 
-export default { App: Stickie, Toolbar: StickieToolbar };
+export default { AppComponent, ToolbarComponent };
 
 
 /*

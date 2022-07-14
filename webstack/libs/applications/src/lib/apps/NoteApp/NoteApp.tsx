@@ -25,7 +25,7 @@ import { Button } from '@chakra-ui/react';
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function NoteApp(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
   // Update functions from the store
@@ -58,13 +58,13 @@ function NoteApp(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <textarea style={{ width: props.data.size.width, height: props.data.size.height, resize: 'none' }} value={note} onChange={handleTextChange} />
+        <textarea style={{ width: "100%", height: "100%", resize: 'none' }} value={note} onChange={handleTextChange} />
       </>
     </AppWindow>
   );
 }
 
-function NoteToolbar(props: App): JSX.Element {
+function ToolbarComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -79,4 +79,4 @@ function NoteToolbar(props: App): JSX.Element {
   )
 }
 
-export default { App: NoteApp, Toolbar: NoteToolbar };
+export default { AppComponent, ToolbarComponent };

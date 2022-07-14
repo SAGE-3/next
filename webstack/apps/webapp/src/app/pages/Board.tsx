@@ -151,6 +151,7 @@ export function BoardPage() {
       ownerId: user._id,
       state: initialValues[appName] as AppState,
       minimized: false,
+      raised: true
     });
   };
 
@@ -279,7 +280,7 @@ export function BoardPage() {
           {apps
             .sort((a, b) => a._updatedAt - b._updatedAt)
             .map((app) => {
-              const Component = Applications[app.data.type].App;
+              const Component = Applications[app.data.type].AppComponent;
               return <Component key={app._id} {...app}></Component>;
             })}
 
@@ -381,6 +382,7 @@ export function BoardPage() {
                   ownerId: user?._id || '-',
                   state: { ...initialValues['Webview'], url },
                   minimized: false,
+                  raised: true
                 });
               }}
             >
@@ -460,11 +462,11 @@ export function BoardPage() {
           Upload
         </Button>
 
-        {/* App Toolbar */}
+        {/* App Toolbar - TODO - Temporary location for right now*/}
         <Box alignItems="center" mx="1" backgroundColor="gray" p="2">
           {apps
             .filter(el => el._id === selectedApp).map((app) => {
-              const Component = Applications[app.data.type].Toolbar;
+              const Component = Applications[app.data.type].ToolbarComponent;
               return <Component key={app._id} {...app}></Component>;
             })}
         </Box>

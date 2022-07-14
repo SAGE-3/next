@@ -16,7 +16,7 @@ import { AppWindow } from '../../components';
 import { useAssetStore, useAppStore } from '@sage3/frontend';
 
 
-function PDFViewer(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
@@ -78,7 +78,7 @@ function PDFViewer(props: App): JSX.Element {
     </AppWindow>
   );
 }
-function PDFViewerToolbar(props: App): JSX.Element {
+function ToolbarComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -100,4 +100,4 @@ function PDFViewerToolbar(props: App): JSX.Element {
   )
 }
 
-export default { App: PDFViewer, Toolbar: PDFViewerToolbar };
+export default { AppComponent, ToolbarComponent };

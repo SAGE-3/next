@@ -11,7 +11,7 @@ import { AppWindow } from '../../components';
 import { App } from '../../schema';
 import { state as AppState } from "./";
 
-function ImageApp(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
@@ -21,7 +21,7 @@ function ImageApp(props: App): JSX.Element {
     </AppWindow>
   )
 }
-function ImageToolbar(props: App): JSX.Element {
+function ToolbarComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
@@ -36,4 +36,4 @@ function ImageToolbar(props: App): JSX.Element {
   )
 }
 
-export default { App: ImageApp, Toolbar: ImageToolbar };
+export default { AppComponent, ToolbarComponent };
