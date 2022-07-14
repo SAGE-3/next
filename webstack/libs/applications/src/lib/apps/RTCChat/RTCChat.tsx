@@ -6,7 +6,7 @@
  *
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Textarea, Text, VStack, UnorderedList, ListItem } from '@chakra-ui/react';
 import { useAppStore, useBoardStore, useUser, usePeer } from '@sage3/frontend';
 import { useLocation } from 'react-router-dom';
@@ -21,7 +21,9 @@ function RTCChat(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const [chatLines, setChatLines] = useState<string[]>([]);
-
+  // the list of chat lines
+  const listRef = useRef<HTMLUListElement>(null);
+  // me
   const { user } = useUser();
 
   const location = useLocation();
@@ -37,6 +39,7 @@ function RTCChat(props: App): JSX.Element {
     console.log('RTC> Callback', data);
     // const remoteUser = id.split('-')[0];
     setChatLines((prev) => [decodeURIComponent(data), ...prev]);
+    listRef.current?.scrollTo({ top: 0, left: 0, behavior: 'smooth' },);
   }
   //  Events from RTC clients
   const evtHandler = (type: string, data: any) => {
@@ -44,9 +47,11 @@ function RTCChat(props: App): JSX.Element {
     if (type === 'join') {
       const userArrived = data.split('-')[0];
       setChatLines((prev) => [(userArrived + '> ENTERED'), ...prev]);
+      listRef.current?.scrollTo({ top: 0, left: 0, behavior: 'smooth' },);
     } else if (type === 'leave') {
       const userLeft = data.split('-')[0];
       setChatLines((prev) => [(userLeft + '> LEFT'), ...prev]);
+      listRef.current?.scrollTo({ top: 0, left: 0, behavior: 'smooth' },);
     }
   }
   //  Events from RTC clients
@@ -89,6 +94,7 @@ function RTCChat(props: App): JSX.Element {
         const text = (user?.data.name || 'Me') + '> ' + e.currentTarget.value;
         // Add the line locally
         setChatLines((prev) => [text, ...prev]);
+        listRef.current?.scrollTo({ top: 0, left: 0, behavior: 'smooth' },);
         // Clear the textarea
         e.currentTarget.value = '';
         // Send over the RTC connections
@@ -105,7 +111,7 @@ function RTCChat(props: App): JSX.Element {
       >
         <Text fontSize="xl">Chat in "{s.board}" </Text>
         <hr />
-        <UnorderedList m={0} p={1} maxHeight={"150px"} overflowY="scroll" overflowX="hidden">
+        <UnorderedList ref={listRef} m={0} p={1} maxHeight={"150px"} overflowY="scroll" overflowX="hidden">
           {chatLines.map((line, i) => (
             <ListItem key={i}>
               {line}
