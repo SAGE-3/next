@@ -23,7 +23,6 @@ function Screenshare(props: App): JSX.Element {
   const { user } = useUser();
   const [mine, setMine] = useState(false);
   const selfView = useRef<HTMLVideoElement>(null);
-  const mycall = useRef<MediaConnection>();
 
   useEffect(() => {
     if (user && props.data.ownerId === user._id) {
@@ -78,11 +77,11 @@ function Screenshare(props: App): JSX.Element {
 
 
   // Broadcast message to all RTC clients
-  const rtcBroadcast = useCallback((data: any) => {
-    for (const c in connections) {
-      connections[c].send(encodeURIComponent(data));
-    }
-  }, [connections]);
+  // const rtcBroadcast = useCallback((data: any) => {
+  //   for (const c in connections) {
+  //     connections[c].send(encodeURIComponent(data));
+  //   }
+  // }, [connections]);
 
   //  Call all RTC clients
   const rtcCall = useCallback((data: MediaStream) => {
@@ -111,13 +110,32 @@ function Screenshare(props: App): JSX.Element {
       .catch(function (err) {
         console.log('mediaDevices>', err.name + ": " + err.message);
       }).finally(function () {
+
+        // For video camera, we need to specify the video source
+        // const constraints = {
+        //   audio: false, video: {
+        //     width: 720, height: 430, frameRate: 30,
+        //     deviceId: selectedDevice || undefined
+        //   }
+        // } as MediaStreamConstraints;
+
+        // For screenshare, different constraints are needed
         const constraints = {
-          audio: false, video: {
-            width: 720, height: 430, frameRate: 30,
-            deviceId: selectedDevice || undefined
-          }
-        };
-        window.navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+          audio: true,
+          video: {
+            chromeMediaSource: 'desktop',
+            minWidth: 1280,
+            maxWidth: 1920,
+            minHeight: 720,
+            maxHeight: 1080,
+            cursor: "always"
+          },
+        } as MediaStreamConstraints;
+
+        // window.navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+        window.navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
+          // for desktop sharing, limit a bit
+          stream.getTracks()[0].applyConstraints({ frameRate: { max: 30, ideal: 15, min: 5 } });
           if (me) {
             rtcCall(stream);
             if (selfView.current) {
@@ -138,9 +156,14 @@ function Screenshare(props: App): JSX.Element {
    * Stop the screenshare
    */
   function handleStop() {
-    if (mycall.current) {
-      mycall.current.close();
-      updateState(props._id, { running: false });
+    updateState(props._id, { running: false });
+    if (selfView.current) {
+      if (selfView.current.srcObject) {
+        const stream = selfView.current.srcObject as MediaStream;
+        const tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+      }
+      selfView.current.srcObject = null;
     }
   }
 
