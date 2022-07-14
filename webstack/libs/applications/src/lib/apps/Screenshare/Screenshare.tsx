@@ -7,13 +7,13 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Box, HStack, Button, VStack, Tag } from '@chakra-ui/react';
+import { Box, HStack, Button, VStack, Tag, Code } from '@chakra-ui/react';
 import { useAppStore, useUser, usePeer } from '@sage3/frontend';
+import Peer from 'peerjs';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
-import { MediaConnection } from 'peerjs';
 
 function Screenshare(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -22,29 +22,40 @@ function Screenshare(props: App): JSX.Element {
 
   const { user } = useUser();
   const [mine, setMine] = useState(false);
+  const [status, setStatus] = useState('Status> off');
   const selfView = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (user && props.data.ownerId === user._id) {
-      // Update the local state
-      setMine(true);
-    }
-  }, []);
+  const localStream = useRef<MediaStream>();
+  const mePeer = useRef<Peer>();
 
   //  Message from RTC clients
   const msgHandler = (id: string, data: any) => {
     const remoteUser = id.split('-')[0];
     console.log('RTC> Callback', remoteUser, data);
   }
+
   //  Events from RTC clients
   const evtHandler = (type: string, data: any) => {
-    console.log('RTC> event', type, data);
+    // Late joiner
+    if (type === 'join') {
+      if (localStream.current && mePeer.current) {
+        mePeer.current.call(data, localStream.current);
+      }
+    }
   }
+
   //  Events from RTC clients
   const callHandler = (stream: MediaStream) => {
     console.log('RTC> call', stream);
     if (selfView.current) {
-      console.log('Setting stream', stream.id);
+      const videoTrack = stream.getVideoTracks()[0];
+      // Video tag got some metadata
+      selfView.current.onloadedmetadata = () => {
+        const settings = videoTrack.getSettings();
+        const w = settings.width;
+        const h = settings.height;
+        setStatus('Stream> ' + w + 'x' + h);
+      };
       selfView.current.srcObject = stream;
     }
   }
@@ -55,6 +66,20 @@ function Screenshare(props: App): JSX.Element {
     eventCallback: evtHandler,
     callCallback: callHandler,
   });
+  mePeer.current = me;
+
+  useEffect(() => {
+    if (user && props.data.ownerId === user._id) {
+      // Update the local state
+      setMine(true);
+    }
+    return () => {
+      // Closing the sharing session
+      if (mine) {
+        handleStop();
+      }
+    }
+  }, [mine]);
 
   // Monitor  the number of connections
   useEffect(() => {
@@ -71,17 +96,11 @@ function Screenshare(props: App): JSX.Element {
       console.log('Screenshare> Starting');
     } else {
       console.log('Screenshare> Stopping');
+      setStatus('Status> off');
       if (selfView.current) selfView.current.srcObject = null;
     }
   }, [s.running]);
 
-
-  // Broadcast message to all RTC clients
-  // const rtcBroadcast = useCallback((data: any) => {
-  //   for (const c in connections) {
-  //     connections[c].send(encodeURIComponent(data));
-  //   }
-  // }, [connections]);
 
   //  Call all RTC clients
   const rtcCall = useCallback((data: MediaStream) => {
@@ -93,14 +112,14 @@ function Screenshare(props: App): JSX.Element {
   }, [connections]);
 
   function handleStart() {
-    let selectedDevice: string;
+    let selectedDevice = '';
     window.navigator.mediaDevices.enumerateDevices()
       .then(function (devices) {
         devices.forEach(function (device: MediaDeviceInfo, idx: number) {
           if (device.kind === "videoinput") {
-            console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
-            // if (device.label.includes("Logitech")) {
-            if (idx === 0) {
+            console.log('>' + idx + ': ' + device.kind + ": " + device.label + " id = " + device.deviceId);
+            // Select the first camera
+            if (!selectedDevice) {
               selectedDevice = device.deviceId;
               console.log('Video input> selected', device);
             }
@@ -110,6 +129,7 @@ function Screenshare(props: App): JSX.Element {
       .catch(function (err) {
         console.log('mediaDevices>', err.name + ": " + err.message);
       }).finally(function () {
+        console.log('mediaDevices> device selected', selectedDevice);
 
         // For video camera, we need to specify the video source
         // const constraints = {
@@ -124,18 +144,27 @@ function Screenshare(props: App): JSX.Element {
           audio: true,
           video: {
             chromeMediaSource: 'desktop',
-            minWidth: 1280,
-            maxWidth: 1920,
-            minHeight: 720,
-            maxHeight: 1080,
+            width: 1024,
+            height: 720,
+            frameRate: 5,
+            // maxWidth: 1280,
+            // maxHeight: 720,
+            // minWidth: 640,
+            // minHeight: 480,
             cursor: "always"
           },
         } as MediaStreamConstraints;
 
         // window.navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
         window.navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
+          localStream.current = stream;
           // for desktop sharing, limit a bit
-          stream.getTracks()[0].applyConstraints({ frameRate: { max: 30, ideal: 15, min: 5 } });
+          stream.getTracks()[0].applyConstraints({ frameRate: { max: 5 } });
+          const settings = stream.getVideoTracks()[0].getSettings();
+          const w = settings.width;
+          const h = settings.height;
+          const fps = settings.frameRate;
+          setStatus('Stream> ' + w + 'x' + h + '@' + fps + 'fps');
           if (me) {
             rtcCall(stream);
             if (selfView.current) {
@@ -175,18 +204,21 @@ function Screenshare(props: App): JSX.Element {
           <video ref={selfView} autoPlay={true} width={"100%"} height={"100%"} />
         </Box>
         <HStack w="100%" >
+          <Code fontSize={"xs"}>{status}</Code>
+        </HStack>
+        <HStack w="100%" >
           {mine && <>
-            <Button onClick={handleStart} colorScheme="green">
+            <Button onClick={handleStart} disabled={s.running} colorScheme="green">
               Start
             </Button>
-            <Button onClick={handleStop} colorScheme="red">
+            <Button onClick={handleStop} disabled={!s.running} colorScheme="red">
               Stop
             </Button></>
           }
           <Tag p={3}>{s.running ? "Started" : "Stopped"} </Tag>
         </HStack>
       </VStack>
-    </AppWindow>
+    </AppWindow >
   );
 }
 

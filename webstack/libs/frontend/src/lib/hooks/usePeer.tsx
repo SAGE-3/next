@@ -12,6 +12,7 @@ import { useLocation } from 'react-router-dom';
 // Peerjs module
 import { Peer, DataConnection } from 'peerjs';
 import { useUser } from '@sage3/frontend';
+// import { usePresenceStore } from '@sage3/frontend';
 
 type usePeerProps = {
   messageCallback: (id: string, data: any) => void
@@ -27,9 +28,24 @@ type usePeerReturn = {
 export function usePeer(props: usePeerProps): usePeerReturn {
   const [connections, setConnections] = useState<Array<DataConnection>>([]);
   const { user } = useUser();
-
   const location = useLocation();
   const locationState = location.state as { boardId: string; roomId: string; };
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // usePresence
+  // const presences = usePresenceStore((state) => state.presences);
+  // const [users, setUsers] = useState<Array<string>>([]);
+
+  // useEffect(() => {
+  //   const here = presences.filter((p) => p.data.boardId === locationState.boardId);
+  //   const ids = here.map((p) => p.data.userId);
+  //   setUsers(ids);
+  // }, [presences, locationState.boardId]);
+
+  // useEffect(() => {
+  //   // console.log('Presence> update in room', users);
+  // }, [users]);
+  ////////////////////////////////////////////////////////////////////////////////
 
   // User's identity
   const me = useRef<Peer>();
