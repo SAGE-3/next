@@ -159,7 +159,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     roomId: req.body.room,
                     boardId: req.body.board,
                     ownerId: user.id,
-                    position: { x: posx, y: ty, z: 0 },
+                    position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
                     size: { width, height, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'ImageViewer',
@@ -183,7 +183,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     roomId: req.body.room,
                     boardId: req.body.board,
                     ownerId: user.id,
-                    position: { x: posx, y: ty, z: 0 },
+                    position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
                     size: { width, height, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'PDFViewer',
@@ -194,6 +194,8 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 );
                 posx += width + 10;
               } else if (isCSV(elt.mimetype)) {
+                const w = tw || 800;
+                const h = th || 400;
                 AppsCollection.add(
                   {
                     name: 'CSVViewer',
@@ -201,8 +203,8 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     roomId: req.body.room,
                     boardId: req.body.board,
                     ownerId: user.id,
-                    position: { x: posx, y: ty, z: 0 },
-                    size: { width: tw || 800, height: th || 400, depth: 0 },
+                    position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+                    size: { width: w, height: h, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'CSVViewer',
                     state: { id: assetID },
@@ -214,6 +216,8 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 posx += 10;
               } else if (isText(elt.mimetype)) {
                 const text = fs.readFileSync(elt.path);
+                const w = tw || 400;
+                const h = th || 400;
                 AppsCollection.add(
                   {
                     name: 'Stickie',
@@ -221,8 +225,8 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     roomId: req.body.room,
                     boardId: req.body.board,
                     ownerId: user.id,
-                    position: { x: posx, y: ty, z: 0 },
-                    size: { width: tw || 400, height: th || 400, depth: 0 },
+                    position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+                    size: { width: w, height: h, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'Stickie',
                     state: { fontSize: 48, color: '#63B3ED', text: text.toString() },

@@ -210,9 +210,9 @@ export function BoardPage() {
       event.stopPropagation();
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer).then((files) => {
-        // Cacluate X and Y of app based on the current board position
-        const xdrop = Math.floor(boardPos.x + window.innerWidth / 2 - 150);
-        const ydrop = Math.floor(boardPos.y + window.innerHeight / 2 - 150);
+        // Get the position of the drop
+        const xdrop = event.nativeEvent.offsetX;
+        const ydrop = event.nativeEvent.offsetY;
         // do the actual upload
         uploadFunction(Array.from(files), xdrop, ydrop);
       });
