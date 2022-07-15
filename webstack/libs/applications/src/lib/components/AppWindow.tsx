@@ -24,6 +24,8 @@ export function AppWindow(props: WindowProps) {
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const gridSize = useUIStore((state) => state.gridSize);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   // Height of the title bar
   const titleBarHeight = 24;
@@ -88,6 +90,19 @@ export function AppWindow(props: WindowProps) {
     });
   }
 
+  // Set the local state on resize
+  function handleResize(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
+    // Get the width and height of the app after the resize
+    const width = parseInt(ref.offsetWidth);
+    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
+    const height = parseInt(ref.offsetHeight) - titleBarHeight;
+
+    // Set local state
+    setSize({ width, height });
+    setPos({ x: position.x, y: position.y });
+
+  }
+
   // Close the app and delete from server
   function handleClose() {
     deleteApp(props.app._id);
@@ -98,10 +113,13 @@ export function AppWindow(props: WindowProps) {
     update(props.app._id, { minimized: !minimized });
   }
 
-  // Bring to front function
-  // Have to set something to trigger an update. 
-  function bringToFront() {
-    update(props.app._id, { name: props.app.data.name });
+  function handleAppClick(e: any) {
+    e.stopPropagation();
+    // Set the selected app in the UI store
+    setSelectedApp(props.app._id);
+    // Bring to front function
+    // Have to set something to trigger an update. 
+    update(props.app._id, { raised: true });
   }
 
   return (
@@ -110,14 +128,15 @@ export function AppWindow(props: WindowProps) {
       dragHandleClassName={'handle'}
       size={{ width: size.width, height: `${minimized ? titleBarHeight : size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
       position={pos}
-      onResizeStart={bringToFront}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
-      onClick={bringToFront}
+      onResize={handleResize}
+      onResizeStart={handleAppClick}
+      onClick={handleAppClick}
+      onDoubleClick={handleAppClick}
       style={{
-        boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.2)'}`,
+        boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
-        overflow: 'hidden',
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
@@ -127,7 +146,22 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
+      disableDragging={minimized}
+      enableResizing={!minimized}
     >
+      {/* Border Box around app to show it is selected */}
+      {
+        (selectedApp === props.app._id) ? (
+          <Box
+            position="absolute"
+            left="-4px"
+            top="-4px"
+            width={size.width + 8}
+            height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
+            border={`2px dashed ${sageColorByName('red')}`}
+            pointerEvents="none"
+          ></Box>) : null
+      }
       {/* Title Bar */}
       <Box
         className="handle" // The CSS name react-rnd latches on to for the drag events
@@ -162,9 +196,10 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      {/* <Box id={'app_' + props.app._id} width={"100%"} height={props.app.data.size.height}> */}
-      {minimized ? null : props.children}
-      {/* </Box> */}
-    </Rnd>
+      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={(minimized) ? 'none' : 'inherit'}>
+        {props.children}
+      </Box>
+
+    </Rnd >
   );
 }

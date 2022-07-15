@@ -49,6 +49,8 @@ export function App() {
       ownerId: '1234',
       state: initialValues[appName] as any,
       minimized: false,
+      raised: true
+
     });
   };
 
@@ -69,10 +71,10 @@ export function App() {
         dragHandleClassName={'board-handle'}
       >
         {apps.map((app) => {
-          const Component = Applications[app.data.type];
+          const Component = Applications[app.data.type].AppComponent;
           return <Component key={app._id} {...app}></Component>;
         })}
-        
+
         {/* Draggable Background */}
         <Box
           className="board-handle"

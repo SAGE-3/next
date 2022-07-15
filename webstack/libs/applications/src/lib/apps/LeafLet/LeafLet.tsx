@@ -12,7 +12,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-function LeafLet(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
@@ -25,5 +25,14 @@ function LeafLet(props: App): JSX.Element {
     </AppWindow>
   );
 }
+function ToolbarComponent(props: App): JSX.Element {
 
-export default LeafLet;
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

@@ -112,6 +112,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             type: 'ImageViewer',
             state: { ...initialValues['ImageViewer'], id: d.id },
             minimized: false,
+            raised: true
           });
           x += w + 10;
         } else if (isCSV(d.type)) {
@@ -127,6 +128,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             type: 'CSVViewer',
             state: { ...initialValues['CSVViewer'], id: d.id },
             minimized: false,
+            raised: true
           });
           x += 800 + 10;
         } else if (isText(d.type)) {
@@ -154,6 +156,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
                 type: 'Stickie',
                 state: { ...initialValues['Stickie'], text: text },
                 minimized: false,
+                raised: true
               });
               x += 400 + 10;
             });
@@ -171,6 +174,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             type: 'PDFViewer',
             state: { ...initialValues['PDFViewer'], id: d.id },
             minimized: false,
+            raised: true
           });
           x += 400 + 10;
         }

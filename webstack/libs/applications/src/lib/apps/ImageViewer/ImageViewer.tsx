@@ -15,7 +15,7 @@ import { useAssetStore, useAppStore } from '@sage3/frontend';
 import { state as AppState } from './index';
 
 
-function ImageViewer(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const assets = useAssetStore((state) => state.assets);
@@ -53,4 +53,14 @@ function ImageViewer(props: App): JSX.Element {
   );
 }
 
-export default ImageViewer;
+function ToolbarComponent(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

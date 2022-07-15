@@ -13,7 +13,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 
-function VideoViewer(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
@@ -27,4 +27,14 @@ function VideoViewer(props: App): JSX.Element {
   );
 }
 
-export default VideoViewer;
+function ToolbarComponent(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };
