@@ -17,6 +17,7 @@ import { state as AppState } from './';
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
 import { AppWindow } from '../../components';
+import { Button } from '@chakra-ui/react';
 
 /**
  * NoteApp SAGE3 application
@@ -24,7 +25,7 @@ import { AppWindow } from '../../components';
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function NoteApp(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
   // Update functions from the store
@@ -57,10 +58,25 @@ function NoteApp(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <textarea style={{ width: props.data.size.width, height: props.data.size.height }} value={note} onChange={handleTextChange} />
+        <textarea style={{ width: "100%", height: "100%", resize: 'none' }} value={note} onChange={handleTextChange} />
       </>
     </AppWindow>
   );
 }
 
-export default NoteApp;
+function ToolbarComponent(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
+  function handleClear() {
+    updateState(props._id, { text: '' });
+  }
+  return (
+    <>
+      <Button onClick={handleClear} colorScheme="green">Clear</Button>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

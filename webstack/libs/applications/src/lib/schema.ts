@@ -24,6 +24,7 @@ export type AppSchema = {
   type: AppName;
   state: AppState;
   minimized: boolean;
+  raised: boolean;
 };
 
 export type App = SBDoc & { data: AppSchema };

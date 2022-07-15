@@ -44,6 +44,7 @@ import { throttle } from 'throttle-debounce';
 import { DraggableEvent } from 'react-draggable';
 
 import { GiArrowCursor } from 'react-icons/gi';
+import { stat } from 'fs';
 
 type LocationParams = {
   boardId: string;
@@ -75,6 +76,8 @@ export function BoardPage() {
   const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
+  const selectedApp = useUIStore(state => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // User information
   const { user } = useUser();
@@ -148,6 +151,7 @@ export function BoardPage() {
       ownerId: user._id,
       state: initialValues[appName] as AppState,
       minimized: false,
+      raised: true
     });
   };
 
@@ -252,7 +256,7 @@ export function BoardPage() {
 
   return (
     <>
-      <div style={{ transform: `scale(${scale})` }}>
+      <div style={{ transform: `scale(${scale})` }} onDoubleClick={() => setSelectedApp('')}>
         {/* Board. Uses lib react-rnd for drag events.
          * Draggable Background below is the actual target for drag events.*/}
         {/*Cursors */}
@@ -270,16 +274,17 @@ export function BoardPage() {
           scale={scale}
           id="monkey"
           onMouseMove={throttleCursorFunc.current}
+
         >
           {/* Apps - SORT is to zIndex order them */}
           {apps
             .sort((a, b) => a._updatedAt - b._updatedAt)
             .map((app) => {
-              const Component = Applications[app.data.type];
+              const Component = Applications[app.data.type].AppComponent;
               return <Component key={app._id} {...app}></Component>;
             })}
 
-          {/* Drawe the cursors: filter by board and not myself */}
+          {/* Draw the cursors: filter by board and not myself */}
           {presences
             .filter((el) => el.data.boardId === locationState.boardId)
             .filter((el) => el.data.userId !== user?._id)
@@ -337,6 +342,7 @@ export function BoardPage() {
         </Rnd>
       </div>
 
+
       {/* Context-menu for the board */}
       <ContextMenu divId="board">
         <Menu>
@@ -376,6 +382,7 @@ export function BoardPage() {
                   ownerId: user?._id || '-',
                   state: { ...initialValues['Webview'], url },
                   minimized: false,
+                  raised: true
                 });
               }}
             >
@@ -454,6 +461,15 @@ export function BoardPage() {
         <Button colorScheme="blue" mx="1" onClick={uploadOnOpen}>
           Upload
         </Button>
+
+        {/* App Toolbar - TODO - Temporary location for right now*/}
+        <Box alignItems="center" mx="1" backgroundColor="gray" p="2">
+          {apps
+            .filter(el => el._id === selectedApp).map((app) => {
+              const Component = Applications[app.data.type].ToolbarComponent;
+              return <Component key={app._id} {...app}></Component>;
+            })}
+        </Box>
       </Box>
 
       {/* Asset dialog */}

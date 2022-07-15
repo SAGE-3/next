@@ -12,7 +12,7 @@ import { App } from "../../schema";
 
 import { state as AppState } from "./";
 
-function LinkerApp(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
@@ -33,4 +33,14 @@ function LinkerApp(props: App): JSX.Element {
   )
 }
 
-export default LinkerApp;
+function ToolbarComponent(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

@@ -13,7 +13,7 @@ import { App } from "../../schema";
 import { state as AppState } from "./";
 
 
-function SliderApp(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
@@ -33,5 +33,14 @@ function SliderApp(props: App): JSX.Element {
     </AppWindow>
   )
 }
+function ToolbarComponent(props: App): JSX.Element {
 
-export default SliderApp;
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

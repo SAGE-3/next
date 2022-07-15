@@ -21,7 +21,9 @@ const WheelStepZoom = 0.004;
 interface UIState {
   scale: number;
   gridSize: number;
+  selectedAppId: string;
   setGridSize: (gridSize: number) => void;
+  setSelectedApp: (appId: string) => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
@@ -34,7 +36,9 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   scale: 1.0,
   gridSize: 50,
+  selectedAppId: '',
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
+  setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
   zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
   zoomInDelta: (d) =>

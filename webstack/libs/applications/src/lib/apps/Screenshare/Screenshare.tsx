@@ -15,7 +15,7 @@ import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
-function Screenshare(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
@@ -222,4 +222,14 @@ function Screenshare(props: App): JSX.Element {
   );
 }
 
-export default Screenshare;
+function ToolbarComponent(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  return (
+    <>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

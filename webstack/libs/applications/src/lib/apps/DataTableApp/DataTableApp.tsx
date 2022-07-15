@@ -41,9 +41,9 @@ import { AppWindow } from '../../components';
 import './styles.css';
 
 import * as React from "react";
-import {ColumnMenu} from "./components/ColumnMenu";
+import { ColumnMenu } from "./components/ColumnMenu";
 
-function DataTableApp(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
 
     // const s = props.data.state as AppState;
     const s = props.data.state as AppState;
@@ -53,20 +53,20 @@ function DataTableApp(props: App): JSX.Element {
 
 
     function handleLoadData() {
-      console.log("in handleLoadData  and updateding the executeInfo")
+        console.log("in handleLoadData  and updateding the executeInfo")
 
         updateState(props._id,
-            { executeInfo: {"executeFunc": "load_data", "params": {"url": s.dataUrl}}})
-      console.log("new value of executeInfo is ")
-      console.log(s.executeInfo)
-      console.log("----")
+            { executeInfo: { "executeFunc": "load_data", "params": { "url": s.dataUrl } } })
+        console.log("new value of executeInfo is ")
+        console.log(s.executeInfo)
+        console.log("----")
 
-      console.log(s)
+        console.log(s)
     }
 
-  function handleUrlChange(ev:any){
-      updateState(props._id, { dataUrl: ev.target.value})
-  }
+    function handleUrlChange(ev: any) {
+        updateState(props._id, { dataUrl: ev.target.value })
+    }
 
 
 
@@ -97,7 +97,7 @@ function DataTableApp(props: App): JSX.Element {
 
     function handleCellClick(clicked: boolean) {
         // setClicked(clicked)
-        updateState(props._id, {clicked: clicked})
+        updateState(props._id, { clicked: clicked })
         const cells = document.querySelectorAll('td');
         cells.forEach(cell => {
             cell.addEventListener('click', () => {
@@ -111,25 +111,25 @@ function DataTableApp(props: App): JSX.Element {
     function handleChange(info: string) {
         const cols = document.querySelectorAll("td[data-col=" + info + "]")
         cols.forEach((cell: any) => {
-                if (!s.checkedItems?.includes(info)) {
-                    const checked = s.checkedItems.concat(info)
-                    updateState(props._id, {checkedItems: checked})
-                    updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected' });
-                    cell.className= "highlight"
+            if (!s.checkedItems?.includes(info)) {
+                const checked = s.checkedItems.concat(info)
+                updateState(props._id, { checkedItems: checked })
+                updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag selected' });
+                cell.className = "highlight"
 
-                    console.log("added: " + cell.cellIndex)
-                    const added = s.selected?.concat(cell.cellIndex)
-                    updateState(props._id, {selected: added})
-                } else {
-                    const unchecked = (() => (s.checkedItems?.filter((item: string) => item != info)))()
-                    // setCheckedItems((checkedItems: string[]) => checkedItems.filter((item: string) => item != info))
-                    updateState(props._id, {checkedItems: unchecked})
-                    updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected' });
-                    cell.className = "originalChakra"
-                    console.log("removed: " + cell.cellIndex)
+                console.log("added: " + cell.cellIndex)
+                const added = s.selected?.concat(cell.cellIndex)
+                updateState(props._id, { selected: added })
+            } else {
+                const unchecked = (() => (s.checkedItems?.filter((item: string) => item != info)))()
+                // setCheckedItems((checkedItems: string[]) => checkedItems.filter((item: string) => item != info))
+                updateState(props._id, { checkedItems: unchecked })
+                updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag unselected' });
+                cell.className = "originalChakra"
+                console.log("removed: " + cell.cellIndex)
 
-                }
             }
+        }
         )
         // updateState(props._id, { checkedItems: checkedItems.concat(info) });
         // updateState(props._id, {checkedItems: s.checkedItems})
@@ -139,42 +139,42 @@ function DataTableApp(props: App): JSX.Element {
 
 
     return (
-    <AppWindow app={props}>
+        <AppWindow app={props}>
 
-        <>
-        <div className="Subcomponent-Container">
-            <CheckboxGroup colorScheme='green'>
-                <HStack spacing='10' display='flex' zIndex="dropdown">
-                    {s.headers?.map((tag: any, index: number) => (
-                        <Checkbox
-                            value={tag}
-                            onChange={(e) => handleChange(tag)}
-                        >
-                            {tag}
-                        </Checkbox>
-                    ))}
-                    <Menu>
-                        <MenuButton
-                            as={IconButton}
-                            aria-label='Table Operations'
-                            icon={<GoKebabVertical/>}
-                            position='absolute'
-                            right='15px'
-                            size="xs"
-                        />
-                        <Portal>
-                            <MenuList>
-                                <MenuItem>Console log col name</MenuItem>
-                                <MenuItem>Sort</MenuItem>
-                                <MenuItem>Compare</MenuItem>
-                            </MenuList>
-                        </Portal>
-                    </Menu>
-                </HStack>
-            </CheckboxGroup>
-        </div>
+            <>
+                <div className="Subcomponent-Container">
+                    <CheckboxGroup colorScheme='green'>
+                        <HStack spacing='10' display='flex' zIndex="dropdown">
+                            {s.headers?.map((tag: any, index: number) => (
+                                <Checkbox
+                                    value={tag}
+                                    onChange={(e) => handleChange(tag)}
+                                >
+                                    {tag}
+                                </Checkbox>
+                            ))}
+                            <Menu>
+                                <MenuButton
+                                    as={IconButton}
+                                    aria-label='Table Operations'
+                                    icon={<GoKebabVertical />}
+                                    position='absolute'
+                                    right='15px'
+                                    size="xs"
+                                />
+                                <Portal>
+                                    <MenuList>
+                                        <MenuItem>Console log col name</MenuItem>
+                                        <MenuItem>Sort</MenuItem>
+                                        <MenuItem>Compare</MenuItem>
+                                    </MenuList>
+                                </Portal>
+                            </Menu>
+                        </HStack>
+                    </CheckboxGroup>
+                </div>
                 <InputGroup size='md'>
-                    {!s.loaded ? <Badge fontSize='1.5em' variant='solid' colorScheme='red'>Not loaded</Badge>:<Badge fontSize='1.5em' variant='solid' colorScheme='green'>Loaded</Badge>}
+                    {!s.loaded ? <Badge fontSize='1.5em' variant='solid' colorScheme='red'>Not loaded</Badge> : <Badge fontSize='1.5em' variant='solid' colorScheme='green'>Loaded</Badge>}
                     <Input
                         type="text"
                         value={s.dataUrl}
@@ -195,7 +195,7 @@ function DataTableApp(props: App): JSX.Element {
                                     s.headers?.map((header: string, index: number) => (
                                         <Th key={index}>
                                             {header}
-                                            <ColumnMenu header={header}/>
+                                            <ColumnMenu header={header} />
                                         </Th>
                                     ))
                                 }
@@ -208,7 +208,7 @@ function DataTableApp(props: App): JSX.Element {
                                     <Tr key={item.id}>
                                         {Object.values(item)?.map((itemChild: any, index) => (
                                             <>
-                                                {(typeof itemChild === 'object') ?<Td key={index} data-col={s.headers[index % s.headers.length] }> {handleNesting(itemChild)} </Td> : <Td key={index} data-col={s.headers[index % s.headers.length] } onClick={() => handleCellClick(!s.clicked)}> {itemChild} </Td>}
+                                                {(typeof itemChild === 'object') ? <Td key={index} data-col={s.headers[index % s.headers.length]}> {handleNesting(itemChild)} </Td> : <Td key={index} data-col={s.headers[index % s.headers.length]} onClick={() => handleCellClick(!s.clicked)}> {itemChild} </Td>}
                                             </>
                                         ))}
                                     </Tr>
@@ -217,32 +217,44 @@ function DataTableApp(props: App): JSX.Element {
                         </Tbody>
                     </Table>
                 </TableContainer>
-        <div className="Message-Container">
-          The value of url is {s.dataUrl}.
+                <div className="Message-Container">
+                    The value of url is {s.dataUrl}.
 
-          The value of viewData is {JSON.stringify(s.viewData)}.
+                    The value of viewData is {JSON.stringify(s.viewData)}.
 
 
-        </div>
-        <div className="Message-Container">
-            <VStack spacing={3}>
-                <Box
-                    fontWeight='bold'
-                >
-                    Message Center
-                </Box>
-                <Alert status='info' variant='top-accent' colorScheme='telegram'>
-                    <AlertIcon />
-                    <AlertTitle>Feedback: </AlertTitle>
-                    <AlertDescription>{ s.messages }</AlertDescription>
-                    <AlertDescription></AlertDescription>
-                </Alert>
-            </VStack>
-        </div>
-        </>
+                </div>
+                <div className="Message-Container">
+                    <VStack spacing={3}>
+                        <Box
+                            fontWeight='bold'
+                        >
+                            Message Center
+                        </Box>
+                        <Alert status='info' variant='top-accent' colorScheme='telegram'>
+                            <AlertIcon />
+                            <AlertTitle>Feedback: </AlertTitle>
+                            <AlertDescription>{s.messages}</AlertDescription>
+                            <AlertDescription></AlertDescription>
+                        </Alert>
+                    </VStack>
+                </div>
+            </>
 
-    </AppWindow>
+        </AppWindow>
     )
 }
 
-export default DataTableApp;
+function ToolbarComponent(props: App): JSX.Element {
+
+    const s = props.data.state as AppState;
+
+    return (
+        <>
+        </>
+    )
+}
+
+export default { AppComponent, ToolbarComponent };
+
+

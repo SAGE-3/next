@@ -165,6 +165,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     type: 'ImageViewer',
                     state: { id: assetID },
                     minimized: false,
+                    raised: false,
                   },
                   user.id
                 );
@@ -189,6 +190,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     type: 'PDFViewer',
                     state: { id: assetID, currentPage: 0, numPages: derived.length },
                     minimized: false,
+                    raised: false,
                   },
                   user.id
                 );
@@ -209,6 +211,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     type: 'CSVViewer',
                     state: { id: assetID },
                     minimized: false,
+                    raised: false,
                   },
                   user.id
                 );
@@ -231,6 +234,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     type: 'Stickie',
                     state: { fontSize: 48, color: '#63B3ED', text: text.toString() },
                     minimized: false,
+                    raised: false,
                   },
                   user.id
                 );

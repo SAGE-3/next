@@ -16,7 +16,7 @@ import { AppWindow } from '../../components';
 import { useAssetStore, useAppStore } from '@sage3/frontend';
 
 
-function PDFViewer(props: App): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
@@ -78,5 +78,26 @@ function PDFViewer(props: App): JSX.Element {
     </AppWindow>
   );
 }
+function ToolbarComponent(props: App): JSX.Element {
 
-export default PDFViewer;
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
+  function handlePrev() {
+    if (s.currentPage === 0) return;
+    updateState(props._id, { currentPage: s.currentPage - 1 })
+  }
+
+  function handleNext() {
+    if (s.currentPage === s.numPages - 1) return;
+    updateState(props._id, { currentPage: s.currentPage + 1 })
+  }
+  return (
+    <>
+      <Button onClick={handlePrev} colorScheme="green">Prev</Button>
+      <Button onClick={handleNext} colorScheme="red">Next</Button>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

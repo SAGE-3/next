@@ -13,17 +13,27 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-function CounterApp(props: App): JSX.Element {
+type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+
+function add(update: UpdateFunc, s: AppState, id: string) {
+  update(id, { count: s.count + 1 });
+}
+
+function sub(update: UpdateFunc, s: AppState, id: string) {
+  update(id, { count: s.count - 1 });
+}
+
+function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
 
   function handleAddClick() {
-    updateState(props._id, { count: s.count + 1 });
+    add(updateState, s, props._id);
   }
 
   function handleSubClick() {
-    updateState(props._id, { count: s.count - 1 });
+    sub(updateState, s, props._id);
   }
 
   function handleZero() {
@@ -49,4 +59,27 @@ function CounterApp(props: App): JSX.Element {
   );
 }
 
-export default CounterApp;
+function ToolbarComponent(props: App): JSX.Element {
+
+  const s = props.data.state as AppState;
+
+  const updateState = useAppStore((state) => state.updateState);
+
+  function handleAddClick() {
+    add(updateState, s, props._id);
+  }
+
+  function handleSubClick() {
+    sub(updateState, s, props._id);
+  }
+
+  return (
+    <>
+      <Button onClick={handleAddClick} colorScheme="green">Add</Button>
+      <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
+    </>
+  )
+}
+
+
+export default { AppComponent, ToolbarComponent };
