@@ -15,6 +15,7 @@ export const ColumnMenu = (props: any) => {
 
     function handleClick(header: string) {
         console.log("clicked! " + header)
+
     }
 
 
@@ -23,42 +24,16 @@ export const ColumnMenu = (props: any) => {
             {colMenus.map((data, key) => {
                 return (
                         <MenuItem>
-                            {/*<MenuButton as={Button}>*/}
-                            {/*    {data.function}*/}
-                            {/*</MenuButton>*/}
 
                             <MenuButton
                                 as={Button}
                                 aria-label='Actions'
                                 size='xs'
                                 variant='link'
-                                // ml='20%'
                                 onClick={(e) => handleClick(props.header)}
                             >
                             {data.function}
                             </MenuButton>
-
-                            {/*<Menu>*/}
-                            {/*<MenuButton*/}
-                            {/*    as={IconButton}*/}
-                            {/*    aria-label='options'*/}
-                            {/*    icon={<FiChevronRight/>}*/}
-                            {/*    variant='ghost'*/}
-                            {/*    size='xs'*/}
-                            {/*    ml='20%'*/}
-                            {/*/>*/}
-                            {/*<MenuList>*/}
-                            {/*        {data.functions.map((vals, index) => {*/}
-                            {/*            return (*/}
-                            {/*                <MenuItem>*/}
-                            {/*                    <MenuButton>{vals}</MenuButton>*/}
-
-                            {/*                </MenuItem>*/}
-                            {/*            )*/}
-                            {/*        })*/}
-                            {/*        }*/}
-                            {/*</MenuList>*/}
-                            {/*</Menu>*/}
                         </MenuItem>
                 )
             })
