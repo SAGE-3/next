@@ -251,7 +251,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuItem>
           </MenuList>
         </Menu>
-      </ButtonGroup>{' '}
+      </ButtonGroup>
     </>
   );
 }

@@ -6,7 +6,12 @@
  *
  */
 import { useEffect, useState } from 'react';
-import { Image } from '@chakra-ui/react';
+import { Image, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+// Icons
+import { MdFileDownload } from 'react-icons/md';
+// Utility functions from SAGE3
+import { downloadFile } from '@sage3/frontend';
+
 import { AppWindow } from '../../components';
 
 import { App } from '../../schema';
@@ -14,7 +19,6 @@ import { Asset, ExtraImageType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore } from '@sage3/frontend';
 
 import { state as AppState } from './index';
-
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -39,13 +43,12 @@ function AppComponent(props: App): JSX.Element {
       if (extra) {
         // find the smallest image for this page (multi-resolution)
         const res = extra.sizes.reduce(function (p, v) {
-          return (p.width < v.width ? p : v);
+          return p.width < v.width ? p : v;
         });
         setUrl(res.url);
       }
     }
   }, [file]);
-
 
   return (
     <AppWindow app={props}>
@@ -55,13 +58,36 @@ function AppComponent(props: App): JSX.Element {
 }
 
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<Asset>();
+
+  useEffect(() => {
+    const myasset = assets.find((a) => a._id === s.id);
+    if (myasset) {
+      setFile(myasset);
+    }
+  }, [s.id, assets]);
 
   return (
     <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="bottom" hasArrow={true} label={'Download Image'} openDelay={400}>
+          <Button
+            onClick={() => {
+              if (file) {
+                const url = file?.data.file;
+                const filename = file?.data.originalfilename;
+                downloadFile('api/assets/static/' + url, filename);
+              }
+            }}
+          >
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
-  )
+  );
 }
 
 export default { AppComponent, ToolbarComponent };
