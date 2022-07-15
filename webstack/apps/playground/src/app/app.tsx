@@ -71,7 +71,7 @@ export function App() {
         dragHandleClassName={'board-handle'}
       >
         {apps.map((app) => {
-          const Component = Applications[app.data.type];
+          const Component = Applications[app.data.type].AppComponent;
           return <Component key={app._id} {...app}></Component>;
         })}
 
