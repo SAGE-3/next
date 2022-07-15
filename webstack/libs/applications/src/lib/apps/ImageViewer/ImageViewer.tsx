@@ -6,6 +6,7 @@
  *
  */
 import { useEffect, useState } from 'react';
+import { Image } from '@chakra-ui/react';
 import { AppWindow } from '../../components';
 
 import { App } from '../../schema';
@@ -48,7 +49,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <img src={url} width="100%" />
+      <Image alt={file?.data.originalfilename} src={url} width="100%" draggable={false} />
     </AppWindow>
   );
 }
