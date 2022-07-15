@@ -17,6 +17,7 @@ export const schema = z.object({
   id: z.string(),
   currentPage: z.number(),
   numPages: z.number(),
+  displayPages: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -24,6 +25,7 @@ export const init: Partial<state> = {
   id: '',
   currentPage: 0,
   numPages: 1,
+  displayPages: 1,
 };
 
 export const name = 'PDFViewer';
