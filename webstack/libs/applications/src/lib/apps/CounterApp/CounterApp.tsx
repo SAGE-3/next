@@ -40,6 +40,7 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { executeInfo: { executeFunc: 'reset_to_zero', params: {} } });
   }
 
+
   return (
     <AppWindow app={props}>
       <>

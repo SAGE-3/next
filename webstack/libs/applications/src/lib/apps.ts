@@ -71,3 +71,5 @@ export const initialValues = {
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
 };
+
+export * from './components'
