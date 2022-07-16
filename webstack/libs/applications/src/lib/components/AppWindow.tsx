@@ -199,7 +199,6 @@ export function AppWindow(props: WindowProps) {
       <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={(minimized) ? 'none' : 'inherit'}>
         {props.children}
       </Box>
-
     </Rnd >
   );
 }
