@@ -107,7 +107,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             boardId,
             ownerId: user._id,
             position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
-            size: { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
+            size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'ImageViewer',
             state: { ...initialValues['ImageViewer'], id: d.id },

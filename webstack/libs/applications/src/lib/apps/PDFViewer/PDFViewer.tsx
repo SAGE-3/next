@@ -6,14 +6,10 @@
  *
  */
 import { useEffect, useState } from 'react';
-import {
-  Box, Button, ButtonGroup, Tooltip,
-  Menu, MenuItem, MenuList, MenuButton,
-  Stack, VStack, HStack,
-} from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
 
 import { App } from '../../schema';
-import { Asset, ExtraPDFType } from '@sage3/shared/types';
+import { Asset, ExtraPDFType, ImageInfoType } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -42,6 +38,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
+  // const [allPagesInfo, setAllPagesInfo] = useState<ImageInfoType[][]>([]);
 
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.id);
@@ -61,10 +58,12 @@ function AppComponent(props: App): JSX.Element {
     if (file) {
       const pages = file.data.derived as ExtraPDFType;
       if (pages) {
+        // setAllPagesInfo(pages);
+
         const allurls = pages.map((page) => {
-          // find the smallest image for this page (multi-resolution)
+          // find the largest image for this page (multi-resolution)
           const res = page.reduce(function (p, v) {
-            return p.width < v.width ? p : v;
+            return p.width > v.width ? p : v;
           });
           return res.url;
         });
@@ -80,31 +79,18 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <HStack
-        roundedBottom="md"
-        bg="whiteAlpha.700"
-        width="100%"
-        height="100%"
-        p={2}
-      >
+      <HStack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}>
         {urls
           .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
-          .map((url, idx) =>
-            <Box
-              id={'pane~' + props._id + idx}
-              p={1} m={1}
-              bg="white" color="gray.800"
-              shadow="base" rounded="lg" width={"100%"}
-            >
-              <img src={url} width={"100%"} draggable={false} alt={file?.data.originalfilename} />
+          .map((url, idx) => (
+            <Box id={'pane~' + props._id + idx} p={1} m={1} bg="white" color="gray.800" shadow="base" rounded="lg" width={'100%'}>
+              <img src={url} width={'100%'} draggable={false} alt={file?.data.originalfilename} />
             </Box>
-          )
-        }
+          ))}
       </HStack>
     </AppWindow>
   );
 }
-
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -121,7 +107,6 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [s.id, assets]);
 
-
   useEffect(() => {
     if (file) {
       const pages = file.data.derived as ExtraPDFType;
@@ -134,26 +119,31 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [file]);
 
+  // Previous page
   function handlePrev(amount = 1) {
     if (s.currentPage === 0) return;
     const newpage = s.currentPage - amount >= 0 ? s.currentPage - amount : 0;
     updateState(props._id, { currentPage: newpage });
   }
 
+  // Next page
   function handleNext(amount = 1) {
     if (s.currentPage === s.numPages - s.displayPages) return;
     const newpage = s.currentPage + amount < s.numPages ? s.currentPage + amount : s.numPages - s.displayPages;
     updateState(props._id, { currentPage: newpage });
   }
 
+  // Go to first page
   function handleFirst() {
     updateState(props._id, { currentPage: 0 });
   }
 
+  // Go to last page
   function handleLast() {
     updateState(props._id, { currentPage: s.numPages - s.displayPages });
   }
 
+  // Add a page
   function handleAddPage() {
     if (s.displayPages < s.numPages) {
       const pageCount = s.displayPages + 1;
@@ -163,11 +153,12 @@ function ToolbarComponent(props: App): JSX.Element {
           width: pageCount * props.data.size.height * aspectRatio,
           height: props.data.size.height,
           depth: props.data.size.depth,
-        }
+        },
       });
     }
   }
 
+  // Remove a page
   function handleRemovePage() {
     if (s.displayPages > 1) {
       const pageCount = s.displayPages - 1;
@@ -177,7 +168,7 @@ function ToolbarComponent(props: App): JSX.Element {
           width: pageCount * props.data.size.height * aspectRatio,
           height: props.data.size.height,
           depth: props.data.size.depth,
-        }
+        },
       });
     }
   }
@@ -186,17 +177,13 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="bottom" hasArrow={true} label={'Remove Page'} openDelay={400}>
-          <Button
-            isDisabled={s.displayPages <= 1}
-            onClick={() => handleRemovePage()}>
+          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()}>
             <MdRemove />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button
-            isDisabled={s.displayPages >= s.numPages}
-            onClick={() => handleAddPage()}>
+          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()}>
             <MdAdd />
           </Button>
         </Tooltip>
@@ -234,13 +221,16 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuButton>
           </Tooltip>
           <MenuList minWidth="150px">
-            <MenuItem icon={<MdFileDownload />} onClick={() => {
-              if (file) {
-                const url = file?.data.file;
-                const filename = file?.data.originalfilename
-                downloadFile('api/assets/static/' + url, filename);
-              }
-            }}>
+            <MenuItem
+              icon={<MdFileDownload />}
+              onClick={() => {
+                if (file) {
+                  const url = file?.data.file;
+                  const filename = file?.data.originalfilename;
+                  downloadFile('api/assets/static/' + url, filename);
+                }
+              }}
+            >
               Download
             </MenuItem>
             <MenuItem icon={<MdOutlineFastRewind />} onClick={() => handlePrev(10)}>

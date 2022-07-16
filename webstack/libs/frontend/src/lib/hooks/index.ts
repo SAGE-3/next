@@ -11,3 +11,4 @@ export * from './useUser';
 export * from './useData';
 export * from './usePeer';
 export * from './usePresence';
+export * from './useMeasure';
