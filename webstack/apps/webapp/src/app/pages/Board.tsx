@@ -32,7 +32,7 @@ import {
   Tag,
 } from '@chakra-ui/react';
 
-import { Applications, initialValues } from '@sage3/applications/apps';
+import { Applications, initialValues, AppError } from '@sage3/applications/apps';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
@@ -44,7 +44,9 @@ import { throttle } from 'throttle-debounce';
 import { DraggableEvent } from 'react-draggable';
 
 import { GiArrowCursor } from 'react-icons/gi';
-import { stat } from 'fs';
+
+// Library to help create error boundaries around dynamic components like SAGEApplications
+import { ErrorBoundary } from 'react-error-boundary';
 
 type LocationParams = {
   boardId: string;
@@ -281,7 +283,13 @@ export function BoardPage() {
             .sort((a, b) => a._updatedAt - b._updatedAt)
             .map((app) => {
               const Component = Applications[app.data.type].AppComponent;
-              return <Component key={app._id} {...app}></Component>;
+              return (
+                // Wrap the components in an errorboundary to protect the board from individual app errors
+                <ErrorBoundary key={app._id}
+                  fallbackRender={({ error, resetErrorBoundary }) => <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />}
+                >
+                  <Component key={app._id} {...app}></Component>
+                </ErrorBoundary>)
             })}
 
           {/* Draw the cursors: filter by board and not myself */}
