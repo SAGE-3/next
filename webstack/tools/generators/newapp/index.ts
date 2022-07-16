@@ -71,12 +71,14 @@ async function updateApps(root: string) {
     const it = apps[i];
     output += `import { name as ${it}Name, init as default${it} } from './apps/${it}';\n`;
   }
+
   output += `\n`;
   output += `\n`;
   for (let i in apps) {
     const it = apps[i];
     output += `import ${it} from './apps/${it}/${it}';\n`;
   }
+
   output += `\n`;
   output += `\n`;
   output += `export const Applications = {\n`;
@@ -84,7 +86,7 @@ async function updateApps(root: string) {
     const it = apps[i];
     output += `  [${it}Name]: ${it},\n`;
   }
-  output += `} as unknown as Record<string, () => JSX.Element>;\n`;
+  output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;\n`;
 
   output += `\n`;
   output += `\n`;
@@ -93,7 +95,8 @@ async function updateApps(root: string) {
     const it = apps[i];
     output += `  [${it}Name]: default${it},\n`;
   }
-  output += `};\n`;
+  output += `};\n\n`;
+  output += `export * from './components';\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);
