@@ -16,19 +16,13 @@ class DataTableState(TrackedBaseModel):
 
     viewData: Optional[dict] = Field(alias = "viewData")
     loaded: bool
-<<<<<<< HEAD
-#     clicked: bool
-selected: list
-items: Optional[dict]
-headers: list
-menuAction: str
-tableMenuAction: str
-=======
-clicked: bool
-checkedItems: list
->>>>>>> origin/dev
-executeInfo: ExecuteInfo
-timestamp: float
+    selected: list
+    items: Optional[dict]
+    headers: list
+    menuAction: str
+    tableMenuAction: str
+    executeInfo: ExecuteInfo
+    timestamp: float
 
 
 class DataTable(SmartBit):
@@ -141,9 +135,11 @@ class DataTable(SmartBit):
         df = pd.DataFrame(temp_json)
         df_sorted = df.sort_values(by=select)
         self.state.viewData = df_sorted.to_dict('records')
+        self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("I am sending this information")
+        print(self.state.viewData)
         self.send_updates()
 
     def column_sort(self):
@@ -190,6 +186,97 @@ class DataTable(SmartBit):
         df = pd.DataFrame(temp_json)
         df_transposed = df.transpose()
         self.state.viewData = df_transposed.to_dict('records')
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("I am sending this information")
+        print(self.state.viewData)
+        self.send_updates()
+
+    def drop_columns(self, select):
+        temp_json = {
+            "Duration":{
+                "0":60,
+                "1":60,
+                "2":60,
+                "3":45,
+                "4":45,
+                "5":60
+            },
+            "Pulse":{
+                "0":110,
+                "1":117,
+                "2":103,
+                "3":109,
+                "4":117,
+                "5":102
+            },
+            "Maxpulse":{
+                "0":130,
+                "1":145,
+                "2":135,
+                "3":175,
+                "4":148,
+                "5":127
+            },
+            "Calories":{
+                "0":409,
+                "1":479,
+                "2":340,
+                "3":282,
+                "4":406,
+                "5":300
+            }
+        }
+        df = pd.DataFrame(temp_json)
+        df_remaining = df.drop(columns=select)
+        self.state.viewData = df_remaining.to_dict('records')
+        self.state.selected = []
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("I am sending this information")
+        print(self.state.viewData)
+        self.send_updates()
+
+    def restore_table(self):
+        temp_json = {
+            "Duration":{
+                "0":60,
+                "1":60,
+                "2":60,
+                "3":45,
+                "4":45,
+                "5":60
+            },
+            "Pulse":{
+                "0":110,
+                "1":117,
+                "2":103,
+                "3":109,
+                "4":117,
+                "5":102
+            },
+            "Maxpulse":{
+                "0":130,
+                "1":145,
+                "2":135,
+                "3":175,
+                "4":148,
+                "5":127
+            },
+            "Calories":{
+                "0":409,
+                "1":479,
+                "2":340,
+                "3":282,
+                "4":406,
+                "5":300
+            }
+        }
+        df = pd.DataFrame(temp_json)
+        self.state.viewData = df.to_dict('records')
+        self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("I am sending this information")

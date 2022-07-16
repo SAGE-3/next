@@ -171,7 +171,25 @@ function AppComponent(props: App): JSX.Element {
       console.log(s)
     }
 
-  const SubMenu = () => (
+    function dropColumns() {
+      console.log("Dropping columns: " + s.selected)
+      updateState(props._id,
+        { executeInfo: {"executeFunc": "drop_columns", "params": {"select": s.selected}}})
+      console.log(s.executeInfo)
+      console.log("----")
+      console.log(s)
+    }
+
+    function restoreTable() {
+      console.log("Restoring table")
+      updateState(props._id,
+        { executeInfo: {"executeFunc": "restore_table", "params": {}}})
+      console.log(s.executeInfo)
+      console.log("----")
+      console.log(s)
+    }
+
+  const ColumnMenu = () => (
     <MenuList>
       {colMenus.map((data, key) => {
         return (
@@ -229,7 +247,7 @@ function AppComponent(props: App): JSX.Element {
           variant='link'
           onClick={transposeTable}
         >
-          Tranpose Table
+          Transpose Table
         </MenuButton>
       </MenuItem>
       <MenuItem>
@@ -241,6 +259,28 @@ function AppComponent(props: App): JSX.Element {
           onClick={tableSort}
         >
           Sort on Selected Columns
+        </MenuButton>
+      </MenuItem>
+      <MenuItem>
+        <MenuButton
+          as={Button}
+          aria-label='Actions'
+          size='xs'
+          variant='link'
+          onClick={dropColumns}
+        >
+          Drop Selected Columns
+        </MenuButton>
+      </MenuItem>
+      <MenuItem>
+        <MenuButton
+          as={Button}
+          aria-label='Actions'
+          size='xs'
+          variant='link'
+          onClick={restoreTable}
+        >
+          Restore Original Table
         </MenuButton>
       </MenuItem>
     </MenuList>
@@ -328,7 +368,7 @@ function AppComponent(props: App): JSX.Element {
                                 isActive={isOpen}
                               />
                               <Portal>
-                                <MenuItem as={SubMenu}/>
+                                <MenuItem as={ColumnMenu}/>
                               </Portal>
                             </>
                           )}

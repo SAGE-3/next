@@ -15,7 +15,7 @@ export type state = {
     items: any;
     loaded: boolean;
     headers: string[];
-    clicked: boolean;
+    // clicked: boolean;
     selected: string[];
     checkedItems: string[];
     dataUrl: string;
