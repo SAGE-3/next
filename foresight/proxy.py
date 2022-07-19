@@ -1,4 +1,3 @@
-
 # -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
@@ -179,7 +178,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "d1e6cbd9-3aac-4a6e-903c-a4ad73841fd3")
+sage_proxy = SAGEProxy("config/config.json", "6920f643-6a58-487c-9b71-824a96ba62c9")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()

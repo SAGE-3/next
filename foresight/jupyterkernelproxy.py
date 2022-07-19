@@ -128,7 +128,7 @@ class JupyterKernelProxy(Borg):
                 if msg_exec_state is None and msg["content"].get("code", None) is None:
                     print(f"Handling message {msg}")
                     parent_msg_id = msg['parent_header']['msg_id']
-                    print(f"Calling fuction responsible")
+                    print(f"Calling fuction responsible and parent message id is {parent_msg_id}")
 
                     #todo: inspect function and make sure it has a first parameter that is ...
                     self.callback_info[parent_msg_id][1](msg)
