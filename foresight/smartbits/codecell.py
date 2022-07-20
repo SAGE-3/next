@@ -43,7 +43,7 @@ class CodeCell(SmartBit):
             else:
                 self.state.output = "Unhandled"
                 self.state.output_type = "text/error"
-                
+
         elif "traceback" in msg['content']:
             self.state.output  = str(msg['content'])
             self.state.output_type  = "text/error"

@@ -11,7 +11,7 @@ class AsyncioEventLoopThread(threading.Thread):
     def __init__(self, *args, loop=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.running = False
-        # self.loop = asyncio.new_event_loop()
+        self.loop = asyncio.new_event_loop()
 
 
     def run(self):
