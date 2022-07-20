@@ -34,8 +34,16 @@ class CodeCell(SmartBit):
             self.state.output  = msg["content"]["text"]
             self.state.output_type  = msg["content"]["name"]
         elif "data" in msg['content']:
-            self.state.output  = str(msg['content']['data'])
-
+            if "image/png" in msg['content']['data']:
+                self.state.output  = msg['content']['data']["image/png"]
+                self.state.output_type = "image/png"
+            elif "text/html" in msg['content']['data']:
+                self.state.output = msg['content']['data']["text/html"]
+                self.state.output_type = "text/html"
+            else:
+                self.state.output = "Unhandled"
+                self.state.output_type = "text/error"
+                
         elif "traceback" in msg['content']:
             self.state.output  = str(msg['content'])
             self.state.output_type  = "text/error"
