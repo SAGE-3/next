@@ -36,6 +36,13 @@ class CodeCell(SmartBit):
         elif "data" in msg['content']:
             self.state.output  = list(msg['content']['data'].values())[0]
             self.state.output_type  = list(msg['content']['data'].keys())[0]
+
+        elif "traceback" in msg['content']:
+            self.state.output  = str(msg['content'])
+            self.state.output_type  = "text/error"
+
+
+
         self.send_updates()
 
 

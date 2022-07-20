@@ -29,11 +29,13 @@ export const init: Partial<state> = {
     loaded: false,
     // clicked: false,
     selected: [],
+    // viewData: {},
     items: [],
     headers: [],
     menuAction: "",
     tableMenuAction: "",
     timestamp: 0,
+
 
     executeInfo: {"executeFunc": "", "params": {}},
 };
