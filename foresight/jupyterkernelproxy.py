@@ -6,16 +6,18 @@ import asyncio
 import threading
 import json
 from jupyter_client import AsyncKernelClient
-from multiprocessing import Queue
 
 class AsyncioEventLoopThread(threading.Thread):
     def __init__(self, *args, loop=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.loop = loop or asyncio.new_event_loop()
         self.running = False
+        self.loop = asyncio.new_event_loop()
+
 
     def run(self):
+        print("I a running the thread......")
         self.running = True
+        asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
     def run_coro(self, coro):
@@ -27,8 +29,6 @@ class AsyncioEventLoopThread(threading.Thread):
         self.loop.call_soon_threadsafe(self.loop.stop)
         print("waiting for the asyncio loop to stop")
         time.sleep(1)
-
-
 
 class Borg:
     """
@@ -65,8 +65,11 @@ class JupyterKernelProxy(Borg):
     # decorator for async functions that need to run in
     # as coroutine in a separate thread
     def _run_coro(_func):
-        def wrapper(self, ):
-            res = self.thr.run_coro(_func(self))
+        def wrapper(self, command_info=None):
+            if command_info is not None:
+                res = self.thr.run_coro(_func(self, command_info))
+            else:
+                res = self.thr.run_coro(_func(self))
             # clearing the func and the and params
             return res
         return wrapper
@@ -87,7 +90,8 @@ class JupyterKernelProxy(Borg):
         #     raise e
 
     # execut a command
-    def execute(self, command_info):
+    @_run_coro
+    async def execute(self, command_info):
         """
         :param command_info: a dict with three keys, 1- uuid, 2-call_fn, a callback function and 3 code to run
         :return:

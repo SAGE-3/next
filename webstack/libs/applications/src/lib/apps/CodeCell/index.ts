@@ -90,7 +90,7 @@ export const init: Partial<state> = {
   code: '',
   output: '',
   output_type: '',
-  executeInfo: { executeFunc: 'resize_on_load', params: {} } as executeInfoType,
+  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
   // cells: [png_sample] as cellType[],
   // cells: sample1.cells as cellType[],
   // cells: sample2.cells as cellType[],

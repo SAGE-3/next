@@ -36,6 +36,9 @@ class CodeCell(SmartBit):
         elif "data" in msg['content']:
             self.state.output  = list(msg['content']['data'].values())[0]
             self.state.output_type  = list(msg['content']['data'].keys())[0]
+        # self.state.code = ""
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
         self.send_updates()
 
 
@@ -52,3 +55,20 @@ class CodeCell(SmartBit):
                         "code": self.state.code}
         self._jupyter_proxy.execute(command_info)
         # the proxy has the responsibilitys
+
+    def test(self, uuid):
+        """
+        Non blocking function to execute code. The proxy has the responsibility to execute the code
+        and to call a call_back function which know how to handle the results message
+        :param uuid:
+        :param code:
+        :return:
+        """
+        print("*****-------I am running a test*****-------")
+        command_info = {"uuid": uuid,
+                        "call_fn": self.handle_exec_result,
+                        "code": self.state.code}
+
+        print(f"Command info is {command_info}")
+        print(f"My proxy is: {self._jupyter_proxy}")
+        self._jupyter_proxy.execute(command_info)

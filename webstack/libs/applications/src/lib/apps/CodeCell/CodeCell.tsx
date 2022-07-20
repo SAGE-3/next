@@ -113,7 +113,7 @@ const AppComponent = (props: App): JSX.Element => {
     const code = ace.current?.editor?.getValue();
     console.log(code)
     if (code) {
-      updateState(props._id, { code: code, executeInfo: { executeFunc: 'execute', params: {uuid: getUUID()}} });
+      updateState(props._id, { code: code, executeInfo: { executeFunc: 'test', params: {uuid: getUUID()}} });
     }
   }
 
@@ -188,7 +188,7 @@ const AppComponent = (props: App): JSX.Element => {
 
   /**
    * Change size of window to hide the output view
-   * @param e 
+   * @param e
    * @param id the id of the cell
    * @param size the size of the cell
    */
@@ -481,9 +481,9 @@ const AppComponent = (props: App): JSX.Element => {
 const RenderMarkdown = (markdown: string | string[]): JSX.Element => {
   return (
     <>
-      <Alert 
-        mb={2} 
-        // variant={'left-accent'} 
+      <Alert
+        mb={2}
+        // variant={'left-accent'}
         backgroundColor={useColorModeValue('#F0F2F6', '#111111')}>
         <Markdown data={markdown} />
       </Alert>
@@ -538,8 +538,8 @@ const RenderImage = ( type: string, encoding: string, ww?: number | string, hh?:
         src={`data:${type};base64,${encoding}`}
         maxWidth="100%"
         display={'block'}
-        width={ww ? ww : 'auto'} 
-        height={hh ? hh : 'auto'} 
+        width={ww ? ww : 'auto'}
+        height={hh ? hh : 'auto'}
         alt="" />
       <Text color={'purple'}>Image: {type}</Text>
     </>
