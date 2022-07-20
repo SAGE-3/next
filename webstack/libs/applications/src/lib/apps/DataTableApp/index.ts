@@ -10,6 +10,7 @@ export type state = {
     menuAction: string;
     tableMenuAction: string;
     timestamp: number;
+    // df: any;
 
     messages: string;
     items: any;

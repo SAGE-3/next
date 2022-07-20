@@ -179,7 +179,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config.json", "bbf42509-fb60-4b6d-ab7c-17afa7143bbe")
+sage_proxy = SAGEProxy("config.json", "57476038-1af2-4c4c-9e1c-22e2946915fc")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()

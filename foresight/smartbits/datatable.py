@@ -23,6 +23,7 @@ class DataTableState(TrackedBaseModel):
     tableMenuAction: str
     executeInfo: ExecuteInfo
     timestamp: float
+    # df: pd.DataFrame
 
 
 class DataTable(SmartBit):
@@ -35,45 +36,50 @@ class DataTable(SmartBit):
         super(DataTable, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
+    # self.state.df = pd.read_json('./data.json')
+
     # TODO, add a decorator to automatically set executeFunc
     # and params to ""
     def load_data(self, url):
-        temp_json = {
-            "Duration":{
-                "0":60,
-                "1":60,
-                "2":60,
-                "3":45,
-                "4":45,
-                "5":60
-            },
-            "Pulse":{
-                "0":110,
-                "1":117,
-                "2":103,
-                "3":109,
-                "4":117,
-                "5":102
-            },
-            "Maxpulse":{
-                "0":130,
-                "1":145,
-                "2":135,
-                "3":175,
-                "4":148,
-                "5":127
-            },
-            "Calories":{
-                "0":409,
-                "1":479,
-                "2":340,
-                "3":282,
-                "4":406,
-                "5":300
-            }
-        }
-        df = pd.DataFrame(temp_json)
+        # temp_json = {
+        #     "Duration":{
+        #         "0":60,
+        #         "1":60,
+        #         "2":60,
+        #         "3":45,
+        #         "4":45,
+        #         "5":60
+        #     },
+        #     "Pulse":{
+        #         "0":110,
+        #         "1":117,
+        #         "2":103,
+        #         "3":109,
+        #         "4":117,
+        #         "5":102
+        #     },
+        #     "Maxpulse":{
+        #         "0":130,
+        #         "1":145,
+        #         "2":135,
+        #         "3":175,
+        #         "4":148,
+        #         "5":127
+        #     },
+        #     "Calories":{
+        #         "0":409,
+        #         "1":479,
+        #         "2":340,
+        #         "3":282,
+        #         "4":406,
+        #         "5":300
+        #     }
+        # }
+        df = pd.read_json('data.json')
+        df.head()
         self.state.viewData = df.to_dict('records')
+        print("-----")
+        print(self.state.viewData)
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}

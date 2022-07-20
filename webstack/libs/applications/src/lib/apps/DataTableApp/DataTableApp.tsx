@@ -291,6 +291,10 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
 
       <>
+        {/*<div style={{ display: s.df !== undefined ? "block" : "none" }}>*/}
+        {/*  {typeof s.df}*/}
+        {/*</div>*/}
+
         <div style={{ display: s.tableMenuAction !== "" ? "block" : "none" }}>
           <Alert status='info'>
             <AlertIcon/>
