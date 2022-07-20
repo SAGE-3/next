@@ -11,7 +11,7 @@ class AsyncioEventLoopThread(threading.Thread):
     def __init__(self, *args, loop=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.running = False
-        # self.loop = asyncio.new_event_loop()
+        self.loop = asyncio.new_event_loop()
 
 
     def run(self):
@@ -59,8 +59,8 @@ class JupyterKernelProxy(Borg):
 
             # start an independent listening process.
             self.stop_thread = False # keep on checking until this changes to false
-            self.msg_checker = threading.Thread(target=self.process_iopub)
-            self.msg_checker.start()
+            #self.msg_checker = threading.Thread(target=self.process_iopub)
+            #self.msg_checker.start()
 
     # decorator for async functions that need to run in
     # as coroutine in a separate thread
@@ -114,38 +114,48 @@ class JupyterKernelProxy(Borg):
         self.thr.stop()
         print("Done Stopping processes")
 
-
-    @_run_coro
-    async def process_iopub(self, log_every = 10 ):
-        time_since_logged = 0
+    async def process_iopub(self):
         while True:
-            if self.stop_thread:
-                print("Stopping thread that checks for messages")
-                break
-            try:
-                msg = await self.kc.get_iopub_msg(timeout=1)
-                # ignore messages that report execution_state (busy or idle messages)
-                # also ignore messages that report the code
+            msg = await self.kc.get_iopub_msg(timeout=1)
+            if msg is not None:
+                print("hi")
+                print(type(msg))
+                print("bye")
+            else:
+                print("nothing to report")
 
-                msg_exec_state = msg["content"].get("execution_state", None)
-                # if msg_exec_state is valid, it means the info contained is not necessary
-                if msg_exec_state is None and msg["content"].get("code", None) is None:
-                    print(f"Handling message {msg}")
-                    parent_msg_id = msg['parent_header']['msg_id']
-                    print(f"Calling fuction responsible and parent message id is {parent_msg_id}")
 
-                    #todo: inspect function and make sure it has a first parameter that is ...
-                    self.callback_info[parent_msg_id][1](msg)
-
-                    # self.iopub_responses.put(msg)
-            except:
-                time_since_logged += 1
-                if time_since_logged == log_every:
-                    print("Still checking")
-                    time_since_logged = 0
-        print("Done with the While True loop that check for messages")
-        # self.msg_checker.join()
-        print("Successfully joined the loop that check for messages")
+    # @_run_coro
+    # async def process_iopub(self, log_every = 10 ):
+    #     time_since_logged = 0
+    #     while True:
+    #         if self.stop_thread:
+    #             print("Stopping thread that checks for messages")
+    #             break
+    #         try:
+    #             msg = await self.kc.get_iopub_msg(timeout=1)
+    #             # ignore messages that report execution_state (busy or idle messages)
+    #             # also ignore messages that report the code
+    #
+    #             msg_exec_state = msg["content"].get("execution_state", None)
+    #             # if msg_exec_state is valid, it means the info contained is not necessary
+    #             if msg_exec_state is None and msg["content"].get("code", None) is None:
+    #                 print(f"Handling message {msg}")
+    #                 parent_msg_id = msg['parent_header']['msg_id']
+    #                 print(f"Calling fuction responsible and parent message id is {parent_msg_id}")
+    #
+    #                 #todo: inspect function and make sure it has a first parameter that is ...
+    #                 self.callback_info[parent_msg_id][1](msg)
+    #
+    #                 # self.iopub_responses.put(msg)
+    #         except:
+    #             time_since_logged += 1
+    #             if time_since_logged == log_every:
+    #                 print("Still checking")
+    #                 time_since_logged = 0
+    #     print("Done with the While True loop that check for messages")
+    #     # self.msg_checker.join()
+    #     print("Successfully joined the loop that check for messages")
 
 
 
