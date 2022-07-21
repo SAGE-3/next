@@ -147,11 +147,11 @@ function AppComponent(props: App): JSX.Element {
             width: 1280,
             height: 800,
             frameRate: 15,
-            // maxWidth: 1280,
-            // maxHeight: 720,
-            // minWidth: 640,
-            // minHeight: 480,
-            cursor: "always"
+            maxWidth: 1280 * window.devicePixelRatio,
+            maxHeight: 800 * window.devicePixelRatio,
+            minWidth: 640,
+            minHeight: 480,
+            advanced: [{ latency: { ideal: 0, max: 1.0 } }],
           },
         } as MediaStreamConstraints;
 
