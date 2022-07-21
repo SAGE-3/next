@@ -151,6 +151,7 @@ function AppComponent(props: App): JSX.Element {
             maxHeight: 800 * window.devicePixelRatio,
             minWidth: 640,
             minHeight: 480,
+            displaySurface: 'monitor',
             advanced: [{ latency: { ideal: 0, max: 1.0 } }],
           },
         } as MediaStreamConstraints;
