@@ -144,9 +144,9 @@ function AppComponent(props: App): JSX.Element {
           audio: true,
           video: {
             chromeMediaSource: 'desktop',
-            width: 1024,
-            height: 720,
-            frameRate: 5,
+            width: 1280,
+            height: 800,
+            frameRate: 15,
             // maxWidth: 1280,
             // maxHeight: 720,
             // minWidth: 640,
