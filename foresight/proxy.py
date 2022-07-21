@@ -98,7 +98,7 @@ class SAGEProxy():
                 self.populate_exisitng()
                 async for msg in ws:
                     msg = json.loads(msg)
-                    print(f"Receive: \n {msg}")
+                    print(f"Received: \n {msg}")
                     self.__message_queue.put(msg)
 
         asyncio.get_event_loop().run_until_complete(_run(self))
@@ -111,6 +111,7 @@ class SAGEProxy():
         """
         while True:
             msg = self.__message_queue.get()
+            print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             collection = msg["event"]['col']
             doc = msg['event']['doc']
@@ -178,7 +179,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "6920f643-6a58-487c-9b71-824a96ba62c9")
+sage_proxy = SAGEProxy("config/config.json", "8a1ee12b-146a-4741-b08b-46e9e7803e4f")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()
