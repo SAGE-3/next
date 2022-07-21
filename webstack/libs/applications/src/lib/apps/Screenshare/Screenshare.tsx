@@ -159,7 +159,7 @@ function AppComponent(props: App): JSX.Element {
         window.navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
           localStream.current = stream;
           // for desktop sharing, limit a bit
-          stream.getTracks()[0].applyConstraints({ frameRate: { max: 5 } });
+          // stream.getTracks()[0].applyConstraints({ frameRate: { max: 5 } });
           const settings = stream.getVideoTracks()[0].getSettings();
           const w = settings.width;
           const h = settings.height;
