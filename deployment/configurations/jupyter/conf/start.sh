@@ -16,7 +16,7 @@ pip3 install redis
 python3 /conf/redis-store.py $token
 
 # dependencies (requirements.txt)
-pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx
+pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx pydantic
 # extras
 # pip3 install python-magic rq dill opencv-python Pillow
 
