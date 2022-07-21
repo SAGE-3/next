@@ -34,6 +34,9 @@ class CodeCell(SmartBit):
             self.state.output  = msg["content"]["text"]
             self.state.output_type  = msg["content"]["name"]
         elif "data" in msg['content']:
+            if len(msg['content']['data']) < 2:
+                # typically contains just a /text/p[lain with no relevant info
+                return
             if "image/png" in msg['content']['data']:
                 self.state.output  = msg['content']['data']["image/png"]
                 self.state.output_type = "image/png"

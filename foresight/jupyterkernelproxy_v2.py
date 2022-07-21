@@ -7,28 +7,6 @@ import threading
 import json
 from jupyter_client import AsyncKernelClient
 
-class AsyncioEventLoopThread(threading.Thread):
-    def __init__(self, *args, loop=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.running = False
-        self.loop = asyncio.new_event_loop()
-
-
-    def run(self):
-        print("I a running the thread......")
-        self.running = True
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_forever()
-
-    def run_coro(self, coro):
-        return asyncio.run_coroutine_threadsafe(coro, loop=self.loop).result()
-
-    def stop(self):
-        self.running = False
-        # self.kc.shutdown()
-        self.loop.call_soon_threadsafe(self.loop.stop)
-        print("waiting for the asyncio loop to stop")
-        time.sleep(1)
 
 class Borg:
     """
@@ -46,12 +24,8 @@ class JupyterKernelProxy(Borg):
         Borg.__init__(self)
         if not hasattr(self, "kernel_config"):
             self.kernel_config = json.load(open(kernel_config))
-            self.startup_timeout = startup_timeout
+            # self.startup_timeout = startup_timeout
             # self.kernel_name = kernel_name
-            self.thr = AsyncioEventLoopThread()
-            self.thr.start()
-            self.callback_info = {}
-            self.kc = None
 
             self.start_new_async_kernel()
             if self.kc is None:
@@ -64,18 +38,17 @@ class JupyterKernelProxy(Borg):
 
     # decorator for async functions that need to run in
     # as coroutine in a separate thread
-    def _run_coro(_func):
-        def wrapper(self, command_info=None):
-            if command_info is not None:
-                res = self.thr.run_coro(_func(self, command_info))
-            else:
-                res = self.thr.run_coro(_func(self))
-            # clearing the func and the and params
-            return res
-        return wrapper
+    # def _run_coro(_func):
+    #     def wrapper(self, command_info=None):
+    #         if command_info is not None:
+    #             res = self.thr.run_coro(_func(self, command_info))
+    #         else:
+    #             res = self.thr.run_coro(_func(self))
+    #         # clearing the func and the and params
+    #         return res
+    #     return wrapper
 
-    @_run_coro
-    async def start_new_async_kernel(self):
+    def start_new_async_kernel(self):
         """Start a new async kernel client"""
         # self.km = AsyncKernelManager(kernel_name=self.kernel_name)
         # await self.km.start_kernel()
@@ -90,21 +63,20 @@ class JupyterKernelProxy(Borg):
         #     raise e
 
     # execut a command
-    @_run_coro
-    async def execute(self, command_info):
-        """
-        :param command_info: a dict with three keys, 1- uuid, 2-call_fn, a callback function and 3 code to run
-        :return:
-        """
-        user_passed_uuid = command_info["uuid"]
-        callback_fn = command_info["call_fn"]
-        command = command_info["code"]
-        execute_uuid = self.kc.execute(command)
-        self.callback_info[execute_uuid] = (user_passed_uuid, callback_fn)
-        return execute_uuid
+    # @_run_coro
+    # async def execute(self, command_info):
+    #     """
+    #     :param command_info: a dict with three keys, 1- uuid, 2-call_fn, a callback function and 3 code to run
+    #     :return:
+    #     """
+    #     user_passed_uuid = command_info["uuid"]
+    #     callback_fn = command_info["call_fn"]
+    #     command = command_info["code"]
+    #     execute_uuid = self.kc.execute(command)
+    #     self.callback_info[execute_uuid] = (user_passed_uuid, callback_fn)
+    #     return execute_uuid
 
     # TODO make sure to top threads only if it's not running (leads to block)
-    @_run_coro
     async def cleanup(self):
         self.stop_thread = True
         print("Stopping processes")
