@@ -21,7 +21,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   file: 'file.svg',
-  city: 'Chicago',
+  city: 'Local Time',
 };
 
 export const name = 'SVGBox';
