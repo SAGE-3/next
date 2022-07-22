@@ -17,6 +17,7 @@ import { name as DataTableAppName, init as defaultDataTableApp } from './apps/Da
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SVGBoxName, init as defaultSVGBox } from './apps/SVGBox';
+import { name as PyScriptName, init as defaultPyScript } from './apps/PyScript';
 
 
 import CounterApp from './apps/CounterApp/CounterApp';
@@ -36,6 +37,7 @@ import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SVGBox from './apps/SVGBox/SVGBox';
+import PyScript from './apps/PyScript/PyScript';
 
 
 export const Applications = {
@@ -56,6 +58,7 @@ export const Applications = {
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
   [SVGBoxName]: SVGBox,
+  [PyScriptName]: PyScript,
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 
@@ -77,6 +80,7 @@ export const initialValues = {
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
   [SVGBoxName]: defaultSVGBox,
+  [PyScriptName]: defaultPyScript,
 };
 
 export * from './components';
