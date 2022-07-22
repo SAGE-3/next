@@ -144,14 +144,15 @@ function AppComponent(props: App): JSX.Element {
           audio: true,
           video: {
             chromeMediaSource: 'desktop',
-            width: 1024,
-            height: 720,
-            frameRate: 5,
-            // maxWidth: 1280,
-            // maxHeight: 720,
-            // minWidth: 640,
-            // minHeight: 480,
-            cursor: "always"
+            width: 1280,
+            height: 800,
+            frameRate: 15,
+            maxWidth: 1280 * window.devicePixelRatio,
+            maxHeight: 800 * window.devicePixelRatio,
+            minWidth: 640,
+            minHeight: 480,
+            displaySurface: 'monitor',
+            advanced: [{ latency: { ideal: 0, max: 1.0 } }],
           },
         } as MediaStreamConstraints;
 
@@ -159,7 +160,7 @@ function AppComponent(props: App): JSX.Element {
         window.navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
           localStream.current = stream;
           // for desktop sharing, limit a bit
-          stream.getTracks()[0].applyConstraints({ frameRate: { max: 5 } });
+          // stream.getTracks()[0].applyConstraints({ frameRate: { max: 5 } });
           const settings = stream.getVideoTracks()[0].getSettings();
           const w = settings.width;
           const h = settings.height;
