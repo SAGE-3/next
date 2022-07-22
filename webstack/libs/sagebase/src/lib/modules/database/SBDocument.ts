@@ -42,6 +42,7 @@ export type SBDocumentUpdateMessage<Type extends SBJSON> = {
   type: 'UPDATE';
   col: string;
   doc: SBDocument<Type>;
+  updates: Partial<Type>
 };
 
 export type SBDocumentDeleteMessage<Type extends SBJSON> = {
@@ -147,7 +148,7 @@ export class SBDocumentRef<Type extends SBJSON> {
         await this.refreshUpdate(by);
         const newValue = await this.read();
         if (newValue) {
-          await this.publishUpdateAction(newValue);
+          await this.publishUpdateAction(newValue, update);
         }
       }
       return generateWriteResult(true);
@@ -214,10 +215,11 @@ export class SBDocumentRef<Type extends SBJSON> {
     return;
   }
 
-  private async publishUpdateAction(doc: SBDocument<Type>): Promise<void> {
+  private async publishUpdateAction(doc: SBDocument<Type>, updates: Partial<Type>): Promise<void> {
     const action = {
       type: 'UPDATE',
       doc: doc,
+      updates
     } as SBDocumentUpdateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
