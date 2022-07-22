@@ -83,7 +83,6 @@ const AppStore = createVanilla<Applications>((set, get) => {
       boardSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
         const doc = message.doc as App;
-        console.log(message);
         switch (message.type) {
           case 'CREATE': {
             set({ apps: [...get().apps, doc] });
