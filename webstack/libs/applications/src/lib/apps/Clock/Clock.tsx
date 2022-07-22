@@ -145,7 +145,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <VStack p={0} m={2} >
         <Clock ref={svgRef} />
-        <Text fontSize={"2xl"}>{city}</Text>
+        {/* <Text fontSize={"2xl"}>{city}</Text> */}
       </VStack>
     </AppWindow>
   );

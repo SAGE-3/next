@@ -24,4 +24,4 @@ export const init: Partial<state> = {
   city: 'Chicago',
 };
 
-export const name = 'SVGBox';
+export const name = 'Clock';
