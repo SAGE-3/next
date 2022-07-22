@@ -133,7 +133,9 @@ function AppComponent(props: App): JSX.Element {
           vid_params.degradationPreference = "maintain-framerate"
         }
         // Set a base encoding setup if there isn't one already
+        console.log('Before', vid_params);
         vid_params.encodings == [{ maxBitrate: 0 }];
+        console.log('After', vid_params);
         // vid_params.encodings == vid_params.encodings ?? [{ maxBitrate: 0 }]
         vid_params.encodings[0].maxBitrate = 4000000 // For a 4mbps stream;
         // Set the new bitrate
