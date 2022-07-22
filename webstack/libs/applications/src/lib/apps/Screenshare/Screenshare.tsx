@@ -14,6 +14,7 @@ import Peer from 'peerjs';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
+import { BsConeStriped } from 'react-icons/bs';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -39,7 +40,22 @@ function AppComponent(props: App): JSX.Element {
     // Late joiner
     if (type === 'join') {
       if (localStream.current && mePeer.current) {
-        mePeer.current.call(data, localStream.current);
+        const acall = mePeer.current.call(data, localStream.current);
+
+        console.log('RTC> Call', acall);
+        const vid_sender = acall.peerConnection.getSenders().filter(s => s.track?.kind == "video")[0]
+        console.log('RTC> vid_sender', vid_sender);
+        const vid_params = vid_sender.getParameters()
+        console.log('RTC> vid_params', vid_params);
+        if ("degradationPreference" in vid_params) {
+          // So that the webrtc implementation doesn't alter the framerate - this is optional
+          vid_params.degradationPreference = "maintain-framerate"
+        }
+        // Set a base encoding setup if there isn't one already
+        vid_params.encodings == vid_params.encodings ?? [{ maxBitrate: 0 }]
+        vid_params.encodings[0].maxBitrate = 4000000 // For a 4mbps stream;
+        // Set the new bitrate
+        vid_sender.setParameters(vid_params);
       }
     }
   }
@@ -106,7 +122,17 @@ function AppComponent(props: App): JSX.Element {
   const rtcCall = useCallback((data: MediaStream) => {
     for (const c in connections) {
       if (me) {
-        me.call(connections[c].peer, data);
+        const acall = me.call(connections[c].peer, data);
+        console.log('RTC> Call', acall);
+        const vid_sender = acall.peerConnection.getSenders().filter(s => s.track?.kind == "video")[0]
+        console.log('RTC> vid_sender', vid_sender);
+        const vid_params = vid_sender.getParameters()
+        console.log('RTC> vid_params', vid_params);
+        if ("degradationPreference" in vid_params) {
+          // So that the webrtc implementation doesn't alter the framerate - this is optional
+          vid_params.degradationPreference = "maintain-framerate"
+        }
+
       }
     }
   }, [connections]);
