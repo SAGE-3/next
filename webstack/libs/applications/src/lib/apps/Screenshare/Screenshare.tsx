@@ -161,6 +161,19 @@ function AppComponent(props: App): JSX.Element {
           // for desktop sharing, limit a bit
           // stream.getTracks()[0].applyConstraints({ frameRate: { max: 5 } });
           const settings = stream.getVideoTracks()[0].getSettings();
+
+          const track = stream.getVideoTracks()[0];
+          console.log('Before> track', track.contentHint);
+          if ('contentHint' in track) {
+            const hint = 'detail';
+            track.contentHint = hint;
+            if (track.contentHint !== hint) {
+              console.log('Stream> Invalid video track contentHint: \'' + hint + '\'');
+            }
+          } else {
+            console.log('Stream> MediaStreamTrack contentHint attribute not supported');
+          }
+
           const w = settings.width;
           const h = settings.height;
           const fps = settings.frameRate;
