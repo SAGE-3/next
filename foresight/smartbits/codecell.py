@@ -36,50 +36,50 @@ class CodeCell(SmartBit):
         self.send_updates()
 
 
-    def handle_exec_result(self, msg):
-        print(" \n\n\n************I am in Code Cell's  function that handles the result of the execution, i.e. updating the client")
-        print(f"return message is {msg}************\n\n\n")
-        if "text" in msg['content']:
-            self.state.output  = msg["content"]["text"]
-            self.state.output_type  = msg["content"]["name"]
-        elif "data" in msg['content']:
-            if len(msg['content']['data']) < 2:
-                # typically contains just a /text/p[lain with no relevant info
-                return
-            if "image/png" in msg['content']['data']:
-                self.state.output  = msg['content']['data']["image/png"]
-                self.state.output_type = "image/png"
-            elif "text/html" in msg['content']['data']:
-                self.state.output = msg['content']['data']["text/html"]
-                self.state.output_type = "text/html"
-            else:
-                self.state.output = "Unhandled"
-                self.state.output_type = "text/error"
+    # def handle_exec_result(self, msg):
+    #     print(" \n\n\n************I am in Code Cell's  function that handles the result of the execution, i.e. updating the client")
+    #     print(f"return message is {msg}************\n\n\n")
+    #     if "text" in msg['content']:
+    #         self.state.output  = msg["content"]["text"]
+    #         self.state.output_type  = msg["content"]["name"]
+    #     elif "data" in msg['content']:
+    #         if len(msg['content']['data']) < 2:
+    #             # typically contains just a /text/p[lain with no relevant info
+    #             return
+    #         if "image/png" in msg['content']['data']:
+    #             self.state.output  = msg['content']['data']["image/png"]
+    #             self.state.output_type = "image/png"
+    #         elif "text/html" in msg['content']['data']:
+    #             self.state.output = msg['content']['data']["text/html"]
+    #             self.state.output_type = "text/html"
+    #         else:
+    #             self.state.output = "Unhandled"
+    #             self.state.output_type = "text/error"
+    #
+    #     elif "traceback" in msg['content']:
+    #         self.state.output  = str(msg['content'])
+    #         self.state.output_type  = "text/error"
+    #
+    #     self.state.executeInfo.executeFunc = ""
+    #     self.state.executeInfo.params = {}
+    #     self.send_updates()
 
-        elif "traceback" in msg['content']:
-            self.state.output  = str(msg['content'])
-            self.state.output_type  = "text/error"
 
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
-
+    # def execute(self, uuid):
+    #     """
+    #     Non blocking function to execute code. The proxy has the responsibility to execute the code
+    #     and to call a call_back function which know how to handle the results message
+    #     :param uuid:
+    #     :param code:
+    #     :return:
+    #     """
+    #     command_info = {"uuid": uuid,
+    #                     "call_fn": self.handle_exec_result_2,
+    #                     "code": self.state.code}
+    #     self._jupyter_proxy.execute(command_info)
+    #     # the proxy has the responsibilitys
 
     def execute(self, uuid):
-        """
-        Non blocking function to execute code. The proxy has the responsibility to execute the code
-        and to call a call_back function which know how to handle the results message
-        :param uuid:
-        :param code:
-        :return:
-        """
-        command_info = {"uuid": uuid,
-                        "call_fn": self.handle_exec_result_2,
-                        "code": self.state.code}
-        self._jupyter_proxy.execute(command_info)
-        # the proxy has the responsibilitys
-
-    def test(self, uuid):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
         and to call a call_back function which know how to handle the results message

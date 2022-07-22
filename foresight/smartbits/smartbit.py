@@ -10,14 +10,13 @@ from pydantic import BaseModel, Field, validate_model
 from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
-from jupyterkernelproxy import JupyterKernelProxy
+from jupyterkernelproxy_client import JupyterKernelClient
 
 class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication("config/config.json")
-    _jupyter_proxy: JupyterKernelProxy  = JupyterKernelProxy()
-
+    _jupyter_proxy: JupyterKernelClient =  JupyterKernelClient("http://127.0.0.1:5000/exec")
 
 
     def __init__(self, **kwargs):

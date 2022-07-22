@@ -28,7 +28,7 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
-from jupyterkernelproxy import JupyterKernelProxy
+from jupyterkernelproxy_client import JupyterKernelClient
 
 from threading import Thread
 
@@ -55,7 +55,7 @@ async def subscribe(sock, room_id):
 
 
 class SAGEProxy():
-    
+
     def __init__(self, config_file, room_id):
         self.room = Room(room_id)
         # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
@@ -70,7 +70,7 @@ class SAGEProxy():
         }
         self.httpx_client = httpx.Client()
         self.s3_comm = SageCommunication(config_file)
-        self.jupytr_kernel = JupyterKernelProxy()
+        self.jupytr_kernel = JupyterKernelClient("http://127.0.0.1:5000/exec")
 
     def authenticat_new_user(self):
         r = self.httpx_client.post( self.__config['server'] + '/auth/jwt', headers=self.__headers)
@@ -182,7 +182,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "8a1ee12b-146a-4741-b08b-46e9e7803e4f")
+sage_proxy = SAGEProxy("config/config.json", "a1f423ee-fde3-4509-9880-bd4bb13ea127")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()
