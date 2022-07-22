@@ -130,6 +130,7 @@ class AppTypes(Enum):
     note = "Note"
     data_table = "DataTable"
     code_cell = "CodeCell"
+    slider = "Slider"
 
 
 class Data(TrackedBaseModel):

@@ -55,7 +55,7 @@ async def subscribe(sock, room_id):
 
 
 class SAGEProxy():
-
+    
     def __init__(self, config_file, room_id):
         self.room = Room(room_id)
         # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
@@ -88,7 +88,6 @@ class SAGEProxy():
 
 
     def receive_messages(self):
-        asyncio.set_event_loop(asyncio.new_event_loop())
 
         async def _run(self):
             async with websockets.connect(self.__config["socket_server"],
@@ -101,8 +100,12 @@ class SAGEProxy():
                     print(f"Received: \n {msg}")
                     self.__message_queue.put(msg)
 
-        asyncio.get_event_loop().run_until_complete(_run(self))
-
+        # asyncio.set_event_loop(asyncio.new_event_loop())
+        # asyncio.get_event_loop().run_until_complete(_run(self))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(_run(self))
+        
     def process_messages(self):
         """
         Running this in the main thread to not deal with sharing variables right.

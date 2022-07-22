@@ -27,6 +27,15 @@ class CodeCell(SmartBit):
         super(CodeCell, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
+    def handle_exec_result_2(self, msg):
+        self.state.output = msg["execute_result"]
+        self.state.output_type = "NOT USED"
+
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
+
+
     def handle_exec_result(self, msg):
         print(" \n\n\n************I am in Code Cell's  function that handles the result of the execution, i.e. updating the client")
         print(f"return message is {msg}************\n\n\n")
@@ -65,7 +74,7 @@ class CodeCell(SmartBit):
         :return:
         """
         command_info = {"uuid": uuid,
-                        "call_fn": self.handle_exec_result,
+                        "call_fn": self.handle_exec_result_2,
                         "code": self.state.code}
         self._jupyter_proxy.execute(command_info)
         # the proxy has the responsibilitys
@@ -80,7 +89,7 @@ class CodeCell(SmartBit):
         """
         print("*****-------I am running a test*****-------")
         command_info = {"uuid": uuid,
-                        "call_fn": self.handle_exec_result,
+                        "call_fn": self.handle_exec_result_2,
                         "code": self.state.code}
 
         print(f"Command info is {command_info}")
