@@ -44,6 +44,8 @@ import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
+import {twilioTokenGenerator} from './twilio/twilioTokenGenerator';
+
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
   console.error('Server> Error', reason);
@@ -95,8 +97,18 @@ async function startServer() {
   // Load all the models: user, board, ...
   await loadCollections();
 
+  // Twilio Token Generator
+  app.get('/twilio/token', (req, res) => {
+    const identity = req.query.identity as string;
+    const room = req.query.room as string;
+    const token = twilioTokenGenerator(identity, room);
+    res.send({token});
+  })
+
   // Load the API Routes
   app.use('/api', expressAPIRouter());
+
+
 
   // Websocket setup
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });

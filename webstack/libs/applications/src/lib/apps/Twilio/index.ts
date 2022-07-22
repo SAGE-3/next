@@ -19,7 +19,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  twilioRoomId: twilio - room - 1,
+  twilioRoomId: `twilio - room - 1`,
 };
 
 export const name = 'Twilio';
