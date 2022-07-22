@@ -23,7 +23,7 @@ import { BoardSchema } from '@sage3/shared/types';
 
 interface Applications {
   apps: App[];
-  create: (newApp: AppSchema) => Promise<void>;
+  create: (newApp: AppSchema) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
   delete: (id: string) => Promise<void>;
@@ -39,7 +39,8 @@ const AppStore = createVanilla<Applications>((set, get) => {
   return {
     apps: [],
     create: async (newApp: AppSchema) => {
-      SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
+      const app = await SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
+      return app;
     },
     update: async (id: string, updates: Partial<AppSchema>) => {
       SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);

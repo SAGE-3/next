@@ -16,39 +16,10 @@ import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
+import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
+import { state as VegaLiteAppState, name as VegaLiteAppName } from './apps/VegaLiteApp';
 
-export type AppState =
-  | CounterAppState
-  | ImageAppState
-  | LinkerAppState
-  | NoteAppState
-  | SliderAppState
-  | StickieState
-  | PDFViewerState
-  | CodeCellState
-  | ImageViewerState
-  | LeafLetState
-  | ScreenshareState
-  | VideoViewerState
-  | WebviewState
-  | DataTableAppState
-  | CSVViewerState
-  | RTCChatState;
 
-export type AppName =
-  | typeof CounterAppName
-  | typeof ImageAppName
-  | typeof LinkerAppName
-  | typeof NoteAppName
-  | typeof SliderAppName
-  | typeof StickieName
-  | typeof PDFViewerName
-  | typeof CodeCellName
-  | typeof ImageViewerName
-  | typeof LeafLetName
-  | typeof ScreenshareName
-  | typeof VideoViewerName
-  | typeof WebviewName
-  | typeof DataTableAppName
-  | typeof CSVViewerName
-  | typeof RTCChatName;
+export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState | DataTableAppState | CSVViewerState | RTCChatState | VegaLiteViewerState | VegaLiteAppState;
+
+export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName | typeof DataTableAppName | typeof CSVViewerName | typeof RTCChatName | typeof VegaLiteViewerName | typeof VegaLiteAppName;

@@ -16,6 +16,8 @@ import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
+import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
+import { name as VegaLiteAppName, init as defaultVegaLiteApp } from './apps/VegaLiteApp';
 
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
@@ -33,6 +35,8 @@ import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
+import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
+import VegaLiteApp from './apps/VegaLiteApp/VegaLiteApp';
 
 export const Applications = {
   [CounterAppName]: CounterApp,
@@ -51,7 +55,9 @@ export const Applications = {
   [DataTableAppName]: DataTableApp,
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
+  [VegaLiteViewerName]: VegaLiteViewer,
+  [VegaLiteAppName]: VegaLiteApp,
+} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
@@ -70,6 +76,8 @@ export const initialValues = {
   [DataTableAppName]: defaultDataTableApp,
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
+  [VegaLiteViewerName]: defaultVegaLiteViewer,
+  [VegaLiteAppName]: defaultVegaLiteApp,
 };
 
-export * from './components'
+export * from './components';

@@ -1,0 +1,165 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+//Sage3 Imports
+import { useAppStore, useUser } from '@sage3/frontend';
+import { App } from '../../schema';
+import { state as AppState } from './';
+import { AppWindow } from '../../components';
+import { debounce } from 'throttle-debounce';
+
+//React Imports
+import { useEffect, useRef, useState } from 'react';
+
+//Library imports
+import { useLocation } from 'react-router-dom';
+import { Button } from '@chakra-ui/react';
+
+//Import ace editor tools
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-python';
+import 'ace-builds/src-noconflict/mode-json';
+import 'ace-builds/src-noconflict/mode-html';
+import 'ace-builds/src-noconflict/mode-typescript';
+import 'ace-builds/src-noconflict/theme-monokai';
+import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
+import 'ace-builds/src-noconflict/theme-xcode';
+import 'ace-builds/src-noconflict/keybinding-vscode';
+import 'ace-builds/src-noconflict/ext-language_tools';
+
+/* App component for VegaLiteApp */
+
+/**
+ * NoteApp SAGE3 application
+ *
+ * @param {AppSchema} props
+ * @returns {JSX.Element}
+ */
+function AppComponent(props: App): JSX.Element {
+  //SAGE state
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
+  //LocalState
+  const [spec, setSpec] = useState(s.spec);
+
+  //aceEditor ref
+  const ace = useRef<AceEditor>(null);
+
+  // Update local value with value from the server
+  useEffect(() => {
+    setSpec(s.spec);
+  }, [s.spec]);
+
+  // Saving the text after 1sec of inactivity
+  const debounceSave = debounce(1000, (val) => {
+    console.log('debounce');
+    updateState(props._id, { spec: val });
+  });
+
+  // Keep a copy of the function
+  const debounceFunc = useRef(debounceSave);
+
+  // callback for aceditor change
+  function handleTextChange(ev: string, event?: any) {
+    const inputValue = ev;
+    // Update the local value
+    setSpec(inputValue);
+    // Update the text when not typing
+    debounceFunc.current(inputValue);
+  }
+
+  return (
+    <AppWindow app={props}>
+      <>
+        <AceEditor
+          ref={ace}
+          value={spec}
+          onChange={handleTextChange}
+          style={{
+            width: '95%',
+            height: '100%',
+            border: 'none',
+            marginTop: 15,
+            marginLeft: 15,
+            marginRight: 0,
+            marginBottom: 10,
+            padding: 0,
+            overflow: 'hidden',
+            // backgroundColor: inputBoxColor,
+            // boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
+            borderRadius: '12px',
+          }}
+          name="ace"
+          fontSize={'1em'}
+          minLines={6}
+          maxLines={Math.floor(props.data.size.height / 28)}
+          placeholder="Enter code here"
+          mode={'python'}
+          // theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
+          editorProps={{ $blockScrolling: true }}
+          setOptions={{
+            hasCssTransforms: true,
+            showGutter: true,
+            showPrintMargin: false,
+            highlightActiveLine: true,
+            showLineNumbers: true,
+          }}
+        />
+        {/* <textarea style={{ width: 400, height: 400 }} onChange={handleTextChange} value={spec}></textarea> */}
+      </>
+    </AppWindow>
+  );
+}
+
+/* App toolbar component for the app VegaLiteApp */
+
+function ToolbarComponent(props: App): JSX.Element {
+  //State
+  const s = props.data.state as AppState;
+  const createApp = useAppStore((state) => state.create);
+  const { user } = useUser();
+
+  //BoardInfo
+  const location = useLocation();
+  const locationState = location.state as {
+    boardId: string;
+    roomId: string;
+  };
+
+  // Creates a new VegaLiteViewer app with aceeditor text
+  const createChart = () => {
+    if (!user) return;
+    createApp({
+      name: 'VegaLiteViewer',
+      description: 'Description',
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'VegaLiteViewer',
+      state: {
+        spec: s.spec,
+      },
+      ownerId: user?._id,
+      minimized: false,
+      raised: true,
+    });
+  };
+
+  return (
+    <>
+      <Button onClick={createChart} colorScheme="green">
+        Create View
+      </Button>
+    </>
+  );
+}
+
+export default { AppComponent, ToolbarComponent };
