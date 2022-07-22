@@ -146,34 +146,35 @@ function AppComponent(props: App): JSX.Element {
             chromeMediaSource: 'desktop',
             width: 1280,
             height: 800,
-            frameRate: 30,
+            frameRate: 20,
             maxWidth: 1280 * window.devicePixelRatio,
             maxHeight: 800 * window.devicePixelRatio,
             // minWidth: 640,
             // minHeight: 480,
-            displaySurface: 'monitor',
+            // displaySurface: 'monitor',
           },
         } as MediaStreamConstraints;
 
         // window.navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
         window.navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
-          localStream.current = stream;
-          // for desktop sharing, limit a bit
-          // stream.getTracks()[0].applyConstraints({ frameRate: { max: 5 } });
-          const settings = stream.getVideoTracks()[0].getSettings();
-
           const track = stream.getVideoTracks()[0];
+
+          // track.applyConstraints({ frameRate: { max: 5 } });
+
           console.log('Before> track', track.contentHint);
           if ('contentHint' in track) {
-            const hint = 'detail';
+            const hint = 'text';
             track.contentHint = hint;
             if (track.contentHint !== hint) {
-              console.log('Stream> Invalid video track contentHint: \'' + hint + '\'');
+              console.log('Stream> Invalid video track contentHint:', hint);
+            } else {
+              console.log('Stream> Video track contentHint:', hint);
             }
           } else {
             console.log('Stream> MediaStreamTrack contentHint attribute not supported');
           }
 
+          const settings = track.getSettings();
           const w = settings.width;
           const h = settings.height;
           const fps = settings.frameRate;
@@ -185,6 +186,8 @@ function AppComponent(props: App): JSX.Element {
             }
             updateState(props._id, { running: true });
           }
+          // Save the stream to the local state
+          localStream.current = stream;
         },
           (err) => {
             console.error("Failed to get local stream", err);
