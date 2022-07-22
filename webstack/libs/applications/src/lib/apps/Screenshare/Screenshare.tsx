@@ -146,13 +146,12 @@ function AppComponent(props: App): JSX.Element {
             chromeMediaSource: 'desktop',
             width: 1280,
             height: 800,
-            frameRate: 15,
+            frameRate: 30,
             maxWidth: 1280 * window.devicePixelRatio,
             maxHeight: 800 * window.devicePixelRatio,
-            minWidth: 640,
-            minHeight: 480,
+            // minWidth: 640,
+            // minHeight: 480,
             displaySurface: 'monitor',
-            advanced: [{ latency: { ideal: 0, max: 1.0 } }],
           },
         } as MediaStreamConstraints;
 
