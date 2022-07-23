@@ -71,7 +71,7 @@ class JupyterKernelClient(Borg):
                 request_id = msg['request_id']
                 self.callback_info[request_id][1](msg)
 
-            time.sleep(5)  # be nice to the system :)
+            time.sleep(1)  # be nice to the system :)
 
 
 

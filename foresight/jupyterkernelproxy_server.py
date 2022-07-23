@@ -31,7 +31,7 @@ async def run_code():
             print(f"message is {msg}")
             if 'execution_state' in msg['content'] and msg['content']['execution_state'] == 'idle':
                 break
-            if msg['msg_type'] in ['execute_result', 'display_data', "error"]:
+            if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
                 result[msg['msg_type']] = msg['content']
         except:
             break
