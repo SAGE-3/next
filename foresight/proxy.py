@@ -12,7 +12,8 @@
 #  and no unknwon fields
 
 # TODO prevent apps updates on fields that were touched?
-
+from typing import Callable
+from pydantic import BaseModel
 import asyncio
 import json
 import time
@@ -41,7 +42,6 @@ class Room:
         self.boards = {}
 
 
-
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
@@ -52,10 +52,15 @@ async def subscribe(sock, room_id):
     }
     await sock.send(json.dumps(msg_sub))
 
-
+class LinkedInfo(BaseModel):
+    board_id: str
+    src: str
+    dests: list
+    src_field: str
+    dests_fields: list
+    callback: Callable
 
 class SAGEProxy():
-
     def __init__(self, config_file, room_id):
         self.room = Room(room_id)
         # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
@@ -71,6 +76,7 @@ class SAGEProxy():
         self.httpx_client = httpx.Client()
         self.s3_comm = SageCommunication(config_file)
         self.jupytr_kernel = JupyterKernelClient("http://127.0.0.1:5000/exec")
+        self.callbacks = {}
 
     def authenticat_new_user(self):
         r = self.httpx_client.post( self.__config['server'] + '/auth/jwt', headers=self.__headers)
@@ -88,7 +94,6 @@ class SAGEProxy():
 
 
     def receive_messages(self):
-
         async def _run(self):
             async with websockets.connect(self.__config["socket_server"],
                                           extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
@@ -114,6 +119,12 @@ class SAGEProxy():
         """
         while True:
             msg = self.__message_queue.get()
+            # I am watching this message for change?
+            print(f"msg is of type {type(msg)} ")
+            if msg["event"]["doc"]["_id"]  in self.callbacks:
+                # handle callback
+                print("this app is being tracked for updates")
+                pass
             print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             collection = msg["event"]['col']
@@ -171,6 +182,18 @@ class SAGEProxy():
         if self.__message_queue.qsize() > 0:
             print("Queue was not empty")
         self.__message_queue.close()
+
+    def register_linked_app(self, board_id, src, dests, src_field, dests_fields, callback):
+        self.callbacks[src] = LinkedInfo(board_id=board_id,
+                                         src=src,
+                                         dests=dests,
+                                         src_field=src_field,
+                                         dests_fields=dests_fields,
+                                         callback=callback)
+
+    # def handle_linked_app_update(self, board_uuid, app_uuid, value):
+    #     src =
+    #     pass
 
 
 

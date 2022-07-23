@@ -14,7 +14,7 @@ class SmartBitFactory:
     cls_root = "smartbits"
     # TODO: read these names from some conf file; not hardcoded here
     class_names = {"Counter": "counter", "Note": "note", "DataTable": "data_table", "CodeCell": "codecell",
-                   "Slider": "slider"}
+                   "Slider": "slider", "Stickie": "stickie"}
 
     @classmethod
     def create_smartbit(cls, doc):

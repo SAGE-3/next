@@ -18,7 +18,6 @@ class TrackedBaseModel(BaseModel):
     _s3_comm: SageCommunication = SageCommunication("config/config.json")
     _jupyter_proxy: JupyterKernelClient =  JupyterKernelClient("http://127.0.0.1:5000/exec")
 
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -130,7 +129,7 @@ class AppTypes(Enum):
     data_table = "DataTable"
     code_cell = "CodeCell"
     slider = "Slider"
-
+    stickie = "Stickie"
 
 class Data(TrackedBaseModel):
     name: str
