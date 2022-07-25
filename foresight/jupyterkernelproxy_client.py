@@ -55,7 +55,6 @@ class JupyterKernelClient(Borg):
 
 
     def process_reponse(self):
-
         while True:
             print("I am processing reponse")
             msg = self.pubsub.get_message()

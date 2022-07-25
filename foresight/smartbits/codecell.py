@@ -30,6 +30,8 @@ class CodeCell(SmartBit):
     def handle_exec_result(self, msg):
         print(f"I am in execute results and msg is: {msg}")
         if "execute_result" in msg:
+            print("******I am about to set the output. The message is:\n")
+            print(msg)
             if "text/html" in msg["execute_result"]["data"]:
                 self.state.output = msg["execute_result"]["data"]["text/html"]
             elif "text/plain":
@@ -53,7 +55,6 @@ class CodeCell(SmartBit):
         :param code:
         :return:
         """
-        print("*****-------I am running a test*****-------")
         command_info = {"uuid": uuid,
                         "call_fn": self.handle_exec_result,
                         "code": self.state.code}
