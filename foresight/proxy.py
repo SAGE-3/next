@@ -4,12 +4,19 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
+# TODO: checking messages that are created at the same time and only executing the first
+#  one keeping info in received_msg_log for now. These seems to be related to raised=True
+
+
+
+# TODO: Fix the issue of messages received twic during updates. There is not need for that!
 
 # TODO: CRITICAL, I am a proxy -- ignore my own messages.
 
 # TODO: add a new validator function that takes a message received on a
 #  channel and makes sure it's structurally valid, i.e., has the right required fields
 #  and no unknwon fields
+
 
 # TODO prevent apps updates on fields that were touched?
 from typing import Callable
@@ -75,8 +82,9 @@ class SAGEProxy():
         }
         self.httpx_client = httpx.Client()
         self.s3_comm = SageCommunication(config_file)
-        self.jupytr_kernel = JupyterKernelClient("http://127.0.0.1:5000/exec")
+        #self.jupytr_kernel = JupyterKernelClient("http://127.0.0.1:5000/exec")
         self.callbacks = {}
+        self.received_msg_log = {}
 
     def authenticat_new_user(self):
         r = self.httpx_client.post( self.__config['server'] + '/auth/jwt', headers=self.__headers)
@@ -102,9 +110,14 @@ class SAGEProxy():
                 self.populate_exisitng()
                 async for msg in ws:
                     msg = json.loads(msg)
-                    print(f"Received: \n {msg}")
-                    self.__message_queue.put(msg)
 
+                    if msg['id'] not in self.received_msg_log or \
+                            msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
+                        self.__message_queue.put(msg)
+                        self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
+                        print(f"in receive_messages adding: {msg}")
+                    else:
+                        print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
         # asyncio.set_event_loop(asyncio.new_event_loop())
         # asyncio.get_event_loop().run_until_complete(_run(self))
         loop = asyncio.new_event_loop()
@@ -120,16 +133,20 @@ class SAGEProxy():
         while True:
             msg = self.__message_queue.get()
             # I am watching this message for change?
-            print(f"msg is of type {type(msg)} ")
             if msg["event"]["doc"]["_id"]  in self.callbacks:
                 # handle callback
                 print("this app is being tracked for updates")
                 pass
-            print(f"getting ready to process: {msg}")
+            # print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
-            collection = msg["event"]['col']
-            doc = msg['event']['doc']
-            self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
+            updated_fileds = list(msg['event']['updates'].keys())
+            print(f"updated fields are: {updated_fileds}")
+            if len(updated_fileds) == 1 and updated_fileds[0] == 'raised':
+                print("The received update is discribed a raised app... ignoring it")
+            else:
+                collection = msg["event"]['col']
+                doc = msg['event']['doc']
+                self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
 
 
     def __handle_exec(self, msg):
@@ -154,9 +171,10 @@ class SAGEProxy():
         if collection == "BOARDS":
             print("BOARD UPDATED: UNHANDLED")
         elif collection == "APPS":
-            print("APP UPDATED")
+            print(f"APP UPDATED")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
+
             sb = self.room.boards[board_id].smartbits[app_id]
 
             # Note that set_data_form_update clear touched field
@@ -170,6 +188,7 @@ class SAGEProxy():
                     _func = getattr(sb, func_name)
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
+                    print(f"About to execute function --{func_name}-- with params --{_params}--")
                     _func(**_params)
 
 
@@ -205,7 +224,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "a1f423ee-fde3-4509-9880-bd4bb13ea127")
+sage_proxy = SAGEProxy("config/config.json", "79ff1453-929e-44c9-9374-e803e37cbc68")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()

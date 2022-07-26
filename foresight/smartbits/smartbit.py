@@ -16,7 +16,7 @@ class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication("config/config.json")
-    _jupyter_proxy: JupyterKernelClient =  JupyterKernelClient("http://127.0.0.1:5000/exec")
+    _jupyter_client: JupyterKernelClient =  JupyterKernelClient("http://127.0.0.1:5000/exec")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

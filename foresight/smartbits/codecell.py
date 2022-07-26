@@ -45,8 +45,6 @@ class CodeCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-
-
     def execute(self, uuid):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
@@ -59,6 +57,6 @@ class CodeCell(SmartBit):
                         "call_fn": self.handle_exec_result,
                         "code": self.state.code}
 
-        print(f"Command info is {command_info}")
-        print(f"My proxy is: {self._jupyter_proxy}")
-        self._jupyter_proxy.execute(command_info)
+        # print(f"Command info is {command_info}")
+        # print(f"My proxy is: {self._jupyter_proxy}")
+        self._jupyter_client.execute(command_info)
