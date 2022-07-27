@@ -15,5 +15,6 @@
     "DataTableApp",
     "CSVViewer",
     "RTCChat",
-    "Clock"
+    "Clock",
+    "JupyterApp"
 ]

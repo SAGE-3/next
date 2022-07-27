@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# stage foresight inside the notebook folder
+rm -fr configurations/jupyter/notebooks/foresight
+cp -r ../foresight configurations/jupyter/notebooks/
+
 #
 # Run the backend services, without the SAGE3 webserver
 # For testing and development

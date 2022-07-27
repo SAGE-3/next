@@ -17,6 +17,7 @@ import { name as DataTableAppName, init as defaultDataTableApp } from './apps/Da
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
+import { name as JupyterAppName, init as defaultJupyterApp } from './apps/JupyterApp';
 
 
 import CounterApp from './apps/CounterApp/CounterApp';
@@ -36,6 +37,7 @@ import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import Clock from './apps/Clock/Clock';
+import JupyterApp from './apps/JupyterApp/JupyterApp';
 
 
 export const Applications = {
@@ -56,6 +58,7 @@ export const Applications = {
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
   [ClockName]: Clock,
+  [JupyterAppName]: JupyterApp,
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 
@@ -77,6 +80,7 @@ export const initialValues = {
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
   [ClockName]: defaultClock,
+  [JupyterAppName]: defaultJupyterApp,
 };
 
 export * from './components';

@@ -21,6 +21,7 @@ import { assetExpressRouter } from './custom/asset';
 
 // Collection Imports
 import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection } from '../collections';
+import { ConfigRouter } from './config';
 
 // Lib Imports
 import { SAGEBase } from '@sage3/sagebase';
@@ -49,6 +50,8 @@ export function expressAPIRouter(): express.Router {
   router.use('/users', UsersCollection.router());
 
   router.use('/presence', PresenceCollection.router());
+
+  router.use('/configuration', ConfigRouter());
 
   return router;
 }
