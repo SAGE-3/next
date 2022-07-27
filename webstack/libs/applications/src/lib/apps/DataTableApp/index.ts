@@ -5,19 +5,22 @@ type exec = {
     params: { [key: string]: any };
 }
 
+//TODO, Replace any datatypes
 export type state = {
     viewData: any;
     menuAction: string;
     tableMenuAction: string;
     timestamp: number;
-    // df: any;
+    currentPage: number;
+    postsPerPage: number;
+    currentPosts: any[];
+    totalPosts: number;
 
     messages: string;
-    items: any;
+    items: any[];
     loaded: boolean;
     headers: string[];
-    // clicked: boolean;
-    selected: string[];
+    selectedCols: string[];
     checkedItems: string[];
     dataUrl: string;
     executeInfo: exec;
@@ -27,15 +30,14 @@ export type state = {
 export const init: Partial<state> = {
 
     loaded: false,
-    // clicked: false,
-    selected: [],
-    // viewData: {},
+    selectedCols: [],
     items: [],
     headers: [],
     menuAction: "",
     tableMenuAction: "",
     timestamp: 0,
-
+    currentPage: 1,
+    postsPerPage: 3,
 
     executeInfo: {"executeFunc": "", "params": {}},
 };

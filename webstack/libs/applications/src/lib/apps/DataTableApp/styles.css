@@ -10,8 +10,17 @@
   padding: 10px 10px;
 }
 
+.URL-Container{
+  margin-top: 30px;
+}
+
+.Pagination-Container{
+  margin-top: 10px;
+  padding: 10px 10px;
+}
+
 .Message-Container{
-  margin-top: 50px;
+  margin-top: 10px;
   margin-bottom: 10px;
   padding: 10px 10px;
 }
