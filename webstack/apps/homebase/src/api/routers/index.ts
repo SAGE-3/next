@@ -7,4 +7,5 @@
  */
 
 export * from './wsRouter';
-export * from './httpRouter'
+export * from './httpRouter';
+export * from './config';

@@ -8,22 +8,18 @@
 
 import { z } from 'zod';
 
+/**
+ * SAGE3 application: JupyterApp
+ * created by: SAGE3
+ */
+
 export const schema = z.object({
-  text: z.string(),
-  fontSize: z.number(),
-  color: z.string(),
-    executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.record(z.any()),
-  }),
+  jupyterURL: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  text: 'stickie note',
-  fontSize: 48,
-  color: '#63B3ED',
-  executeInfo: { executeFunc: '', params: {} },
+  jupyterURL: 'http://localhost:8888',
 };
 
-export const name = 'Stickie';
+export const name = 'JupyterApp';

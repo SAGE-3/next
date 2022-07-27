@@ -4,6 +4,12 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
+# TODO: checking messages that are created at the same time and only executing the first
+#  one keeping info in received_msg_log for now. These seems to be related to raised=True
+
+
+
+# TODO: Fix the issue of messages received twic during updates. There is not need for that!
 
 # TODO: CRITICAL, I am a proxy -- ignore my own messages.
 
@@ -11,8 +17,10 @@
 #  channel and makes sure it's structurally valid, i.e., has the right required fields
 #  and no unknwon fields
 
-# TODO prevent apps updates on fields that were touched?
 
+# TODO prevent apps updates on fields that were touched?
+from typing import Callable
+from pydantic import BaseModel
 import asyncio
 import json
 import time
@@ -28,7 +36,7 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
-from jupyterkernelproxy import JupyterKernelProxy
+from jupyterkernelproxy_client import JupyterKernelClient
 
 from threading import Thread
 
@@ -41,7 +49,6 @@ class Room:
         self.boards = {}
 
 
-
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
@@ -52,10 +59,15 @@ async def subscribe(sock, room_id):
     }
     await sock.send(json.dumps(msg_sub))
 
-
+class LinkedInfo(BaseModel):
+    board_id: str
+    src: str
+    dests: list
+    src_field: str
+    dests_fields: list
+    callback: Callable
 
 class SAGEProxy():
-    
     def __init__(self, config_file, room_id):
         self.room = Room(room_id)
         # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
@@ -70,7 +82,9 @@ class SAGEProxy():
         }
         self.httpx_client = httpx.Client()
         self.s3_comm = SageCommunication(config_file)
-        self.jupytr_kernel = JupyterKernelProxy()
+        #self.jupytr_kernel = JupyterKernelClient("http://127.0.0.1:5000/exec")
+        self.callbacks = {}
+        self.received_msg_log = {}
 
     def authenticat_new_user(self):
         r = self.httpx_client.post( self.__config['server'] + '/auth/jwt', headers=self.__headers)
@@ -88,7 +102,6 @@ class SAGEProxy():
 
 
     def receive_messages(self):
-
         async def _run(self):
             async with websockets.connect(self.__config["socket_server"],
                                           extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
@@ -97,9 +110,14 @@ class SAGEProxy():
                 self.populate_exisitng()
                 async for msg in ws:
                     msg = json.loads(msg)
-                    print(f"Received: \n {msg}")
-                    self.__message_queue.put(msg)
 
+                    if msg['id'] not in self.received_msg_log or \
+                            msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
+                        self.__message_queue.put(msg)
+                        self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
+                        print(f"in receive_messages adding: {msg}")
+                    else:
+                        print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
         # asyncio.set_event_loop(asyncio.new_event_loop())
         # asyncio.get_event_loop().run_until_complete(_run(self))
         loop = asyncio.new_event_loop()
@@ -114,11 +132,21 @@ class SAGEProxy():
         """
         while True:
             msg = self.__message_queue.get()
-            print(f"getting ready to process: {msg}")
+            # I am watching this message for change?
+            if msg["event"]["doc"]["_id"]  in self.callbacks:
+                # handle callback
+                print("this app is being tracked for updates")
+                pass
+            # print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
-            collection = msg["event"]['col']
-            doc = msg['event']['doc']
-            self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
+            updated_fileds = list(msg['event']['updates'].keys())
+            print(f"updated fields are: {updated_fileds}")
+            if len(updated_fileds) == 1 and updated_fileds[0] == 'raised':
+                print("The received update is discribed a raised app... ignoring it")
+            else:
+                collection = msg["event"]['col']
+                doc = msg['event']['doc']
+                self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
 
 
     def __handle_exec(self, msg):
@@ -143,9 +171,10 @@ class SAGEProxy():
         if collection == "BOARDS":
             print("BOARD UPDATED: UNHANDLED")
         elif collection == "APPS":
-            print("APP UPDATED")
+            print(f"APP UPDATED")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
+
             sb = self.room.boards[board_id].smartbits[app_id]
 
             # Note that set_data_form_update clear touched field
@@ -159,6 +188,7 @@ class SAGEProxy():
                     _func = getattr(sb, func_name)
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
+                    print(f"About to execute function --{func_name}-- with params --{_params}--")
                     _func(**_params)
 
 
@@ -172,6 +202,18 @@ class SAGEProxy():
             print("Queue was not empty")
         self.__message_queue.close()
 
+    def register_linked_app(self, board_id, src, dests, src_field, dests_fields, callback):
+        self.callbacks[src] = LinkedInfo(board_id=board_id,
+                                         src=src,
+                                         dests=dests,
+                                         src_field=src_field,
+                                         dests_fields=dests_fields,
+                                         callback=callback)
+
+    # def handle_linked_app_update(self, board_uuid, app_uuid, value):
+    #     src =
+    #     pass
+
 
 
 def get_cmdline_parser():
@@ -182,7 +224,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "8a1ee12b-146a-4741-b08b-46e9e7803e4f")
+sage_proxy = SAGEProxy("config/config.json", "79ff1453-929e-44c9-9374-e803e37cbc68")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()

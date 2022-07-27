@@ -9,24 +9,14 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
-  node-server:
-    image: "sage3/next:prod"
-    ports:
-      - "443:443"
-    depends_on:
-      - "redis-server"
-    volumes:
-      - ./configurations/node/keys:/app/keys
-      - ./configurations/node/assets:/app/dist/apps/homebase/assets
-      - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
   jupyter:
-    image: "jupyter/base-notebook"
+    image: "jupyter/datascience-notebook:aarch64-ubuntu-20.04"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
       - ./redis-client:/home/jovyan/work
     ports:
-      - "8888:8888"
+      - "127.0.0.1:8888:8888"
     environment:
       - REDIS_URL=redis-server:6379
     depends_on:

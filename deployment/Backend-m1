@@ -4,6 +4,7 @@
 rm -fr configurations/jupyter/notebooks/foresight
 cp -r ../foresight configurations/jupyter/notebooks/
 
+
 #
 # Run the backend services, without the SAGE3 webserver
 # For testing and development
@@ -26,7 +27,7 @@ fi
 # trap ctrl-c and call cleanup()
 trap cleanup SIGINT
 
-modules="-f docker-compose-backend.yml"
+modules="-f docker-compose-backend-m1.yml"
 
 function cleanup() {
 	echo "-- Trapped CTRL-C --"
