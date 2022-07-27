@@ -15,6 +15,7 @@
     "DataTableApp",
     "CSVViewer",
     "RTCChat",
-    "SVGBox",
-    "Twilio"
+    "Twilio",
+    "Clock",
+    "JupyterApp"
 ]

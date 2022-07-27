@@ -113,7 +113,7 @@ const AppComponent = (props: App): JSX.Element => {
     const code = ace.current?.editor?.getValue();
     console.log(code)
     if (code) {
-      updateState(props._id, { code: code, executeInfo: { executeFunc: 'test', params: {uuid: getUUID()}} });
+      updateState(props._id, { code: code, executeInfo: { executeFunc: 'execute', params: {uuid: getUUID()}} });
     }
   }
 

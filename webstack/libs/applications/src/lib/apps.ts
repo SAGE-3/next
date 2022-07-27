@@ -16,8 +16,9 @@ import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
-import { name as SVGBoxName, init as defaultSVGBox } from './apps/SVGBox';
 import { name as TwilioName, init as defaultTwilio } from './apps/Twilio';
+import { name as ClockName, init as defaultClock } from './apps/Clock';
+import { name as JupyterAppName, init as defaultJupyterApp } from './apps/JupyterApp';
 
 
 import CounterApp from './apps/CounterApp/CounterApp';
@@ -36,9 +37,9 @@ import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
-import SVGBox from './apps/SVGBox/SVGBox';
 import Twilio from './apps/Twilio/Twilio';
-
+import Clock from './apps/Clock/Clock';
+import JupyterApp from './apps/JupyterApp/JupyterApp';
 
 export const Applications = {
   [CounterAppName]: CounterApp,
@@ -57,10 +58,10 @@ export const Applications = {
   [DataTableAppName]: DataTableApp,
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
-  [SVGBoxName]: SVGBox,
   [TwilioName]: Twilio,
+  [ClockName]: Clock,
+  [JupyterAppName]: JupyterApp,
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
-
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
@@ -79,8 +80,9 @@ export const initialValues = {
   [DataTableAppName]: defaultDataTableApp,
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
-  [SVGBoxName]: defaultSVGBox,
   [TwilioName]: defaultTwilio,
+  [ClockName]: defaultClock,
+  [JupyterAppName]: defaultJupyterApp,
 };
 
 export * from './components';

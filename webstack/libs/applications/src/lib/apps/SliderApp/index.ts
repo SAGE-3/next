@@ -10,11 +10,16 @@ import { z } from 'zod';
 
 export const schema = z.object({
   value: z.number(),
+    executeInfo: z.object({
+    executeFunc: z.string(),
+    params: z.record(z.any()),
+  }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   value: 55,
+  executeInfo: { executeFunc: '', params: {} },
 };
 
 export const name = 'Slider';

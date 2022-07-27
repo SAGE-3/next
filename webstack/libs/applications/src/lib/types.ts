@@ -16,10 +16,10 @@ import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
-import { state as SVGBoxState, name as SVGBoxName } from './apps/SVGBox';
 import { state as TwilioState, name as TwilioName } from './apps/Twilio';
+import { state as ClockState, name as ClockName } from './apps/Clock';
+import { state as JupyterAppState, name as JupyterAppName } from './apps/JupyterApp';
 
+export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState | DataTableAppState | CSVViewerState | RTCChatState | TwilioState | ClockState | JupyterAppState;
 
-export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState | DataTableAppState | CSVViewerState | RTCChatState | SVGBoxState | TwilioState;
-
-export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName | typeof DataTableAppName | typeof CSVViewerName | typeof RTCChatName | typeof SVGBoxName | typeof TwilioName;
+export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName | typeof DataTableAppName | typeof CSVViewerName | typeof RTCChatName | typeof TwilioName | typeof ClockName | typeof JupyterAppName;

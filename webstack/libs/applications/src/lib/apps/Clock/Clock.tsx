@@ -25,6 +25,8 @@ import { ReactComponent as Clock } from './clock.svg';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const update = useAppStore((state) => state.update);
+
   const svgRef = useRef<SVGSVGElement>(null);
   const [nightMode, setNightMode] = useState(false);
   const [city, setCity] = useState(s.city);
@@ -36,8 +38,9 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     setCity(s.city);
     localizeCity(s.city);
+    // Update the app title
+    update(props._id, { description: 'Clock> ' + s.city });
   }, [s.city]);
-
 
   const localizeCity = (city: string) => {
     const key = 'AIzaSyBQ335g9XtAX56ZCqqF6jsHz4mP-qIX5vo';
@@ -142,7 +145,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <VStack p={0} m={2} >
         <Clock ref={svgRef} />
-        <Text fontSize={"2xl"}>{city}</Text>
+        {/* <Text fontSize={"2xl"}>{city}</Text> */}
       </VStack>
     </AppWindow>
   );
