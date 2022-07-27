@@ -42,6 +42,7 @@ export interface serverConfiguration {
     certificateKeyFile: string;
     certificateChainFile: string;
   };
+  twilio: TwilioConfiguration;
 }
 
 /**
@@ -84,4 +85,12 @@ export interface AuthConfiguration {
     routeEndpoint: string;
     callbackURL: string;
   };
+}
+
+// The Twilio Configuration
+export interface TwilioConfiguration {
+  accountSid: string; // Your Account SID from www.twilio.com/console
+  authToken: string;  // Your Auth Token from www.twilio.com/console
+  apiKey: string; // API Key
+  apiSecret: string; // API Secret
 }

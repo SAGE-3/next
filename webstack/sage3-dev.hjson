@@ -69,5 +69,11 @@
     "certificateFile": "localhost-server.crt",
     "certificateChainFile": "localhost-ca.crt",
     "certificateKeyFile": "localhost-server.key"
+  },
+  twilio: {
+    "accountSid": "AC43f67ea8d72208ae398d8d234d365d99",
+    "authToken":"a69de47d75b2edf85da3ea3575ad8128",
+    "apiKey": "SK9fcd5219bfa48d8b68ddf459e54fe110",
+    "apiSecret": "S0TzN2srXLGypAjUnCBdQXOcdhVzosYH",
   }
 }
