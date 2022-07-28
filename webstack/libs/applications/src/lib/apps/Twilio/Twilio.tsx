@@ -6,8 +6,8 @@
  *
  */
 
-import { useAppStore, useUser } from '@sage3/frontend';
-import { Button, getToken } from '@chakra-ui/react';
+import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { Button } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -17,95 +17,157 @@ import { AppWindow } from '../../components';
 import './styling.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { connect, createLocalTracks } from 'twilio-video';
+import { connect, createLocalTracks, Room, LocalVideoTrack } from 'twilio-video';
+
+
+async function fetchToken(userId: string, roomName: string) {
+  const reponse = await fetch(`/twilio/token?identity=${userId}&room=${roomName}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+  const { token } = await reponse.json();
+  return token;
+}
 
 /* App component for Twilio */
-
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
+  const twilioRoomName = props.data.boardId + '-' + props._createdBy;
+
+  // Current User
   const { user } = useUser();
 
-  const [localToken, setToken] = useState(s.twilioRoomId);
+  // Token
+  const [token, setToken] = useState<string | null>(null);
 
-  const [tracks, setTracks] = useState<any[]>([]);
+  // Twilio Room
+  const [room, setRoom] = useState<Room | null>(null);
 
-  const [room, setRoom] = useState<any>();
-  const [track, setTrack] = useState<any>();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    async function getToken() {
-      const roomname = 'room-1';
-      const reponse = await fetch(`/twilio/token?identity=${user?._id}&room=${roomname}`, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+  function shareWebcam() {
+    if (token && room === null) {
+      // Option 1
+      navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true
+      }).then((mediaStream) => {
+        return connect(token, {
+          name: twilioRoomName,
+          tracks: mediaStream.getTracks()
+        });
+      }).then(room => {
+        console.log(`Connected to Room: ${room.name}`);
+        setRoom(room)
+      }, error => {
+        console.error(`Unable to connect to Room: ${error.message}`);
+        setRoom(null);
       });
-      const { token } = await reponse.json();
+    }
+  }
+
+  function shareScreen() {
+    if (token && room === null) {
+      navigator.mediaDevices.getDisplayMedia().then(stream => {
+        const screenTrack = new LocalVideoTrack(stream.getTracks()[0]);
+        return connect(token, {
+          name: twilioRoomName,
+          tracks: [screenTrack]
+        });
+      }).then(room => {
+        console.log(`Connected to Room: ${room.name}`);
+        setRoom(room)
+      }, error => {
+        console.error(`Unable to connect to Room: ${error.message}`);
+        setRoom(null);
+      });
+    }
+  }
+
+  function joinRoom() {
+    if (token && room === null) {
+      connect(token, { name: twilioRoomName }).then(room => {
+        console.log(`Successfully joined a Room: ${room}`);
+        // Log any Participants already connected to the Room
+        room.participants.forEach(participant => {
+          console.log(`Participant "${participant.identity}" is connected to the Room`);
+          participant.tracks.forEach((publication: any) => {
+            if (publication.track) {
+              publication.track.attach(videoRef.current);
+            }
+          });
+
+          participant.on('trackSubscribed', (track: any) => {
+            track.attach(videoRef.current);
+          });
+        });
+
+        // Log new Participants as they connect to the Room
+        room.once('participantConnected', participant => {
+          console.log(`Participant "${participant.identity}" has connected to the Room`);
+
+          participant.tracks.forEach((publication: any) => {
+            if (publication.isSubscribed) {
+              const track = publication.track;
+              publication.track.attach(videoRef.current);
+            }
+          });
+
+          participant.on('trackSubscribed', (track: any) => {
+            track.attach(videoRef.current);
+          });
+        });
+
+
+        // Log Participants as they disconnect from the Room
+        room.once('participantDisconnected', participant => {
+          console.log(`Participant "${participant.identity}" has disconnected from the Room`);
+        });
+      }, error => {
+        console.error(`Unable to connect to Room: ${error.message}`);
+      });
+    }
+  }
+
+  useEffect(() => {
+    async function getToken(userId: string, roomName: string) {
+      const token = await fetchToken(userId, roomName);
       setToken(token);
+    }
+    if (user && token === null) {
+      getToken(user._id, twilioRoomName);
+    }
+  }, [token]);
 
-      if (user && props._updatedBy === user._id) {
-        connect(token, {
-          audio: true,
-          name: roomname,
-          video: { width: 640 },
-        }).then((room) => {
-          console.log(`Owner Connected to Room: ${room.name}`);
-        });
-      } else {
-        connect(token, {
-          audio: false,
-          name: roomname,
-        }).then((room) => {
-          console.log(`Viewer Connected to Room: ${room.name}`);
 
-          // Attach the Participant's Media to a <div> element.
-          room.on('participantConnected', (participant) => {
-            console.log(`Participant "${participant.identity}" connected`);
+  useEffect(() => {
+    if (user && user._id !== props._createdBy && token !== null) {
+      joinRoom();
+    }
+  }, [token]);
 
-            participant.tracks.forEach((publication: any) => {
-              if (publication.isSubscribed) {
-                const track = publication.track;
-                if (track) {
-                  track.attach(videoRef.current);
-                }
-              }
-            });
-
-            participant.on('trackSubscribed', (track: any) => {
-              if (track) {
-                track.attach(videoRef.current);
-              }
-            });
-          });
-
-          room.participants.forEach((participant) => {
-            participant.tracks.forEach((publication: any) => {
-              if (publication.track) {
-                publication.track.attach(videoRef.current);
-              }
-            });
-
-            participant.on('trackSubscribed', (track: any) => {
-              if (track) {
-                track.attach(videoRef.current);
-              }
-            });
-          });
-        });
+  useEffect(() => {
+    return () => {
+      if (room) {
+        room.disconnect();
+        console.log('disconnected from room: ', room.name);
       }
     }
-    getToken();
-  }, []);
+  }, [room]);
 
   return (
     <AppWindow app={props}>
       <>
         <video ref={videoRef} className="video-container"></video>
+        {user?._id === props._createdBy ?
+          <>
+            <Button colorScheme="green" onClick={shareWebcam}>Share Webcam</Button>
+            <Button colorScheme="green" onClick={shareScreen}>Share Screen</Button>
+          </> : null}
       </>
     </AppWindow>
   );
