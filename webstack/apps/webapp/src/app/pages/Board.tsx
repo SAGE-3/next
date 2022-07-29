@@ -36,7 +36,7 @@ import { Applications, initialValues, AppError } from '@sage3/applications/apps'
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
-import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu, useTwilioStore} from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -71,6 +71,10 @@ export function BoardPage() {
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === locationState.boardId);
 
+  // Twilio Store to join and leave room when joining board
+  const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
+  const leaveTwilioRoom = useTwilioStore((state) => state.leaveRoom);
+
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -101,17 +105,27 @@ export function BoardPage() {
   // Board current position
   const [boardPos, setBoardPos] = useState({ x: 0, y: 0 });
 
+  // Handle joining and leave a board
   useEffect(() => {
     // Subscribe to the board that was selected
     subBoard(locationState.boardId);
     // Update the user's presence information
     updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
 
+    // Join Twilio room
+    if (user) {
+      joinTwilioRoom(user?._id, locationState.roomId);
+    }
+
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
+      // Unsube from board updates
       unsubBoard();
       // Update the user's presence information
       updatePresence({ boardId: '', roomId: '' });
+      // Leave twilio room
+      leaveTwilioRoom();
+      
     };
   }, []);
 

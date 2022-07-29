@@ -1,0 +1,14 @@
+ipython
+jupyter_client
+#python-socketio
+requests
+#websockets
+#websocket-client
+httpx
+pydantic
+pandas
+# matplotlib
+
+# pillow
+# pyexiftool
+# fluent-logger
