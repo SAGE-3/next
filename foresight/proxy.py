@@ -139,9 +139,11 @@ class SAGEProxy():
                 pass
             # print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
-            updated_fileds = list(msg['event']['updates'].keys())
-            print(f"updated fields are: {updated_fileds}")
-            if len(updated_fileds) == 1 and updated_fileds[0] == 'raised':
+            updated_fields = []
+            if msg['event']['type'] == "UPDATE":
+                updated_fields = list(msg['event']['updates'].keys())
+            print(f"updated fields are: {updated_fields}")
+            if len(updated_fields) == 1 and updated_fields[0] == 'raised':
                 print("The received update is discribed a raised app... ignoring it")
             else:
                 collection = msg["event"]['col']
