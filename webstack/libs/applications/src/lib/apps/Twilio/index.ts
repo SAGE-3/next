@@ -14,10 +14,14 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
+  videoId: z.string(),
+  audioId: z.string()
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
+  videoId: '1234',
+  audioId: '1234'
 };
 
 export const name = 'Twilio';

@@ -9,8 +9,6 @@
 // The React version of Zustand
 import create from 'zustand';
 
-import { Room } from 'twilio-video';
-
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.3;
 const MaxZoom = 4.0;
