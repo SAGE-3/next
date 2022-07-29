@@ -6,7 +6,7 @@
  *
  */
 
-import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAppStore, useUser } from '@sage3/frontend';
 import { Button, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -17,12 +17,9 @@ import { AppWindow } from '../../components';
 import './styling.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { LocalVideoTrack, LocalTrackOptions, createLocalVideoTrack, TrackPublication, Track, RemoteVideoTrack, createLocalTracks, CreateLocalTrackOptions, CreateLocalTracksOptions } from 'twilio-video';
+import { LocalVideoTrack, createLocalTracks, CreateLocalTracksOptions } from 'twilio-video';
 import { useTwilioStore } from './store';
 import { genId } from '@sage3/shared';
-
-
-
 
 
 /* App component for Twilio */
@@ -50,9 +47,7 @@ function AppComponent(props: App): JSX.Element {
 
 
   useEffect(() => {
-    console.log('tracks', tracks);
     tracks.forEach(track => {
-      console.log(track.name, s.videoId, s.audioId);
       if (track.name === s.videoId && videoRef.current) {
         track.attach(videoRef.current);
       }
@@ -64,7 +59,6 @@ function AppComponent(props: App): JSX.Element {
     return () => {
       room?.localParticipant.tracks.forEach(track => {
         if (track.trackName === s.videoId || track.trackName === s.audioId) {
-          console.log(track.trackName)
           track.unpublish();
         }
       });
@@ -124,9 +118,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (room && selectedAudioSource && selectedVideoSource) {
       const videoId = genId();
       const audioId = genId();
-
       await updateState(props._id, { videoId, audioId });
-
       const constraints = {
         audio: { deviceId: selectedAudioSource.deviceId, name: audioId },
         video: { deviceId: selectedVideoSource.deviceId, name: videoId }
@@ -141,7 +133,6 @@ function ToolbarComponent(props: App): JSX.Element {
     if (room) {
       const videoId = genId();
       await updateState(props._id, { videoId });
-      room.localParticipant.tracks.forEach(track => console.log('track', track))
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
       const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
       room.localParticipant.publishTrack(screenTrack);
