@@ -42,7 +42,7 @@ async def before_first_request():
 
     try:
         kc.execute("")
-        await kc.get_iopub_msg(timeout=0.001)
+        await kc.get_iopub_msg(timeout=0.005)
     except:
         print("The expected error")
         pass
@@ -64,7 +64,7 @@ async def run_code():
     kc.execute("print('flushing stdout', flush=True)")
     while True:
         try:
-            msg = await kc.get_iopub_msg(timeout=0.001)
+            msg = await kc.get_iopub_msg(timeout=0.005)
             print("found a message in the queue")
         except queue.Empty:
             print("pre-run the queue is empty")
@@ -76,7 +76,7 @@ async def run_code():
 
     while True:
         try:
-            msg = await kc.get_iopub_msg(timeout=0.001)
+            msg = await kc.get_iopub_msg(timeout=0.005)
             print(f"\tmsg is {msg}")
             if msg["parent_header"]['msg_id'] != parent_msg_id:
                 logger.info("in 1")
