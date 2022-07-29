@@ -1,7 +1,0 @@
-# We need to start a private kernel using some kernel configs
-python -m ipykernel_launcher -f config/kernel-s3-next.json
-
-# We can connect to the kernel to run code
-jupyter console --existing ~/Documents/GitHub/next/foresight/config/kernel-s3-next.json
-
-
