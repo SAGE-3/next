@@ -36,6 +36,7 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
+import logging
 from jupyterkernelproxy_client import JupyterKernelClient
 
 from threading import Thread
@@ -226,7 +227,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "79ff1453-929e-44c9-9374-e803e37cbc68")
+sage_proxy = SAGEProxy("config/config.json", "cfe328af-f6d1-44e3-b1a7-3a4e7f7d16d1")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()

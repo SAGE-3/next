@@ -1,16 +1,29 @@
 # TODO: Check throught the kernel client that the kernel is actually alive
 from flask import Flask, request
-
 from  jupyter_client import AsyncKernelClient
-import asyncio
+import sys
+import io
 import json
 import redis
 import queue
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 from collections import defaultdict
 kc = AsyncKernelClient()
 session_id= None
 app = Flask(__name__)
 red = None
+import os, contextlib
+
+# def supress_stdout(func):
+#     async def wrapper(*a, **ka):
+#         with open(os.devnull, 'w') as devnull:
+#             with contextlib.redirect_stdout(devnull):
+#                 return await func(*a, **ka)
+#     return wrapper
+
 
 
 @app.before_first_request
@@ -26,51 +39,60 @@ async def before_first_request():
     # For some reason, sometimes the first execute is ignored
     print(f"my session id is {session_id}")
 
+
     try:
         kc.execute("")
-        await kc.get_iopub_msg(timeout=1)
+        await kc.get_iopub_msg(timeout=0.001)
     except:
         print("The expected error")
         pass
 
 
+
+
 @app.route('/exec', methods=['POST'])
 async def run_code():
-    result = defaultdict(list)
+    global kc
+    result = {}
     print("i am here")
     code = request.data.decode("utf-8")
 
-    # tempy the queue before running a job
+    # Flushing the output and empty the queue before running a job
+    # TODO: THIS IS A TEMP FIX> THIS DOES NOT GUARANTEE THAT ANOTHER THREAD IS
+    #  NOT GOING TO TRY TO WRITE TO STDOUT, WHICH WILL BE PICKED UP LATER.
+    # NEED TO HANDLE THIS BY TESTING WHETHER WE ARE IN EXECUTE MODE AND DELAYING PRINTING UNTIL DONE WITH EXECUTE MODE
+    kc.execute("print('flushing stdout', flush=True)")
     while True:
         try:
-            msg = await kc.get_iopub_msg(timeout=1)
-            print("foudn a message in the queue")
+            msg = await kc.get_iopub_msg(timeout=0.001)
+            print("found a message in the queue")
         except queue.Empty:
             print("pre-run the queue is empty")
             break
 
     parent_msg_id = kc.execute(code)
-    result["request_id"].append(parent_msg_id)
+    result["request_id"] = parent_msg_id
     print(f"Executing code {code} and parent message id is {parent_msg_id}")
-
 
     while True:
         try:
-            msg = await kc.get_iopub_msg(timeout=1)
+            msg = await kc.get_iopub_msg(timeout=0.001)
             print(f"\tmsg is {msg}")
             if msg["parent_header"]['msg_id'] != parent_msg_id:
-                print("in 1")
+                logger.info("in 1")
                 continue
             if 'execution_state' in msg['content'] and msg['content']['execution_state'] == 'idle':
-                print("in 2")
+                logger.info("in 2")
             if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
-                print("in 3")
-                result[msg['msg_type']].append(msg['content'])
+                logger.info("in 3")
+                result[msg['msg_type']] = msg['content']
         except queue.Empty:
             print("queue is empty")
             break
         except Exception as e:
             raise Exception(f"Error in jupyter kernel sever: {e} ")
+    # restore STDOUT
+
     print(f"Result is {result}")
     # if 'display_data' in result:
     #     del(result['execute_result'])
