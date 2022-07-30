@@ -47,11 +47,11 @@ class JupyterKernelClient(Borg):
         command = command_info["code"]
         print(f"!!!!!EXECUTING COMMAND {command}!!!!!!")
 
-        # try:
-        #     msg = requests.post(self.url, data = command).json()
-        # except:
-        #     raise Exception(f"couldn't run code on {self.url}")
-        msg={"request_id":"bogus_id"}
+        try:
+            msg = requests.post(self.url, data = command).json()
+        except:
+            raise Exception(f"couldn't run code on {self.url}")
+        # msg={"request_id":"bogus_id"}
         self.callback_info[msg['request_id']] = (user_passed_uuid, callback_fn)
         return msg
 
