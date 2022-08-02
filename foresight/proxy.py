@@ -36,6 +36,7 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
+import logging
 from jupyterkernelproxy_client import JupyterKernelClient
 
 from threading import Thread
@@ -139,9 +140,11 @@ class SAGEProxy():
                 pass
             # print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
-            updated_fileds = list(msg['event']['updates'].keys())
-            print(f"updated fields are: {updated_fileds}")
-            if len(updated_fileds) == 1 and updated_fileds[0] == 'raised':
+            updated_fields = []
+            if msg['event']['type'] == "UPDATE":
+                updated_fields = list(msg['event']['updates'].keys())
+            print(f"updated fields are: {updated_fields}")
+            if len(updated_fields) == 1 and updated_fields[0] == 'raised':
                 print("The received update is discribed a raised app... ignoring it")
             else:
                 collection = msg["event"]['col']
@@ -224,7 +227,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "79ff1453-929e-44c9-9374-e803e37cbc68")
+sage_proxy = SAGEProxy("config/config.json", "cfe328af-f6d1-44e3-b1a7-3a4e7f7d16d1")
 listening_process = threading.Thread(target=sage_proxy.receive_messages)
 worker_process = threading.Thread(target=sage_proxy.process_messages)
 listening_process.start()
