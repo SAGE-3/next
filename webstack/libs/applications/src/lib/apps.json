@@ -16,5 +16,6 @@
     "CSVViewer",
     "RTCChat",
     "Clock",
-    "JupyterApp"
+    "JupyterApp",
+    "Cobrowse"
 ]

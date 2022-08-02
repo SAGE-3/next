@@ -18,6 +18,7 @@ import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewe
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as JupyterAppName, init as defaultJupyterApp } from './apps/JupyterApp';
+import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 
 
 import CounterApp from './apps/CounterApp/CounterApp';
@@ -38,6 +39,7 @@ import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import Clock from './apps/Clock/Clock';
 import JupyterApp from './apps/JupyterApp/JupyterApp';
+import Cobrowse from './apps/Cobrowse/Cobrowse';
 
 
 export const Applications = {
@@ -59,6 +61,7 @@ export const Applications = {
   [RTCChatName]: RTCChat,
   [ClockName]: Clock,
   [JupyterAppName]: JupyterApp,
+  [CobrowseName]: Cobrowse,
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 
@@ -81,6 +84,7 @@ export const initialValues = {
   [RTCChatName]: defaultRTCChat,
   [ClockName]: defaultClock,
   [JupyterAppName]: defaultJupyterApp,
+  [CobrowseName]: defaultCobrowse,
 };
 
 export * from './components';

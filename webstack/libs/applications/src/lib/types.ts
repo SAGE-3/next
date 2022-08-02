@@ -18,8 +18,9 @@ import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as JupyterAppState, name as JupyterAppName } from './apps/JupyterApp';
+import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 
 
-export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState | DataTableAppState | CSVViewerState | RTCChatState | ClockState | JupyterAppState;
+export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState | DataTableAppState | CSVViewerState | RTCChatState | ClockState | JupyterAppState | CobrowseState;
 
-export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName | typeof DataTableAppName | typeof CSVViewerName | typeof RTCChatName | typeof ClockName | typeof JupyterAppName;
+export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName | typeof DataTableAppName | typeof CSVViewerName | typeof RTCChatName | typeof ClockName | typeof JupyterAppName | typeof CobrowseName;
