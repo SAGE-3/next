@@ -26,7 +26,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { LocalVideoTrack, LocalAudioTrack, createLocalTracks, CreateLocalTracksOptions, createLocalVideoTrack } from 'twilio-video';
 
 // Icons
-import {MdScreenShare, MdPhotoCamera, MdExpandMore, MdChevronRight } from 'react-icons/md';
+import { MdScreenShare, MdPhotoCamera, MdExpandMore, MdChevronRight } from 'react-icons/md';
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
@@ -68,22 +68,22 @@ function AppComponent(props: App): JSX.Element {
   }, [tracks, s.videoId, s.audioId]);
 
   useEffect(() => {
-    if (user?._id === props._createdBy  ) {
-        streams.forEach(stream => {
-          if (stream.id == s.videoId && videoRef.current) {
-            videoRef.current.srcObject = stream.stream;
-            videoRef.current.muted = true;
-            try {
-              videoRef.current.play();
-            } catch(error) {
-              console.log(error);
-            }
- 
+    if (user?._id === props._createdBy) {
+      streams.forEach(stream => {
+        if (stream.id == s.videoId && videoRef.current) {
+          videoRef.current.srcObject = stream.stream;
+          videoRef.current.muted = true;
+          try {
+            videoRef.current.play();
+          } catch (error) {
+            console.log(error);
           }
-        });
+
+        }
+      });
     }
-  
-  }, [streams, s.videoId, videoRef ]);
+
+  }, [streams, s.videoId, videoRef]);
 
   return (
     <AppWindow app={props}>
@@ -120,7 +120,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleMute = useCallback(() => {
     setMute(!mute);
     shareWebcam();
-  },[mute, setMute])
+  }, [mute, setMute])
 
   const handleSelectVideoSource = useCallback(
     (source: InputDeviceInfo) => {
@@ -141,6 +141,7 @@ function ToolbarComponent(props: App): JSX.Element {
   useEffect(() => {
     async function getDevices() {
       const devices = await navigator.mediaDevices.enumerateDevices();
+      console.log(devices);
       const videos = devices.filter((d) => d.kind === 'videoinput');
       const audios = devices.filter((d) => d.kind === 'audioinput');
       setVideoSources(videos);
@@ -165,11 +166,11 @@ function ToolbarComponent(props: App): JSX.Element {
       }
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       addStream(videoId, mediaStream);
-      const tracks = mediaStream.getTracks().map(track => 
+      const tracks = mediaStream.getTracks().map(track =>
         track.kind === 'audio'
-        ? new LocalAudioTrack(track, {name: audioId, logLevel: 'off'}) 
-        : new LocalVideoTrack(track, {name: videoId, logLevel: 'off'})
-        );
+          ? new LocalAudioTrack(track, { name: audioId, logLevel: 'off' })
+          : new LocalVideoTrack(track, { name: videoId, logLevel: 'off' })
+      );
       room.localParticipant.publishTracks(tracks);
       setVideoType('camera');
     }
@@ -195,7 +196,7 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       {user?._id === props._createdBy ? (
         <>
-          <Button colorScheme="green" onClick={shareWebcam} disabled={!room || !selectedAudioSource || !selectedVideoSource}  mx={1} rightIcon={<MdPhotoCamera />}> 
+          <Button colorScheme="green" onClick={shareWebcam} disabled={!room || !selectedAudioSource || !selectedVideoSource} mx={1} rightIcon={<MdPhotoCamera />}>
             Webcam
           </Button>
           {videoType === 'camera' ? (
@@ -232,10 +233,10 @@ function ToolbarComponent(props: App): JSX.Element {
             </>
           ) : null}
 
-          <Button colorScheme="green" onClick={shareScreen} disabled={!room}  mx={1} rightIcon={<MdScreenShare />}>
+          <Button colorScheme="green" onClick={shareScreen} disabled={!room} mx={1} rightIcon={<MdScreenShare />}>
             Screenshare
           </Button>
-          
+
         </>
       ) : null}
     </>
