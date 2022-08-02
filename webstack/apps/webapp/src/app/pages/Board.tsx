@@ -36,7 +36,7 @@ import { Applications, initialValues, AppError } from '@sage3/applications/apps'
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
-import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu, useTwilioStore} from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu, useTwilioStore } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -74,6 +74,7 @@ export function BoardPage() {
   // Twilio Store to join and leave room when joining board
   const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
   const leaveTwilioRoom = useTwilioStore((state) => state.leaveRoom);
+  const room = useTwilioStore((state) => state.room);
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -105,6 +106,30 @@ export function BoardPage() {
   // Board current position
   const [boardPos, setBoardPos] = useState({ x: 0, y: 0 });
 
+  //TWILIO STUFF
+  // I need to do it out here to detect if an app closes to close the stream attached to it.
+  // It kinda of a hacky way to do it, but it works.
+  const userStreamIds: string[] = [];
+  apps.forEach(el => {
+    if (el.data.type === 'Twilio' && el._createdBy === user?._id) {
+      const s = el.data.state as any;
+      userStreamIds.push(s.videoId, s.audioId)
+    }
+  });
+
+  useEffect(() => {
+    return () => {
+      // Remove track so user's video doesn't continuosly play
+      room?.localParticipant.tracks.forEach((publication: any) => {
+        if (userStreamIds.indexOf(publication.trackName) === -1) {
+          publication.unpublish();
+          publication.track.stop();
+        }
+      });
+
+    }
+  }, [userStreamIds, room]);
+
   // Handle joining and leave a board
   useEffect(() => {
     // Subscribe to the board that was selected
@@ -125,7 +150,7 @@ export function BoardPage() {
       updatePresence({ boardId: '', roomId: '' });
       // Leave twilio room
       leaveTwilioRoom();
-      
+
     };
   }, []);
 

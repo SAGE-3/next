@@ -53,18 +53,6 @@ function AppComponent(props: App): JSX.Element {
         track.attach(audioRef.current);
       }
     });
-
-    return () => {
-      // Remove track so user's video doesn't continuosly play
-      if (user?._id === props._createdBy) {
-        room?.localParticipant.tracks.forEach((publication: any) => {
-          if (publication.trackName === s.videoId || publication.trackName === s.audioId) {
-            publication.unpublish();
-            publication.track.stop();
-          }
-        });
-      }
-    };
   }, [tracks, s.videoId, s.audioId]);
 
   useEffect(() => {
