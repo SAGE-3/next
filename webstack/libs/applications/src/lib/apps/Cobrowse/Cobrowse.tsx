@@ -27,7 +27,7 @@ export const useStore = create((set: any) => ({
 }));
 
 
-/* App component for JupyterApp */
+/* App component for CoBrowse */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -181,24 +181,26 @@ function AppComponent(props: App): JSX.Element {
           <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any} > </webview>
           : <img id={"image" + props._id}></img>
         :
-        <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-          <Center w="100%" h="100%" bg="gray.700" >
-            <Box p={4} >
-              <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  JupyterLab is only supported with the SAGE3 Desktop Application.
-                </Box>
-              </Center>
-              <br />
-              <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  Current URL <a style={{ color: "#13a89e" }} href={s.sharedurl} rel="noreferrer" target="_blank">
-                    {s.sharedurl} </a>
-                </Box>
-              </Center>
-            </Box>
-          </Center>
-        </div>
+        mine ?
+          <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
+            <Center w="100%" h="100%" bg="gray.700" >
+              <Box p={4} >
+                <Center>
+                  <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
+                    CoBrowse is only supported with the SAGE3 Desktop Application.
+                  </Box>
+                </Center>
+                <br />
+                <Center>
+                  <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
+                    Current URL <a style={{ color: "#13a89e" }} href={s.sharedurl} rel="noreferrer" target="_blank">
+                      {s.sharedurl} </a>
+                  </Box>
+                </Center>
+              </Box>
+            </Center>
+          </div>
+          : <img id={"image" + props._id}></img>
       }
     </AppWindow >
   );
