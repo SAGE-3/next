@@ -6,36 +6,99 @@
  *
  */
 
-import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { Box, Button, Center } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { GetConfiguration, useAppStore } from '@sage3/frontend';
+import { isElectron } from './util';
+
+// Electron and Browser components
+// @ts-ignore
+import { WebviewTag } from 'electron';
+
+/* App component for Webview */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
+  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+  const webviewNode = useRef<WebviewTag>();
+  const [url, setUrl] = useState<string | null>(s.webviewurl);
+
+  // Init the webview
+  const setWebviewRef = useCallback(
+    (node: WebviewTag) => {
+      // event dom-ready callback
+      const domReadyCallback = (webview: any) => {
+        webview.removeEventListener('dom-ready', domReadyCallback);
+      };
+
+      if (node) {
+        webviewNode.current = node;
+        const webview = webviewNode.current;
+
+        // Callback when the webview is ready
+        webview.addEventListener('dom-ready', domReadyCallback(webview));
+
+        const titleUpdated = (event: any) => {
+          // Update the app title
+          update(props._id, { description: event.title });
+        };
+        webview.addEventListener('page-title-updated', titleUpdated);
+
+        // After the partition has been set, you can navigate
+        webview.src = url;
+      }
+    },
+    [url]
+  );
+
+  const nodeStyle: React.CSSProperties = {
+    width: props.data.size.width + 'px',
+    height: props.data.size.height + 'px',
+    objectFit: 'contain',
+  };
 
   return (
     <AppWindow app={props}>
-      <>
-        <h1> url : {s.url}</h1>
-      </>
+      {isElectron() ? (
+        <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
+      ) : (
+        <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
+          <Center w="100%" h="100%" bg="gray.700">
+            <Box p={4}>
+              <Center>
+                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
+                  Webview is only supported with the SAGE3 Desktop Application.
+                </Box>
+              </Center>
+              <br />
+              <Center>
+                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
+                  Current URL{' '}
+                  <a style={{ color: '#13a89e' }} href={s.webviewurl} rel="noreferrer" target="_blank">
+                    {s.webviewurl}{' '}
+                  </a>
+                </Box>
+              </Center>
+            </Box>
+          </Center>
+        </div>
+      )}
     </AppWindow>
   );
 }
 
+/* App toolbar component for the app Webview */
+
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
 
-  return (
-    <>
-    </>
-  )
+  return <></>;
 }
 
 export default { AppComponent, ToolbarComponent };
-

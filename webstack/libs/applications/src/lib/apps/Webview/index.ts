@@ -14,12 +14,12 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  url: z.string(),
+  webviewurl: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  url: '',
+  webviewurl: 'https://google.com/',
 };
 
 export const name = 'Webview';
