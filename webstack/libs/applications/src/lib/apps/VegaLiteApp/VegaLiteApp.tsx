@@ -66,7 +66,7 @@ function AppComponent(props: App): JSX.Element {
   const debounceFunc = useRef(debounceSave);
 
   // callback for aceditor change
-  function handleTextChange(ev: string, event?: any) {
+  function handleTextChange(ev: string) {
     const inputValue = ev;
     // Update the local value
     setSpec(inputValue);
@@ -91,17 +91,14 @@ function AppComponent(props: App): JSX.Element {
             marginBottom: 10,
             padding: 0,
             overflow: 'hidden',
-            // backgroundColor: inputBoxColor,
-            // boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
             borderRadius: '12px',
           }}
           name="ace"
           fontSize={'1em'}
           minLines={6}
-          maxLines={Math.floor(props.data.size.height / 28)}
+          maxLines={Math.floor(props.data.size.height / 18)}
           placeholder="Enter code here"
           mode={'python'}
-          // theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
           editorProps={{ $blockScrolling: true }}
           setOptions={{
             hasCssTransforms: true,
@@ -109,9 +106,9 @@ function AppComponent(props: App): JSX.Element {
             showPrintMargin: false,
             highlightActiveLine: true,
             showLineNumbers: true,
+            wrap: true,
           }}
         />
-        {/* <textarea style={{ width: 400, height: 400 }} onChange={handleTextChange} value={spec}></textarea> */}
       </>
     </AppWindow>
   );
@@ -137,7 +134,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!user) return;
     createApp({
       name: 'VegaLiteViewer',
-      description: 'Description',
+      description: 'Visualization',
       roomId: locationState.roomId,
       boardId: locationState.boardId,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
