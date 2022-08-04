@@ -30,12 +30,9 @@ import { GiArrowCursor } from 'react-icons/gi';
 
 // Library to help create error boundaries around dynamic components like SAGEApplications
 import { ErrorBoundary } from 'react-error-boundary';
-import { BoardHeader } from '../components/Board/BoardHeader';
-import { BoardFooter } from '../components/Board/BoardFooter';
-import { ClearBoardModal } from '../components/Board/ClearBoardModal';
-import { Twilio } from '../components/Board/Twilio';
-import { BoardContextMenu } from '../components/Board/BoardContextMenu';
-import { Background } from '../components/Board/Background';
+
+// Board components
+import { BoardHeader, BoardFooter, ClearBoardModal, Twilio, BoardContextMenu, Background } from '../components/Board';
 
 type LocationParams = {
   boardId: string;
