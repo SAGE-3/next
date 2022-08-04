@@ -7,14 +7,11 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import {
-  Avatar,
   Box,
-  Button,
-  Select,
-  Text,
+
   useDisclosure,
   useToast,
   useColorModeValue,
@@ -23,22 +20,18 @@ import {
   MenuItem,
   Modal,
   ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+
   MenuItemOption,
   MenuOptionGroup,
   Tag,
 } from '@chakra-ui/react';
 
 import { Applications, initialValues, AppError } from '@sage3/applications/apps';
-import { AppName, AppState } from '@sage3/applications/schema';
-import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
+import { usePresence, usePresenceStore } from '@sage3/frontend';
 
 import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu, useTwilioStore } from '@sage3/frontend';
 
-import { sageColorByName } from '@sage3/shared';
+
 import { DraggableData, Rnd } from 'react-rnd';
 import { throttle } from 'throttle-debounce';
 import { DraggableEvent } from 'react-draggable';
@@ -47,6 +40,12 @@ import { GiArrowCursor } from 'react-icons/gi';
 
 // Library to help create error boundaries around dynamic components like SAGEApplications
 import { ErrorBoundary } from 'react-error-boundary';
+import { BoardHeader } from '../components/Board/BoardHeader';
+import { BoardFooter } from '../components/Board/BoardFooter';
+import { ClearBoardModal } from '../components/Board/ClearBoardModal';
+import { Twilio } from '../components/Board/Twilio';
+import { BoardContextMenu } from '../components/Board/BoardContextMenu';
+import { Background } from '../components/Board/Background';
 
 type LocationParams = {
   boardId: string;
@@ -57,34 +56,23 @@ type LocationParams = {
  * The board page which displays the board and its apps.
  */
 export function BoardPage() {
+
   // Navigation and routing
   const location = useLocation();
   const locationState = location.state as LocationParams;
-  const navigate = useNavigate();
 
   // Board and App Store stuff
   const apps = useAppStore((state) => state.apps);
-  const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === locationState.boardId);
 
-  // Twilio Store to join and leave room when joining board
-  const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
-  const leaveTwilioRoom = useTwilioStore((state) => state.leaveRoom);
-  const room = useTwilioStore((state) => state.room);
-
-  // UI store for global setting
+  // UI store
   const scale = useUIStore((state) => state.scale);
-  const zoomInDelta = useUIStore((state) => state.zoomInDelta);
-  const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
-  const gridSize = useUIStore((state) => state.gridSize);
-  const setGridSize = useUIStore((state) => state.setGridSize);
-  const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
-  const selectedApp = useUIStore(state => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
 
   // User information
   const { user } = useUser();
@@ -93,42 +81,8 @@ export function BoardPage() {
   const { update: updatePresence } = usePresence();
   const presences = usePresenceStore((state) => state.presences);
 
-  // Asset manager button
-  const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
-  // Upload modal
-  const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
   // Clear the board modal
-  const { isOpen, onOpen, onClose } = useDisclosure();
-
-  // display some notifications
-  const toast = useToast();
-
-  // Board current position
-  const [boardPos, setBoardPos] = useState({ x: 0, y: 0 });
-
-  //TWILIO STUFF
-  // I need to do it out here to detect if an app closes to close the stream attached to it.
-  // It kinda of a hacky way to do it, but it works.
-  const userStreamIds: string[] = [];
-  apps.forEach(el => {
-    if (el.data.type === 'Twilio' && el._createdBy === user?._id) {
-      const s = el.data.state as any;
-      userStreamIds.push(s.videoId, s.audioId)
-    }
-  });
-
-  useEffect(() => {
-    return () => {
-      // Remove track so user's video doesn't continuosly play
-      room?.localParticipant.tracks.forEach((publication: any) => {
-        if (userStreamIds.indexOf(publication.trackName) === -1) {
-          publication.unpublish();
-          publication.track.stop();
-        }
-      });
-
-    }
-  }, [userStreamIds, room]);
+  const { isOpen: clearModalIsOpen, onOpen: clearModalOnOpen, onClose: clearModalOnClose } = useDisclosure();
 
   // Handle joining and leave a board
   useEffect(() => {
@@ -137,155 +91,20 @@ export function BoardPage() {
     // Update the user's presence information
     updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
 
-    // Join Twilio room
-    if (user) {
-      joinTwilioRoom(user?._id, locationState.roomId);
-    }
-
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsube from board updates
       unsubBoard();
       // Update the user's presence information
       updatePresence({ boardId: '', roomId: '' });
-      // Leave twilio room
-      leaveTwilioRoom();
 
     };
   }, []);
 
-  // Redirect the user back to the homepage when he clicks the green button in the top left corner
-  function handleHomeClick() {
-    navigate('/home');
-  }
-
-  // Function to handle when a new app is opened.
-  // App is positioned in the middle of the screen for right now.
-  const handleNewApp = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    // Check if value is corretly set
-    const appName = event.target.value as AppName;
-    if (!appName) return;
-
-    // Default width and height
-    const width = 300;
-    const height = 300;
-
-    // Cacluate X and Y of app based on the current board position and the width and height of the viewport
-    let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-    let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
-    x = Math.round(x / gridSize) * gridSize; // Snap to grid
-    y = Math.round(y / gridSize) * gridSize;
-
-    // Skip if no user is logged in
-    if (!user) return;
-
-    // Create the new app
-    createApp({
-      name: appName,
-      description: `${appName} - Description`,
-      roomId: locationState.roomId,
-      boardId: locationState.boardId,
-      position: { x, y, z: 0 },
-      size: { width, height, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: appName,
-      ownerId: user._id,
-      state: initialValues[appName] as AppState,
-      minimized: false,
-      raised: true
-    });
-  };
-
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
-    setBoardPos({ x: -data.x, y: -data.y });
+    setBoardPosition({ x: -data.x, y: -data.y });
   }
-
-  // Perform the actual upload
-  const uploadFunction = (input: File[], dx: number, dy: number) => {
-    if (input) {
-      // Uploaded with a Form object
-      const fd = new FormData();
-      // Add each file to the form
-      const fileListLength = input.length;
-      for (let i = 0; i < fileListLength; i++) {
-        fd.append('files', input[i]);
-      }
-
-      // Add fields to the upload form
-      fd.append('room', locationState.roomId);
-      fd.append('board', locationState.boardId);
-
-      // Position to open the asset
-      fd.append('targetX', dx.toString());
-      fd.append('targetY', dy.toString());
-
-      // Upload with a POST request
-      fetch('/api/assets/upload', {
-        method: 'POST',
-        body: fd,
-      })
-        .catch((error: Error) => {
-          console.log('Upload> Error: ', error);
-        })
-        .finally(() => {
-          // Close the modal UI
-          // props.onClose();
-          console.log('Upload> Upload complete');
-          // Display a message
-          toast({
-            title: 'Upload Done',
-            status: 'info',
-            duration: 4000,
-            isClosable: true,
-          });
-        });
-    }
-  };
-
-  // Start dragging
-  function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }
-  // Drop event
-  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
-    if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
-      event.preventDefault();
-      event.stopPropagation();
-      // Collect all the files dropped into an array
-      collectFiles(event.dataTransfer).then((files) => {
-        // Get the position of the drop
-        const xdrop = event.nativeEvent.offsetX;
-        const ydrop = event.nativeEvent.offsetY;
-        // do the actual upload
-        uploadFunction(Array.from(files), xdrop, ydrop);
-      });
-    } else {
-      console.log('drop_handler: no files');
-    }
-  }
-
-  // State of the checkboxes in context menu
-  const [radios, setRadios] = useState<string[]>(['ui', 'grid']);
-  // Enable/disable the grid
-  const onGridChange = () => {
-    if (radios.includes('grid')) {
-      setGridSize(1);
-      setRadios(radios.filter((el) => el !== 'grid'));
-    } else {
-      setGridSize(50);
-      setRadios([...radios, 'grid']);
-    }
-  };
-  // Show/hide the UI
-  const onUIChange = () => {
-    if (radios.includes('ui')) {
-      setRadios(radios.filter((el) => el !== 'ui'));
-    } else {
-      setRadios([...radios, 'ui']);
-    }
-  };
 
   // Update the cursor every half second
   // TODO: They don't work over apps yet.
@@ -358,239 +177,48 @@ export function BoardPage() {
             })}
 
           {/* Draggable Background */}
-          <Box
-            className="board-handle"
-            // width={5000}
-            // height={5000}
-            width="100%"
-            height="100%"
-            backgroundSize={`50px 50px`}
-            // backgroundSize={`${gridSize}px ${gridSize}px`}
-            backgroundImage={`linear-gradient(to right, ${gridColor} 1px, transparent 1px),
-               linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
-            id="board"
-            // Drag and drop event handlers
-            onDrop={OnDrop}
-            onDragOver={OnDragOver}
-            onWheel={(evt: any) => {
-              evt.stopPropagation();
-              if ((evt.altKey || evt.ctrlKey || evt.metaKey) && evt.buttons === 0) {
-                // Alt + wheel : Zoom
-              } else {
-                // const cursor = { x: evt.clientX, y: evt.clientY, };
-                if (evt.deltaY < 0) {
-                  zoomInDelta(evt.deltaY);
-                } else if (evt.deltaY > 0) {
-                  zoomOutDelta(evt.deltaY);
-                }
-              }
-            }}
-          />
+          <Background
+            boardId={locationState.boardId}
+            roomId={locationState.roomId}
+          ></Background>
         </Rnd>
       </div>
 
-
       {/* Context-menu for the board */}
       <ContextMenu divId="board">
-        <Menu>
-          <MenuGroup m={'2px 3px 0 3px'} title="Actions">
-            <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem">
-              Fit View to Board
-            </MenuItem>
-            <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem">
-              Show all Apps
-            </MenuItem>
-            <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem" onClick={onOpen}>
-              Clear Board
-            </MenuItem>
-            <MenuItem
-              p={'2px 3px 1px 3px'}
-              className="contextmenuitem"
-              onClick={() => {
-                const width = 700;
-                const height = 700;
-                // Calculate X and Y of app based on the current board position and the width and height of the viewport
-                let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-                let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
-                x = Math.round(x / gridSize) * gridSize; // Snap to grid
-                y = Math.round(y / gridSize) * gridSize;
-                // Open a webview into the SAGE3 builtin Jupyter instance
-                createApp({
-                  name: 'JupyterApp',
-                  description: 'JupyterApp',
-                  roomId: locationState.roomId,
-                  boardId: locationState.boardId,
-                  position: { x, y, z: 0 },
-                  size: { width, height, depth: 0 },
-                  rotation: { x: 0, y: 0, z: 0 },
-                  type: 'JupyterApp',
-                  ownerId: user?._id || '-',
-                  state: { ...initialValues['JupyterApp'], jupyterURL: "" },
-                  minimized: false,
-                  raised: true
-                });
-              }}
-            >
-              Open Jupyter
-            </MenuItem>
-          </MenuGroup>
-          <hr className="divider" />
-          <MenuOptionGroup m={'2px 3px 0 3px'} title="Options" type="checkbox" defaultValue={radios}>
-            <MenuItemOption m={0} p={'2px 3px 1px 3px'} className="contextmenuitem" value="grid" onClick={onGridChange}>
-              Snap to Grid
-            </MenuItemOption>
-            <MenuItemOption p={'2px 3px 1px 3px'} className="contextmenuitem" value="ui" onClick={onUIChange}>
-              Show Interface
-            </MenuItemOption>
-          </MenuOptionGroup>
-        </Menu>
+        <BoardContextMenu
+          boardId={locationState.boardId}
+          roomId={locationState.roomId}
+          clearBoard={clearModalOnOpen}
+        ></BoardContextMenu>
       </ContextMenu>
 
-      {/* Top bar */}
-      <Box
-        display="flex"
-        pointerEvents={'none'}
-        justifyContent="space-between"
-        alignItems="center"
-        p={2}
-        position="absolute"
-        top="0"
-        width="100%"
-      >
-        {/* Home Button */}
-        <Button pointerEvents={'all'} colorScheme="green" onClick={handleHomeClick}>
-          Home
-        </Button>
-
-        {/* Board Name */}
-        <Text fontSize="2xl" background="teal" px={6} borderRadius="4" color="white">
-          {board?.data.name}
-        </Text>
-
-        {/* User Avatar */}
-        <Avatar
-          size="md"
-          pointerEvents={'all'}
-          name={user?.data.name}
-          getInitials={initials}
-          backgroundColor={user ? sageColorByName(user.data.color) : ''}
-          color="black"
-        />
-      </Box>
+      {/* Top Bar */}
+      <BoardHeader
+        boardName={(board?.data.name) ? board.data.name : ''}
+        boardId={locationState.boardId}
+      />
 
       {/* Bottom Bar */}
-      <Box display="flex" justifyContent="left" alignItems="center" p={2} position="absolute" bottom="0">
-        {/* App Create Menu */}
-        <Select
-          colorScheme="green"
-          width="200px"
-          mx="1"
-          background="darkgray"
-          placeholder="Open Application"
-          onChange={handleNewApp}
-          value={0}
-        >
-          {Object.keys(Applications).map((appName) => (
-            <option key={appName} value={appName}>
-              {appName}
-            </option>
-          ))}
-        </Select>
+      <BoardFooter
+        boardId={locationState.boardId}
+        roomId={locationState.roomId}
+      ></BoardFooter>
 
-        {/* Open the Asset Manager Dialog */}
-        <Button colorScheme="green" mx="1" onClick={assetOnOpen}>
-          Asset Manager
-        </Button>
-
-        {/* Open the Asset Upload Dialog */}
-        <Button colorScheme="blue" mx="1" onClick={uploadOnOpen}>
-          Upload
-        </Button>
-
-        {/* App Toolbar - TODO - Temporary location for right now*/}
-        <Box alignItems="center" mx="1" backgroundColor="gray" p="2">
-          {apps
-            .filter(el => el._id === selectedApp).map((app) => {
-              const Component = Applications[app.data.type].ToolbarComponent;
-              return <Component key={app._id} {...app}></Component>;
-            })}
-        </Box>
-      </Box>
-
-      {/* Asset dialog */}
-      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPos}></AssetModal>
-
-      {/* Upload dialog */}
-      <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
+      {/*Twilio*/}
+      <Twilio roomName={locationState.boardId} />
 
       {/* Clear the board modal */}
-      <Modal isCentered isOpen={isOpen} onClose={onClose}>
+      <Modal isCentered isOpen={clearModalIsOpen} onClose={clearModalOnClose}>
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Clear the Board</ModalHeader>
-          <ModalBody>Are you sure you want to DELETE all apps?</ModalBody>
-          <ModalFooter>
-            <Button colorScheme="teal" size="md" variant="outline" mr={3} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              colorScheme="red"
-              size="md"
-              onClick={() => {
-                apps.forEach((a) => deleteApp(a._id));
-                onClose();
-              }}
-            >
-              Yes, Clear the Board
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+        <ClearBoardModal
+          onClick={() => {
+            apps.forEach((a) => deleteApp(a._id));
+            clearModalOnClose();
+          }}
+          onClose={clearModalOnClose}
+        ></ClearBoardModal>
       </Modal>
     </>
   );
-}
-
-/**
- * Collects files into an array, from a list of files or folders
- *
- * @export
- * @param {DataTransfer} evdt
- * @returns {Promise<File[]>}
- */
-export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
-  return new Promise<File[]>((resolve, reject) => {
-    const contents: File[] = [];
-    let reading = 0;
-
-    function handleFiles(file: File) {
-      reading--;
-      if (file.name !== '.DS_Store') contents.push(file);
-      if (reading === 0) {
-        resolve(contents);
-      }
-    }
-
-    const dt = evdt;
-    const length = evdt.items.length;
-    for (let i = 0; i < length; i++) {
-      const entry = dt.items[i].webkitGetAsEntry();
-      if (entry?.isFile) {
-        reading++;
-        // @ts-ignore
-        entry.file(handleFiles);
-      } else if (entry?.isDirectory) {
-        reading++;
-        // @ts-ignore
-        const reader = entry.createReader();
-        reader.readEntries(function (entries: any) {
-          // @ts-ignore
-          reading--;
-          entries.forEach(function (dir: any, key: any) {
-            reading++;
-            dir.file(handleFiles);
-          });
-        });
-      }
-    }
-  });
 }

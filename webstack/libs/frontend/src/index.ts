@@ -8,6 +8,7 @@
 
 export * from './lib/api';
 export * from './lib/config';
+export * from './lib/components';
 export * from './lib/hooks';
 export * from './lib/stores';
 export * from './lib/utils';

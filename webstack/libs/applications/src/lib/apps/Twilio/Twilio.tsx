@@ -37,9 +37,8 @@ function AppComponent(props: App): JSX.Element {
   const tracks = useTwilioStore((state) => state.tracks);
   const streams = useTwilioStore((state) => state.localVideoStreams);
 
-  // Video and Audio HTML Ref
+  // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
   // Current User
   const { user } = useUser();
@@ -48,9 +47,6 @@ function AppComponent(props: App): JSX.Element {
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current) {
         track.attach(videoRef.current);
-      }
-      if (track.name === s.audioId && audioRef.current) {
-        track.attach(audioRef.current);
       }
     });
   }, [tracks, s.videoId, s.audioId]);
@@ -77,7 +73,6 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <>
         <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
-        <audio ref={audioRef} className="audio-container"></audio>
       </>
     </AppWindow>
   );
