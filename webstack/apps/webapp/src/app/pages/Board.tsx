@@ -368,27 +368,25 @@ export function BoardPage() {
               p={'2px 3px 1px 3px'}
               className="contextmenuitem"
               onClick={() => {
-                const width = 600;
-                const height = 800;
+                const width = 700;
+                const height = 700;
                 // Calculate X and Y of app based on the current board position and the width and height of the viewport
                 let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
                 let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
                 x = Math.round(x / gridSize) * gridSize; // Snap to grid
                 y = Math.round(y / gridSize) * gridSize;
-                const token = '44';
-                const url = 'http://' + window.location.hostname + ':8888/tree/?token=' + token;
                 // Open a webview into the SAGE3 builtin Jupyter instance
                 createApp({
-                  name: 'Webview',
-                  description: 'Webview',
+                  name: 'JupyterApp',
+                  description: 'JupyterApp',
                   roomId: locationState.roomId,
                   boardId: locationState.boardId,
                   position: { x, y, z: 0 },
                   size: { width, height, depth: 0 },
                   rotation: { x: 0, y: 0, z: 0 },
-                  type: 'Webview',
+                  type: 'JupyterApp',
                   ownerId: user?._id || '-',
-                  state: { ...initialValues['Webview'], url },
+                  state: { ...initialValues['JupyterApp'], jupyterURL: "" },
                   minimized: false,
                   raised: true
                 });

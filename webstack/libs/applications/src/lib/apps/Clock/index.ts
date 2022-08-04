@@ -8,22 +8,20 @@
 
 import { z } from 'zod';
 
+/**
+ * SAGE3 application: SVGBox
+ * created by: Luc Renambot
+ */
+
 export const schema = z.object({
-  text: z.string(),
-  fontSize: z.number(),
-  color: z.string(),
-    executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.record(z.any()),
-  }),
+  file: z.string(),
+  city: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  text: 'stickie note',
-  fontSize: 48,
-  color: '#63B3ED',
-  executeInfo: { executeFunc: '', params: {} },
+  file: 'file.svg',
+  city: 'Chicago',
 };
 
-export const name = 'Stickie';
+export const name = 'Clock';

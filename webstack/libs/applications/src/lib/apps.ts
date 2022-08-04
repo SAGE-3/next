@@ -18,6 +18,8 @@ import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewe
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VegaLiteAppName, init as defaultVegaLiteApp } from './apps/VegaLiteApp';
+import { name as ClockName, init as defaultClock } from './apps/Clock';
+import { name as JupyterAppName, init as defaultJupyterApp } from './apps/JupyterApp';
 
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
@@ -37,6 +39,8 @@ import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VegaLiteApp from './apps/VegaLiteApp/VegaLiteApp';
+import Clock from './apps/Clock/Clock';
+import JupyterApp from './apps/JupyterApp/JupyterApp';
 
 export const Applications = {
   [CounterAppName]: CounterApp,
@@ -57,6 +61,8 @@ export const Applications = {
   [RTCChatName]: RTCChat,
   [VegaLiteViewerName]: VegaLiteViewer,
   [VegaLiteAppName]: VegaLiteApp,
+  [ClockName]: Clock,
+  [JupyterAppName]: JupyterApp,
 } as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export const initialValues = {
@@ -78,6 +84,8 @@ export const initialValues = {
   [RTCChatName]: defaultRTCChat,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VegaLiteAppName]: defaultVegaLiteApp,
+  [ClockName]: defaultClock,
+  [JupyterAppName]: defaultJupyterApp,
 };
 
 export * from './components';

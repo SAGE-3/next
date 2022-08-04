@@ -32,6 +32,7 @@ class JupyterKernelClient(Borg):
             self.stop_thread = False # keep on checking until this changes to false
             self.msg_checker = threading.Thread(target=self.process_reponse)
             self.msg_checker.start()
+            self.callback_info = {}
 
 
 
@@ -44,18 +45,33 @@ class JupyterKernelClient(Borg):
         user_passed_uuid = command_info["uuid"]
         callback_fn = command_info["call_fn"]
         command = command_info["code"]
-        msg = requests.post(self.url, data = command)
-        # self.callback_info[msg['request_id']] = (user_passed_uuid, callback_fn)
+        print(f"!!!!!EXECUTING COMMAND {command}!!!!!!")
+
+        try:
+            msg = requests.post(self.url, data = command).json()
+        except:
+            raise Exception(f"couldn't run code on {self.url}")
+        # msg={"request_id":"bogus_id"}
+        self.callback_info[msg['request_id']] = (user_passed_uuid, callback_fn)
         return msg
+
 
 
     def process_reponse(self):
         while True:
-            print("I am processing reponse")
+            # print("I am processing reponse")
             msg = self.pubsub.get_message()
             if msg:
-                print(f"reponse published is {msg}")
-            time.sleep(5)  # be nice to the system :)
+                # ignore first message
+                if msg["data"] == 1:
+                    continue
+                print(f"********************I am the client and I got the following from pubsub  is:\n {msg}")
+                msg = msg['data'].decode("utf-8")
+                msg=eval(msg)
+                request_id = msg['request_id']
+                self.callback_info[request_id][1](msg)
+
+            time.sleep(1)  # be nice to the system :)
 
 
 
