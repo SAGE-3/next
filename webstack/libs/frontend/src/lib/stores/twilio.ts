@@ -49,6 +49,8 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
   addStream: (id: string, stream: MediaStream) => set(state => ({ ...state, localVideoStreams: [...state.localVideoStreams, {id, stream}] })),
   removeStream: (id: string) => set(state => ({ ...state, localVideoStreams: state.localVideoStreams.filter(stream => stream.id !== id) })),
   joinRoom: async (userId: string, roomName: string) => {
+    console.log('Twilio> Joining room')
+
     if (get().room?.name === roomName) {
       console.log('Twilio> Already in room: ', roomName);
       return true;
@@ -137,6 +139,7 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
     return true;
   },
   leaveRoom: () => {
+    console.log('Twilio> Leaving room')
     const room = get().room;
     if (room) {
       room.disconnect();

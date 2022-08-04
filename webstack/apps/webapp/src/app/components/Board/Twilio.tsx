@@ -6,15 +6,14 @@
  *
  */
 
-import { useAppStore, useTwilioStore, useUser } from "@sage3/frontend";
-import { useEffect } from "react";
-
+import { useAppStore, useTwilioStore, useUser } from '@sage3/frontend';
+import { useEffect } from 'react';
 
 export function Twilio(props: { roomName: string }) {
-
   // User information
   const { user } = useUser();
   const apps = useAppStore((state) => state.apps);
+  const twilioApps = apps.filter((el) => el.data.type === 'Webcam' || el.data.type === 'Screenshare');
 
   // Twilio Store to join and leave room when joining board
   const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
@@ -25,10 +24,10 @@ export function Twilio(props: { roomName: string }) {
   // I need to do it out here to detect if an app closes to close the stream attached to it.
   // It kinda of a hacky way to do it, but it works.
   const userStreamIds: string[] = [];
-  apps.forEach(el => {
-    if ((el.data.type === 'Screenshare' || el.data.type === 'Webcam') && el._createdBy === user?._id) {
+  twilioApps.forEach((el) => {
+    if (el._createdBy === user?._id) {
       const s = el.data.state as any;
-      userStreamIds.push(s.videoId, s.audioId)
+      userStreamIds.push(s.videoId, s.audioId);
     }
   });
 
@@ -41,10 +40,10 @@ export function Twilio(props: { roomName: string }) {
           publication.track.stop();
         }
       });
-    }
+    };
   }, [userStreamIds, room]);
 
-  // Handle joining and leave a board
+  // Handle joining and leaving twilio room when entering board
   useEffect(() => {
     // Join Twilio room
     if (user) {
@@ -55,9 +54,8 @@ export function Twilio(props: { roomName: string }) {
     return () => {
       // Leave twilio room
       leaveTwilioRoom();
-
     };
-  }, []);
+  }, [twilioApps.length]);
 
   return null;
 }
