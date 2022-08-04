@@ -6,7 +6,7 @@
  *
  */
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   Box, Button, ButtonGroup, Center, Tooltip,
   Input, InputGroup, Menu, MenuButton, HStack,
@@ -44,6 +44,9 @@ export const useStore = create((set: any) => ({
 
   mute: {} as { [key: string]: boolean },
   setMute: (id: string, mute: boolean) => set((state: any) => ({ mute: { ...state.mute, ...{ [id]: mute } } })),
+
+  view: {} as { [key: string]: WebviewTag },
+  setView: (id: string, view: WebviewTag) => set((state: any) => ({ view: { ...state.view, ...{ [id]: view } } })),
 }));
 
 
@@ -55,6 +58,16 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string>(s.webviewurl);
+  const setView = useStore((state: any) => state.setView);
+
+  // Using Electron webview functions of the webivew requires the dom-ready event to be called first
+  // This is used to track when that function has been called
+  const [domReady, setDomReady] = useState(false);
+
+  // Update from backend
+  useEffect(() => {
+    setUrl(s.webviewurl);
+  }, [s.webviewurl]);
 
   // Init the webview
   const setWebviewRef = useCallback(
@@ -62,11 +75,18 @@ function AppComponent(props: App): JSX.Element {
       // event dom-ready callback
       const domReadyCallback = (webview: any) => {
         webview.removeEventListener('dom-ready', domReadyCallback);
+        // Timeout for dom-ready race stuff
+        setTimeout(() => {
+          setDomReady(true);
+        }, 100);
       };
 
       if (node) {
         webviewNode.current = node;
         const webview = webviewNode.current;
+
+        // save the webview for the toolbar
+        setView(props._id, webview);
 
         // Special partitions to keep login info and settings separate
         if (url.indexOf("sharepoint.com") >= 0 ||
@@ -112,7 +132,15 @@ function AppComponent(props: App): JSX.Element {
         // After the partition has been set, you can navigate
         webview.src = url;
       }
-    }, [url]);
+    }, []);
+
+  useEffect(() => {
+    if (domReady === false) return;
+    if (webviewNode.current) {
+      webviewNode.current.stop();
+      webviewNode.current.src = url;
+    }
+  }, [url, domReady]);
 
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
@@ -155,15 +183,17 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const mute = useStore((state: any) => state.mute[props._id]);
   const setMute = useStore((state: any) => state.setMute);
   const [urlValue, setUrlValue] = useState(s.webviewurl);
+  const mute = useStore((state: any) => state.mute[props._id]);
+  const view = useStore((state: any) => state.view[props._id]);
 
   // from the UI to the react state
   const handleUrlChange = (event: any) => setUrlValue(event.target.value);
 
   // Used by electron to change the url, usually be in-page navigation.
-  const changeUrl = () => {
+  const changeUrl = (evt: any) => {
+    evt.preventDefault();
     let url = urlValue.trim();
     // Check for spaces. If they exist the this isn't a url. Create a google search
     if (url.indexOf(' ') !== -1) {
@@ -195,25 +225,19 @@ function ToolbarComponent(props: App): JSX.Element {
   return <HStack>
     <ButtonGroup isAttached size="xs" colorScheme="teal">
       <Tooltip placement="bottom" hasArrow={true} label={'Go Back'} openDelay={400}>
-        <Button
-        // onClick={() => addressDispatch({ type: 'back' })} disabled={addressState.historyIdx === addressState.history.length - 1}
-        >
+        <Button onClick={() => view.goBack()} >
           <MdArrowBack />
         </Button>
       </Tooltip>
 
       <Tooltip placement="bottom" hasArrow={true} label={'Go Forward'} openDelay={400}>
-        <Button
-        // onClick={() => addressDispatch({ type: 'forward' })} disabled={addressState.historyIdx === 0}
-        >
+        <Button onClick={() => view.goForward()} >
           <MdArrowForward />
         </Button>
       </Tooltip>
 
       <Tooltip placement="bottom" hasArrow={true} label={'Reload Page'} openDelay={400}>
-        <Button
-        // onClick={() => setReload({ reload: true })}
-        >
+        <Button onClick={() => view.reload()} >
           <MdRefresh />
         </Button>
       </Tooltip>
@@ -255,7 +279,7 @@ function ToolbarComponent(props: App): JSX.Element {
     </form>
 
     <Tooltip placement="bottom" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-      <Button onClick={() => changeUrl()} size="xs" variant="solid" colorScheme="teal">
+      <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
         <MdOutlineSubdirectoryArrowLeft />
       </Button>
     </Tooltip>
