@@ -197,7 +197,7 @@ export function BoardPage() {
           toast({
             title: 'Upload Done',
             status: 'info',
-            duration: 4000,
+            duration: 2000,
             isClosable: true,
           });
         });
