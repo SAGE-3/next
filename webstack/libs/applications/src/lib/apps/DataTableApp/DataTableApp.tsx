@@ -15,6 +15,7 @@ import {
   VStack,
   Badge,
   Button,
+  Center,
   Input,
   InputGroup,
   InputRightElement,
@@ -29,10 +30,11 @@ import {
   CheckboxGroup,
   HStack,
   Menu, MenuButton, IconButton, MenuList, MenuItem, Portal, ButtonGroup,
+  Spinner,
 } from '@chakra-ui/react'
 
 import { GoKebabVertical } from "react-icons/go";
-import {FiChevronDown} from "react-icons/fi";
+import {FiArrowLeft, FiArrowRight, FiChevronDown} from "react-icons/fi";
 
 
 import { useAppStore } from '@sage3/frontend';
@@ -51,56 +53,70 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
+  const [running, setRunning] = useState((s.executeInfo.executeFunc === "") ? false: true)
+  const [items, setItems] = useState(s.items)
+  const [headers, setHeaders] = useState(s.headers)
+  const [loaded, setLoaded] = useState(s.loaded)
+  const [currentPosts, setCurrentPosts] = useState(s.currentPosts)
+  const [totalPosts, setTotalPosts] = useState(s.totalPosts)
+  const [postsPerPage, setPostsPerPage] = useState(s.postsPerPage)
+  const [currentPage, setCurrentPage] = useState(s.currentPage)
+  const [url, setUrl] = useState(s.dataUrl)
+  const [leftButtonStatus, setLeftButtonStatus] = useState(false)
+  const [rightButtonStatus, setRightButtonStatus] = useState(false)
+  // const [selectedCols, setSelectedCols] = useState(s.selectedCols)
 
   function handleLoadData() {
     console.log("in handleLoadData  and updating the executeInfo")
-
+    setRunning(true)
     updateState(props._id,
-      { executeInfo: {"executeFunc": "load_data", "params": {"url": s.dataUrl}}})
+      { executeInfo: {"executeFunc": "load_data", "params": {"url": url}}})
     console.log("new value of executeInfo is ")
     console.log(s.executeInfo)
     console.log("----")
     console.log(s)
   }
 
+  useEffect(() => {
+    (s.executeInfo.executeFunc === "") ? setRunning(false): setRunning(true)
+  }, [s.executeInfo.executeFunc])
+
   //TODO Is there a reason to set items? Does it cost memory or performance?
   //TODO Why are all the useEffects running multiple times upon loading?
   useEffect(() => {
-    if(s.viewData !== undefined) {
-      console.log(s)
-      updateState(props._id, { items: Object.values(s.viewData) });
-      // setTotalPosts(s.items.length)
-      updateState(props._id, { headers: Object.keys(s.viewData[0]) });
-      updateState(props._id, { loaded: true });
+    if(Object.values(s.viewData).length > 0) {
+      setItems(Object.values(s.viewData))
+      setHeaders(Object.keys(s.viewData[0]) )
+      setLoaded(true)
+      // updateState(props._id, { items: Object.values(s.viewData) });
+      // updateState(props._id, { headers: Object.keys(s.viewData[0]) });
+      // updateState(props._id, { loaded: true });
       console.log("first useEffect")
       console.log("s.viewData is not undefined")
+      console.log("items: " + items)
     }
-  }, [s.timestamp])
+  }, [s.timestamp, Object.values(s.viewData).length])
 
   useEffect(() => {
-    if(s.items.length !== undefined) {
+    if(items.length !== undefined) {
       // Get current posts
-      const indexOfLastPost = s.currentPage * s.postsPerPage;
-      const indexOfFirstPost = indexOfLastPost - s.postsPerPage;
-      updateState(props._id, {currentPosts: s.items.slice(indexOfFirstPost, indexOfLastPost)})
-      updateState(props._id, {totalPosts: s.items.length})
+      const indexOfLastPost = currentPage * postsPerPage;
+      const indexOfFirstPost = indexOfLastPost - postsPerPage;
+      setCurrentPosts(items.slice(indexOfFirstPost, indexOfLastPost))
+      setTotalPosts(items.length)
+      // updateState(props._id, {currentPosts: s.items.slice(indexOfFirstPost, indexOfLastPost)})
+      // updateState(props._id, {totalPosts: s.items.length})
       console.log("second useEffect")
+      console.log("total posts: " + totalPosts)
     }
-  }, [s.items.length])
-
-  useEffect(() => {
-    // Get current posts
-    const indexOfLastPost = s.currentPage * s.postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - s.postsPerPage;
-    updateState(props._id, {currentPosts: s.items.slice(indexOfFirstPost, indexOfLastPost)})
-    console.log("paginator useEffect")
-  }, [s.currentPage])
+  }, [items, currentPage, postsPerPage])
 
   //TODO Warning: A component is changing an uncontrolled input to be controlled.
   // This is likely caused by the value changing from undefined to a defined value,
   // which should not happen. Decide between using a controlled or uncontrolled input element for the lifetime of the component
   function handleUrlChange(ev:any){
-    updateState(props._id, { dataUrl: ev.target.value})
+    setUrl(ev.target.value)
+    // updateState(props._id, { dataUrl: ev.target.value})
   }
 
     //TODO Fix delay in updatestate upon click
@@ -115,27 +131,6 @@ function AppComponent(props: App): JSX.Element {
         })
        console.log('after click')
     }
-
-  // function handleTagClicks(info: string) {
-  //   const cols = document.querySelectorAll("td[data-col=" + info + "]")
-  //   cols.forEach((cell: any) => {
-  //       if (!s.selectedCols?.includes(info)) {
-  //         const checked = s.selectedCols.concat(info)
-  //         updateState(props._id, {selectedCols: checked})
-  //         updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag selected' });
-  //         cell.className= "highlight"
-  //       } else {
-  //         const unchecked = (() => (s.selectedCols?.filter((item: string) => item != info)))()
-  //         updateState(props._id, {selectedCols: unchecked})
-  //         updateState(props._id, { messages: (info).charAt(0).toUpperCase() + (info).slice(1)+ ' tag unselected' });
-  //         cell.className = "originalChakra"
-  //         console.log("removed: " + info)
-  //
-  //       }
-  //     }
-  //   )
-  //   console.log("s.selectedCols: " + s.selectedCols)
-  // }
 
   function handleColClick(info: string) {
     const cols = document.querySelectorAll("td[data-col=" + info + "]")
@@ -225,28 +220,77 @@ function AppComponent(props: App): JSX.Element {
       console.log(s)
     }
 
+    //TODO Display pandas plots. Which plot library?
+    function scatterPlot() {
+      console.log("scatter plot")
+    }
+
+    //TODO Add Columns
+  function addCols() {
+    console.log("add column")
+  }
+
   const Pagination = () => {
     const pageNumbers = [];
 
-    for (let i = 1; i <= Math.ceil(s.totalPosts / s.postsPerPage); i++) {
+    for (let i = 1; i <= Math.ceil(totalPosts / postsPerPage); i++) {
       pageNumbers.push(i);
     }
 
     function paginater(number: number) {
       console.log("paginate " + number)
-      updateState(props._id, {currentPage: number})
-      updateState(props._id, {currentPosts: s.currentPosts})
+      // updateState(props._id, {currentPage: number})
+      // updateState(props._id, {currentPosts: s.currentPosts})
+      setCurrentPage(number)
+      setCurrentPosts(currentPosts)
+
       updateState(props._id, {messages: "Currently on page " + number})
-      console.log("current page " + s.currentPage)
-      console.log("typeof currentPosts " + typeof s.currentPosts)
-      console.log("currentPosts " + s.currentPosts)
+      console.log("current page " + currentPage)
     }
 
-    //TODO Add left right arrow
+    function handleLeftArrow() {
+      console.log("left arrow")
+      if (currentPage !== 1) {
+        // updateState(props._id, {currentPage: s.currentPage - 1})
+        // updateState(props._id, {currentPosts: s.currentPosts})
+        setCurrentPage(currentPage - 1)
+        setCurrentPosts(currentPosts)
+        setLeftButtonStatus(false)
+        // setRightButtonStatus()
+        updateState(props._id, {messages: "Currently on page " + (currentPage - 1)})
+        console.log("current page " + (currentPage - 1))
+      } else {
+        console.log("No page before 0")
+        setLeftButtonStatus(true)
+      }
+    }
+
+    function handleRightArrow() {
+      console.log("right arrow")
+      if (currentPage !== pageNumbers.length) {
+        // updateState(props._id, {currentPage: s.currentPage + 1})
+        // updateState(props._id, {currentPosts: s.currentPosts})
+        setCurrentPage(currentPage + 1)
+        setCurrentPosts(currentPosts)
+        setRightButtonStatus(false)
+        updateState(props._id, {messages: "Currently on page " + (currentPage + 1)})
+        console.log("current page " + (currentPage + 1))
+      } else {
+        console.log("No page after " + pageNumbers.length)
+        setRightButtonStatus(true)
+      }
+    }
+
     //TODO Add focus to current page number
     return (
       <div>
           <HStack spacing='5' display='flex' justify='center' zIndex='dropdown'>
+            <IconButton
+              aria-label='Page left'
+              icon={<FiArrowLeft />}
+              onClick={() => handleLeftArrow()}
+              disabled={leftButtonStatus}
+            />
             {pageNumbers.map((number: number) => (
               <Button
                 key={number}
@@ -255,6 +299,12 @@ function AppComponent(props: App): JSX.Element {
                 {number}
               </Button>
             ))}
+            <IconButton
+              aria-label='Page right'
+              icon={<FiArrowRight />}
+              onClick={() => handleRightArrow()}
+              disabled={rightButtonStatus}
+            />
           </HStack>
       </div>
     );
@@ -363,46 +413,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
 
       <>
-        {/*<div style={{ display: s.tableMenuAction !== "" ? "block" : "none" }}>*/}
-        {/*  <Alert status='info'>*/}
-        {/*    <AlertIcon/>*/}
-        {/*    {s.tableMenuAction}*/}
-        {/*  </Alert>*/}
-        {/*</div>*/}
-
-        {/*<div style={{ display: s.menuAction !== "" ? "block" : "none" }}>*/}
-        {/*  <Alert status='info'>*/}
-        {/*    <AlertIcon/>*/}
-        {/*    {s.menuAction}*/}
-        {/*  </Alert>*/}
-        {/*</div>*/}
-
-        <div className="Message-Container" style={{ display: s.headers.length !== 0 ? "block" : "none" }}>
-          {/*<CheckboxGroup colorScheme='green' >*/}
-          {/*    <HStack spacing='10' display='flex' zIndex="dropdown">*/}
-          {/*        {s.headers?.map((tag: any, index: number) => (*/}
-          {/*            <Checkbox*/}
-          {/*                value={tag}*/}
-          {/*                onChange={(e) => handleTagClicks(tag)}*/}
-          {/*            >*/}
-          {/*                {tag}*/}
-          {/*            </Checkbox>*/}
-          {/*        ))}*/}
-          {/*        <Menu>*/}
-          {/*            <MenuButton*/}
-          {/*                as={IconButton}*/}
-          {/*                aria-label='Table Operations'*/}
-          {/*                icon={<GoKebabVertical/>}*/}
-          {/*                position='absolute'*/}
-          {/*                right='15px'*/}
-          {/*                size="xs"*/}
-          {/*            />*/}
-          {/*            <Portal>*/}
-          {/*                  <MenuItem as={TableMenu}/>*/}
-          {/*            </Portal>*/}
-          {/*        </Menu>*/}
-          {/*    </HStack>*/}
-          {/*</CheckboxGroup>*/}
+        <div className="Message-Container" style={{ display: headers.length !== 0 ? "block" : "none" }}>
           <Menu>
             <MenuButton
               as={IconButton}
@@ -413,6 +424,7 @@ function AppComponent(props: App): JSX.Element {
               right='15px'
               size="md"
             />
+            {/*TODO figure out why chakra sends table menu to another dimension*/}
             <Portal>
               <MenuItem as={TableMenu}/>
             </Portal>
@@ -421,26 +433,46 @@ function AppComponent(props: App): JSX.Element {
 
         <div className='URL-Container'>
           <InputGroup size='md'>
-            {!s.loaded ? <Badge fontSize='1.5em' variant='solid' colorScheme='red'>Not loaded</Badge>:<Badge fontSize='1.5em' variant='solid' colorScheme='green'>Loaded</Badge>}
+            {/*{!loaded ? <Badge fontSize='1.5em' variant='solid' colorScheme='red'>Not loaded</Badge>:<Badge fontSize='1.5em' variant='solid' colorScheme='green'>Loaded</Badge>}*/}
             <Input
               type="text"
-              value={s.dataUrl}
+              // value={s.dataUrl}
+              value={url}
               onChange={handleUrlChange}
               placeholder={'URL here'}
             />
             <InputRightElement width='5rem'>
-              <Button variant='outline' onClick={handleLoadData}>Load Data</Button>
+              <Button variant='outline' onClick={handleLoadData} disabled={running}>Load Data</Button>
             </InputRightElement>
           </InputGroup>
         </div>
 
-        <div style={{ display: s.viewData !== undefined ? "block" : "none" }}>
+
+          <Center>
+            <Spinner
+              style={{ display: (s.executeInfo.executeFunc === "") ?  "none" : "flex" }}
+              justify-content='center'
+              thickness='4px'
+              speed='3s'
+              emptyColor='gray.200'
+              color='blue.500'
+              size='xl'
+            />
+          </Center>
+
+        <div>
+          <p>s.selectedCols: {s.selectedCols}</p>
+          <p>totalPosts: {totalPosts}</p>
+          <p>currentPage: {currentPage}</p>
+        </div>
+
+        <div style={{ display: totalPosts !== 0 || totalPosts !== undefined ? "block" : "none" }}>
           <TableContainer overflowY="auto" display="flex" maxHeight="250px">
             <Table colorScheme="facebook" variant='simple' size="sm">
               <Thead>
                 <Tr>
                   {
-                    s.headers?.map((header: any, index: number) => (
+                    headers?.map((header: any, index: number) => (
                       <Th
                         key={index}
                         onClick={(e) => handleColClick(header)}
@@ -473,11 +505,11 @@ function AppComponent(props: App): JSX.Element {
 
               <Tbody>
                 {
-                  s.currentPosts?.map((item: any, index: number) => (
+                  currentPosts?.map((item: any, index: number) => (
                     <Tr key={item.id}>
                       {Object.values(item).map((cell: any, index: number) => (
                         <Td key={index}
-                            data-col={s.headers[index % s.headers.length] }
+                            data-col={headers[index % headers.length] }
                             onClick={(e) => handleCellClick()}
                         >
                           {cell}
@@ -492,7 +524,7 @@ function AppComponent(props: App): JSX.Element {
 
         </div>
 
-        <div className="Pagination-Container">
+        <div className="Pagination-Container" style={{ display: totalPosts !== 0 || totalPosts !== undefined ? "block" : "none" }}>
         <Pagination/>
         </div>
 

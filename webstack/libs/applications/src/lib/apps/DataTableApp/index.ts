@@ -21,7 +21,6 @@ export type state = {
     loaded: boolean;
     headers: string[];
     selectedCols: string[];
-    checkedItems: string[];
     dataUrl: string;
     executeInfo: exec;
 };
@@ -38,6 +37,7 @@ export const init: Partial<state> = {
     timestamp: 0,
     currentPage: 1,
     postsPerPage: 3,
+    viewData: {},
 
     executeInfo: {"executeFunc": "", "params": {}},
 };
