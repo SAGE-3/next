@@ -17,6 +17,7 @@ import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
   app: App;
+  aspectRatio?: number | boolean;
   children: JSX.Element;
 };
 
@@ -148,6 +149,7 @@ export function AppWindow(props: WindowProps) {
       dragGrid={[gridSize, gridSize]}
       disableDragging={minimized}
       enableResizing={!minimized}
+      lockAspectRatio={props.aspectRatio}
     >
       {/* Border Box around app to show it is selected */}
       {

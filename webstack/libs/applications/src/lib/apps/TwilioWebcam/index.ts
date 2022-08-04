@@ -20,8 +20,8 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  videoId: '1234',
-  audioId: '1234'
+  videoId: '',
+  audioId: ''
 };
 
-export const name = 'Twilio';
+export const name = 'Webcam';

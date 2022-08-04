@@ -10,26 +10,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import {
-  Box,
-
   useDisclosure,
-  useToast,
-  useColorModeValue,
-  Menu,
-  MenuGroup,
-  MenuItem,
   Modal,
   ModalOverlay,
-
-  MenuItemOption,
-  MenuOptionGroup,
   Tag,
 } from '@chakra-ui/react';
 
-import { Applications, initialValues, AppError } from '@sage3/applications/apps';
+import { Applications, AppError } from '@sage3/applications/apps';
 import { usePresence, usePresenceStore } from '@sage3/frontend';
 
-import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu, useTwilioStore } from '@sage3/frontend';
+import { useAppStore, useBoardStore, useUser, useUIStore, ContextMenu} from '@sage3/frontend';
 
 
 import { DraggableData, Rnd } from 'react-rnd';

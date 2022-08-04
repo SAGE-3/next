@@ -10,13 +10,13 @@ import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewe
 import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
-import { name as ScreenshareName, init as defaultScreenshare } from './apps/Screenshare';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
-import { name as TwilioName, init as defaultTwilio } from './apps/Twilio';
+import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
+import { name as TwilioWebcamName, init as defaultTwilioWebcam } from './apps/TwilioWebcam';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VegaLiteAppName, init as defaultVegaLiteApp } from './apps/VegaLiteApp';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
@@ -32,13 +32,13 @@ import PDFViewer from './apps/PDFViewer/PDFViewer';
 import CodeCell from './apps/CodeCell/CodeCell';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
 import LeafLet from './apps/LeafLet/LeafLet';
-import Screenshare from './apps/Screenshare/Screenshare';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
-import Twilio from './apps/Twilio/Twilio';
+import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
+import TwilioWebcam from './apps/TwilioWebcam/TwilioWebcam';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VegaLiteApp from './apps/VegaLiteApp/VegaLiteApp';
 import Clock from './apps/Clock/Clock';
@@ -55,13 +55,13 @@ export const Applications = {
   [CodeCellName]: CodeCell,
   [ImageViewerName]: ImageViewer,
   [LeafLetName]: LeafLet,
-  [ScreenshareName]: Screenshare,
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
   [DataTableAppName]: DataTableApp,
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
-  [TwilioName]: Twilio,
+  [TwilioScreenshareName]: TwilioScreenshare,
+  [TwilioWebcamName]: TwilioWebcam,
   [ClockName]: Clock,
   [JupyterAppName]: JupyterApp,
   [VegaLiteViewerName]: VegaLiteViewer,
@@ -80,13 +80,13 @@ export const initialValues = {
   [CodeCellName]: defaultCodeCell,
   [ImageViewerName]: defaultImageViewer,
   [LeafLetName]: defaultLeafLet,
-  [ScreenshareName]: defaultScreenshare,
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
   [DataTableAppName]: defaultDataTableApp,
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
-  [TwilioName]: defaultTwilio,
+  [TwilioScreenshareName]: defaultTwilioScreenshare,
+  [TwilioWebcamName]: defaultTwilioWebcam,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VegaLiteAppName]: defaultVegaLiteApp,
   [ClockName]: defaultClock,

@@ -26,7 +26,7 @@ export function Twilio(props: { roomName: string }) {
   // It kinda of a hacky way to do it, but it works.
   const userStreamIds: string[] = [];
   apps.forEach(el => {
-    if (el.data.type === 'Twilio' && el._createdBy === user?._id) {
+    if ((el.data.type === 'Screenshare' || el.data.type === 'Webcam') && el._createdBy === user?._id) {
       const s = el.data.state as any;
       userStreamIds.push(s.videoId, s.audioId)
     }

@@ -7,13 +7,14 @@
  */
 
 import { Box, Button, Text, Avatar } from '@chakra-ui/react';
-import { useUser,  WebcamContainer, initials } from '@sage3/frontend';
+import { useUser, initials } from '@sage3/frontend';
 import { useNavigate } from 'react-router';
 import { sageColorByName } from '@sage3/shared';
+import { AvatarGroup } from './AvatarGroup';
 
 type HeaderProps = {
-  boardId: string,
-  boardName: string,
+  boardId: string;
+  boardName: string;
 };
 
 /**
@@ -24,8 +25,6 @@ type HeaderProps = {
  * @returns
  */
 export function BoardHeader(props: HeaderProps) {
-
-
   // User information
   const { user } = useUser();
   const navigate = useNavigate();
@@ -35,7 +34,6 @@ export function BoardHeader(props: HeaderProps) {
     navigate('/home');
   }
   return (
-
     <Box
       display="flex"
       pointerEvents={'none'}
@@ -56,18 +54,21 @@ export function BoardHeader(props: HeaderProps) {
         {props.boardName}
       </Text>
 
-      {/* Webcams */}
-      <WebcamContainer boardId={props.boardId}></WebcamContainer>
+      <Box display="flex" alignItems="center">
+        {/* Avatar Group */}
+        <AvatarGroup boardId={props.boardId}  />
 
-      {/* User Avatar */}
-      <Avatar
-        size="md"
-        pointerEvents={'all'}
-        name={user?.data.name}
-        getInitials={initials}
-        backgroundColor={user ? sageColorByName(user.data.color) : ''}
-        color="black"
-      />
+        {/* User Avatar */}
+        <Avatar
+          size="md"
+          pointerEvents={'all'}
+          name={user?.data.name}
+          getInitials={initials}
+          backgroundColor={user ? sageColorByName(user.data.color) : ''}
+          color="white"
+          mx={1}
+        />
+      </Box>
     </Box>
   );
 }
