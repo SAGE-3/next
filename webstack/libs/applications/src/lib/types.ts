@@ -16,10 +16,51 @@ import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
+import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
+import { state as VegaLiteAppState, name as VegaLiteAppName } from './apps/VegaLiteApp';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as JupyterAppState, name as JupyterAppName } from './apps/JupyterApp';
 
+export type AppState =
+  | CounterAppState
+  | ImageAppState
+  | LinkerAppState
+  | NoteAppState
+  | SliderAppState
+  | StickieState
+  | PDFViewerState
+  | CodeCellState
+  | ImageViewerState
+  | LeafLetState
+  | ScreenshareState
+  | VideoViewerState
+  | WebviewState
+  | DataTableAppState
+  | CSVViewerState
+  | RTCChatState
+  | VegaLiteAppState
+  | VegaLiteViewerState
+  | ClockState
+  | JupyterAppState;
 
-export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState | DataTableAppState | CSVViewerState | RTCChatState | ClockState | JupyterAppState;
-
-export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName | typeof DataTableAppName | typeof CSVViewerName | typeof RTCChatName | typeof ClockName | typeof JupyterAppName;
+export type AppName =
+  | typeof CounterAppName
+  | typeof ImageAppName
+  | typeof LinkerAppName
+  | typeof NoteAppName
+  | typeof SliderAppName
+  | typeof StickieName
+  | typeof PDFViewerName
+  | typeof CodeCellName
+  | typeof ImageViewerName
+  | typeof LeafLetName
+  | typeof ScreenshareName
+  | typeof VideoViewerName
+  | typeof WebviewName
+  | typeof DataTableAppName
+  | typeof CSVViewerName
+  | typeof RTCChatName
+  | typeof ClockName
+  | typeof JupyterAppName
+  | typeof VegaLiteViewerName
+  | typeof VegaLiteAppName;
