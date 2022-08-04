@@ -17,5 +17,8 @@
     "RTCChat",
     "Twilio",
     "Clock",
-    "JupyterApp"
+    "JupyterApp",
+    "VegaLiteViewer",
+    "VegaLiteApp"
 ]
+

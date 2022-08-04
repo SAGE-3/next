@@ -117,9 +117,12 @@ async function csvToArray(str: string): Promise<Record<string, string>[]> {
   // use the csv parser library to parse the csv
   return new Promise(resolve => {
     parse(str, {
+      relax_quotes: true,
       columns: true,
       skip_empty_lines: true,
-      delimiter: ",",
+      rtrim: true,
+      trim: true,
+      // delimiter: ",",
     }, function (err, records) {
       const data = records as Record<string, string>[];
       // return the array

@@ -17,9 +17,10 @@ import { name as DataTableAppName, init as defaultDataTableApp } from './apps/Da
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as TwilioName, init as defaultTwilio } from './apps/Twilio';
+import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
+import { name as VegaLiteAppName, init as defaultVegaLiteApp } from './apps/VegaLiteApp';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as JupyterAppName, init as defaultJupyterApp } from './apps/JupyterApp';
-
 
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
@@ -38,6 +39,8 @@ import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import Twilio from './apps/Twilio/Twilio';
+import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
+import VegaLiteApp from './apps/VegaLiteApp/VegaLiteApp';
 import Clock from './apps/Clock/Clock';
 import JupyterApp from './apps/JupyterApp/JupyterApp';
 
@@ -61,7 +64,10 @@ export const Applications = {
   [TwilioName]: Twilio,
   [ClockName]: Clock,
   [JupyterAppName]: JupyterApp,
+  [VegaLiteViewerName]: VegaLiteViewer,
+  [VegaLiteAppName]: VegaLiteApp,
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
+
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
@@ -81,6 +87,8 @@ export const initialValues = {
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
   [TwilioName]: defaultTwilio,
+  [VegaLiteViewerName]: defaultVegaLiteViewer,
+  [VegaLiteAppName]: defaultVegaLiteApp,
   [ClockName]: defaultClock,
   [JupyterAppName]: defaultJupyterApp,
 };
