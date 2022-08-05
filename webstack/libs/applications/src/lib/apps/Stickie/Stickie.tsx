@@ -9,7 +9,7 @@
 // Import the React library
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, Textarea } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
 
 import { useAppStore, useUser } from '@sage3/frontend';
 import { App } from '../../schema';
@@ -22,6 +22,7 @@ import { AppWindow } from '../../components';
 
 // Styling for the placeholder text
 import './styling.css';
+import { MdRemove, MdAdd } from 'react-icons/md';
 
 const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed', '#B794F4'];
 
@@ -57,8 +58,23 @@ function AppComponent(props: App): JSX.Element {
   const [note, setNote] = useState(s.text);
 
   // Update local value with value from the server
-  useEffect(() => { setNote(s.text); }, [s.text]);
-
+  useEffect(() => {
+    setNote(s.text);
+  }, [s.text]);
+  // Update local value with value from the server
+  useEffect(() => {
+    setFontSize(s.fontSize);
+    // Adjust the size of the textarea
+    if (textbox.current) {
+      const numlines = Math.ceil(textbox.current.scrollHeight / s.fontSize);
+      if (numlines > rows) {
+        // change local number of rows
+        setRows(numlines);
+        // update size of the window
+        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+      }
+    }
+  }, [s.fontSize]);
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(1000, (val) => {
@@ -75,9 +91,10 @@ function AppComponent(props: App): JSX.Element {
     // Update the text when not typing
     debounceFunc.current(inputValue);
 
+    // Adjust the size of the textarea
     if (textbox.current) {
       const numlines = Math.ceil(textbox.current.scrollHeight / s.fontSize);
-      if (numlines !== rows) {
+      if (numlines > rows) {
         // change local number of rows
         setRows(numlines);
         // update size of the window
@@ -91,29 +108,27 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     if (e.shiftKey && e.code === 'Tab') {
       // Create a new stickie
-      createApp(
-        {
-          name: 'Stickie',
-          description: "Description",
-          roomId: locationState.roomId,
-          boardId: locationState.boardId,
-          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'Stickie',
-          state: { text: '', color: s.color, fontSize: s.fontSize },
-          ownerId: user._id,
-          minimized: false,
-          raised: true
-        }
-      );
+      createApp({
+        name: 'Stickie',
+        description: 'Stckie>',
+        roomId: locationState.roomId,
+        boardId: locationState.boardId,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Stickie',
+        state: { text: '', color: s.color, fontSize: s.fontSize },
+        ownerId: user._id,
+        minimized: false,
+        raised: true,
+      });
     }
   };
 
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={"100%"} h={"100%"} p={0}>
+      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0}>
         <Textarea
           ref={textbox}
           resize={'none'}
@@ -141,17 +156,60 @@ function AppComponent(props: App): JSX.Element {
 }
 
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
+  // Update functions from the store
+  const updateState = useAppStore((state) => state.updateState);
+
+  // Larger font size
+  function handleIncreaseFont() {
+    const fs = s.fontSize + 8;
+    updateState(props._id, { fontSize: fs });
+  }
+  // Smaller font size
+  function handleDecreaseFont() {
+    const fs = s.fontSize - 8;
+    updateState(props._id, { fontSize: fs });
+  }
 
   return (
     <>
+      <HStack>
+        <ButtonGroup isAttached size="xs" colorScheme="teal">
+          <Tooltip placement="bottom" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+            <Button mx={1} isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()}>
+              <MdAdd />
+            </Button>
+          </Tooltip>
+
+          <Tooltip placement="bottom" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+            <Button mx={1} isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()}>
+              <MdRemove />
+            </Button>
+          </Tooltip>
+        </ButtonGroup >
+
+        <ButtonGroup isAttached size="xs" colorScheme="teal">
+          {/* Colors */}
+          {colors.map((color) => {
+            return (
+              <Button mx={0.5}
+                key={color}
+                value={color}
+                bgColor={color}
+                _hover={{ background: color, opacity: 0.7, transform: 'scaleY(1.3)' }}
+                _active={{ background: color, opacity: 0.9 }}
+                size="xs"
+                onClick={() => updateState(props._id, { color: color })}
+              > </Button>
+            );
+          })}
+        </ButtonGroup>
+      </HStack>
     </>
-  )
+  );
 }
 
 export default { AppComponent, ToolbarComponent };
-
 
 /*
   // Main effect for styling the text

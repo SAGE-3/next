@@ -143,7 +143,7 @@ export function BoardPage() {
     // Create the new app
     createApp({
       name: appName,
-      description: `${appName} - Description`,
+      description: `${appName}>`,
       roomId: locationState.roomId,
       boardId: locationState.boardId,
       position: { x, y, z: 0 },
@@ -378,7 +378,7 @@ export function BoardPage() {
                 // Open a webview into the SAGE3 builtin Jupyter instance
                 createApp({
                   name: 'JupyterApp',
-                  description: 'JupyterApp',
+                  description: 'JupyterApp>',
                   roomId: locationState.roomId,
                   boardId: locationState.boardId,
                   position: { x, y, z: 0 },
