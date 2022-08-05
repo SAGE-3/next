@@ -18,6 +18,9 @@ import { sageColorByName } from '@sage3/shared';
 type WindowProps = {
   app: App;
   children: JSX.Element;
+
+  // React Rnd property to control the window aspect ratio (optional)
+  lockAspectRatio?: boolean | number;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -134,6 +137,7 @@ export function AppWindow(props: WindowProps) {
       onResizeStart={handleAppClick}
       onClick={handleAppClick}
       onDoubleClick={handleAppClick}
+      lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
