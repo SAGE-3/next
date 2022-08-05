@@ -15,7 +15,7 @@ export type state = {
     postsPerPage: number;
     currentPosts: any[];
     totalPosts: number;
-
+    pageNumberArr: number[];
     messages: string;
     items: any[];
     loaded: boolean;

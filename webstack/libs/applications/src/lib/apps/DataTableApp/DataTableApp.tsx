@@ -47,12 +47,14 @@ import './styles.css';
 import React, { useState, useMemo, useEffect } from 'react';
 // import {ColumnMenu} from "./components/ColumnMenu";
 import { colMenus } from "./colMenus";
+import {forEach} from "vega-lite/build/src/encoding";
 
 function AppComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
   const updateState = useAppStore(state => state.updateState);
+
   const [running, setRunning] = useState((s.executeInfo.executeFunc === "") ? false: true)
   const [items, setItems] = useState(s.items)
   const [headers, setHeaders] = useState(s.headers)
@@ -62,9 +64,8 @@ function AppComponent(props: App): JSX.Element {
   const [postsPerPage, setPostsPerPage] = useState(s.postsPerPage)
   const [currentPage, setCurrentPage] = useState(s.currentPage)
   const [url, setUrl] = useState(s.dataUrl)
-  const [leftButtonStatus, setLeftButtonStatus] = useState(false)
-  const [rightButtonStatus, setRightButtonStatus] = useState(false)
-  // const [selectedCols, setSelectedCols] = useState(s.selectedCols)
+  const [leftButtonStatus, setLeftButtonStatus] = useState(true)
+  const [rightButtonStatus, setRightButtonStatus] = useState(true)
 
   function handleLoadData() {
     console.log("in handleLoadData  and updating the executeInfo")
@@ -110,6 +111,17 @@ function AppComponent(props: App): JSX.Element {
       console.log("total posts: " + totalPosts)
     }
   }, [items, currentPage, postsPerPage])
+
+  useEffect(() => {
+    s.selectedCols.forEach((col: any) => {
+      const cols = document.querySelectorAll("td[data-col=" + col + "]")
+      cols.forEach((cell: any) => {
+            cell.className="highlight"
+        }
+    )
+    })
+    console.log("selectedCols useEffect")
+  }, [s.selectedCols])
 
   //TODO Warning: A component is changing an uncontrolled input to be controlled.
   // This is likely caused by the value changing from undefined to a defined value,
@@ -209,6 +221,12 @@ function AppComponent(props: App): JSX.Element {
       console.log(s.executeInfo)
       console.log("----")
       console.log(s)
+
+      const cols = document.querySelectorAll("td")
+      cols.forEach((cell: any) => {
+         cell.className = "originalChakra"
+       }
+      )
     }
 
     function restoreTable() {
@@ -230,6 +248,20 @@ function AppComponent(props: App): JSX.Element {
     console.log("add column")
   }
 
+  useEffect(() => {
+      if (currentPage !== 1) {
+        setLeftButtonStatus(false)
+      } else {
+        setLeftButtonStatus(true)
+      }
+      if (currentPage !== 4 && totalPosts !== 0) {
+        setRightButtonStatus(false)
+      } else {
+        setRightButtonStatus(true)
+      }
+      console.log("pagination useEffect")
+    }, [totalPosts])
+
   const Pagination = () => {
     const pageNumbers = [];
 
@@ -243,7 +275,6 @@ function AppComponent(props: App): JSX.Element {
       // updateState(props._id, {currentPosts: s.currentPosts})
       setCurrentPage(number)
       setCurrentPosts(currentPosts)
-
       updateState(props._id, {messages: "Currently on page " + number})
       console.log("current page " + currentPage)
     }
@@ -256,7 +287,6 @@ function AppComponent(props: App): JSX.Element {
         setCurrentPage(currentPage - 1)
         setCurrentPosts(currentPosts)
         setLeftButtonStatus(false)
-        // setRightButtonStatus()
         updateState(props._id, {messages: "Currently on page " + (currentPage - 1)})
         console.log("current page " + (currentPage - 1))
       } else {
@@ -324,6 +354,24 @@ function AppComponent(props: App): JSX.Element {
               onClick={handleMenuClick}
             >
               {data.col_function}
+            </MenuButton>
+            <MenuButton
+              as={Button}
+              aria-label='Actions'
+              size='xs'
+              variant='link'
+              onClick={handleMenuClick}
+            >
+              Sort Column
+            </MenuButton>
+            <MenuButton
+              as={Button}
+              aria-label='Actions'
+              size='xs'
+              variant='link'
+              onClick={dropColumns}
+            >
+              Drop Column
             </MenuButton>
           </MenuItem>
         )
@@ -468,7 +516,7 @@ function AppComponent(props: App): JSX.Element {
 
         <div style={{ display: totalPosts !== 0 || totalPosts !== undefined ? "block" : "none" }}>
           <TableContainer overflowY="auto" display="flex" maxHeight="250px">
-            <Table colorScheme="facebook" variant='simple' size="sm">
+            <Table colorScheme="facebook" variant='simple' size="sm" className="originalChakra">
               <Thead>
                 <Tr>
                   {
