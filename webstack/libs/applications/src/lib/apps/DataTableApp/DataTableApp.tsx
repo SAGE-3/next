@@ -13,7 +13,6 @@ import {
   AlertDescription,
   Box,
   VStack,
-  Badge,
   Button,
   Center,
   Input,
@@ -26,10 +25,8 @@ import {
   Tr,
   Th,
   Td,
-  Checkbox,
-  CheckboxGroup,
   HStack,
-  Menu, MenuButton, IconButton, MenuList, MenuItem, Portal, ButtonGroup,
+  Menu, MenuButton, IconButton, MenuList, MenuItem, Portal,
   Spinner,
 } from '@chakra-ui/react'
 
@@ -47,7 +44,6 @@ import './styles.css';
 import React, { useState, useMemo, useEffect } from 'react';
 // import {ColumnMenu} from "./components/ColumnMenu";
 import { colMenus } from "./colMenus";
-import {forEach} from "vega-lite/build/src/encoding";
 
 function AppComponent(props: App): JSX.Element {
 
