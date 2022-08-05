@@ -19,6 +19,9 @@ import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { APIHttp, SocketAPI } from '../api';
 import { AppSchema } from '@sage3/applications/schema';
 
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 interface BoardState {
   boards: Board[];
   create: (newBoard: BoardSchema) => void;
@@ -93,3 +96,6 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
 
 // Convert the Zustand JS store to Zustand React Store
 export const useBoardStore = createReact(BoardStore);
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('BoardStore', useBoardStore);

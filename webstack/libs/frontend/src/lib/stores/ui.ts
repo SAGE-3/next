@@ -9,6 +9,9 @@
 // The React version of Zustand
 import create from 'zustand';
 
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.3;
 const MaxZoom = 4.0;
@@ -57,3 +60,6 @@ export const useUIStore = create<UIState>((set) => ({
       return { ...state, scale: zoomOutVal };
     }),
 }));
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('UIStore', useUIStore);
