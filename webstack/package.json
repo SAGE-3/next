@@ -97,7 +97,7 @@
     "vega-lite": "^5.3.0",
     "ws": "^8.7.0",
     "zod": "^3.17.3",
-    "zustand": "^4.0.0-rc.1"
+    "zustand": "^4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",
