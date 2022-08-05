@@ -74,8 +74,7 @@
   },
   twilio: {
     "accountSid": "AC43f67ea8d72208ae398d8d234d365d99",
-    "authToken":"a69de47d75b2edf85da3ea3575ad8128",
-    "apiKey": "SK9fcd5219bfa48d8b68ddf459e54fe110",
-    "apiSecret": "S0TzN2srXLGypAjUnCBdQXOcdhVzosYH",
+    "apiKey": "SKbe39af89723afe3232a9d0abb60b4d85",
+    "apiSecret": "UycFTsz4JrjPJCucCBGP4uIntl4Pg3iT",
   }
 }

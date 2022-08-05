@@ -6,7 +6,7 @@
  *
  */
 
-import { Twilio, jwt } from 'twilio';
+import { jwt } from 'twilio';
 
 import { TwilioConfiguration } from "@sage3/shared/types"
 
@@ -21,7 +21,6 @@ export class SAGETwilio {
 
   constructor(config: TwilioConfiguration) {
     this.config = config;
-    new Twilio(config.accountSid, config.authToken);
   }
 
   /**

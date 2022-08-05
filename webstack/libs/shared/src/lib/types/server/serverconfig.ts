@@ -90,7 +90,6 @@ export interface AuthConfiguration {
 // The Twilio Configuration
 export interface TwilioConfiguration {
   accountSid: string; // Your Account SID from www.twilio.com/console
-  authToken: string;  // Your Auth Token from www.twilio.com/console
   apiKey: string; // API Key
   apiSecret: string; // API Secret
 }

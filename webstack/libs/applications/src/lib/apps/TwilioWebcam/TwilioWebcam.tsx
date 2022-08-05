@@ -16,7 +16,7 @@ import { useAppStore, useUser, useTwilioStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Chakra and React imports
-import { Button, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
+import { Button, Menu, MenuButton, MenuItem, MenuList, useEventListener } from '@chakra-ui/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Twilio Imports
@@ -30,9 +30,8 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   // Twilio Store
-  const room = useTwilioStore((state) => state.room);
   const tracks = useTwilioStore((state) => state.tracks);
-  const streams = useTwilioStore((state) => state.localVideoStreams);
+  const localStreams = useTwilioStore((state) => state.localVideoStreams);
 
   // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -41,22 +40,24 @@ function AppComponent(props: App): JSX.Element {
   // Current User
   const { user } = useUser();
 
-  useEffect(() => {
-    if (user?._id !== props._createdBy) {
-      tracks.forEach((track) => {
-        if (track.name === s.videoId && videoRef.current) {
-          track.attach(videoRef.current);
-        }
-        // if (track.name === s.audioId && audioRef.current) {
-        //   track.attach(audioRef.current);
-        // }
-      });
-    }
-  }, [tracks, s.videoId, s.audioId]);
+    // // // Unpublishing streams when closing app or leaving board
+    // useEffect(() => {
+    //   return () => {
+    //     console.log('Unpublishing streams');
+    //     // Remove track so user's video doesn't continuosly play
+    //     room?.localParticipant.tracks.forEach((publication: any) => {
+    //       console.log(userStreamIds, publication)
+    //       if (userStreamIds.indexOf(publication.trackName) === -1) {
+    //         publication.unpublish();
+    //         publication.track.stop();
+    //       } 
+    //     });
+    //   };
+    // }, [userStreamIds.length, room]);
 
   useEffect(() => {
     if (user?._id === props._createdBy) {
-      streams.forEach((stream) => {
+      localStreams.forEach((stream) => {
         if (stream.id == s.videoId && videoRef.current) {
           videoRef.current.srcObject = stream.stream;
           videoRef.current.muted = true;
@@ -67,8 +68,17 @@ function AppComponent(props: App): JSX.Element {
           }
         }
       });
+    } else {
+      tracks.forEach((track) => {
+        if (track.name === s.videoId && videoRef.current) {
+          track.attach(videoRef.current);
+        }
+        if (track.name === s.audioId && audioRef.current) {
+          track.attach(audioRef.current);
+        }
+      });
     }
-  }, [streams, s.videoId, videoRef]);
+  }, [s.videoId, s.audioId]);
 
   return (
     <AppWindow app={props}>
@@ -83,23 +93,28 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app Twilio */
 
 function ToolbarComponent(props: App): JSX.Element {
+  // Update app State
   const updateState = useAppStore((state) => state.updateState);
 
   // Current User
   const { user } = useUser();
+
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
 
+  // Local state of selected video/audio sources
   const [videoSources, setVideoSources] = useState<InputDeviceInfo[]>([]);
   const [audioSoruces, setAudioSources] = useState<InputDeviceInfo[]>([]);
   const [selectedVideoSource, setSelectedVideoSource] = useState<InputDeviceInfo>();
   const [selectedAudioSource, setSelectedAudioSource] = useState<InputDeviceInfo>();
 
+  // Add and remove local streams to the Twilio store
   const addStream = useTwilioStore((state) => state.addStream);
   const removeStream = useTwilioStore((state) => state.removeStream);
 
   const [mute, setMute] = useState(false);
 
+  // Handle muting and unmuting of the local stream
   function handleMute() {
     setMute(!mute);
     shareWebcam();
@@ -115,51 +130,83 @@ function ToolbarComponent(props: App): JSX.Element {
     shareWebcam();
   }
 
+  // Get all the local video and audio sources
   async function getDevices() {
     const devices = await navigator.mediaDevices.enumerateDevices();
+    console.log(devices)
     const videos = devices.filter((d) => d.kind === 'videoinput');
     const audios = devices.filter((d) => d.kind === 'audioinput');
     setVideoSources(videos);
     setAudioSources(audios);
-    if (selectedVideoSource === undefined) {
-      setSelectedVideoSource(videos[0]);
-    }
-    if (selectedAudioSource === undefined) {
-      setSelectedAudioSource(audios[0]);
-    }
   }
 
   useEffect(() => {
     getDevices();
   }, []);
 
-  // Share webcam function
-  const shareWebcam = useCallback(async () => {
-    const videoId = genId();
-    const audioId = genId();
-    if (room && selectedAudioSource && selectedVideoSource) {
-      await updateState(props._id, { videoId, audioId });
-      const constraints = {
-        video: { deviceId: selectedVideoSource.deviceId, name: videoId },
-      } as any;
-      if (!mute) {
-        constraints.audio = { deviceId: selectedAudioSource.deviceId, name: audioId };
-      }
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      addStream(videoId, mediaStream);
-      const tracks = mediaStream
-        .getTracks()
-        .map((track) =>
-          track.kind === 'audio'
-            ? new LocalAudioTrack(track, { name: audioId, logLevel: 'off' })
-            : new LocalVideoTrack(track, { name: videoId, logLevel: 'off' })
-        );
-      room.localParticipant.publishTracks(tracks);
+  async function getAudioStream() {
+    if (selectedAudioSource) {
+      const id = genId();
+      const audioConstraints = {
+        audio: { deviceId: selectedAudioSource.deviceId, name: id },
+      } as MediaStreamConstraints;
+      const audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+      updateState(props._id, { audioId: id });
+      addStream(id, audioStream);
+      console.log('here i am')
     }
-    getDevices();
-    return () => {
-      removeStream(videoId);
-    };
+  }
+
+  async function getVideoStream() {
+    if (selectedAudioSource) {
+      const id = genId();
+      const videoConstraints = {
+        video: { deviceId: selectedAudioSource.deviceId, name: id },
+      } as MediaStreamConstraints;
+      const videoStream = await navigator.mediaDevices.getUserMedia(videoConstraints);
+      updateState(props._id, { videoId: id });
+      addStream(id, videoStream);
+    }
+  }
+
+  // Audio Device Changed
+  useEffect(() => {
+    getAudioStream();
+  }, [selectedAudioSource]);
+
+  // Video Device Changed
+  useEffect(() => {
+    getVideoStream();
+  }, [selectedVideoSource]);
+
+  // Share webcam
+  const shareWebcam = useCallback(async () => {
+    // // Generate ids for the new streams
+    // const videoId = genId();
+    // const audioId = genId();
+    // if (room && selectedAudioSource && selectedVideoSource) {
+    //   await updateState(props._id, { videoId, audioId });
+    //   const constraints = {
+    //     video: { deviceId: selectedVideoSource.deviceId, name: videoId },
+    //   } as any;
+    //   if (!mute) {
+    //     constraints.audio = { deviceId: selectedAudioSource.deviceId, name: audioId };
+    //   }
+    //   const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+    //   addStream(videoId, mediaStream);
+    //   const tracks = mediaStream
+    //     .getTracks()
+    //     .map((track) =>
+    //       track.kind === 'audio'
+    //         ? new LocalAudioTrack(track, { name: audioId, logLevel: 'off' })
+    //         : new LocalVideoTrack(track, { name: videoId, logLevel: 'off' })
+    //     );
+    //   room.localParticipant.publishTracks(tracks);
+    // }
+    // getDevices();
+    // return () => {
+    //   removeStream(videoId);
+    // };
   }, [room, selectedAudioSource, selectedVideoSource, mute]);
 
   return (
@@ -193,7 +240,7 @@ function ToolbarComponent(props: App): JSX.Element {
               </MenuList>
             </Menu>
             <Menu>
-              <MenuButton as={Button} mx={1} colorScheme="blue" rightIcon={<MdExpandMore />} disabled={true}>
+              <MenuButton as={Button} mx={1} colorScheme="blue" rightIcon={<MdExpandMore />} disabled={false}>
                 Audio Source
               </MenuButton>
               <MenuList>
@@ -208,7 +255,9 @@ function ToolbarComponent(props: App): JSX.Element {
                 ))}
               </MenuList>
             </Menu>
-            <Button onClick={() => handleMute()} disabled={true}>Mute</Button>
+            <Button onClick={() => handleMute()} disabled={true}>
+              Mute
+            </Button>
           </>
         </>
       ) : null}

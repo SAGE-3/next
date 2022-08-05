@@ -192,9 +192,6 @@ export function BoardPage() {
         roomId={locationState.roomId}
       ></BoardFooter>
 
-      {/*Twilio*/}
-      <Twilio roomName={locationState.boardId} />
-
       {/* Clear the board modal */}
       <Modal isCentered isOpen={clearModalIsOpen} onClose={clearModalOnClose}>
         <ModalOverlay />

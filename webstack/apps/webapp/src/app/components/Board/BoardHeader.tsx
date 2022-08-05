@@ -11,6 +11,7 @@ import { useUser, initials } from '@sage3/frontend';
 import { useNavigate } from 'react-router';
 import { sageColorByName } from '@sage3/shared';
 import { AvatarGroup } from './AvatarGroup';
+import { Twilio } from './Twilio';
 
 type HeaderProps = {
   boardId: string;
@@ -44,10 +45,14 @@ export function BoardHeader(props: HeaderProps) {
       top="0"
       width="100%"
     >
-      {/* Home Button */}
-      <Button pointerEvents={'all'} colorScheme="green" onClick={handleHomeClick}>
-        Home
-      </Button>
+      <Box display="flex" alignItems="center">
+        {/* Home Button */}
+        <Button pointerEvents={'all'} colorScheme="green" onClick={handleHomeClick}>
+          Home
+        </Button>
+        {/*Twilio*/}
+        <Twilio roomName={props.boardId} />
+      </Box>
 
       {/* Board Name */}
       <Text fontSize="2xl" background="teal" px={6} borderRadius="4" color="white">
@@ -56,7 +61,7 @@ export function BoardHeader(props: HeaderProps) {
 
       <Box display="flex" alignItems="center">
         {/* Avatar Group */}
-        <AvatarGroup boardId={props.boardId}  />
+        <AvatarGroup boardId={props.boardId} />
 
         {/* User Avatar */}
         <Avatar

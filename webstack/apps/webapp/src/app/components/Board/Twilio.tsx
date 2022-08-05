@@ -6,42 +6,22 @@
  *
  */
 
+import { Box, Icon, Tooltip } from '@chakra-ui/react';
 import { useAppStore, useTwilioStore, useUser } from '@sage3/frontend';
 import { useEffect } from 'react';
 
+import { SiTwilio } from 'react-icons/si';
+
 export function Twilio(props: { roomName: string }) {
+  
   // User information
   const { user } = useUser();
-  const apps = useAppStore((state) => state.apps);
-  const twilioApps = apps.filter((el) => el.data.type === 'Webcam' || el.data.type === 'Screenshare');
 
   // Twilio Store to join and leave room when joining board
+  const room = useTwilioStore((state) => state.room);
   const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
   const leaveTwilioRoom = useTwilioStore((state) => state.leaveRoom);
-  const room = useTwilioStore((state) => state.room);
 
-  //TWILIO STUFF
-  // I need to do it out here to detect if an app closes to close the stream attached to it.
-  // It kinda of a hacky way to do it, but it works.
-  const userStreamIds: string[] = [];
-  twilioApps.forEach((el) => {
-    if (el._createdBy === user?._id) {
-      const s = el.data.state as any;
-      userStreamIds.push(s.videoId, s.audioId);
-    }
-  });
-
-  useEffect(() => {
-    return () => {
-      // Remove track so user's video doesn't continuosly play
-      room?.localParticipant.tracks.forEach((publication: any) => {
-        if (userStreamIds.indexOf(publication.trackName) === -1) {
-          publication.unpublish();
-          publication.track.stop();
-        }
-      });
-    };
-  }, [userStreamIds, room]);
 
   // Handle joining and leaving twilio room when entering board
   useEffect(() => {
@@ -49,13 +29,18 @@ export function Twilio(props: { roomName: string }) {
     if (user) {
       joinTwilioRoom(user?._id, props.roomName);
     }
-
     // Uncmounting
     return () => {
       // Leave twilio room
       leaveTwilioRoom();
     };
-  }, [twilioApps.length]);
+  }, []); // Observe the length of the apps array
 
-  return null;
+  return (
+    <Tooltip pointerEvents={'all'} label={room ? 'Twilio Connected' : 'Twilio Connection Error'}>
+      <Box pointerEvents={'all'} mx={1}>
+        <Icon fontSize="2rem" color={room ? 'green' : 'red'} as={SiTwilio} />
+      </Box>
+    </Tooltip>
+  );
 }
