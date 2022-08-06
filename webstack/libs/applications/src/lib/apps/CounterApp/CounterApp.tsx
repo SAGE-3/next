@@ -7,77 +7,82 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
+import { Button, Text, VStack } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import { AppWindow, BaseOperator } from '../../components';
 
-type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+// Operator for the Counter application
+import { useOperator } from './operator';
 
-function add(update: UpdateFunc, s: AppState, id: string) {
-  update(id, { count: s.count + 1 });
+/**
+ * Operator class for the CounterApp app
+ * 
+ * @class Operator
+ * @extends {BaseOperator<AppState>}
+ */
+export class Operator extends BaseOperator<AppState> {
+
+  add(s: AppState) {
+    this.update({ count: s.count + 1 });
+  }
+
+  sub(s: AppState) {
+    this.update({ count: s.count - 1 });
+  }
+
+  zero() {
+    this.update({ executeInfo: { executeFunc: 'reset_to_zero', params: {} } });
+  }
+
 }
 
-function sub(update: UpdateFunc, s: AppState, id: string) {
-  update(id, { count: s.count - 1 });
-}
 
+/**
+ * Application component for the Counter application.
+ *
+ * @param {App} props 
+ * @returns {JSX.Element} 
+ */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
-  const updateState = useAppStore((state) => state.updateState);
-
-  function handleAddClick() {
-    add(updateState, s, props._id);
-  }
-
-  function handleSubClick() {
-    sub(updateState, s, props._id);
-  }
-
-  function handleZero() {
-    updateState(props._id, { executeInfo: { executeFunc: 'reset_to_zero', params: {} } });
-  }
-
+  const updater = useOperator(props._id);
 
   return (
     <AppWindow app={props}>
-      <>
-        <h1>Count: {s.count}</h1>
-        <Button onClick={handleAddClick} colorScheme="green">
+      <VStack>
+        <Text fontSize={"3xl"}>Count: {s.count}</Text>
+        <Button w={200} onClick={() => (updater?.add(s))} colorScheme="green" mx={2}>
           Add
         </Button>
-        <Button onClick={handleSubClick} colorScheme="red">
+        <Button w={200} onClick={() => (updater?.sub(s))} colorScheme="red" mx={2}>
           Sub
         </Button>
-        <Button onClick={handleZero} colorScheme="blue">
+        <Button w={200} onClick={() => (updater?.zero())} colorScheme="blue" mx={2}>
           Zero
         </Button>
-        <h2>Last update by: {props._updatedBy}</h2>
-      </>
+        <Text fontSize={"xl"}>Last update by:</Text>
+        <Text fontSize={"sm"}>{props._updatedBy}</Text>
+      </VStack>
     </AppWindow>
   );
 }
 
+/**
+ * UI component for the CounterApp app
+ *
+ * @param {App} props 
+ * @returns {JSX.Element} 
+ */
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
-
-  const updateState = useAppStore((state) => state.updateState);
-
-  function handleAddClick() {
-    add(updateState, s, props._id);
-  }
-
-  function handleSubClick() {
-    sub(updateState, s, props._id);
-  }
+  const updater = useOperator(props._id);
 
   return (
     <>
-      <Button onClick={handleAddClick} colorScheme="green">Add</Button>
-      <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
+      <Button onClick={() => (updater?.add(s))} colorScheme="green" mx={2}>Add</Button>
+      <Button onClick={() => (updater?.sub(s))} colorScheme="red" mx={2}>Sub</Button>
     </>
   )
 }

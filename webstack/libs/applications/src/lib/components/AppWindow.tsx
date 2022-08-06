@@ -15,6 +15,24 @@ import { App } from '../schema';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
+
+export type OperatorFunc<T> = (id: string, state: Partial<T>) => Promise<void>;
+
+export class BaseOperator<T> {
+  readonly appId: string;
+  readonly updateFunc: OperatorFunc<T>;
+
+  constructor(i: string, f: OperatorFunc<T>) {
+    this.appId = i;
+    this.updateFunc = f;
+  }
+
+  update(s: Partial<T>) {
+    this.updateFunc(this.appId, s);
+  }
+
+}
+
 type WindowProps = {
   app: App;
   children: JSX.Element;

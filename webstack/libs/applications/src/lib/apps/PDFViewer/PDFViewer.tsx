@@ -31,8 +31,66 @@ import {
   MdNavigateBefore,
 } from 'react-icons/md';
 
+// Operator for the Counter application
+import { useOperator } from './operator';
+
+// Operator stuff
+import { BaseOperator } from '../../components';
+
+export class Operator extends BaseOperator<AppState> {
+
+  // Set page count
+  setPageNumber(count: number) {
+    console.log('setPageNumber', count);
+    this.update({ numPages: count });
+  }
+
+  // Next page
+  nextPage(s: AppState, amount = 1) {
+    console.log('nextPage', s.currentPage, s.numPages, s.displayPages);
+    if (s.currentPage === s.numPages - s.displayPages) return;
+    const newpage = s.currentPage + amount < s.numPages ? s.currentPage + amount : s.numPages - s.displayPages;
+    this.update({ currentPage: newpage });
+  }
+
+  // Previous page
+  previousPage(s: AppState, amount = 1) {
+    if (s.currentPage === 0) return;
+    const newpage = s.currentPage - amount >= 0 ? s.currentPage - amount : 0;
+    this.update({ currentPage: newpage });
+  }
+
+  // Go to first page
+  firstPage() {
+    this.update({ currentPage: 0 });
+  }
+
+  // Go to last page
+  lastPage(s: AppState) {
+    this.update({ currentPage: s.numPages - s.displayPages });
+  }
+
+  // Add a page
+  addPage(s: AppState) {
+    if (s.displayPages < s.numPages) {
+      const pageCount = s.displayPages + 1;
+      this.update({ displayPages: pageCount });
+    }
+  }
+
+  // Remove a page
+  removePage(s: AppState) {
+    if (s.displayPages > 1) {
+      const pageCount = s.displayPages - 1;
+      this.update({ displayPages: pageCount });
+    }
+  }
+
+}
+
 function AppComponent(props: App): JSX.Element {
-  const updateState = useAppStore((state) => state.updateState);
+  const updater = useOperator(props._id);
+
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
   const s = props.data.state as AppState;
@@ -40,6 +98,7 @@ function AppComponent(props: App): JSX.Element {
   const [file, setFile] = useState<Asset>();
   // const [allPagesInfo, setAllPagesInfo] = useState<ImageInfoType[][]>([]);
   const [aspectRatio, setAspecRatio] = useState(1);
+
 
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
@@ -53,10 +112,10 @@ function AppComponent(props: App): JSX.Element {
       // Updte the state of the app
       if (myasset.data.derived) {
         const pages = myasset.data.derived as ExtraPDFType;
-        updateState(props._id, { numPages: pages.length });
+        updater?.setPageNumber(pages.length);
       }
     }
-  }, [s.id, assets]);
+  }, [s.id, assets, updater]);
 
   useEffect(() => {
     if (file) {
@@ -95,36 +154,33 @@ function AppComponent(props: App): JSX.Element {
     switch (evt.key) {
       case "ArrowRight": {
         // Next page
-        if (s.currentPage === s.numPages - s.displayPages) return;
-        const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
-        updateState(props._id, { currentPage: newpage });
+        updater?.nextPage(s);
         break;
       }
       case "ArrowLeft": {
         // Previous page
-        if (s.currentPage === 0) return;
-        const newpage = s.currentPage - 1 >= 0 ? s.currentPage - 1 : 0;
-        updateState(props._id, { currentPage: newpage });
+        updater?.previousPage(s);
         break;
       }
       case "1": {
         // Go to first page
-        updateState(props._id, { currentPage: 0 });
+        updater?.firstPage();
         break;
       }
       case "0": {
         // Go to last page
-        updateState(props._id, { currentPage: s.numPages - s.displayPages });
+        updater?.lastPage(s);
         break;
       }
+
       case "-": {
         // Remove one page
         if (s.displayPages > 1) {
-          const pageCount = s.displayPages - 1;
-          updateState(props._id, { displayPages: pageCount });
+          updater?.removePage(s);
+          // Resize the window
           update(props._id, {
             size: {
-              width: pageCount * props.data.size.height * aspectRatio,
+              width: (s.displayPages - 1) * props.data.size.height * aspectRatio,
               height: props.data.size.height,
               depth: props.data.size.depth,
             },
@@ -135,11 +191,11 @@ function AppComponent(props: App): JSX.Element {
       case "+": {
         // Add one page
         if (s.displayPages < s.numPages) {
-          const pageCount = s.displayPages + 1;
-          updateState(props._id, { displayPages: pageCount });
+          updater?.addPage(s);
+          // Resize the window
           update(props._id, {
             size: {
-              width: pageCount * props.data.size.height * aspectRatio,
+              width: (s.displayPages + 1) * props.data.size.height * aspectRatio,
               height: props.data.size.height,
               depth: props.data.size.depth,
             },
@@ -198,7 +254,8 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+  const updater = useOperator(props._id);
+
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
@@ -223,38 +280,14 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [file]);
 
-  // Previous page
-  function handlePrev(amount = 1) {
-    if (s.currentPage === 0) return;
-    const newpage = s.currentPage - amount >= 0 ? s.currentPage - amount : 0;
-    updateState(props._id, { currentPage: newpage });
-  }
-
-  // Next page
-  function handleNext(amount = 1) {
-    if (s.currentPage === s.numPages - s.displayPages) return;
-    const newpage = s.currentPage + amount < s.numPages ? s.currentPage + amount : s.numPages - s.displayPages;
-    updateState(props._id, { currentPage: newpage });
-  }
-
-  // Go to first page
-  function handleFirst() {
-    updateState(props._id, { currentPage: 0 });
-  }
-
-  // Go to last page
-  function handleLast() {
-    updateState(props._id, { currentPage: s.numPages - s.displayPages });
-  }
-
   // Add a page
   function handleAddPage() {
     if (s.displayPages < s.numPages) {
-      const pageCount = s.displayPages + 1;
-      updateState(props._id, { displayPages: pageCount });
+      updater?.addPage(s);
+      // Resize the window
       update(props._id, {
         size: {
-          width: pageCount * props.data.size.height * aspectRatio,
+          width: (s.displayPages + 1) * props.data.size.height * aspectRatio,
           height: props.data.size.height,
           depth: props.data.size.depth,
         },
@@ -265,11 +298,11 @@ function ToolbarComponent(props: App): JSX.Element {
   // Remove a page
   function handleRemovePage() {
     if (s.displayPages > 1) {
-      const pageCount = s.displayPages - 1;
-      updateState(props._id, { displayPages: pageCount });
+      updater?.removePage(s);
+      // Resize the window
       update(props._id, {
         size: {
-          width: pageCount * props.data.size.height * aspectRatio,
+          width: (s.displayPages - 1) * props.data.size.height * aspectRatio,
           height: props.data.size.height,
           depth: props.data.size.depth,
         },
@@ -294,25 +327,25 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="bottom" hasArrow={true} label={'1st Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => updater?.firstPage()}>
             <MdSkipPrevious />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Previous Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => updater?.previousPage(s)}>
             <MdNavigateBefore />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()}>
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => updater?.nextPage(s)}>
             <MdNavigateNext />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()}>
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => updater?.lastPage(s)}>
             <MdSkipNext />
           </Button>
         </Tooltip>
@@ -337,10 +370,10 @@ function ToolbarComponent(props: App): JSX.Element {
             >
               Download
             </MenuItem>
-            <MenuItem icon={<MdOutlineFastRewind />} onClick={() => handlePrev(10)}>
+            <MenuItem icon={<MdOutlineFastRewind />} onClick={() => updater?.previousPage(s, 10)}>
               Back 10 pages
             </MenuItem>
-            <MenuItem icon={<MdOutlineFastForward />} onClick={() => handleNext(10)}>
+            <MenuItem icon={<MdOutlineFastForward />} onClick={() => updater?.nextPage(s, 10)}>
               Forward 10 pages
             </MenuItem>
           </MenuList>
