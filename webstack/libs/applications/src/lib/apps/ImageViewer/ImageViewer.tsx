@@ -80,7 +80,7 @@ function AppComponent(props: App): JSX.Element {
   }, [url, sizes, displaySize, scale]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div ref={ref} style={{
         position: 'relative', overflowY: 'hidden',
         height: displaySize.width / aspectRatio,

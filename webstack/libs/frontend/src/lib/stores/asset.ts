@@ -18,6 +18,9 @@ import { Asset, AssetSchema } from '@sage3/shared/types';
 // The observable websocket
 import { AssetHTTPService, SocketAPI } from '../api';
 
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 interface AssetState {
   assets: Asset[];
   subscribe: () => Promise<void>;
@@ -84,3 +87,6 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
 
 // Convert the Zustand JS store to Zustand React Store
 export const useAssetStore = createReact(AssetStore);
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('AssetStore', useAssetStore);
