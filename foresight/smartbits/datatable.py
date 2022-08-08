@@ -46,34 +46,62 @@ class DataTable(SmartBit):
         super(DataTable, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
-    # TODO, add a decorator to automatically set executeFunc
-    # and params to ""
-    def load_data(self):
+    def paginate(self):
         i = 1
-
-        self._df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
-        self._modified_df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
-        print("--------------")
-        self._df.insert(0, 'Index', range(0, self._df.shape[0], 1))
-        self._modified_df.insert(0, 'Index', range(0, self._df.shape[0], 1))
-
-        # self.state.viewData = self._modified_df.to_dict("split")
-        self.state.timestamp = time.time()
-
+        pageNumbers = []
         self.state.totalRows = self._modified_df.shape[0]
-
         while i <= math.ceil(self.state.totalRows / self.state.rowsPerPage):
-            self.state.pageNumbers.append(i);
+            pageNumbers.append(i);
             i += 1
-
+        self.state.pageNumbers = pageNumbers
         index_of_last_row = self.state.currentPage * self.state.rowsPerPage
         index_of_first_row = index_of_last_row - self.state.rowsPerPage
         self._current_rows = self._modified_df.iloc[index_of_first_row:index_of_last_row]
         print("_current_rows")
         print(self._current_rows)
-
         self.state.viewData = self._current_rows.to_dict("split")
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("paginate")
+        print("I am sending this information")
+        print("=======================")
+        self.send_updates()
 
+    def handle_left_arrow(self):
+        if self.state.currentPage != 1:
+            self.state.currentPage -= 1
+            self.paginate()
+        else:
+            print("No page before 1")
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("handle_left_arrow")
+        print("I am sending this information")
+        print("=======================")
+        self.send_updates()
+
+    def handle_right_arrow(self):
+        if self.state.currentPage != len(self.state.pageNumbers):
+            self.state.currentPage += 1
+            self.paginate()
+        else:
+            print(f"No page after {len(self.state.pageNumbers)}")
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("handle_right_arrow")
+        print("I am sending this information")
+        print("=======================")
+        self.send_updates()
+
+
+# TODO, add a decorator to automatically set executeFunc
+    # and params to ""
+    def load_data(self):
+        self._df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
+        self._modified_df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
+        self.paginate()
+        print("--------------")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("load_data")

@@ -46,83 +46,94 @@ import React, {useState, useMemo, useEffect} from 'react';
 import {colMenus} from "./colMenus";
 
 
-// const Pagination = () => {
-//   const pageNumbers = [];
-//
-//   for (let i = 1; i <= Math.ceil(totalPosts / postsPerPage); i++) {
-//     pageNumbers.push(i);
-//   }
-//
-//   function paginater(number: number) {
-//     console.log("paginate " + number)
-//     // updateState(props._id, {currentPage: number})
-//     // updateState(props._id, {currentPosts: s.currentPosts})
-//     setCurrentPage(number)
-//     setCurrentPosts(currentPosts)
-//     updateState(props._id, {messages: "Currently on page " + number})
-//     console.log("current page " + currentPage)
-//   }
-//
-//   function handleLeftArrow() {
-//     console.log("left arrow")
-//     if (currentPage !== 1) {
-//       // updateState(props._id, {currentPage: s.currentPage - 1})
-//       // updateState(props._id, {currentPosts: s.currentPosts})
-//       setCurrentPage(currentPage - 1)
-//       setCurrentPosts(currentPosts)
-//       setLeftButtonStatus(false)
-//       updateState(props._id, {messages: "Currently on page " + (currentPage - 1)})
-//       console.log("current page " + (currentPage - 1))
-//     } else {
-//       console.log("No page before 0")
-//       setLeftButtonStatus(true)
-//     }
-//   }
-//
-//   function handleRightArrow() {
-//     console.log("right arrow")
-//     if (currentPage !== pageNumbers.length) {
-//       // updateState(props._id, {currentPage: s.currentPage + 1})
-//       // updateState(props._id, {currentPosts: s.currentPosts})
-//       setCurrentPage(currentPage + 1)
-//       setCurrentPosts(currentPosts)
-//       setRightButtonStatus(false)
-//       updateState(props._id, {messages: "Currently on page " + (currentPage + 1)})
-//       console.log("current page " + (currentPage + 1))
-//     } else {
-//       console.log("No page after " + pageNumbers.length)
-//       setRightButtonStatus(true)
-//     }
-//   }
-//
-//   //TODO Add focus to current page number
-//   return (
-//     <div>
-//       <HStack spacing='5' display='flex' justify='center' zIndex='dropdown'>
-//         <IconButton
-//           aria-label='Page left'
-//           icon={<FiArrowLeft/>}
-//           onClick={() => handleLeftArrow()}
-//           disabled={leftButtonStatus}
-//         />
-//         {pageNumbers.map((number: number) => (
-//           <Button
-//             key={number}
-//             onClick={(e) => paginater(number)}
-//           >
-//             {number}
-//           </Button>
-//         ))}
-//         <IconButton
-//           aria-label='Page right'
-//           icon={<FiArrowRight/>}
-//           onClick={() => handleRightArrow()}
-//           disabled={rightButtonStatus}
-//         />
-//       </HStack>
-//     </div>
-//   );
-// };
+const Pagination = (props: App): JSX.Element => {
+
+  const s = props.data.state as AppState;
+  const updateState = useAppStore(state => state.updateState);
+
+  const [leftButtonDisable, setLeftButtonDisable] = useState(true)
+  const [rightButtonDisable, setRightButtonDisable] = useState(true)
+
+  function paginater(page: number) {
+    updateState(props._id, {currentPage: page})
+    updateState(props._id, {executeInfo: {"executeFunc": "paginate", "params": {}}})
+    updateState(props._id, {messages: "Currently on page " + page})
+    console.log("current page " + s.currentPage)
+    console.log("new value of executeInfo is ")
+    console.log(s.executeInfo)
+    console.log("----")
+    console.log(s)
+  }
+
+  function handleLeftArrow() {
+    console.log("left arrow")
+    updateState(props._id, {executeInfo: {"executeFunc": "handle_left_arrow", "params": {}}})
+    if (s.currentPage !== 1) {
+      setLeftButtonDisable(false)
+      updateState(props._id, {messages: "Currently on page " + (s.currentPage)})
+      console.log("current page " + (s.currentPage))
+    } else {
+      console.log("No page before 0")
+      setLeftButtonDisable(true)
+    }
+  }
+
+  function handleRightArrow() {
+    console.log("right arrow")
+    updateState(props._id, {executeInfo: {"executeFunc": "handle_right_arrow", "params": {}}})
+    if (s.currentPage !== s.pageNumbers.length) {
+      setRightButtonDisable(false)
+      updateState(props._id, {messages: "Currently on page " + (s.currentPage)})
+      console.log("current page " + (s.currentPage))
+    } else {
+      console.log("No page after " + s.pageNumbers.length)
+      setRightButtonDisable(true)
+    }
+  }
+
+  useEffect(() => {
+    if (s.currentPage !== 1) {
+      setLeftButtonDisable(false)
+    } else {
+      setLeftButtonDisable(true)
+    }
+    if (s.currentPage !== s.pageNumbers.length) {
+      setRightButtonDisable(false)
+    } else {
+      setRightButtonDisable(true)
+    }
+    console.log("pagination useEffect")
+  },[s.currentPage])
+
+
+  //TODO Add focus to current page number
+  return (
+    <div>
+      <HStack spacing='5' display='flex' justify='center' zIndex='dropdown'>
+        <IconButton
+          aria-label='Page left'
+          icon={<FiArrowLeft/>}
+          onClick={() => handleLeftArrow()}
+          disabled={leftButtonDisable}
+        />
+        {s.pageNumbers.map((page: number) => (
+          <Button
+            key={page}
+            onClick={(e) => paginater(page)}
+          >
+            {page}
+          </Button>
+        ))}
+        <IconButton
+          aria-label='Page right'
+          icon={<FiArrowRight/>}
+          onClick={() => handleRightArrow()}
+          disabled={rightButtonDisable}
+        />
+      </HStack>
+    </div>
+  );
+};
 
 function AppComponent(props: App): JSX.Element {
 
@@ -133,10 +144,9 @@ function AppComponent(props: App): JSX.Element {
   // Client local states
   const [data, setData] = useState([])
   const [headers, setHeaders] = useState([])
+  const [indices, setIndices] = useState([])
   const [running, setRunning] = useState((s.executeInfo.executeFunc === "") ? false : true)
 
-  const [leftButtonDisable, setLeftButtonDisable] = useState(true)
-  const [rightButtonDisable, setRightButtonDisable] = useState(true)
 
   // Array of function references to map through for table actions menu
   const tableActions = [tableSort, dropColumns, transposeTable, restoreTable]
@@ -162,30 +172,15 @@ function AppComponent(props: App): JSX.Element {
     (s.executeInfo.executeFunc === "") ? setRunning(false) : setRunning(true)
   }, [s.executeInfo.executeFunc])
 
-  //TODO Is there a reason to set items? Does it cost memory or performance?
-  //TODO Why are all the useEffects running multiple times upon loading?
   useEffect(() => {
     if (s.viewData != undefined && s.viewData.data != undefined) {
       setData(s.viewData.data)
       setHeaders(s.viewData.columns)
+      setIndices(s.viewData.index)
 
       console.log("loading useEffect")
     }
   }, [s.timestamp])
-
-  // useEffect(() => {
-  //   if (items.length !== undefined) {
-  //     // Get current posts
-  //     const indexOfLastPost = currentPage * postsPerPage;
-  //     const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  //     setCurrentPosts(items.slice(indexOfFirstPost, indexOfLastPost))
-  //     setTotalPosts(items.length)
-  //     // updateState(props._id, {currentPosts: s.items.slice(indexOfFirstPost, indexOfLastPost)})
-  //     // updateState(props._id, {totalPosts: s.items.length})
-  //     console.log("second useEffect")
-  //     console.log("total posts: " + totalPosts)
-  //   }
-  // }, [items, currentPage, postsPerPage])
 
   useEffect(() => {
     s.selectedCols.forEach((col: any) => {
@@ -205,7 +200,7 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {dataUrl: ev.target.value})
   }
 
-  //TODO Fix delay in updatestate upon click
+  //TODO Fix delay in updateState upon click
   function handleCellClick() {
     console.log('initial click')
     const cells = document.querySelectorAll('td');
@@ -311,21 +306,6 @@ function AppComponent(props: App): JSX.Element {
     )
   }
 
-  // useEffect(() => {
-  //   if (s.currentPage !== 1) {
-  //     setLeftButtonStatus(false)
-  //   } else {
-  //     setLeftButtonStatus(true)
-  //   }
-  //   if (s.currentPage !== s.totalPages && s.totalRows !== 0) {
-  //     setRightButtonStatus(false)
-  //   } else {
-  //     setRightButtonStatus(true)
-  //   }
-  //   console.log("pagination useEffect")
-  // }, [s.totalRows])
-
-
   return (
     <AppWindow app={props}>
 
@@ -347,6 +327,7 @@ function AppComponent(props: App): JSX.Element {
                 {tableActions.map((action, key) => {
                   return (
                     <MenuItem
+                      key={key}
                       onClick={action}
                     >
                       {tableMenuNames[key]}
@@ -388,8 +369,6 @@ function AppComponent(props: App): JSX.Element {
 
         <div>
           <p>s.selectedCols: {s.selectedCols}</p>
-          <p>totalRows: {s.totalRows}</p>
-          <p>currentPage: {s.currentPage}</p>
         </div>
 
         <div style={{display: s.totalRows !== 0 ? "block" : "none"}}>
@@ -397,6 +376,8 @@ function AppComponent(props: App): JSX.Element {
             <Table colorScheme="facebook" variant='simple' size="sm" className="originalChakra">
               <Thead>
                 <Tr>
+                  <Th className="indexColumn">
+                  </Th>
                   {
                     headers?.map((header: any, index: number) => (
                       <Th
@@ -422,6 +403,7 @@ function AppComponent(props: App): JSX.Element {
                                   {columnActions.map((action, key) => {
                                     return (
                                       <MenuItem
+                                        key={key}
                                         onClick={action}
                                       >
                                         {columnMenuNames[key]}
@@ -444,6 +426,9 @@ function AppComponent(props: App): JSX.Element {
                 {
                   data?.map((row: any, rowIndex: number) => (
                     <Tr key={rowIndex}>
+                      <Td key={rowIndex}>
+                        {indices[rowIndex]}
+                      </Td>
                       {row.map((cell: any, colIndex: number) => (
                         <Td key={colIndex}
                             data-col={headers[colIndex % headers.length]}
@@ -461,10 +446,10 @@ function AppComponent(props: App): JSX.Element {
 
         </div>
 
-        {/*<div className="Pagination-Container"*/}
-        {/*     style={{display: s.totalRows !== 0 ? "block" : "none"}}>*/}
-        {/*  <Pagination/>*/}
-        {/*</div>*/}
+        <div className="Pagination-Container"
+             style={{display: s.pageNumbers.length !== 0 ? "block" : "none"}}>
+          <Pagination {...props}/>
+        </div>
 
         <div className="Message-Container">
           <VStack spacing={3}>

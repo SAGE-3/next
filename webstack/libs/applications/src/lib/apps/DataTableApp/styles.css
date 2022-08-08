@@ -34,6 +34,15 @@ th {
   z-index: 1;
 }
 
+.indexColumn {
+  position: sticky;
+  inset-block-start: 0;
+  background-color: gray;
+  flex-direction: row;
+  justify-content: space-between;
+  z-index: 1;
+}
+
 td {
   position: relative;
   /*z-index: 3;*/
