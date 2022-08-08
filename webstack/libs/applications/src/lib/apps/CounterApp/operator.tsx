@@ -21,7 +21,7 @@ import { Operator } from './CounterApp'
  * @returns 
  */
 export function useOperator(appId: string) {
-  const [operator, setOperator] = useState<Operator>();
+  const [operator, setOperator] = useState<Operator>({} as Operator);
   const updateState = useAppStore((state) => state.updateState);
   useEffect(() => {
     setOperator(new Operator(appId, updateState));

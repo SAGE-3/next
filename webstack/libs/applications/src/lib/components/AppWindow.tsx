@@ -28,7 +28,9 @@ export class BaseOperator<T> {
   }
 
   update(s: Partial<T>) {
-    this.updateFunc(this.appId, s);
+    if (this.updateFunc) {
+      this.updateFunc(this.appId, s);
+    }
   }
 
 }

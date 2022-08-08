@@ -6,7 +6,6 @@
  *
  */
 
-import { useAppStore } from '@sage3/frontend';
 import { Button, Text, VStack } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -53,13 +52,13 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <VStack>
         <Text fontSize={"3xl"}>Count: {s.count}</Text>
-        <Button w={200} onClick={() => (updater?.add(s))} colorScheme="green" mx={2}>
+        <Button w={200} onClick={() => (updater.add(s))} colorScheme="green" mx={2}>
           Add
         </Button>
-        <Button w={200} onClick={() => (updater?.sub(s))} colorScheme="red" mx={2}>
+        <Button w={200} onClick={() => (updater.sub(s))} colorScheme="red" mx={2}>
           Sub
         </Button>
-        <Button w={200} onClick={() => (updater?.zero())} colorScheme="blue" mx={2}>
+        <Button w={200} onClick={() => (updater.zero())} colorScheme="blue" mx={2}>
           Zero
         </Button>
         <Text fontSize={"xl"}>Last update by:</Text>
@@ -81,8 +80,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Button onClick={() => (updater?.add(s))} colorScheme="green" mx={2}>Add</Button>
-      <Button onClick={() => (updater?.sub(s))} colorScheme="red" mx={2}>Sub</Button>
+      <Button onClick={() => (updater.add(s))} colorScheme="green" mx={2}>Add</Button>
+      <Button onClick={() => (updater.sub(s))} colorScheme="red" mx={2}>Sub</Button>
     </>
   )
 }
