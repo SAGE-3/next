@@ -15,19 +15,14 @@ export type state = {
 
   totalRows: number;
   rowsPerPage: number;
-  totalPages: number;
   currentPage: number;
-  currentRows: any[];
+  pageNumbers: number[];
 
   selectedCols: string[];
+  selectedCol: string;
   messages: string;
 
   timestamp: number;
-
-
-  // Client
-  pageNumberArr: number[];
-
 };
 
 
@@ -35,13 +30,16 @@ export const init: Partial<state> = {
   executeInfo: {"executeFunc": "", "params": {}},
 
   viewData: {},
-  selectedCols: [],
 
-  timestamp: 0.0,
   totalRows: 1,
   rowsPerPage: 3,
   currentPage: 1,
+  pageNumbers: [],
 
+  selectedCols: [],
+  selectedCol: "",
+
+  timestamp: 0.0,
 };
 
 

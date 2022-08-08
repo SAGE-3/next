@@ -11,16 +11,25 @@ from pydantic import Field, PrivateAttr
 from typing import Optional, TypeVar
 import pandas as pd
 import time
+import math
 
 PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 
 class DataTableState(TrackedBaseModel):
+    executeInfo: ExecuteInfo
 
     viewData: Optional[dict]
-    selectedCols: list
 
-    executeInfo: ExecuteInfo
+    totalRows: int
+    rowsPerPage: int
+    currentPage: int
+    pageNumbers: list
+
+    selectedCols: list
+    selectedCol: str
+
     timestamp: float
+
 
 
 class DataTable(SmartBit):
@@ -30,6 +39,7 @@ class DataTable(SmartBit):
     _df: PandasDataFrame = PrivateAttr()
     # Modified df to keep track of
     _modified_df: PandasDataFrame = PrivateAttr()
+    _current_rows: PandasDataFrame = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
@@ -39,14 +49,31 @@ class DataTable(SmartBit):
     # TODO, add a decorator to automatically set executeFunc
     # and params to ""
     def load_data(self):
+        i = 1
+
         self._df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
         self._modified_df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
         print("--------------")
         self._df.insert(0, 'Index', range(0, self._df.shape[0], 1))
         self._modified_df.insert(0, 'Index', range(0, self._df.shape[0], 1))
-        self.state.viewData = self._modified_df.to_dict("split")
+
+        # self.state.viewData = self._modified_df.to_dict("split")
         self.state.timestamp = time.time()
-        # self.state.totalPosts = self._modified_df.shape[0]
+
+        self.state.totalRows = self._modified_df.shape[0]
+
+        while i <= math.ceil(self.state.totalRows / self.state.rowsPerPage):
+            self.state.pageNumbers.append(i);
+            i += 1
+
+        index_of_last_row = self.state.currentPage * self.state.rowsPerPage
+        index_of_first_row = index_of_last_row - self.state.rowsPerPage
+        self._current_rows = self._modified_df.iloc[index_of_first_row:index_of_last_row]
+        print("_current_rows")
+        print(self._current_rows)
+
+        self.state.viewData = self._current_rows.to_dict("split")
+
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("load_data")
@@ -54,31 +81,9 @@ class DataTable(SmartBit):
         print("=======================")
         self.send_updates()
 
-    def menu_click(self):
-        action = f"You've clicked an action to perform"
-        self.state.menuAction = action
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        print("---------------------------------------------------------")
-        print("menu_click")
-        print("I am sending this information")
-        self.send_updates()
-
-    def table_menu_click(self, selected_cols):
-        listToStr = ' '.join([str(item) for item in selected_cols])
-        action = f"You've clicked an action to perform on columns: {listToStr}"
-        self.state.tableMenuAction = action
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        print("---------------------------------------------------------")
-        print("table_menu_click")
-        print("I am sending this information")
-        self.send_updates()
-
-
     def table_sort(self, selected_cols):
         self._modified_df.sort_values(by=selected_cols, inplace=True)
-        self.state.viewData = self._modified_df.to_dict("records")
+        self.state.viewData = self._modified_df.to_dict("split")
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -88,23 +93,9 @@ class DataTable(SmartBit):
         print("I am sending this information")
         self.send_updates()
 
-    def column_sort(self):
-        pass
-
-    def transpose_table(self):
-        self._modified_df.transpose()
-        self.state.viewData = self._modified_df.to_dict('records')
-        self.state.timestamp = time.time()
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        print("---------------------------------------------------------")
-        print("transpose_table")
-        print("I am sending this information")
-        self.send_updates()
-
     def drop_columns(self, selected_cols):
         self._modified_df.drop(columns=selected_cols, inplace=True)
-        self.state.viewData = self._modified_df.to_dict('records')
+        self.state.viewData = self._modified_df.to_dict('split')
         self.state.selectedCols = []
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
@@ -114,15 +105,53 @@ class DataTable(SmartBit):
         print("I am sending this information")
         self.send_updates()
 
+    def transpose_table(self):
+        self._modified_df.transpose()
+        self.state.viewData = self._modified_df.to_dict('split')
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("---------------------------------------------------------")
+        print("transpose_table")
+        print("I am sending this information")
+        self.send_updates()
+
     def restore_table(self):
         self._modified_df = self._df
-        self.state.viewData = self._modified_df.to_dict('records')
+        self.state.viewData = self._modified_df.to_dict('split')
         self.state.selectedCols = []
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("---------------------------------------------------------")
         print("restore_table")
+        print("I am sending this information")
+        self.send_updates()
+
+    def column_sort(self, col):
+        self._modified_df.sort_values(by=col, inplace=True)
+        self.state.selectedCol = ""
+        self.state.viewData = self._modified_df.to_dict("split")
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("---------------------------------------------------------")
+        print("column_sort")
+        print(f"column: {col}")
+        print("I am sending this information")
+        self.send_updates()
+
+    def drop_column(self, col):
+        self._modified_df.drop(columns=col, inplace=True)
+        self.state.selectedCol = ""
+        self.state.viewData = self._modified_df.to_dict('split')
+        self.state.selectedCols = []
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("---------------------------------------------------------")
+        print("drop_column")
+        print(f"column: {col}")
         print("I am sending this information")
         self.send_updates()
 

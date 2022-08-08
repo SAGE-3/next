@@ -139,12 +139,12 @@ function AppComponent(props: App): JSX.Element {
   const [rightButtonDisable, setRightButtonDisable] = useState(true)
 
   // Array of function references to map through for table actions menu
-  const tableActions = [transposeTable, tableSort, dropColumns, restoreTable]
-  const tableMenuNames = ["Transpose Table", "Sort on Selected Columns", "Drop Selected Columns", "Restore Original Table"]
+  const tableActions = [tableSort, dropColumns, transposeTable, restoreTable]
+  const tableMenuNames = ["Sort on Selected Columns", "Drop Selected Columns", "Transpose Table", "Restore Original Table"]
 
   // Array of function references to map through for column actions menu
-  const columnActions = [tableSort, dropColumns]
-  const columnMenuNames = ["Sort on Selected Columns", "Drop Selected Columns"]
+  const columnActions = [columnSort, dropColumn]
+  const columnMenuNames = ["Sort on Column", "Drop Column"]
 
   function handleLoadData() {
     console.log("in handleLoadData and updating the executeInfo")
@@ -155,6 +155,7 @@ function AppComponent(props: App): JSX.Element {
     console.log(s.executeInfo)
     console.log("----")
     console.log(s)
+
   }
 
   useEffect(() => {
@@ -169,7 +170,6 @@ function AppComponent(props: App): JSX.Element {
       setHeaders(s.viewData.columns)
 
       console.log("loading useEffect")
-      console.log("data: " + data)
     }
   }, [s.timestamp])
 
@@ -202,7 +202,7 @@ function AppComponent(props: App): JSX.Element {
   // This is likely caused by the value changing from undefined to a defined value,
   // which should not happen. Decide between using a controlled or uncontrolled input element for the lifetime of the component
   function handleUrlChange(ev: any) {
-    updateState(props._id, { dataUrl: ev.target.value})
+    updateState(props._id, {dataUrl: ev.target.value})
   }
 
   //TODO Fix delay in updatestate upon click
@@ -236,15 +236,7 @@ function AppComponent(props: App): JSX.Element {
     )
   }
 
-  function transposeTable() {
-    console.log("Transposing")
-    updateState(props._id,
-      {executeInfo: {"executeFunc": "transpose_table", "params": {}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
-  }
-
+  // Start of table wide functions
   function tableSort() {
     console.log("Sorting on " + s.selectedCols)
     updateState(props._id,
@@ -254,13 +246,9 @@ function AppComponent(props: App): JSX.Element {
     console.log(s)
   }
 
-  function columnSort() {
-    console.log("Sorting on " + s.selectedCols)
-    updateState(props._id,
-      {executeInfo: {"executeFunc": "column_sort", "params": {"selected_cols": s.selectedCols}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
+  //TODO Add Columns
+  function addCols() {
+    console.log("add column")
   }
 
   function dropColumns() {
@@ -278,6 +266,15 @@ function AppComponent(props: App): JSX.Element {
     )
   }
 
+  function transposeTable() {
+    console.log("Transposing")
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "transpose_table", "params": {}}})
+    console.log(s.executeInfo)
+    console.log("----")
+    console.log(s)
+  }
+
   function restoreTable() {
     console.log("Restoring table")
     updateState(props._id,
@@ -287,9 +284,31 @@ function AppComponent(props: App): JSX.Element {
     console.log(s)
   }
 
-  //TODO Add Columns
-  function addCols() {
-    console.log("add column")
+  //Start of single column functions
+  function columnSort(column: any) {
+    updateState(props._id, {selectedCol: column})
+    console.log("Sorting on " + s.selectedCol)
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "column_sort", "params": {"selected_col": s.selectedCol}}})
+    console.log(s.executeInfo)
+    console.log("----")
+    console.log(s)
+  }
+
+  function dropColumn(column: any) {
+    updateState(props._id, {selectedCol: column})
+    console.log("Dropping column: " + s.selectedCol)
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "drop_column", "params": {"selected_col": s.selectedCol}}})
+    console.log(s.executeInfo)
+    console.log("----")
+    console.log(s)
+
+    const cols = document.querySelectorAll("td")
+    cols.forEach((cell: any) => {
+        cell.className = "originalChakra"
+      }
+    )
   }
 
   // useEffect(() => {
@@ -327,16 +346,10 @@ function AppComponent(props: App): JSX.Element {
               <MenuList>
                 {tableActions.map((action, key) => {
                   return (
-                    <MenuItem>
-                      <MenuButton
-                        as={Button}
-                        aria-label='Actions'
-                        size='xs'
-                        variant='link'
-                        onClick={action}
-                      >
-                        {tableMenuNames[key]}
-                      </MenuButton>
+                    <MenuItem
+                      onClick={action}
+                    >
+                      {tableMenuNames[key]}
                     </MenuItem>
                   )
                 })
@@ -353,7 +366,6 @@ function AppComponent(props: App): JSX.Element {
               value={s.dataUrl}
               onChange={handleUrlChange}
               placeholder={'URL here'}
-              // colorScheme='black'
             />
             <InputRightElement width='5rem'>
               <Button variant='outline' onClick={handleLoadData} disabled={running}>Load Data</Button>
@@ -378,7 +390,6 @@ function AppComponent(props: App): JSX.Element {
           <p>s.selectedCols: {s.selectedCols}</p>
           <p>totalRows: {s.totalRows}</p>
           <p>currentPage: {s.currentPage}</p>
-          <p>headers: {headers}</p>
         </div>
 
         <div style={{display: s.totalRows !== 0 ? "block" : "none"}}>
@@ -406,24 +417,20 @@ function AppComponent(props: App): JSX.Element {
                                 ml='20%'
                                 isActive={isOpen}
                               />
-                              <MenuList>
-                                {columnActions.map((action, key) => {
-                                  return (
-                                    <MenuItem>
-                                      <MenuButton
-                                        as={Button}
-                                        aria-label='Actions'
-                                        size='xs'
-                                        variant='link'
+                              <Portal>
+                                <MenuList>
+                                  {columnActions.map((action, key) => {
+                                    return (
+                                      <MenuItem
                                         onClick={action}
                                       >
                                         {columnMenuNames[key]}
-                                      </MenuButton>
-                                    </MenuItem>
-                                  )
-                                })
-                                }
-                              </MenuList>
+                                      </MenuItem>
+                                    )
+                                  })
+                                  }
+                                </MenuList>
+                              </Portal>
                             </>
                           )}
                         </Menu>
