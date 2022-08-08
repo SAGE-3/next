@@ -101,6 +101,7 @@ class DataTable(SmartBit):
         self._df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
         self._modified_df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
         self.paginate()
+        self.state.selectedCols = []
         print("--------------")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -111,7 +112,8 @@ class DataTable(SmartBit):
 
     def table_sort(self, selected_cols):
         self._modified_df.sort_values(by=selected_cols, inplace=True)
-        self.state.viewData = self._modified_df.to_dict("split")
+        self.state.currentPage = 1
+        self.paginate()
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -123,7 +125,7 @@ class DataTable(SmartBit):
 
     def drop_columns(self, selected_cols):
         self._modified_df.drop(columns=selected_cols, inplace=True)
-        self.state.viewData = self._modified_df.to_dict('split')
+        self.paginate()
         self.state.selectedCols = []
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
@@ -135,7 +137,7 @@ class DataTable(SmartBit):
 
     def transpose_table(self):
         self._modified_df.transpose()
-        self.state.viewData = self._modified_df.to_dict('split')
+        self.paginate()
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -146,7 +148,7 @@ class DataTable(SmartBit):
 
     def restore_table(self):
         self._modified_df = self._df
-        self.state.viewData = self._modified_df.to_dict('split')
+        self.paginate()
         self.state.selectedCols = []
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
@@ -159,7 +161,7 @@ class DataTable(SmartBit):
     def column_sort(self, col):
         self._modified_df.sort_values(by=col, inplace=True)
         self.state.selectedCol = ""
-        self.state.viewData = self._modified_df.to_dict("split")
+        self.paginate()
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -172,7 +174,7 @@ class DataTable(SmartBit):
     def drop_column(self, col):
         self._modified_df.drop(columns=col, inplace=True)
         self.state.selectedCol = ""
-        self.state.viewData = self._modified_df.to_dict('split')
+        self.paginate()
         self.state.selectedCols = []
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""

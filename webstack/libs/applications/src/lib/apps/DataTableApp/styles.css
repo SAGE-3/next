@@ -53,28 +53,30 @@ body:not(.nohover) tbody td:hover {
 }
 
 .highlight {
-  text-align: start;
+  text-align: match-parent;
   -webkit-padding-start: 1.5rem;
   padding-inline-start: 1.5rem;
   -webkit-padding-end: 1.5rem;
   padding-inline-end: 1.5rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  line-height: 1.25rem;
+  line-height: 1px;
+  font-size: 0.85rem;
   border-bottom: 1px solid;
   border-color: #29487D;
   background-color: purple;
 }
 
 .originalChakra {
-  text-align: start;
+  text-align: justify;
   -webkit-padding-start: 1.5rem;
   padding-inline-start: 1.5rem;
   -webkit-padding-end: 1.5rem;
   padding-inline-end: 1.5rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  line-height: 1.25rem;
+  line-height: 1px;
+  font-size: 0.85rem;
   border-bottom: 1px solid;
   border-color: #29487D;
 }

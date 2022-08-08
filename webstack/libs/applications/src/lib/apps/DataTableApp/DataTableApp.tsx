@@ -41,7 +41,7 @@ import {state as AppState} from "./index";
 import {AppWindow} from '../../components';
 import './styles.css';
 
-import React, {useState, useMemo, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 // import {ColumnMenu} from "./components/ColumnMenu";
 import {colMenus} from "./colMenus";
 
@@ -120,6 +120,7 @@ const Pagination = (props: App): JSX.Element => {
           <Button
             key={page}
             onClick={(e) => paginater(page)}
+            variant={s.currentPage === page ? 'solid' : 'ghost'}
           >
             {page}
           </Button>
@@ -182,16 +183,55 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.timestamp])
 
-  useEffect(() => {
-    s.selectedCols.forEach((col: any) => {
-      const cols = document.querySelectorAll("td[data-col=" + col + "]")
-      cols.forEach((cell: any) => {
-          cell.className = "highlight"
-        }
-      )
-    })
-    console.log("selectedCols useEffect")
-  }, [JSON.stringify(s.selectedCols)])
+  // useEffect(() => {
+  //   const table: any = document.querySelector('table')
+  //   const cells: any = table.querySelectorAll('td')
+  //   cells.forEach((cell: any) => {
+  //       if (!headers?.includes(s.selectedCols)) {
+  //         const checked = s.selectedCols.concat(cols)
+  //         updateState(props._id, {selectedCols: checked})
+  //         updateState(props._id, {messages: (cols).charAt(0).toUpperCase() + (cols).slice(1) + ' tag selected'});
+  //         cell.className = "highlight"
+  //       } else {
+  //         const unchecked = (() => (s.selectedCols?.filter((item: string) => item != cols)))()
+  //         updateState(props._id, {selectedCols: unchecked})
+  //         updateState(props._id, {messages: (cols).charAt(0).toUpperCase() + (cols).slice(1) + ' tag unselected'});
+  //         cell.className = "originalChakra"
+  //       }
+  //     }
+  //   )
+  //   console.log("selectedCols useEffect")
+  // }, [JSON.stringify(s.selectedCols)])
+
+
+  // function handleColClick(info: string) {
+  //   const cols = document.querySelectorAll("td[data-col=" + info + "]")
+  //   cols.forEach((cell: any) => {
+  //       if (!s.selectedCols?.includes(info)) {
+  //         const checked = s.selectedCols.concat(info)
+  //         updateState(props._id, {selectedCols: checked})
+  //         updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag selected'});
+  //         cell.className = "highlight"
+  //       } else {
+  //         const unchecked = (() => (s.selectedCols?.filter((item: string) => item != info)))()
+  //         updateState(props._id, {selectedCols: unchecked})
+  //         updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag unselected'});
+  //         cell.className = "originalChakra"
+  //       }
+  //     }
+  //   )
+  // }
+
+  // if (!s.selectedCols?.includes(info)) {
+  //   const checked = s.selectedCols.concat(info)
+  //   updateState(props._id, {selectedCols: checked})
+  //   updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag selected'});
+  //   cell.className = "highlight"
+  // } else {
+  //   const unchecked = (() => (s.selectedCols?.filter((item: string) => item != info)))()
+  //   updateState(props._id, {selectedCols: unchecked})
+  //   updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag unselected'});
+  //   cell.className = "originalChakra"
 
   //TODO Warning: A component is changing an uncontrolled input to be controlled.
   // This is likely caused by the value changing from undefined to a defined value,
@@ -432,6 +472,7 @@ function AppComponent(props: App): JSX.Element {
                       {row.map((cell: any, colIndex: number) => (
                         <Td key={colIndex}
                             data-col={headers[colIndex % headers.length]}
+                            className="originalChakra"
                             onClick={(e) => handleCellClick()}
                         >
                           {cell}
