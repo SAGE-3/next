@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   redis-server:
-    image: "redis/redis-stack-server:7.0.0-RC5"
+    image: "redis/redis-stack-server:latest"
     volumes:
       - ./configurations/redis/data:/data
       - ./configurations/redis/conf:/conf
@@ -10,7 +10,7 @@ services:
     entrypoint: redis-server
     command: /conf/redis.conf
   jupyter:
-    image: "jupyter/base-notebook"
+    image: "jupyter/datascience-notebook:latest"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks

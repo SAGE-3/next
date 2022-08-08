@@ -14,5 +14,9 @@
   "Webview",
   "DataTableApp",
   "CSVViewer",
-  "RTCChat"
+  "RTCChat",
+  "VegaLiteViewer",
+  "VegaLiteApp",
+  "Clock",
+  "JupyterApp"
 ]

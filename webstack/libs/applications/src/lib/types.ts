@@ -16,6 +16,10 @@ import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
+import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
+import { state as VegaLiteAppState, name as VegaLiteAppName } from './apps/VegaLiteApp';
+import { state as ClockState, name as ClockName } from './apps/Clock';
+import { state as JupyterAppState, name as JupyterAppName } from './apps/JupyterApp';
 
 export type AppState =
   | CounterAppState
@@ -33,7 +37,11 @@ export type AppState =
   | WebviewState
   | DataTableAppState
   | CSVViewerState
-  | RTCChatState;
+  | RTCChatState
+  | VegaLiteAppState
+  | VegaLiteViewerState
+  | ClockState
+  | JupyterAppState;
 
 export type AppName =
   | typeof CounterAppName
@@ -51,4 +59,8 @@ export type AppName =
   | typeof WebviewName
   | typeof DataTableAppName
   | typeof CSVViewerName
-  | typeof RTCChatName;
+  | typeof RTCChatName
+  | typeof ClockName
+  | typeof JupyterAppName
+  | typeof VegaLiteViewerName
+  | typeof VegaLiteAppName;

@@ -10,14 +10,13 @@ services:
     entrypoint: redis-server
     command: /conf/redis.conf
   node-server:
-    image: "sage3/sage3:prod"
+    image: "sage3/next:prod"
     ports:
       - "443:443"
     depends_on:
       - "redis-server"
     volumes:
       - ./configurations/node/keys:/app/keys
-      - ./configurations/node/database:/app/database
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
   jupyter:

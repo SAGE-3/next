@@ -17,7 +17,7 @@ import { FileEntry, AssetModalProps } from './filemanager/types';
 
 import { initialValues } from '@sage3/applications/apps';
 import { ExtraImageType } from '@sage3/shared/types';
-import { isImage, isPDF, isCSV, isText } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
 
 export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.Element {
   const subscribe = useAssetStore((state) => state.subscribe);
@@ -107,7 +107,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             boardId,
             ownerId: user._id,
             position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
-            size: { width: w, height: 24 + w / (extras.aspectRatio || 1), depth: 0 },
+            size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'ImageViewer',
             state: { ...initialValues['ImageViewer'], id: d.id },
@@ -159,6 +159,36 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
                 raised: true
               });
               x += 400 + 10;
+            });
+          }
+        } else if (isJSON(d.type)) {
+          const localurl = '/api/assets/static/' + d.filename;
+          if (localurl) {
+            // Get the content of the file
+            fetch(localurl, {
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+              },
+            }).then(function (response) {
+              return response.json();
+            }).then(async function (spec) {
+              // Create a note from the text
+              createApp({
+                name: 'VegaLiteApp',
+                description: 'VegaLite> ' + d.originalfilename,
+                roomId,
+                boardId,
+                ownerId: user._id,
+                position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
+                size: { width: 500, height: 600, depth: 0 },
+                rotation: { x: x, y: 0, z: 0 },
+                type: 'VegaLiteApp',
+                state: { ...initialValues['Stickie'], spec: JSON.stringify(spec, null, 2) },
+                minimized: false,
+                raised: true
+              });
+              x += 500 + 10;
             });
           }
         } else if (isPDF(d.type)) {

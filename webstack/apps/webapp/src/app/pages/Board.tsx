@@ -32,7 +32,7 @@ import {
   Tag,
 } from '@chakra-ui/react';
 
-import { Applications, initialValues } from '@sage3/applications/apps';
+import { Applications, initialValues, AppError } from '@sage3/applications/apps';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
 
@@ -44,7 +44,9 @@ import { throttle } from 'throttle-debounce';
 import { DraggableEvent } from 'react-draggable';
 
 import { GiArrowCursor } from 'react-icons/gi';
-import { stat } from 'fs';
+
+// Library to help create error boundaries around dynamic components like SAGEApplications
+import { ErrorBoundary } from 'react-error-boundary';
 
 type LocationParams = {
   boardId: string;
@@ -141,7 +143,7 @@ export function BoardPage() {
     // Create the new app
     createApp({
       name: appName,
-      description: `${appName} - Description`,
+      description: `${appName}>`,
       roomId: locationState.roomId,
       boardId: locationState.boardId,
       position: { x, y, z: 0 },
@@ -195,7 +197,7 @@ export function BoardPage() {
           toast({
             title: 'Upload Done',
             status: 'info',
-            duration: 4000,
+            duration: 2000,
             isClosable: true,
           });
         });
@@ -281,7 +283,13 @@ export function BoardPage() {
             .sort((a, b) => a._updatedAt - b._updatedAt)
             .map((app) => {
               const Component = Applications[app.data.type].AppComponent;
-              return <Component key={app._id} {...app}></Component>;
+              return (
+                // Wrap the components in an errorboundary to protect the board from individual app errors
+                <ErrorBoundary key={app._id}
+                  fallbackRender={({ error, resetErrorBoundary }) => <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />}
+                >
+                  <Component key={app._id} {...app}></Component>
+                </ErrorBoundary>)
             })}
 
           {/* Draw the cursors: filter by board and not myself */}
@@ -360,27 +368,25 @@ export function BoardPage() {
               p={'2px 3px 1px 3px'}
               className="contextmenuitem"
               onClick={() => {
-                const width = 600;
-                const height = 800;
+                const width = 700;
+                const height = 700;
                 // Calculate X and Y of app based on the current board position and the width and height of the viewport
                 let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
                 let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
                 x = Math.round(x / gridSize) * gridSize; // Snap to grid
                 y = Math.round(y / gridSize) * gridSize;
-                const token = '44';
-                const url = 'http://' + window.location.hostname + ':8888/tree/?token=' + token;
                 // Open a webview into the SAGE3 builtin Jupyter instance
                 createApp({
-                  name: 'Webview',
-                  description: 'Webview',
+                  name: 'JupyterApp',
+                  description: 'JupyterApp>',
                   roomId: locationState.roomId,
                   boardId: locationState.boardId,
                   position: { x, y, z: 0 },
                   size: { width, height, depth: 0 },
                   rotation: { x: 0, y: 0, z: 0 },
-                  type: 'Webview',
+                  type: 'JupyterApp',
                   ownerId: user?._id || '-',
-                  state: { ...initialValues['Webview'], url },
+                  state: { ...initialValues['JupyterApp'], jupyterURL: "" },
                   minimized: false,
                   raised: true
                 });

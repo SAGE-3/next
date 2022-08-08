@@ -23,20 +23,25 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { value: Number(event.target.value) })
   }
 
+  function resetTo33(event: React.MouseEvent<HTMLButtonElement>){
+    console.log("I am here");
+    updateState(props._id, { executeInfo: { executeFunc: 'set_to_val', params: {val:33 } } });
+  }
+
   return (
     <AppWindow app={props}>
       <>
         <h3>{props.data.name} </h3>
         <h3>{s.value}</h3>
         <input type="range" min="1" max="100" value={s.value} onChange={handleSliderChange} />
+        <br/>
+        <button type="button" onClick={resetTo33}>reset to 33!</button>
       </>
     </AppWindow>
   )
 }
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
-
   return (
     <>
     </>

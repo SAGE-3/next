@@ -19,6 +19,7 @@
     "webapp": "nx serve webapp",
     "playground": "nx serve playground",
     "stage": "rimraf dist && yarn build homebase && yarn build webapp && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
+    "prod": "rimraf dist && yarn build homebase --prod && yarn build webapp --prod && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
     "newapp": "nx workspace-generator newapp"
   },
   "private": true,
@@ -92,11 +93,11 @@
     "tslib": "^2.4.0",
     "uuid": "^8.3.0",
     "vega": "^5.22.1",
-    "vega-embed": "^6.15.1",
-    "vega-lite": "^5.2.0",
+    "vega-embed": "^6.21.0",
+    "vega-lite": "^5.3.0",
     "ws": "^8.7.0",
     "zod": "^3.17.3",
-    "zustand": "^4.0.0-rc.1"
+    "zustand": "^4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",
@@ -171,6 +172,7 @@
     "prettier": "2.6.2",
     "react-test-renderer": "18.0.0",
     "rimraf": "^3.0.2",
+    "simple-zustand-devtools": "^1.1.0",
     "ts-node": "~9.1.1",
     "typescript": "^4.7.4",
     "url-loader": "^3.0.0"

@@ -1,0 +1,24 @@
+version: "3.8"
+services:
+  redis-server:
+    image: "redis/redis-stack-server:latest"
+    volumes:
+      - ./configurations/redis/data:/data
+      - ./configurations/redis/conf:/conf
+    ports:
+      - "127.0.0.1:6379:6379"
+    entrypoint: redis-server
+    command: /conf/redis.conf
+  jupyter:
+    image: "jupyter/datascience-notebook:aarch64-ubuntu-20.04"
+    volumes:
+      - ./configurations/jupyter/conf:/conf
+      - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
+      - ./redis-client:/home/jovyan/work
+    ports:
+      - "127.0.0.1:8888:8888"
+    environment:
+      - REDIS_URL=redis-server:6379
+    depends_on:
+      - "redis-server"
+    command: /conf/start.sh

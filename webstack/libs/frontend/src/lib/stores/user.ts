@@ -15,6 +15,9 @@ import createReact from 'zustand';
 // Application specific schema
 import { User, UserSchema } from '@sage3/shared/types';
 
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 interface UserState {
   user: User | undefined;
   create: (newuser: UserSchema) => Promise<void>;
@@ -44,3 +47,6 @@ const UserStore = createVanilla<UserState>((set, get) => {
 
 // Convert the Zustand JS store to Zustand React Store
 export const useUserStore = createReact(UserStore);
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('UserStore', useUserStore);

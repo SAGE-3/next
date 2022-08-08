@@ -28,23 +28,25 @@ class CodeCell(SmartBit):
         # self._some_private_info = {1: 2}
 
     def handle_exec_result(self, msg):
-        print(" \n\n\n************I am in Code Cell's  function that handles the result of the execution, i.e. updating the client")
-        print(f"return message is {msg}************\n\n\n")
-        if "text" in msg['content']:
-            self.state.output  = msg["content"]["text"]
-            self.state.output_type  = msg["content"]["name"]
-        elif "data" in msg['content']:
-            self.state.output  = list(msg['content']['data'].values())[0]
-            self.state.output_type  = list(msg['content']['data'].keys())[0]
+        print(f"I am in execute results and msg is: {msg}")
+        self.state.output_type = "NOT USED"
+        if "execute_result" in msg:
+            print("******I am about to set the output. The message is:\n")
+            print(msg)
+            if "text/html" in msg["execute_result"]["data"]:
+                self.state.output = msg["execute_result"]["data"]["text/html"]
+                self.state.output_type = "text/html"
+            elif "text/plain":
+                self.state.output = msg["execute_result"]["data"]["text/plain"]
+                self.state.output_type = "text/plain"
+        elif 'stream' in msg:
+            self.state.output = msg["stream"]["text"]
 
-        elif "traceback" in msg['content']:
-            self.state.output  = str(msg['content'])
-            self.state.output_type  = "text/error"
 
 
-
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
         self.send_updates()
-
 
     def execute(self, uuid):
         """
@@ -57,5 +59,7 @@ class CodeCell(SmartBit):
         command_info = {"uuid": uuid,
                         "call_fn": self.handle_exec_result,
                         "code": self.state.code}
-        self._jupyter_proxy.execute(command_info)
-        # the proxy has the responsibilitys
+
+        # print(f"Command info is {command_info}")
+        # print(f"My proxy is: {self._jupyter_proxy}")
+        self._jupyter_client.execute(command_info)

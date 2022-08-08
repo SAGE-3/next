@@ -21,9 +21,12 @@ import { APIHttp, SocketAPI } from '../api';
 import { AppState, AppSchema, App } from '@sage3/applications/schema';
 import { BoardSchema } from '@sage3/shared/types';
 
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 interface Applications {
   apps: App[];
-  create: (newApp: AppSchema) => Promise<void>;
+  create: (newApp: AppSchema) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
   delete: (id: string) => Promise<void>;
@@ -39,7 +42,8 @@ const AppStore = createVanilla<Applications>((set, get) => {
   return {
     apps: [],
     create: async (newApp: AppSchema) => {
-      SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
+      const app = await SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
+      return app;
     },
     update: async (id: string, updates: Partial<AppSchema>) => {
       SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
@@ -149,7 +153,12 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
   };
 });
 
-const playground = process.env.NX_TASK_TARGET_PROJECT === 'playground';
 
+
+
+const playground = process.env.NX_TASK_TARGET_PROJECT === 'playground';
 // Convert the Zustand JS store to Zustand React Store
 export const useAppStore = playground ? createReact(AppPlaygroundStore) : createReact(AppStore);
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('AppStore', useAppStore);

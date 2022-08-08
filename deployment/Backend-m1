@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# stage foresight inside the notebook folder
+rm -fr configurations/jupyter/notebooks/foresight
+cp -r ../foresight configurations/jupyter/notebooks/
+
+
+#
+# Run the backend services, without the SAGE3 webserver
+# For testing and development
+#
+
+SERVER_VERSION=$(docker version -f "{{.Server.Version}}")
+SERVER_VERSION_MAJOR=$(echo "$SERVER_VERSION"| cut -d'.' -f 1)
+
+echo "Docker Version:" $SERVER_VERSION
+
+if [ "${SERVER_VERSION_MAJOR}" -ge 20 ] && [ "$OSTYPE" = "darwin" ] ; then
+	# Now compose part of docker
+    CMD="docker compose"
+else
+	# Need docker-compose script
+    CMD="docker-compose"
+fi
+
+
+# trap ctrl-c and call cleanup()
+trap cleanup SIGINT
+
+modules="-f docker-compose-backend-m1.yml"
+
+function cleanup() {
+	echo "-- Trapped CTRL-C --"
+	$CMD $modules stop
+	$CMD $modules rm -f
+	exit
+}
+
+if [ $# -eq 0 ]; then
+	echo "Docker Run"
+	$CMD $modules  up --remove-orphans
+else
+	if [ $1 = "stop" ]; then
+		echo "Docker Stop"
+		# Stop running the containers
+		$CMD $modules stop
+		# Remove stopped containers
+		$CMD $modules rm -f
+	fi
+fi

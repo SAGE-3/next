@@ -12,13 +12,18 @@ export const schema = z.object({
   text: z.string(),
   fontSize: z.number(),
   color: z.string(),
+  executeInfo: z.object({
+    executeFunc: z.string(),
+    params: z.record(z.any()),
+  }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   text: 'stickie note',
-  fontSize: 48,
-  color: '#63B3ED',
+  fontSize: 42,
+  color: '#F6E05E',
+  executeInfo: { executeFunc: '', params: {} },
 };
 
 export const name = 'Stickie';

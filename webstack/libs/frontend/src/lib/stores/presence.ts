@@ -17,6 +17,9 @@ import { BoardSchema, Presence, PresenceSchema, RoomSchema } from '@sage3/shared
 import { APIHttp, SocketAPI } from '../api';
 import { AppSchema } from '@sage3/applications/schema';
 
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 interface PresenceState {
   presences: Presence[];
   subscribe: () => Promise<void>;
@@ -80,3 +83,6 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
 
 // Convert the Zustand JS store to Zustand React Store
 export const usePresenceStore = createReact(PresenceStore);
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('PresenceStore', usePresenceStore);

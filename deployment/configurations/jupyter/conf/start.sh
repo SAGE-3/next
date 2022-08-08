@@ -16,7 +16,7 @@ pip3 install redis
 python3 /conf/redis-store.py $token
 
 # dependencies (requirements.txt)
-pip3 install websockets matplotlib rejson pytest requests namesgenerator
+pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx pydantic
 # extras
 # pip3 install python-magic rq dill opencv-python Pillow
 
@@ -31,6 +31,8 @@ jupyter nbextension enable 2D-Jupyter/2D-Jupyter --user
 # jupyter labextension enable 2D-Jupyter/2D-Jupyter
 
 # Start jupyter
-#jupyter lab --no-browser --ServerApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
 #jupyter notebook --no-browser --NotebookApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
-jupyter lab --collaborative --no-browser --NotebookApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
+#jupyter lab --collaborative --no-browser --NotebookApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
+
+jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
+
