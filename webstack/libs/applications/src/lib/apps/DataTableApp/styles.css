@@ -43,21 +43,6 @@ body:not(.nohover) tbody td:hover {
   background-color: darkslategray;
 }
 
-/*thead th:not(:empty):active::after {*/
-/*  content: '';*/
-/*  opacity: 30%;*/
-/*  height: 500px;*/
-/*  left: 0;*/
-/*  position: absolute;*/
-/*  top: 65px;*/
-/*  width: 100%;*/
-/*  !*z-index: 2;*!*/
-/*}*/
-
-/*th:active::after {*/
-/*  background-color: purple;*/
-/*}*/
-
 .highlight {
   text-align: start;
   -webkit-padding-start: 1.5rem;

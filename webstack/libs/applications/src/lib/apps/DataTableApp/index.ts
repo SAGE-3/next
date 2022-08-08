@@ -1,45 +1,47 @@
 // import {SBPrimitive} from "../../../../../sagebase/src/lib/modules";
 
 type exec = {
-    executeFunc: string;
-    params: { [key: string]: any };
+  executeFunc: string;
+  params: { [key: string]: any };
 }
 
 //TODO, Replace any datatypes
 export type state = {
-    viewData: any;
-    menuAction: string;
-    tableMenuAction: string;
-    timestamp: number;
-    currentPage: number;
-    postsPerPage: number;
-    currentPosts: any[];
-    totalPosts: number;
-    pageNumberArr: number[];
-    messages: string;
-    items: any[];
-    loaded: boolean;
-    headers: string[];
-    selectedCols: string[];
-    dataUrl: string;
-    executeInfo: exec;
+
+  // Python
+  executeInfo: exec;
+  viewData: any;
+  dataUrl: string;
+
+  totalRows: number;
+  rowsPerPage: number;
+  totalPages: number;
+  currentPage: number;
+  currentRows: any[];
+
+  selectedCols: string[];
+  messages: string;
+
+  timestamp: number;
+
+
+  // Client
+  pageNumberArr: number[];
+
 };
 
 
 export const init: Partial<state> = {
+  executeInfo: {"executeFunc": "", "params": {}},
 
-    loaded: false,
-    selectedCols: [],
-    items: [],
-    headers: [],
-    menuAction: "",
-    tableMenuAction: "",
-    timestamp: 0,
-    currentPage: 1,
-    postsPerPage: 3,
-    viewData: {},
+  viewData: {},
+  selectedCols: [],
 
-    executeInfo: {"executeFunc": "", "params": {}},
+  timestamp: 0.0,
+  totalRows: 1,
+  rowsPerPage: 3,
+  currentPage: 1,
+
 };
 
 

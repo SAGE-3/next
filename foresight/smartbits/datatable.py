@@ -17,12 +17,8 @@ PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 class DataTableState(TrackedBaseModel):
 
     viewData: Optional[dict]
-    loaded: bool
     selectedCols: list
-    items: list
-    headers: list
-    menuAction: str
-    tableMenuAction: str
+
     executeInfo: ExecuteInfo
     timestamp: float
 
@@ -42,13 +38,13 @@ class DataTable(SmartBit):
 
     # TODO, add a decorator to automatically set executeFunc
     # and params to ""
-    def load_data(self, url):
+    def load_data(self):
         self._df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
         self._modified_df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
         print("--------------")
         self._df.insert(0, 'Index', range(0, self._df.shape[0], 1))
         self._modified_df.insert(0, 'Index', range(0, self._df.shape[0], 1))
-        self.state.viewData = self._modified_df.to_dict("records")
+        self.state.viewData = self._modified_df.to_dict("split")
         self.state.timestamp = time.time()
         # self.state.totalPosts = self._modified_df.shape[0]
         self.state.executeInfo.executeFunc = ""
