@@ -30,9 +30,6 @@ interface TwilioState {
   room: Room | undefined;
   participants: Participant[];
   tracks: RemoteVideoTrack[];
-  localVideoStreams: {id: string, stream: MediaStream}[];
-  addStream:(id: string, stream: MediaStream) => void;
-  removeStream:(id: string) => void;
   joinRoom: (userId: string, roomName: string) => Promise<boolean>;
   leaveRoom: () => void;
 }
@@ -47,9 +44,6 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
   room: undefined,
   participants: [],
   tracks: [],
-  localVideoStreams: [],
-  addStream: (id: string, stream: MediaStream) => set(state => ({ ...state, localVideoStreams: [...state.localVideoStreams, {id, stream}] })),
-  removeStream: (id: string) => set(state => ({ ...state, localVideoStreams: state.localVideoStreams.filter(stream => stream.id !== id) })),
   joinRoom: async (userId: string, roomName: string) => {
     console.log('Twilio> Joining room')
 

@@ -17,7 +17,6 @@ export function WebcamContainer(props: WebcamContainerProps) {
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
   const tracks = useTwilioStore((state) => state.tracks);
-  const streams = useTwilioStore((state) => state.localVideoStreams);
 
   const presences = usePresenceStore((state) => state.presences);
   const presence = presences.filter(el => el.data.boardId === props.boardId);

@@ -31,7 +31,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Twilio Store
   const tracks = useTwilioStore((state) => state.tracks);
-  const localStreams = useTwilioStore((state) => state.localVideoStreams);
+
 
   // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -57,17 +57,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (user?._id === props._createdBy) {
-      localStreams.forEach((stream) => {
-        if (stream.id == s.videoId && videoRef.current) {
-          videoRef.current.srcObject = stream.stream;
-          videoRef.current.muted = true;
-          try {
-            videoRef.current.play();
-          } catch (error) {
-            console.log(error);
-          }
-        }
-      });
+     
     } else {
       tracks.forEach((track) => {
         if (track.name === s.videoId && videoRef.current) {
@@ -108,9 +98,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const [selectedVideoSource, setSelectedVideoSource] = useState<InputDeviceInfo>();
   const [selectedAudioSource, setSelectedAudioSource] = useState<InputDeviceInfo>();
 
-  // Add and remove local streams to the Twilio store
-  const addStream = useTwilioStore((state) => state.addStream);
-  const removeStream = useTwilioStore((state) => state.removeStream);
 
   const [mute, setMute] = useState(false);
 
@@ -152,7 +139,6 @@ function ToolbarComponent(props: App): JSX.Element {
       } as MediaStreamConstraints;
       const audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
       updateState(props._id, { audioId: id });
-      addStream(id, audioStream);
       console.log('here i am')
     }
   }
@@ -165,7 +151,6 @@ function ToolbarComponent(props: App): JSX.Element {
       } as MediaStreamConstraints;
       const videoStream = await navigator.mediaDevices.getUserMedia(videoConstraints);
       updateState(props._id, { videoId: id });
-      addStream(id, videoStream);
     }
   }
 
