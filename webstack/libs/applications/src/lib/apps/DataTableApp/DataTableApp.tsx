@@ -41,7 +41,7 @@ import {state as AppState} from "./index";
 import {AppWindow} from '../../components';
 import './styles.css';
 
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 // import {ColumnMenu} from "./components/ColumnMenu";
 import {colMenus} from "./colMenus";
 
@@ -53,6 +53,23 @@ const Pagination = (props: App): JSX.Element => {
 
   const [leftButtonDisable, setLeftButtonDisable] = useState(true)
   const [rightButtonDisable, setRightButtonDisable] = useState(true)
+  // const [rowDisplayOptions, setRowDisplayOptions] = useState([])
+  // const [minRows, setMinRows] = useState(1)
+  // const [maxRows, setMaxRows] = useState(5)
+
+  const rowsPerPageArr = useMemo(() => {
+    const rowDisplayOptions = []
+    const minRows = 1
+    const maxRows = 10
+
+    for (let i = minRows; i <= maxRows; i++) {
+      rowDisplayOptions.push(i)
+    }
+    console.log(rowDisplayOptions)
+
+    return(rowDisplayOptions)
+  }, [])
+
 
   function paginater(page: number) {
     updateState(props._id, {currentPage: page})
@@ -63,6 +80,11 @@ const Pagination = (props: App): JSX.Element => {
     console.log(s.executeInfo)
     console.log("----")
     console.log(s)
+  }
+
+  const  handleRowDisplayCount = (rows: number) =>  {
+    updateState(props._id, {rowsPerPage: rows})
+    updateState(props._id, {executeInfo: {"executeFunc": "paginate", "params": {}}})
   }
 
   function handleLeftArrow() {
@@ -109,28 +131,53 @@ const Pagination = (props: App): JSX.Element => {
   //TODO Add focus to current page number
   return (
     <div>
-      <HStack spacing='5' display='flex' justify='center' zIndex='dropdown'>
-        <IconButton
-          aria-label='Page left'
-          icon={<FiArrowLeft/>}
-          onClick={() => handleLeftArrow()}
-          disabled={leftButtonDisable}
-        />
-        {s.pageNumbers.map((page: number) => (
-          <Button
-            key={page}
-            onClick={(e) => paginater(page)}
-            variant={s.currentPage === page ? 'solid' : 'ghost'}
-          >
-            {page}
-          </Button>
-        ))}
-        <IconButton
-          aria-label='Page right'
-          icon={<FiArrowRight/>}
-          onClick={() => handleRightArrow()}
-          disabled={rightButtonDisable}
-        />
+      <HStack display='flex' justify='center'>
+        <HStack spacing='5' display='flex' justify='center' zIndex='dropdown'>
+          <IconButton
+            aria-label='Page left'
+            icon={<FiArrowLeft/>}
+            variant='link'
+            onClick={() => handleLeftArrow()}
+            disabled={leftButtonDisable}
+          />
+          {s.pageNumbers.map((page: number) => (
+            <Button
+              key={page}
+              onClick={(e) => paginater(page)}
+              variant={s.currentPage === page ? 'solid' : 'link'}
+            >
+              {page}
+            </Button>
+          ))}
+          <IconButton
+            aria-label='Page right'
+            icon={<FiArrowRight/>}
+            variant='link'
+            onClick={() => handleRightArrow()}
+            disabled={rightButtonDisable}
+          />
+        </HStack>
+        <Menu size="xs">
+          <MenuButton as={Button} rightIcon={<FiChevronDown />} left='12rem' variant='solid' borderColor='black'>
+            {s.rowsPerPage}
+          </MenuButton>
+          <Portal>
+            <MenuList width='min-content'>
+              {
+                rowsPerPageArr.map((rows: number, key: number) => {
+                  return(
+                    <MenuItem
+                      key={key}
+                      onClick={() => handleRowDisplayCount(rows)}
+                    >
+                      {rows}
+                    </MenuItem>
+                  )
+                })
+              }
+            </MenuList>
+          </Portal>
+        </Menu>
       </HStack>
     </div>
   );
@@ -157,6 +204,8 @@ function AppComponent(props: App): JSX.Element {
   const columnActions = [columnSort, dropColumn]
   const columnMenuNames = ["Sort on Column", "Drop Column"]
 
+
+
   function handleLoadData() {
     console.log("in handleLoadData and updating the executeInfo")
     setRunning(true)
@@ -181,57 +230,44 @@ function AppComponent(props: App): JSX.Element {
 
       console.log("loading useEffect")
     }
-  }, [s.timestamp])
+  }, [s.timestamp, s.rowsPerPage])
 
+  // One array: Reset the className of all cells, then iterate through selected columns array and highlight them
   // useEffect(() => {
   //   const table: any = document.querySelector('table')
   //   const cells: any = table.querySelectorAll('td')
   //   cells.forEach((cell: any) => {
-  //       if (!headers?.includes(s.selectedCols)) {
-  //         const checked = s.selectedCols.concat(cols)
-  //         updateState(props._id, {selectedCols: checked})
-  //         updateState(props._id, {messages: (cols).charAt(0).toUpperCase() + (cols).slice(1) + ' tag selected'});
-  //         cell.className = "highlight"
-  //       } else {
-  //         const unchecked = (() => (s.selectedCols?.filter((item: string) => item != cols)))()
-  //         updateState(props._id, {selectedCols: unchecked})
-  //         updateState(props._id, {messages: (cols).charAt(0).toUpperCase() + (cols).slice(1) + ' tag unselected'});
-  //         cell.className = "originalChakra"
+  //     cell.className = "originalChakra"
+  //   })
+  //   s.selectedCols.forEach((col) => {
+  //     const cols = document.querySelectorAll("td[data-col=" + col + "]")
+  //     cols.forEach((cell: any) => {
+  //       cell.className = "highlight"
   //       }
-  //     }
-  //   )
-  //   console.log("selectedCols useEffect")
+  //     )
+  //   })
+  //   console.log("ONE ARRAY selectedCols useEffect")
   // }, [JSON.stringify(s.selectedCols)])
 
-
-  // function handleColClick(info: string) {
-  //   const cols = document.querySelectorAll("td[data-col=" + info + "]")
-  //   cols.forEach((cell: any) => {
-  //       if (!s.selectedCols?.includes(info)) {
-  //         const checked = s.selectedCols.concat(info)
-  //         updateState(props._id, {selectedCols: checked})
-  //         updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag selected'});
-  //         cell.className = "highlight"
-  //       } else {
-  //         const unchecked = (() => (s.selectedCols?.filter((item: string) => item != info)))()
-  //         updateState(props._id, {selectedCols: unchecked})
-  //         updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag unselected'});
-  //         cell.className = "originalChakra"
-  //       }
-  //     }
-  //   )
-  // }
-
-  // if (!s.selectedCols?.includes(info)) {
-  //   const checked = s.selectedCols.concat(info)
-  //   updateState(props._id, {selectedCols: checked})
-  //   updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag selected'});
-  //   cell.className = "highlight"
-  // } else {
-  //   const unchecked = (() => (s.selectedCols?.filter((item: string) => item != info)))()
-  //   updateState(props._id, {selectedCols: unchecked})
-  //   updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag unselected'});
-  //   cell.className = "originalChakra"
+  // Saving two arrays: One with selected (highlighted class) and the other with the not-selected ones (not-highlighted class)
+  useEffect(() => {
+    const difference = headers.filter(x => !s.selectedCols.includes(x));
+    difference.forEach((col) => {
+      const cols = document.querySelectorAll("td[data-col=" + col + "]")
+      cols.forEach((cell: any) => {
+          cell.className = "originalChakra"
+        }
+      )
+    })
+    s.selectedCols.forEach((col) => {
+      const cols = document.querySelectorAll("td[data-col=" + col + "]")
+      cols.forEach((cell: any) => {
+          cell.className = "highlight"
+        }
+      )
+    })
+    console.log("TWO ARRAYS selectedCols useEffect")
+  }, [JSON.stringify(s.selectedCols)])
 
   //TODO Warning: A component is changing an uncontrolled input to be controlled.
   // This is likely caused by the value changing from undefined to a defined value,
@@ -259,16 +295,37 @@ function AppComponent(props: App): JSX.Element {
         if (!s.selectedCols?.includes(info)) {
           const checked = s.selectedCols.concat(info)
           updateState(props._id, {selectedCols: checked})
-          updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag selected'});
-          cell.className = "highlight"
+          updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' column selected'});
         } else {
           const unchecked = (() => (s.selectedCols?.filter((item: string) => item != info)))()
           updateState(props._id, {selectedCols: unchecked})
-          updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' tag unselected'});
-          cell.className = "originalChakra"
+          updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' column unselected'});
         }
       }
     )
+  }
+
+  function handleRowClick(info: number) {
+    // const row = info.toString()
+    const rows = document.querySelectorAll("tr[key='" + info + "']")
+    console.log(rows)
+    // const cols = document.querySelectorAll("td[data-col=" + info + "]")
+    rows.forEach((row: any) => {
+        if (!s.selectedRows?.includes(info)) {
+          const checked = s.selectedRows.concat(info)
+          updateState(props._id, {selectedRows: checked})
+          updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
+          row.className = "highlight"
+        } else {
+          const unchecked = (() => (s.selectedRows?.filter((item: number) => item != info)))()
+          updateState(props._id, {selectedRows: unchecked})
+          updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
+          row.className = "originalChakra"
+        }
+        console.log("cell" + row)
+      }
+    )
+    console.log("row " + info + " clicked")
   }
 
   // Start of table wide functions
@@ -339,11 +396,11 @@ function AppComponent(props: App): JSX.Element {
     console.log("----")
     console.log(s)
 
-    const cols = document.querySelectorAll("td")
-    cols.forEach((cell: any) => {
-        cell.className = "originalChakra"
-      }
-    )
+    // const cols = document.querySelectorAll("td")
+    // cols.forEach((cell: any) => {
+    //     cell.className = "originalChakra"
+    //   }
+    // )
   }
 
   return (
@@ -361,7 +418,6 @@ function AppComponent(props: App): JSX.Element {
               right='15px'
               size="md"
             />
-            {/*TODO figure out why chakra sends table menu to another dimension*/}
             <Portal>
               <MenuList>
                 {tableActions.map((action, key) => {
@@ -409,6 +465,7 @@ function AppComponent(props: App): JSX.Element {
 
         <div>
           <p>s.selectedCols: {s.selectedCols}</p>
+          <p>s.selectedRows: {s.selectedRows}</p>
         </div>
 
         <div style={{display: s.totalRows !== 0 ? "block" : "none"}}>
@@ -465,13 +522,21 @@ function AppComponent(props: App): JSX.Element {
               <Tbody>
                 {
                   data?.map((row: any, rowIndex: number) => (
-                    <Tr key={rowIndex}>
-                      <Td key={rowIndex}>
+                    <Tr
+                      key={rowIndex}
+                      // data-row={rowIndex}
+                    >
+                      <Td key={rowIndex}
+                          // data-row={rowIndex}
+                          className="indexTd"
+                          onClick={(e) => handleRowClick(rowIndex)}
+                      >
                         {indices[rowIndex]}
                       </Td>
                       {row.map((cell: any, colIndex: number) => (
                         <Td key={colIndex}
                             data-col={headers[colIndex % headers.length]}
+                            // data-row={rowIndex}
                             className="originalChakra"
                             onClick={(e) => handleCellClick()}
                         >

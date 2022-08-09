@@ -20,6 +20,10 @@ export type state = {
 
   selectedCols: string[];
   selectedCol: string;
+
+  selectedRows: number[];
+  selectedRow: string;
+
   messages: string;
 
   timestamp: number;
@@ -38,6 +42,9 @@ export const init: Partial<state> = {
 
   selectedCols: [],
   selectedCol: "",
+
+  selectedRows: [],
+  selectedRow: "",
 
   timestamp: 0.0,
 };

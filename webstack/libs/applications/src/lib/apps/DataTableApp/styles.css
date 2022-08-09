@@ -43,6 +43,14 @@ th {
   z-index: 1;
 }
 
+.indexTd {
+  position: relative;
+  justify-content: center;
+  width: 5%;
+  color: darkblue;
+  font-weight: bolder;
+}
+
 td {
   position: relative;
   /*z-index: 3;*/

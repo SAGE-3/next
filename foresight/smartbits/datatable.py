@@ -28,6 +28,9 @@ class DataTableState(TrackedBaseModel):
     selectedCols: list
     selectedCol: str
 
+    selectedRows: list
+    selectedRow: str
+
     timestamp: float
 
 
