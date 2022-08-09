@@ -153,7 +153,6 @@ export function AppWindow(props: WindowProps) {
       dragGrid={[gridSize, gridSize]}
       disableDragging={minimized}
       enableResizing={!minimized}
-      lockAspectRatio={props.aspectRatio}
     >
       {/* Border Box around app to show it is selected */}
       {

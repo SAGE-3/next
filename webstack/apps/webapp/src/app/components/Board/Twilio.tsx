@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 
 import { SiTwilio } from 'react-icons/si';
 
-export function Twilio(props: { roomName: string }) {
+export function Twilio(props: { roomName: string, connect: boolean }) {
   
   // User information
   const { user } = useUser();
@@ -22,11 +22,10 @@ export function Twilio(props: { roomName: string }) {
   const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
   const leaveTwilioRoom = useTwilioStore((state) => state.leaveRoom);
 
-
   // Handle joining and leaving twilio room when entering board
   useEffect(() => {
     // Join Twilio room
-    if (user) {
+    if (user && props.connect) {
       joinTwilioRoom(user?._id, props.roomName);
     }
     // Uncmounting
@@ -34,7 +33,16 @@ export function Twilio(props: { roomName: string }) {
       // Leave twilio room
       leaveTwilioRoom();
     };
-  }, []); // Observe the length of the apps array
+  }, []); 
+
+  // Handle joining and leaving twilio room when props.connect changes
+  useEffect(() => {
+    if (user && props.connect) {
+      joinTwilioRoom(user?._id, props.roomName);
+    } else {
+      leaveTwilioRoom();
+    }
+  }, [props.connect]);
 
   return (
     <Tooltip pointerEvents={'all'} label={room ? 'Twilio Connected' : 'Twilio Connection Error'}>

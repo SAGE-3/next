@@ -11,6 +11,8 @@ import create from 'zustand';
 
 import { Room, Participant, connect, ConnectOptions, RemoteVideoTrack } from 'twilio-video';
 
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 async function fetchToken(userId: string, roomName: string) {
   const reponse = await fetch(`/twilio/token?identity=${userId}&room=${roomName}`, {
     method: 'GET',
@@ -147,3 +149,7 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
     set({ room: undefined, participants: [], tracks: [] });
   }
 }));
+
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('Twilio', useTwilioStore);

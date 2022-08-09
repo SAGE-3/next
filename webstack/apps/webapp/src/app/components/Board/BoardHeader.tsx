@@ -7,7 +7,7 @@
  */
 
 import { Box, Button, Text, Avatar } from '@chakra-ui/react';
-import { useUser, initials } from '@sage3/frontend';
+import { useUser, initials, useAppStore } from '@sage3/frontend';
 import { useNavigate } from 'react-router';
 import { sageColorByName } from '@sage3/shared';
 import { AvatarGroup } from './AvatarGroup';
@@ -34,6 +34,11 @@ export function BoardHeader(props: HeaderProps) {
   function handleHomeClick() {
     navigate('/home');
   }
+
+  // Apps
+  const apps = useAppStore((state) => state.apps);
+  const twilioConnect = apps.filter(el => el.data.type === 'Screenshare').length > 0;
+
   return (
     <Box
       display="flex"
@@ -51,7 +56,7 @@ export function BoardHeader(props: HeaderProps) {
           Home
         </Button>
         {/*Twilio*/}
-        <Twilio roomName={props.boardId} />
+        <Twilio roomName={props.boardId} connect={twilioConnect}/>
       </Box>
 
       {/* Board Name */}

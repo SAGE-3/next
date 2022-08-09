@@ -16,7 +16,7 @@ import { useAppStore, useUser, useTwilioStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Chakra and React imports
-import { Button } from '@chakra-ui/react';
+import { Box, Button } from '@chakra-ui/react';
 import { useCallback, useEffect, useRef } from 'react';
 
 // Twilio Imports
@@ -29,18 +29,36 @@ import { MdScreenShare } from 'react-icons/md';
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
+  // Current User
+  const { user } = useUser();
+
   // Twilio Store
   const tracks = useTwilioStore((state) => state.tracks);
 
   const streams = useTwilioStore((state) => state.localVideoStreams);
+  const updateState = useAppStore((state) => state.updateState);
 
+  // Twilio Store
+  const room = useTwilioStore((state) => state.room);
   // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Current User
-  const { user } = useUser();
+  const addStream = useTwilioStore((state) => state.addStream);
+  const removeStream = useTwilioStore((state) => state.removeStream);
+
+  async function shareScreen() {
+    const videoId = genId();
+    if (room) {
+      await updateState(props._id, { videoId });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
+      addStream(videoId, stream);
+      const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
+      room.localParticipant.publishTrack(screenTrack);
+    }
+  }
 
   useEffect(() => {
+    if (user?._id === props._createdBy) return;
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current) {
         track.attach(videoRef.current);
@@ -62,12 +80,27 @@ function AppComponent(props: App): JSX.Element {
         }
       });
     }
-  }, [streams, s.videoId, videoRef]);
+  }, [streams, s.videoId]);
 
   return (
     <AppWindow app={props}>
       <>
-        <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
+       <Box display="flex" flexDir="column">
+
+          <Box backgroundColor="black" height={props.data.size.height - 50 +'px'}>
+          {!room ? <div>Please wait...</div> : <video ref={videoRef} className="video-container" width="100%" height="100%"></video>}
+          </Box>
+
+        <Box backgroundColor="green" display="flex" justifyContent="center" height="50px" p="5px">
+        {user?._id === props._createdBy ? (
+          <Button colorScheme="green" onClick={shareScreen} disabled={!room} mx={1} rightIcon={<MdScreenShare />}>
+            Share
+          </Button>
+        ) : <p>{props._createdBy} - {s.videoId}</p>}
+        </Box>
+
+       </Box>
+       
       </>
     </AppWindow>
   );
@@ -76,42 +109,7 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app Twilio */
 
 function ToolbarComponent(props: App): JSX.Element {
-  const updateState = useAppStore((state) => state.updateState);
-
-  // Current User
-  const { user } = useUser();
-  // Twilio Store
-  const room = useTwilioStore((state) => state.room);
-
-  const addStream = useTwilioStore((state) => state.addStream);
-  const removeStream = useTwilioStore((state) => state.removeStream);
-
-  // Sharescreen function
-  const shareScreen = useCallback(async () => {
-    const videoId = genId();
-    if (room) {
-      await updateState(props._id, { videoId });
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
-      addStream(videoId, stream);
-      const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
-      room.localParticipant.publishTrack(screenTrack);
-    }
-    return () => {
-      removeStream(videoId);
-    };
-  }, [room]);
-
-  return (
-    <>
-      {user?._id === props._createdBy ? (
-        <>
-          <Button colorScheme="green" onClick={shareScreen} disabled={!room} mx={1} rightIcon={<MdScreenShare />}>
-            Share
-          </Button>
-        </>
-      ) : null}
-    </>
-  );
+  return <></>;
 }
 
 export default { AppComponent, ToolbarComponent };
