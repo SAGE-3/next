@@ -6,44 +6,34 @@
  *
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
-  Avatar,
-  Box,
-  Button,
-  Select,
-  Text,
-  useDisclosure,
-  useToast,
+  Avatar, Box, Button, Select, Text, Tag,
+  useDisclosure, useToast,
   useColorModeValue,
-  Menu,
-  MenuGroup,
-  MenuItem,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  MenuItemOption,
-  MenuOptionGroup,
-  Tag,
+  Menu, MenuGroup, MenuItem,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  MenuItemOption, MenuOptionGroup,
 } from '@chakra-ui/react';
+import { GiArrowCursor } from 'react-icons/gi';
+
+import { DraggableData, Rnd } from 'react-rnd';
+import { DraggableEvent } from 'react-draggable';
 
 import { Applications, initialValues, AppError } from '@sage3/applications/apps';
 import { AppName, AppState } from '@sage3/applications/schema';
-import { initials, usePresence, usePresenceStore } from '@sage3/frontend';
-
-import { useAppStore, useBoardStore, useUser, useUIStore, AssetModal, UploadModal, ContextMenu } from '@sage3/frontend';
+import { initials, usePresence, usePresenceStore, processContentURL } from '@sage3/frontend';
+import {
+  useAppStore, useBoardStore, useUser, useUIStore,
+  AssetModal, UploadModal, ContextMenu
+} from '@sage3/frontend';
+import { AlfredComponent } from '@sage3/frontend';
 
 import { sageColorByName } from '@sage3/shared';
-import { DraggableData, Rnd } from 'react-rnd';
 import { throttle } from 'throttle-debounce';
-import { DraggableEvent } from 'react-draggable';
 
-import { GiArrowCursor } from 'react-icons/gi';
 
 // Library to help create error boundaries around dynamic components like SAGEApplications
 import { ErrorBoundary } from 'react-error-boundary';
@@ -119,6 +109,106 @@ export function BoardPage() {
   function handleHomeClick() {
     navigate('/home');
   }
+
+  // Alfred quick bar
+  const alfredAction = useCallback((term: string) => {
+    if (!user) return;
+    // Get the position of the cursor
+    const me = presences.find((el) => (el.data.userId === user._id) && (el.data.boardId === locationState.boardId));
+    const pos = me?.data.cursor || { x: 100, y: 100, z: 0 };
+    const width = 400;
+    const height = 400;
+    pos.x -= width / 2;
+    pos.y -= height / 2;
+    // Decompose the search
+    const terms = term.split(' ');
+
+    if (terms[0] === 'app') {
+      // app shortcuts
+      const name = terms[1];
+      if (name === "Webview" || name === "Screenshare" || name === "JupyterApp" || name === "Clock") {
+        createApp({
+          name: name,
+          description: name,
+          roomId: locationState.roomId,
+          boardId: locationState.boardId,
+          position: pos,
+          size: { width, height, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: name,
+          ownerId: user?._id,
+          state: { ...initialValues[name] as AppState },
+          minimized: false,
+          raised: true
+        });
+      }
+    } else if (terms[0] === 'w' || terms[0] === 'web' || terms[0] === 'webview') {
+      let loc = terms[1];
+      if (!loc.startsWith('http://') && !loc.startsWith('https://')) {
+        loc = 'https://' + loc;
+      }
+      createApp({
+        name: 'Webview',
+        description: 'Webview',
+        roomId: locationState.roomId,
+        boardId: locationState.boardId,
+        position: pos,
+        size: { width, height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Webview',
+        ownerId: user?._id,
+        state: { url: processContentURL(loc) },
+        minimized: false,
+        raised: true
+      });
+    } else if (terms[0] === 'g' || terms[0] === 'goo' || terms[0] === 'google') {
+      const rest = terms.slice(1).join('+');
+      const searchURL = 'https://www.google.com/search?q=' + rest;
+      createApp({
+        name: 'Webview',
+        description: 'Webview',
+        roomId: locationState.roomId,
+        boardId: locationState.boardId,
+        position: pos,
+        size: { width, height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Webview',
+        ownerId: user?._id,
+        state: { url: processContentURL(searchURL) },
+        minimized: false,
+        raised: true
+      });
+
+    } else if (terms[0] === 's' || terms[0] === 'n' || terms[0] === 'stick' || terms[0] === 'stickie' || terms[0] === 'note') {
+      const content = terms.slice(1).join(' ');
+      createApp({
+        name: 'Stickie',
+        description: 'Stckie>',
+        roomId: locationState.roomId,
+        boardId: locationState.boardId,
+        position: pos,
+        size: { width, height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Stickie',
+        state: { text: content, color: '#F6E05E', fontSize: 42 },
+        ownerId: user._id,
+        minimized: false,
+        raised: true,
+      });
+    } else if (terms[0] === 'c' || terms[0] === 'cell') {
+      const content = terms.slice(1).join(' ');
+      console.log('Create cell', content)
+    } else if (terms[0] === 'showui') {
+      // Show all the UI elements
+      // toggleAllMenus(true);
+    } else if (terms[0] === 'hideui') {
+      // Hide all the UI elements
+      // toggleAllMenus(false);
+    } else if (terms[0] === 'clear' || terms[0] === 'clearall' || terms[0] === 'closeall') {
+      apps.forEach((a) => deleteApp(a._id));
+    }
+  }, [user, apps, locationState.boardId, presences]);
+
 
   // Function to handle when a new app is opened.
   // App is positioned in the middle of the screen for right now.
@@ -483,6 +573,9 @@ export function BoardPage() {
 
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
+
+      {/* Alfred modal dialog */}
+      <AlfredComponent onAction={alfredAction} />
 
       {/* Clear the board modal */}
       <Modal isCentered isOpen={isOpen} onClose={onClose}>
