@@ -25,11 +25,13 @@ const WheelStepZoom = 0.004;
 interface UIState {
   scale: number;
   gridSize: number;
-  boardPosition: { x: number, y: number };
+  showUI: boolean;
+  boardPosition: { x: number; y: number };
   selectedAppId: string;
-  setBoardPosition: (position: { x: number, y: number }) => void;
+  setBoardPosition: (position: { x: number; y: number }) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
+  flipUI: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
@@ -42,11 +44,13 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   scale: 1.0,
   gridSize: 50,
+  showUI: true,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
-  setBoardPosition: (position: { x: number, y: number }) => set((state) => ({ ...state, boardPosition: position })),
+  setBoardPosition: (position: { x: number; y: number }) => set((state) => ({ ...state, boardPosition: position })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
+  flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
   zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
   zoomInDelta: (d) =>
@@ -67,4 +71,4 @@ export const useUIStore = create<UIState>((set) => ({
 }));
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('UIStore', useUIStore);
+if (process.env.NODE_ENV === 'development') mountStoreDevtool('UIStore', useUIStore);
