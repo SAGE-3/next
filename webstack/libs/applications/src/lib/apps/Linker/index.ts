@@ -30,4 +30,4 @@ export const init: Partial<state> = {
   isLinked: false,
 };
 
-export const name = 'LinkerApp';
+export const name = 'Linker';
