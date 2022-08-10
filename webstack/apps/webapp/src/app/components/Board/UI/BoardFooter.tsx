@@ -25,8 +25,6 @@ type FooterProps = {
  * @returns
  */
 export function BoardFooter(props: FooterProps) {
-
-
   // User information
   const { user } = useUser();
 
@@ -43,7 +41,6 @@ export function BoardFooter(props: FooterProps) {
   const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
   // Upload modal
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
-
 
   // Function to handle when a new app is opened.
   // App is positioned in the middle of the screen for right now.
@@ -81,8 +78,8 @@ export function BoardFooter(props: FooterProps) {
       raised: true
     });
   };
-  return (
 
+  return (
     <Box display="flex" justifyContent="left" alignItems="center" p={2} position="absolute" bottom="0">
       {/* App Create Menu */}
       <Select

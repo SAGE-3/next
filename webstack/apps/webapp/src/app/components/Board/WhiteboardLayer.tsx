@@ -5,14 +5,14 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
- type WhiteboardLayerProps = {
+
+type WhiteboardLayerProps = {
   boardId: string;
   roomId: string;
 };
 
- 
- export function WhiteboardLayer(props: WhiteboardLayerProps) {
-   return (
+export function WhiteboardLayer(props: WhiteboardLayerProps) {
+  return (
     null
-   )
- }
+  )
+}

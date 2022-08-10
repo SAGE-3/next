@@ -6,23 +6,22 @@
  *
  */
 
-import { Box, useColorModeValue, useToast } from "@chakra-ui/react";
-import { useUIStore } from "@sage3/frontend";
+import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
+import { useUIStore } from '@sage3/frontend';
 
 type BackgroundProps = {
-  roomId: string,
-  boardId: string
-}
+  roomId: string;
+  boardId: string;
+};
 
 export function Background(props: BackgroundProps) {
-
   // display some notifications
   const toast = useToast();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
-  
+
   // Chakra Color Mode for grid color
   const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
 
@@ -73,6 +72,7 @@ export function Background(props: BackgroundProps) {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }
+
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
@@ -90,6 +90,7 @@ export function Background(props: BackgroundProps) {
       console.log('drop_handler: no files');
     }
   }
+
   return (
     <>
       <Box
@@ -121,9 +122,8 @@ export function Background(props: BackgroundProps) {
         }}
       />
     </>
-  )
+  );
 }
-
 
 /**
  * Collects files into an array, from a list of files or folders
@@ -132,7 +132,7 @@ export function Background(props: BackgroundProps) {
  * @param {DataTransfer} evdt
  * @returns {Promise<File[]>}
  */
- export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
+export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
   return new Promise<File[]>((resolve, reject) => {
     const contents: File[] = [];
     let reading = 0;

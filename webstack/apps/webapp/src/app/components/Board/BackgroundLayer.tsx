@@ -23,9 +23,8 @@ type BackgroundLayerProps = {
 };
 
 export function BackgroundLayer(props: BackgroundLayerProps) {
-
-    // User
-    const { user } = useUser();
+  // User
+  const { user } = useUser();
 
   // Apps Store
   const apps = useAppStore((state) => state.apps);

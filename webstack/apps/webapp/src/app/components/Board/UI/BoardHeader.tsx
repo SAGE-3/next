@@ -57,7 +57,7 @@ export function BoardHeader(props: HeaderProps) {
           Home
         </Button>
         {/*Twilio*/}
-        <Twilio roomName={props.boardId} connect={twilioConnect}/>
+        <Twilio roomName={props.boardId} connect={twilioConnect} />
       </Box>
 
       {/* Board Name */}
