@@ -6,16 +6,23 @@
  *
  */
 
-import { Menu, MenuGroup, MenuItem, MenuItemOption, MenuOptionGroup } from '@chakra-ui/react';
+import { useState } from 'react';
+import {
+  Menu, MenuGroup, MenuItem, MenuItemOption, MenuOptionGroup,
+  Button, useColorModeValue, VStack, Text, Checkbox
+} from '@chakra-ui/react';
+
 import { initialValues } from '@sage3/applications/apps';
 import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
-import { useState } from 'react';
 
 type ContextProps = {
   roomId: string;
   boardId: string;
   clearBoard: () => void;
 };
+
+// State of the checkboxes in context menu: grid ui
+const savedRadios = [true, true];
 
 export function BoardContextMenu(props: ContextProps) {
   // User information
@@ -26,45 +33,55 @@ export function BoardContextMenu(props: ContextProps) {
   const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const flipUI = useUIStore((state) => state.flipUI);
 
-  // State of the checkboxes in context menu
-  const [radios, setRadios] = useState<string[]>(['ui', 'grid']);
+  // State of the checkboxes in context menu: grid ui
+  const [radios, setRadios] = useState(savedRadios);
+
+  // Theme
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const panelBackground = useColorModeValue('gray.50', '#4A5568');
 
   // Enable/disable the grid
-  const onGridChange = () => {
-    if (radios.includes('grid')) {
-      setGridSize(1);
-      setRadios(radios.filter((el) => el !== 'grid'));
-    } else {
+  const onGridChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.checked;
+    if (val) {
       setGridSize(50);
-      setRadios([...radios, 'grid']);
-    }
-  };
-  // Show/hide the UI
-  const onUIChange = () => {
-    if (radios.includes('ui')) {
-      setRadios(radios.filter((el) => el !== 'ui'));
     } else {
-      setRadios([...radios, 'ui']);
+      setGridSize(1);
     }
+    setRadios((_prev) => [val, radios[1]]);
+    savedRadios[0] = val;
+  };
+
+  // Show/hide the UI
+  const onUIChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    flipUI();
+    const val = e.target.checked;
+    setRadios((_prev) => [radios[0], val]);
+    savedRadios[1] = val;
   };
 
   return (
-    <Menu>
-      <MenuGroup m={'2px 3px 0 3px'} title="Actions">
-        <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem">
+    <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto" w={160}>
+
+      <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={"none"}>
+        Actions
+      </Text>
+
+      <VStack w={"100%"}>
+        <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start">
           Fit View to Board
-        </MenuItem>
-        <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem">
+        </Button>
+        <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start">
           Show all Apps
-        </MenuItem>
-        <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem" onClick={props.clearBoard}>
+        </Button>
+        <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor}
+          justifyContent="flex-start" onClick={props.clearBoard}>
           Clear Board
-        </MenuItem>
-        <MenuItem
-          p={'2px 3px 1px 3px'}
-          className="contextmenuitem"
-          onClick={() => {
+        </Button>
+        <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor}
+          justifyContent="flex-start" onClick={() => {
             const width = 700;
             const height = 700;
             // Calculate X and Y of app based on the current board position and the width and height of the viewport
@@ -90,17 +107,19 @@ export function BoardContextMenu(props: ContextProps) {
           }}
         >
           Open Jupyter
-        </MenuItem>
-      </MenuGroup>
-      <hr className="divider" />
-      <MenuOptionGroup m={'2px 3px 0 3px'} title="Options" type="checkbox" defaultValue={radios}>
-        <MenuItemOption m={0} p={'2px 3px 1px 3px'} className="contextmenuitem" value="grid" onClick={onGridChange}>
-          Snap to Grid
-        </MenuItemOption>
-        <MenuItemOption p={'2px 3px 1px 3px'} className="contextmenuitem" value="ui" onClick={onUIChange}>
-          Show Interface
-        </MenuItemOption>
-      </MenuOptionGroup>
-    </Menu>
+        </Button>
+      </VStack>
+
+      <VStack w={"100%"}>
+        <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={"none"}>
+          Options
+        </Text>
+        <Checkbox w={"100%"} size={'sm'} fontSize={14} color={textColor} justifyContent="flex-start"
+          isChecked={radios[0]} onChange={onGridChange}>Snap to Grid</Checkbox>
+        <Checkbox w={"100%"} size={'sm'} fontSize={14} color={textColor} justifyContent="flex-start"
+          isChecked={radios[1]} onChange={onUIChange}>Show Interface</Checkbox>
+      </VStack>
+
+    </VStack>
   );
 }

@@ -10,6 +10,8 @@ import { useState, createContext } from 'react';
 import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
+import { useUIStore } from '@sage3/frontend';
+
 // Pass the font size between the panel and the buttons
 const bigFont = 18;
 const smallFont = 14;
@@ -55,15 +57,18 @@ export function Panel(props: PanelProps) {
   const [fontsize, setFontsize] = useState(bigFont);
   const [fontsize2, setFontsize2] = useState(smallFont);
   const [showActions, setShowActions] = useState(props.opened);
+  // Theme
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
+  // UI store
+  const showUI = useUIStore((state) => state.showUI);
 
   function handleDblClick(e: any) {
     e.stopPropagation();
     setShowActions(!showActions);
   }
 
-  return (
+  if (showUI) return (
     <Rnd
       bounds="window"
       size={{ width: w, height: '100px' }}
@@ -85,4 +90,5 @@ export function Panel(props: PanelProps) {
       </VStack>
     </Rnd>
   );
+  else return null;
 }

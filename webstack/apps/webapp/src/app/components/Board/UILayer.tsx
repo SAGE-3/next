@@ -64,12 +64,13 @@ export function UILayer(props: UILayerProps) {
           <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
         ))}
       </Panel>
+
       <ContextMenu divId="board">
         <BoardContextMenu
           boardId={props.boardId}
           roomId={props.roomId}
           clearBoard={() => apps.forEach((a) => deleteApp(a._id))}
-        ></BoardContextMenu>
+        />
       </ContextMenu>
 
       <Panel title={'Quick Actions'} opened={true}>
@@ -82,6 +83,7 @@ export function UILayer(props: UILayerProps) {
 
       {/* Bottom Bar */}
       <BoardFooter boardId={props.boardId} roomId={props.roomId}></BoardFooter>
+
     </Box>
   );
 }
