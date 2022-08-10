@@ -1,7 +1,7 @@
 // SAGE3 Generated from apps.json file
 
 import { name as CounterAppName, init as defaultCounterApp } from './apps/Counter';
-import { name as LinkerAppName, init as defaultLinkerApp } from './apps/LinkerApp';
+import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
@@ -19,7 +19,7 @@ import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 
 import Counter from './apps/Counter/Counter';
-import LinkerApp from './apps/LinkerApp/LinkerApp';
+import Linker from './apps/Linker/Linker';
 import Stickie from './apps/Stickie/Stickie';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import CodeCell from './apps/CodeCell/CodeCell';
@@ -38,7 +38,7 @@ import JupyterLab from './apps/JupyterLab/JupyterLab';
 
 export const Applications = {
   [CounterAppName]: Counter,
-  [LinkerAppName]: LinkerApp,
+  [LinkerName]: Linker,
   [StickieName]: Stickie,
   [PDFViewerName]: PDFViewer,
   [CodeCellName]: CodeCell,
@@ -58,7 +58,7 @@ export const Applications = {
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
-  [LinkerAppName]: defaultLinkerApp,
+  [LinkerName]: defaultLinker,
   [StickieName]: defaultStickie,
   [PDFViewerName]: defaultPDFViewer,
   [CodeCellName]: defaultCodeCell,

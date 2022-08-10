@@ -1,7 +1,7 @@
 // SAGE3 Generated from apps.json file
 
 import { state as CounterState, name as CounterName } from './apps/Counter';
-import { state as LinkerAppState, name as LinkerAppName } from './apps/LinkerApp';
+import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
 import { state as CodeCellState, name as CodeCellName } from './apps/CodeCell';
@@ -21,8 +21,9 @@ import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 
 export type AppState =
   | CounterState
-  | LinkerAppState
+  | LinkerState
   | StickieState
+  | LinkerState
   | PDFViewerState
   | CodeCellState
   | ImageViewerState
@@ -41,7 +42,8 @@ export type AppState =
 
 export type AppName =
   | typeof CounterName
-  | typeof LinkerAppName
+  | typeof LinkerName
+  | typeof LinkerName
   | typeof StickieName
   | typeof PDFViewerName
   | typeof CodeCellName

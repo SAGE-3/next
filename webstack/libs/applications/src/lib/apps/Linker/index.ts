@@ -6,21 +6,28 @@
  *
  */
 
-import { z } from 'zod';
+import { any, z } from 'zod';
+
+/**
+ * SAGE3 application: LinkerApp
+ * created by: RJ
+ */
 
 export const schema = z.object({
-  toAppId: z.string(),
-  toAppField: z.string(),
-  fromAppId: z.string(),
-  fromAppField: z.string(),
+  app1Id: z.string(),
+  app2Id: z.string(),
+  app1Prop: z.string(),
+  app2Prop: z.string(),
+  isLinked: z.boolean(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  toAppId: '',
-  toAppField: '',
-  fromAppId: '',
-  fromAppField: '',
+  app1Id: 'none',
+  app2Id: 'none',
+  app1Prop: 'none',
+  app2Prop: 'none',
+  isLinked: false,
 };
 
 export const name = 'Linker';
