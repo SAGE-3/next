@@ -45,6 +45,8 @@ import { DraggableEvent } from 'react-draggable';
 
 import { GiArrowCursor } from 'react-icons/gi';
 
+import { Panel, ButtonPanel } from '../components/Panel';
+
 // Library to help create error boundaries around dynamic components like SAGEApplications
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -78,11 +80,12 @@ export function BoardPage() {
   const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
-  const selectedApp = useUIStore(state => state.selectedAppId);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // User information
   const { user } = useUser();
+  const [myPosition, setMyPosition] = useState({ x: 0, y: 0, z: 0 });
 
   // Presence Information
   const { update: updatePresence } = usePresence();
@@ -100,6 +103,8 @@ export function BoardPage() {
 
   // Board current position
   const [boardPos, setBoardPos] = useState({ x: 0, y: 0 });
+  // Quick action palette position
+  const [quickPosition, setQuickPosition] = useState({ x: 50, y: 75 });
 
   useEffect(() => {
     // Subscribe to the board that was selected
@@ -153,7 +158,7 @@ export function BoardPage() {
       ownerId: user._id,
       state: initialValues[appName] as AppState,
       minimized: false,
-      raised: true
+      raised: true,
     });
   };
 
@@ -249,12 +254,113 @@ export function BoardPage() {
   };
 
   // Update the cursor every half second
-  // TODO: They don't work over apps yet.
+  // TODO: we skip events when the cursor is over the applications
   const throttleCursor = throttle(500, (e: React.MouseEvent<HTMLDivElement>) => {
-    if (updatePresence) updatePresence({ cursor: { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, z: 0 } });
+    updatePresence({ cursor: { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, z: 0 } });
   });
   // Keep a copy of the function
   const throttleCursorFunc = useRef(throttleCursor);
+  const cursorFunc = (e: React.MouseEvent<HTMLDivElement>) => {
+    const boardElt = document.getElementById('board');
+    // Check if event is on the board
+    if (updatePresence && e.target === boardElt) {
+      // Save my local position as fast as possible
+      setMyPosition({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, z: 0 });
+      // Sent the throttled version to the server
+      throttleCursorFunc.current(e);
+    }
+  };
+
+  const createStickie = () => {
+    if (!user) return;
+    createApp({
+      name: 'Stickie',
+      description: 'Stckie>',
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x: myPosition.x + 50, y: myPosition.y, z: 0 },
+      size: { width: 400, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Stickie',
+      state: { text: '', color: '#F6E05E', fontSize: 42 },
+      ownerId: user?._id || '',
+      minimized: false,
+      raised: true,
+    });
+  };
+  const createWebview = () => {
+    if (!user) return;
+    createApp({
+      name: 'Webview',
+      description: 'Webview>',
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x: myPosition.x + 50, y: myPosition.y, z: 0 },
+      size: { width: 400, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Webview',
+      state: { url: 'https://google.com' },
+      ownerId: user?._id || '',
+      minimized: false,
+      raised: true,
+    });
+  };
+  const createScreenshare = () => {
+    if (!user) return;
+    createApp({
+      name: 'Screenshare',
+      description: 'Screenshare>',
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x: myPosition.x + 50, y: myPosition.y, z: 0 },
+      size: { width: 400, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Screenshare',
+      state: { running: false },
+      ownerId: user?._id || '',
+      minimized: false,
+      raised: true,
+    });
+  };
+  const createCell = () => {
+    if (!user) return;
+    createApp({
+      name: 'CodeCell',
+      description: 'CodeCell>',
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x: myPosition.x + 50, y: myPosition.y, z: 0 },
+      size: { width: 400, height: 180, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'CodeCell',
+      state: { ...initialValues['CodeCell'] as any },
+      ownerId: user?._id || '',
+      minimized: false,
+      raised: true,
+    });
+  };
+  const newApplication = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!user) return;
+    const name = e.currentTarget.getAttribute('title');
+    if (name) {
+      const applicationName = name as AppName;
+      createApp({
+        name: applicationName,
+        description: applicationName + '>',
+        roomId: locationState.roomId,
+        boardId: locationState.boardId,
+        position: { x: myPosition.x + 50, y: myPosition.y, z: 0 },
+        size: { width: 400, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: applicationName,
+        state: { ...initialValues[applicationName] as any },
+        ownerId: user?._id || '',
+        minimized: false,
+        raised: true,
+      });
+
+    }
+  };
 
   return (
     <>
@@ -275,8 +381,7 @@ export function BoardPage() {
           dragHandleClassName={'board-handle'}
           scale={scale}
           id="monkey"
-          onMouseMove={throttleCursorFunc.current}
-
+          onMouseMove={cursorFunc}
         >
           {/* Apps - SORT is to zIndex order them */}
           {apps
@@ -285,12 +390,30 @@ export function BoardPage() {
               const Component = Applications[app.data.type].AppComponent;
               return (
                 // Wrap the components in an errorboundary to protect the board from individual app errors
-                <ErrorBoundary key={app._id}
-                  fallbackRender={({ error, resetErrorBoundary }) => <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />}
+                <ErrorBoundary
+                  key={app._id}
+                  fallbackRender={({ error, resetErrorBoundary }) => (
+                    <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+                  )}
                 >
                   <Component key={app._id} {...app}></Component>
-                </ErrorBoundary>)
+                </ErrorBoundary>
+              );
             })}
+
+          <Panel title={'Applications'} position={{ x: 50, y: 400 }} opened={true}>
+            {Object.keys(Applications).map((appName) => (
+              <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(e)} />
+            ))}
+          </Panel>
+
+          <Panel title={'Quick Actions'} position={quickPosition} opened={true}>
+            <ButtonPanel title="Cell" onClick={() => createCell()} />
+            <ButtonPanel title="Stickie" onClick={() => createStickie()} />
+            <ButtonPanel title="Webview" onClick={() => createWebview()} />
+            <ButtonPanel title="Screenshare" onClick={() => createScreenshare()} />
+            <ButtonPanel title="Clear Board" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
+          </Panel>
 
           {/* Draw the cursors: filter by board and not myself */}
           {presences
@@ -350,7 +473,6 @@ export function BoardPage() {
         </Rnd>
       </div>
 
-
       {/* Context-menu for the board */}
       <ContextMenu divId="board">
         <Menu>
@@ -370,29 +492,28 @@ export function BoardPage() {
               onClick={() => {
                 const width = 700;
                 const height = 700;
-                // Calculate X and Y of app based on the current board position and the width and height of the viewport
-                let x = Math.floor(boardPos.x + window.innerWidth / 2 - width / 2);
-                let y = Math.floor(boardPos.y + window.innerHeight / 2 - height / 2);
-                x = Math.round(x / gridSize) * gridSize; // Snap to grid
-                y = Math.round(y / gridSize) * gridSize;
                 // Open a webview into the SAGE3 builtin Jupyter instance
                 createApp({
                   name: 'JupyterApp',
                   description: 'JupyterApp>',
                   roomId: locationState.roomId,
                   boardId: locationState.boardId,
-                  position: { x, y, z: 0 },
+                  position: { x: myPosition.x + 50, y: myPosition.y, z: 0 },
                   size: { width, height, depth: 0 },
                   rotation: { x: 0, y: 0, z: 0 },
                   type: 'JupyterApp',
                   ownerId: user?._id || '-',
-                  state: { ...initialValues['JupyterApp'], jupyterURL: "" },
+                  state: { ...initialValues['JupyterApp'], jupyterURL: '' },
                   minimized: false,
-                  raised: true
+                  raised: true,
                 });
               }}
             >
               Open Jupyter
+            </MenuItem>
+            <MenuItem p={'2px 3px 1px 3px'} className="contextmenuitem"
+              onClick={() => setQuickPosition({ x: myPosition.x + 50, y: myPosition.y + 100 })}>
+              Bring Palette
             </MenuItem>
           </MenuGroup>
           <hr className="divider" />
@@ -471,7 +592,8 @@ export function BoardPage() {
         {/* App Toolbar - TODO - Temporary location for right now*/}
         <Box alignItems="center" mx="1" backgroundColor="gray" p="2">
           {apps
-            .filter(el => el._id === selectedApp).map((app) => {
+            .filter((el) => el._id === selectedApp)
+            .map((app) => {
               const Component = Applications[app.data.type].ToolbarComponent;
               return <Component key={app._id} {...app}></Component>;
             })}
