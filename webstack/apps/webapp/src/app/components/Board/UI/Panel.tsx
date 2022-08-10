@@ -71,13 +71,17 @@ export function Panel(props: PanelProps) {
       enableResizing={false}
       dragHandleClassName="header" // only allow dragging the header
     >
-      <VStack boxShadow="lg" p="1" rounded="md" bg={panelBackground} maxH={350} overflow="auto" cursor="auto">
+      <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto">
         <Tooltip placement="top" gutter={20} hasArrow={true} label={'Doubleclick to open/close'} openDelay={600}>
           <Text className="header" color={textColor} fontSize={fontsize} h={'auto'} cursor="move">
             {props.title}
           </Text>
         </Tooltip>
-        {showActions && <Provider value={fontsize2}>{props.children}</Provider>}
+        {showActions && <Provider value={fontsize2}>
+          <VStack maxH={300} w={"100%"} overflow="auto">
+            {props.children}
+          </VStack>
+        </Provider>}
       </VStack>
     </Rnd>
   );
