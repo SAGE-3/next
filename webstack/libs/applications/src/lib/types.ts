@@ -21,46 +21,7 @@ import { state as VegaLiteAppState, name as VegaLiteAppName } from './apps/VegaL
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as JupyterAppState, name as JupyterAppName } from './apps/JupyterApp';
 
-export type AppState =
-  | CounterAppState
-  | ImageAppState
-  | LinkerAppState
-  | NoteAppState
-  | SliderAppState
-  | StickieState
-  | PDFViewerState
-  | CodeCellState
-  | ImageViewerState
-  | LeafLetState
-  | ScreenshareState
-  | VideoViewerState
-  | WebviewState
-  | DataTableAppState
-  | CSVViewerState
-  | RTCChatState
-  | VegaLiteAppState
-  | VegaLiteViewerState
-  | ClockState
-  | JupyterAppState;
 
-export type AppName =
-  | typeof CounterAppName
-  | typeof ImageAppName
-  | typeof LinkerAppName
-  | typeof NoteAppName
-  | typeof SliderAppName
-  | typeof StickieName
-  | typeof PDFViewerName
-  | typeof CodeCellName
-  | typeof ImageViewerName
-  | typeof LeafLetName
-  | typeof ScreenshareName
-  | typeof VideoViewerName
-  | typeof WebviewName
-  | typeof DataTableAppName
-  | typeof CSVViewerName
-  | typeof RTCChatName
-  | typeof ClockName
-  | typeof JupyterAppName
-  | typeof VegaLiteViewerName
-  | typeof VegaLiteAppName;
+export type AppState = CounterAppState | ImageAppState | LinkerAppState | NoteAppState | SliderAppState | StickieState | PDFViewerState | CodeCellState | ImageViewerState | LeafLetState | ScreenshareState | VideoViewerState | WebviewState | DataTableAppState | CSVViewerState | RTCChatState | VegaLiteViewerState | VegaLiteAppState | ClockState | JupyterAppState;
+
+export type AppName = typeof CounterAppName | typeof ImageAppName | typeof LinkerAppName | typeof NoteAppName | typeof SliderAppName | typeof StickieName | typeof PDFViewerName | typeof CodeCellName | typeof ImageViewerName | typeof LeafLetName | typeof ScreenshareName | typeof VideoViewerName | typeof WebviewName | typeof DataTableAppName | typeof CSVViewerName | typeof RTCChatName | typeof VegaLiteViewerName | typeof VegaLiteAppName | typeof ClockName | typeof JupyterAppName;

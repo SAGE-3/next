@@ -21,6 +21,7 @@ import { name as VegaLiteAppName, init as defaultVegaLiteApp } from './apps/Vega
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as JupyterAppName, init as defaultJupyterApp } from './apps/JupyterApp';
 
+
 import CounterApp from './apps/CounterApp/CounterApp';
 import ImageApp from './apps/ImageApp/ImageApp';
 import LinkerApp from './apps/LinkerApp/LinkerApp';
@@ -41,6 +42,7 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VegaLiteApp from './apps/VegaLiteApp/VegaLiteApp';
 import Clock from './apps/Clock/Clock';
 import JupyterApp from './apps/JupyterApp/JupyterApp';
+
 
 export const Applications = {
   [CounterAppName]: CounterApp,
@@ -63,7 +65,8 @@ export const Applications = {
   [VegaLiteAppName]: VegaLiteApp,
   [ClockName]: Clock,
   [JupyterAppName]: JupyterApp,
-} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
+
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
