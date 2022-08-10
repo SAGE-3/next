@@ -73,7 +73,7 @@ export function Panel(props: PanelProps) {
     >
       <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto">
         <Tooltip placement="top" gutter={20} hasArrow={true} label={'Doubleclick to open/close'} openDelay={600}>
-          <Text className="header" color={textColor} fontSize={fontsize} h={'auto'} cursor="move">
+          <Text className="header" color={textColor} fontSize={fontsize} h={'auto'} cursor="move" userSelect={"none"}>
             {props.title}
           </Text>
         </Tooltip>
