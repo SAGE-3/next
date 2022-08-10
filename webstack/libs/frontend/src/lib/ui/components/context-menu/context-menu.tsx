@@ -28,11 +28,14 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     if (event.target.id === props.divId) {
       // local position plus board position
       setContextMenuPos({ x: event.clientX, y: event.clientY, });
-      setShowContextMenu(true);
+      setTimeout(() => setShowContextMenu(true));
     }
   }, [setContextMenuPos, props.divId]);
 
-  const handleClick = useCallback(() => (showContextMenu ? setShowContextMenu(false) : null), [showContextMenu]);
+  const handleClick = useCallback(() => {
+    // timeout to allow button click to fire before hiding menu
+    return (showContextMenu ? setTimeout(() => setShowContextMenu(false)) : null);
+  }, [showContextMenu]);
 
   useEffect(() => {
     document.addEventListener('click', handleClick);
@@ -44,7 +47,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   });
 
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
-  const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
 
   return (
     showContextMenu ? (
@@ -54,13 +56,10 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
           top: contextMenuPos.y + 2,
           left: contextMenuPos.x + 2,
           backgroundColor: bgColor,
-          border: border,
         }}
       >
         {props.children}
       </div >
-    ) : (
-      <> </>
-    )
+    ) : (null)
   );
 };
