@@ -1,10 +1,7 @@
 // SAGE3 Generated from apps.json file
 
-import { name as CounterAppName, init as defaultCounterApp } from './apps/CounterApp';
-import { name as ImageAppName, init as defaultImageApp } from './apps/ImageApp';
+import { name as CounterAppName, init as defaultCounterApp } from './apps/Counter';
 import { name as LinkerAppName, init as defaultLinkerApp } from './apps/LinkerApp';
-import { name as NoteAppName, init as defaultNoteApp } from './apps/NoteApp';
-import { name as SliderAppName, init as defaultSliderApp } from './apps/SliderApp';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
@@ -17,15 +14,12 @@ import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewe
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
-import { name as VegaLiteAppName, init as defaultVegaLiteApp } from './apps/VegaLiteApp';
+import { name as VegaLiteName, init as defaultVegaLiteApp } from './apps/VegaLite';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
-import { name as JupyterAppName, init as defaultJupyterApp } from './apps/JupyterApp';
+import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 
-import CounterApp from './apps/CounterApp/CounterApp';
-import ImageApp from './apps/ImageApp/ImageApp';
+import Counter from './apps/Counter/Counter';
 import LinkerApp from './apps/LinkerApp/LinkerApp';
-import NoteApp from './apps/NoteApp/NoteApp';
-import SliderApp from './apps/SliderApp/SliderApp';
 import Stickie from './apps/Stickie/Stickie';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import CodeCell from './apps/CodeCell/CodeCell';
@@ -38,16 +32,13 @@ import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
-import VegaLiteApp from './apps/VegaLiteApp/VegaLiteApp';
+import VegaLite from './apps/VegaLite/VegaLite';
 import Clock from './apps/Clock/Clock';
-import JupyterApp from './apps/JupyterApp/JupyterApp';
+import JupyterLab from './apps/JupyterLab/JupyterLab';
 
 export const Applications = {
-  [CounterAppName]: CounterApp,
-  [ImageAppName]: ImageApp,
+  [CounterAppName]: Counter,
   [LinkerAppName]: LinkerApp,
-  [NoteAppName]: NoteApp,
-  [SliderAppName]: SliderApp,
   [StickieName]: Stickie,
   [PDFViewerName]: PDFViewer,
   [CodeCellName]: CodeCell,
@@ -60,18 +51,15 @@ export const Applications = {
   [RTCChatName]: RTCChat,
   [TwilioScreenshareName]: TwilioScreenshare,
   [ClockName]: Clock,
-  [JupyterAppName]: JupyterApp,
+  [JupyterLabName]: JupyterLab,
   [VegaLiteViewerName]: VegaLiteViewer,
-  [VegaLiteAppName]: VegaLiteApp,
+  [VegaLiteName]: VegaLite,
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
-  [ImageAppName]: defaultImageApp,
   [LinkerAppName]: defaultLinkerApp,
-  [NoteAppName]: defaultNoteApp,
-  [SliderAppName]: defaultSliderApp,
   [StickieName]: defaultStickie,
   [PDFViewerName]: defaultPDFViewer,
   [CodeCellName]: defaultCodeCell,
@@ -84,9 +72,9 @@ export const initialValues = {
   [RTCChatName]: defaultRTCChat,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
-  [VegaLiteAppName]: defaultVegaLiteApp,
+  [VegaLiteName]: defaultVegaLiteApp,
   [ClockName]: defaultClock,
-  [JupyterAppName]: defaultJupyterApp,
+  [JupyterLabName]: defaultJupyterLab,
 };
 
 export * from './components';

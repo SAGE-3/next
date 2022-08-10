@@ -1,9 +1,6 @@
 [
-    "CounterApp",
-    "ImageApp",
-    "LinkerApp",
-    "NoteApp",
-    "SliderApp",
+    "Counter",
+    "Linker",
     "Stickie",
     "PDFViewer",
     "CodeCell",
@@ -16,8 +13,7 @@
     "RTCChat",
     "TwilioScreenshare",
     "Clock",
-    "JupyterApp",
+    "JupyterLab",
     "VegaLiteViewer",
-    "VegaLiteApp"
+    "VegaLite"
 ]
-

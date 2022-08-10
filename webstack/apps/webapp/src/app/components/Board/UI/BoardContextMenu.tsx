@@ -74,16 +74,16 @@ export function BoardContextMenu(props: ContextProps) {
             y = Math.round(y / gridSize) * gridSize;
             // Open a webview into the SAGE3 builtin Jupyter instance
             createApp({
-              name: 'JupyterApp',
-              description: 'JupyterApp',
+              name: 'JupyterLab',
+              description: 'JupyterLab',
               roomId: props.roomId,
               boardId: props.boardId,
               position: { x, y, z: 0 },
               size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
-              type: 'JupyterApp',
+              type: 'JupyterLab',
               ownerId: user?._id || '-',
-              state: { ...initialValues['JupyterApp'], jupyterURL: '' },
+              state: { ...initialValues['JupyterLab'], jupyterURL: '' },
               minimized: false,
               raised: true,
             });
