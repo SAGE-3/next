@@ -20,6 +20,7 @@ export type SBPrimitive = null | boolean | number | string | SBArray | SBJSON;
 export type SBDocument<Type extends SBJSON> = {
   _id: string;
   _createdAt: number;
+  _createdBy: string;
   _updatedAt: number;
   _updatedBy: string;
   data: Type;
@@ -254,6 +255,7 @@ export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type, by: 
   const doc = {
     _id: id,
     _createdAt: createdAt,
+    _createdBy: by,
     _updatedAt: updatedAt,
     _updatedBy: by,
     data: { ...dataCopy },

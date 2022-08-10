@@ -7,6 +7,7 @@
  */
 
 // The React version of Zustand
+import { Position } from '@sage3/shared/types';
 import create from 'zustand';
 
 // Dev Tools
@@ -24,7 +25,9 @@ const WheelStepZoom = 0.004;
 interface UIState {
   scale: number;
   gridSize: number;
+  boardPosition: { x: number, y: number };
   selectedAppId: string;
+  setBoardPosition: (position: { x: number, y: number }) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   zoomIn: () => void;
@@ -40,6 +43,8 @@ export const useUIStore = create<UIState>((set) => ({
   scale: 1.0,
   gridSize: 50,
   selectedAppId: '',
+  boardPosition: { x: 0, y: 0 },
+  setBoardPosition: (position: { x: number, y: number }) => set((state) => ({ ...state, boardPosition: position })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),

@@ -9,7 +9,7 @@
 //Sage3 Imports
 import { useAppStore, useUser } from '@sage3/frontend';
 import { App } from '../../schema';
-import { state as AppState } from './';
+import { state as AppState } from '.';
 import { AppWindow } from '../../components';
 import { debounce } from 'throttle-debounce';
 

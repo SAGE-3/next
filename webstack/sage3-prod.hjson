@@ -71,5 +71,10 @@
     "certificateFile": "_.evl.uic.edu.crt",
     "certificateKeyFile": "_.evl.uic.edu.key",
     "certificateChainFile": "_.evl.uic.edu-ca.crt"
+  },
+  twilio: {
+    "accountSid": "AC43f67ea8d72208ae398d8d234d365d99",
+    "apiKey": "SKbe39af89723afe3232a9d0abb60b4d85",
+    "apiSecret": "UycFTsz4JrjPJCucCBGP4uIntl4Pg3iT",
   }
 }

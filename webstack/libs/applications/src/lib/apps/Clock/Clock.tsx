@@ -175,7 +175,7 @@ function ToolbarComponent(props: App): JSX.Element {
           backgroundColor="whiteAlpha.300"
         />
       </InputGroup>
-    </form>
+    </form>∏
   </>;
 }
 

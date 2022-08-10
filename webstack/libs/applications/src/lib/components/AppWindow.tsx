@@ -17,6 +17,7 @@ import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
   app: App;
+  aspectRatio?: number | boolean;
   children: JSX.Element;
 
   // React Rnd property to control the window aspect ratio (optional)

@@ -7,6 +7,7 @@ export const SBSchema = z.object({
   _createdAt: z.number(),
   _updatedAt: z.number(),
   _updatedBy: z.string(),
+  _createdBy: z.string(),
 });
 
 // Create the Typescript type

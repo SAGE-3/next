@@ -6,7 +6,13 @@
  *
  */
 
-export * from './path-util';
-export * from './subscription-cache';
-export * from './presence';
-export * from './twilio';
+type WhiteboardLayerProps = {
+  boardId: string;
+  roomId: string;
+};
+
+export function WhiteboardLayer(props: WhiteboardLayerProps) {
+  return (
+    null
+  )
+}
