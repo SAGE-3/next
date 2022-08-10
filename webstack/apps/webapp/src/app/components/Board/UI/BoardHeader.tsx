@@ -37,7 +37,8 @@ export function BoardHeader(props: HeaderProps) {
 
   // Apps
   const apps = useAppStore((state) => state.apps);
-  const twilioConnect = apps.filter(el => el.data.type === 'Screenshare').length > 0;
+  // Connect to Twilio only if there are Screenshares or Webcam apps
+  const twilioConnect = apps.filter(el => (el.data.type === 'Screenshare')).length > 0;
 
   return (
     <Box

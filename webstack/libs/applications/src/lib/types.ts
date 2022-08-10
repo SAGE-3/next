@@ -17,8 +17,6 @@ import { state as DataTableAppState, name as DataTableAppName } from './apps/Dat
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
-import { state as TwilioWebcamState, name as TwilioWebcamName } from './apps/TwilioWebcam';
-
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as JupyterAppState, name as JupyterAppName } from './apps/JupyterApp';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
@@ -45,8 +43,7 @@ export type AppState =
   | VegaLiteViewerState
   | ClockState
   | JupyterAppState
-  | TwilioScreenshareState
-  | TwilioWebcamState;
+  | TwilioScreenshareState;
 
 export type AppName =
   | typeof CounterAppName
@@ -69,5 +66,4 @@ export type AppName =
   | typeof JupyterAppName
   | typeof VegaLiteViewerName
   | typeof VegaLiteAppName
-  | typeof TwilioScreenshareName
-  | typeof TwilioWebcamName;
+  | typeof TwilioScreenshareName;
