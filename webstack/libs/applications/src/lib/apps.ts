@@ -14,7 +14,7 @@ import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewe
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
-import { name as VegaLiteName, init as defaultVegaLiteApp } from './apps/VegaLite';
+import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 
@@ -54,8 +54,7 @@ export const Applications = {
   [JupyterLabName]: JupyterLab,
   [VegaLiteViewerName]: VegaLiteViewer,
   [VegaLiteName]: VegaLite,
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
-
+} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
@@ -72,7 +71,7 @@ export const initialValues = {
   [RTCChatName]: defaultRTCChat,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
-  [VegaLiteName]: defaultVegaLiteApp,
+  [VegaLiteName]: defaultVegaLite,
   [ClockName]: defaultClock,
   [JupyterLabName]: defaultJupyterLab,
 };

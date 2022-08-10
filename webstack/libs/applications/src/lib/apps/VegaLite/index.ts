@@ -9,7 +9,7 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: VegaLiteApp
+ * SAGE3 application: VegaLite
  * created by: RJ
  */
 

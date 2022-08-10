@@ -32,7 +32,7 @@ import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 import 'ace-builds/src-noconflict/ext-language_tools';
 
-/* App component for VegaLiteApp */
+/* App component for VegaLite */
 
 /**
  * NoteApp SAGE3 application
@@ -114,7 +114,7 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app VegaLiteApp */
+/* App toolbar component for the app VegaLite */
 
 function ToolbarComponent(props: App): JSX.Element {
   //State
