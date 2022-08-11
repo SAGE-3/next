@@ -71,7 +71,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           x: 0,
           y: 0,
           width: 5000,
-          height: 5000,
+          height: 2500,
         }}
         onDragStop={handleDragBoardStop}
         enableResizing={false}

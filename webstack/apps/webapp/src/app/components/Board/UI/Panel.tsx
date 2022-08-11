@@ -7,7 +7,7 @@
  */
 
 import { useState, createContext } from 'react';
-import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
 import { useUIStore } from '@sage3/frontend';
@@ -28,7 +28,18 @@ export function ButtonPanel(props: ButtonPanelProps) {
   return (
     <Consumer>
       {(value) => (
-        <Button {...props} w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={value} color={textColor} justifyContent="flex-start">
+        <Button
+          {...props}
+          w="100%"
+          borderRadius={10}
+          h="auto"
+          p={1}
+          pl={2}
+
+          fontSize={value}
+          color={textColor}
+          justifyContent="flex-start"
+        >
           {props.title}
         </Button>
       )}
@@ -60,6 +71,8 @@ export function Panel(props: PanelProps) {
   // Theme
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
+  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+
   // UI store
   const showUI = useUIStore((state) => state.showUI);
 
@@ -68,27 +81,72 @@ export function Panel(props: PanelProps) {
     setShowActions(!showActions);
   }
 
-  if (showUI) return (
-    <Rnd
-      bounds="window"
-      size={{ width: w, height: '100px' }}
-      onDoubleClick={handleDblClick}
-      enableResizing={false}
-      dragHandleClassName="header" // only allow dragging the header
-    >
-      <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto">
-        <Tooltip placement="top" gutter={20} hasArrow={true} label={'Doubleclick to open/close'} openDelay={600}>
-          <Text className="header" color={textColor} fontSize={fontsize} h={'auto'} cursor="move" userSelect={"none"}>
-            {props.title}
-          </Text>
-        </Tooltip>
-        {showActions && <Provider value={fontsize2}>
-          <VStack maxH={300} w={"100%"} overflow="auto">
-            {props.children}
-          </VStack>
-        </Provider>}
-      </VStack>
-    </Rnd>
-  );
+  if (showUI)
+    return (
+      <Rnd
+        bounds="window"
+        size={{ width: w, height: '100px' }}
+        onDoubleClick={handleDblClick}
+        enableResizing={false}
+        dragHandleClassName="header" // only allow dragging the header
+      >
+        <Box
+          display="flex"
+          boxShadow="outline"
+          transition="all .5s "
+          _hover={{ transform: 'translate(-3px, -5px)', boxShadow: '2xl' }}
+          bg={panelBackground}
+          p="2"
+          pl="1"
+          rounded="md"
+        >
+          <Box
+            width="25px"
+            backgroundImage={`radial-gradient(${gripColor} 1px, transparent 0)`}
+            backgroundPosition="0 0"
+            backgroundSize="8px 8px"
+            mr="2"
+            cursor="move"
+            className="header"
+          />
+
+          <Box width="100%">
+            <VStack bg={panelBackground} cursor="auto">
+              <Tooltip placement="top" gutter={20} hasArrow={true} label={'Doubleclick to open/close'} openDelay={600}>
+                <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'} userSelect={'none'}>
+                  {props.title}
+                </Text>
+              </Tooltip>
+              {showActions && (
+                <Provider value={fontsize2}>
+                  <VStack
+                    maxH={300}
+                    w={'100%'}
+                    overflow="auto"
+                    p={1}
+                    css={{
+                      '&::-webkit-scrollbar': {
+                        width: '6px',
+                    
+                      },
+                      '&::-webkit-scrollbar-track': {
+                        width: '6px',
+             
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: gripColor,
+                        borderRadius: '24px',
+                      },
+                    }}
+                  >
+                    {props.children}
+                  </VStack>
+                </Provider>
+              )}
+            </VStack>
+          </Box>
+        </Box>
+      </Rnd>
+    );
   else return null;
 }

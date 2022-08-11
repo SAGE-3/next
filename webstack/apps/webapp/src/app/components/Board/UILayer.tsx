@@ -6,13 +6,15 @@
  *
  */
 
-import { Box } from '@chakra-ui/react';
+import { Box, useDisclosure } from '@chakra-ui/react';
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
-import { ContextMenu, useAppStore, useBoardStore, useUIStore, useUser } from '@sage3/frontend';
+import { AssetModal, ContextMenu, UploadModal, useAppStore, useBoardStore, useUIStore, useUser } from '@sage3/frontend';
+import { useNavigate } from 'react-router';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 import { BoardFooter } from './UI/BoardFooter';
 import { BoardHeader } from './UI/BoardHeader';
+import { MiniMap } from './UI/Minimap';
 import { ButtonPanel, Panel } from './UI/Panel';
 
 type UILayerProps = {
@@ -35,6 +37,19 @@ export function UILayer(props: UILayerProps) {
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
+
+  // Asset manager button
+  const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
+
+  // Upload modal
+  const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
+
+  const navigate = useNavigate();
+
+  // Redirect the user back to the homepage when he clicks the green button in the top left corner
+  function handleHomeClick() {
+    navigate('/home');
+  }
 
   const newApplication = (appName: AppName) => {
     if (!user) return;
@@ -66,24 +81,23 @@ export function UILayer(props: UILayerProps) {
       </Panel>
 
       <ContextMenu divId="board">
-        <BoardContextMenu
-          boardId={props.boardId}
-          roomId={props.roomId}
-          clearBoard={() => apps.forEach((a) => deleteApp(a._id))}
-        />
+        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={() => apps.forEach((a) => deleteApp(a._id))} />
       </ContextMenu>
 
-      <Panel title={'Quick Actions'} opened={true}>
-        <ButtonPanel title="Cell" onClick={() => newApplication('CodeCell' as AppName)} />
-        <ButtonPanel title="Stickie" onClick={() => newApplication('Stickie' as AppName)} />
-        <ButtonPanel title="Webview" onClick={() => newApplication('Webview' as AppName)} />
-        <ButtonPanel title="Screenshare" onClick={() => newApplication('Screenshare' as AppName)} />
-        <ButtonPanel title="Clear Board" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
+      <Panel title={'Menu'} opened={true}>
+        <ButtonPanel title="Home" backgroundColor="green.500" onClick={handleHomeClick} />
+        <ButtonPanel title="Asset Browser" backgroundColor="blue.500"  onClick={assetOnOpen} />
+        <ButtonPanel title="Upload"  backgroundColor="blue.500"  onClick={uploadOnOpen} />
+        <ButtonPanel title="Clear Board" backgroundColor="red.500" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
       </Panel>
 
       {/* Bottom Bar */}
       <BoardFooter boardId={props.boardId} roomId={props.roomId}></BoardFooter>
 
+      {/* Asset dialog */}
+      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
+      {/* Upload dialog */}
+      <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
     </Box>
   );
 }

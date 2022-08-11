@@ -8,7 +8,6 @@
 
 import { Box, Button, Text, Avatar } from '@chakra-ui/react';
 import { useUser, initials, useAppStore } from '@sage3/frontend';
-import { useNavigate } from 'react-router';
 import { sageColorByName } from '@sage3/shared';
 import { AvatarGroup } from './AvatarGroup';
 import { Twilio } from './Twilio';
@@ -28,12 +27,6 @@ type HeaderProps = {
 export function BoardHeader(props: HeaderProps) {
   // User information
   const { user } = useUser();
-  const navigate = useNavigate();
-
-  // Redirect the user back to the homepage when he clicks the green button in the top left corner
-  function handleHomeClick() {
-    navigate('/home');
-  }
 
   // Apps
   const apps = useAppStore((state) => state.apps);
@@ -52,10 +45,6 @@ export function BoardHeader(props: HeaderProps) {
       width="100%"
     >
       <Box display="flex" alignItems="center">
-        {/* Home Button */}
-        <Button pointerEvents={'all'} colorScheme="green" onClick={handleHomeClick}>
-          Home
-        </Button>
         {/*Twilio*/}
         <Twilio roomName={props.boardId} connect={twilioConnect} />
       </Box>
