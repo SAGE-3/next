@@ -21,7 +21,7 @@ export type state = {
   selectedCols: string[];
   selectedCol: string;
 
-  selectedRows: number[];
+  selectedRows: string[];
   selectedRow: string;
 
   messages: string;

@@ -269,6 +269,26 @@ function AppComponent(props: App): JSX.Element {
     console.log("TWO ARRAYS selectedCols useEffect")
   }, [JSON.stringify(s.selectedCols)])
 
+  // useEffect(() => {
+  //   const difference = indices.filter(x => !s.selectedRows.includes(x));
+  //   difference.map(String)
+  //   difference.forEach((row) => {
+  //     const rows = document.querySelectorAll("td[data-row=" + row + "]")
+  //     rows.forEach((cell: any) => {
+  //         cell.className = "originalChakra"
+  //       }
+  //     )
+  //   })
+  //   s.selectedRows.map(String).forEach((row) => {
+  //     const rows = document.querySelectorAll("td[data-row=" + row + "]")
+  //     rows.forEach((cell: any) => {
+  //         cell.className = "highlight"
+  //       }
+  //     )
+  //   })
+  //   console.log("TWO ARRAYS selectedCols useEffect")
+  // }, [JSON.stringify(s.selectedCols)])
+
   //TODO Warning: A component is changing an uncontrolled input to be controlled.
   // This is likely caused by the value changing from undefined to a defined value,
   // which should not happen. Decide between using a controlled or uncontrolled input element for the lifetime of the component
@@ -305,24 +325,35 @@ function AppComponent(props: App): JSX.Element {
     )
   }
 
-  function handleRowClick(info: number) {
-    // const row = info.toString()
-    const rows = document.querySelectorAll("tr[key='" + info + "']")
-    console.log(rows)
+  function handleRowClick(info: string) {
+    const row = document.querySelectorAll("td[data-row='" + info + "']")
+    console.log(row)
     // const cols = document.querySelectorAll("td[data-col=" + info + "]")
-    rows.forEach((row: any) => {
+    // if (!s.selectedRows?.includes(info)) {
+    //   const checked = s.selectedRows.concat(info)
+    //   updateState(props._id, {selectedRows: checked})
+    //   updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
+    //   row.style.backgroundColor = "yellow"
+    // } else {
+    //   const unchecked = (() => (s.selectedRows?.filter((item: number) => item != info)))()
+    //   updateState(props._id, {selectedRows: unchecked})
+    //   updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
+    //   // row.className = "originalChakra"
+    // }
+    // console.log("row " + row)
+    row.forEach((cell: any) => {
         if (!s.selectedRows?.includes(info)) {
           const checked = s.selectedRows.concat(info)
           updateState(props._id, {selectedRows: checked})
           updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
-          row.className = "highlight"
+          cell.className = "highlight"
         } else {
-          const unchecked = (() => (s.selectedRows?.filter((item: number) => item != info)))()
+          const unchecked = (() => (s.selectedRows?.filter((item: string) => item != info)))()
           updateState(props._id, {selectedRows: unchecked})
           updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
-          row.className = "originalChakra"
+          cell.className = "originalChakra"
         }
-        console.log("cell" + row)
+        console.log("row" + row)
       }
     )
     console.log("row " + info + " clicked")
@@ -529,14 +560,14 @@ function AppComponent(props: App): JSX.Element {
                       <Td key={rowIndex}
                           // data-row={rowIndex}
                           className="indexTd"
-                          onClick={(e) => handleRowClick(rowIndex)}
+                          onClick={(e) => handleRowClick(rowIndex.toString())}
                       >
                         {indices[rowIndex]}
                       </Td>
                       {row.map((cell: any, colIndex: number) => (
                         <Td key={colIndex}
                             data-col={headers[colIndex % headers.length]}
-                            // data-row={rowIndex}
+                            data-row={rowIndex.toString()}
                             className="originalChakra"
                             onClick={(e) => handleCellClick()}
                         >
