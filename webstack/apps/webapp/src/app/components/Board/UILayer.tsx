@@ -13,10 +13,11 @@ import { AssetModal, ContextMenu, UploadModal, useAppStore, useBoardStore, useUI
 import { useNavigate } from 'react-router';
 import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
-import { BoardFooter } from './UI/BoardFooter';
-import { BoardHeader } from './UI/BoardHeader';
+
+import { InfoPanel } from './UI/InfoPanel';
 import { MiniMap } from './UI/Minimap';
 import { ButtonPanel, Panel } from './UI/Panel';
+import { Twilio } from './UI/Twilio';
 
 type UILayerProps = {
   boardId: string;
@@ -34,10 +35,12 @@ export function UILayer(props: UILayerProps) {
   const appPanelPosition = useUIStore((state) => state.appPanelPosition);
   const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
   const minimapPanelPosition = useUIStore((state) => state.minimapPanelPosition);
+  const infoPanelPosition = useUIStore((state) => state.infoPanelPosition);
   const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
   const setMenuPanelPosition = useUIStore((state) => state.setMenuPanelPosition);
   const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
+  const setInfoPanelPosition = useUIStore((state) => state.setInfoPanelPosition);
 
   // User
   const { user } = useUser();
@@ -78,10 +81,12 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
+    // Connect to Twilio only if there are Screenshares or Webcam apps
+    const twilioConnect = apps.filter(el => (el.data.type === 'Screenshare')).length > 0;
+
   return (
     <Box display="flex" flexDirection="column" height="100vw">
-      {/* Top Bar */}
-      <BoardHeader boardName={board?.data.name ? board.data.name : ''} boardId={props.boardId} />
+
 
       <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition}>
         {Object.keys(Applications).map((appName) => (
@@ -89,30 +94,27 @@ export function UILayer(props: UILayerProps) {
         ))}
       </Panel>
 
-    
-
       <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition}>
-        <ButtonPanel title="Home" backgroundColor="green.500" onClick={handleHomeClick} />
-        <ButtonPanel title="Asset Browser" backgroundColor="blue.500"  onClick={assetOnOpen} />
-        <ButtonPanel title="Upload"  backgroundColor="blue.500"  onClick={uploadOnOpen} />
-        <ButtonPanel title="Clear Board" backgroundColor="red.500" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
+        <ButtonPanel title="Home" textColor="white" backgroundColor="green.500" onClick={handleHomeClick} />
+        <ButtonPanel title="Asset Browser"  textColor="white" backgroundColor="blue.500" onClick={assetOnOpen} />
+        <ButtonPanel title="Upload"  textColor="white" backgroundColor="blue.500" onClick={uploadOnOpen} />
+        <ButtonPanel title="Clear Board"  textColor="white" backgroundColor="red.500" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
       </Panel>
-
-      {/* Bottom Bar */}
-      <BoardFooter boardId={props.boardId} roomId={props.roomId}></BoardFooter>
 
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 
-      <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition}/>
+      <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} />
 
       <ContextMenu divId="board">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={() => apps.forEach((a) => deleteApp(a._id))} />
       </ContextMenu>
-
+      <InfoPanel title={(board?.data.name) ? board.data.name : ''} boardId={props.boardId} position={infoPanelPosition} setPosition={setInfoPanelPosition} />
       {/* Asset dialog */}
       <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
+
+      <Twilio roomName={props.boardId} connect={twilioConnect} />
     </Box>
   );
 }

@@ -6,16 +6,22 @@
  *
  */
 
-import { Box, useColorModeValue, Text } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Avatar, Divider, Tooltip, Icon } from '@chakra-ui/react';
 import { Applications } from '@sage3/applications/apps';
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, initials, useTwilioStore } from '@sage3/frontend';
 import { useState } from 'react';
 import { Rnd } from 'react-rnd';
-type MinimapProps = {
+import { AvatarGroup } from './AvatarGroup';
+import { sageColorByName } from '@sage3/shared';
+import { SiTwilio } from 'react-icons/si';
+type InfoPanelProps = {
   position: { x: number; y: number };
+  boardId: string;
+  title: string;
   setPosition: (pos: { x: number; y: number }) => void;
 };
-export function MiniMap(props: MinimapProps) {
+
+export function InfoPanel(props: InfoPanelProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   // UI store
@@ -24,8 +30,12 @@ export function MiniMap(props: MinimapProps) {
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+  // Twilio
+  const room = useTwilioStore((state) => state.room);
 
   const [hover, setHover] = useState(false);
+  // User information
+  const { user } = useUser();
 
   function handleDblClick(e: any) {
     e.stopPropagation();
@@ -67,28 +77,30 @@ export function MiniMap(props: MinimapProps) {
           />
 
           <Box display="flex" flexDirection="column">
-            <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
-              Minimap
-            </Text>
-            <Box alignItems="center" p="1" width="100%" display="flex">
-              <Box height={2500 / 25 + 'px'} width={5000 / 25 + 'px'} backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
-                <Box position="absolute">
-                  {apps.map((app) => {
-                    return (
-                      <Box
-                        key={app._id}
-                        backgroundColor="teal"
-                        position="absolute"
-                        left={app.data.position.x / 25 + 'px'}
-                        top={app.data.position.y / 25 + 'px'}
-                        width={app.data.size.width / 25 + 'px'}
-                        height={app.data.size.height / 25 + 'px'}
-                        transition={'all .2s'}
-                      ></Box>
-                    );
-                  })}
+            <Box display="flex" justifyContent={'left'}>
+              <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
+                {props.title}
+              </Text>
+              <Tooltip pointerEvents={'all'} label={room ? 'Twilio Connected' : 'Twilio Disconnected'}>
+                <Box pointerEvents={'all'} mx={1}>
+                  <Icon fontSize="24px" color={room ? 'green' : 'red'} as={SiTwilio} />
                 </Box>
-              </Box>
+              </Tooltip>
+            </Box>
+            <Box alignItems="center" p="1" width="100%" display="flex">
+              {/* User Avatar */}
+              <Avatar
+                size="sm"
+                pointerEvents={'all'}
+                name={user?.data.name}
+                getInitials={initials}
+                backgroundColor={user ? sageColorByName(user.data.color) : ''}
+                color="white"
+                border="2px solid white"
+                mx={1}
+              />
+              {/* Avatar Group */}
+              <AvatarGroup boardId={props.boardId} />
             </Box>
           </Box>
         </Box>

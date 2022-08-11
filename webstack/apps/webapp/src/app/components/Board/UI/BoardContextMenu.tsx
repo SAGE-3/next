@@ -19,6 +19,7 @@ import {
   Text,
   Checkbox,
   Divider,
+  useColorMode,
 } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/apps';
@@ -50,6 +51,8 @@ export function BoardContextMenu(props: ContextProps) {
   const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
+  const setInfoPanelPosition = useUIStore((state) => state.setInfoPanelPosition);
+
 
   // State of the checkboxes in context menu: grid ui
   const [radios, setRadios] = useState(savedRadios);
@@ -77,14 +80,27 @@ export function BoardContextMenu(props: ContextProps) {
     setRadios((_prev) => [radios[0], val]);
     savedRadios[1] = val;
   };
-
+  const { colorMode, toggleColorMode } = useColorMode();
   console.log(contextMenuPosition);
   return (
     <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto" w={160}>
-      <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold" >
+      <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold">
         Actions
       </Text>
       <VStack w={'100%'}>
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={toggleColorMode}
+        >
+          {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+        </Button>
         <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start">
           Fit View to Board
         </Button>
@@ -143,8 +159,8 @@ export function BoardContextMenu(props: ContextProps) {
       </VStack>
 
       <VStack w={'100%'}>
-      <Divider/>
-        <Text className="header" color={textColor} fontSize={18} fontWeight="bold"  h={'auto'} cursor="move" userSelect={'none'}>
+        <Divider />
+        <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
           Options
         </Text>
         <Checkbox
@@ -171,8 +187,8 @@ export function BoardContextMenu(props: ContextProps) {
         </Checkbox>
       </VStack>
       <VStack w={'100%'}>
-      <Divider/>
-      <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
+        <Divider />
+        <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
           Move Panels
         </Text>
         <Button
@@ -226,6 +242,19 @@ export function BoardContextMenu(props: ContextProps) {
           onClick={() => setAppToolbarPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
         >
           App Toolbar
+        </Button>
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={() => setInfoPanelPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
+        >
+          Info
         </Button>
       </VStack>
     </VStack>

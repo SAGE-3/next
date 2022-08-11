@@ -17,7 +17,6 @@ export function Twilio(props: { roomName: string, connect: boolean }) {
   const { user } = useUser();
 
   // Twilio Store to join and leave room when joining board
-  const room = useTwilioStore((state) => state.room);
   const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
   const leaveTwilioRoom = useTwilioStore((state) => state.leaveRoom);
 
@@ -43,11 +42,5 @@ export function Twilio(props: { roomName: string, connect: boolean }) {
     }
   }, [props.connect]);
 
-  return (
-    <Tooltip pointerEvents={'all'} label={room ? 'Twilio Connected' : 'Twilio Connection Error'}>
-      <Box pointerEvents={'all'} mx={1}>
-        <Icon fontSize="2rem" color={room ? 'green' : 'red'} as={SiTwilio} />
-      </Box>
-    </Tooltip>
-  );
+  return null;
 }

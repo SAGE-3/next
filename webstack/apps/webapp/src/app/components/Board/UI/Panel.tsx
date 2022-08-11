@@ -21,6 +21,7 @@ const { Provider, Consumer } = createContext(16);
 // Add a title to the chakra button props
 export interface ButtonPanelProps extends ButtonProps {
   title: string;
+  textColor?: string;
 }
 
 // Button with a title and using the font size from parent panel
@@ -38,7 +39,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
           pl={2}
 
           fontSize={value}
-          color={textColor}
+          color={(props.textColor) ? props.textColor : textColor}
           justifyContent="flex-start"
         >
           {props.title}
@@ -67,6 +68,7 @@ export type PanelProps = {
 export function Panel(props: PanelProps) {
   // Track the size of the panel
   const [w, setW] = useState(200);
+  const [hover, setHover] = useState(false)
   // Track the font sizes of the panel
   const [fontsize, setFontsize] = useState(bigFont);
   const [fontsize2, setFontsize2] = useState(smallFont);
@@ -91,9 +93,11 @@ export function Panel(props: PanelProps) {
         bounds="window"
         size={{ width: w, height: '100px' }}
         onDoubleClick={handleDblClick}
-        onDragStop={(e, data) => { props.setPosition({x: data.x, y: data.y}); }}
+        onDragStart={() => setHover(true)}
+        onDragStop={(e, data) => { setHover(false); props.setPosition({x: data.x, y: data.y}); }}
         enableResizing={false}
         dragHandleClassName="header" // only allow dragging the header
+        style={{transition: hover ? 'none' : 'all 1s'}}
       >
         <Box
           display="flex"
@@ -106,8 +110,8 @@ export function Panel(props: PanelProps) {
           rounded="md"
         >
           <Box
-            width="25px"
-            backgroundImage={`radial-gradient(${gripColor} 1px, transparent 0)`}
+            width="30px"
+            backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
             backgroundPosition="0 0"
             backgroundSize="8px 8px"
             mr="2"

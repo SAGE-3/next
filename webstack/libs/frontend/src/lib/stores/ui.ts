@@ -33,6 +33,8 @@ interface UIState {
   appToolbarPanelPosition:  { x: number; y: number };
   minimapPanelPosition:  { x: number; y: number };
   contextMenuPosition:  { x: number; y: number };
+  infoPanelPosition:  { x: number; y: number };
+  setInfoPanelPosition: (position: { x: number; y: number }) => void;
   setContextMenuPosition: (pos: {x: number, y: number}) => void;
   setminimapPanelPosition: (pos: { x: number; y: number }) => void;
   setMenuPanelPosition: (pos:  { x: number; y: number }) => void;
@@ -57,11 +59,13 @@ export const useUIStore = create<UIState>((set) => ({
   showUI: true,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
-  menuPanelPosition: { x: 20, y: 20 },
-  appPanelPosition: { x: 20, y: 220 },
-  appToolbarPanelPosition: { x: 20, y: 760 },
-  minimapPanelPosition: { x: 20, y: 590 },
+  menuPanelPosition: { x: 20, y: 130 },
+  appPanelPosition: { x: 20, y: 325 },
+  appToolbarPanelPosition: { x: 20, y: 850 },
+  minimapPanelPosition: { x: 20, y: 690 },
+  infoPanelPosition: { x: 20, y: 20 },
   contextMenuPosition: { x: 0, y: 0 },
+  setInfoPanelPosition:(pos: { x: number; y: number }) => set((state) => ({ ...state, infoPanelPosition: pos })),
   setContextMenuPosition: (pos: {x: number, y: number}) => set((state) => ({ ...state, contextMenuPosition: pos })),
   setminimapPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, minimapPanelPosition: pos })),
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),

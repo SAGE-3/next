@@ -27,8 +27,6 @@ type AppToolbarProps = {
  * @returns
  */
 export function AppToolbar(props: AppToolbarProps) {
-  // User information
-  const { user } = useUser();
 
   // App Store
   const createApp = useAppStore((state) => state.create);
@@ -49,6 +47,8 @@ export function AppToolbar(props: AppToolbarProps) {
     e.stopPropagation();
   }
 
+  const [hover, setHover] = useState(false);
+
   const app = apps.find((app) => app._id === selectedApp);
 
   function getAppToolbar() {
@@ -66,11 +66,15 @@ export function AppToolbar(props: AppToolbarProps) {
       position={{ ...props.position }}
       bounds="window"
       onDoubleClick={handleDblClick}
+      onDragStart={() => setHover(true)}
       onDragStop={(e, data) => {
+        setHover(false);
         props.setPosition({ x: data.x, y: data.y });
       }}
       enableResizing={false}
       dragHandleClassName="handle" // only allow dragging the header
+      style={{ transition: hover ? 'none' : 'all 1s' }}
+
     >
       <Box
         display="flex"
@@ -83,7 +87,7 @@ export function AppToolbar(props: AppToolbarProps) {
       >
         <Box
           width="25px"
-          backgroundImage={`radial-gradient(${gripColor} 1px, transparent 0)`}
+          backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
           backgroundPosition="0 0"
           backgroundSize="8px 8px"
           mr="2"
