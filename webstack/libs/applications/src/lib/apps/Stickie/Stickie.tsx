@@ -122,7 +122,7 @@ function AppComponent(props: App): JSX.Element {
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Stickie',
-        state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: {executeFunc: '', params: {} }},
+        state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
         ownerId: user._id,
         minimized: false,
         raised: true,
@@ -211,23 +211,23 @@ function ToolbarComponent(props: App): JSX.Element {
       <HStack>
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="bottom" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()}>
+            <Button isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdAdd />
             </Button>
           </Tooltip>
 
           <Tooltip placement="bottom" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button mx={1} isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()}>
+            <Button isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdRemove />
             </Button>
           </Tooltip>
-        </ButtonGroup >
+        </ButtonGroup>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           {/* Colors */}
           {colors.map((color) => {
             return (
-              <Button mx={0.5}
+              <Button
                 key={color}
                 value={color}
                 bgColor={color}
@@ -235,19 +235,21 @@ function ToolbarComponent(props: App): JSX.Element {
                 _active={{ background: color, opacity: 0.9 }}
                 size="xs"
                 onClick={() => updateState(props._id, { color: color })}
-              > </Button>
+              >
+                {' '}
+              </Button>
             );
           })}
         </ButtonGroup>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="bottom" hasArrow={true} label={'Download as Text'} openDelay={400}>
-            <Button onClick={downloadTxt}>
+            <Button onClick={downloadTxt} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdFileDownload />
             </Button>
           </Tooltip>
           <Tooltip placement="bottom" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
-            <Button mx={1} onClick={downloadMd} colorScheme="pink">
+            <Button onClick={downloadMd} colorScheme="pink" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdFileDownload />
             </Button>
           </Tooltip>

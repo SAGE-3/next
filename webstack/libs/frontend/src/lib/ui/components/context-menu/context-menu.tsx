@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useColorModeValue } from "@chakra-ui/react";
 
 import './style.scss';
+import { useUIStore } from '../../../stores';
 
 /**
  * ContextMenu component
@@ -22,12 +23,16 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   // Hide menu
   const [showContextMenu, setShowContextMenu] = useState(false);
 
+  // Set the position of the context menu
+  const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
+
   const handleContextMenu = useCallback((event: any) => {
     event.preventDefault();
     // Check if right div ID is clicked
     if (event.target.id === props.divId) {
       // local position plus board position
       setContextMenuPos({ x: event.clientX, y: event.clientY, });
+      setContextMenuPosition({ x: event.clientX, y: event.clientY, });
       setTimeout(() => setShowContextMenu(true));
     }
   }, [setContextMenuPos, props.divId]);

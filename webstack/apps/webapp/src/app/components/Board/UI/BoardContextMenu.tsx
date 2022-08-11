@@ -8,8 +8,17 @@
 
 import { useState } from 'react';
 import {
-  Menu, MenuGroup, MenuItem, MenuItemOption, MenuOptionGroup,
-  Button, useColorModeValue, VStack, Text, Checkbox
+  Menu,
+  MenuGroup,
+  MenuItem,
+  MenuItemOption,
+  MenuOptionGroup,
+  Button,
+  useColorModeValue,
+  VStack,
+  Text,
+  Checkbox,
+  Divider,
 } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/apps';
@@ -22,7 +31,7 @@ type ContextProps = {
 };
 
 // State of the checkboxes in context menu: grid ui
-const savedRadios = [true, true];
+const savedRadios = [false, true];
 
 export function BoardContextMenu(props: ContextProps) {
   // User information
@@ -34,6 +43,13 @@ export function BoardContextMenu(props: ContextProps) {
   const setGridSize = useUIStore((state) => state.setGridSize);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const flipUI = useUIStore((state) => state.flipUI);
+  const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
+
+  // UI Menu position setters
+  const setMenuPanelPosition = useUIStore((state) => state.setMenuPanelPosition);
+  const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
+  const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
+  const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
 
   // State of the checkboxes in context menu: grid ui
   const [radios, setRadios] = useState(savedRadios);
@@ -62,26 +78,42 @@ export function BoardContextMenu(props: ContextProps) {
     savedRadios[1] = val;
   };
 
+  console.log(contextMenuPosition);
   return (
     <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto" w={160}>
-
-      <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={"none"}>
+      <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold" >
         Actions
       </Text>
-
-      <VStack w={"100%"}>
+      <VStack w={'100%'}>
         <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start">
           Fit View to Board
         </Button>
         <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start">
           Show all Apps
         </Button>
-        <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor}
-          justifyContent="flex-start" onClick={props.clearBoard}>
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={props.clearBoard}
+        >
           Clear Board
         </Button>
-        <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor}
-          justifyContent="flex-start" onClick={() => {
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={() => {
             const width = 700;
             const height = 700;
             // Calculate X and Y of app based on the current board position and the width and height of the viewport
@@ -110,16 +142,92 @@ export function BoardContextMenu(props: ContextProps) {
         </Button>
       </VStack>
 
-      <VStack w={"100%"}>
-        <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={"none"}>
+      <VStack w={'100%'}>
+      <Divider/>
+        <Text className="header" color={textColor} fontSize={18} fontWeight="bold"  h={'auto'} cursor="move" userSelect={'none'}>
           Options
         </Text>
-        <Checkbox w={"100%"} size={'sm'} fontSize={14} color={textColor} justifyContent="flex-start"
-          isChecked={radios[0]} onChange={onGridChange}>Snap to Grid</Checkbox>
-        <Checkbox w={"100%"} size={'sm'} fontSize={14} color={textColor} justifyContent="flex-start"
-          isChecked={radios[1]} onChange={onUIChange}>Show Interface</Checkbox>
+        <Checkbox
+          w={'100%'}
+          size={'sm'}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          isChecked={radios[0]}
+          onChange={onGridChange}
+        >
+          Snap to Grid
+        </Checkbox>
+        <Checkbox
+          w={'100%'}
+          size={'sm'}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          isChecked={radios[1]}
+          onChange={onUIChange}
+        >
+          Show Interface
+        </Checkbox>
       </VStack>
-
+      <VStack w={'100%'}>
+      <Divider/>
+      <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
+          Move Panels
+        </Text>
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={() => setMenuPanelPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
+        >
+          Menu
+        </Button>
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={() => setAppPanelPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
+        >
+          Applications
+        </Button>
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={() => setminimapPanelPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
+        >
+          Minimap
+        </Button>
+        <Button
+          w="100%"
+          borderRadius={2}
+          h="auto"
+          p={1}
+          mt={0}
+          fontSize={14}
+          color={textColor}
+          justifyContent="flex-start"
+          onClick={() => setAppToolbarPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
+        >
+          App Toolbar
+        </Button>
+      </VStack>
     </VStack>
   );
 }

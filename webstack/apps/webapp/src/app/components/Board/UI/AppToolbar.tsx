@@ -6,28 +6,59 @@
  *
  */
 
-import { Box, useColorModeValue, Text } from '@chakra-ui/react';
-import { Applications } from '@sage3/applications/apps';
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { Box, Button, Select, useColorModeValue, useDisclosure, Text } from '@chakra-ui/react';
+import { AssetModal, UploadModal, useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { Applications, initialValues } from '@sage3/applications/apps';
+import { AppName, AppState } from '@sage3/applications/schema';
+import { MiniMap } from './Minimap';
 import { Rnd } from 'react-rnd';
-type MinimapProps = {
+import { useRef, useState } from 'react';
+
+type AppToolbarProps = {
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
 };
-export function MiniMap(props: MinimapProps) {
+
+/**
+ * AppToolbar Component
+ *
+ * @export
+ * @param {AppToolbarProps} props
+ * @returns
+ */
+export function AppToolbar(props: AppToolbarProps) {
+  // User information
+  const { user } = useUser();
+
   // App Store
+  const createApp = useAppStore((state) => state.create);
   const apps = useAppStore((state) => state.apps);
-  // UI store
-  const showUI = useUIStore((state) => state.showUI);
+
+  // UI Store
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+
   // Theme
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
 
+  // UI store
+  const showUI = useUIStore((state) => state.showUI);
+
   function handleDblClick(e: any) {
     e.stopPropagation();
   }
 
+  const app = apps.find((app) => app._id === selectedApp);
+
+  function getAppToolbar() {
+    if (app) {
+      const Component = Applications[app.data.type].ToolbarComponent;
+      return <Component key={app._id} {...app}></Component>;
+    } else {
+      return <Text>No App Selected</Text>;
+    }
+  }
   if (showUI)
     return (
     <Rnd
@@ -61,28 +92,11 @@ export function MiniMap(props: MinimapProps) {
         />
 
         <Box display="flex" flexDirection="column">
-          <Text w="100%" textAlign="center"  color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
-            Minimap
+          <Text w="100%" textAlign="left" mx={1} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
+            {app?.data.name}
           </Text>
-          <Box alignItems="center" p="1" width="100%" display="flex">
-            <Box height={2500 / 25 + 'px'} width={5000 / 25 + 'px'} backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
-              <Box position="absolute">
-                {apps.map((app) => {
-                  return (
-                    <Box
-                      key={app._id}
-                      backgroundColor="teal"
-                      position="absolute"
-                      left={app.data.position.x / 25 + 'px'}
-                      top={app.data.position.y / 25 + 'px'}
-                      width={app.data.size.width / 25 + 'px'}
-                      height={app.data.size.height / 25 + 'px'}
-                      transition={'all .2s'}
-                    ></Box>
-                  );
-                })}
-              </Box>
-            </Box>
+          <Box alignItems="center" p="1" width="100%" display="flex" height="32px">
+            {getAppToolbar()}
           </Box>
         </Box>
       </Box>

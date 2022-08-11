@@ -11,6 +11,7 @@ import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box } fr
 import { Rnd } from 'react-rnd';
 
 import { useUIStore } from '@sage3/frontend';
+import { X } from 'vega-lite/build/src/channel';
 
 // Pass the font size between the panel and the buttons
 const bigFont = 18;
@@ -51,6 +52,8 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export type PanelProps = {
   title: string;
   opened: boolean;
+  position: {x: number, y: number};
+  setPosition: (pos: { x: number; y: number }) => void;
   children?: JSX.Element[];
 };
 
@@ -84,9 +87,11 @@ export function Panel(props: PanelProps) {
   if (showUI)
     return (
       <Rnd
+        position={{...props.position}}
         bounds="window"
         size={{ width: w, height: '100px' }}
         onDoubleClick={handleDblClick}
+        onDragStop={(e, data) => { props.setPosition({x: data.x, y: data.y}); }}
         enableResizing={false}
         dragHandleClassName="header" // only allow dragging the header
       >

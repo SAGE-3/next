@@ -42,19 +42,9 @@ export function BoardFooter(props: FooterProps) {
     <Box display="flex" width="100vw" p={2} position="absolute" bottom="0" justifyContent="space-between" pointerEvents={"none"}>
       <Box display="flex" justifyContent="left" alignItems="end">
 
-        {/* App Toolbar - TODO - Temporary location for right now*/}
-        <Box alignItems="center" mx="1" backgroundColor="gray" p="2">
-          {apps
-            .filter((el) => el._id === selectedApp)
-            .map((app) => {
-              const Component = Applications[app.data.type].ToolbarComponent;
-              return <Component key={app._id} {...app}></Component>;
-            })}
-        </Box>
-
       </Box>
       <Box display="flex" alignContent={'end'} justifyContent="right">
-        <MiniMap/>
+       
       </Box>
     </Box>
   );

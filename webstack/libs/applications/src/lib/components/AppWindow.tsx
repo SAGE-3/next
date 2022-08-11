@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, Button, Text } from '@chakra-ui/react';
+import { Box, Text } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
@@ -63,9 +63,7 @@ export function AppWindow(props: WindowProps) {
     setPos({ x, y });
     update(props.app._id, {
       position: {
-        x,
-        y,
-        z: props.app.data.position.z,
+        x, y, z: props.app.data.position.z,
       },
     });
   }
@@ -106,6 +104,7 @@ export function AppWindow(props: WindowProps) {
     // Set local state
     setSize({ width, height });
     setPos({ x: position.x, y: position.y });
+
   }
 
   // Close the app and delete from server
@@ -123,7 +122,7 @@ export function AppWindow(props: WindowProps) {
     // Set the selected app in the UI store
     setSelectedApp(props.app._id);
     // Bring to front function
-    // Have to set something to trigger an update.
+    // Have to set something to trigger an update. 
     update(props.app._id, { raised: true });
   }
 
@@ -137,13 +136,13 @@ export function AppWindow(props: WindowProps) {
       onResizeStop={handleResizeStop}
       onResize={handleResize}
       onResizeStart={handleAppClick}
-      // onClick={handleAppClick}
+      onClick={handleAppClick}
       onDoubleClick={handleAppClick}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
-        borderRadius: '10px',
+        borderRadius: '10px'
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
@@ -157,39 +156,22 @@ export function AppWindow(props: WindowProps) {
       enableResizing={!minimized}
     >
       {/* Border Box around app to show it is selected */}
-      {selectedApp === props.app._id ? (
-        <Box
-          position="absolute"
-          left="-4px"
-          top="-4px"
-          width={size.width + 8}
-          height={minimized ? titleBarHeight + 8 + 'px' : size.height + titleBarHeight + 8 + 'px'}
-          border={`2px dashed ${sageColorByName('red')}`}
-          borderRadius="10px"
-          pointerEvents="none"
-        ></Box>
-      ) : (
-        <Box
-         className={selectedApp !== props.app._id ? 'handle' : 'nothandle'} // The CSS name react-rnd latches on to for the drag events
-          backgroundColor='gray.700'
-          width="100%"
-          height="100%"
-          position="absolute"
-          borderRadius="10px"
-          justifyContent="center"
-          alignItems="center"
-          display="flex"
-          opacity="0"
-          pointerEvents="all"
-          zIndex={2}
-          _hover={{ opacity: '.5' }}
-        >
-          <Button colorScheme={'red'} onClick={handleClose} mx={2}>X</Button>
-        </Box>
-      )}
+      {
+        (selectedApp === props.app._id) ? (
+          <Box
+            position="absolute"
+            left="-4px"
+            top="-4px"
+            width={size.width + 8}
+            height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
+            border={`${3 * 1/scale}px dashed ${sageColorByName('red')}`}
+            borderRadius="10px"
+            pointerEvents="none"
+          ></Box>) : null
+      }
       {/* Title Bar */}
       <Box
-        className={selectedApp === props.app._id ? 'handle' : 'nothandle'} // The CSS name react-rnd latches on to for the drag events
+        className="handle" // The CSS name react-rnd latches on to for the drag events
         display="flex"
         flexDirection="row"
         flexWrap="nowrap"
@@ -222,16 +204,9 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box
-        id={'app_' + props.app._id}
-        width={size.width}
-        height={size.height}
-        overflow="hidden"
-        display={minimized ? 'none' : 'inherit'}
-        pointerEvents={selectedApp === props.app._id ? 'all' : 'none'}
-      >
+      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={(minimized) ? 'none' : 'inherit'}>
         {props.children}
       </Box>
-    </Rnd>
+    </Rnd >
   );
 }
