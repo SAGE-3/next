@@ -8,7 +8,6 @@
 
 import { Avatar, Box } from '@chakra-ui/react';
 import { usePresenceStore } from '@sage3/frontend';
-import { sageColorByName } from '@sage3/shared';
 
 type AvatarGroupProps = {
   boardId: string;

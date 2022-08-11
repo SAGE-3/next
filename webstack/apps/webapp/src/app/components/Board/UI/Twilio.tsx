@@ -6,13 +6,10 @@
  *
  */
 
-import { Box, Icon, Tooltip } from '@chakra-ui/react';
 import { useTwilioStore, useUser } from '@sage3/frontend';
 import { useEffect } from 'react';
 
-import { SiTwilio } from 'react-icons/si';
-
-export function Twilio(props: { roomName: string, connect: boolean }) {
+export function Twilio(props: { roomName: string; connect: boolean }) {
   // User information
   const { user } = useUser();
 

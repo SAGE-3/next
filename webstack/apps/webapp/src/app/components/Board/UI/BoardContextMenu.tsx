@@ -7,20 +7,7 @@
  */
 
 import { useState } from 'react';
-import {
-  Menu,
-  MenuGroup,
-  MenuItem,
-  MenuItemOption,
-  MenuOptionGroup,
-  Button,
-  useColorModeValue,
-  VStack,
-  Text,
-  Checkbox,
-  Divider,
-  useColorMode,
-} from '@chakra-ui/react';
+import { Button, useColorModeValue, VStack, Text, Checkbox, Divider, useColorMode } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/apps';
 import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
@@ -52,7 +39,6 @@ export function BoardContextMenu(props: ContextProps) {
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
   const setInfoPanelPosition = useUIStore((state) => state.setInfoPanelPosition);
-
 
   // State of the checkboxes in context menu: grid ui
   const [radios, setRadios] = useState(savedRadios);

@@ -6,7 +6,7 @@
  *
  */
 
-import { Box, StatHelpText, useDisclosure } from '@chakra-ui/react';
+import { Box, useDisclosure } from '@chakra-ui/react';
 import { Applications, initialValues } from '@sage3/applications/apps';
 import { AppName } from '@sage3/applications/schema';
 import { AssetModal, ContextMenu, UploadModal, useAppStore, useBoardStore, useUIStore, useUser } from '@sage3/frontend';
@@ -81,13 +81,11 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
-    // Connect to Twilio only if there are Screenshares or Webcam apps
-    const twilioConnect = apps.filter(el => (el.data.type === 'Screenshare')).length > 0;
+  // Connect to Twilio only if there are Screenshares or Webcam apps
+  const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
 
   return (
     <Box display="flex" flexDirection="column" height="100vw">
-
-
       <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition}>
         {Object.keys(Applications).map((appName) => (
           <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
@@ -96,9 +94,14 @@ export function UILayer(props: UILayerProps) {
 
       <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition}>
         <ButtonPanel title="Home" textColor="white" backgroundColor="green.500" onClick={handleHomeClick} />
-        <ButtonPanel title="Asset Browser"  textColor="white" backgroundColor="blue.500" onClick={assetOnOpen} />
-        <ButtonPanel title="Upload"  textColor="white" backgroundColor="blue.500" onClick={uploadOnOpen} />
-        <ButtonPanel title="Clear Board"  textColor="white" backgroundColor="red.500" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
+        <ButtonPanel title="Asset Browser" textColor="white" backgroundColor="blue.500" onClick={assetOnOpen} />
+        <ButtonPanel title="Upload" textColor="white" backgroundColor="blue.500" onClick={uploadOnOpen} />
+        <ButtonPanel
+          title="Clear Board"
+          textColor="white"
+          backgroundColor="red.500"
+          onClick={() => apps.forEach((a) => deleteApp(a._id))}
+        />
       </Panel>
 
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
@@ -108,7 +111,12 @@ export function UILayer(props: UILayerProps) {
       <ContextMenu divId="board">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={() => apps.forEach((a) => deleteApp(a._id))} />
       </ContextMenu>
-      <InfoPanel title={(board?.data.name) ? board.data.name : ''} boardId={props.boardId} position={infoPanelPosition} setPosition={setInfoPanelPosition} />
+      <InfoPanel
+        title={board?.data.name ? board.data.name : ''}
+        boardId={props.boardId}
+        position={infoPanelPosition}
+        setPosition={setInfoPanelPosition}
+      />
       {/* Asset dialog */}
       <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
       {/* Upload dialog */}

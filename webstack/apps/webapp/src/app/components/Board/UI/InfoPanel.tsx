@@ -6,14 +6,14 @@
  *
  */
 
-import { Box, useColorModeValue, Text, Avatar, Divider, Tooltip, Icon } from '@chakra-ui/react';
-import { Applications } from '@sage3/applications/apps';
+import { Box, useColorModeValue, Text, Avatar, Tooltip, Icon } from '@chakra-ui/react';
 import { useAppStore, useUIStore, useUser, initials, useTwilioStore } from '@sage3/frontend';
 import { useState } from 'react';
 import { Rnd } from 'react-rnd';
 import { AvatarGroup } from './AvatarGroup';
 import { sageColorByName } from '@sage3/shared';
 import { SiTwilio } from 'react-icons/si';
+
 type InfoPanelProps = {
   position: { x: number; y: number };
   boardId: string;

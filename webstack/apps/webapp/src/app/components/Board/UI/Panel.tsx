@@ -11,7 +11,6 @@ import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box } fr
 import { Rnd } from 'react-rnd';
 
 import { useUIStore } from '@sage3/frontend';
-import { X } from 'vega-lite/build/src/channel';
 
 // Pass the font size between the panel and the buttons
 const bigFont = 18;
@@ -37,9 +36,8 @@ export function ButtonPanel(props: ButtonPanelProps) {
           h="auto"
           p={1}
           pl={2}
-
           fontSize={value}
-          color={(props.textColor) ? props.textColor : textColor}
+          color={props.textColor ? props.textColor : textColor}
           justifyContent="flex-start"
         >
           {props.title}
@@ -53,7 +51,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export type PanelProps = {
   title: string;
   opened: boolean;
-  position: {x: number, y: number};
+  position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
   children?: JSX.Element[];
 };
@@ -68,7 +66,7 @@ export type PanelProps = {
 export function Panel(props: PanelProps) {
   // Track the size of the panel
   const [w, setW] = useState(200);
-  const [hover, setHover] = useState(false)
+  const [hover, setHover] = useState(false);
   // Track the font sizes of the panel
   const [fontsize, setFontsize] = useState(bigFont);
   const [fontsize2, setFontsize2] = useState(smallFont);
@@ -89,15 +87,18 @@ export function Panel(props: PanelProps) {
   if (showUI)
     return (
       <Rnd
-        position={{...props.position}}
+        position={{ ...props.position }}
         bounds="window"
         size={{ width: w, height: '100px' }}
         onDoubleClick={handleDblClick}
         onDragStart={() => setHover(true)}
-        onDragStop={(e, data) => { setHover(false); props.setPosition({x: data.x, y: data.y}); }}
+        onDragStop={(e, data) => {
+          setHover(false);
+          props.setPosition({ x: data.x, y: data.y });
+        }}
         enableResizing={false}
         dragHandleClassName="header" // only allow dragging the header
-        style={{transition: hover ? 'none' : 'all 1s'}}
+        style={{ transition: hover ? 'none' : 'all 1s' }}
       >
         <Box
           display="flex"
@@ -136,11 +137,9 @@ export function Panel(props: PanelProps) {
                     css={{
                       '&::-webkit-scrollbar': {
                         width: '6px',
-                    
                       },
                       '&::-webkit-scrollbar-track': {
                         width: '6px',
-             
                       },
                       '&::-webkit-scrollbar-thumb': {
                         background: gripColor,

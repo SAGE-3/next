@@ -7,14 +7,15 @@
  */
 
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
-import { Applications } from '@sage3/applications/apps';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { useState } from 'react';
 import { Rnd } from 'react-rnd';
+
 type MinimapProps = {
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
 };
+
 export function MiniMap(props: MinimapProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);

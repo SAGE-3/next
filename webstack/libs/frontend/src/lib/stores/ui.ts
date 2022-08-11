@@ -28,18 +28,22 @@ interface UIState {
   showUI: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
-  menuPanelPosition:  { x: number; y: number };
-  appPanelPosition:  { x: number; y: number };
-  appToolbarPanelPosition:  { x: number; y: number };
-  minimapPanelPosition:  { x: number; y: number };
-  contextMenuPosition:  { x: number; y: number };
-  infoPanelPosition:  { x: number; y: number };
-  setInfoPanelPosition: (position: { x: number; y: number }) => void;
-  setContextMenuPosition: (pos: {x: number, y: number}) => void;
+
+  // Panels & Context Menu
+  menuPanelPosition: { x: number; y: number };
+  setMenuPanelPosition: (pos: { x: number; y: number }) => void;
+  appPanelPosition: { x: number; y: number };
+  setAppPanelPosition: (pos: { x: number; y: number }) => void;
+  appToolbarPanelPosition: { x: number; y: number };
+  setAppToolbarPosition: (pos: { x: number; y: number }) => void;
+  minimapPanelPosition: { x: number; y: number };
   setminimapPanelPosition: (pos: { x: number; y: number }) => void;
-  setMenuPanelPosition: (pos:  { x: number; y: number }) => void;
-  setAppPanelPosition: (pos:  { x: number; y: number }) => void;
-  setAppToolbarPosition: (pos:  { x: number; y: number }) => void;
+  infoPanelPosition: { x: number; y: number };
+  setInfoPanelPosition: (position: { x: number; y: number }) => void;
+  contextMenuPosition: { x: number; y: number };
+  setContextMenuPosition: (pos: { x: number; y: number }) => void;
+
+
   setBoardPosition: (pos: { x: number; y: number }) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
@@ -65,12 +69,12 @@ export const useUIStore = create<UIState>((set) => ({
   minimapPanelPosition: { x: 20, y: 690 },
   infoPanelPosition: { x: 20, y: 20 },
   contextMenuPosition: { x: 0, y: 0 },
-  setInfoPanelPosition:(pos: { x: number; y: number }) => set((state) => ({ ...state, infoPanelPosition: pos })),
-  setContextMenuPosition: (pos: {x: number, y: number}) => set((state) => ({ ...state, contextMenuPosition: pos })),
+  setInfoPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, infoPanelPosition: pos })),
+  setContextMenuPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, contextMenuPosition: pos })),
   setminimapPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, minimapPanelPosition: pos })),
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
-  setAppPanelPosition: (pos:  { x: number; y: number }) => set((state) => ({ ...state, appPanelPosition: pos })),
-  setMenuPanelPosition: (pos:  { x: number; y: number }) => set((state) => ({ ...state, menuPanelPosition: pos })),
+  setAppPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appPanelPosition: pos })),
+  setMenuPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, menuPanelPosition: pos })),
   setBoardPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, boardPosition: pos })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
