@@ -17,6 +17,8 @@ export type state = {
   rowsPerPage: number;
   currentPage: number;
   pageNumbers: number[];
+  indexOfFirstRow: number;
+  indexOfLastRow: number;
 
   selectedCols: string[];
   selectedCol: string;
@@ -39,6 +41,8 @@ export const init: Partial<state> = {
   rowsPerPage: 3,
   currentPage: 1,
   pageNumbers: [],
+  indexOfFirstRow: 0,
+  indexOfLastRow: 0,
 
   selectedCols: [],
   selectedCol: "",

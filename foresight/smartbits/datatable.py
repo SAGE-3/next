@@ -15,6 +15,7 @@ import math
 
 PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 
+
 class DataTableState(TrackedBaseModel):
     executeInfo: ExecuteInfo
 
@@ -24,6 +25,8 @@ class DataTableState(TrackedBaseModel):
     rowsPerPage: int
     currentPage: int
     pageNumbers: list
+    indexOfFirstRow: int
+    indexOfLastRow: int
 
     selectedCols: list
     selectedCol: str
@@ -32,7 +35,6 @@ class DataTableState(TrackedBaseModel):
     selectedRow: str
 
     timestamp: float
-
 
 
 class DataTable(SmartBit):
@@ -57,9 +59,9 @@ class DataTable(SmartBit):
             pageNumbers.append(i);
             i += 1
         self.state.pageNumbers = pageNumbers
-        index_of_last_row = self.state.currentPage * self.state.rowsPerPage
-        index_of_first_row = index_of_last_row - self.state.rowsPerPage
-        self._current_rows = self._modified_df.iloc[index_of_first_row:index_of_last_row]
+        self.state.indexOfLastRow = self.state.currentPage * self.state.rowsPerPage
+        self.state.indexOfFirstRow = self.state.indexOfLastRow - self.state.rowsPerPage
+        self._current_rows = self._modified_df.iloc[self.state.indexOfFirstRow:self.state.indexOfLastRow]
         print("_current_rows")
         print(self._current_rows)
         self.state.viewData = self._current_rows.to_dict("split")
@@ -97,8 +99,7 @@ class DataTable(SmartBit):
         print("=======================")
         self.send_updates()
 
-
-# TODO, add a decorator to automatically set executeFunc
+    # TODO, add a decorator to automatically set executeFunc
     # and params to ""
     def load_data(self):
         self._df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
@@ -138,6 +139,19 @@ class DataTable(SmartBit):
         print("I am sending this information")
         self.send_updates()
 
+    def drop_rows(self, selected_rows):
+        selected_rows = list(map(int, selected_rows))
+        self._modified_df.drop(selected_rows, inplace=True)
+        self.paginate()
+        self.state.selectedRows = []
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("---------------------------------------------------------")
+        print("drop_rows")
+        print("I am sending this information")
+        self.send_updates()
+
     def transpose_table(self):
         self._modified_df.transpose()
         self.paginate()
@@ -174,18 +188,15 @@ class DataTable(SmartBit):
         print("I am sending this information")
         self.send_updates()
 
-    def drop_column(self, col):
-        self._modified_df.drop(columns=col, inplace=True)
-        self.state.selectedCol = ""
+    def drop_column(self, selected_col):
+        self._modified_df.drop(columns=selected_col, inplace=True)
         self.paginate()
-        self.state.selectedCols = []
+        self.state.selectedCol = ""
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("---------------------------------------------------------")
         print("drop_column")
-        print(f"column: {col}")
+        print(f"column: {selected_col}")
         print("I am sending this information")
         self.send_updates()
-
-

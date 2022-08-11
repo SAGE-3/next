@@ -25,19 +25,19 @@
   padding: 10px 10px;
 }
 
-th {
+.ColName {
   position: sticky;
   inset-block-start: 0;
   background-color: black;
   flex-direction: row;
   justify-content: space-between;
-  z-index: 1;
+  /*z-index: 1;*/
 }
 
 .indexColumn {
   position: sticky;
   inset-block-start: 0;
-  background-color: gray;
+  background-color: black;
   flex-direction: row;
   justify-content: space-between;
   z-index: 1;

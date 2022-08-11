@@ -27,7 +27,7 @@ import {
   Td,
   HStack,
   Menu, MenuButton, IconButton, MenuList, MenuItem, Portal,
-  Spinner,
+  Spinner, MenuDivider, Divider, ButtonGroup,
 } from '@chakra-ui/react'
 
 import {GoKebabVertical} from "react-icons/go";
@@ -67,7 +67,7 @@ const Pagination = (props: App): JSX.Element => {
     }
     console.log(rowDisplayOptions)
 
-    return(rowDisplayOptions)
+    return (rowDisplayOptions)
   }, [])
 
 
@@ -82,7 +82,7 @@ const Pagination = (props: App): JSX.Element => {
     console.log(s)
   }
 
-  const  handleRowDisplayCount = (rows: number) =>  {
+  const handleRowDisplayCount = (rows: number) => {
     updateState(props._id, {rowsPerPage: rows})
     updateState(props._id, {executeInfo: {"executeFunc": "paginate", "params": {}}})
   }
@@ -125,47 +125,47 @@ const Pagination = (props: App): JSX.Element => {
       setRightButtonDisable(true)
     }
     console.log("pagination useEffect")
-  },[s.currentPage])
+  }, [s.currentPage])
 
 
   //TODO Add focus to current page number
   return (
     <div>
-      <HStack display='flex' justify='center'>
-        <HStack spacing='5' display='flex' justify='center' zIndex='dropdown'>
-          <IconButton
-            aria-label='Page left'
-            icon={<FiArrowLeft/>}
-            variant='link'
-            onClick={() => handleLeftArrow()}
-            disabled={leftButtonDisable}
-          />
-          {s.pageNumbers.map((page: number) => (
-            <Button
-              key={page}
-              onClick={(e) => paginater(page)}
-              variant={s.currentPage === page ? 'solid' : 'link'}
-            >
-              {page}
-            </Button>
-          ))}
-          <IconButton
-            aria-label='Page right'
-            icon={<FiArrowRight/>}
-            variant='link'
-            onClick={() => handleRightArrow()}
-            disabled={rightButtonDisable}
-          />
-        </HStack>
+      <HStack spacing='5' display='flex' justify='center'>
+        <IconButton
+          aria-label='Page left'
+          icon={<FiArrowLeft/>}
+          variant='link'
+          onClick={() => handleLeftArrow()}
+          disabled={leftButtonDisable}
+        />
+        {s.pageNumbers.map((page: number) => (
+          <Button
+            key={page}
+            onClick={(e) => paginater(page)}
+            variant={s.currentPage === page ? 'solid' : 'link'}
+          >
+            {page}
+          </Button>
+        ))}
+        <IconButton
+          aria-label='Page right'
+          icon={<FiArrowRight/>}
+          variant='link'
+          onClick={() => handleRightArrow()}
+          disabled={rightButtonDisable}
+        />
+      </HStack>
+        <HStack justify='right'>
         <Menu size="xs">
-          <MenuButton as={Button} rightIcon={<FiChevronDown />} left='12rem' variant='solid' borderColor='black'>
+          <MenuButton as={Button} rightIcon={<FiChevronDown/>} variant='solid' size='xs'>
             {s.rowsPerPage}
           </MenuButton>
           <Portal>
-            <MenuList width='min-content'>
+            <MenuList>
               {
                 rowsPerPageArr.map((rows: number, key: number) => {
-                  return(
+                  return (
                     <MenuItem
                       key={key}
                       onClick={() => handleRowDisplayCount(rows)}
@@ -178,7 +178,11 @@ const Pagination = (props: App): JSX.Element => {
             </MenuList>
           </Portal>
         </Menu>
-      </HStack>
+        <Box fontSize='xs'>Rows per page</Box>
+        </HStack>
+      <Box fontSize='xs' font-style='oblique' float='right'>
+        <p>Showing {s.indexOfFirstRow} - {s.indexOfLastRow - 1} of {s.totalRows} rows</p>
+      </Box>
     </div>
   );
 };
@@ -197,13 +201,20 @@ function AppComponent(props: App): JSX.Element {
 
 
   // Array of function references to map through for table actions menu
-  const tableActions = [tableSort, dropColumns, transposeTable, restoreTable]
-  const tableMenuNames = ["Sort on Selected Columns", "Drop Selected Columns", "Transpose Table", "Restore Original Table"]
+  const tableColActions = [tableSort, dropColumns]
+  const tableColMenuNames = ["Sort on Selected Columns", "Drop Selected Columns"]
+
+  // Array of function references to map through for table actions menu
+  const tableRowActions = [dropRows]
+  const tableRowMenuNames = ["Drop Selected Rows"]
+
+  // Array of function references to map through for table actions menu
+  const tableActions = [transposeTable, restoreTable]
+  const tableMenuNames = ["Transpose Table", "Restore Original Table"]
 
   // Array of function references to map through for column actions menu
   const columnActions = [columnSort, dropColumn]
   const columnMenuNames = ["Sort on Column", "Drop Column"]
-
 
 
   function handleLoadData() {
@@ -269,25 +280,24 @@ function AppComponent(props: App): JSX.Element {
     console.log("TWO ARRAYS selectedCols useEffect")
   }, [JSON.stringify(s.selectedCols)])
 
-  // useEffect(() => {
-  //   const difference = indices.filter(x => !s.selectedRows.includes(x));
-  //   difference.map(String)
-  //   difference.forEach((row) => {
-  //     const rows = document.querySelectorAll("td[data-row=" + row + "]")
-  //     rows.forEach((cell: any) => {
-  //         cell.className = "originalChakra"
-  //       }
-  //     )
-  //   })
-  //   s.selectedRows.map(String).forEach((row) => {
-  //     const rows = document.querySelectorAll("td[data-row=" + row + "]")
-  //     rows.forEach((cell: any) => {
-  //         cell.className = "highlight"
-  //       }
-  //     )
-  //   })
-  //   console.log("TWO ARRAYS selectedCols useEffect")
-  // }, [JSON.stringify(s.selectedCols)])
+  useEffect(() => {
+    const difference = indices.filter(x => !s.selectedCols.includes(x));
+    difference.forEach((row) => {
+      const rows = document.querySelectorAll("td[data-row='" + row + "']")
+      rows.forEach((cell: any) => {
+          cell.className = "originalChakra"
+        }
+      )
+    })
+    s.selectedRows.forEach((row) => {
+      const rows = document.querySelectorAll("td[data-row='" + row + "']")
+      rows.forEach((cell: any) => {
+          cell.className = "highlight"
+        }
+      )
+    })
+    console.log("TWO ARRAYS selectedRows useEffect")
+  }, [JSON.stringify(s.selectedRows)])
 
   //TODO Warning: A component is changing an uncontrolled input to be controlled.
   // This is likely caused by the value changing from undefined to a defined value,
@@ -315,11 +325,20 @@ function AppComponent(props: App): JSX.Element {
         if (!s.selectedCols?.includes(info)) {
           const checked = s.selectedCols.concat(info)
           updateState(props._id, {selectedCols: checked})
-          updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' column selected'});
+          updateState(props._id,
+            {
+              messages:
+                (info).charAt(0).toUpperCase() + (info).slice(1) + ' column selected ---'
+                + ' Selected Columns: ' + checked.toString()
+            });
         } else {
           const unchecked = (() => (s.selectedCols?.filter((item: string) => item != info)))()
           updateState(props._id, {selectedCols: unchecked})
-          updateState(props._id, {messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' column unselected'});
+          updateState(props._id,
+            {
+              messages: (info).charAt(0).toUpperCase() + (info).slice(1) + ' column unselected ---'
+                + ' Selected Columns: ' + unchecked.toString()
+            });
         }
       }
     )
@@ -327,33 +346,18 @@ function AppComponent(props: App): JSX.Element {
 
   function handleRowClick(info: string) {
     const row = document.querySelectorAll("td[data-row='" + info + "']")
-    console.log(row)
-    // const cols = document.querySelectorAll("td[data-col=" + info + "]")
-    // if (!s.selectedRows?.includes(info)) {
-    //   const checked = s.selectedRows.concat(info)
-    //   updateState(props._id, {selectedRows: checked})
-    //   updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
-    //   row.style.backgroundColor = "yellow"
-    // } else {
-    //   const unchecked = (() => (s.selectedRows?.filter((item: number) => item != info)))()
-    //   updateState(props._id, {selectedRows: unchecked})
-    //   updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
-    //   // row.className = "originalChakra"
-    // }
-    // console.log("row " + row)
     row.forEach((cell: any) => {
         if (!s.selectedRows?.includes(info)) {
           const checked = s.selectedRows.concat(info)
           updateState(props._id, {selectedRows: checked})
-          updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
-          cell.className = "highlight"
+          updateState(props._id, {messages: 'Row ' + info + ' selected ---' + ' Selected Rows: ' + checked.toString()});
+          // cell.className = "highlight"
         } else {
           const unchecked = (() => (s.selectedRows?.filter((item: string) => item != info)))()
           updateState(props._id, {selectedRows: unchecked})
-          updateState(props._id, {messages: 'Row ' + {info} + ' selected'});
-          cell.className = "originalChakra"
+          updateState(props._id, {messages: 'Row ' + info + ' unselected ---' + ' Selected Rows: ' + unchecked.toString()});
+          // cell.className = "originalChakra"
         }
-        console.log("row" + row)
       }
     )
     console.log("row " + info + " clicked")
@@ -381,12 +385,27 @@ function AppComponent(props: App): JSX.Element {
     console.log(s.executeInfo)
     console.log("----")
     console.log(s)
+    //
+    // const cols = document.querySelectorAll("td")
+    // cols.forEach((cell: any) => {
+    //     cell.className = "originalChakra"
+    //   }
+    // )
+  }
 
-    const cols = document.querySelectorAll("td")
-    cols.forEach((cell: any) => {
-        cell.className = "originalChakra"
-      }
-    )
+  function dropRows() {
+    console.log("Dropping rows: " + s.selectedRows)
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "drop_rows", "params": {"selected_rows": s.selectedRows}}})
+    console.log(s.executeInfo)
+    console.log("----")
+    console.log(s)
+    //
+    // const cols = document.querySelectorAll("td")
+    // cols.forEach((cell: any) => {
+    //     cell.className = "originalChakra"
+    //   }
+    // )
   }
 
   function transposeTable() {
@@ -419,19 +438,14 @@ function AppComponent(props: App): JSX.Element {
   }
 
   function dropColumn(column: any) {
-    updateState(props._id, {selectedCol: column})
-    console.log("Dropping column: " + s.selectedCol)
     updateState(props._id,
       {executeInfo: {"executeFunc": "drop_column", "params": {"selected_col": s.selectedCol}}})
+    const selectedCols = s.selectedCols.filter(function(e) { return e !== column })
+    updateState(props._id, {selectedCols: selectedCols})
+    updateState(props._id, {messages: ""})
     console.log(s.executeInfo)
     console.log("----")
     console.log(s)
-
-    // const cols = document.querySelectorAll("td")
-    // cols.forEach((cell: any) => {
-    //     cell.className = "originalChakra"
-    //   }
-    // )
   }
 
   return (
@@ -451,6 +465,30 @@ function AppComponent(props: App): JSX.Element {
             />
             <Portal>
               <MenuList>
+                {tableColActions.map((action, key) => {
+                  return (
+                    <MenuItem
+                      key={key}
+                      onClick={action}
+                    >
+                      {tableColMenuNames[key]}
+                    </MenuItem>
+                  )
+                })
+                }
+                <MenuDivider/>
+                {tableRowActions.map((action, key) => {
+                  return (
+                    <MenuItem
+                      key={key}
+                      onClick={action}
+                    >
+                      {tableRowMenuNames[key]}
+                    </MenuItem>
+                  )
+                })
+                }
+                <MenuDivider/>
                 {tableActions.map((action, key) => {
                   return (
                     <MenuItem
@@ -494,59 +532,64 @@ function AppComponent(props: App): JSX.Element {
           />
         </Center>
 
-        <div>
-          <p>s.selectedCols: {s.selectedCols}</p>
-          <p>s.selectedRows: {s.selectedRows}</p>
-        </div>
-
         <div style={{display: s.totalRows !== 0 ? "block" : "none"}}>
-          <TableContainer overflowY="auto" display="flex" maxHeight="250px">
+          <TableContainer overflowY="auto" display="flex" maxHeight="300px">
             <Table colorScheme="facebook" variant='simple' size="sm" className="originalChakra">
               <Thead>
                 <Tr>
-                  <Th className="indexColumn">
-                  </Th>
-                  {
-                    headers?.map((header: any, index: number) => (
-                      <Th
-                        key={index}
-                        onClick={(e) => handleColClick(header)}
-                      >
-                        {header}
-                        {/* TODO Make column menus disappear*/}
-                        <Menu>
-                          {({isOpen}) => (
-                            <>
-                              <MenuButton
-                                as={IconButton}
-                                aria-label='Options'
-                                size='sm'
-                                variant='ghost'
-                                icon={<FiChevronDown/>}
-                                ml='20%'
-                                isActive={isOpen}
-                              />
-                              <Portal>
-                                <MenuList>
-                                  {columnActions.map((action, key) => {
-                                    return (
-                                      <MenuItem
-                                        key={key}
-                                        onClick={action}
-                                      >
-                                        {columnMenuNames[key]}
-                                      </MenuItem>
-                                    )
-                                  })
-                                  }
-                                </MenuList>
-                              </Portal>
-                            </>
-                          )}
-                        </Menu>
-                      </Th>
-                    ))
-                  }
+                  <>
+                    <Th className="indexColumn"/>
+                    {
+                      headers?.map((header: any, index: number) => (
+                        <Th className="ColName" >
+                          <ButtonGroup colorScheme="black" display="flex" size='sm'>
+                            <Button
+                              key={index}
+                              onClick={(e) => handleColClick(header)}
+                              width='80%'
+                              variant='ghost'
+                              border-radius='0px'
+                              justifyContent='flex-start'
+                            >
+                              {header}
+                              {/* TODO Make column menus disappear*/}
+                            </Button>
+                            <Menu>
+                              <>
+                                <MenuButton
+                                  as={IconButton}
+                                  aria-label='Options'
+                                  size='sm'
+                                  variant='link'
+                                  icon={<FiChevronDown/>}
+                                  right='1%'
+                                  onClick={(e) => {
+                                    updateState(props._id, {selectedCol: header})
+                                  }}
+
+                                />
+                                <Portal>
+                                  <MenuList>
+                                    {columnActions.map((action, key) => {
+                                      return (
+                                        <MenuItem
+                                          key={key}
+                                          onClick={action}
+                                        >
+                                          {columnMenuNames[key]}
+                                        </MenuItem>
+                                      )
+                                    })
+                                    }
+                                  </MenuList>
+                                </Portal>
+                              </>
+                            </Menu>
+                          </ButtonGroup>
+                        </Th>
+                      ))
+                    }
+                  </>
                 </Tr>
               </Thead>
 
@@ -558,7 +601,7 @@ function AppComponent(props: App): JSX.Element {
                       // data-row={rowIndex}
                     >
                       <Td key={rowIndex}
-                          // data-row={rowIndex}
+                        // data-row={rowIndex}
                           className="indexTd"
                           onClick={(e) => handleRowClick(rowIndex.toString())}
                       >
