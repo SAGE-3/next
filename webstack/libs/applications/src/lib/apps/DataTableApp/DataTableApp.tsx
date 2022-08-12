@@ -31,7 +31,7 @@ import {
 } from '@chakra-ui/react'
 
 import {GoKebabVertical} from "react-icons/go";
-import {FiArrowLeft, FiArrowRight, FiChevronDown} from "react-icons/fi";
+import {FiArrowLeft, FiArrowRight, FiChevronDown, FiMoreHorizontal} from "react-icons/fi";
 
 
 import {useAppStore} from '@sage3/frontend';
@@ -53,9 +53,8 @@ const Pagination = (props: App): JSX.Element => {
 
   const [leftButtonDisable, setLeftButtonDisable] = useState(true)
   const [rightButtonDisable, setRightButtonDisable] = useState(true)
-  // const [rowDisplayOptions, setRowDisplayOptions] = useState([])
-  // const [minRows, setMinRows] = useState(1)
-  // const [maxRows, setMaxRows] = useState(5)
+  const [pageNumbers, setPageNumbers] = useState([0])
+
 
   const rowsPerPageArr = useMemo(() => {
     const rowDisplayOptions = []
@@ -116,16 +115,25 @@ const Pagination = (props: App): JSX.Element => {
   useEffect(() => {
     if (s.currentPage !== 1) {
       setLeftButtonDisable(false)
+      if (s.currentPage + 1 !== s.pageNumbers.length) {
+        setPageNumbers([s.currentPage - 1, s.currentPage, s.currentPage + 1])
+      }
     } else {
       setLeftButtonDisable(true)
+      if (s.pageNumbers.length > 1) {
+        setPageNumbers([1, 2])
+      } else {
+        setPageNumbers([1])
+      }
     }
     if (s.currentPage !== s.pageNumbers.length) {
       setRightButtonDisable(false)
     } else {
       setRightButtonDisable(true)
+      setPageNumbers([s.currentPage - 1, s.currentPage])
     }
     console.log("pagination useEffect")
-  }, [s.currentPage])
+  }, [s.currentPage, JSON.stringify(s.pageNumbers)])
 
 
   //TODO Add focus to current page number
@@ -139,7 +147,32 @@ const Pagination = (props: App): JSX.Element => {
           onClick={() => handleLeftArrow()}
           disabled={leftButtonDisable}
         />
-        {s.pageNumbers.map((page: number) => (
+        <div style={
+          {display:
+              s.currentPage - 1 !== 1
+              && s.currentPage !== 1 ? "block" : "none"}}
+        >
+          <Menu>
+            <MenuButton as={IconButton} icon={<FiMoreHorizontal/>} variant='link' size='xs'>
+              {s.rowsPerPage}
+            </MenuButton>
+            <Portal>
+              <MenuList display='flex' maxW='xs' minW='0' width='5px'>
+                {s.pageNumbers.map((page: number) => (
+                  <Button
+                    key={page}
+                    onClick={(e) => paginater(page)}
+                    variant={s.currentPage === page ? 'solid' : 'link'}
+                    size='sm'
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </MenuList>
+            </Portal>
+          </Menu>
+        </div>
+        {pageNumbers.map((page: number) => (
           <Button
             key={page}
             onClick={(e) => paginater(page)}
@@ -148,6 +181,30 @@ const Pagination = (props: App): JSX.Element => {
             {page}
           </Button>
         ))}
+        <div style={
+          {display:
+              s.currentPage + 1 !== s.pageNumbers.length
+              && s.currentPage !== s.pageNumbers.length ? "block" : "none"}}
+        >
+          <Menu size="xs">
+            <MenuButton as={IconButton} icon={<FiMoreHorizontal/>} variant='link' size='xs'>
+              {s.rowsPerPage}
+            </MenuButton>
+            <Portal>
+              <MenuList>
+                {s.pageNumbers.map((page: number) => (
+                  <Button
+                    key={page}
+                    onClick={(e) => paginater(page)}
+                    variant={s.currentPage === page ? 'solid' : 'link'}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </MenuList>
+            </Portal>
+          </Menu>
+        </div>
         <IconButton
           aria-label='Page right'
           icon={<FiArrowRight/>}
