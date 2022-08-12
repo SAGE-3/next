@@ -32,7 +32,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
         <Button
           {...props}
           w="100%"
-          borderRadius={10}
+          borderRadius="md"
           h="auto"
           p={1}
           pl={2}
@@ -98,13 +98,12 @@ export function Panel(props: PanelProps) {
         }}
         enableResizing={false}
         dragHandleClassName="header" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 1s' }}
+        style={{ transition: hover ? 'none' : 'all 0.3s' }}
       >
         <Box
           display="flex"
           boxShadow="outline"
           transition="all .5s "
-          _hover={{ transform: 'translate(-3px, -5px)', boxShadow: '2xl' }}
           bg={panelBackground}
           p="2"
           pl="1"
@@ -123,7 +122,7 @@ export function Panel(props: PanelProps) {
           <Box width="100%">
             <VStack bg={panelBackground} cursor="auto">
               <Tooltip placement="top" gutter={20} hasArrow={true} label={'Doubleclick to open/close'} openDelay={600}>
-                <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'} userSelect={'none'}>
+                <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'} userSelect={'none'} className="header">
                   {props.title}
                 </Text>
               </Tooltip>
@@ -143,7 +142,7 @@ export function Panel(props: PanelProps) {
                       },
                       '&::-webkit-scrollbar-thumb': {
                         background: gripColor,
-                        borderRadius: '24px',
+                        borderRadius: 'md',
                       },
                     }}
                   >

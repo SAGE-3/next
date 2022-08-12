@@ -450,7 +450,7 @@ function BaseCard(props: BoxProps) {
       border={borderColor()}
       w="xs"
       borderWidth="1px"
-      borderRadius="lg"
+      borderRadius="md"
       boxShadow="sm"
       overflow="hidden"
       px={5} py={3}

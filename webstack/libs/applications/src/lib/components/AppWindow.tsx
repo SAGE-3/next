@@ -142,7 +142,7 @@ export function AppWindow(props: WindowProps) {
       style={{
         boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
-        borderRadius: '10px'
+        borderRadius: '6px'
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
@@ -165,7 +165,7 @@ export function AppWindow(props: WindowProps) {
             width={size.width + 8}
             height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
             border={`${3 * 1/scale}px dashed ${sageColorByName('red')}`}
-            borderRadius="10px"
+            borderRadius="6px"
             pointerEvents="none"
           ></Box>) : null
       }
@@ -183,7 +183,7 @@ export function AppWindow(props: WindowProps) {
         overflow="hidden"
         whiteSpace="nowrap"
         height={titleBarHeight + 'px'} // The height of the title bar
-        borderRadius="10px 10px 0 0"
+        borderRadius="6px 6px 0 0"
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">

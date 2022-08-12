@@ -71,13 +71,12 @@ export function AppToolbar(props: AppToolbarProps) {
         }}
         enableResizing={false}
         dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 1s' }}
+        style={{ transition: hover ? 'none' : 'all 0.3s'}}
       >
         <Box
           display="flex"
           boxShadow="outline"
           transition="all .5s "
-          _hover={{ transform: 'translate(-3px, -5px)', boxShadow: '2xl' }}
           bg={panelBackground}
           p="2"
           rounded="md"
@@ -93,7 +92,7 @@ export function AppToolbar(props: AppToolbarProps) {
           />
 
           <Box display="flex" flexDirection="column">
-            <Text w="100%" textAlign="left" mx={1} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
+            <Text w="100%" textAlign="left" mx={1} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}  className="handle">
               {app?.data.name}
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px">

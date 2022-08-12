@@ -133,7 +133,7 @@ function AppComponent(props: App): JSX.Element {
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0}>
+      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0}  borderRadius="0 0 6px 6px">
         <Textarea
           ref={textbox}
           resize={'none'}
@@ -142,7 +142,6 @@ function AppComponent(props: App): JSX.Element {
           variant="outline"
           borderWidth="0px"
           p={4}
-          borderRadius="0"
           style={{ resize: 'none' }}
           aria-label="Note text"
           placeholder="Type here..."

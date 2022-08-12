@@ -55,13 +55,12 @@ export function InfoPanel(props: InfoPanelProps) {
         }}
         enableResizing={false}
         dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 1s' }}
+        style={{ transition: hover ? 'none' :'all 0.3s' }}
       >
         <Box
           display="flex"
           boxShadow="outline"
           transition="all .5s "
-          _hover={{ transform: 'translate(-3px, -5px)', boxShadow: '2xl' }}
           bg={panelBackground}
           p="2"
           rounded="md"
@@ -78,7 +77,7 @@ export function InfoPanel(props: InfoPanelProps) {
 
           <Box display="flex" flexDirection="column">
             <Box display="flex" justifyContent={'left'}>
-              <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
+              <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}  className="handle">
                 {props.title}
               </Text>
               <Tooltip pointerEvents={'all'} label={room ? 'Twilio Connected' : 'Twilio Disconnected'}>

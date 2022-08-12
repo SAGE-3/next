@@ -33,7 +33,7 @@ export function BoardCard(props: BoardCardProps) {
   return (
     <Box
       borderWidth='2px'
-      borderRadius='lg'
+      borderRadius='md'
       overflow='hidden'
       height="80px"
       my="2"
