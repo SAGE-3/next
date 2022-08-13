@@ -42,8 +42,6 @@ class CodeCell(SmartBit):
         elif 'stream' in msg:
             self.state.output = msg["stream"]["text"]
 
-
-
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
