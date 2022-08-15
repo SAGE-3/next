@@ -6,14 +6,15 @@
  *
  */
 
+import { useEffect, useState, useRef } from 'react';
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
 import { useAppStore, useUIStore } from '@sage3/frontend';
-import { useState } from 'react';
 import { Rnd } from 'react-rnd';
 
 type MinimapProps = {
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
+  stuck?: boolean;
 };
 
 export function MiniMap(props: MinimapProps) {
@@ -25,33 +26,53 @@ export function MiniMap(props: MinimapProps) {
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
-
+  // Hover state
   const [hover, setHover] = useState(false);
+  // Put in a corner
+  const [stuck, setStuck] = useState(props.stuck || false);
 
   function handleDblClick(e: any) {
     e.stopPropagation();
   }
 
+  useEffect(() => {
+    const resizeObserver = (e: UIEvent) => {
+      props.setPosition({ x: window.innerWidth - 262, y: window.innerHeight - 156 });
+    };
+    if (stuck) {
+      props.setPosition({ x: window.innerWidth - 262, y: window.innerHeight - 156 });
+      window.addEventListener('resize', resizeObserver);
+    }
+    return () => {
+      if (stuck) window.removeEventListener('resize', resizeObserver);
+    }
+  }, [stuck]);
+
   if (showUI)
     return (
       <Rnd
-        // default={{ x: props.position.x, y: props.position.y, width: '100%', height: '100px' }}
         position={{ ...props.position }}
-        bounds="window"
+        bounds="parent"
         onDoubleClick={handleDblClick}
         onDragStart={() => setHover(true)}
         onDragStop={(e, data) => {
           setHover(false);
           props.setPosition({ x: data.x, y: data.y });
+          // bottom right corner
+          if (data.x > (window.innerWidth - 265) && data.y > (window.innerHeight - 155)) {
+            setStuck(true);
+          } else {
+            setStuck(false);
+          }
         }}
         enableResizing={false}
         dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 0.3s' }}
+        style={{ transition: hover ? 'none' : 'all 0.2s' }}
       >
         <Box
           display="flex"
-          boxShadow="outline"
-          transition="all .5s "
+          boxShadow={stuck ? "base" : "outline"}
+          transition="all .2s "
           bg={panelBackground}
           p="2"
           rounded="md"
@@ -67,7 +88,8 @@ export function MiniMap(props: MinimapProps) {
           />
 
           <Box display="flex" flexDirection="column">
-            <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}  className="handle">
+            <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'}
+              userSelect={'none'} className="handle" cursor="move">
               Minimap
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex">
@@ -92,7 +114,7 @@ export function MiniMap(props: MinimapProps) {
             </Box>
           </Box>
         </Box>
-      </Rnd>
+      </Rnd >
     );
   else return null;
 }

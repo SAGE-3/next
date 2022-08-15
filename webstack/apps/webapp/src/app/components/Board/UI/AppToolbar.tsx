@@ -6,12 +6,12 @@
  *
  */
 
+import { useState } from 'react';
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 import { Rnd } from 'react-rnd';
-import { useState } from 'react';
 
 type AppToolbarProps = {
   position: { x: number; y: number };
@@ -27,7 +27,6 @@ type AppToolbarProps = {
  */
 export function AppToolbar(props: AppToolbarProps) {
   // App Store
-  const createApp = useAppStore((state) => state.create);
   const apps = useAppStore((state) => state.apps);
 
   // UI Store
@@ -40,12 +39,12 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
+  // Hover state
+  const [hover, setHover] = useState(false);
 
   function handleDblClick(e: any) {
     e.stopPropagation();
   }
-
-  const [hover, setHover] = useState(false);
 
   const app = apps.find((app) => app._id === selectedApp);
 
@@ -57,10 +56,10 @@ export function AppToolbar(props: AppToolbarProps) {
       return <Text>No App Selected</Text>;
     }
   }
+
   if (showUI)
     return (
       <Rnd
-        // default={{ x: props.position.x, y: props.position.y, width: '100%', height: '100px' }}
         position={{ ...props.position }}
         bounds="window"
         onDoubleClick={handleDblClick}
@@ -71,12 +70,12 @@ export function AppToolbar(props: AppToolbarProps) {
         }}
         enableResizing={false}
         dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 0.3s'}}
+        style={{ transition: hover ? 'none' : 'all 0.2s' }}
       >
         <Box
           display="flex"
           boxShadow="outline"
-          transition="all .5s "
+          transition="all .2s "
           bg={panelBackground}
           p="2"
           rounded="md"
@@ -92,10 +91,12 @@ export function AppToolbar(props: AppToolbarProps) {
           />
 
           <Box display="flex" flexDirection="column">
-            <Text w="100%" textAlign="left" mx={1} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}  className="handle">
+            <Text w="100%" textAlign="left" mx={1} color={textColor} fontSize={14} fontWeight="bold" h={'auto'}
+              userSelect={'none'} className="handle" cursor="move">
               {app?.data.name}
             </Text>
-            <Box alignItems="center" p="1" width="100%" display="flex" height="32px">
+            <Box alignItems="center" p="1" width="100%" display="flex" height="32px"
+              userSelect={'none'} className="handle" cursor="move">
               {getAppToolbar()}
             </Box>
           </Box>

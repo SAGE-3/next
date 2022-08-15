@@ -88,15 +88,15 @@ export function UILayer(props: UILayerProps) {
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
 
   return (
-    <Box display="flex" flexDirection="column" height="100vw">
-      <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition}>
+    <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
+      <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition} height={351}>
         {Object.keys(Applications).map((appName) => (
           <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
         ))}
       </Panel>
 
-      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition}>
-        <ButtonPanel title="Home" onClick={handleHomeClick} />
+      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={182} stuck={true}>
+        <ButtonPanel title="Home" onClick={handleHomeClick} colorScheme="blackAlpha" />
         <ButtonPanel title="Asset Browser" onClick={assetOnOpen} />
         <ButtonPanel title="Upload" onClick={uploadOnOpen} />
         <ButtonPanel title="Clear Board" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
@@ -104,20 +104,23 @@ export function UILayer(props: UILayerProps) {
 
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 
-      <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} />
+      <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} stuck={true} />
 
       <ContextMenu divId="board">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={() => apps.forEach((a) => deleteApp(a._id))} />
       </ContextMenu>
-      
+
       <InfoPanel
         title={board?.data.name ? board.data.name : ''}
         boardId={props.boardId}
         position={infoPanelPosition}
         setPosition={setInfoPanelPosition}
+        stuck={true}
       />
+
       {/* Asset dialog */}
       <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
+
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
 
