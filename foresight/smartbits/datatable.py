@@ -41,7 +41,7 @@ class DataTable(SmartBit):
     # the key that is assigned to this in state is
     state: DataTableState
     # Original df to keep track of
-    _df: PandasDataFrame = PrivateAttr()
+    _original_df: PandasDataFrame = PrivateAttr()
     # Modified df to keep track of
     _modified_df: PandasDataFrame = PrivateAttr()
     _current_rows: PandasDataFrame = PrivateAttr()
@@ -102,16 +102,20 @@ class DataTable(SmartBit):
     # TODO, add a decorator to automatically set executeFunc
     # and params to ""
     def load_data(self):
-        self._df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
+        start = time.time()
         self._modified_df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
+        self._original_df = self._modified_df
         self.paginate()
         self.state.selectedCols = []
         print("--------------")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
+
         print("load_data")
         print("I am sending this information")
         print("=======================")
+        end = time.time()
+        print(f"time to load_data: {end - start}")
         self.send_updates()
 
     def table_sort(self, selected_cols):
