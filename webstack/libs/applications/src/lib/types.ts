@@ -1,10 +1,7 @@
 // SAGE3 Generated from apps.json file
 
-import { state as CounterAppState, name as CounterAppName } from './apps/CounterApp';
-import { state as ImageAppState, name as ImageAppName } from './apps/ImageApp';
-import { state as LinkerAppState, name as LinkerAppName } from './apps/LinkerApp';
-import { state as NoteAppState, name as NoteAppName } from './apps/NoteApp';
-import { state as SliderAppState, name as SliderAppName } from './apps/SliderApp';
+import { state as CounterState, name as CounterName } from './apps/Counter';
+import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
 import { state as CodeCellState, name as CodeCellName } from './apps/CodeCell';
@@ -16,18 +13,17 @@ import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
-import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
-import { state as VegaLiteAppState, name as VegaLiteAppName } from './apps/VegaLiteApp';
+import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { state as ClockState, name as ClockName } from './apps/Clock';
-import { state as JupyterAppState, name as JupyterAppName } from './apps/JupyterApp';
+import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
+import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
+import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 
 export type AppState =
-  | CounterAppState
-  | ImageAppState
-  | LinkerAppState
-  | NoteAppState
-  | SliderAppState
+  | CounterState
+  | LinkerState
   | StickieState
+  | LinkerState
   | PDFViewerState
   | CodeCellState
   | ImageViewerState
@@ -38,17 +34,16 @@ export type AppState =
   | DataTableAppState
   | CSVViewerState
   | RTCChatState
-  | VegaLiteAppState
+  | VegaLiteState
   | VegaLiteViewerState
   | ClockState
-  | JupyterAppState;
+  | JupyterLabState
+  | TwilioScreenshareState;
 
 export type AppName =
-  | typeof CounterAppName
-  | typeof ImageAppName
-  | typeof LinkerAppName
-  | typeof NoteAppName
-  | typeof SliderAppName
+  | typeof CounterName
+  | typeof LinkerName
+  | typeof LinkerName
   | typeof StickieName
   | typeof PDFViewerName
   | typeof CodeCellName
@@ -61,6 +56,7 @@ export type AppName =
   | typeof CSVViewerName
   | typeof RTCChatName
   | typeof ClockName
-  | typeof JupyterAppName
+  | typeof JupyterLabName
   | typeof VegaLiteViewerName
-  | typeof VegaLiteAppName;
+  | typeof VegaLiteName
+  | typeof TwilioScreenshareName;

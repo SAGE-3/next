@@ -17,6 +17,7 @@ import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
   app: App;
+  aspectRatio?: number | boolean;
   children: JSX.Element;
 
   // React Rnd property to control the window aspect ratio (optional)
@@ -141,6 +142,7 @@ export function AppWindow(props: WindowProps) {
       style={{
         boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
+        borderRadius: '10px'
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
@@ -162,7 +164,8 @@ export function AppWindow(props: WindowProps) {
             top="-4px"
             width={size.width + 8}
             height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
-            border={`2px dashed ${sageColorByName('red')}`}
+            border={`${3 * 1/scale}px dashed ${sageColorByName('red')}`}
+            borderRadius="10px"
             pointerEvents="none"
           ></Box>) : null
       }
@@ -180,6 +183,7 @@ export function AppWindow(props: WindowProps) {
         overflow="hidden"
         whiteSpace="nowrap"
         height={titleBarHeight + 'px'} // The height of the title bar
+        borderRadius="10px 10px 0 0"
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">

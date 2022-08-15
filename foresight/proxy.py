@@ -62,10 +62,10 @@ async def subscribe(sock, room_id):
 
 class LinkedInfo(BaseModel):
     board_id: str
-    src: str
-    dests: list
+    src_app: str
+    dest_app: str
     src_field: str
-    dests_fields: list
+    dest_field: str
     callback: Callable
 
 class SAGEProxy():
@@ -83,7 +83,6 @@ class SAGEProxy():
         }
         self.httpx_client = httpx.Client()
         self.s3_comm = SageCommunication(config_file)
-        #self.jupytr_kernel = JupyterKernelClient("http://127.0.0.1:5000/exec")
         self.callbacks = {}
         self.received_msg_log = {}
 
@@ -102,29 +101,23 @@ class SAGEProxy():
             self.__handle_create("APPS", app_info)
 
 
-    def receive_messages(self):
-        async def _run(self):
-            async with websockets.connect(self.__config["socket_server"],
-                                          extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
-                await subscribe(ws, self.room.room_id)
-                print("completed subscription, checking if boards and apps already there")
-                self.populate_exisitng()
-                async for msg in ws:
-                    msg = json.loads(msg)
+    async def receive_messages(self):
+        async with websockets.connect(self.__config["socket_server"],
+                                      extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
+            await subscribe(ws, self.room.room_id)
+            print("completed subscription, checking if boards and apps already there")
+            self.populate_exisitng()
+            async for msg in ws:
+                msg = json.loads(msg)
 
-                    if msg['id'] not in self.received_msg_log or \
-                            msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
-                        self.__message_queue.put(msg)
-                        self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
-                        print(f"in receive_messages adding: {msg}")
-                    else:
-                        print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
-        # asyncio.set_event_loop(asyncio.new_event_loop())
-        # asyncio.get_event_loop().run_until_complete(_run(self))
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(_run(self))
-        
+                if msg['id'] not in self.received_msg_log or \
+                        msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
+                    self.__message_queue.put(msg)
+                    self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
+                    print(f"in receive_messages adding: {msg}")
+                else:
+                    print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
+
     def process_messages(self):
         """
         Running this in the main thread to not deal with sharing variables right.
@@ -134,16 +127,33 @@ class SAGEProxy():
         while True:
             msg = self.__message_queue.get()
             # I am watching this message for change?
-            if msg["event"]["doc"]["_id"]  in self.callbacks:
-                # handle callback
-                print("this app is being tracked for updates")
-                pass
+
             # print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             updated_fields = []
+
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
-            print(f"updated fields are: {updated_fields}")
+                print(f"updated fields are: {updated_fields}")
+                app_id = msg["event"]["doc"]["_id"]
+                if app_id in self.callbacks:
+                    # handle callback
+                    print("this app is being tracked for updates")
+                    print(f"tracked field is {self.callbacks[app_id].src_field}")
+                    if f"state.{self.callbacks[app_id].src_field}" in updated_fields:
+                        print("Yes, the tracked fields was updated")
+                        # TODO 4: make callback function optional. In which case, jsut update dest with src
+                        # TODO 1. We need to dispatch the funciton on a different thread, not run it
+                        #  on the same thread as proxy
+                        # TODO 2. Catch to avoid errors here so the thread does not crash
+                        # TODO 3. Refactor into a function
+                        board_id = self.callbacks[app_id].board_id
+                        src_val = msg['event']['updates'][f"state.{self.callbacks[app_id].src_field}"]
+                        dest_field = self.callbacks[app_id].dest_field
+                        dest_id = self.callbacks[app_id].dest_app
+                        dest_app = self.room.boards[board_id].smartbits[dest_id]
+                        self.callbacks[app_id].callback(src_val, dest_app, dest_field)
+
             if len(updated_fields) == 1 and updated_fields[0] == 'raised':
                 print("The received update is discribed a raised app... ignoring it")
             else:
@@ -205,12 +215,12 @@ class SAGEProxy():
             print("Queue was not empty")
         self.__message_queue.close()
 
-    def register_linked_app(self, board_id, src, dests, src_field, dests_fields, callback):
-        self.callbacks[src] = LinkedInfo(board_id=board_id,
-                                         src=src,
-                                         dests=dests,
+    def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
+        self.callbacks[src_app] = LinkedInfo(board_id=board_id,
+                                         src_app=src_app,
+                                         dest_app=dest_app,
                                          src_field=src_field,
-                                         dests_fields=dests_fields,
+                                         dest_field=dest_field,
                                          callback=callback)
 
     # def handle_linked_app_update(self, board_uuid, app_uuid, value):
@@ -227,12 +237,15 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "9e90da0d-4fd1-433a-a22e-add312a255fc")
-listening_process = threading.Thread(target=sage_proxy.receive_messages)
-worker_process = threading.Thread(target=sage_proxy.process_messages)
+sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
+
+listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
 listening_process.start()
+worker_process = threading.Thread(target=sage_proxy.process_messages)
 worker_process.start()
 
+
+# asyncio.gather(sage_proxy.produce(), sage_proxy.consume())
 # TODO start threads cleanly in a way that can be easily stopped.
 # if __name__ == "__main__":
 #     # The below is needed in running in iPython -- need to dig into this more

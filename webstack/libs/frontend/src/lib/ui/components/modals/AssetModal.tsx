@@ -18,6 +18,7 @@ import { FileEntry, AssetModalProps } from './filemanager/types';
 import { initialValues } from '@sage3/applications/apps';
 import { ExtraImageType } from '@sage3/shared/types';
 import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
+import { AppState } from 'libs/applications/src/lib/types';
 
 export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.Element {
   const subscribe = useAssetStore((state) => state.subscribe);
@@ -154,7 +155,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
                 size: { width: 400, height: 400, depth: 0 },
                 rotation: { x: x, y: 0, z: 0 },
                 type: 'Stickie',
-                state: { ...initialValues['Stickie'], text: text },
+                state: { ...initialValues['Stickie'] as AppState, text },
                 minimized: false,
                 raised: true
               });
@@ -175,7 +176,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
             }).then(async function (spec) {
               // Create a note from the text
               createApp({
-                name: 'VegaLiteApp',
+                name: 'VegaLite',
                 description: 'VegaLite> ' + d.originalfilename,
                 roomId,
                 boardId,
@@ -183,8 +184,8 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
                 position: { x: dropPos.x + x, y: dropPos.y, z: 0 },
                 size: { width: 500, height: 600, depth: 0 },
                 rotation: { x: x, y: 0, z: 0 },
-                type: 'VegaLiteApp',
-                state: { ...initialValues['Stickie'], spec: JSON.stringify(spec, null, 2) },
+                type: 'VegaLite',
+                state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
                 minimized: false,
                 raised: true
               });

@@ -8,18 +8,18 @@
 
 import { z } from 'zod';
 
+/**
+ * SAGE3 application: Twilio
+ * created by: Ryan
+ */
+
 export const schema = z.object({
-  value: z.number(),
-    executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.record(z.any()),
-  }),
+  videoId: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  value: 55,
-  executeInfo: { executeFunc: '', params: {} },
+  videoId: '',
 };
 
-export const name = 'Slider';
+export const name = 'Screenshare';
