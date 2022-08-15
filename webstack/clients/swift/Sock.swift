@@ -11,11 +11,14 @@ import Foundation
 final class SocketModel: ObservableObject {
     @Published private(set) var messages: [ReceiveMessage] = []
     private var webSocketTask: URLSessionWebSocketTask?
+    
+    // fill with the actual token string
     private var token = ""
     
     func connect() {
         let url = URL(string: "ws://127.0.0.1:3333/api")!
         var request = URLRequest(url: url)
+        // add the JWT token
         request.addValue("Bearer " + token, forHTTPHeaderField: "Authorization")
         webSocketTask = URLSession.shared.webSocketTask(with: request)
         webSocketTask?.receive(completionHandler: onReceive)
@@ -44,6 +47,7 @@ final class SocketModel: ObservableObject {
             }
             print("Recv>", message)
             do {
+                // Just parse board list message as an example
                 let msg = try JSONDecoder().decode(ReceiveMessage.self, from: data)
                 print("Recv> JSON", msg)
                 let boards = msg.data
@@ -58,7 +62,7 @@ final class SocketModel: ObservableObject {
             } catch let error {
                 print("Error", error)
             }
-                        
+            
         }
     }
     
@@ -80,8 +84,6 @@ final class SocketModel: ObservableObject {
     deinit {
         disconnect()
     }
-    
-    
 }
 
 struct SendMessage: Encodable {
@@ -115,4 +117,3 @@ struct Board: Decodable {
     let ownerId: String
     let isPrivate: Bool
 }
-
