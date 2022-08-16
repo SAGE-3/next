@@ -6,18 +6,17 @@
  *
  */
 
-import { App } from '../../schema';
+// Chakra and React imports
+import { useEffect, useRef } from 'react';
+import { Box, Button } from '@chakra-ui/react';
 
+import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
 import { useAppStore, useUser, useTwilioStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
-
-// Chakra and React imports
-import { Box, Button } from '@chakra-ui/react';
-import { useEffect, useRef } from 'react';
 
 // Twilio Imports
 import { LocalVideoTrack } from 'twilio-video';
@@ -46,7 +45,7 @@ function AppComponent(props: App): JSX.Element {
   const shareScreen = async () => {
     stopStream();
     if (room && videoRef.current) {
-      
+
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
       videoRef.current.srcObject = stream;
       videoRef.current.play();
@@ -68,7 +67,7 @@ function AppComponent(props: App): JSX.Element {
       track?.track.stop();
       updateState(props._id, { videoId: '' });
     }
-    if ( videoRef.current && videoRef.current.srcObject) {
+    if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => {
         console.log('STOP:', track);
@@ -104,15 +103,15 @@ function AppComponent(props: App): JSX.Element {
 
           <Box backgroundColor="gray" display="flex" justifyContent="center" height="50px" p="5px">
             {user?._id === props._createdBy ? (
-                <Button 
-                colorScheme={(videoRef.current?.srcObject) ? 'red' : 'green'} 
-                onClick={(videoRef.current?.srcObject) ? stopStream : shareScreen} 
-                disabled={!room} 
-                mx={1} 
+              <Button
+                colorScheme={(videoRef.current?.srcObject) ? 'red' : 'green'}
+                onClick={(videoRef.current?.srcObject) ? stopStream : shareScreen}
+                disabled={!room}
+                mx={1}
                 rightIcon={<MdScreenShare />}
-                >
-                  {videoRef.current?.srcObject ? 'Stop Sharing' : 'Share Screen'}
-                </Button>         
+              >
+                {videoRef.current?.srcObject ? 'Stop Sharing' : 'Share Screen'}
+              </Button>
             ) : (
               <p>
                 {props._createdBy} - {s.videoId}

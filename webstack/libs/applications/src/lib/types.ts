@@ -7,7 +7,7 @@ import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer
 import { state as CodeCellState, name as CodeCellName } from './apps/CodeCell';
 import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
-import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
+import { state as ScreenshareState, name as ScreenshareName } from './apps/TwilioScreenshare';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
@@ -23,7 +23,6 @@ export type AppState =
   | CounterState
   | LinkerState
   | StickieState
-  | LinkerState
   | PDFViewerState
   | CodeCellState
   | ImageViewerState
@@ -42,7 +41,6 @@ export type AppState =
 
 export type AppName =
   | typeof CounterName
-  | typeof LinkerName
   | typeof LinkerName
   | typeof StickieName
   | typeof PDFViewerName
