@@ -67,7 +67,7 @@ export function BoardContextMenu(props: ContextProps) {
     savedRadios[1] = val;
   };
   const { colorMode, toggleColorMode } = useColorMode();
-  console.log(contextMenuPosition);
+
   return (
     <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto" w={160}>
       <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold">
