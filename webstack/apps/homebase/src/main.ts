@@ -44,6 +44,9 @@ import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
+// SAGE Twilio Helper Import
+import { SAGETwilio } from '@sage3/backend';
+
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
   console.error('Server> Error', reason);
@@ -94,6 +97,18 @@ async function startServer() {
 
   // Load all the models: user, board, ...
   await loadCollections();
+
+  // Twilio Setup
+  const twilio = new SAGETwilio(config.twilio);
+  app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
+    const authId = req.user.id;
+    if (authId === undefined) {
+      res.status(403).send();
+    }
+    const room = req.query.room as string;
+    const token = twilio.generateVideoToken(authId, room);
+    res.send({ token });
+  })
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());

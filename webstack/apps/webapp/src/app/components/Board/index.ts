@@ -6,7 +6,6 @@
  *
  */
 
-export * from './path-util';
-export * from './subscription-cache';
-export * from './presence';
-export * from './twilio';
+export * from './BackgroundLayer';
+export * from './UILayer';
+export * from './WhiteboardLayer';
