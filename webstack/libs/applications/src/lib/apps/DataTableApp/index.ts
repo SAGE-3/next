@@ -37,7 +37,7 @@ export const init: Partial<state> = {
 
   viewData: {},
 
-  totalRows: 1,
+  totalRows: 0,
   rowsPerPage: 3,
   currentPage: 1,
   pageNumbers: [],

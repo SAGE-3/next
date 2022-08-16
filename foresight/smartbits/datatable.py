@@ -9,9 +9,14 @@ from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from pydantic import Field, PrivateAttr
 from typing import Optional, TypeVar
+from urllib.request import urlopen
+from urllib.parse import urlparse
+from os.path import splitext
 import pandas as pd
+import numpy as np
 import time
 import math
+import magic
 
 PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 
@@ -99,11 +104,40 @@ class DataTable(SmartBit):
         print("=======================")
         self.send_updates()
 
+    def get_ext(self, url):
+        parsed = urlparse(url)
+        root, ext = splitext(parsed.path)
+        return ext[1:]
+
     # TODO, add a decorator to automatically set executeFunc
     # and params to ""
-    def load_data(self):
+    def load_data(self, url):
         start = time.time()
-        self._modified_df = pd.read_json("https://www.dropbox.com/s/cg22j2nj6h8ork8/data.json?dl=1")
+        # url = "https://www.dropbox.com/s/57thhzy5e6pebp5/data.csv?dl=1"
+        extension = self.get_ext(url)
+        response = urlopen(url)
+        # Leave magic in for retrieving file extensions of uploaded datasets, not API datasets
+        # print(magic.from_file(response))
+        # print(magic.from_file(response, mime=True))
+        valid_exts = ['csv', 'tsv', 'json', 'xlxs']
+        if extension in valid_exts:
+            if extension == 'csv':
+                self._modified_df = pd.read_csv(response)
+            elif extension == 'tsv':
+                self._modified_df = pd.read_table(response)
+            elif extension == 'json':
+                self._modified_df = pd.read_json(response)
+            elif extension == 'xlxs':
+                self._modified_df = pd.read_excel(response)
+        else:
+            raise Exception("unsupported format")
+
+        # self._modified_df = pd.read_json(response)
+        # self._modified_df = pd.read_json(url)
+        if pd.Index(np.arange(0, len(self._modified_df))).equals(self._modified_df.index):
+            pass
+        else:
+            self._modified_df.reset_index()
         self._original_df = self._modified_df
         self.paginate()
         self.state.selectedCols = []
@@ -179,8 +213,9 @@ class DataTable(SmartBit):
         print("I am sending this information")
         self.send_updates()
 
-    def column_sort(self, col):
-        self._modified_df.sort_values(by=col, inplace=True)
+    def column_sort(self, selected_col):
+        self._modified_df.sort_values(by=selected_col, inplace=True)
+        self.state.currentPage = 1
         self.state.selectedCol = ""
         self.paginate()
         self.state.timestamp = time.time()
@@ -188,7 +223,7 @@ class DataTable(SmartBit):
         self.state.executeInfo.params = {}
         print("---------------------------------------------------------")
         print("column_sort")
-        print(f"column: {col}")
+        print(f"column: {selected_col}")
         print("I am sending this information")
         self.send_updates()
 

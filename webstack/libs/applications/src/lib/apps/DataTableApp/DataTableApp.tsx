@@ -26,13 +26,29 @@ import {
   Th,
   Td,
   HStack,
-  Menu, MenuButton, IconButton, MenuList, MenuItem, Portal,
-  Spinner, MenuDivider, Divider, ButtonGroup,
+  Menu,
+  MenuButton,
+  IconButton,
+  MenuList,
+  MenuItem,
+  Portal,
+  Spinner,
+  MenuDivider,
+  ButtonGroup,
+  FormControl,
+  FormLabel,
+  Stack,
+  useDisclosure,
+  Popover,
+  PopoverTrigger,
+  PopoverContent, PopoverCloseButton, PopoverArrow, FormHelperText,
 } from '@chakra-ui/react'
 
 import {GoKebabVertical} from "react-icons/go";
 import {FiArrowLeft, FiArrowRight, FiChevronDown, FiMoreHorizontal} from "react-icons/fi";
+import {TbWorldDownload} from "react-icons/tb";
 
+import FocusLock from 'react-focus-lock';
 
 import {useAppStore} from '@sage3/frontend';
 import {App} from "../../schema";
@@ -44,6 +60,99 @@ import './styles.css';
 import React, {useState, useEffect, useMemo} from 'react';
 // import {ColumnMenu} from "./components/ColumnMenu";
 import {colMenus} from "./colMenus";
+
+// const TextInput = (props: App): JSX.Element => {
+//   const s = props.data.state as AppState;
+//   const updateState = useAppStore(state => state.updateState);
+//
+//   return (
+//     <FormControl>
+//       <FormLabel>Online Dataset</FormLabel>
+//         <InputGroup size='md'>
+//           <Input
+//             type="text"
+//             value={s.dataUrl}
+//             onChange={handleUrlChange}
+//           />
+//           <InputRightElement width='5rem'>
+//             <Button variant='outline' onClick={handleLoadData} disabled={running}>Load Data</Button>
+//           </InputRightElement>
+//         </InputGroup>
+//     </FormControl>
+//   )
+// })
+
+// const Form = (props: App): JSX.Element => {
+//   return (
+//     <Stack spacing={4}>
+//       <FormControl>
+//       <FormLabel>Online Dataset</FormLabel>
+//         <Input
+//           size='md'
+//           type="text"
+//           value={s.dataUrl}
+//           onChange={handleUrlChange}
+//         />
+//       </FormControl>
+//       <ButtonGroup display='flex' justifyContent='flex-end'>
+//         <Button variant='outline' onClick={onCancel}>
+//           Cancel
+//         </Button>
+//         <Button variant='outline' onClick={handleLoadData} disabled={running}>Load Data</Button>
+//       </ButtonGroup>
+//     </Stack>
+//   )
+// }
+
+// const PopoverForm = (props: App): JSX.Element => {
+//   const {onOpen, onClose, isOpen} = useDisclosure()
+//   // const firstFieldRef = React.useRef(null)
+//
+//   const s = props.data.state as AppState;
+//   const updateState = useAppStore(state => state.updateState);
+//
+//   return (
+//     <>
+//       <Popover
+//         isOpen={isOpen}
+//         onOpen={onOpen}
+//         onClose={onClose}
+//         placement='right'
+//         closeOnBlur={false}
+//       >
+//         <PopoverTrigger>
+//           <Button rightIcon={<TbWorldDownload/>}>
+//             New Dataset
+//           </Button>
+//         </PopoverTrigger>
+//         <PopoverContent p={5}>
+//           <FocusLock returnFocus persistentFocus={true}>
+//             <PopoverArrow/>
+//             <PopoverCloseButton/>
+//             <Stack spacing={4}>
+//               <FormControl>
+//                 <FormLabel>Online Dataset</FormLabel>
+//                 <Input
+//                   size='md'
+//                   type="text"
+//                   value={s.dataUrl}
+//                   onChange={this.props.handleUrlChange}
+//                 />
+//                 <FormHelperText>Link to online dataset</FormHelperText>
+//               </FormControl>
+//               <ButtonGroup display='flex' justifyContent='flex-end'>
+//                 <Button variant='outline' onClick={onClose}>
+//                   Cancel
+//                 </Button>
+//                 <Button variant='outline' onClick={() => props.handleLoadData()}>Load Data</Button>
+//               </ButtonGroup>
+//             </Stack>
+//           </FocusLock>
+//         </PopoverContent>
+//       </Popover>
+//     </>
+//   )
+// }
 
 
 const Pagination = (props: App): JSX.Element => {
@@ -136,7 +245,6 @@ const Pagination = (props: App): JSX.Element => {
   }, [s.currentPage, JSON.stringify(s.pageNumbers)])
 
 
-  //TODO Add focus to current page number
   return (
     <div>
       <HStack spacing='5' display='flex' justify='center'>
@@ -148,16 +256,18 @@ const Pagination = (props: App): JSX.Element => {
           disabled={leftButtonDisable}
         />
         <div style={
-          {display:
+          {
+            display:
               s.currentPage - 1 !== 1
-              && s.currentPage !== 1 ? "block" : "none"}}
+              && s.currentPage !== 1 ? "block" : "none"
+          }}
         >
           <Menu>
             <MenuButton as={IconButton} icon={<FiMoreHorizontal/>} variant='link' size='xs'>
               {s.rowsPerPage}
             </MenuButton>
             <Portal>
-              <MenuList display='flex' maxW='xs' minW='0' width='5px'>
+              <MenuList display='flex' maxW='sm' zIndex="dropdown" overflowY="scroll">
                 {s.pageNumbers.map((page: number) => (
                   <Button
                     key={page}
@@ -182,16 +292,18 @@ const Pagination = (props: App): JSX.Element => {
           </Button>
         ))}
         <div style={
-          {display:
+          {
+            display:
               s.currentPage + 1 !== s.pageNumbers.length
-              && s.currentPage !== s.pageNumbers.length ? "block" : "none"}}
+              && s.currentPage !== s.pageNumbers.length ? "block" : "none"
+          }}
         >
           <Menu size="xs">
             <MenuButton as={IconButton} icon={<FiMoreHorizontal/>} variant='link' size='xs'>
               {s.rowsPerPage}
             </MenuButton>
             <Portal>
-              <MenuList>
+              <MenuList display='flex' maxW='sm' zIndex="dropdown" overflowY="scroll">
                 {s.pageNumbers.map((page: number) => (
                   <Button
                     key={page}
@@ -213,7 +325,7 @@ const Pagination = (props: App): JSX.Element => {
           disabled={rightButtonDisable}
         />
       </HStack>
-        <HStack justify='right'>
+      <HStack justify='right'>
         <Menu size="xs">
           <MenuButton as={Button} rightIcon={<FiChevronDown/>} variant='solid' size='xs'>
             {s.rowsPerPage}
@@ -236,9 +348,10 @@ const Pagination = (props: App): JSX.Element => {
           </Portal>
         </Menu>
         <Box fontSize='xs'>Rows per page</Box>
-        </HStack>
+      </HStack>
       <Box fontSize='xs' font-style='oblique' float='right'>
         <p>Showing {s.indexOfFirstRow} - {s.indexOfLastRow - 1} of {s.totalRows} rows</p>
+        <p>Page {s.currentPage} of {s.pageNumbers[s.pageNumbers.length - 1]}</p>
       </Box>
     </div>
   );
@@ -256,6 +369,7 @@ function AppComponent(props: App): JSX.Element {
   const [indices, setIndices] = useState([])
   const [running, setRunning] = useState((s.executeInfo.executeFunc === "") ? false : true)
 
+  const {onOpen, onClose, isOpen} = useDisclosure()
 
   // Array of function references to map through for table actions menu
   const tableColActions = [tableSort, dropColumns]
@@ -278,12 +392,11 @@ function AppComponent(props: App): JSX.Element {
     console.log("in handleLoadData and updating the executeInfo")
     setRunning(true)
     updateState(props._id,
-      {executeInfo: {"executeFunc": "load_data", "params": {}}})
+      {executeInfo: {"executeFunc": "load_data", "params": {"url": s.dataUrl}}})
     console.log("new value of executeInfo is ")
     console.log(s.executeInfo)
     console.log("----")
     console.log(s)
-
   }
 
   useEffect(() => {
@@ -317,29 +430,30 @@ function AppComponent(props: App): JSX.Element {
   //   console.log("ONE ARRAY selectedCols useEffect")
   // }, [JSON.stringify(s.selectedCols)])
 
-  // Saving two arrays: One with selected (highlighted class) and the other with the not-selected ones (not-highlighted class)
-  useEffect(() => {
-    const difference = headers.filter(x => !s.selectedCols.includes(x));
-    difference.forEach((col) => {
-      const cols = document.querySelectorAll("td[data-col=" + col + "]")
+    useEffect(() => {
+    const colDifference = headers.filter(x => !s.selectedCols.includes(x));
+    colDifference.forEach((col) => {
+      const cols = document.querySelectorAll("td[data-col='" + col + "']")
       cols.forEach((cell: any) => {
           cell.className = "originalChakra"
         }
       )
     })
     s.selectedCols.forEach((col) => {
-      const cols = document.querySelectorAll("td[data-col=" + col + "]")
+      const cols = document.querySelectorAll("td[data-col='" + col + "']")
       cols.forEach((cell: any) => {
           cell.className = "highlight"
         }
       )
     })
     console.log("TWO ARRAYS selectedCols useEffect")
-  }, [JSON.stringify(s.selectedCols)])
+  }, [JSON.stringify(s.selectedCols), indices.length])
 
+    //Highlighting for row selection
   useEffect(() => {
-    const difference = indices.filter(x => !s.selectedCols.includes(x));
-    difference.forEach((row) => {
+    const rowDifference = indices.filter(x => !s.selectedRows.includes(x));
+
+    rowDifference.forEach((row) => {
       const rows = document.querySelectorAll("td[data-row='" + row + "']")
       rows.forEach((cell: any) => {
           cell.className = "originalChakra"
@@ -485,7 +599,7 @@ function AppComponent(props: App): JSX.Element {
 
   //Start of single column functions
   function columnSort(column: any) {
-    updateState(props._id, {selectedCol: column})
+    // updateState(props._id, {selectedCol: column})
     console.log("Sorting on " + s.selectedCol)
     updateState(props._id,
       {executeInfo: {"executeFunc": "column_sort", "params": {"selected_col": s.selectedCol}}})
@@ -497,7 +611,9 @@ function AppComponent(props: App): JSX.Element {
   function dropColumn(column: any) {
     updateState(props._id,
       {executeInfo: {"executeFunc": "drop_column", "params": {"selected_col": s.selectedCol}}})
-    const selectedCols = s.selectedCols.filter(function(e) { return e !== column })
+    const selectedCols = s.selectedCols.filter(function (e) {
+      return e !== column
+    })
     updateState(props._id, {selectedCols: selectedCols})
     updateState(props._id, {messages: ""})
     console.log(s.executeInfo)
@@ -509,60 +625,118 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
 
       <>
-        <div className="Message-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
-          <Menu>
-            <MenuButton
-              as={IconButton}
-              aria-label='Table Operations'
-              icon={<GoKebabVertical/>}
-              position='absolute'
-              top='35px'
-              right='15px'
-              size="md"
-            />
-            <Portal>
-              <MenuList>
-                {tableColActions.map((action, key) => {
-                  return (
-                    <MenuItem
-                      key={key}
-                      onClick={action}
-                    >
-                      {tableColMenuNames[key]}
-                    </MenuItem>
-                  )
-                })
-                }
-                <MenuDivider/>
-                {tableRowActions.map((action, key) => {
-                  return (
-                    <MenuItem
-                      key={key}
-                      onClick={action}
-                    >
-                      {tableRowMenuNames[key]}
-                    </MenuItem>
-                  )
-                })
-                }
-                <MenuDivider/>
-                {tableActions.map((action, key) => {
-                  return (
-                    <MenuItem
-                      key={key}
-                      onClick={action}
-                    >
-                      {tableMenuNames[key]}
-                    </MenuItem>
-                  )
-                })
-                }
-              </MenuList>
-            </Portal>
-          </Menu>
+        <div className="URL-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
+          <p>s.selectedRows: {s.selectedRows}</p>
+          <p>typeof s.selectedRows: {typeof s.selectedRows}</p>
+          <p>indices: {indices}</p>
+          <HStack
+            position='absolute'
+            top='35px'
+            right='15px'
+          >
+            <Box>
+                    <Popover
+        isOpen={isOpen}
+        onOpen={onOpen}
+        onClose={onClose}
+        placement='right'
+        closeOnBlur={false}
+      >
+        <PopoverTrigger>
+          <Button rightIcon={<TbWorldDownload/>}>
+            New Dataset
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent p={5}>
+          <FocusLock returnFocus persistentFocus={true}>
+            <PopoverArrow/>
+            <PopoverCloseButton/>
+            <Stack spacing={4}>
+              <FormControl>
+                <FormLabel>Online Dataset</FormLabel>
+                <Input
+                  size='md'
+                  type="text"
+                  value={s.dataUrl}
+                  onChange={handleUrlChange}
+                />
+                <FormHelperText>Link to online dataset</FormHelperText>
+              </FormControl>
+              <ButtonGroup display='flex' justifyContent='flex-end'>
+                <Button variant='outline' onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                variant='outline'
+                onClick={() => handleLoadData()}
+                isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}
+                >
+                  Load Data
+                </Button>
+              </ButtonGroup>
+            </Stack>
+          </FocusLock>
+        </PopoverContent>
+      </Popover>
+            </Box>
+            <Menu>
+              <MenuButton
+                as={IconButton}
+                aria-label='Table Operations'
+                icon={<GoKebabVertical/>}
+                // position='absolute'
+                // top='35px'
+                // right='15px'
+                size="md"
+              />
+              <Portal>
+                <MenuList
+                >
+                  {tableColActions.map((action, key) => {
+                    return (
+                      <MenuItem
+                        key={key}
+                        onClick={action}
+                      >
+                        {tableColMenuNames[key]}
+                      </MenuItem>
+                    )
+                  })
+                  }
+                  <MenuDivider/>
+                  {tableRowActions.map((action, key) => {
+                    return (
+                      <MenuItem
+                        key={key}
+                        onClick={action}
+                      >
+                        {tableRowMenuNames[key]}
+                      </MenuItem>
+                    )
+                  })
+                  }
+                  <MenuDivider/>
+                  {tableActions.map((action, key) => {
+                    return (
+                      <MenuItem
+                        key={key}
+                        onClick={action}
+                      >
+                        {tableMenuNames[key]}
+                      </MenuItem>
+                    )
+                  })
+                  }
+                </MenuList>
+              </Portal>
+            </Menu>
+          </HStack>
         </div>
-
-        <div className='URL-Container'>
+        <div
+          style={{display: s.totalRows !== 0 ? "none" : "block"}}
+          className='URL-Container'
+        >
+          <p>s.dataUrl: {s.dataUrl}</p>
           <InputGroup size='md'>
             <Input
               type="text"
@@ -571,11 +745,17 @@ function AppComponent(props: App): JSX.Element {
               placeholder={'URL here'}
             />
             <InputRightElement width='5rem'>
-              <Button variant='outline' onClick={handleLoadData} disabled={running}>Load Data</Button>
+              <Button
+                variant='outline'
+                onClick={handleLoadData}
+                // disabled={running}
+                isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}
+              >
+                Load Data
+              </Button>
             </InputRightElement>
           </InputGroup>
         </div>
-
 
         <Center>
           <Spinner
@@ -591,14 +771,14 @@ function AppComponent(props: App): JSX.Element {
 
         <div style={{display: s.totalRows !== 0 ? "block" : "none"}}>
           <TableContainer overflowY="auto" display="flex" maxHeight="300px">
-            <Table colorScheme="facebook" variant='simple' size="sm" className="originalChakra">
+            <Table colorScheme="facebook" variant='simple' size="md" className="originalChakra">
               <Thead>
                 <Tr>
                   <>
                     <Th className="indexColumn"/>
                     {
                       headers?.map((header: any, index: number) => (
-                        <Th className="ColName" >
+                        <Th className="ColName">
                           <ButtonGroup colorScheme="black" display="flex" size='sm'>
                             <Button
                               key={index}
@@ -609,7 +789,6 @@ function AppComponent(props: App): JSX.Element {
                               justifyContent='flex-start'
                             >
                               {header}
-                              {/* TODO Make column menus disappear*/}
                             </Button>
                             <Menu>
                               <>
@@ -655,10 +834,8 @@ function AppComponent(props: App): JSX.Element {
                   data?.map((row: any, rowIndex: number) => (
                     <Tr
                       key={rowIndex}
-                      // data-row={rowIndex}
                     >
                       <Td key={rowIndex}
-                        // data-row={rowIndex}
                           className="indexTd"
                           onClick={(e) => handleRowClick(rowIndex.toString())}
                       >
@@ -719,4 +896,7 @@ function ToolbarComponent(props: App): JSX.Element {
   )
 }
 
-export default {AppComponent, ToolbarComponent};
+export default {
+  AppComponent, ToolbarComponent
+}
+;
