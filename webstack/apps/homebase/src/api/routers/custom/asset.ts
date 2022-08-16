@@ -232,7 +232,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     size: { width: w, height: h, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'Stickie',
-                    state: { fontSize: 48, color: '#63B3ED', text: text.toString() },
+                    state: { fontSize: 48, color: '#63B3ED', text: text.toString(), executeInfo: { executeFunc: '', params: {} } },
                     minimized: false,
                     raised: false,
                   },
@@ -246,7 +246,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 const h = th || 600;
                 AppsCollection.add(
                   {
-                    name: 'VegaLiteApp',
+                    name: 'VegaLite',
                     description: 'VegaLite> ' + elt.originalname,
                     roomId: req.body.room,
                     boardId: req.body.board,
@@ -254,7 +254,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
                     size: { width: w, height: h, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
-                    type: 'VegaLiteApp',
+                    type: 'VegaLite',
                     state: { spec: text.toString() },
                     minimized: false,
                     raised: false,

@@ -20,7 +20,7 @@ export type HeaderProps = {
  * @param {HeaderProps} props
  * @returns
  */
-export function Header(props: HeaderProps) {
+export function HomeHeader(props: HeaderProps) {
   const { user } = useUser();
   const { logout } = useAuth();
   const presences = usePresenceStore((state) => state.presences);

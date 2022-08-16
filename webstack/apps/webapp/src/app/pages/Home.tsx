@@ -14,9 +14,9 @@ import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { BoardList } from '../components/BoardList';
-import { Header } from '../components/Header';
-import { RoomList } from '../components/RoomList';
+import { BoardList } from '../components/Home/BoardList';
+import { HomeHeader } from '../components/Home/HomeHeader';
+import { RoomList } from '../components/Home/RoomList';
 
 export function HomePage() {
 
@@ -53,7 +53,7 @@ export function HomePage() {
 
   return (
     <div>
-      <Header title={(selectedRoom) ? 'Room: ' + selectedRoom.data.name : "Rooms"}></Header>
+      <HomeHeader title={(selectedRoom) ? 'Room: ' + selectedRoom.data.name : "Rooms"}></HomeHeader>
 
       <Box display="flex" flexDirection="row" flexWrap="nowrap">
 

@@ -7,6 +7,7 @@
  */
 
 // The React version of Zustand
+import { Position } from '@sage3/shared/types';
 import create from 'zustand';
 
 // Dev Tools
@@ -24,9 +25,29 @@ const WheelStepZoom = 0.004;
 interface UIState {
   scale: number;
   gridSize: number;
+  showUI: boolean;
+  boardPosition: { x: number; y: number };
   selectedAppId: string;
+
+  // Panels & Context Menu
+  menuPanelPosition: { x: number; y: number };
+  setMenuPanelPosition: (pos: { x: number; y: number }) => void;
+  appPanelPosition: { x: number; y: number };
+  setAppPanelPosition: (pos: { x: number; y: number }) => void;
+  appToolbarPanelPosition: { x: number; y: number };
+  setAppToolbarPosition: (pos: { x: number; y: number }) => void;
+  minimapPanelPosition: { x: number; y: number };
+  setminimapPanelPosition: (pos: { x: number; y: number }) => void;
+  infoPanelPosition: { x: number; y: number };
+  setInfoPanelPosition: (position: { x: number; y: number }) => void;
+  contextMenuPosition: { x: number; y: number };
+  setContextMenuPosition: (pos: { x: number; y: number }) => void;
+
+
+  setBoardPosition: (pos: { x: number; y: number }) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
+  flipUI: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
@@ -38,10 +59,26 @@ interface UIState {
  */
 export const useUIStore = create<UIState>((set) => ({
   scale: 1.0,
-  gridSize: 50,
+  gridSize: 1,
+  showUI: true,
   selectedAppId: '',
+  boardPosition: { x: 0, y: 0 },
+  menuPanelPosition: { x: 20, y: 130 },
+  appPanelPosition: { x: 20, y: 325 },
+  appToolbarPanelPosition: { x: 20, y: 850 },
+  minimapPanelPosition: { x: 20, y: 690 },
+  infoPanelPosition: { x: 20, y: 20 },
+  contextMenuPosition: { x: 0, y: 0 },
+  setInfoPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, infoPanelPosition: pos })),
+  setContextMenuPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, contextMenuPosition: pos })),
+  setminimapPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, minimapPanelPosition: pos })),
+  setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
+  setAppPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appPanelPosition: pos })),
+  setMenuPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, menuPanelPosition: pos })),
+  setBoardPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, boardPosition: pos })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
+  flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
   zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
   zoomInDelta: (d) =>
@@ -62,4 +99,4 @@ export const useUIStore = create<UIState>((set) => ({
 }));
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('UIStore', useUIStore);
+if (process.env.NODE_ENV === 'development') mountStoreDevtool('UIStore', useUIStore);

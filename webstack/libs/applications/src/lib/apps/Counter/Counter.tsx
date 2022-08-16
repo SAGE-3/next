@@ -7,11 +7,12 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Text, Tooltip } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { MdAdd, MdRemove } from 'react-icons/md';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -26,42 +27,16 @@ function sub(update: UpdateFunc, s: AppState, id: string) {
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
-
-  function handleAddClick() {
-    add(updateState, s, props._id);
-  }
-
-  function handleSubClick() {
-    sub(updateState, s, props._id);
-  }
-
-  function handleZero() {
-    updateState(props._id, { executeInfo: { executeFunc: 'reset_to_zero', params: {} } });
-  }
-
-
   return (
     <AppWindow app={props}>
-      <>
-        <h1>Count: {s.count}</h1>
-        <Button onClick={handleAddClick} colorScheme="green">
-          Add
-        </Button>
-        <Button onClick={handleSubClick} colorScheme="red">
-          Sub
-        </Button>
-        <Button onClick={handleZero} colorScheme="blue">
-          Zero
-        </Button>
-        <h2>Last update by: {props._updatedBy}</h2>
-      </>
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="5xl">Count: {s.count}</Text>
+      </Box>
     </AppWindow>
   );
 }
 
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
@@ -76,11 +51,21 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Button onClick={handleAddClick} colorScheme="green">Add</Button>
-      <Button onClick={handleSubClick} colorScheme="red">Sub</Button>
-    </>
-  )
-}
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="bottom" hasArrow={true} label={'Increase Count'} openDelay={400}>
+          <Button onClick={handleAddClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
 
+        <Tooltip placement="bottom" hasArrow={true} label={'Decrease Count'} openDelay={400}>
+          <Button onClick={handleSubClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="red">
+            <MdRemove />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>
+  );
+}
 
 export default { AppComponent, ToolbarComponent };
