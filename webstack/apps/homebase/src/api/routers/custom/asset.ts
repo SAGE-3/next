@@ -34,7 +34,7 @@ import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { isCSV, isImage, isPDF, isText } from '@sage3/shared';
+import { isCSV, isImage, isPDF, isText, isJSON } from '@sage3/shared';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -232,13 +232,36 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     size: { width: w, height: h, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'Stickie',
-                    state: { fontSize: 48, color: '#63B3ED', text: text.toString() },
+                    state: { fontSize: 48, color: '#63B3ED', text: text.toString(), executeInfo: { executeFunc: '', params: {} } },
                     minimized: false,
                     raised: false,
                   },
                   user.id
                 );
                 posx += tw || 400;
+                posx += 10;
+              } else if (isJSON(elt.mimetype)) {
+                const text = fs.readFileSync(elt.path);
+                const w = tw || 500;
+                const h = th || 600;
+                AppsCollection.add(
+                  {
+                    name: 'VegaLite',
+                    description: 'VegaLite> ' + elt.originalname,
+                    roomId: req.body.room,
+                    boardId: req.body.board,
+                    ownerId: user.id,
+                    position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+                    size: { width: w, height: h, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'VegaLite',
+                    state: { spec: text.toString() },
+                    minimized: false,
+                    raised: false,
+                  },
+                  user.id
+                );
+                posx += tw || 500;
                 posx += 10;
               }
             }

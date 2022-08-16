@@ -18,6 +18,9 @@ import { Room, RoomSchema } from '@sage3/shared/types';
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
 
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 interface RoomState {
   rooms: Room[];
   create: (newRoom: RoomSchema) => Promise<void>;
@@ -88,3 +91,6 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
 
 // Convert the Zustand JS store to Zustand React Store
 export const useRoomStore = createReact(RoomStore);
+
+// Add Dev tools
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('RoomStore', useRoomStore);

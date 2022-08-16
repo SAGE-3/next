@@ -5,7 +5,7 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -39,6 +39,10 @@ function AppComponent(props: App): JSX.Element {
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
   // const [allPagesInfo, setAllPagesInfo] = useState<ImageInfoType[][]>([]);
+  const [aspectRatio, setAspecRatio] = useState(1);
+
+  // Div around the pages to capture events
+  const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.id);
@@ -59,7 +63,6 @@ function AppComponent(props: App): JSX.Element {
       const pages = file.data.derived as ExtraPDFType;
       if (pages) {
         // setAllPagesInfo(pages);
-
         const allurls = pages.map((page) => {
           // find the largest image for this page (multi-resolution)
           const res = page.reduce(function (p, v) {
@@ -68,18 +71,119 @@ function AppComponent(props: App): JSX.Element {
           return res.url;
         });
         setUrls(allurls);
+        // First image of the page
+        const firstpage = pages[0];
+        setAspecRatio(firstpage[0].width / firstpage[0].height);
+      }
+    }
+  }, [file]);
 
+  useEffect(() => {
+    if (file) {
+      const pages = file.data.derived as ExtraPDFType;
+      if (pages) {
         if (pages.length > 1) {
           const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
           update(props._id, { description: 'PDF> ' + file.data.originalfilename + pageInfo });
         }
       }
     }
-  }, [file, s.currentPage]);
+  }, [s.currentPage]);
+
+  // Event handler
+  const handleUserKeyPress = useCallback((evt: KeyboardEvent) => {
+    switch (evt.key) {
+      case "ArrowRight": {
+        // Next page
+        if (s.currentPage === s.numPages - s.displayPages) return;
+        const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
+        updateState(props._id, { currentPage: newpage });
+        break;
+      }
+      case "ArrowLeft": {
+        // Previous page
+        if (s.currentPage === 0) return;
+        const newpage = s.currentPage - 1 >= 0 ? s.currentPage - 1 : 0;
+        updateState(props._id, { currentPage: newpage });
+        break;
+      }
+      case "1": {
+        // Go to first page
+        updateState(props._id, { currentPage: 0 });
+        break;
+      }
+      case "0": {
+        // Go to last page
+        updateState(props._id, { currentPage: s.numPages - s.displayPages });
+        break;
+      }
+      case "-": {
+        // Remove one page
+        if (s.displayPages > 1) {
+          const pageCount = s.displayPages - 1;
+          updateState(props._id, { displayPages: pageCount });
+          update(props._id, {
+            size: {
+              width: pageCount * props.data.size.height * aspectRatio,
+              height: props.data.size.height,
+              depth: props.data.size.depth,
+            },
+          });
+        }
+        break;
+      }
+      case "+": {
+        // Add one page
+        if (s.displayPages < s.numPages) {
+          const pageCount = s.displayPages + 1;
+          updateState(props._id, { displayPages: pageCount });
+          update(props._id, {
+            size: {
+              width: pageCount * props.data.size.height * aspectRatio,
+              height: props.data.size.height,
+              depth: props.data.size.depth,
+            },
+          });
+        }
+        break;
+      }
+      case "D": {
+        // Trigger a download
+        if (file) {
+          const url = file?.data.file;
+          const filename = file?.data.originalfilename;
+          downloadFile('api/assets/static/' + url, filename);
+        }
+        break;
+      }
+    }
+  }, [s, file, props.data.position]);
+
+
+  // Attach/detach event handler from the div
+  useEffect(() => {
+    const div = divRef.current;
+    if (div) {
+      div.addEventListener('keydown', handleUserKeyPress);
+      div.addEventListener('mouseleave', () => {
+        // remove focus onto div
+        div.blur();
+      });
+      div.addEventListener('mouseenter', () => {
+        // Focus on the div for jeyboard events
+        div.focus({ preventScroll: true });
+      });
+    }
+    return () => {
+      if (div) div.removeEventListener('keydown', handleUserKeyPress);
+    };
+  }, [divRef, handleUserKeyPress]);
 
   return (
     <AppWindow app={props}>
-      <HStack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}>
+      <HStack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}
+        // setting for keyboard handler
+        ref={divRef} tabIndex={1} >
         {urls
           .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
           .map((url, idx) => (
@@ -175,48 +279,48 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <ButtonGroup isAttached size="xs" colorScheme="teal" >
         <Tooltip placement="bottom" hasArrow={true} label={'Remove Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()}>
+          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()}>
+          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="bottom" hasArrow={true} label={'1st Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdSkipPrevious />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Previous Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdNavigateBefore />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()}>
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdNavigateNext />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()}>
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdSkipNext />
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <ButtonGroup isAttached size="xs" colorScheme="teal" >
         <Menu placement="bottom">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="teal" aria-label="layout">
+            <MenuButton as={Button} colorScheme="teal" aria-label="layout"  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdMenu />
             </MenuButton>
           </Tooltip>
