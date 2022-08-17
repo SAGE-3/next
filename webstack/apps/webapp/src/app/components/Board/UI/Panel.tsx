@@ -26,6 +26,12 @@ export interface ButtonPanelProps extends ButtonProps {
 // Button with a title and using the font size from parent panel
 export function ButtonPanel(props: ButtonPanelProps) {
   const textColor = useColorModeValue('gray.800', 'gray.100');
+
+  const onDragStart = (e: React.DragEvent<HTMLButtonElement>) => {
+    // storing the app name in the dataTransfer object
+    e.dataTransfer.setData('app', props.title);
+  };
+
   return (
     <Consumer>
       {(value) => (
@@ -39,6 +45,9 @@ export function ButtonPanel(props: ButtonPanelProps) {
           fontSize={value}
           color={props.textColor ? props.textColor : textColor}
           justifyContent="flex-start"
+          // Drag and drop the button to create an app
+          onDragStart={onDragStart}
+          draggable={true}
         >
           {props.title}
         </Button>
