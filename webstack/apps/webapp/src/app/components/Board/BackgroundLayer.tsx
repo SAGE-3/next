@@ -8,7 +8,7 @@
 
 import { Tag } from '@chakra-ui/react';
 import { Applications, AppError } from '@sage3/applications/apps';
-import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { useRef } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -37,6 +37,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Presence Information
   const { update: updatePresence } = usePresence();
   const presences = usePresenceStore((state) => state.presences);
+  const users = useUsersStore((state) => state.users);
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
@@ -118,7 +119,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
                 <GiArrowCursor color="red"></GiArrowCursor>
                 <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
                   {/* using the ID before we can get the name */}
-                  {presence.data.userId.split('-')[0]}
+                  {users.find((el) => el._id === presence.data.userId)?.data.name}
                 </Tag>
               </div>
             );

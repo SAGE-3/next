@@ -17,36 +17,84 @@ import { User, UserSchema } from '@sage3/shared/types';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+import { APIHttp, SocketAPI } from '../api';
 
 interface UserState {
-  user: User | undefined;
-  create: (newuser: UserSchema) => Promise<void>;
-  update: (updates: Partial<UserSchema>) => Promise<void>;
-  subscribeToUser: (id: string) => Promise<void>;
+  users: User[];
+  get: (id: string) => Promise<User | null>;
+  subscribeToUsers: () => Promise<void>;
 }
 
 /**
- * TODO
  * The UserStore of others users.
- * The current user is a hook useUser.
+ * The current user is a hook 'useUser'.
  */
-const UserStore = createVanilla<UserState>((set, get) => {
+const UsersStore = createVanilla<UserState>((set, get) => {
+  let usersSub: (() => void) | null = null;
   return {
-    user: undefined,
-    create: async (newuser: UserSchema) => {
-      // TODO
+    users: [],
+    get: async (id: string) => {
+      const user = get().users.find(user => user._id === id);
+      if (user) {
+        return user;
+      } else {
+        const response = await APIHttp.GET<UserSchema, User>('/users/' + id);
+        if (response.success &&  response.data) {
+          const user = response.data[0] as User;
+          set({ users: [ ...get().users, user ]});
+          return user;
+        } else {
+          return null;
+        }
+      }
     },
-    update: async (updates: Partial<UserSchema>) => {
-      // TODO
-    },
-    subscribeToUser: async (id: string) => {
-      // TODO
+
+    subscribeToUsers: async () => {
+      const response = await APIHttp.GET<UserSchema, User>('/users');
+      if (response.success) {
+        set({ users: response.data });
+      }
+      // Unsubscribe old subscription
+      if (usersSub) {
+        usersSub();
+        usersSub = null;
+      }
+
+      // Socket Subscribe Message
+      const route = '/users';
+      // Socket Listenting to updates from server about the current users
+      usersSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
+        const doc = message.doc as User;
+        switch (message.type) {
+          case 'CREATE': {
+            set({ users: [...get().users, doc] });
+            break;
+          }
+          case 'UPDATE': {
+            const users = [...get().users];
+            const idx = users.findIndex((el) => el._id === doc._id);
+            if (idx > -1) {
+              users[idx] = doc;
+            }
+            set({ users: users });
+            break;
+          }
+          case 'DELETE': {
+            const users = [...get().users];
+            const idx = users.findIndex((el) => el._id === doc._id);
+            if (idx > -1) {
+              users.splice(idx, 1);
+            }
+            set({ users: users });
+          }
+        }
+      });
     },
   };
 });
 
 // Convert the Zustand JS store to Zustand React Store
-export const useUserStore = createReact(UserStore);
+export const useUsersStore = createReact(UsersStore);
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('UserStore', useUserStore);
+if (process.env.NODE_ENV === 'development')  mountStoreDevtool('UsersStore', useUsersStore);

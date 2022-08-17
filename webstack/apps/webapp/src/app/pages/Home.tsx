@@ -7,7 +7,7 @@
  */
 
 import { Box, useColorModeValue, Text, Icon } from '@chakra-ui/react';
-import { usePresence, usePresenceStore } from '@sage3/frontend';
+import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
 import { SBDocument } from '@sage3/sagebase';
 
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
@@ -28,8 +28,11 @@ export function HomePage() {
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const { update: updatePresence } = usePresence();
 
+  const subscribeToUsers = useUsersStore(state => state.subscribeToUsers);
+
   useEffect(() => {
     subscribeToPresence();
+    subscribeToUsers();
   }, []);
 
   const navigate = useNavigate();

@@ -7,20 +7,27 @@
  */
 
 import { Avatar, Box } from '@chakra-ui/react';
-import { usePresenceStore } from '@sage3/frontend';
+import { usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
 
 type AvatarGroupProps = {
   boardId: string;
 };
 
 export function AvatarGroup(props: AvatarGroupProps) {
-  const presences = usePresenceStore((state) => state.presences);
-  const users = presences.filter((el) => el.data.boardId === props.boardId);
+
+  // Get current user
+  const {user} = useUser();
+  // Get all users
+  const users = useUsersStore(state=>state.users);
+  // Get presences of users
+  let presences = usePresenceStore((state) => state.presences);
+  // Filter out the users who are not present on the board and is not the current user
+  presences = presences.filter((el) => ( el.data.boardId === props.boardId && el._id !== user?._id));
 
   return (
     <Box display="flex" flexDirection="row" alignItems="baseline">
-      {users.map((user) => {
-        return <Avatar key={user.data.userId} name={user.data.userId} size="sm" mx={1} backgroundColor="teal" color="white" />;
+      {presences.map((presence) => {
+        return <Avatar key={presence.data.userId} name={users.find(el => el._id === presence._id)?.data.name} size="sm" mx={1} backgroundColor="teal" color="white" />;
       })}
     </Box>
   );
