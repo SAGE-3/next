@@ -54,7 +54,7 @@ export function RoomList(props: RoomListProps) {
           height="60px"
           width="60px"
           m="2"
-          borderRadius="lg"
+          borderRadius="md"
           border={`solid ${borderColor} 2px`}
           fontSize="48px"
           p="0"

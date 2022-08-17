@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, Text } from '@chakra-ui/react';
+import { Box, Text, useColorModeValue } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
@@ -33,6 +33,11 @@ export function AppWindow(props: WindowProps) {
 
   // Height of the title bar
   const titleBarHeight = 24;
+  // Border color when selected
+  const borderColor = useColorModeValue(
+    sageColorByName('blue'),
+    sageColorByName('orange')
+  );
 
   // App Store
   const update = useAppStore((state) => state.update);
@@ -140,9 +145,9 @@ export function AppWindow(props: WindowProps) {
       onDoubleClick={handleAppClick}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
-        boxShadow: `${minimized ? '' : '0 4px 16px rgba(0,0,0,0.4)'}`,
+        boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
-        borderRadius: '10px'
+        borderRadius: '6px'
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
@@ -164,8 +169,8 @@ export function AppWindow(props: WindowProps) {
             top="-4px"
             width={size.width + 8}
             height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
-            border={`${3 * 1/scale}px dashed ${sageColorByName('red')}`}
-            borderRadius="10px"
+            border={`${3 * 1 / scale}px dashed ${borderColor}`}
+            borderRadius="6px"
             pointerEvents="none"
           ></Box>) : null
       }
@@ -183,7 +188,7 @@ export function AppWindow(props: WindowProps) {
         overflow="hidden"
         whiteSpace="nowrap"
         height={titleBarHeight + 'px'} // The height of the title bar
-        borderRadius="10px 10px 0 0"
+        borderRadius="6px 6px 0 0"
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">

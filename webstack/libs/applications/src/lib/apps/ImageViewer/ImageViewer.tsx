@@ -96,7 +96,7 @@ function AppComponent(props: App): JSX.Element {
         maxHeight: '100%'
       }}>
         <Image width="100%" userSelect={"auto"} draggable={false}
-          alt={file?.data.originalfilename} src={url} />
+          alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px"/>
       </div>
     </AppWindow>
   );
