@@ -7,7 +7,10 @@
  */
 
 import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
-import { useUIStore } from '@sage3/frontend';
+
+import { useUIStore, useAppStore, useUser } from '@sage3/frontend';
+import { initialValues } from '@sage3/applications/apps';
+import { AppName } from '@sage3/applications/schema';
 
 type BackgroundProps = {
   roomId: string;
@@ -17,6 +20,10 @@ type BackgroundProps = {
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
+  // How to create some applications
+  const createApp = useAppStore((state) => state.create);
+  // User
+  const { user } = useUser();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -73,21 +80,44 @@ export function Background(props: BackgroundProps) {
     event.dataTransfer.dropEffect = 'move';
   }
 
+  const newApplication = (appName: AppName, x: number, y: number) => {
+    if (!user) return;
+    createApp({
+      name: appName,
+      description: appName + '>',
+      roomId: props.roomId,
+      boardId: props.boardId,
+      position: { x: x - 200, y: y - 200, z: 0 },
+      size: { width: 400, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: appName,
+      state: { ...(initialValues[appName] as any) },
+      ownerId: user._id || '',
+      minimized: false,
+      raised: true,
+    });
+  };
+
+
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    // Get the position of the drop
+    const xdrop = event.nativeEvent.offsetX;
+    const ydrop = event.nativeEvent.offsetY;
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer).then((files) => {
-        // Get the position of the drop
-        const xdrop = event.nativeEvent.offsetX;
-        const ydrop = event.nativeEvent.offsetY;
         // do the actual upload
         uploadFunction(Array.from(files), xdrop, ydrop);
       });
     } else {
-      console.log('drop_handler: no files');
+      // if no files were dropped, create an application
+      const appName = event.dataTransfer.getData('app') as AppName;
+      if (appName) {
+        newApplication(appName, xdrop, ydrop);
+      }
     }
   }
 
