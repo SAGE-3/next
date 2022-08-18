@@ -231,11 +231,10 @@ export function RowFile({ file, clickCB }: RowFileProps) {
       <Modal closeOnEsc={true} closeOnOverlayClick={true} isOpen={isOpen} onClose={onClose} size={'3xl'} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Asset Browser</ModalHeader>
+          <ModalHeader>EXIF Metadata Viewer</ModalHeader>
           <ModalBody>
-
+            {/* Read-only ace editor showing the JSON data */}
             <ExifViewer file={file} colorMode={colorMode} />
-
           </ModalBody>
 
           <ModalFooter>

@@ -215,7 +215,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
   };
 
   return (
-    <Modal isCentered isOpen={isOpen} onClose={onClose} size={'6xl'}>
+    <Modal isCentered isOpen={isOpen} onClose={onClose} size={'5xl'}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Asset Browser</ModalHeader>
