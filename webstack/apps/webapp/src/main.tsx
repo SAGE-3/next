@@ -11,11 +11,12 @@ const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(
-    <StrictMode>
-      <HashRouter>
-        <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-        <App />
-      </HashRouter>
-    </StrictMode>
+    <HashRouter>
+      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
+      <App />
+    </HashRouter>
   );
 }
+
+{/* <StrictMode>
+</StrictMode> */}
