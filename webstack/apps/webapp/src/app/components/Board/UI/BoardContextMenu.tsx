@@ -73,8 +73,8 @@ export function BoardContextMenu(props: ContextProps) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
-    const x = Math.floor(boardPosition.x + (contextMenuPosition.x * 1/scale) );
-    const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1/scale) );
+    const x = Math.floor(boardPosition.x + (contextMenuPosition.x * 1 / scale));
+    const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1 / scale));
     createApp({
       name: appName,
       description: appName + '>',
@@ -295,7 +295,7 @@ export function BoardContextMenu(props: ContextProps) {
             Info
           </Button>
         </VStack>
-        
+
 
         <VStack w={'100%'}>
           <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>

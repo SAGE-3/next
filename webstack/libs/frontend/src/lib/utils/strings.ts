@@ -91,6 +91,54 @@ export function humanFileSize(size: number): string {
 }
 
 /**
+ * Process a URL to be embedded
+ *
+ * @param {string} view_url
+ * @returns {string} resulting url
+ */
+export function processContentURL(view_url: string): string {
+  // A youtube URL with a 'watch' video
+  if (view_url.startsWith('https://www.youtube.com') && !view_url.includes('/channel/')) {
+    if (view_url.indexOf('embed') === -1 || view_url.indexOf('watch?v=') >= 0) {
+      // Search for the Youtube ID
+      let video_id = view_url.split('v=')[1];
+      const ampersandPosition = video_id.indexOf('&');
+      if (ampersandPosition !== -1) {
+        video_id = video_id.substring(0, ampersandPosition);
+      }
+      view_url = 'https://www.youtube.com/embed/' + video_id + '?autoplay=0';
+    }
+  } else if (view_url.startsWith('https://www.ted.com/talks')) {
+    // Handler for TED talks
+    const talk = view_url.replace('https://www.ted.com/talks', 'https://embed.ted.com/talks');
+    view_url = talk;
+  } else if (view_url.startsWith('https://youtu.be')) {
+    // youtube short URL (used in sharing)
+    const video_id = view_url.split('/').pop();
+    view_url = 'https://www.youtube.com/embed/' + video_id + '?autoplay=0';
+  } else if (view_url.indexOf('vimeo') >= 0) {
+    // Search for the Vimeo ID
+    const m = view_url.match(/^.+vimeo.com\/(.*\/)?([^#?]*)/);
+    const vimeo_id = m ? m[2] || m[1] : null;
+    if (vimeo_id) {
+      view_url = 'https://player.vimeo.com/video/' + vimeo_id;
+    }
+  } else if (view_url.indexOf('twitch.tv') >= 0) {
+    // Twitch video from:
+    //    https://go.twitch.tv/videos/180266596
+    // to embedded:
+    //    https://player.twitch.tv/?!autoplay&video=v180266596
+    // Search for the Twitch ID
+    const tw = view_url.match(/^.+twitch.tv\/(.*\/)?([^#?]*)/);
+    const twitch_id = tw ? tw[2] || tw[1] : null;
+    if (twitch_id) {
+      view_url = 'https://player.twitch.tv/?!autoplay&video=v' + twitch_id;
+    }
+  }
+  return view_url;
+}
+
+/**
  * Check if a string looks like a UUIDv4
  * @param uuid: string to be tested
  * @returns {boolean} true if uuid is valid
