@@ -137,3 +137,13 @@ export function processContentURL(view_url: string): string {
   }
   return view_url;
 }
+
+/**
+ * Check if a string looks like a UUIDv4
+ * @param uuid: string to be tested
+ * @returns {boolean} true if uuid is valid
+ */
+export function isUUIDv4(uuid: string): boolean {
+  const v4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return v4Regex.test(uuid);
+}

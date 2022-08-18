@@ -77,12 +77,15 @@ export function UILayer(props: UILayerProps) {
   // Function to create a new app
   const newApplication = (appName: AppName) => {
     if (!user) return;
+
+    const x = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
+    const y = Math.floor(boardPosition.y + window.innerHeight / 2 - 400 / 2);
     createApp({
       name: appName,
       description: appName + '>',
       roomId: props.roomId,
       boardId: props.boardId,
-      position: { x: boardPosition.x, y: boardPosition.y, z: 0 },
+      position: { x, y, z: 0 },
       size: { width: 400, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
@@ -185,40 +188,39 @@ export function UILayer(props: UILayerProps) {
   }, [user, apps, props.boardId, presences]);
 
   return (
-    <Box display="flex" flexDirection="column" height="100vw">
-      <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition}>
+    <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
+      <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition} height={351}>
         {Object.keys(Applications).map((appName) => (
-          <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
+          <ButtonPanel key={appName} title={appName} canDrag={true} onClick={(e) => newApplication(appName as AppName)} />
         ))}
       </Panel>
 
-      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition}>
-        <ButtonPanel title="Home" textColor="white" backgroundColor="green.500" onClick={handleHomeClick} />
-        <ButtonPanel title="Asset Browser" textColor="white" backgroundColor="blue.500" onClick={assetOnOpen} />
-        <ButtonPanel title="Upload" textColor="white" backgroundColor="blue.500" onClick={uploadOnOpen} />
-        <ButtonPanel
-          title="Clear Board"
-          textColor="white"
-          backgroundColor="red.500"
-          onClick={() => apps.forEach((a) => deleteApp(a._id))}
-        />
+      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={182} stuck={true}>
+        <ButtonPanel title="Home" onClick={handleHomeClick} colorScheme="blackAlpha" />
+        <ButtonPanel title="Asset Browser" onClick={assetOnOpen} />
+        <ButtonPanel title="Upload" onClick={uploadOnOpen} />
+        <ButtonPanel title="Clear Board" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
       </Panel>
 
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 
-      <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} />
+      <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} stuck={true} />
 
       <ContextMenu divId="board">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={() => apps.forEach((a) => deleteApp(a._id))} />
       </ContextMenu>
+
       <InfoPanel
         title={board?.data.name ? board.data.name : ''}
         boardId={props.boardId}
         position={infoPanelPosition}
         setPosition={setInfoPanelPosition}
+        stuck={true}
       />
+
       {/* Asset dialog */}
       <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
+
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
 
