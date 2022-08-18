@@ -22,12 +22,11 @@ import {
 
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
-import { RowFileProps } from './types';
-
 
 import { humanFileSize, downloadFile, useUser } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 import { ExifViewer } from './exifviewer';
+import { RowFileProps } from './types';
 
 /**
  * Component diplaying one file in a row
@@ -51,6 +50,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
   // show the context menu
   const [showMenu, setShowMenu] = useState(false);
+  const [dragImage, setDragImage] = useState<HTMLImageElement>();
 
   // dark/light modes
   const { colorMode } = useColorMode();
@@ -98,10 +98,17 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   useEffect(() => {
     const button = buttonRef.current;
     button?.addEventListener('click', onSingleClick);
+
+    // Build the drag image for the file
+    const img = new Image();
+    img.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2FkZDhlNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSJub25lIiBkPSJNMCAwaDI0djI0SDBWMHoiLz48cGF0aCBkPSJNMTQgMkg2Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDEyYzEuMSAwIDItLjkgMi0yVjhsLTYtNnptNCAxOEg2VjRoOHY0aDR2MTJ6bS02LTNjLTEuMSAwLTItLjktMi0yVjkuNWMwLS4yOC4yMi0uNS41LS41cy41LjIyLjUuNVYxNWgyVjkuNWEyLjUgMi41IDAgMCAwLTUgMFYxNWMwIDIuMjEgMS43OSA0IDQgNHM0LTEuNzkgNC00di00aC0ydjRjMCAxLjEtLjkgMi0yIDJ6Ii8+PC9zdmc+";
+    setDragImage(img);
+
     return () => {
       button?.removeEventListener('click', onSingleClick);
     }
   }, [divRef]);
+
   // useEffect(() => {
   //   const button = buttonRef.current;
   //   button?.addEventListener('dblclick', onDoubleClick);
@@ -153,9 +160,16 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
   const extension = getExtension(file.type);
 
+  const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    if (dragImage) {
+      e.dataTransfer.setDragImage(dragImage, 2, 2);
+    }
+  };
+
   return (
     <div ref={divRef}>
-      <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono" alignItems="center">
+      <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono"
+        alignItems="center" draggable={true} onDragStart={dragStart}>
         <Box w="30px">{whichIcon(extension)}</Box>
         <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
           {file.originalfilename}
