@@ -12636,10 +12636,10 @@ react-vega@^7.5.1:
     prop-types "^15.8.1"
     vega-embed "^6.5.1"
 
-react-virtuoso@^2.16.1:
-  version "2.16.1"
-  resolved "https://registry.yarnpkg.com/react-virtuoso/-/react-virtuoso-2.16.1.tgz#0242ca410c4fb6be802e054b7ebd3f799d42efc5"
-  integrity sha512-WpcHZedUe00XYSQ56KcdYmWy/oaiPPuweTYemC9gl8CbjchLTKqLPCJa51Yv32U9oj1XPAEMfxuaXM7NTtjOiw==
+react-virtuoso@^2.17.1:
+  version "2.17.1"
+  resolved "https://registry.yarnpkg.com/react-virtuoso/-/react-virtuoso-2.17.1.tgz#5f1f9163f4ef30a2f553e43a33dd7f574e4f17e5"
+  integrity sha512-4inE+O5/SZmzk3vTRB6e26Uev8uFLxqmiiFZV662i/DuHaEG+hU/FwyDtkddCDL8sw7pTVwBZz18188Itvch7Q==
   dependencies:
     "@virtuoso.dev/react-urx" "^0.2.12"
     "@virtuoso.dev/urx" "^0.2.12"
