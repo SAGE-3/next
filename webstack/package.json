@@ -81,7 +81,7 @@
     "react-router": "^6.0.1",
     "react-router-dom": "6.3.0",
     "react-vega": "^7.5.1",
-    "react-virtuoso": "^2.16.1",
+    "react-virtuoso": "^2.17.1",
     "redis": "^4.1.0",
     "regenerator-runtime": "0.13.7",
     "resize-observer-polyfill": "^1.5.1",

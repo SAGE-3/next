@@ -96,12 +96,12 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <Box display="flex" flexDir="column">
+        <Box display="flex" flexDir="column" borderRadius="0 0 6px 6px">
           <Box backgroundColor="black" height={props.data.size.height - 50 + 'px'}>
             <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
           </Box>
 
-          <Box backgroundColor="gray" display="flex" justifyContent="center" height="50px" p="5px">
+          <Box backgroundColor="gray" display="flex" justifyContent="center" height="50px" p="5px" borderRadius="0 0 6px 6px">
             {user?._id === props._createdBy ? (
               <Button
                 colorScheme={(videoRef.current?.srcObject) ? 'red' : 'green'}

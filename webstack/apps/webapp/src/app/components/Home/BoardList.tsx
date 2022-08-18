@@ -67,22 +67,22 @@ export function BoardList(props: BoardListProps) {
 
       {props.selectedRoom
         ? (filterBoards ? filterBoards : boards)
-          .sort((a, b) => a.data.name.localeCompare(b.data.name))
-          .map((board) => {
-            return (
-              <BoardCard
-                key={board._id}
-                board={board}
-                userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                onSelect={() => props.onBoardClick(board)}
-                onEdit={() => {
-                  console.log('edit board');
-                }}
-                onEnter={() => props.onEnterClick(board)}
-                onDelete={() => deleteBoard(board._id)}
-              />
-            );
-          })
+            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+            .map((board) => {
+              return (
+                <BoardCard
+                  key={board._id}
+                  board={board}
+                  userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                  onSelect={() => props.onBoardClick(board)}
+                  onEdit={() => {
+                    console.log('edit board');
+                  }}
+                  onEnter={() => props.onEnterClick(board)}
+                  onDelete={() => deleteBoard(board._id)}
+                />
+              );
+            })
         : null}
       {props.selectedRoom ? (
         <Tooltip label="Create a board" openDelay={400}>

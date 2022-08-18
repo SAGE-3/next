@@ -6,19 +6,22 @@
  *
  */
 
+import { useState, useEffect } from 'react';
 import { Box, useColorModeValue, Text, Avatar, Tooltip, Icon } from '@chakra-ui/react';
-import { useAppStore, useUIStore, useUser, initials, useTwilioStore } from '@sage3/frontend';
-import { useState } from 'react';
+
 import { Rnd } from 'react-rnd';
-import { AvatarGroup } from './AvatarGroup';
-import { sageColorByName } from '@sage3/shared';
 import { SiTwilio } from 'react-icons/si';
+
+import { useAppStore, useUIStore, useUser, initials, useTwilioStore } from '@sage3/frontend';
+import { sageColorByName } from '@sage3/shared';
+import { AvatarGroup } from './AvatarGroup';
 
 type InfoPanelProps = {
   position: { x: number; y: number };
   boardId: string;
   title: string;
   setPosition: (pos: { x: number; y: number }) => void;
+  stuck?: boolean;
 };
 
 export function InfoPanel(props: InfoPanelProps) {
@@ -32,6 +35,8 @@ export function InfoPanel(props: InfoPanelProps) {
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   // Twilio
   const room = useTwilioStore((state) => state.room);
+  // Put in a corner
+  const [stuck, setStuck] = useState(props.stuck || false);
 
   const [hover, setHover] = useState(false);
   // User information
@@ -41,10 +46,15 @@ export function InfoPanel(props: InfoPanelProps) {
     e.stopPropagation();
   }
 
+  useEffect(() => {
+    if (stuck) {
+      props.setPosition({ x: 5, y: 5 });
+    }
+  }, [stuck]);
+
   if (showUI)
     return (
       <Rnd
-        // default={{ x: props.position.x, y: props.position.y, width: '100%', height: '100px' }}
         position={{ ...props.position }}
         bounds="window"
         onDoubleClick={handleDblClick}
@@ -52,16 +62,21 @@ export function InfoPanel(props: InfoPanelProps) {
         onDragStop={(e, data) => {
           setHover(false);
           props.setPosition({ x: data.x, y: data.y });
+          // top left corner
+          if (data.x < 5 && data.y < 5) {
+            setStuck(true);
+          } else {
+            setStuck(false);
+          }
         }}
         enableResizing={false}
         dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 1s' }}
+        style={{ transition: hover ? 'none' : 'all 0.2s' }}
       >
         <Box
           display="flex"
-          boxShadow="outline"
-          transition="all .5s "
-          _hover={{ transform: 'translate(-3px, -5px)', boxShadow: '2xl' }}
+          boxShadow={stuck ? "base" : "outline"}
+          transition="all .2s "
           bg={panelBackground}
           p="2"
           rounded="md"
@@ -78,7 +93,7 @@ export function InfoPanel(props: InfoPanelProps) {
 
           <Box display="flex" flexDirection="column">
             <Box display="flex" justifyContent={'left'}>
-              <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
+              <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'} className="handle">
                 {props.title}
               </Text>
               <Tooltip pointerEvents={'all'} label={room ? 'Twilio Connected' : 'Twilio Disconnected'}>

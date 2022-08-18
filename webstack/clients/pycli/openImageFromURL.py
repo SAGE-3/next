@@ -53,6 +53,7 @@ def listBoards():
     r = requests.get(web_server + '/api/boards', headers=head)
     return r
 
+
 def getAppInfo(appId):
     """Get info about an app
     """
@@ -109,6 +110,7 @@ def processMessage(msg):
     if type == 'UPDATE':
         print('Update> ', collection, data)
 
+
 def openImageFromURL(roomId, boardId, userID, url, posx, posy, w=400, h=400):
     """Upload a file and open
     boardId: uuid of the board
@@ -121,23 +123,24 @@ def openImageFromURL(roomId, boardId, userID, url, posx, posy, w=400, h=400):
     headers = {'Authorization': 'Bearer {}'.format(token)}
     # Extra parameters as data
     payload = {
-      'name': 'Image',
-      'description': 'Image',
-      'roomId': roomId,
-      'boardId': boardId,
-      'position': { 'x': posx , 'y': posy, 'z': 0 },
-      'size': { 'width': w, 'height': h, 'depth': 0 },
-      'rotation': { 'x': 0, 'y': 0, 'z': 0 },
-      'type': "Image",
-      'ownerId': userID,
-      'state': { 'url': url },
-      'minimized': False,
-      'raised': True
+        'name': 'ImageViewer',
+        'description': 'ImageViewer>',
+        'roomId': roomId,
+        'boardId': boardId,
+        'position': {'x': posx, 'y': posy, 'z': 0},
+        'size': {'width': w, 'height': h, 'depth': 0},
+        'rotation': {'x': 0, 'y': 0, 'z': 0},
+        'type': "ImageViewer",
+        'ownerId': userID,
+        'state': {'id': url},
+        'minimized': False,
+        'raised': True
     }
     # POST
     r = requests.post(web_server + '/api/apps', headers=headers, json=payload)
     print('Upload>', r)
     return r
+
 
 async def main():
     myID = connect()
@@ -164,7 +167,8 @@ async def main():
     print('myID', myID)
     # encodedURL = 'https://i.picsum.photos/id/866/300/200.jpg?hmac=vwkhhp_0HQtgJfxWytDiH1t2GX4YyYyWs3_18hlicBY'
     encodedURL = 'data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAAUA AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO 9TXL0Y4OHwAAAABJRU5ErkJggg=='
-    openImageFromURL(room0['_id'], board0['_id'],myID, encodedURL , 200, 200, 400, 400)
+    openImageFromURL(room0['_id'], board0['_id'], myID,
+                     encodedURL, 200, 200, 400, 400)
 
 if __name__ == '__main__':
     asyncio.run(main())

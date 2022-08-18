@@ -12,3 +12,4 @@ export * from './useData';
 export * from './usePeer';
 export * from './usePresence';
 export * from './useMeasure';
+export * from './useHotkeys';

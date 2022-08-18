@@ -47,7 +47,7 @@ export function RoomCard(props: RoomCardProps) {
         display="flex"
         justifyContent="center"
         borderWidth='2px'
-        borderRadius='lg'
+        borderRadius='md'
         border={`solid ${(props.selected) ? sageColorByName(props.room.data.color) : borderColor} 2px`}
         fontWeight="bold"
         width="60px"

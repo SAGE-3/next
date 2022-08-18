@@ -43,11 +43,12 @@ interface UIState {
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
-
   setBoardPosition: (pos: { x: number; y: number }) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
+  displayUI: () => void;
+  hideUI: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
@@ -79,6 +80,8 @@ export const useUIStore = create<UIState>((set) => ({
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
+  displayUI: () => set((state) => ({ ...state, showUI: true })),
+  hideUI: () => set((state) => ({ ...state, showUI: false })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
   zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
   zoomInDelta: (d) =>
