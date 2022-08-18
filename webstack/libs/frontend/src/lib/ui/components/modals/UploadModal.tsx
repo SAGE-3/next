@@ -92,9 +92,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader>Upload Assets</ModalHeader>
         <ModalBody>
-          <Checkbox onChange={checkFolder}>Enable folder upload (instead of files)</Checkbox>
-          <br />
-          <br />
+          <Checkbox mb={4} onChange={checkFolder}>Enable folder upload</Checkbox>
           <FormControl isRequired>
             <InputGroup>
               <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
@@ -120,16 +118,12 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
               }
             </InputGroup>
             <FormHelperText>Select one or more files</FormHelperText>
-
-            <br />
-            <br />
-
-            <Button type="submit" onClick={upload}>
-              Upload
-            </Button>
           </FormControl>
         </ModalBody>
         <ModalFooter>
+          <Button type="submit" colorScheme='blue' mr={5} onClick={upload}>
+            Upload
+          </Button>
           <Button mr={3} onClick={props.onClose}>
             Cancel
           </Button>

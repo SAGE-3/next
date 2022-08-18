@@ -6,20 +6,22 @@
  *
  */
 
-/**
- * SAGE3 application: Webview
- * created by: SAGE3 Team
- */
-
 import { z } from 'zod';
 
+/**
+ * SAGE3 application: Cobrowse
+ * created by: SAGE3
+ */
+
 export const schema = z.object({
-  webviewurl: z.string(),
+  sharedurl: z.string(),
+  frame: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  webviewurl: 'https://google.com/',
+  sharedurl: 'https://www.google.com',
+  frame: 0,
 };
 
-export const name = 'Webview';
+export const name = 'Cobrowse';

@@ -10,7 +10,7 @@ import { Image, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 // Icons
 import { MdFileDownload } from 'react-icons/md';
 // Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
+import { downloadFile, isUUIDv4 } from '@sage3/frontend';
 
 import { AppWindow } from '../../components';
 
@@ -46,11 +46,17 @@ function AppComponent(props: App): JSX.Element {
 
   // Convert the ID to an asset
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.id);
-    if (myasset) {
-      setFile(myasset);
-      // Update the app title
-      update(props._id, { description: 'Image> ' + myasset?.data.originalfilename });
+    const isUUID = isUUIDv4(s.id);
+    if (isUUID) {
+      const myasset = assets.find((a) => a._id === s.id);
+      if (myasset) {
+        setFile(myasset);
+        // Update the app title
+        update(props._id, { description: 'Image> ' + myasset?.data.originalfilename });
+      }
+    } else {
+      // Assume it is a URL
+      setUrl(s.id);
     }
   }, [s.id, assets]);
 
@@ -74,9 +80,12 @@ function AppComponent(props: App): JSX.Element {
 
   // Track the size size and pick the 'best' URL
   useEffect(() => {
-    // Match the window size, dpi, and scale of the board to a URL
-    const res = getImageUrl(url, sizes, displaySize.width * window.devicePixelRatio * scale);
-    setUrl(res);
+    const isUUID = isUUIDv4(s.id);
+    if (isUUID) {
+      // Match the window size, dpi, and scale of the board to a URL
+      const res = getImageUrl(url, sizes, displaySize.width * window.devicePixelRatio * scale);
+      setUrl(res);
+    }
   }, [url, sizes, displaySize, scale]);
 
   return (
@@ -87,7 +96,7 @@ function AppComponent(props: App): JSX.Element {
         maxHeight: '100%'
       }}>
         <Image width="100%" userSelect={"auto"} draggable={false}
-          alt={file?.data.originalfilename} src={url} />
+          alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px"/>
       </div>
     </AppWindow>
   );

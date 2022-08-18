@@ -6,7 +6,7 @@
  *
  */
 
-import { useState, createContext } from 'react';
+import { useState, createContext, useEffect } from 'react';
 import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
@@ -20,25 +20,35 @@ const { Provider, Consumer } = createContext(16);
 // Add a title to the chakra button props
 export interface ButtonPanelProps extends ButtonProps {
   title: string;
+  canDrag?: boolean;
   textColor?: string;
 }
 
 // Button with a title and using the font size from parent panel
 export function ButtonPanel(props: ButtonPanelProps) {
   const textColor = useColorModeValue('gray.800', 'gray.100');
+
+  const onDragStart = (e: React.DragEvent<HTMLButtonElement>) => {
+    // storing the app name in the dataTransfer object
+    e.dataTransfer.setData('app', props.title);
+  };
+
   return (
     <Consumer>
       {(value) => (
         <Button
           {...props}
           w="100%"
-          borderRadius={10}
+          borderRadius="md"
           h="auto"
           p={1}
           pl={2}
           fontSize={value}
           color={props.textColor ? props.textColor : textColor}
           justifyContent="flex-start"
+          // Drag and drop the button to create an app
+          onDragStart={onDragStart}
+          draggable={props.canDrag ? true : false}
         >
           {props.title}
         </Button>
@@ -51,8 +61,10 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export type PanelProps = {
   title: string;
   opened: boolean;
+  height: number;
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
+  stuck?: boolean;
   children?: JSX.Element[];
 };
 
@@ -75,7 +87,8 @@ export function Panel(props: PanelProps) {
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
-
+  // Put in a corner
+  const [stuck, setStuck] = useState(props.stuck || false);
   // UI store
   const showUI = useUIStore((state) => state.showUI);
 
@@ -83,6 +96,19 @@ export function Panel(props: PanelProps) {
     e.stopPropagation();
     setShowActions(!showActions);
   }
+
+  useEffect(() => {
+    const resizeObserver = (e: UIEvent) => {
+      props.setPosition({ x: 5, y: window.innerHeight - (props.height + 5) });
+    };
+    if (stuck) {
+      props.setPosition({ x: 5, y: window.innerHeight - (props.height + 5) });
+      window.addEventListener('resize', resizeObserver);
+    }
+    return () => {
+      if (stuck) window.removeEventListener('resize', resizeObserver);
+    }
+  }, [stuck]);
 
   if (showUI)
     return (
@@ -95,16 +121,21 @@ export function Panel(props: PanelProps) {
         onDragStop={(e, data) => {
           setHover(false);
           props.setPosition({ x: data.x, y: data.y });
+          // bottom right corner
+          if (data.x < 5 && data.y > (window.innerHeight - (props.height + 5))) {
+            setStuck(true);
+          } else {
+            setStuck(false);
+          }
         }}
         enableResizing={false}
         dragHandleClassName="header" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 1s' }}
+        style={{ transition: hover ? 'none' : 'all 0.2s' }}
       >
         <Box
           display="flex"
-          boxShadow="outline"
-          transition="all .5s "
-          _hover={{ transform: 'translate(-3px, -5px)', boxShadow: '2xl' }}
+          boxShadow={stuck ? "base" : "outline"}
+          transition="all .2s "
           bg={panelBackground}
           p="2"
           pl="1"
@@ -123,7 +154,8 @@ export function Panel(props: PanelProps) {
           <Box width="100%">
             <VStack bg={panelBackground} cursor="auto">
               <Tooltip placement="top" gutter={20} hasArrow={true} label={'Doubleclick to open/close'} openDelay={600}>
-                <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'} userSelect={'none'}>
+                <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'}
+                  userSelect={'none'} className="header" cursor="move">
                   {props.title}
                 </Text>
               </Tooltip>
@@ -143,7 +175,7 @@ export function Panel(props: PanelProps) {
                       },
                       '&::-webkit-scrollbar-thumb': {
                         background: gripColor,
-                        borderRadius: '24px',
+                        borderRadius: 'md',
                       },
                     }}
                   >
@@ -154,7 +186,7 @@ export function Panel(props: PanelProps) {
             </VStack>
           </Box>
         </Box>
-      </Rnd>
+      </Rnd >
     );
   else return null;
 }
