@@ -135,7 +135,7 @@ export function UILayer(props: UILayerProps) {
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Webview',
         ownerId: user?._id,
-        state: { url: processContentURL(loc) },
+        state: { webviewurl: processContentURL(loc) },
         minimized: false,
         raised: true
       });
@@ -152,7 +152,7 @@ export function UILayer(props: UILayerProps) {
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Webview',
         ownerId: user?._id,
-        state: { url: processContentURL(searchURL) },
+        state: { webviewurl: processContentURL(searchURL) },
         minimized: false,
         raised: true
       });
