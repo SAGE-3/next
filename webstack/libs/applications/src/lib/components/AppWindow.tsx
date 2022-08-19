@@ -15,6 +15,8 @@ import { App } from '../schema';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
+import { ReactComponent as AppIcon } from './icon.svg';
+
 type WindowProps = {
   app: App;
   aspectRatio?: number | boolean;
@@ -192,7 +194,7 @@ export function AppWindow(props: WindowProps) {
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">
-          <Text color="white">{props.app.data.description}</Text>
+          <AppIcon width={(titleBarHeight  - 4) + 'px'} height={(titleBarHeight  - 4) + 'px'}></AppIcon><Text color="white">{props.app.data.description}</Text>
         </Box>
         {/* Right Title bar Elements */}
         <Box display="flex" alignItems="center">

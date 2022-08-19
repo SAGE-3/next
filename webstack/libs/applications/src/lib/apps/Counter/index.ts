@@ -23,3 +23,4 @@ export const init: Partial<state> = {
 };
 
 export const name = 'Counter';
+

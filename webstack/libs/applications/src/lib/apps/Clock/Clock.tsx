@@ -19,7 +19,7 @@ import { AppWindow } from '../../components';
 import * as d3 from 'd3';
 // SVG clock file
 import { ReactComponent as Clock } from './clock.svg';
-
+//import { ReactComponent as AppIcon } from './icon.svg';
 
 /* App component for SVGBox */
 

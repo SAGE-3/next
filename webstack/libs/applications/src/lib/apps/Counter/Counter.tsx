@@ -14,6 +14,10 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { MdAdd, MdRemove } from 'react-icons/md';
 
+import { Image } from '@chakra-ui/react'
+
+//import {icons} from '../../apps';
+
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
 function add(update: UpdateFunc, s: AppState, id: string) {
@@ -26,6 +30,7 @@ function sub(update: UpdateFunc, s: AppState, id: string) {
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  
 
   return (
     <AppWindow app={props}>
@@ -38,7 +43,7 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
+  
   const updateState = useAppStore((state) => state.updateState);
 
   function handleAddClick() {

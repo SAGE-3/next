@@ -77,3 +77,7 @@ export const initialValues = {
 };
 
 export * from './components';
+
+//export const icons = {
+//  [CounterAppName]: './assets/layers.png',
+//};
