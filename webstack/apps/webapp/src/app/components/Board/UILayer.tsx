@@ -15,6 +15,7 @@ import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 
 import { InfoPanel } from './UI/InfoPanel';
+import { MainMenu } from './UI/Menus/MainMenu';
 import { MiniMap } from './UI/Minimap';
 import { ButtonPanel, Panel } from './UI/Panel';
 import { Twilio } from './UI/Twilio';
@@ -95,12 +96,8 @@ export function UILayer(props: UILayerProps) {
         ))}
       </Panel>
 
-      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={182} stuck={true}>
-        <ButtonPanel title="Home" onClick={handleHomeClick} colorScheme="blackAlpha" />
-        <ButtonPanel title="Asset Browser" onClick={assetOnOpen} />
-        <ButtonPanel title="Upload" onClick={uploadOnOpen} />
-        <ButtonPanel title="Clear Board" onClick={() => apps.forEach((a) => deleteApp(a._id))} />
-      </Panel>
+      <MainMenu title={'Main Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={182} uploadOnOpen={uploadOnOpen} assetOnOpen={assetOnOpen} />
+      
 
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 

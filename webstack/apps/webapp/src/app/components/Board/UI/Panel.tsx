@@ -7,9 +7,9 @@
  */
 
 import { useState, createContext, useEffect } from 'react';
-import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box } from '@chakra-ui/react';
+import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box, Icon, HStack } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
-
+import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { useUIStore } from '@sage3/frontend';
 
 // Pass the font size between the panel and the buttons
@@ -86,6 +86,10 @@ export function Panel(props: PanelProps) {
     e.stopPropagation();
     setShowActions(!showActions);
   }
+  function handleClick(e: any) {
+    e.stopPropagation();
+    setShowActions(!showActions);
+  }
 
   useEffect(() => {
     const resizeObserver = (e: UIEvent) => {
@@ -106,7 +110,8 @@ export function Panel(props: PanelProps) {
         position={{ ...props.position }}
         bounds="window"
         size={{ width: w, height: '100px' }}
-        onDoubleClick={handleDblClick}
+        //onDoubleClick={handleDblClick}
+        
         onDragStart={() => setHover(true)}
         onDragStop={(e, data) => {
           setHover(false);
@@ -143,12 +148,13 @@ export function Panel(props: PanelProps) {
 
           <Box width="100%">
             <VStack bg={panelBackground} cursor="auto">
-              <Tooltip placement="top" gutter={20} hasArrow={true} label={'Doubleclick to open/close'} openDelay={600}>
+                <HStack w="100%" >
                 <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'}
-                  userSelect={'none'} className="header" cursor="move">
+                  userSelect={'none'} className="header" cursor="move" >
                   {props.title}
                 </Text>
-              </Tooltip>
+                {(showActions) ? <Icon as={MdExpandLess} onClick={handleClick} /> : <Icon  as={MdExpandMore} onClick={handleClick} />}
+                </HStack>
               {showActions && (
                 <Provider value={fontsize2}>
                   <VStack
