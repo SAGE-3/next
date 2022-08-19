@@ -76,7 +76,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
         // build an FileEntry object
         const entry: FileEntry = {
           id: id,
-          owner: user?._id || '-',
+          owner: item.data.owner,
           filename: item.data.file,
           originalfilename: item.data.originalfilename,
           date: new Date().getTime(),
