@@ -43,7 +43,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/users', UsersCollection.router());
 
   // Test check
-  router.use(checkPermissions('user'));
+  router.use(checkPermissions('guest', 'google', 'cilogon', 'jwt'));
 
   router.use('/assets', assetExpressRouter());
 

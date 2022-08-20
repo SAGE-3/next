@@ -9,11 +9,10 @@
 // NPM imports
 import * as express from 'express';
 
-// Collection Imports
-import { UsersCollection } from '../collections';
-
 // SAGEBase Imports
 import { SBAuthSchema } from '@sage3/sagebase';
+// User collection
+// import { UsersCollection } from '../collections';
 
 /**
  * Middleware to check if the user has permission to access the route.
@@ -25,29 +24,19 @@ import { SBAuthSchema } from '@sage3/sagebase';
 export function checkPermissions(...permittedRoles: string[]) {
   // return a middleware
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // user is already logged in
     const user = req.user as SBAuthSchema;
-    console.log('checkPermissions>', permittedRoles, user.id, req.path);
-    UsersCollection.get(user.id)
-      .then((details) => {
-        if (details) {
-          const { name, userRole } = details.data;
-          console.log('User> check', name, userRole);
-          // Check if the user has the correct role
-          if (permittedRoles.includes(userRole)) {
-            // role is allowed, so continue on the next middleware
-            next();
-          } else {
-            // user is forbidden
-            res.status(403).json({ message: 'Forbidden user' });
-          }
-        } else {
-          // No user details found
-          res.status(403).json({ message: 'User details not found' });
-        }
-      })
-      .catch((err) => {
-        // Error getting user details
-        res.status(403).json({ message: err.message });
-      });
+    // could get more data from user collection
+    // UsersCollection.get(user.id)...
+    const provider = user.provider; // guest, google, cilogon, jwt
+    console.log('checkPermissions>', permittedRoles, user.id, provider, req.path);
+    // Check if the user has the correct role
+    if (permittedRoles.includes(provider)) {
+      // role is allowed, so continue on the next middleware
+      next();
+    } else {
+      // user is forbidden
+      res.status(403).json({ message: 'Forbidden user' });
+    }
   };
 }
