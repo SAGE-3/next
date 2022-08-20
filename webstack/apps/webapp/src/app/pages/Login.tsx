@@ -18,6 +18,7 @@ import { BgColor, useAuth } from '@sage3/frontend';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
 
+// Logos
 import sage3DarkMode from '../../assets/SAGE3DarkMode.png';
 import sage3LightMode from '../../assets/SAGE3LightMode.png';
 import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
