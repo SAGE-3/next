@@ -81,7 +81,7 @@ export function LoginPage() {
               pl="1rem"
               _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
               justifyContent="flex-start"
-              disabled={!production}
+              disabled={false}
               onClick={googleLogin}
             >
               Login with Google
