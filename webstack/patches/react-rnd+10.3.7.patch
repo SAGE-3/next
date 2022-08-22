@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-rnd/package.json b/node_modules/react-rnd/package.json
+index 19d7af4..6e78aff 100644
+--- a/node_modules/react-rnd/package.json
++++ b/node_modules/react-rnd/package.json
+@@ -100,7 +100,7 @@
+   },
+   "dependencies": {
+     "re-resizable": "6.9.6",
+-    "react-draggable": "4.4.4",
++    "react-draggable": "4.4.5",
+     "tslib": "2.3.1"
+   },
+   "peerDependencies": {
