@@ -14,6 +14,10 @@ export type SBAuthSchema = {
   provider: string;
   providerId: string;
   id: string;
+  // data to pass from auth provider to account
+  displayName?: string;
+  email?: string;
+  picture?: string;
 };
 
 /**
@@ -72,12 +76,12 @@ class SBAuthDatabase {
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthSchema if one was found or added succesfully.
    */
-  public async findOrAddAuth(provider: string, providerId: string): Promise<SBAuthSchema | undefined> {
+  public async findOrAddAuth(provider: string, providerId: string, extras?: any): Promise<SBAuthSchema | undefined> {
     let auth = await this.readAuth(provider, providerId);
     if (auth != undefined) {
       return auth;
     } else {
-      auth = await this.addAuth(provider, providerId);
+      auth = await this.addAuth(provider, providerId, extras);
       return auth;
     }
   }
@@ -88,11 +92,14 @@ class SBAuthDatabase {
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthscema if add was successful
    */
-  public async addAuth(provider: string, providerId: string): Promise<SBAuthSchema | undefined> {
+  public async addAuth(provider: string, providerId: string, extras: any): Promise<SBAuthSchema | undefined> {
     const doc = {
       provider,
       providerId,
       id: v4(),
+      displayName: extras.displayName,
+      email: extras.email,
+      picture: extras.picture,
     } as SBAuthSchema;
     const key = provider + providerId;
     const redisRes = await this._redisClient.json.set(`${this._prefix}:${key}`, '.', doc);

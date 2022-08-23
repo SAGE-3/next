@@ -34,10 +34,11 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
 
   useEffect(() => {
     let userSub: (() => void) | null = null;
-    async function fetchUser() {
 
+    async function fetchUser() {
+      if (!auth) return;
       // Subscribe to user updates
-      const route = `/users/${auth}`;
+      const route = `/users/${auth.id}`;
       userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
         const doc = message.doc as User;
         switch (message.type) {
@@ -56,7 +57,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       });
 
       // Check if user account exists
-      const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth}`);
+      const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth.id}`);
 
       // If account exists, set the user context and subscribe to updates
       if (userResponse.data) {

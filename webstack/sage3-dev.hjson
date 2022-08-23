@@ -52,8 +52,8 @@
       "routeEndpoint": "/auth/guest"
     },
     "googleConfig": {
-      "clientID": "416190066680-brpp3rgo9m271euoihnruhc3in3ipsi7.apps.googleusercontent.com",
-      "clientSecret": "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",
+      "clientID": "773749598438-sgbn6mj326jj6ggsa8n3avrc3jue0ikv.apps.googleusercontent.com",
+      "clientSecret": "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",
       "routeEndpoint": "/auth/google",
       "callbackURL": "/auth/google/redirect"
     },
@@ -70,9 +70,9 @@
     "certificateChainFile": "localhost-ca.crt",
     "certificateKeyFile": "localhost-server.key"
   },
-  twilio: {
+  "twilio": {
     "accountSid": "AC43f67ea8d72208ae398d8d234d365d99",
     "apiKey": "SKbe39af89723afe3232a9d0abb60b4d85",
-    "apiSecret": "UycFTsz4JrjPJCucCBGP4uIntl4Pg3iT",
+    "apiSecret": "UycFTsz4JrjPJCucCBGP4uIntl4Pg3iT"
   }
 }
