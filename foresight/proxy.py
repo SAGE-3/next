@@ -237,7 +237,7 @@ def get_cmdline_parser():
 
 
 
-sage_proxy = SAGEProxy("config/config.json", "7c43e052-1b1b-4913-9773-c45410859147")
+sage_proxy = SAGEProxy("config/config.json", "c4403c6f-a2e8-40d0-9b4b-c73999340b4c")
 
 listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
 listening_process.start()

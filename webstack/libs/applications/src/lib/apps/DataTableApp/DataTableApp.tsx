@@ -173,8 +173,6 @@ const Pagination = (props: App): JSX.Element => {
     for (let i = minRows; i <= maxRows; i++) {
       rowDisplayOptions.push(i)
     }
-    console.log(rowDisplayOptions)
-
     return (rowDisplayOptions)
   }, [])
 
@@ -515,23 +513,24 @@ function AppComponent(props: App): JSX.Element {
     )
   }
 
-  function handleRowClick(info: string) {
-    const row = document.querySelectorAll("td[data-row='" + info + "']")
+  function handleRowClick(info: number) {
+    const infoString = info.toString()
+    const row = document.querySelectorAll("td[data-row='" + infoString + "']")
     row.forEach((cell: any) => {
-        if (!s.selectedRows?.includes(info)) {
-          const checked = s.selectedRows.concat(info)
+        if (!s.selectedRows?.includes(infoString)) {
+          const checked = s.selectedRows.concat(infoString)
           updateState(props._id, {selectedRows: checked})
-          updateState(props._id, {messages: 'Row ' + info + ' selected ---' + ' Selected Rows: ' + checked.toString()});
+          updateState(props._id, {messages: 'Row ' + infoString + ' selected ---' + ' Selected Rows: ' + checked.toString()});
           // cell.className = "highlight"
         } else {
-          const unchecked = (() => (s.selectedRows?.filter((item: string) => item != info)))()
+          const unchecked = (() => (s.selectedRows?.filter((item: string) => item != infoString)))()
           updateState(props._id, {selectedRows: unchecked})
           updateState(props._id, {messages: 'Row ' + info + ' unselected ---' + ' Selected Rows: ' + unchecked.toString()});
           // cell.className = "originalChakra"
         }
       }
     )
-    console.log("row " + info + " clicked")
+    console.log("row " + infoString + " clicked")
   }
 
   // Start of table wide functions
@@ -627,8 +626,7 @@ function AppComponent(props: App): JSX.Element {
       <>
         <div className="URL-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
           <p>s.selectedRows: {s.selectedRows}</p>
-          <p>typeof s.selectedRows: {typeof s.selectedRows}</p>
-          <p>indices: {indices}</p>
+          <p>s.selectedCols: {s.selectedCols}</p>
           <HStack
             position='absolute'
             top='35px'
@@ -736,7 +734,6 @@ function AppComponent(props: App): JSX.Element {
           style={{display: s.totalRows !== 0 ? "none" : "block"}}
           className='URL-Container'
         >
-          <p>s.dataUrl: {s.dataUrl}</p>
           <InputGroup size='md'>
             <Input
               type="text"
@@ -833,18 +830,18 @@ function AppComponent(props: App): JSX.Element {
                 {
                   data?.map((row: any, rowIndex: number) => (
                     <Tr
-                      key={rowIndex}
+                      key={indices[rowIndex]}
                     >
-                      <Td key={rowIndex}
+                      <Td key={indices[rowIndex]}
                           className="indexTd"
-                          onClick={(e) => handleRowClick(rowIndex.toString())}
+                          onClick={(e) => handleRowClick(indices[rowIndex])}
                       >
                         {indices[rowIndex]}
                       </Td>
                       {row.map((cell: any, colIndex: number) => (
                         <Td key={colIndex}
                             data-col={headers[colIndex % headers.length]}
-                            data-row={rowIndex.toString()}
+                            data-row={indices[rowIndex]}
                             className="originalChakra"
                             onClick={(e) => handleCellClick()}
                         >

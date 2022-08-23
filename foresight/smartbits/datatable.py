@@ -166,7 +166,7 @@ class DataTable(SmartBit):
         self.send_updates()
 
     def drop_columns(self, selected_cols):
-        self._modified_df.drop(columns=selected_cols, inplace=True)
+        self._modified_df.drop(columns=selected_cols, axis=1, inplace=True)
         self.paginate()
         self.state.selectedCols = []
         self.state.timestamp = time.time()
@@ -179,7 +179,7 @@ class DataTable(SmartBit):
 
     def drop_rows(self, selected_rows):
         selected_rows = list(map(int, selected_rows))
-        self._modified_df.drop(selected_rows, inplace=True)
+        self._modified_df.drop(selected_rows, axis=0, inplace=True)
         self.paginate()
         self.state.selectedRows = []
         self.state.timestamp = time.time()
@@ -228,7 +228,7 @@ class DataTable(SmartBit):
         self.send_updates()
 
     def drop_column(self, selected_col):
-        self._modified_df.drop(columns=selected_col, inplace=True)
+        self._modified_df.drop(columns=selected_col, axis=1, inplace=True)
         self.paginate()
         self.state.selectedCol = ""
         self.state.timestamp = time.time()
