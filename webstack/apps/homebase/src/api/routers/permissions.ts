@@ -29,7 +29,7 @@ export function checkPermissions(...permittedRoles: string[]) {
     // could get more data from user collection
     // UsersCollection.get(user.id)...
     const provider = user.provider; // guest, google, cilogon, jwt
-    console.log('checkPermissions>', permittedRoles, user.id, provider, req.path);
+    console.log('checkPermissions>', permittedRoles, user.displayName, '-', provider, '-', req.path);
     // Check if the user has the correct role
     if (permittedRoles.includes(provider)) {
       // role is allowed, so continue on the next middleware

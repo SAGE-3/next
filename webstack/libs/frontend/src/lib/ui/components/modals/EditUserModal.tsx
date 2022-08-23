@@ -34,8 +34,8 @@ interface EditUserModalProps {
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { user, update } = useUser();
 
-  const [name, setName] = useState<UserSchema['name']>('');
-  const [email, setEmail] = useState<UserSchema['email']>('');
+  const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
+  const [email, setEmail] = useState<UserSchema['email']>(user?.data.email || '');
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)
