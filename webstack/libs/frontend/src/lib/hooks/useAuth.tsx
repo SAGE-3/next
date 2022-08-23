@@ -14,6 +14,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { SBAuthSchema } from '@sage3/sagebase';
 
 /**
  * Endpoint to login with Google OAuth
@@ -69,7 +70,7 @@ async function logout(): Promise<void> {
  * Verify the authentication of the current user.
  * @returns {boolean} returns true if the user if authenticated
  */
-async function verify(): Promise<{ success: boolean; authentication: boolean; auth: { id: string } | null }> {
+async function verify(): Promise<{ success: boolean; authentication: boolean; auth: SBAuthSchema | null }> {
   const res = await fetch('/auth/verify', {
     method: 'GET',
     credentials: 'include',
@@ -83,8 +84,8 @@ async function verify(): Promise<{ success: boolean; authentication: boolean; au
 }
 
 type AuthenticatedType = {
-  auth: string | null;
-  verify: () => Promise<{ success: boolean; authentication: boolean; auth: { id: string } | null }>;
+  auth: SBAuthSchema | null;
+  verify: () => Promise<{ success: boolean; authentication: boolean; auth: SBAuthSchema | null }>;
   logout: () => Promise<void>;
   googleLogin: () => void;
   ciLogin: () => void;
@@ -106,7 +107,7 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
     async function fetchAuth() {
       const verifyRes = await verify();
       if (verifyRes.auth) {
-        setAuth({ auth: verifyRes.auth.id, verify, logout, googleLogin, ciLogin, guestLogin });
+        setAuth({ auth: verifyRes.auth, verify, logout, googleLogin, ciLogin, guestLogin });
       } else {
         setAuth({ auth: null, verify, logout, googleLogin, ciLogin, guestLogin });
       }

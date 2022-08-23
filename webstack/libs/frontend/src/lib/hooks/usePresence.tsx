@@ -58,7 +58,7 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
 
     // If the user is authenticated now, subscribe to his presence updates.
     if (auth) {
-      subscribeToPresence(auth);
+      subscribeToPresence(auth.id);
     }
 
     // Clean up. 
@@ -77,7 +77,8 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
    * @returns 
    */
   async function update(updates: Partial<PresenceSchema>) {
-    const res = await SocketAPI.sendRESTMessage(`/presence/${auth}`, 'PUT', updates);
+    if (!auth) return;
+    const res = await SocketAPI.sendRESTMessage(`/presence/${auth.id}`, 'PUT', updates);
     return res;
   }
 

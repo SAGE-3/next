@@ -91,7 +91,7 @@ export class SBAuth {
         if (passportGoogleSetup(config.strategies.googleConfig)) {
           express.get(
             config.strategies.googleConfig.routeEndpoint,
-            passport.authenticate('google', { prompt: 'select_account', scope: ['profile'] })
+            passport.authenticate('google', { prompt: 'select_account', scope: ['profile', 'email'] })
           );
           express.get(
             config.strategies.googleConfig.callbackURL,
@@ -124,7 +124,7 @@ export class SBAuth {
         if (passportCILogonSetup(config.strategies.cilogonConfig)) {
           express.get(
             config.strategies.cilogonConfig.routeEndpoint,
-            passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid'] })
+            passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid', 'email', 'profile'] })
           );
           express.get(
             config.strategies.cilogonConfig.callbackURL,
