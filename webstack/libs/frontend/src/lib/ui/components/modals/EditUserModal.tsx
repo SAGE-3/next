@@ -8,22 +8,14 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  InputGroup,
-  InputLeftElement,
-  Input,
-  useToast,
-  Button,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
+  InputGroup, InputLeftElement, Input,
+  useToast, Button, Text,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
+import { useAuth } from '@sage3/frontend';
 import { useUser } from '../../../hooks';
-
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -33,6 +25,7 @@ interface EditUserModalProps {
 
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { user, update } = useUser();
+  const { auth } = useAuth();
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
   const [email, setEmail] = useState<UserSchema['email']>(user?.data.email || '');
@@ -104,6 +97,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
+          <Text mt={3} fontSize={"md"}>Authentication: <em>{auth?.provider}</em></Text>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name || !email}>
