@@ -83,6 +83,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               ref={initialRef}
               type="string"
               placeholder={user?.data.name}
+              _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={name}
               onChange={handleNameChange}
@@ -95,6 +96,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <Input
               type="email"
               placeholder={user?.data.email}
+              _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={email}
               onChange={handleEmailChange}

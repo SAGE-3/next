@@ -61,28 +61,30 @@ export function BoardList(props: BoardListProps) {
   return (
     <>
       <InputGroup>
-        <Input placeholder="Search Boards..." my="2" value={search} onChange={handleFilterBoards} />
+        <Input my="2" value={search} onChange={handleFilterBoards}
+          placeholder="Search Boards..." _placeholder={{ opacity: 1, color: 'gray.600' }}
+        />
         <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
       </InputGroup>
 
       {props.selectedRoom
         ? (filterBoards ? filterBoards : boards)
-            .sort((a, b) => a.data.name.localeCompare(b.data.name))
-            .map((board) => {
-              return (
-                <BoardCard
-                  key={board._id}
-                  board={board}
-                  userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                  onSelect={() => props.onBoardClick(board)}
-                  onEdit={() => {
-                    console.log('edit board');
-                  }}
-                  onEnter={() => props.onEnterClick(board)}
-                  onDelete={() => deleteBoard(board._id)}
-                />
-              );
-            })
+          .sort((a, b) => a.data.name.localeCompare(b.data.name))
+          .map((board) => {
+            return (
+              <BoardCard
+                key={board._id}
+                board={board}
+                userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                onSelect={() => props.onBoardClick(board)}
+                onEdit={() => {
+                  console.log('edit board');
+                }}
+                onEnter={() => props.onEnterClick(board)}
+                onDelete={() => deleteBoard(board._id)}
+              />
+            );
+          })
         : null}
       {props.selectedRoom ? (
         <Tooltip label="Create a board" openDelay={400}>

@@ -25,6 +25,7 @@ import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemand
 
 import { humanFileSize, downloadFile, useUser } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
+import { useUsersStore } from '@sage3/frontend';
 import { ExifViewer } from './exifviewer';
 import { RowFileProps } from './types';
 
@@ -51,6 +52,8 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   // show the context menu
   const [showMenu, setShowMenu] = useState(false);
   const [dragImage, setDragImage] = useState<HTMLImageElement>();
+  // Access the list of users
+  const users = useUsersStore((state) => state.users);
 
   // dark/light modes
   const { colorMode } = useColorMode();
@@ -160,6 +163,9 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
   const extension = getExtension(file.type);
 
+  // find the owner of the file, given the user ID
+  const owner = users.find((el) => el._id === file.owner);
+
   const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragImage) {
       e.dataTransfer.setDragImage(dragImage, 2, 2);
@@ -175,7 +181,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
           {file.originalfilename}
         </Box>
         <Box w="120px" textAlign="right">
-          {file.owner.substring(0, 12)}
+          {owner?.data.name.substring(0, 12) || '-'}
         </Box>
         <Box w="110px" textAlign="center">
           {extension}

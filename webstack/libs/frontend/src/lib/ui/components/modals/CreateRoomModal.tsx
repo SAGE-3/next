@@ -97,6 +97,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               ref={initialRef}
               type="text"
               placeholder={'Name'}
+              _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={name}
               onChange={handleNameChange}
@@ -109,6 +110,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             <Input
               type="text"
               placeholder={'Description'}
+              _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={description}
               onChange={handleDescription}
