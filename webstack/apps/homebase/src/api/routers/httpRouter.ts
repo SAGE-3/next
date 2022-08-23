@@ -42,8 +42,8 @@ export function expressAPIRouter(): express.Router {
 
   router.use('/users', UsersCollection.router());
 
-  // Test check
-  router.use(checkPermissions('guest', 'google', 'cilogon', 'jwt'));
+  // Check permissions, after the user router to let people login
+  // router.use(checkPermissions('guest', 'google', 'cilogon', 'jwt'));
 
   router.use('/assets', assetExpressRouter());
 

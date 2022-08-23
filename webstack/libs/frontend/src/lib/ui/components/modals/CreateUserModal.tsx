@@ -31,16 +31,15 @@ type CreateUserProps = {
 }
 
 export function CreateUserModal(props: CreateUserProps): JSX.Element {
+  // get the user information
+  const auth = useAuth();
 
-  const [name, setName] = useState<UserSchema['name']>('');
-  const [email, setEmail] = useState<UserSchema['email']>('');
+  const [name, setName] = useState<UserSchema['name']>(auth.auth?.displayName ?? '');
+  const [email, setEmail] = useState<UserSchema['email']>(auth.auth?.email ?? '');
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)
 
-  const { logout } = useAuth();
-
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
 
@@ -112,7 +111,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mx={2} onClick={logout}>Cancel</Button>
+          <Button colorScheme="red" mx={2} onClick={auth.logout}>Cancel</Button>
           <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
             Create Account
           </Button>
