@@ -87,6 +87,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
                 type="string"
                 id='first-name'
                 placeholder='First name'
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
                 value={name}
                 onChange={handleNameChange}
                 onKeyDown={onSubmit} />
@@ -102,6 +103,8 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
                 id='email'
                 type='email'
                 value={email}
+                placeholder='name@email.com'
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
                 onChange={handleEmailChange}
                 onKeyDown={onSubmit}
               />
