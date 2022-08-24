@@ -26,7 +26,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface Applications {
   apps: App[];
-  error: string | null;
+  error: { id?: string; msg: string } | null;
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
@@ -50,14 +50,14 @@ const AppStore = createVanilla<Applications>((set, get) => {
     create: async (newApp: AppSchema) => {
       const app = await SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
       if (!app.success) {
-        set({ error: app.message });
+        set({ error: { msg: app.message } });
       }
       return app;
     },
     update: async (id: string, updates: Partial<AppSchema>) => {
       const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
       if (!res.success) {
-        set({ error: res.message });
+        set({ error: { id, msg: res.message } });
       }
     },
     updateState: async (id: string, state: Partial<AppState>) => {
@@ -70,13 +70,13 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
       const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', update);
       if (!res.success) {
-        set({ error: res.message });
+        set({ error: { msg: res.message } });
       }
     },
     delete: async (id: string) => {
       const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
       if (!res.success) {
-        set({ error: res.message });
+        set({ error: { id, msg: res.message } });
       }
     },
     unsubToBoard: () => {
@@ -93,7 +93,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       if (apps.success) {
         set({ apps: apps.data });
       } else {
-        set({ error: apps.message });
+        set({ error: { msg: apps.message || 'subscription error' } });
         return;
       }
 

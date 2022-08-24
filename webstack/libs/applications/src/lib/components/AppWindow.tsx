@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, Text, useColorModeValue } from '@chakra-ui/react';
+import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
@@ -31,6 +31,8 @@ export function AppWindow(props: WindowProps) {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
 
+  // Display messages
+  const toast = useToast();
   // Height of the title bar
   const titleBarHeight = 24;
   // Border color when selected
@@ -42,11 +44,24 @@ export function AppWindow(props: WindowProps) {
   // App Store
   const update = useAppStore((state) => state.update);
   const deleteApp = useAppStore((state) => state.delete);
+  const storeError = useAppStore((state) => state.error);
+  const clearError = useAppStore((state) => state.clearError);
 
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(props.app.data.minimized);
+
+  // Track the app store errors
+  useEffect(() => {
+    if (storeError) {
+      // Display a message'
+      if (storeError.id && storeError.id === props.app._id)
+        toast({ description: 'Error - ' + storeError.msg, duration: 3000, isClosable: true });
+      // Clear the error
+      clearError();
+    }
+  }, [storeError]);
 
   // If size or position change, update the local state.
   useEffect(() => {

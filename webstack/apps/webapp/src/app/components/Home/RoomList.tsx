@@ -33,7 +33,7 @@ export function RoomList(props: RoomListProps) {
   useEffect(() => {
     if (storeError) {
       // Display a message
-      toast({ description: 'Error> ' + storeError, duration: 3000, isClosable: true });
+      toast({ description: 'Error - ' + storeError, duration: 3000, isClosable: true });
       // Clear the error
       clearError();
     }
