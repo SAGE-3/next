@@ -40,9 +40,9 @@ export function HomeAvatar() {
           />
         </MenuButton>
         <MenuList>
-          <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px"/>} fontWeight="bold">Account</MenuItem>
-          <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px"/>} fontWeight="bold">Color Mode</MenuItem>
-          <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px"/>} fontWeight="bold">Logout</MenuItem>
+          <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px" />} fontWeight="bold">Account</MenuItem>
+          <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />} fontWeight="bold">Color Mode</MenuItem>
+          <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />} fontWeight="bold">Logout</MenuItem>
         </MenuList>
       </Menu>
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>

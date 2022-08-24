@@ -6,12 +6,12 @@
  *
  */
 
-import { BoardSchema } from "@sage3/shared/types";
-import { SAGE3Collection, sageRouter } from "@sage3/backend";
+import { BoardSchema } from '@sage3/shared/types';
+import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
 class SAGE3BoardsCollection extends SAGE3Collection<BoardSchema> {
   constructor() {
-    super("BOARDS", {
+    super('BOARDS', {
       name: '',
       ownerId: '',
       roomId: '',

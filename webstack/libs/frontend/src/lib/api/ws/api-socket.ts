@@ -46,7 +46,7 @@ class SocketAPISingleton {
     route: APIClientWSMessage['route'],
     method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>,
     body?: Record<string, unknown>
-  ): Promise<unknown> {
+  ): Promise<any> {
     await this.init();
     const message = {
       id: genId(),
