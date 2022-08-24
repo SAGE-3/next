@@ -251,8 +251,15 @@ async function startServer() {
             console.log('Authorization> ws ok', decoded?.sub);
             const payload = decoded as JWTPayload;
             if (decoded?.sub) {
+              const displayName = payload.name;
+              const email = payload.sub;
+              const extras = {
+                displayName: displayName ?? '',
+                email: email ?? '',
+                picture: '',
+              };
               // Find the actual user based on the token information
-              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub);
+              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub, extras);
               // Add the info to the request
               req.user = authRecord;
               if (wsPath === 'api') {
