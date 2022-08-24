@@ -13,7 +13,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 import { SubscriptionCache } from '../utils/subscription-cache';
 import { SAGE3Collection } from './SAGECollection';
-import { defineAbilityFor, AuthSubject } from './permissions';
+import { checkPermissionsWS, AuthSubject } from './permissions';
 
 export async function sageWSRouter<T extends SBJSON>(
   collection: SAGE3Collection<T>,
@@ -25,8 +25,7 @@ export async function sageWSRouter<T extends SBJSON>(
   const path = '/api/' + collection.name.toLowerCase();
 
   //  Check permissions on collections
-  const perm = defineAbilityFor(user).can(message.method, collection.name as AuthSubject);
-  if (!perm) {
+  if (!checkPermissionsWS(user, message.method, collection.name as AuthSubject)) {
     socket.send(JSON.stringify({ id: message.id, success: false, message: 'Not Allowed' }));
     return;
   }

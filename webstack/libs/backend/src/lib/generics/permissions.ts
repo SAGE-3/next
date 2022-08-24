@@ -30,7 +30,7 @@ export type AuthMiddleware = (act: AuthAction, subj: AuthSubject) => Middleware;
  * @param {...string[]} permittedRoles
  * @returns
  */
-export function checkPermissions(subj: AuthSubject): Middleware {
+export function checkPermissionsREST(subj: AuthSubject): Middleware {
   // return a middleware
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // user is already logged in
@@ -48,15 +48,24 @@ export function checkPermissions(subj: AuthSubject): Middleware {
   };
 }
 
+export function checkPermissionsWS(user: SBAuthSchema, act: AuthAction, subj: AuthSubject): boolean {
+  //  Check permissions for ws
+  const perm = defineAbilityFor(user).can(act, subj);
+  return perm;
+}
+
 export function defineAbilityFor(user: SBAuthSchema) {
   const { can, build } = new AbilityBuilder<AppAbility>(Ability);
 
+  // Limit the guest accounts
   if (user.provider === 'guest') {
-    // Limit the guest accounts
     can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE']);
+    // login and update presence
     can(['POST', 'PUT'], ['USERS', 'PRESENCE']);
+    // create and modify apps, not delete
+    can(['POST', 'PUT'], ['APPS']);
   } else {
-    //  Everything
+    // everybody else can do anything
     can(['GET', 'POST', 'PUT', 'DELETE', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE']);
   }
 
