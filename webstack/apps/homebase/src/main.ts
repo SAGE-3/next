@@ -108,7 +108,7 @@ async function startServer() {
     const room = req.query.room as string;
     const token = twilio.generateVideoToken(authId, room);
     res.send({ token });
-  })
+  });
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
@@ -133,7 +133,7 @@ async function startServer() {
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, message, user?.id || '-', subCache);
+      wsAPIRouter(socket, message, user, subCache);
     });
 
     socket.on('close', () => {

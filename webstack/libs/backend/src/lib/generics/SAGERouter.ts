@@ -11,8 +11,13 @@ import * as express from 'express';
 import { SBAuthSchema, SBJSON } from '@sage3/sagebase';
 import { SAGE3Collection } from './SAGECollection';
 
+import { checkPermissions, AuthSubject } from './permissions';
+
 export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): express.Router {
   const router = express.Router();
+
+  //  Check permissions on collections
+  router.use(checkPermissions(collection.name as AuthSubject));
 
   // POST: Add new document
   router.post('/', async ({ body, user }, res) => {

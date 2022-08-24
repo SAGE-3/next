@@ -6,20 +6,31 @@
  *
  */
 
-import { SubscriptionCache } from '../utils/subscription-cache';
-import { APIClientWSMessage } from '@sage3/shared/types';
-import { SAGE3Collection } from './SAGECollection';
-import { SBDocumentUpdate, SBJSON } from '@sage3/sagebase';
 import { WebSocket } from 'ws';
+
+import { SBAuthSchema, SBDocumentUpdate, SBJSON } from '@sage3/sagebase';
+import { APIClientWSMessage } from '@sage3/shared/types';
+
+import { SubscriptionCache } from '../utils/subscription-cache';
+import { SAGE3Collection } from './SAGECollection';
+import { defineAbilityFor, AuthSubject } from './permissions';
 
 export async function sageWSRouter<T extends SBJSON>(
   collection: SAGE3Collection<T>,
   socket: WebSocket,
   message: APIClientWSMessage,
-  userId: string,
+  user: SBAuthSchema,
   cache: SubscriptionCache
 ): Promise<void> {
   const path = '/api/' + collection.name.toLowerCase();
+
+  //  Check permissions on collections
+  const perm = defineAbilityFor(user).can(message.method, collection.name as AuthSubject);
+  if (!perm) {
+    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Not Allowed' }));
+    return;
+  }
+
   switch (message.method) {
     case 'POST': {
       // POST: Add new document
@@ -28,7 +39,7 @@ export async function sageWSRouter<T extends SBJSON>(
         socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
         return;
       } else {
-        const doc = await collection.add(body, userId);
+        const doc = await collection.add(body, user.id);
         if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
       }
@@ -54,7 +65,7 @@ export async function sageWSRouter<T extends SBJSON>(
     case 'PUT': {
       const id = message.route.split('/').at(-1) as string;
       const body = message.body as SBDocumentUpdate<T>;
-      const update = await collection.update(id, userId, body);
+      const update = await collection.update(id, user.id, body);
       if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
       else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update doc.' }));
       break;
