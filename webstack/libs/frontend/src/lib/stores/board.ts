@@ -24,6 +24,8 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface BoardState {
   boards: Board[];
+  error: string | null;
+  clearError: () => void;
   create: (newBoard: BoardSchema) => void;
   update: (id: string, updates: Partial<BoardSchema>) => void;
   delete: (id: string) => void;
@@ -37,20 +39,36 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
   let boardsSub: (() => void) | null = null;
   return {
     boards: [],
-    create(newBoard: BoardSchema) {
-      SocketAPI.sendRESTMessage('/boards', 'POST', newBoard);
+    error: null,
+    clearError: () => {
+      set({ error: null });
     },
-    update(id: string, updates: Partial<BoardSchema>) {
-      SocketAPI.sendRESTMessage(`/boards/${id}`, 'PUT', updates);
+    create: async (newBoard: BoardSchema) => {
+      const res = await SocketAPI.sendRESTMessage('/boards', 'POST', newBoard);
+      if (!res.success) {
+        set({ error: res.message });
+      }
     },
-    delete: (id: string) => {
-      SocketAPI.sendRESTMessage(`/boards/${id}`, 'DELETE');
+    update: async (id: string, updates: Partial<BoardSchema>) => {
+      const res = await SocketAPI.sendRESTMessage(`/boards/${id}`, 'PUT', updates);
+      if (!res.success) {
+        set({ error: res.message });
+      }
+    },
+    delete: async (id: string) => {
+      const res = await SocketAPI.sendRESTMessage(`/boards/${id}`, 'DELETE');
+      if (!res.success) {
+        set({ error: res.message });
+      }
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
       set({ boards: [] });
       const boards = await APIHttp.GET<BoardSchema, Board>('/boards', { roomId });
       if (boards.success) {
         set({ boards: boards.data });
+      } else {
+        set({ error: boards.message });
+        return;
       }
 
       // Unsubscribe old subscription
@@ -98,4 +116,4 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
 export const useBoardStore = createReact(BoardStore);
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('BoardStore', useBoardStore);
+if (process.env.NODE_ENV === 'development') mountStoreDevtool('BoardStore', useBoardStore);
