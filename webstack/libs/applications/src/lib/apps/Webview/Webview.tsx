@@ -109,7 +109,7 @@ function AppComponent(props: App): JSX.Element {
         } else if (url.includes(".pdf")) {
           // PDF documents
           webview.partition = 'persist:pdf';
-        } else if (url.includes(window.location.hostname + ":8888")) {
+        } else if (url.includes(window.location.hostnam)) {
           // Jupyter
           webview.partition = 'persist:jupyter';
         } else if (url.includes("colab.research.google.com")) {
