@@ -21,7 +21,8 @@ class SageCommunication(Borg):
         self.routes = {
             "get_apps": "/api/apps",
             "get_boards": "/api/boards",
-            "send_update": "/api/apps/{}"
+            "send_update": "/api/apps/{}",
+            "create_app": "/api/apps/"
         }
 
     def send_app_update(self, app_id, data):
@@ -35,6 +36,19 @@ class SageCommunication(Borg):
                                    json=data
                                    )
         return r
+
+    def create_app(self, data):
+        """
+        :param app_id:
+        :param data: data
+        :return:
+        """
+        r = self.httpx_client.post(self.__config['server'] + self.routes["create_app"],
+                                   headers=self.__headers,
+                                   json=data
+                                   )
+        return r
+
     def get_apps(self, room_id=None, board_id=None):
         """
         list all the rerouces belonging to room_id

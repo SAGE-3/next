@@ -45,7 +45,7 @@ class JupyterKernelClient(Borg):
         user_passed_uuid = command_info["uuid"]
         callback_fn = command_info["call_fn"]
         command = command_info["code"]
-        print(f"!!!!!EXECUTING COMMAND {command}!!!!!!")
+        # print(f"!!!!!EXECUTING COMMAND {command}!!!!!!")
 
         try:
             msg = requests.post(self.url, data = command).json()
@@ -65,7 +65,7 @@ class JupyterKernelClient(Borg):
                 # ignore first message
                 if msg["data"] == 1:
                     continue
-                print(f"********************I am the client and I got the following from pubsub  is:\n {msg}")
+                # print(f"********************I am the client and I got the following from pubsub  is:\n {msg}")
                 msg = msg['data'].decode("utf-8")
                 msg=eval(msg)
                 request_id = msg['request_id']

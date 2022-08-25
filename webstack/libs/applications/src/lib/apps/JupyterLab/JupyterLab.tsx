@@ -32,7 +32,7 @@ function AppComponent(props: App): JSX.Element {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         console.log('Jupyter> token', conf.token);
-        const newUrl = `http://${window.location.hostname}:8888/lab?token=${conf.token}`;
+        const newUrl = `http://${window.location.hostname}/lab?token=${conf.token}`;
         console.log('Jupyter> url', newUrl)
         setUrl(newUrl);
       }
