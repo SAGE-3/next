@@ -83,7 +83,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/* Apps - SORT is to zIndex order them */}
         {apps
-          .sort((a, b) => a._updatedAt - b._updatedAt)
+          //.sort((a, b) => a._updatedAt - b._updatedAt)
           .map((app) => {
             const Component = Applications[app.data.type].AppComponent;
             return (

@@ -42,6 +42,7 @@ export function AppWindow(props: WindowProps) {
   );
 
   // App Store
+  const apps = useAppStore((state) => state.apps);
   const update = useAppStore((state) => state.update);
   const deleteApp = useAppStore((state) => state.delete);
   const storeError = useAppStore((state) => state.error);
@@ -51,6 +52,7 @@ export function AppWindow(props: WindowProps) {
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(props.app.data.minimized);
+  const [zIndex, setZIndex] = useState(99);
 
   // Track the app store errors
   useEffect(() => {
@@ -73,6 +75,12 @@ export function AppWindow(props: WindowProps) {
   useEffect(() => {
     setMinimized(props.app.data.minimized);
   }, [props.app.data.minimized]);
+
+  // Track raised state
+  useEffect(() => {
+    if (props.app.data.raised) setZIndex(9999);
+    else setZIndex(99);
+  }, [props.app.data.raised]);
 
   // Handle when the app is dragged by the title bar
   function handleDragStop(_e: any, data: DraggableData) {
@@ -141,8 +149,11 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
     // Set the selected app in the UI store
     setSelectedApp(props.app._id);
+    // Raise down
+    apps.forEach((a) => {
+      if (a.data.raised) update(a._id, { raised: false });
+    });
     // Bring to front function
-    // Have to set something to trigger an update. 
     update(props.app._id, { raised: true });
   }
 
@@ -162,7 +173,8 @@ export function AppWindow(props: WindowProps) {
       style={{
         boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
-        borderRadius: '6px'
+        borderRadius: '6px',
+	zIndex: zIndex,
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
