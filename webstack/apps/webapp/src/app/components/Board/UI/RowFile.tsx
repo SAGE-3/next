@@ -186,9 +186,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const onDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!user) return;
     const w = 400;
-    // Get the center of the board
-    // const xDrop = Math.floor(boardPosition.x);
-    // const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
+    // Get around  the center of the board
     const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - w / 2);
     const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
     if (isImage(file.type)) {
