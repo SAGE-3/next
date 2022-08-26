@@ -8,9 +8,13 @@
 
 import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser } from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore } from '@sage3/frontend';
 import { initialValues } from '@sage3/applications/apps';
-import { AppName } from '@sage3/applications/schema';
+import { AppName, AppState } from '@sage3/applications/schema';
+
+// File information
+import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
+import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
 type BackgroundProps = {
   roomId: string;
@@ -20,6 +24,8 @@ type BackgroundProps = {
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
+  // Assets
+  const assets = useAssetStore((state) => state.assets);
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // User
@@ -98,6 +104,140 @@ export function Background(props: BackgroundProps) {
     });
   };
 
+  // Create an app for a file
+  function OpenFile(fileID: string, fileType: string, xDrop: number, yDrop: number) {
+    if (!user) return;
+    const w = 400;
+    if (isImage(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const extras = a.data.derived as ExtraImageType;
+          createApp({
+            name: 'ImageViewer',
+            description: 'Image Description',
+            roomId: props.roomId,
+            boardId: props.boardId,
+            ownerId: user._id,
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'ImageViewer',
+            state: { ...initialValues['ImageViewer'], id: fileID },
+            minimized: false,
+            raised: true
+          });
+        }
+      });
+    } else if (isCSV(fileType)) {
+      createApp({
+        name: 'CVSViewer',
+        description: 'CSV Description',
+        roomId: props.roomId,
+        boardId: props.boardId,
+        ownerId: user._id,
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 800, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'CSVViewer',
+        state: { ...initialValues['CSVViewer'], id: fileID },
+        minimized: false,
+        raised: true
+      });
+    } else if (isText(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const localurl = '/api/assets/static/' + a.data.file;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/csv',
+              Accept: 'text/csv'
+            },
+          }).then(function (response) {
+            return response.text();
+          }).then(async function (text) {
+            // Create a note from the text
+            createApp({
+              name: 'Stickie',
+              description: 'Stickie',
+              roomId: props.roomId,
+              boardId: props.boardId,
+              ownerId: user._id,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 400, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'Stickie',
+              state: { ...initialValues['Stickie'] as AppState, text },
+              minimized: false,
+              raised: true
+            });
+          });
+        }
+      });
+    } else if (isJSON(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const localurl = '/api/assets/static/' + a.data.file;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json'
+            },
+          }).then(function (response) {
+            return response.json();
+          }).then(async function (spec) {
+            // Create a note from the text
+            createApp({
+              name: 'VegaLite',
+              description: 'VegaLite> ' + a.data.originalfilename,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              ownerId: user._id,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 500, height: 600, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'VegaLite',
+              state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
+              minimized: false,
+              raised: true
+            });
+          });
+        }
+      });
+    } else if (isPDF(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const pages = a.data.derived as ExtraPDFType;
+          let aspectRatio = 1;
+          if (pages) {
+            // First page
+            const page = pages[0];
+            // First image of the page
+            aspectRatio = page[0].width / page[0].height;
+          }
+          createApp({
+            name: 'PDFViewer',
+            description: 'PDF Description',
+            roomId: props.roomId,
+            boardId: props.boardId,
+            ownerId: user._id,
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 400 / aspectRatio, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'PDFViewer',
+            state: { ...initialValues['PDFViewer'], id: fileID },
+            minimized: false,
+            raised: true
+          });
+        }
+      });
+    }
+  }
 
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
@@ -117,6 +257,12 @@ export function Background(props: BackgroundProps) {
       const appName = event.dataTransfer.getData('app') as AppName;
       if (appName) {
         newApplication(appName, xdrop, ydrop);
+      } else {
+        // Get information from the drop
+        const fileID = event.dataTransfer.getData('file');
+        const fileType = event.dataTransfer.getData('type');
+        // Open the file at the drop location
+        OpenFile(fileID, fileType, xdrop, ydrop);
       }
     }
   }

@@ -22,6 +22,7 @@ import { BoardContextMenu } from './UI/BoardContextMenu';
 
 import { InfoPanel } from './UI/InfoPanel';
 import { MiniMap } from './UI/Minimap';
+import { Assets } from './UI/Assets';
 import { ButtonPanel, Panel } from './UI/Panel';
 import { Twilio } from './UI/Twilio';
 import { ClearBoardModal } from './UI/ClearBoardModal';
@@ -43,8 +44,10 @@ export function UILayer(props: UILayerProps) {
   const appPanelPosition = useUIStore((state) => state.appPanelPosition);
   const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
   const minimapPanelPosition = useUIStore((state) => state.minimapPanelPosition);
+  const assetsPanelPosition = useUIStore((state) => state.assetsPanelPosition);
   const infoPanelPosition = useUIStore((state) => state.infoPanelPosition);
   const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
+  const setassetsPanelPosition = useUIStore((state) => state.setassetsPanelPosition);
   const setMenuPanelPosition = useUIStore((state) => state.setMenuPanelPosition);
   const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
@@ -216,6 +219,7 @@ export function UILayer(props: UILayerProps) {
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 
       <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} stuck={true} />
+      <Assets position={assetsPanelPosition} setPosition={setassetsPanelPosition} opened={false} />
 
       <ContextMenu divId="board">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} />

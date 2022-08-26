@@ -41,7 +41,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
-    setBoardPosition({ x: -data.x, y: -data.y });
+    const x = Math.abs(data.x);
+    const y = Math.abs(data.y);
+    setBoardPosition({ x, y });
   }
 
   // Update the cursor every half second
