@@ -43,6 +43,7 @@ export class MetadataProcessor {
       return Promise.resolve({
         file: job.data.file,
         id: job.data.id,
+        data: data,
         result: fn,
       });
     });

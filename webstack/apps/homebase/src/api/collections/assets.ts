@@ -87,12 +87,27 @@ class SAGE3AssetsCollection {
     await Promise.all(tasks).then(async ([r1, r2, r3]) => {
       // no await because we want create event before the update events
       if (r1) {
-        await this.assetCollection.updateItem(id, { metadata: r1.result });
+        const exif = r1.data;
+        // Find a creation date from all the exif dates
+        let realDate = new Date();
+        if (!isNaN(Date.parse(exif.CreateDate))) {
+          realDate = new Date(exif.CreateDate);
+        } else if (!isNaN(Date.parse(exif.DateTimeOriginal))) {
+          realDate = new Date(exif.DateTimeOriginal);
+        } else if (!isNaN(Date.parse(exif.ModifyDate))) {
+          realDate = new Date(exif.ModifyDate);
+        } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
+          realDate = new Date(exif.FileModifyDate);
+        }
+        // update date and metada
+        await this.assetCollection.updateItem(id, { dateCreated: realDate.toISOString(), metadata: r1.result });
       }
       if (r2) {
+        // update after image processing
         await this.assetCollection.updateItem(id, { derived: r2.result });
       }
       if (r3) {
+        // update after PDF processing
         await this.assetCollection.updateItem(id, { derived: r3.result });
       }
     });
