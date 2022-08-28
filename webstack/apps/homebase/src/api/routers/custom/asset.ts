@@ -287,7 +287,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
 export async function assetWSRouter(
   socket: WebSocket,
   message: APIClientWSMessage,
-  userId: string,
+  user: SBAuthSchema,
   cache: SubscriptionCache
 ): Promise<void> {
   // const auth = request.session.passport.user;

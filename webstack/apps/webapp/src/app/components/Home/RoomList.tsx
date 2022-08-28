@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Button, Text, Tooltip, useColorModeValue } from "@chakra-ui/react";
+import { Button, Text, Tooltip, useColorModeValue, useToast } from "@chakra-ui/react";
 
 import { SBDocument } from "@sage3/sagebase";
 import { RoomSchema } from "@sage3/shared/types";
@@ -19,13 +19,25 @@ type RoomListProps = {
 }
 
 export function RoomList(props: RoomListProps) {
+  // Data stores
   const rooms = useRoomStore((state) => state.rooms);
+  const storeError = useRoomStore((state) => state.error);
+  const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
   const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
-
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
-
   const presences = usePresenceStore(state => state.presences);
+  // UI elements
+  const borderColor = useColorModeValue('#718096', '#A0AEC0');
+  const toast = useToast();
+
+  useEffect(() => {
+    if (storeError) {
+      // Display a message
+      toast({ description: 'Error - ' + storeError, duration: 3000, isClosable: true });
+      // Clear the error
+      clearError();
+    }
+  }, [storeError]);
 
   useEffect(() => {
     subToAllRooms();

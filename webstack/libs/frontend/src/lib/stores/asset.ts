@@ -23,6 +23,8 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface AssetState {
   assets: Asset[];
+  error: string | null;
+  clearError: () => void;
   subscribe: () => Promise<void>;
   unsubscribe: () => void;
 }
@@ -34,6 +36,10 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
   let assetSub: (() => void) | null = null;
   return {
     assets: [],
+    error: null,
+    clearError: () => {
+      set({ error: null });
+    },
     unsubscribe: () => {
       // Unsubscribe old subscription
       if (assetSub) {
@@ -45,7 +51,11 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
       const files = await AssetHTTPService.readAll();
       if (files) {
         set({ assets: files });
+      } else {
+        set({ error: 'Error reading assets' });
+        return;
       }
+
       // Unsubscribe old subscription
       if (assetSub) {
         assetSub();

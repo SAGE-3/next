@@ -62,7 +62,6 @@ export function passportJWTSetup(config: SBAuthJWTConfig): boolean {
                 picture: '',
               };
               const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub, extras);
-              console.log('JWT auth record:', authRecord);
               if (authRecord) {
                 return done(null, authRecord);
               } else {
