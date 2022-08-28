@@ -259,10 +259,15 @@ export function Background(props: BackgroundProps) {
         newApplication(appName, xdrop, ydrop);
       } else {
         // Get information from the drop
-        const fileID = event.dataTransfer.getData('file');
-        const fileType = event.dataTransfer.getData('type');
+        const ids = event.dataTransfer.getData('file');
+        const types = event.dataTransfer.getData('type');
+        const fileIDs = JSON.parse(ids);
+        const fileTypes = JSON.parse(types);
         // Open the file at the drop location
-        OpenFile(fileID, fileType, xdrop, ydrop);
+        const num = fileIDs.length;
+        for (let i = 0; i < num; i++) {
+          OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+        }
       }
     }
   }

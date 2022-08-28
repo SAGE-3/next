@@ -37,7 +37,8 @@ import { FileEntry } from './types';
 
 export type RowFileProps = {
   file: FileEntry;
-  clickCB: (p: FileEntry) => void;
+  clickCB: (p: FileEntry, shift: boolean, modif: boolean) => void;
+  dragCB: (e: React.DragEvent<HTMLDivElement>) => void;
 };
 
 /**
@@ -47,7 +48,7 @@ export type RowFileProps = {
 * @param p FileEntry
 * @returns
 */
-export function RowFile({ file, clickCB }: RowFileProps) {
+export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
 
@@ -72,15 +73,16 @@ export function RowFile({ file, clickCB }: RowFileProps) {
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
-    // Flip the value
-    setSelected((s) => !s);
-    clickCB(file);
+    // @ts-expect-error
+    const ismac = navigator.userAgentData.platform === 'macOS';
+    const modifier = ismac ? e.metaKey : e.ctrlKey;
+    clickCB(file, e.shiftKey, modifier);
     if (showMenu) setShowMenu(false);
   };
 
   useEffect(() => {
     setSelected(file.selected);
-  }, [file.selected]);
+  }, [file]);
 
   // Context menu selection handler
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
@@ -106,14 +108,6 @@ export function RowFile({ file, clickCB }: RowFileProps) {
     // hide context menu
     setShowMenu(false);
   };
-
-  // useEffect(() => {
-  //   const button = buttonRef.current;
-  //   button?.addEventListener('dblclick', onDoubleClick);
-  //   return () => {
-  //     button?.removeEventListener('dblclick', onDoubleClick);
-  //   }
-  // }, [buttonRef]);
 
   useEffect(() => {
     const button = buttonRef.current;
@@ -172,14 +166,12 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
   const extension = getExtension(file.type);
 
-
   const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragImage) {
       e.dataTransfer.setDragImage(dragImage, 2, 2);
     }
-    // storing the file id in the dataTransfer object
-    e.dataTransfer.setData('file', file.id);
-    e.dataTransfer.setData('type', file.type);
+    // call drag callback in the parent
+    dragCB(e);
   };
 
   // Create an app for a file

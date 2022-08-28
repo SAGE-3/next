@@ -205,7 +205,7 @@ export function UILayer(props: UILayerProps) {
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
       <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition} height={351}>
         {Object.keys(Applications).map((appName) => (
-          <ButtonPanel key={appName} title={appName} canDrag={true} onClick={(e) => newApplication(appName as AppName)} />
+          <ButtonPanel key={appName} title={appName} candrag={"true"} onClick={(e) => newApplication(appName as AppName)} />
         ))}
       </Panel>
 

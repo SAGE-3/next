@@ -24,8 +24,6 @@ type AssetsProps = {
 
 
 export function Assets(props: AssetsProps) {
-  // App Store
-  const apps = useAppStore((state) => state.apps);
   // UI store
   const showUI = useUIStore((state) => state.showUI);
   // Theme
@@ -75,7 +73,7 @@ export function Assets(props: AssetsProps) {
           ownerName: users.find((el) => el._id === item.data.owner)?.data.name || '-',
           filename: item.data.file,
           originalfilename: item.data.originalfilename,
-          date: new Date().getTime(),
+          date: new Date(item.data.dateCreated).getTime(),
           dateAdded: new Date(item.data.dateAdded).getTime(),
           room: item.data.room,
           size: item.data.size,
@@ -128,9 +126,7 @@ export function Assets(props: AssetsProps) {
               Assets
             </Text>
             <Box alignItems="center" p="1" width={"3xl"} display="flex">
-              {showContent &&
-                <Files files={assetsList} />
-              }
+              <Files files={assetsList} show={showContent} />
             </Box>
           </Box>
         </Box>

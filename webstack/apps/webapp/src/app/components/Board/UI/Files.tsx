@@ -13,12 +13,20 @@ import { Virtuoso } from 'react-virtuoso';
 
 import { Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack } from '@chakra-ui/react';
 
+import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { RowFile } from './RowFile';
 
 export interface FilesProps {
+  show: boolean;
   files: FileEntry[];
 }
+
+type sortOrder = 'file' | 'owner' | 'type' | 'modified' | 'added' | 'size';
+type sortType = {
+  order: sortOrder;
+  reverse: boolean;
+};
 
 export function Files(props: FilesProps): JSX.Element {
   // The data list
@@ -26,11 +34,12 @@ export function Files(props: FilesProps): JSX.Element {
 
   // Element to set the focus to when opening the dialog
   const initialRef = React.useRef<HTMLInputElement>(null);
-  const [sorted, setSorted] = useState<string>('file');
+  const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
 
   // Update the file list to the list passed through props
   useEffect(() => {
-    setList(props.files);
+    const newList = sortFiles(props.files, sorted.order, sorted.reverse);
+    setList(newList);
   }, [props.files]);
 
   // Create the column headers. Add arrows indicating sorting.
@@ -65,127 +74,127 @@ export function Files(props: FilesProps): JSX.Element {
       <Spacer /> <Box>Size</Box> <Spacer /> <Box w="1rem"></Box>{' '}
     </Flex>
   );
-  switch (sorted) {
+  switch (sorted.order) {
     case 'file':
-      headerFile = (
-        <Flex>
-          <Box >Filename</Box> <Box>⬆︎</Box><Spacer />
-        </Flex>
-      );
-      break;
-    case 'file_r':
-      headerFile = (
-        <Flex>
-          <Box >Filename</Box> <Box>⬇︎</Box><Spacer />
-        </Flex>
-      );
+      if (sorted.reverse)
+        headerFile = (
+          <Flex>
+            <Box >Filename</Box> <Box>⬇︎</Box><Spacer />
+          </Flex>
+        );
+      else
+        headerFile = (
+          <Flex>
+            <Box >Filename</Box> <Box>⬆︎</Box><Spacer />
+          </Flex>
+        );
       break;
     case 'owner':
-      headerOwner = (
-        <Flex>
-          <Spacer />
-          <Box>Owner</Box>
-          <Box>⬆︎</Box>
-          <Spacer />
-        </Flex>
-      );
-      break;
-    case 'owner_r':
-      headerOwner = (
-        <Flex>
-          <Spacer />
-          <Box>Owner</Box>
-          <Box>⬇︎</Box>
-          <Spacer />
-        </Flex>
-      );
+      if (sorted.reverse)
+        headerOwner = (
+          <Flex>
+            <Spacer />
+            <Box>Owner</Box>
+            <Box>⬇︎</Box>
+            <Spacer />
+          </Flex>
+        );
+      else
+        headerOwner = (
+          <Flex>
+            <Spacer />
+            <Box>Owner</Box>
+            <Box>⬆︎</Box>
+            <Spacer />
+          </Flex>
+        );
       break;
     case 'type':
-      headerType = (
-        <Flex>
-          <Spacer />
-          <Box>Type</Box>
-          <Box>⬆︎</Box>
-          <Spacer />
-        </Flex>
-      );
-      break;
-    case 'type_r':
-      headerType = (
-        <Flex>
-          <Spacer />
-          <Box>Type</Box>
-          <Box>⬇︎</Box>
-          <Spacer />
-        </Flex>
-      );
+      if (sorted.reverse)
+        headerType = (
+          <Flex>
+            <Spacer />
+            <Box>Type</Box>
+            <Box>⬇︎</Box>
+            <Spacer />
+          </Flex>
+        );
+      else
+        headerType = (
+          <Flex>
+            <Spacer />
+            <Box>Type</Box>
+            <Box>⬆︎</Box>
+            <Spacer />
+          </Flex>
+        );
       break;
     case 'modified':
-      headerModified = (
-        <Flex>
-          <Spacer />
-          <Box>Modified</Box>
-          <Box>⬆︎</Box>
-          <Spacer />
-        </Flex>
-      );
-      break;
-    case 'modified_r':
-      headerModified = (
-        <Flex>
-          <Spacer />
-          <Box>Modified</Box>
-          <Box>⬇︎</Box>
-          <Spacer />
-        </Flex>
-      );
+      if (sorted.reverse)
+        headerModified = (
+          <Flex>
+            <Spacer />
+            <Box>Modified</Box>
+            <Box>⬇︎</Box>
+            <Spacer />
+          </Flex>
+        );
+      else
+        headerModified = (
+          <Flex>
+            <Spacer />
+            <Box>Modified</Box>
+            <Box>⬆︎</Box>
+            <Spacer />
+          </Flex>
+        );
       break;
     case 'added':
-      headerAdded = (
-        <Flex>
-          <Spacer />
-          <Box>Added</Box>
-          <Box>⬆︎</Box>
-          <Spacer />
-        </Flex>
-      );
-      break;
-    case 'added_r':
-      headerAdded = (
-        <Flex>
-          <Spacer />
-          <Box>Added</Box>
-          <Box>⬇︎</Box>
-          <Spacer />
-        </Flex>
-      );
+      if (sorted.reverse)
+        headerAdded = (
+          <Flex>
+            <Spacer />
+            <Box>Added</Box>
+            <Box>⬇︎</Box>
+            <Spacer />
+          </Flex>
+        );
+      else
+        headerAdded = (
+          <Flex>
+            <Spacer />
+            <Box>Added</Box>
+            <Box>⬆︎</Box>
+            <Spacer />
+          </Flex>
+        );
       break;
     case 'size':
-      headerSize = (
-        <Flex>
-          <Spacer />
-          <Box>Size</Box>
-          <Box>⬆︎</Box>
-          <Spacer />
-        </Flex>
-      );
-      break;
-    case 'size_r':
-      headerSize = (
-        <Flex>
-          <Spacer />
-          <Box>Size</Box>
-          <Box>⬇︎</Box>
-          <Spacer />
-        </Flex>
-      );
+      if (sorted.reverse)
+        headerSize = (
+          <Flex>
+            <Spacer />
+            <Box>Size</Box>
+            <Box>⬇︎</Box>
+            <Spacer />
+          </Flex>
+        );
+      else
+        headerSize = (
+          <Flex>
+            <Spacer />
+            <Box>Size</Box>
+            <Box>⬆︎</Box>
+            <Spacer />
+          </Flex>
+        );
       break;
   }
 
-  const headerClick = (order: 'file' | 'owner' | 'type' | 'modified' | 'added' | 'size') => {
+  const sortFiles = (aList: FileEntry[], order: sortOrder, reverse: boolean) => {
     if (order === 'file') {
       // Store the list into the state after sorting by filename
-      filesList.sort((a, b) => {
+      aList.sort((a, b) => {
         // compare filenames case independent
         const namea = a.originalfilename.toLowerCase();
         const nameb = b.originalfilename.toLowerCase();
@@ -193,17 +202,9 @@ export function Files(props: FilesProps): JSX.Element {
         if (namea > nameb) return 1;
         return 0;
       });
-      if (sorted === 'file') {
-        filesList.reverse();
-        setList(filesList);
-        setSorted('file_r');
-      } else {
-        setList(filesList);
-        setSorted('file');
-      }
     } else if (order === 'owner') {
       // Store the list into the state after sorting by type
-      filesList.sort((a, b) => {
+      aList.sort((a, b) => {
         // compare names case independent
         const namea = a.ownerName.toLowerCase();
         const nameb = b.ownerName.toLowerCase();
@@ -211,75 +212,48 @@ export function Files(props: FilesProps): JSX.Element {
         if (namea > nameb) return 1;
         return 0;
       });
-      if (sorted === 'owner') {
-        filesList.reverse();
-        setList(filesList);
-        setSorted('owner_r');
-      } else {
-        setList(filesList);
-        setSorted('owner');
-      }
     } else if (order === 'type') {
       // Store the list into the state after sorting by type
-      filesList.sort((a, b) => {
+      aList.sort((a, b) => {
         // compare type names case independent
-        const namea = a.type.toLowerCase();
-        const nameb = b.type.toLowerCase();
+        const namea = getExtension(a.type).toLowerCase();
+        const nameb = getExtension(b.type).toLowerCase();
         if (namea < nameb) return -1;
         if (namea > nameb) return 1;
         return 0;
       });
-      if (sorted === 'type') {
-        filesList.reverse();
-        setList(filesList);
-        setSorted('type_r');
-      } else {
-        setList(filesList);
-        setSorted('type');
-      }
     } else if (order === 'modified') {
       // Store the list into the state after sorting by date
-      filesList.sort((a, b) => {
+      aList.sort((a, b) => {
         // compare dates (number)
         return a.date - b.date;
       });
-      if (sorted === 'modified') {
-        filesList.reverse();
-        setList(filesList);
-        setSorted('modified_r');
-      } else {
-        setList(filesList);
-        setSorted('modified');
-      }
     } else if (order === 'added') {
       // Store the list into the state after sorting by date
-      filesList.sort((a, b) => {
+      aList.sort((a, b) => {
         // compare dates (number)
         return a.dateAdded - b.dateAdded;
       });
-      if (sorted === 'added') {
-        filesList.reverse();
-        setList(filesList);
-        setSorted('added_r');
-      } else {
-        setList(filesList);
-        setSorted('added');
-      }
     } else if (order === 'size') {
       // Store the list into the state after sorting by file size
-      filesList.sort((a, b) => {
+      aList.sort((a, b) => {
         // compare sizes
         return a.size - b.size;
       });
-      if (sorted === 'size') {
-        filesList.reverse();
-        setList(filesList);
-        setSorted('size_r');
-      } else {
-        setList(filesList);
-        setSorted('size');
-      }
     }
+    // if reverse order
+    if (reverse) {
+      aList.reverse();
+    }
+    return aList;
+  };
+
+  const headerClick = (order: sortOrder) => {
+    setSorted({ order: order, reverse: !sorted.reverse });
+    setList((prev) => {
+      const newList = sortFiles(prev, order, !sorted.reverse);
+      return newList;
+    });
   };
 
   // Select the file when clicked
@@ -304,22 +278,49 @@ export function Files(props: FilesProps): JSX.Element {
   };
 
   // Select the file when clicked
-  const onClick = (p: FileEntry) => {
-    setList(
-      filesList.map((k) => {
+  // shift: extends the seelction to new position above or below
+  // modifier: ctrl/cmd pick and extend selection
+  const onClick = (p: FileEntry, shift: boolean, modif: boolean) => {
+    setList((prev) => {
+      let started = false;
+      const newList = prev.map((k) => {
+        if (shift && k.selected) started = !started;
         if (p.id === k.id) {
-          // Flip the value
-          k.selected = !k.selected;
+          started = !started;
+          // Flip the selection
+          return { ...k, selected: !k.selected };
         } else {
-          k.selected = false;
+          if (!modif) {
+            // Deselect any other
+            if (shift && started)
+              return { ...k, selected: true };
+            else
+              return { ...k, selected: k.selected && shift };
+          } else return k;
         }
-        return k;
-      })
-    );
+
+      });
+      return newList;
+    });
+  };
+
+  const dragCB = (e: React.DragEvent<HTMLDivElement>) => {
+    const flist: string[] = []; // file id list
+    const tlist: string[] = []; // file type list
+    filesList.forEach((f) => {
+      // add the file information in the lists
+      if (f.selected) {
+        flist.push(f.id);
+        tlist.push(f.type);
+      }
+    });
+    // storing the files id in the dataTransfer object
+    e.dataTransfer.setData('file', JSON.stringify(flist));
+    e.dataTransfer.setData('type', JSON.stringify(tlist));
   };
 
   return (
-    <VStack w={"100%"} fontSize={"xs"}>
+    <VStack w={"100%"} fontSize={"xs"} display={props.show ? "inherit" : "none"}>
       {/* Search box */}
       <InputGroup size={"xs"}>
         <InputLeftAddon children="Search" />
@@ -359,14 +360,14 @@ export function Files(props: FilesProps): JSX.Element {
       {/* Listing the files in a 'table' */}
       <Virtuoso
         style={{
-          height: '150px',
+          height: '140px',
           width: '100%',
           borderCollapse: 'collapse',
         }}
         data={filesList}
         totalCount={filesList.length}
         // Content of the table
-        itemContent={(idx, val) => <RowFile file={filesList[idx]} clickCB={onClick} />}
+        itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} />}
       />
     </VStack>
   );
