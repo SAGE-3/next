@@ -89,4 +89,4 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
 export const useAssetStore = createReact(AssetStore);
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('AssetStore', useAssetStore);
+if (process.env.NODE_ENV === 'development') mountStoreDevtool('AssetStore', useAssetStore);

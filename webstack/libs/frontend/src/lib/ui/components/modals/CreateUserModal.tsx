@@ -95,7 +95,6 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
           <FormControl isRequired >
             <FormLabel htmlFor='email'>Email</FormLabel>
-
             <InputGroup>
               <InputLeftElement pointerEvents="none" children={<MdEmail size={'1.5rem'} />} />
               <Input
