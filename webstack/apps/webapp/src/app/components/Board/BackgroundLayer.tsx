@@ -9,7 +9,7 @@
 import { Tag } from '@chakra-ui/react';
 import { Applications, AppError } from '@sage3/applications/apps';
 import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GiArrowCursor } from 'react-icons/gi';
@@ -33,6 +33,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const scale = useUIStore((state) => state.scale);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const resetZIndex = useUIStore((state) => state.resetZIndex);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
@@ -60,6 +61,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       throttleCursorFunc.current(e);
     }
   };
+
+  // Reset the global zIndex when no apps
+  useEffect(() => {
+    if (apps.length === 0) resetZIndex();
+  }, [apps]);
 
   return (
     <div style={{ transform: `scale(${scale})` }} onDoubleClick={() => setSelectedApp('')}>
