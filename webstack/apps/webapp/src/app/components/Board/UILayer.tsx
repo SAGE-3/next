@@ -16,9 +16,12 @@ import { BoardContextMenu } from './UI/BoardContextMenu';
 
 import { InfoPanel } from './UI/InfoPanel';
 import { MainMenu } from './UI/Menus/MainMenu';
+import { NavigationMenu } from './UI/Menus/NavigationMenu';
+import { ApplicatiosnMenu } from './UI/Menus/ApplicationsMenu';
 import { MiniMap } from './UI/Minimap';
 import { ButtonPanel, Panel } from './UI/Panel';
 import { Twilio } from './UI/Twilio';
+import { AvatarMenu } from './UI/Menus/AvatarMenu';
 
 type UILayerProps = {
   boardId: string;
@@ -32,17 +35,18 @@ export function UILayer(props: UILayerProps) {
 
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const menuPanelPosition = useUIStore((state) => state.menuPanelPosition);
-  const appPanelPosition = useUIStore((state) => state.appPanelPosition);
+  //const menuPanelPosition = useUIStore((state) => state.menuPanelPosition);
+  //const appPanelPosition = useUIStore((state) => state.appPanelPosition);
   const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
-  const minimapPanelPosition = useUIStore((state) => state.minimapPanelPosition);
-  const infoPanelPosition = useUIStore((state) => state.infoPanelPosition);
-  const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
-  const setMenuPanelPosition = useUIStore((state) => state.setMenuPanelPosition);
-  const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
+  //const minimapPanelPosition = useUIStore((state) => state.minimapPanelPosition);
+  //const infoPanelPosition = useUIStore((state) => state.infoPanelPosition);
+  //const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
+  //const setMenuPanelPosition = useUIStore((state) => state.setMenuPanelPosition);
+  //const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
-  const setInfoPanelPosition = useUIStore((state) => state.setInfoPanelPosition);
+  //const setInfoPanelPosition = useUIStore((state) => state.setInfoPanelPosition);
 
+ 
   // User
   const { user } = useUser();
 
@@ -57,64 +61,28 @@ export function UILayer(props: UILayerProps) {
   // Upload modal
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
 
-  const navigate = useNavigate();
-
-  // Redirect the user back to the homepage when he clicks the green button in the top left corner
-  function handleHomeClick() {
-    navigate('/home');
-  }
-
-  const newApplication = (appName: AppName) => {
-    if (!user) return;
-
-    const x = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
-    const y = Math.floor(boardPosition.y + window.innerHeight / 2 - 400 / 2);
-    createApp({
-      name: appName,
-      description: appName + '>',
-      roomId: props.roomId,
-      boardId: props.boardId,
-      position: { x, y, z: 0 },
-      size: { width: 400, height: 400, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: appName,
-      state: { ...(initialValues[appName] as any) },
-      ownerId: user._id || '',
-      minimized: false,
-      raised: true,
-    });
-  };
-
+    
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
 
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
-      <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition} height={351}>
-        {Object.keys(Applications).map((appName) => (
-          <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
-        ))}
-      </Panel>
-
-      <MainMenu title={'Main Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={182} uploadOnOpen={uploadOnOpen} assetOnOpen={assetOnOpen} />
       
+      <ApplicatiosnMenu boardId={props.boardId} roomId={props.roomId} />
 
-      <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
+      <MainMenu uploadOnOpen={uploadOnOpen} assetOnOpen={assetOnOpen} />
+       
+      <AvatarMenu boardId={props.boardId} />
 
-      <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} stuck={true} />
+      <NavigationMenu  width={260} />
 
       <ContextMenu divId="board">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={() => apps.forEach((a) => deleteApp(a._id))} />
       </ContextMenu>
 
-      <InfoPanel
-        title={board?.data.name ? board.data.name : ''}
-        boardId={props.boardId}
-        position={infoPanelPosition}
-        setPosition={setInfoPanelPosition}
-        stuck={true}
-      />
-
+      
+      <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
+      
       {/* Asset dialog */}
       <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
 

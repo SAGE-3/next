@@ -7,7 +7,7 @@
  */
 
 import { useState, createContext, useEffect } from 'react';
-import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box, Icon, HStack } from '@chakra-ui/react';
+import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box, Icon, HStack, propNames } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { useUIStore } from '@sage3/frontend';
@@ -27,8 +27,8 @@ export interface ButtonPanelProps extends ButtonProps {
 export function ButtonPanel(props: ButtonPanelProps) {
   const textColor = useColorModeValue('gray.800', 'gray.100');
   return (
-    <Consumer>
-      {(value) => (
+    <Box w="100%">
+     
         <Button
           {...props}
           w="100%"
@@ -36,14 +36,14 @@ export function ButtonPanel(props: ButtonPanelProps) {
           h="auto"
           p={1}
           pl={2}
-          fontSize={value}
+          fontSize={smallFont}
           color={props.textColor ? props.textColor : textColor}
           justifyContent="flex-start"
         >
           {props.title}
         </Button>
-      )}
-    </Consumer>
+      
+    </Box>
   );
 }
 
@@ -51,11 +51,13 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export type PanelProps = {
   title: string;
   opened: boolean;
-  height: number;
+  setOpened: (opened: boolean) => void;
+  height?: number;
+  width?: number;
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
   stuck?: boolean;
-  children?: JSX.Element[];
+  children?: JSX.Element;
 };
 
 /**
@@ -67,12 +69,14 @@ export type PanelProps = {
  */
 export function Panel(props: PanelProps) {
   // Track the size of the panel
-  const [w, setW] = useState(200);
+  const [w, setW] = (props.width) ? useState(props.width) : useState(200) ;
   const [hover, setHover] = useState(false);
   // Track the font sizes of the panel
   const [fontsize, setFontsize] = useState(bigFont);
   const [fontsize2, setFontsize2] = useState(smallFont);
-  const [showActions, setShowActions] = useState(props.opened);
+  //const [showActions, setShowActions] = useState(props.opened);
+  const showActions = props.opened;
+  const setShowActions = props.setOpened;
   // Theme
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
@@ -91,7 +95,7 @@ export function Panel(props: PanelProps) {
     setShowActions(!showActions);
   }
 
-  useEffect(() => {
+  /*useEffect(() => {
     const resizeObserver = (e: UIEvent) => {
       props.setPosition({ x: 5, y: window.innerHeight - (props.height + 5) });
     };
@@ -102,7 +106,7 @@ export function Panel(props: PanelProps) {
     return () => {
       if (stuck) window.removeEventListener('resize', resizeObserver);
     }
-  }, [stuck]);
+  }, [stuck]);*/
 
   if (showUI)
     return (
@@ -117,11 +121,11 @@ export function Panel(props: PanelProps) {
           setHover(false);
           props.setPosition({ x: data.x, y: data.y });
           // bottom right corner
-          if (data.x < 5 && data.y > (window.innerHeight - (props.height + 5))) {
+          /*if (data.x < 5 && data.y > (window.innerHeight - (props.height + 5))) {
             setStuck(true);
           } else {
             setStuck(false);
-          }
+          }*/
         }}
         enableResizing={false}
         dragHandleClassName="header" // only allow dragging the header
@@ -147,42 +151,24 @@ export function Panel(props: PanelProps) {
           />
 
           <Box width="100%">
-            <VStack bg={panelBackground} cursor="auto">
+            <Box bg={panelBackground} cursor="auto">
+        
                 <HStack w="100%" >
-                <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'}
-                  userSelect={'none'} className="header" cursor="move" >
-                  {props.title}
-                </Text>
+                  <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'}
+                    userSelect={'none'} className="header" cursor="move" >
+                    {props.title}
+                  </Text>
                 {(showActions) ? <Icon as={MdExpandLess} onClick={handleClick} /> : <Icon  as={MdExpandMore} onClick={handleClick} />}
                 </HStack>
-              {showActions && (
-                <Provider value={fontsize2}>
-                  <VStack
-                    maxH={300}
-                    w={'100%'}
-                    overflow="auto"
-                    p={1}
-                    css={{
-                      '&::-webkit-scrollbar': {
-                        width: '6px',
-                      },
-                      '&::-webkit-scrollbar-track': {
-                        width: '6px',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: gripColor,
-                        borderRadius: 'md',
-                      },
-                    }}
-                  >
-                    {props.children}
-                  </VStack>
-                </Provider>
-              )}
-            </VStack>
+                
+              {showActions ? <>{props.children}</> : null }
+              
+         
+            </Box>
           </Box>
         </Box>
       </Rnd >
     );
   else return null;
 }
+

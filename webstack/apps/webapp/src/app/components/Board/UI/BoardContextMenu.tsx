@@ -36,11 +36,11 @@ export function BoardContextMenu(props: ContextProps) {
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
   // UI Menu position setters
-  const setMenuPanelPosition = useUIStore((state) => state.setMenuPanelPosition);
-  const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
+  const setMenuPanelPosition = useUIStore((state) => state.mainMenu.setPosition);
+  const setAppPanelPosition = useUIStore((state) => state.applicationsMenu.setPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
-  const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
-  const setInfoPanelPosition = useUIStore((state) => state.setInfoPanelPosition);
+  const setminimapPanelPosition = useUIStore((state) => state.navigationMenu.setPosition);
+  const setInfoPanelPosition = useUIStore((state) => state.avatarMenu.setPosition);
 
   // State of the checkboxes in context menu: grid ui
   const [radios, setRadios] = useState(savedRadios);

@@ -194,7 +194,7 @@ export function AppWindow(props: WindowProps) {
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">
-          <AppIcon width={(titleBarHeight  - 4) + 'px'} height={(titleBarHeight  - 4) + 'px'}></AppIcon><Text color="white">{props.app.data.description}</Text>
+          {/* <AppIcon width={(titleBarHeight  - 4) + 'px'} height="10px"></AppIcon><Text color="white">{props.app.data.description}</Text> */}
         </Box>
         {/* Right Title bar Elements */}
         <Box display="flex" alignItems="center">
