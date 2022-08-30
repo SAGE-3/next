@@ -26,12 +26,6 @@ import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemand
 
 import { humanFileSize, downloadFile, useUser, useAppStore, useUIStore } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
-// File information
-import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
-import { initialValues } from '@sage3/applications/apps';
-import { AppState } from '@sage3/applications/schema';
-
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
 

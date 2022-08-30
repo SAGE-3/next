@@ -35,11 +35,15 @@ export function Files(props: FilesProps): JSX.Element {
   // Element to set the focus to when opening the dialog
   const initialRef = React.useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
+  const [searchTerm, setSearchTerm] = useState<string>();
 
   // Update the file list to the list passed through props
   useEffect(() => {
+    // reappy the sort
     const newList = sortFiles(props.files, sorted.order, sorted.reverse);
     setList(newList);
+    // Clear the search
+    setSearchTerm("");
   }, [props.files]);
 
   // Create the column headers. Add arrows indicating sorting.
@@ -260,6 +264,7 @@ export function Files(props: FilesProps): JSX.Element {
   const handleSearch = (event: React.FormEvent<HTMLInputElement>) => {
     event.preventDefault();
     const term = event.currentTarget.value;
+    setSearchTerm(term);
     if (term) {
       // If something to search
       setList(
@@ -329,6 +334,7 @@ export function Files(props: FilesProps): JSX.Element {
           focusBorderColor="gray.500"
           placeholder="name, owner, extension..."
           _placeholder={{ opacity: 1, color: 'gray.400' }}
+          value={searchTerm}
           onChange={handleSearch}
         />
       </InputGroup>
