@@ -67,26 +67,22 @@ class SAGE3AssetsCollection {
   /**
    * Process a file for metadata, and pdf/image processing
    */
-  public async processFile(asset: Asset): Promise<void> {
-    const tasks = [] as Promise<any>[];
-    const id = asset._id;
-    const fileType = asset.data.mimetype;
-    // extract metadata
-    const t1 = this.metaQ.addFile(id, asset.data.file);
-    tasks.push(t1);
-    // convert image to multiple sizes
-    if (isImage(fileType)) {
-      const t2 = this.imgQ.addFile(id, asset.data.file);
-      tasks.push(t2);
-    }
-    // convert PDF to images
-    if (isPDF(fileType)) {
-      const t3 = this.pdfQ.addFile(id, asset.data.file);
-      tasks.push(t3);
-    }
-    await Promise.all(tasks).then(async ([r1, r2, r3]) => {
-      // no await because we want create event before the update events
-      if (r1) {
+  public async processFile(id: string, file: string, fileType: string): Promise<any> {
+    return new Promise((resolve) => {
+      const tasks = [] as Promise<any>[];
+      // extract metadata
+      const t1 = this.metaQ.addFile(id, file);
+      tasks.push(t1);
+      // convert image to multiple sizes
+      if (isImage(fileType)) {
+        const t2 = this.imgQ.addFile(id, file);
+        tasks.push(t2);
+      } else if (isPDF(fileType)) {
+        // convert PDF to images
+        const t2 = this.pdfQ.addFile(id, file);
+        tasks.push(t2);
+      }
+      Promise.all(tasks).then(async ([r1, r2]) => {
         const exif = r1.data;
         // Find a creation date from all the exif dates
         let realDate = new Date();
@@ -99,17 +95,21 @@ class SAGE3AssetsCollection {
         } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
           realDate = new Date(exif.FileModifyDate);
         }
-        // update date and metada
-        await this.assetCollection.updateItem(id, { dateCreated: realDate.toISOString(), metadata: r1.result });
-      }
-      if (r2) {
-        // update after image processing
-        await this.assetCollection.updateItem(id, { derived: r2.result });
-      }
-      if (r3) {
-        // update after PDF processing
-        await this.assetCollection.updateItem(id, { derived: r3.result });
-      }
+        if (isImage(fileType) || isPDF(fileType)) {
+          // image or pdf processed
+          resolve({
+            dateCreated: realDate.toISOString(),
+            metadata: r1.result,
+            derived: r2.result,
+          });
+        } else {
+          // everything else
+          resolve({
+            dateCreated: realDate.toISOString(),
+            metadata: r1.result,
+          });
+        }
+      });
     });
   }
 
