@@ -15,6 +15,7 @@ import { AppName, AppState } from '@sage3/applications/schema';
 // File information
 import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { setupApp } from './Drops';
 
 type BackgroundProps = {
   roomId: string;
@@ -86,22 +87,9 @@ export function Background(props: BackgroundProps) {
     event.dataTransfer.dropEffect = 'move';
   }
 
-  const newApplication = (appName: AppName, x: number, y: number) => {
+  const newApp = (appName: AppName, x: number, y: number) => {
     if (!user) return;
-    createApp({
-      name: appName,
-      description: appName + '>',
-      roomId: props.roomId,
-      boardId: props.boardId,
-      position: { x: x - 200, y: y - 200, z: 0 },
-      size: { width: 400, height: 400, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: appName,
-      state: { ...(initialValues[appName] as any) },
-      ownerId: user._id || '',
-      minimized: false,
-      raised: true,
-    });
+    createApp(setupApp(appName, x, y, props.roomId, props.boardId, user._id));
   };
 
   // Create an app for a file
@@ -113,37 +101,19 @@ export function Background(props: BackgroundProps) {
       assets.forEach((a) => {
         if (a._id === fileID) {
           const extras = a.data.derived as ExtraImageType;
-          createApp({
-            name: 'ImageViewer',
-            description: 'Image Description',
-            roomId: props.roomId,
-            boardId: props.boardId,
-            ownerId: user._id,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'ImageViewer',
-            state: { ...initialValues['ImageViewer'], id: fileID },
-            minimized: false,
-            raised: true
-          });
+          createApp(
+            setupApp("ImageViewer", xDrop, yDrop, props.roomId, props.boardId, user._id,
+              { w: w, h: w / (extras.aspectRatio || 1) },
+              { id: fileID }
+            ));
         }
       });
     } else if (isCSV(fileType)) {
-      createApp({
-        name: 'CVSViewer',
-        description: 'CSV Description',
-        roomId: props.roomId,
-        boardId: props.boardId,
-        ownerId: user._id,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 400, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'CSVViewer',
-        state: { ...initialValues['CSVViewer'], id: fileID },
-        minimized: false,
-        raised: true
-      });
+      createApp(
+        setupApp("CSVViewer", xDrop, yDrop, props.roomId, props.boardId, user._id,
+          { w: 800, h: 400 },
+          { id: fileID }
+        ));
     } else if (isText(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
@@ -159,20 +129,11 @@ export function Background(props: BackgroundProps) {
             return response.text();
           }).then(async function (text) {
             // Create a note from the text
-            createApp({
-              name: 'Stickie',
-              description: 'Stickie',
-              roomId: props.roomId,
-              boardId: props.boardId,
-              ownerId: user._id,
-              position: { x: xDrop, y: yDrop, z: 0 },
-              size: { width: 400, height: 400, depth: 0 },
-              rotation: { x: 0, y: 0, z: 0 },
-              type: 'Stickie',
-              state: { ...initialValues['Stickie'] as AppState, text },
-              minimized: false,
-              raised: true
-            });
+            createApp(
+              setupApp("Stickie", xDrop, yDrop, props.roomId, props.boardId, user._id,
+                { w: 400, h: 400 },
+                { text: text }
+              ));
           });
         }
       });
@@ -190,21 +151,12 @@ export function Background(props: BackgroundProps) {
           }).then(function (response) {
             return response.json();
           }).then(async function (spec) {
-            // Create a note from the text
-            createApp({
-              name: 'VegaLite',
-              description: 'VegaLite> ' + a.data.originalfilename,
-              roomId: props.roomId,
-              boardId: props.boardId,
-              ownerId: user._id,
-              position: { x: xDrop, y: yDrop, z: 0 },
-              size: { width: 500, height: 600, depth: 0 },
-              rotation: { x: 0, y: 0, z: 0 },
-              type: 'VegaLite',
-              state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
-              minimized: false,
-              raised: true
-            });
+            // Create a vis from the json spec
+            createApp(
+              setupApp("VegaLite", xDrop, yDrop, props.roomId, props.boardId, user._id,
+                { w: 500, h: 600 },
+                { spec: JSON.stringify(spec, null, 2) }
+              ));
           });
         }
       });
@@ -220,20 +172,11 @@ export function Background(props: BackgroundProps) {
             // First image of the page
             aspectRatio = page[0].width / page[0].height;
           }
-          createApp({
-            name: 'PDFViewer',
-            description: 'PDF Description',
-            roomId: props.roomId,
-            boardId: props.boardId,
-            ownerId: user._id,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 400 / aspectRatio, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'PDFViewer',
-            state: { ...initialValues['PDFViewer'], id: fileID },
-            minimized: false,
-            raised: true
-          });
+          createApp(
+            setupApp("PDFViewer", xDrop, yDrop, props.roomId, props.boardId, user._id,
+              { w: 400, h: 400 / aspectRatio },
+              { id: fileID }
+            ));
         }
       });
     }
@@ -256,7 +199,7 @@ export function Background(props: BackgroundProps) {
       // if no files were dropped, create an application
       const appName = event.dataTransfer.getData('app') as AppName;
       if (appName) {
-        newApplication(appName, xdrop, ydrop);
+        newApp(appName, xdrop, ydrop);
       } else {
         // Get information from the drop
         const ids = event.dataTransfer.getData('file');
@@ -273,36 +216,34 @@ export function Background(props: BackgroundProps) {
   }
 
   return (
-    <>
-      <Box
-        className="board-handle"
-        // width={5000}
-        // height={5000}
-        width="100%"
-        height="100%"
-        backgroundSize={`50px 50px`}
-        // backgroundSize={`${gridSize}px ${gridSize}px`}
-        backgroundImage={`linear-gradient(to right, ${gridColor} 1px, transparent 1px),
+    <Box
+      className="board-handle"
+      // width={5000}
+      // height={5000}
+      width="100%"
+      height="100%"
+      backgroundSize={`50px 50px`}
+      // backgroundSize={`${gridSize}px ${gridSize}px`}
+      backgroundImage={`linear-gradient(to right, ${gridColor} 1px, transparent 1px),
                linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
-        id="board"
-        // Drag and drop event handlers
-        onDrop={OnDrop}
-        onDragOver={OnDragOver}
-        onWheel={(evt: any) => {
-          evt.stopPropagation();
-          if ((evt.altKey || evt.ctrlKey || evt.metaKey) && evt.buttons === 0) {
-            // Alt + wheel : Zoom
-          } else {
-            // const cursor = { x: evt.clientX, y: evt.clientY, };
-            if (evt.deltaY < 0) {
-              zoomInDelta(evt.deltaY);
-            } else if (evt.deltaY > 0) {
-              zoomOutDelta(evt.deltaY);
-            }
+      id="board"
+      // Drag and drop event handlers
+      onDrop={OnDrop}
+      onDragOver={OnDragOver}
+      onWheel={(evt: any) => {
+        evt.stopPropagation();
+        if ((evt.altKey || evt.ctrlKey || evt.metaKey) && evt.buttons === 0) {
+          // Alt + wheel : Zoom
+        } else {
+          // const cursor = { x: evt.clientX, y: evt.clientY, };
+          if (evt.deltaY < 0) {
+            zoomInDelta(evt.deltaY);
+          } else if (evt.deltaY > 0) {
+            zoomOutDelta(evt.deltaY);
           }
-        }}
-      />
-    </>
+        }
+      }}
+    />
   );
 }
 

@@ -32,8 +32,8 @@ import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/apps';
 import { AppState } from '@sage3/applications/schema';
 
-
 import { FileEntry } from './types';
+import { setupAppForFile } from './CreateApp';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -170,132 +170,23 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragImage) {
-      e.dataTransfer.setDragImage(dragImage, 2, 2);
+      e.dataTransfer.setDragImage(dragImage, 1, 1);
     }
     // call drag callback in the parent
-    dragCB(e);
+    if (selected) dragCB(e);
+    else e.preventDefault()
   };
 
   // Create an app for a file
   const onDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!user) return;
-    const w = 400;
     // Get around  the center of the board
-    const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - w / 2);
+    const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
     const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
-    if (isImage(file.type)) {
-      // Look for the file in the asset store
-      const extras = file.derived as ExtraImageType;
-      createApp({
-        name: 'ImageViewer',
-        description: 'Image Description',
-        roomId: roomId,
-        boardId: boardId,
-        ownerId: user._id,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'ImageViewer',
-        state: { ...initialValues['ImageViewer'], id: file.id },
-        minimized: false,
-        raised: true
-      });
-    } else if (isCSV(file.type)) {
-      createApp({
-        name: 'CVSViewer',
-        description: 'CSV Description',
-        roomId: roomId,
-        boardId: boardId,
-        ownerId: user._id,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 400, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'CSVViewer',
-        state: { ...initialValues['CSVViewer'], id: file.id },
-        minimized: false,
-        raised: true
-      });
-    } else if (isText(file.type)) {
-      // Look for the file in the asset store
-      const localurl = '/api/assets/static/' + file.filename;
-      // Get the content of the file
-      fetch(localurl, {
-        headers: {
-          'Content-Type': 'text/csv',
-          Accept: 'text/csv'
-        },
-      }).then(function (response) {
-        return response.text();
-      }).then(async function (text) {
-        // Create a note from the text
-        createApp({
-          name: 'Stickie',
-          description: 'Stickie',
-          roomId: roomId,
-          boardId: boardId,
-          ownerId: user._id,
-          position: { x: xDrop, y: yDrop, z: 0 },
-          size: { width: 400, height: 400, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'Stickie',
-          state: { ...initialValues['Stickie'] as AppState, text },
-          minimized: false,
-          raised: true
-        });
-      });
-    } else if (isJSON(file.type)) {
-      // Look for the file in the asset store
-      const localurl = '/api/assets/static/' + file.filename;
-      // Get the content of the file
-      fetch(localurl, {
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-      }).then(function (response) {
-        return response.json();
-      }).then(async function (spec) {
-        // Create a note from the text
-        createApp({
-          name: 'VegaLite',
-          description: 'VegaLite> ' + file.originalfilename,
-          roomId: roomId,
-          boardId: boardId,
-          ownerId: user._id,
-          position: { x: xDrop, y: yDrop, z: 0 },
-          size: { width: 500, height: 600, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'VegaLite',
-          state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
-          minimized: false,
-          raised: true
-        });
-      });
-    } else if (isPDF(file.type)) {
-      // Look for the file in the asset store
-      const pages = file.derived as ExtraPDFType;
-      let aspectRatio = 1;
-      if (pages) {
-        // First page
-        const page = pages[0];
-        // First image of the page
-        aspectRatio = page[0].width / page[0].height;
-      }
-      createApp({
-        name: 'PDFViewer',
-        description: 'PDF Description',
-        roomId: roomId,
-        boardId: boardId,
-        ownerId: user._id,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 400, height: 400 / aspectRatio, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'PDFViewer',
-        state: { ...initialValues['PDFViewer'], id: file.id },
-        minimized: false,
-        raised: true
-      });
-    }
+
+    // Create the app
+    const setup = setupAppForFile(file, xDrop, yDrop, roomId, boardId, user._id);
+    if (setup) createApp(setup);
   }
 
   return (
