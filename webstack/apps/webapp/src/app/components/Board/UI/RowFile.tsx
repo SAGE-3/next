@@ -82,6 +82,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   useEffect(() => {
     setSelected(file.selected);
+    // hide context menu
+    setShowMenu(false);
   }, [file]);
 
   // Context menu selection handler
@@ -342,9 +344,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             </li>
           </ul>
         </Portal>
-      ) : (
-        <> </>
-      )}
+      ) : (null)}
 
       {/* Delete a file modal */}
       <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose}>
