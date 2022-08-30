@@ -20,7 +20,7 @@ const { Provider, Consumer } = createContext(16);
 // Add a title to the chakra button props
 export interface ButtonPanelProps extends ButtonProps {
   title: string;
-  canDrag?: boolean;
+  candrag?: string;
   textColor?: string;
 }
 
@@ -48,7 +48,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
           justifyContent="flex-start"
           // Drag and drop the button to create an app
           onDragStart={onDragStart}
-          draggable={props.canDrag ? true : false}
+          draggable={props.candrag === "true" ? true : false}
         >
           {props.title}
         </Button>

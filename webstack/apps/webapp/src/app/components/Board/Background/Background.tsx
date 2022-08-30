@@ -8,9 +8,14 @@
 
 import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser } from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore } from '@sage3/frontend';
 import { initialValues } from '@sage3/applications/apps';
-import { AppName } from '@sage3/applications/schema';
+import { AppName, AppState } from '@sage3/applications/schema';
+
+// File information
+import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
+import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { setupApp } from './Drops';
 
 type BackgroundProps = {
   roomId: string;
@@ -20,6 +25,8 @@ type BackgroundProps = {
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
+  // Assets
+  const assets = useAssetStore((state) => state.assets);
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // User
@@ -80,24 +87,100 @@ export function Background(props: BackgroundProps) {
     event.dataTransfer.dropEffect = 'move';
   }
 
-  const newApplication = (appName: AppName, x: number, y: number) => {
+  const newApp = (appName: AppName, x: number, y: number) => {
     if (!user) return;
-    createApp({
-      name: appName,
-      description: appName + '>',
-      roomId: props.roomId,
-      boardId: props.boardId,
-      position: { x: x - 200, y: y - 200, z: 0 },
-      size: { width: 400, height: 400, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: appName,
-      state: { ...(initialValues[appName] as any) },
-      ownerId: user._id || '',
-      minimized: false,
-      raised: true,
-    });
+    createApp(setupApp(appName, x, y, props.roomId, props.boardId, user._id));
   };
 
+  // Create an app for a file
+  function OpenFile(fileID: string, fileType: string, xDrop: number, yDrop: number) {
+    if (!user) return;
+    const w = 400;
+    if (isImage(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const extras = a.data.derived as ExtraImageType;
+          createApp(
+            setupApp("ImageViewer", xDrop, yDrop, props.roomId, props.boardId, user._id,
+              { w: w, h: w / (extras.aspectRatio || 1) },
+              { id: fileID }
+            ));
+        }
+      });
+    } else if (isCSV(fileType)) {
+      createApp(
+        setupApp("CSVViewer", xDrop, yDrop, props.roomId, props.boardId, user._id,
+          { w: 800, h: 400 },
+          { id: fileID }
+        ));
+    } else if (isText(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const localurl = '/api/assets/static/' + a.data.file;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/csv',
+              Accept: 'text/csv'
+            },
+          }).then(function (response) {
+            return response.text();
+          }).then(async function (text) {
+            // Create a note from the text
+            createApp(
+              setupApp("Stickie", xDrop, yDrop, props.roomId, props.boardId, user._id,
+                { w: 400, h: 400 },
+                { text: text }
+              ));
+          });
+        }
+      });
+    } else if (isJSON(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const localurl = '/api/assets/static/' + a.data.file;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json'
+            },
+          }).then(function (response) {
+            return response.json();
+          }).then(async function (spec) {
+            // Create a vis from the json spec
+            createApp(
+              setupApp("VegaLite", xDrop, yDrop, props.roomId, props.boardId, user._id,
+                { w: 500, h: 600 },
+                { spec: JSON.stringify(spec, null, 2) }
+              ));
+          });
+        }
+      });
+    } else if (isPDF(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const pages = a.data.derived as ExtraPDFType;
+          let aspectRatio = 1;
+          if (pages) {
+            // First page
+            const page = pages[0];
+            // First image of the page
+            aspectRatio = page[0].width / page[0].height;
+          }
+          createApp(
+            setupApp("PDFViewer", xDrop, yDrop, props.roomId, props.boardId, user._id,
+              { w: 400, h: 400 / aspectRatio },
+              { id: fileID }
+            ));
+        }
+      });
+    }
+  }
 
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
@@ -116,42 +199,51 @@ export function Background(props: BackgroundProps) {
       // if no files were dropped, create an application
       const appName = event.dataTransfer.getData('app') as AppName;
       if (appName) {
-        newApplication(appName, xdrop, ydrop);
+        newApp(appName, xdrop, ydrop);
+      } else {
+        // Get information from the drop
+        const ids = event.dataTransfer.getData('file');
+        const types = event.dataTransfer.getData('type');
+        const fileIDs = JSON.parse(ids);
+        const fileTypes = JSON.parse(types);
+        // Open the file at the drop location
+        const num = fileIDs.length;
+        for (let i = 0; i < num; i++) {
+          OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+        }
       }
     }
   }
 
   return (
-    <>
-      <Box
-        className="board-handle"
-        // width={5000}
-        // height={5000}
-        width="100%"
-        height="100%"
-        backgroundSize={`50px 50px`}
-        // backgroundSize={`${gridSize}px ${gridSize}px`}
-        backgroundImage={`linear-gradient(to right, ${gridColor} 1px, transparent 1px),
+    <Box
+      className="board-handle"
+      // width={5000}
+      // height={5000}
+      width="100%"
+      height="100%"
+      backgroundSize={`50px 50px`}
+      // backgroundSize={`${gridSize}px ${gridSize}px`}
+      backgroundImage={`linear-gradient(to right, ${gridColor} 1px, transparent 1px),
                linear-gradient(to bottom, ${gridColor} 1px, transparent 1px);`}
-        id="board"
-        // Drag and drop event handlers
-        onDrop={OnDrop}
-        onDragOver={OnDragOver}
-        onWheel={(evt: any) => {
-          evt.stopPropagation();
-          if ((evt.altKey || evt.ctrlKey || evt.metaKey) && evt.buttons === 0) {
-            // Alt + wheel : Zoom
-          } else {
-            // const cursor = { x: evt.clientX, y: evt.clientY, };
-            if (evt.deltaY < 0) {
-              zoomInDelta(evt.deltaY);
-            } else if (evt.deltaY > 0) {
-              zoomOutDelta(evt.deltaY);
-            }
+      id="board"
+      // Drag and drop event handlers
+      onDrop={OnDrop}
+      onDragOver={OnDragOver}
+      onWheel={(evt: any) => {
+        evt.stopPropagation();
+        if ((evt.altKey || evt.ctrlKey || evt.metaKey) && evt.buttons === 0) {
+          // Alt + wheel : Zoom
+        } else {
+          // const cursor = { x: evt.clientX, y: evt.clientY, };
+          if (evt.deltaY < 0) {
+            zoomInDelta(evt.deltaY);
+          } else if (evt.deltaY > 0) {
+            zoomOutDelta(evt.deltaY);
           }
-        }}
-      />
-    </>
+        }
+      }}
+    />
   );
 }
 

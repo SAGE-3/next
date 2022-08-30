@@ -123,6 +123,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       // Normalize mime types using the mime package
       elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
       // Put the new file into the collection
+      const now = new Date().toISOString();
       const assetID = await AssetsCollection.addAsset(
         {
           file: elt.filename,
@@ -133,7 +134,8 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           destination: elt.destination,
           size: elt.size,
           mimetype: elt.mimetype,
-          dateAdded: new Date().toISOString(),
+          dateCreated: now,
+          dateAdded: now,
         },
         user.id
       );
