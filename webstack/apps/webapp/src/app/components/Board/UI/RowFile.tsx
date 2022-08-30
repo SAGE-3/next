@@ -178,14 +178,14 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   };
 
   // Create an app for a file
-  const onDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const onDoubleClick = async (event: React.MouseEvent<HTMLDivElement>) => {
     if (!user) return;
     // Get around  the center of the board
     const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
     const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
 
     // Create the app
-    const setup = setupAppForFile(file, xDrop, yDrop, roomId, boardId, user._id);
+    const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user._id);
     if (setup) createApp(setup);
   }
 
