@@ -65,7 +65,7 @@ export function UILayer(props: UILayerProps) {
   const deleteApp = useAppStore((state) => state.delete);
 
   // Asset manager modal
-  const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
+  // const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
   // Upload modal
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
   // Clear boar modal
@@ -209,9 +209,9 @@ export function UILayer(props: UILayerProps) {
         ))}
       </Panel>
 
-      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={182} stuck={true}>
+      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={150} stuck={true}>
         <ButtonPanel title="Home" onClick={handleHomeClick} colorScheme="blackAlpha" />
-        <ButtonPanel title="Asset Browser" onClick={assetOnOpen} />
+        {/* <ButtonPanel title="Asset Browser" onClick={assetOnOpen} /> */}
         <ButtonPanel title="Upload" onClick={uploadOnOpen} />
         <ButtonPanel title="Clear Board" onClick={clearOnOpen} />
       </Panel>
@@ -234,7 +234,7 @@ export function UILayer(props: UILayerProps) {
       />
 
       {/* Asset dialog */}
-      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
+      {/* <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal> */}
 
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
