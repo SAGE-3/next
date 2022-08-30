@@ -6,9 +6,10 @@
  *
  */
 
-import { Box, Button, Input, InputGroup, InputLeftAddon, InputRightAddon, Progress, useToast } from '@chakra-ui/react';
+import { Box, Button, Input, InputGroup, InputLeftAddon, InputRightAddon, Progress, Tooltip, useToast } from '@chakra-ui/react';
 import { Board } from '@sage3/shared/types';
 import { ChangeEvent, useState } from 'react';
+import { isUUIDv4 } from '@sage3/frontend';
 
 // Props
 interface enterBoardProps {
@@ -56,7 +57,7 @@ export function EnterBoardById(props: enterBoardProps) {
       // Give user some feedback
       toast({
         title: 'Success',
-        description: `Joining Board ${board.data.name}`,
+        description: `Joining Board "${board.data.name}"`,
         duration: 3000,
         isClosable: true,
         status: 'success',
@@ -73,7 +74,7 @@ export function EnterBoardById(props: enterBoardProps) {
 
       // Give user some feedback
       toast({
-        title: 'Invalid board ID',
+        title: 'Invalid Board ID',
         duration: 3000,
         isClosable: true,
         status: 'error',
@@ -86,13 +87,20 @@ export function EnterBoardById(props: enterBoardProps) {
       <form onSubmit={handleSubmit}>
         <InputGroup>
           <InputLeftAddon children="BoardID" />
-          <Input value={boardId} onChange={handleInputChange} onSubmit={handleSubmit} fontSize="sm" />
+          <Input value={boardId} onChange={handleInputChange} onSubmit={handleSubmit} fontSize="sm"
+            placeholder="Enter a board ID"
+            spellCheck={false}
+            _placeholder={{ opacity: 1, color: 'gray.600' }}
+          />
           <InputRightAddon
             p="0"
             children={
-              <Button colorScheme="green" borderRadius="0 4px 4px 0" onClick={handleSubmit}>
-                Enter
-              </Button>
+              <Tooltip isOpen={!isUUIDv4(boardId) ? undefined : false} placement="top" gutter={20} hasArrow={true} label={'Enter a Valid BoardID'} openDelay={400} shouldWrapChildren>
+                <Button colorScheme="green" borderRadius="0 4px 4px 0" onClick={handleSubmit}
+                  disabled={!isUUIDv4(boardId)}>
+                  Enter
+                </Button>
+              </Tooltip>
             }
           />
         </InputGroup>
