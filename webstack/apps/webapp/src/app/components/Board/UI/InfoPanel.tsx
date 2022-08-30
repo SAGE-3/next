@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Box, useColorModeValue, Text, Avatar, Tooltip, Icon } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Avatar, Tooltip, Icon, useToast } from '@chakra-ui/react';
 
 import { Rnd } from 'react-rnd';
 import { SiTwilio } from 'react-icons/si';
@@ -42,10 +42,22 @@ export function InfoPanel(props: InfoPanelProps) {
   // User information
   const { user } = useUser();
 
+  // Toast
+  const toast = useToast();
+
   function handleDblClick(e: any) {
     e.stopPropagation();
   }
-
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(props.boardId);
+    toast({
+      title: 'Success',
+      description: `Copied Board Id`,
+      duration: 3000,
+      isClosable: true,
+      status: 'success',
+    });
+  };
   useEffect(() => {
     if (stuck) {
       props.setPosition({ x: 5, y: 5 });
@@ -73,14 +85,7 @@ export function InfoPanel(props: InfoPanelProps) {
         dragHandleClassName="handle" // only allow dragging the header
         style={{ transition: hover ? 'none' : 'all 0.2s' }}
       >
-        <Box
-          display="flex"
-          boxShadow={stuck ? "base" : "outline"}
-          transition="all .2s "
-          bg={panelBackground}
-          p="2"
-          rounded="md"
-        >
+        <Box display="flex" boxShadow={stuck ? 'base' : 'outline'} transition="all .2s " bg={panelBackground} p="2" rounded="md">
           <Box
             width="25px"
             backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
@@ -93,9 +98,23 @@ export function InfoPanel(props: InfoPanelProps) {
 
           <Box display="flex" flexDirection="column">
             <Box display="flex" justifyContent={'left'}>
-              <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'} className="handle">
-                {props.title}
-              </Text>
+              <Tooltip pointerEvents={'all'} label={'Copy BoardId'} placement="top" hasArrow>
+                <Text
+                  w="100%"
+                  textAlign="center"
+                  color={textColor}
+                  fontSize={18}
+                  fontWeight="bold"
+                  h={'auto'}
+                  userSelect={'none'}
+                  className="handle"
+                  onClick={handleCopyId}
+                  cursor="pointer"
+                >
+                  {props.title}
+                </Text>
+              </Tooltip>
+
               <Tooltip pointerEvents={'all'} label={room ? 'Twilio Connected' : 'Twilio Disconnected'}>
                 <Box pointerEvents={'all'} mx={1}>
                   <Icon fontSize="24px" color={room ? 'green' : 'red'} as={SiTwilio} />
