@@ -52,7 +52,7 @@ export function InfoPanel(props: InfoPanelProps) {
     navigator.clipboard.writeText(props.boardId);
     toast({
       title: 'Success',
-      description: `Copied Board Id`,
+      description: `BoardID Copied to Clipboard`,
       duration: 3000,
       isClosable: true,
       status: 'success',
@@ -98,7 +98,7 @@ export function InfoPanel(props: InfoPanelProps) {
 
           <Box display="flex" flexDirection="column">
             <Box display="flex" justifyContent={'left'}>
-              <Tooltip pointerEvents={'all'} label={'Copy BoardId'} placement="top" hasArrow>
+              <Tooltip pointerEvents={'all'} label={'Copy BoardID to Clipboard'} placement="top" hasArrow>
                 <Text
                   w="100%"
                   textAlign="center"
