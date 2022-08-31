@@ -25,15 +25,12 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
   const s = props.data.state as AppState;
+  // file from the asset manager
   const [file, setFile] = useState<Asset>();
-  const [viewer, setViewer] = useState<OpenSeadragon.Viewer>();
-  // const [driving, setDriving] = useState<boolean>(false);
-  // const [zoomLevel, setZoomLevel] = useState<number>(s.zoomLevel);
-
+  // Keep handle to the viewer
+  const viewer = useRef<OpenSeadragon.Viewer>();
+  // me me me
   const { user } = useUser();
-
-  // Div around the pages to capture events
-  const divRef = useRef<HTMLDivElement>(null);
 
   // Chakra Color Mode for grid color
   const bgColor = useColorModeValue('white', 'black');
@@ -49,34 +46,46 @@ function AppComponent(props: App): JSX.Element {
 
   const zoomHandler = (event: OpenSeadragon.ZoomEvent) => {
     updateState(props._id, { zoomLevel: event.zoom });
+    if (viewer.current) {
+      // Center moves during the zoom
+      const center = viewer.current.viewport.getCenter();
+      updateState(props._id, { zoomCenter: [center.x, center.y] });
+    }
   };
   const panHandler = (event: OpenSeadragon.PanEvent) => {
     updateState(props._id, { zoomCenter: [event.center.x, event.center.y] });
   }
 
-  // update from backend
+  // Update from backend
   useEffect(() => {
-    if (viewer) {
-      viewer.removeAllHandlers('zoom');
+    if (viewer.current) {
+      // disable handlers
+      viewer.current.removeAllHandlers('zoom');
+      // if it's not my update, then apply
       if (props._updatedBy !== user?._id)
-        viewer.viewport.zoomTo(s.zoomLevel);
-      viewer.addHandler('zoom', zoomHandler);
+        viewer.current.viewport.zoomTo(s.zoomLevel);
+      // put interaction handler back
+      viewer.current.addHandler('zoom', zoomHandler);
     }
   }, [s.zoomLevel]);
 
+  // Update from backend
   useEffect(() => {
-    if (viewer) {
-      viewer.removeAllHandlers('pan');
+    if (viewer.current) {
+      // disable handlers
+      viewer.current.removeAllHandlers('pan');
+      // if it's not my update, then apply
       if (props._updatedBy !== user?._id)
-        viewer.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]), true);
-      viewer.addHandler('pan', panHandler);
+        viewer.current.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]));
+      // put interaction handler back
+      viewer.current.addHandler('pan', panHandler);
     }
   }, [s.zoomCenter]);
 
   useEffect(() => {
-    if (file) {
+    if (file && !viewer.current) {
       // create the image viewer with the right data and path
-      const viewer = OpenSeadragon({
+      viewer.current = OpenSeadragon({
         // suppporting div
         id: 'zoom_' + props._id,
         // icons for the library
@@ -96,26 +105,28 @@ function AppComponent(props: App): JSX.Element {
         // change tileSources for your dataset
         tileSources: '/api/assets/static/' + file.data.file,
       });
-      // Save the viewer to state
-      setViewer(viewer);
 
       // Handler when dataset is loaded
-      viewer.addHandler('open', () => {
+      viewer.current.addHandler('open', (e: OpenSeadragon.OpenEvent) => {
         // @ts-expect-error source missing dimensions
-        const imginfo = { w: viewer.source.width, h: viewer.source.height };
+        const imginfo = { w: viewer.current.source.width, h: viewer.current.source.height };
         const info = imginfo.w.toLocaleString() + " x " + imginfo.h.toLocaleString() + " pixels";
         // Update the app title
         update(props._id, { description: 'Zoom> ' + file.data.originalfilename + ' ' + info });
+        // Reset the view
+        e.eventSource.viewport.zoomTo(s.zoomLevel);
+        e.eventSource.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]));
       });
 
-      viewer.addHandler('zoom', zoomHandler);
-      viewer.addHandler('pan', panHandler);
+      // Interaction handlers
+      viewer.current.addHandler('zoom', zoomHandler);
+      viewer.current.addHandler('pan', panHandler);
     }
   }, [file]);
 
   return (
     <AppWindow app={props}>
-      <Box id={'zoom_' + props._id} roundedBottom="md" bg={bgColor} width="100%" height="100%" p={2} ref={divRef}>
+      <Box id={'zoom_' + props._id} roundedBottom="md" bg={bgColor} width="100%" height="100%" p={2}>
       </Box>
     </AppWindow>
   );
