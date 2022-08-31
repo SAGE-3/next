@@ -8,7 +8,6 @@
   "LeafLet",
   "VideoViewer",
   "Webview",
-  "Linker",
   "DataTableApp",
   "CSVViewer",
   "RTCChat",
@@ -17,5 +16,6 @@
   "CoBrowse",
   "JupyterLab",
   "VegaLiteViewer",
-  "VegaLite"
+  "VegaLite",
+  "Zoom"
 ]

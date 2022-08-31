@@ -7,17 +7,18 @@ import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer
 import { state as CodeCellState, name as CodeCellName } from './apps/CodeCell';
 import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
-import { state as ScreenshareState, name as ScreenshareName } from './apps/TwilioScreenshare';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
+import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
 import { state as ClockState, name as ClockName } from './apps/Clock';
-import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
+import { state as CoBrowseState, name as CoBrowseName } from './apps/CoBrowse';
 import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
+import { state as ZoomState, name as ZoomName } from './apps/Zoom';
 
 export type AppState =
   | CounterState
@@ -27,17 +28,18 @@ export type AppState =
   | CodeCellState
   | ImageViewerState
   | LeafLetState
-  | ScreenshareState
   | VideoViewerState
   | WebviewState
   | DataTableAppState
   | CSVViewerState
   | RTCChatState
-  | VegaLiteState
-  | VegaLiteViewerState
+  | ScreenshareState
   | ClockState
-  | CobrowseState
-  | JupyterLabState;
+  | CoBrowseState
+  | JupyterLabState
+  | VegaLiteViewerState
+  | VegaLiteState
+  | ZoomState;
 
 export type AppName =
   | typeof CounterName
@@ -47,14 +49,15 @@ export type AppName =
   | typeof CodeCellName
   | typeof ImageViewerName
   | typeof LeafLetName
-  | typeof ScreenshareName
   | typeof VideoViewerName
   | typeof WebviewName
   | typeof DataTableAppName
   | typeof CSVViewerName
   | typeof RTCChatName
+  | typeof ScreenshareName
   | typeof ClockName
-  | typeof CobrowseName
+  | typeof CoBrowseName
   | typeof JupyterLabName
   | typeof VegaLiteViewerName
-  | typeof VegaLiteName;
+  | typeof VegaLiteName
+  | typeof ZoomName;
