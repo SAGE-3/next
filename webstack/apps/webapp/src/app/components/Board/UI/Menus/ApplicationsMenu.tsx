@@ -8,7 +8,7 @@
 
  import { useEffect, useState, useRef, createContext } from 'react';
  import { Box, useColorModeValue, Text } from '@chakra-ui/react';
- import { AssetModal, ContextMenu, UploadModal, useAppStore, useBoardStore, useUIStore, useUser } from '@sage3/frontend';
+ import { AssetModal, ContextMenu, StuckTypes, UploadModal, useAppStore, useBoardStore, useUIStore, useUser } from '@sage3/frontend';
  import { Rnd } from 'react-rnd';
  import { Applications, initialValues } from '@sage3/applications/apps';
  import { AppName } from '@sage3/applications/schema';
@@ -39,7 +39,25 @@
    const setPosition = useUIStore((state) => state.applicationsMenu.setPosition);
    const opened = useUIStore((state) => state.applicationsMenu.opened);
    const setOpened = useUIStore((state) => state.applicationsMenu.setOpened);
+   const show = useUIStore((state) => state.applicationsMenu.show);
+   const setShow = useUIStore((state) => state.applicationsMenu.setShow);
+   const stuck = useUIStore((state) => state.applicationsMenu.stuck);
+   const setStuck = useUIStore((state) => state.applicationsMenu.setStuck);
 
+   const controllerPosition = useUIStore((state) => state.controller.position);
+    // if a menu is currently closed, make it "jump" to the controller
+    useEffect(() => {
+        if (!show) {
+            setPosition({x: controllerPosition.x+40, y: controllerPosition.y + 90});
+            setStuck(StuckTypes.Controller);
+        }
+    }, [show ]);
+    useEffect(() => {
+        if (stuck == StuckTypes.Controller) {
+            setPosition({x: controllerPosition.x+40, y: controllerPosition.y + 90})
+        }
+    }, [controllerPosition ]);
+    
    // Theme
    const textColor = useColorModeValue('gray.800', 'gray.100');
    // User
@@ -72,7 +90,19 @@
   
      return (
          
-        <Panel title="Applications" opened={opened} setOpened={setOpened} setPosition={setPosition} position={position} >
+        <Panel 
+            title="Applications" 
+            opened={opened} 
+            setOpened={setOpened} 
+            setPosition={setPosition} 
+            position={position} 
+            width={230} 
+            showClose={true}
+            show={show} 
+            setShow={setShow}
+            stuck={stuck}
+            setStuck={setStuck}
+            >
             <Box>
             {Object.keys(Applications).map((appName) => (
                 <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />

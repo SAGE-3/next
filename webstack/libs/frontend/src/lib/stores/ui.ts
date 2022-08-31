@@ -21,13 +21,29 @@ const StepZoom = 0.1;
 // When using mouse wheel, repeated events
 const WheelStepZoom = 0.004;
 
+export enum StuckTypes {
+  Controller,  // 0
+  None,    // 1
+  Top,   // 2
+  Bottom,  // 3
+  Left,   // 4
+  Right,   // 5
+  TopRight,  // 6
+  TopLeft,  // 7
+  BottomRight,  // 8
+  BottomLeft  // 9
+}
+
 // Typescript interface defining the store
 interface PanelUI{
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
-  opened: boolean;
+  opened: boolean;  // whether the actions are open (otherwise, just title)
   setOpened: (opened: boolean) => void;
-  // other things, like being stuck
+  show:boolean;     // whether the panel is visible
+  setShow: (show: boolean) => void;
+  stuck: StuckTypes;  // if the panel is stuck, says direction, otherwise, None or Controller
+  setStuck: (show: StuckTypes) => void;
 }
 
 interface UIState {
@@ -42,17 +58,10 @@ interface UIState {
   applicationsMenu :PanelUI;
   navigationMenu: PanelUI;
   avatarMenu : PanelUI;
+  controller: PanelUI;
 
-  //menuPanelPosition: { x: number; y: number };
-  //setMenuPanelPosition: (pos: { x: number; y: number }) => void;
-  //appPanelPosition: { x: number; y: number };
-  //setAppPanelPosition: (pos: { x: number; y: number }) => void;
   appToolbarPanelPosition: { x: number; y: number };
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
-  //minimapPanelPosition: { x: number; y: number };
-  //setminimapPanelPosition: (pos: { x: number; y: number }) => void;
-  //infoPanelPosition: { x: number; y: number };
-  //setInfoPanelPosition: (position: { x: number; y: number }) => void;
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
@@ -75,35 +84,46 @@ export const useUIStore = create<UIState>((set) => ({
   showUI: true,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
-  //menuPanelPosition: { x: 20, y: 130 },
-  //appPanelPosition: { x: 20, y: 325 },
   appToolbarPanelPosition: { x: 20, y: 850 },
-  //minimapPanelPosition: { x: 20, y: 690 },
-  //infoPanelPosition: { x: 20, y: 20 },
   contextMenuPosition: { x: 0, y: 0 },
-  mainMenu: {position: {x:20, y:130},
+  controller: {position: {x:20, y:130}, stuck: StuckTypes.None,
+                        setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, controller:{...state.controller, position:pos} })),
+                        setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, controller:{...state.controller, stuck:stuck} })),
+                        setOpened: (opened: boolean) => set((state) => ({ ...state, controller:{...state.controller, opened:opened} })),
+                        opened: true,
+                        setShow: (show: boolean) => set((state) => ({ ...state, controller:{...state.controller, show:show} })),
+                        show: true  },
+  mainMenu: {position: {x:20, y:130}, stuck: StuckTypes.Controller,
                         setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, mainMenu:{...state.mainMenu, position:pos} })),
+                        setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, mainMenu:{...state.mainMenu, stuck:stuck} })),
                         setOpened: (opened: boolean) => set((state) => ({ ...state, mainMenu:{...state.mainMenu, opened:opened} })),
-                        opened: true },
-  applicationsMenu: {position: {x:20, y:325},
+                        opened: true,
+                        setShow: (show: boolean) => set((state) => ({ ...state, mainMenu:{...state.mainMenu, show:show} })),
+                        show: false },
+  applicationsMenu: {position: {x:20, y:325}, stuck: StuckTypes.Controller,
                         setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, applicationsMenu:{...state.applicationsMenu, position:pos} })),
+                        setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, applicationsMenu:{...state.applicationsMenu, stuck:stuck} })),
                         opened: true,
                         setOpened: (op: boolean) => set((state) => ({ ...state, applicationsMenu:{...state.applicationsMenu, opened:op} })),
+                        show: false,
+                        setShow: (show: boolean) => set((state) => ({ ...state, applicationsMenu:{...state.applicationsMenu, show:show} }))
                          },  
-  navigationMenu: {position: {x:20, y:690},
+  navigationMenu: {position: {x:20, y:690}, stuck: StuckTypes.Controller,
                         setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, navigationMenu:{...state.navigationMenu, position:pos} })),
+                        setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, navigationMenu:{...state.navigationMenu, stuck:stuck} })),
                         setOpened: (opened: boolean) => set((state) => ({ ...state, navigationMenu:{...state.navigationMenu, opened:opened} })),
-                        opened: true },
-  avatarMenu: {position: {x:20, y:20},
+                        opened: true,
+                        setShow: (show: boolean) => set((state) => ({ ...state, navigationMenu:{...state.navigationMenu, show:show} })),
+                        show: false },
+  avatarMenu: {position: {x:20, y:20}, stuck: StuckTypes.Controller,
                         setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, avatarMenu:{...state.avatarMenu, position:pos} })),
+                        setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, avatarMenu:{...state.avatarMenu, stuck:stuck} })),
                         setOpened: (opened: boolean) => set((state) => ({ ...state, avatarMenu:{...state.avatarMenu, opened:opened} })),
-                        opened: true },                    
-  //setInfoPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, infoPanelPosition: pos })),
+                        opened: true,
+                        setShow: (show: boolean) => set((state) => ({ ...state, avatarMenu:{...state.avatarMenu, show:show} })),
+                        show: false },                    
   setContextMenuPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, contextMenuPosition: pos })),
-  //setminimapPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, minimapPanelPosition: pos })),
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
-  //setAppPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appPanelPosition: pos })),
-  //setMenuPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, menuPanelPosition: pos })),
   setBoardPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, boardPosition: pos })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),

@@ -6,11 +6,11 @@
  *
  */
 
-import { useState, createContext, useEffect } from 'react';
-import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box, Icon, HStack, propNames } from '@chakra-ui/react';
+import { useState, createContext, useEffect , useRef} from 'react';
+import { VStack, Text, Button, ButtonProps, Tooltip, useColorModeValue, Box, Icon, IconButton, CloseButton, HStack, propNames, ComponentWithAs, IconProps, background } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
-import { useUIStore } from '@sage3/frontend';
+import { StuckTypes, useUIStore } from '@sage3/frontend';
 
 // Pass the font size between the panel and the buttons
 const bigFont = 18;
@@ -47,6 +47,41 @@ export function ButtonPanel(props: ButtonPanelProps) {
   );
 }
 
+
+// Add a title to the chakra button props
+export interface IconButtonPanelProps extends ButtonProps {
+  icon: JSX.Element;
+  disabled: boolean;
+  used: boolean;
+  description: string;
+  //textColor?: string;
+}
+
+// Button with a title and using the font size from parent panel
+export function IconButtonPanel(props: IconButtonPanelProps) {
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+  return (
+    <Box >
+     
+        <IconButton
+          {...props}
+          
+          borderRadius="md"
+          h="auto"
+          p={1}
+          fontSize="4xl"
+          color={props.textColor ? props.textColor : textColor}
+          justifyContent="flex-center"
+          aria-label={props.description}
+          icon={props.icon}
+          isDisabled={props.disabled}
+          isActive={props.used}
+        />
+      
+    </Box>
+  );
+}
+
 // Props for the panel: a title and some children
 export type PanelProps = {
   title: string;
@@ -56,8 +91,12 @@ export type PanelProps = {
   width?: number;
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
-  stuck?: boolean;
+  stuck: StuckTypes;
+  setStuck:(stuck: StuckTypes) => void;
   children?: JSX.Element;
+  showClose: boolean;
+  show: boolean;
+  setShow: (show: boolean) => void;
 };
 
 /**
@@ -74,17 +113,18 @@ export function Panel(props: PanelProps) {
   // Track the font sizes of the panel
   const [fontsize, setFontsize] = useState(bigFont);
   const [fontsize2, setFontsize2] = useState(smallFont);
-  //const [showActions, setShowActions] = useState(props.opened);
+
   const showActions = props.opened;
   const setShowActions = props.setOpened;
+  
   // Theme
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
-  // Put in a corner
-  const [stuck, setStuck] = useState(props.stuck || false);
+  
   // UI store
   const showUI = useUIStore((state) => state.showUI);
+  const ref = useRef<HTMLDivElement>(null);
 
   function handleDblClick(e: any) {
     e.stopPropagation();
@@ -94,6 +134,13 @@ export function Panel(props: PanelProps) {
     e.stopPropagation();
     setShowActions(!showActions);
   }
+
+//  useEffect(() => {
+//    if (!props.show) {
+//        //setPosition({x: controllerPosition.x+190, y: controllerPosition.y + 90})
+//        props.setStuck(StuckTypes.Controller);
+//    }
+//}, [props.show ]);
 
   /*useEffect(() => {
     const resizeObserver = (e: UIEvent) => {
@@ -108,18 +155,94 @@ export function Panel(props: PanelProps) {
     }
   }, [stuck]);*/
 
+  useEffect(() => {
+    //console.log("resize event");
+    if (ref.current && props.stuck != StuckTypes.None) {
+      const we = ref.current["clientWidth"];
+      const he = ref.current["clientHeight"];
+      if (props.stuck == StuckTypes.Top) {
+        props.setPosition({ x: window.innerWidth/2 - we/2, y: 5 });
+      } else if (props.stuck == StuckTypes.TopLeft) {
+        props.setPosition({ x: 5, y: 5 });
+      } else if (props.stuck == StuckTypes.TopRight) {
+        props.setPosition({ x: window.innerWidth - we - 5, y: 5 });
+      } else if (props.stuck == StuckTypes.BottomRight) {
+        props.setPosition({ x: window.innerWidth - we - 5, y: window.innerHeight - he - 5 });
+      } else if (props.stuck == StuckTypes.BottomLeft) {
+        props.setPosition({ x: 5, y: window.innerHeight - he - 5 });
+      } else if (props.stuck == StuckTypes.Bottom) {
+        props.setPosition({ x:  window.innerWidth/2 - we/2, y: window.innerHeight - he - 5 });
+      } else if (props.stuck == StuckTypes.Left) {
+        props.setPosition({ x:  5, y: window.innerHeight/2 - he/2 });
+      } else if (props.stuck == StuckTypes.Right) {
+        props.setPosition({ x:  window.innerWidth - we - 5, y: window.innerHeight/2 - he/2 });
+      } else {
+        console.log("non of the above")
+      }
+    }
+
+  }, [window.innerWidth,window.innerHeight]);
+ 
+
+  const borderTop = (props.stuck == StuckTypes.TopLeft || props.stuck == StuckTypes.Top || props.stuck == StuckTypes.TopRight) ? "2px" : "0px";
+  const borderBottom = (props.stuck == StuckTypes.BottomLeft || props.stuck == StuckTypes.Bottom || props.stuck == StuckTypes.BottomRight) ? "2px" : "0px";
+  const borderLeft = (props.stuck == StuckTypes.TopLeft || props.stuck == StuckTypes.Left || props.stuck == StuckTypes.BottomLeft) ? "2px" : "0px";
+  const borderRight = (props.stuck == StuckTypes.TopRight || props.stuck == StuckTypes.Right || props.stuck == StuckTypes.BottomRight) ? "2px" : "0px";
+
   if (showUI)
+    if (props.show)
     return (
-      <Rnd
+      
+      <Rnd 
         position={{ ...props.position }}
         bounds="window"
-        size={{ width: w, height: '100px' }}
+        size={{ width: w, height : (ref.current) ? (ref.current["clientHeight"] + 5) : '100px' }}
         //onDoubleClick={handleDblClick}
         
         onDragStart={() => setHover(true)}
         onDragStop={(e, data) => {
           setHover(false);
           props.setPosition({ x: data.x, y: data.y });
+          //props.setStuck(StuckTypes.None);
+          if (ref.current) {
+            const we = ref.current["clientWidth"];
+            const he = ref.current["clientHeight"];
+            if (data.x < 5) { // left
+              if( data.y < 5 ) { // top
+                props.setStuck(StuckTypes.TopLeft);
+                console.log("top left");
+                //ref.current["style"] = {...ref.current["style"],background:'red'};
+              } else if (data.y >(window.innerHeight - (he + 10))) { //bottom
+                props.setStuck(StuckTypes.BottomLeft);
+                console.log("bottom left");
+              } else { // middle
+                props.setStuck(StuckTypes.Left);
+                console.log(" left");
+              }
+            } else if (data.x >(window.innerWidth - (we + 5))) { // right
+              if( data.y < 5 ) { // top
+                props.setStuck(StuckTypes.TopRight);
+                console.log("top right");
+              } else if (data.y >(window.innerHeight - (he + 10))) { //bottom
+                props.setStuck(StuckTypes.BottomRight);
+                console.log("bottom right");
+              } else { // middle
+                props.setStuck(StuckTypes.Right);
+                console.log("right");
+              }
+
+            } else if (data.y >(window.innerHeight - (he + 10))) { //bottom
+              props.setStuck(StuckTypes.Bottom);
+              console.log("bottom");
+            } else if( data.y < 5 ) { // top
+              props.setStuck(StuckTypes.Top);
+              console.log("top");
+            } else {
+              props.setStuck(StuckTypes.None);
+              console.log("none");
+            }
+            //console.log(props.stuck);
+          }
           // bottom right corner
           /*if (data.x < 5 && data.y > (window.innerHeight - (props.height + 5))) {
             setStuck(true);
@@ -133,12 +256,15 @@ export function Panel(props: PanelProps) {
       >
         <Box
           display="flex"
-          boxShadow={stuck ? "base" : "outline"}
+          boxShadow="base"
           transition="all .2s "
           bg={panelBackground}
           p="2"
           pl="1"
           rounded="md"
+          ref={ref} 
+          borderTop={borderTop} borderLeft={borderLeft} borderBottom={borderBottom} borderRight={borderRight} borderRadius={0}
+          
         >
           <Box
             width="30px"
@@ -154,11 +280,14 @@ export function Panel(props: PanelProps) {
             <Box bg={panelBackground} cursor="auto">
         
                 <HStack w="100%" >
+                  {(props.showClose) ? <CloseButton size='sm' onClick={()=> {props.setShow(false); props.setStuck(StuckTypes.Controller);}} /> : null}
                   <Text w="100%" textAlign="center" color={textColor} fontSize={fontsize} fontWeight="bold" h={'auto'}
                     userSelect={'none'} className="header" cursor="move" >
                     {props.title}
                   </Text>
-                {(showActions) ? <Icon as={MdExpandLess} onClick={handleClick} /> : <Icon  as={MdExpandMore} onClick={handleClick} />}
+                  
+                {(showActions) ? <IconButton as={MdExpandLess} aria-label="show less" onClick={handleClick}  size='xs' /> : <IconButton  as={MdExpandMore} aria-label="show more" onClick={handleClick}  size='xs' />}
+                
                 </HStack>
                 
               {showActions ? <>{props.children}</> : null }
@@ -169,6 +298,7 @@ export function Panel(props: PanelProps) {
         </Box>
       </Rnd >
     );
+    else return null;
   else return null;
 }
 

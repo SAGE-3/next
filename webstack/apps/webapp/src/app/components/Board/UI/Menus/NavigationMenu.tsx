@@ -8,7 +8,7 @@
 
  import { useEffect, useState, useRef, createContext } from 'react';
  import { Box, useColorModeValue, Text } from '@chakra-ui/react';
- import { useAppStore, useUIStore } from '@sage3/frontend';
+ import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
  import { Rnd } from 'react-rnd';
 
  import { ButtonPanel, Panel , PanelProps} from '../Panel';
@@ -28,6 +28,25 @@
    const setPosition = useUIStore((state) => state.navigationMenu.setPosition);
    const opened = useUIStore((state) => state.navigationMenu.opened);
    const setOpened = useUIStore((state) => state.navigationMenu.setOpened);
+   const show = useUIStore((state) => state.navigationMenu.show);
+   const setShow = useUIStore((state) => state.navigationMenu.setShow);
+   const stuck = useUIStore((state) => state.navigationMenu.stuck);
+   const setStuck = useUIStore((state) => state.navigationMenu.setStuck);
+
+   const controllerPosition = useUIStore((state) => state.controller.position);
+    // if a menu is currently closed, make it "jump" to the controller
+    useEffect(() => {
+        if (!show) {
+            setPosition({x: controllerPosition.x+190, y: controllerPosition.y + 90});
+            setStuck(StuckTypes.Controller);
+        }
+    }, [show ]);
+    useEffect(() => {
+        if (stuck == StuckTypes.Controller) {
+            setPosition({x: controllerPosition.x+190, y: controllerPosition.y + 90})
+        }
+    }, [controllerPosition ]);
+    
    const showUI = useUIStore((state) => state.showUI);
    // Theme
    const textColor = useColorModeValue('gray.800', 'gray.100');
@@ -55,7 +74,19 @@
  
      return (
          
-        <Panel title={"Mini Map"} opened={opened} setOpened={setOpened} setPosition={setPosition} position={position} width={props.width}  >
+        <Panel 
+            title={"Mini Map"} 
+            opened={opened} 
+            setOpened={setOpened} 
+            setPosition={setPosition} 
+            position={position} 
+            width={props.width}  
+            showClose={true}
+            show={show} 
+            setShow={setShow}
+            stuck={stuck}
+            setStuck={setStuck}
+            >
             
              <Box alignItems="center" p="1" width="100%" display="flex">
                <Box height={2500 / 25 + 'px'} width={5000 / 25 + 'px'} backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
