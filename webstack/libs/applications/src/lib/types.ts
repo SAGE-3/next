@@ -14,8 +14,8 @@ import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
 import { state as ClockState, name as ClockName } from './apps/Clock';
-import { state as CoBrowseState, name as CoBrowseName } from './apps/CoBrowse';
 import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
+import { state as CoBrowseState, name as CoBrowseName } from './apps/CoBrowse';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as ZoomState, name as ZoomName } from './apps/Zoom';
