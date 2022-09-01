@@ -3878,6 +3878,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/openseadragon@^3.0.3":
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/@types/openseadragon/-/openseadragon-3.0.3.tgz#a8ae0b84da721652a240d17db4c06b0bc43ddfff"
+  integrity sha512-qh9LilysFrZvM407R9K4Von10hZWD9JjLq6nmHEPz5GCqCjVXueoQGZUTfFv2K3Fzi7DPLFNxkx3AgJYli2OpA==
+
 "@types/parse-json@^4.0.0":
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@types/parse-json/-/parse-json-4.0.0.tgz#2f8bb441434d163b35fb8ffdccd7138927ffb8c0"
@@ -11511,6 +11516,11 @@ openid-client@^5.1.6:
     lru-cache "^6.0.0"
     object-hash "^2.0.1"
     oidc-token-hash "^5.0.1"
+
+openseadragon@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/openseadragon/-/openseadragon-3.1.0.tgz#152b1ed8b6b03296feeed4e0ddf084cea7d0c1f2"
+  integrity sha512-0zCbRIWUbCto7xm1tv2ZLEiSl84cDU659W/sfs2zqqTqVRa4CRHzhy7i9nsv6dHA1DryFR8IzjStjmWOqRs9Rg==
 
 optionator@^0.8.1:
   version "0.8.3"
