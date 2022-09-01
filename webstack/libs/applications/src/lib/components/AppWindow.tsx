@@ -132,7 +132,7 @@ export function AppWindow(props: WindowProps) {
   }
 
   // Close the app and delete from server
-  function handleClose() {
+  function handleClose(e: any) {
     deleteApp(props.app._id);
   }
 
