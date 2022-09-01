@@ -104,6 +104,8 @@ function AppComponent(props: App): JSX.Element {
         visibilityRatio: 0.5,
         // change tileSources for your dataset
         tileSources: '/api/assets/static/' + file.data.file,
+        // setup for CORS
+        crossOriginPolicy: "Anonymous",
       });
 
       // Handler when dataset is loaded
