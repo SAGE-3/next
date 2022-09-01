@@ -33,7 +33,7 @@ jobs:
         run: yarn install --frozen-lockfile --silent
 
       - name: Clear
-        run: nx reset
+        run: yarn nx reset
 
       - name: Build Homebase
         run: yarn build --if-present
