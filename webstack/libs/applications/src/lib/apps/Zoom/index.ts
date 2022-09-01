@@ -21,7 +21,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  zid: 'e7862b49-6f57-46f6-b75e-7377f7c27387',
+  zid: '',
   zoomLevel: 1,
   zoomCenter: [0.5, 0.5],
 };
