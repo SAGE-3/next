@@ -14,12 +14,19 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  center: z.number(),
+  location: z.array(z.number(), z.number()),
+  zoom: z.number(),
+  baseLayer: z.string(),
+  overlay: z.boolean(),
+  geojson: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  center: 44,
+  location: [21.297, -157.816],
+  zoom: 13,
+  baseLayer: 'OpenStreetMap',
+  overlay: true,
 };
 
 export const name = 'LeafLet';
