@@ -10,7 +10,7 @@
 import { FileEntry } from './types';
 import { isImage, isPDF, isCSV, isText, isJSON, isVideo } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
-import { initialValues } from '@sage3/applications/apps';
+import { initialValues} from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
 
 /**

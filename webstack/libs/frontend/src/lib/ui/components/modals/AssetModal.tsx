@@ -15,7 +15,7 @@ import { useAppStore, useAssetStore, useUser, useUIStore } from '@sage3/frontend
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
-import { initialValues } from '@sage3/applications/apps';
+import { initialValues} from '@sage3/applications/initialValues';
 import { ExtraImageType } from '@sage3/shared/types';
 import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
 import { AppState } from 'libs/applications/src/lib/types';

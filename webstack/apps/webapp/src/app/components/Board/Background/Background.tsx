@@ -9,8 +9,7 @@
 import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 
 import { useUIStore, useAppStore, useUser, useAssetStore } from '@sage3/frontend';
-import { initialValues } from '@sage3/applications/apps';
-import { AppName, AppState } from '@sage3/applications/schema';
+import { AppName } from '@sage3/applications/schema';
 
 // File information
 import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';

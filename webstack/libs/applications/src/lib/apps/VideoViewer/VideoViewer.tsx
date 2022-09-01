@@ -20,6 +20,8 @@ export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
 
+
+
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -94,7 +96,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div style={videoContainerStyle}>
-        <video ref={videoRef} src={url} autoPlay={false} height="100%" width="100%"></video>
+        <video ref={videoRef} id={`${props._id}-video`} src={url} autoPlay={false} height="100%" width="100%"></video>
       </div>
     </AppWindow>
   );
@@ -104,23 +106,55 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const update = useAppStore((state) => state.updateState);
+  const [videoRef, setVideoRef] = useState<HTMLVideoElement>(document.getElementById(`${props._id}-video`) as HTMLVideoElement);
+
+  const [duration, setDuration] = useState(10);
+
+  const [sliderTime, setSliderTime] = useState(s.currentTime);
+
+  useEffect(() => {
+    let interval: null | NodeJS.Timer = null;
+    if (videoRef) {
+      setSliderTime(s.currentTime);
+      if (s.play) {
+        let count = 0;
+        interval = setInterval(() => {
+          console.log('uhoh')
+      
+          setSliderTime(sliderTime + count);
+          count += 1
+        }, 1000);
+      } 
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    }
+  }, [s.currentTime, s.play])
+
+  useEffect(() => {
+    setDuration(videoRef.duration);
+  }, [videoRef])
+
 
   const handlePlay = () => {
     update(props._id, { play: !s.play });
   };
 
   const handleRewind = () => {
-    update(props._id, { play: !s.play });
+    update(props._id, { currentTime: Math.max(0, videoRef.currentTime - 5 )});
   };
 
   const handleForward = () => {
-    update(props._id, { play: !s.play });
+    update(props._id, { currentTime: Math.min(videoRef.duration, videoRef.currentTime + 5 )});
+
   };
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="bottom" hasArrow={true} label={'Rewind 10 Seconds'} openDelay={400}>
-          <Button onClick={handlePlay} colorScheme={'green'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button onClick={handleRewind} colorScheme={'green'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdFastRewind />
           </Button>
         </Tooltip>
@@ -132,18 +166,18 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Forward 10 Seconds'} openDelay={400}>
-          <Button onClick={handlePlay} colorScheme={'green'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button onClick={handleForward} colorScheme={'green'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdFastForward />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
-      <Slider aria-label="slider-ex-4" defaultValue={30} width="200px" mx={2}>
-        <SliderTrack bg="red.100">
-          <SliderFilledTrack bg="tomato" />
+      <Slider aria-label="slider-ex-4" value={sliderTime} max={duration} width="200px" mx={2}>
+        <SliderTrack bg="green.100">
+          <SliderFilledTrack bg="green.400" />
         </SliderTrack>
         <SliderThumb boxSize={6}>
-          <Box color="tomato" as={MdGraphicEq} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} />
+          <Box color="green.500" as={MdGraphicEq} transition={'all 0.2s'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)', color: "green.300" }}  />
         </SliderThumb>
       </Slider>
     </>
