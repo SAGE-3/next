@@ -32,9 +32,6 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile --silent
 
-      - name: Clear
-        run: yarn nx reset
-
       - name: Build Homebase
         run: yarn build --if-present
 
