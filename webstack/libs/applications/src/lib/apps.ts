@@ -14,7 +14,7 @@ import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewe
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as ScreenshareName, init as defaultScreenshare } from './apps/Screenshare';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
-import { name as CoBrowseName, init as defaultCoBrowse } from './apps/CoBrowse';
+import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -34,7 +34,7 @@ import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import Screenshare from './apps/Screenshare/Screenshare';
 import Clock from './apps/Clock/Clock';
-import CoBrowse from './apps/CoBrowse/CoBrowse';
+import Cobrowse from './apps/Cobrowse/Cobrowse';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VegaLite from './apps/VegaLite/VegaLite';
@@ -55,7 +55,7 @@ export const Applications = {
   [RTCChatName]: RTCChat,
   [ScreenshareName]: Screenshare,
   [ClockName]: Clock,
-  [CoBrowseName]: CoBrowse,
+  [CobrowseName]: Cobrowse,
   [JupyterLabName]: JupyterLab,
   [VegaLiteViewerName]: VegaLiteViewer,
   [VegaLiteName]: VegaLite,
@@ -77,7 +77,7 @@ export const initialValues = {
   [RTCChatName]: defaultRTCChat,
   [ScreenshareName]: defaultScreenshare,
   [ClockName]: defaultClock,
-  [CoBrowseName]: defaultCoBrowse,
+  [CobrowseName]: defaultCobrowse,
   [JupyterLabName]: defaultJupyterLab,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VegaLiteName]: defaultVegaLite,
