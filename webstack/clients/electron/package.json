@@ -8,13 +8,14 @@
     "url": "https://github.com/SAGE-3"
   },
   "dependencies": {
+    "@julusian/jpeg-turbo": "^2.0.0",
     "commander": "^7",
     "electron-store": "^8",
     "node-fetch": "^2",
     "semver": "^7"
   },
   "devDependencies": {
-    "electron": "^20.0.3",
+    "electron": "^20.1.1",
     "electron-notarize": "^1",
     "electron-packager": "latest"
   },

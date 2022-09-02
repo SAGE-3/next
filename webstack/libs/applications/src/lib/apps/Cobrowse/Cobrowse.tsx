@@ -227,7 +227,7 @@ function ToolbarComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       const electron = window.require('electron');
       const ipcRenderer = electron.ipcRenderer;
-      ipcRenderer.send('streamview', { url: s.sharedurl, id: s.frame });
+      ipcRenderer.send('streamview', { url: s.sharedurl, id: s.frame, dpr: window.devicePixelRatio });
       ipcRenderer.on('paint', (_evt: any, arg: any) => {
         sock.send(JSON.stringify({ type: 'paint', data: arg.buf }));
       });

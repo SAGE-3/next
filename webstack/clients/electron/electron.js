@@ -31,6 +31,8 @@ const electron = require('electron');
 const Store = require('electron-store');
 // parsing command-line arguments
 var program = require('commander');
+// Turbo JPEG
+var turbojpg = require('@julusian/jpeg-turbo');
 
 // Application modules in 'src'
 // Hashing function
@@ -700,36 +702,44 @@ function createWindow() {
     console.log('will-attach-webview');
     // Disable alert and confirm dialogs
     webPreferences.disableDialogs = true;
-
     const sender = event.sender;
-    // console.log('Sendder:', sender);
-    // sender.on('streamview', (event, arg) => {
-    //   console.log('Streamview:', evt);
-    // });
     sender.on('ipc-message', function (evt, channel, args) {
-      console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
-      console.log('Webview> Message', channel, args);
+      // passed from the render process
+      const devicePixelRatio = args.dpr;
       const viewContent = electron.webContents.fromId(args.id);
-      viewContent.beginFrameSubscription(true, (image, dirty) => {
+      viewContent.beginFrameSubscription(true, async (image, dirty) => {
         let dataenc;
         let neww, newh;
-        const devicePixelRatio = 2;
         const quality = 50;
         if (devicePixelRatio > 1) {
           neww = dirty.width / devicePixelRatio;
           newh = dirty.height / devicePixelRatio;
-          const resizedimage = image.resize({ width: neww, height: newh });
-          dataenc = resizedimage.toJPEG(quality);
+          // good: quick scaling (better/best other options)
+          const resizedimage = image.resize({ width: neww, height: newh, quality: 'good' });
+          var options = {
+            format: turbojpg.FORMAT_BGRA,
+            width: neww,
+            height: newh,
+            subsampling: turbojpg.SAMP_420,
+            quality: quality,
+          };
+          dataenc = await turbojpg.compress(resizedimage.getBitmap(), options);
         } else {
-          dataenc = image.toJPEG(quality);
           neww = dirty.width;
           newh = dirty.height;
+          var options = {
+            format: turbojpg.FORMAT_BGRA,
+            width: neww,
+            height: newh,
+            subsampling: turbojpg.SAMP_420,
+            quality: quality,
+          };
+          dataenc = await turbojpg.compress(image.getBitmap(), options);
         }
         evt.reply('paint', {
           buf: dataenc.toString('base64'),
           dirty: { ...dirty, width: neww, height: newh },
         });
-        // console.log('Paint>', neww, newh, dataenc.length);
       });
     });
 
@@ -817,15 +827,6 @@ function createWindow() {
       mainWindow.webContents.send('set-source', values);
     });
   });
-
-  // Request from the renderer process
-  // ipcMain.on('streamview', (event, arg) => {
-  //   console.log('streamview>', arg.url, arg.id);
-  //   // const allweb = electron.webContents.getAllWebContents();
-  //   // allweb.forEach((web) => {
-  //   //   console.log('web>', web.id, web);
-  //   // });
-  // });
 }
 
 /**
