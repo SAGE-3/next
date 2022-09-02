@@ -96,7 +96,7 @@ export function AppToolbar(props: AppToolbarProps) {
               {app?.data.name}
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px"
-              userSelect={'none'} className="handle" cursor="move">
+              userSelect={'none'}>
               {getAppToolbar()}
             </Box>
           </Box>
