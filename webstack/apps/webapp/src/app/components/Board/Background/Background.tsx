@@ -13,7 +13,7 @@ import { initialValues } from '@sage3/applications/apps';
 import { AppName, AppState } from '@sage3/applications/schema';
 
 // File information
-import { isImage, isPDF, isCSV, isText, isJSON, isDZI } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -119,6 +119,12 @@ export function Background(props: BackgroundProps) {
         setupApp("Zoom", xDrop, yDrop, props.roomId, props.boardId, user._id,
           { w: 800, h: 400 },
           { zid: fileID }
+        ));
+    } else if (isGeoJSON(fileType)) {
+      createApp(
+        setupApp("LeafLet", xDrop, yDrop, props.roomId, props.boardId, user._id,
+          { w: 800, h: 400 },
+          { geojson: fileID }
         ));
     } else if (isText(fileType)) {
       // Look for the file in the asset store
