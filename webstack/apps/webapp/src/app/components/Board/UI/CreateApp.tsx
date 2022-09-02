@@ -8,7 +8,8 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI } from '@sage3/shared';
+
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues} from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
@@ -81,6 +82,21 @@ export async function setupAppForFile(
         state: { ...initialValues['CSVViewer'], id: file.id },
         minimized: false,
         raised: true,
+      });
+    } else if (isDZI(file.type)) {
+      resolve({
+        name: 'Zoom',
+        description: 'Zoom>',
+        roomId: roomId,
+        boardId: boardId,
+        ownerId: userId,
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 800, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Zoom',
+        state: { ...initialValues['Zoom'] as AppState, zid: file.id },
+        minimized: false,
+        raised: true
       });
     } else if (isText(file.type)) {
       // Look for the file in the asset store

@@ -6,7 +6,7 @@
  *
  */
 
-import { name as CounterAppName } from './apps/Counter';
+import { name as CounterName } from './apps/Counter';
 import { name as LinkerName } from './apps/Linker';
 import { name as StickieName } from './apps/Stickie';
 import { name as PDFViewerName } from './apps/PDFViewer';
@@ -24,6 +24,7 @@ import { name as VegaLiteName } from './apps/VegaLite';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as JupyterLabName } from './apps/JupyterLab';
+import { name as ZoomName } from './apps/Zoom';
 
 import Counter from './apps/Counter/Counter';
 import Linker from './apps/Linker/Linker';
@@ -37,15 +38,16 @@ import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
-import Screenshare from './apps/TwilioScreenshare/TwilioScreenshare';
-import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
-import VegaLite from './apps/VegaLite/VegaLite';
+import Screenshare from './apps/Screenshare/Screenshare';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
+import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
+import VegaLite from './apps/VegaLite/VegaLite';
+import Zoom from './apps/Zoom/Zoom';
 
 export const Applications = {
-  [CounterAppName]: Counter,
+  [CounterName]: Counter,
   [LinkerName]: Linker,
   [StickieName]: Stickie,
   [PDFViewerName]: PDFViewer,
@@ -63,6 +65,7 @@ export const Applications = {
   [JupyterLabName]: JupyterLab,
   [VegaLiteViewerName]: VegaLiteViewer,
   [VegaLiteName]: VegaLite,
+  [ZoomName]: Zoom,
 } as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';

@@ -8,14 +8,14 @@
   "LeafLet",
   "VideoViewer",
   "Webview",
-  "Linker",
   "DataTableApp",
   "CSVViewer",
   "RTCChat",
   "Screenshare",
   "Clock",
-  "CoBrowse",
+  "Cobrowse",
   "JupyterLab",
   "VegaLiteViewer",
-  "VegaLite"
+  "VegaLite",
+  "Zoom"
 ]

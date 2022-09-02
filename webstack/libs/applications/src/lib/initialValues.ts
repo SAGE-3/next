@@ -24,6 +24,7 @@
  import { name as ClockName, init as defaultClock } from './apps/Clock';
  import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
  import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
+ import { name as ZoomName, init as defaultZoom } from './apps/Zoom';
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
@@ -44,4 +45,5 @@ export const initialValues = {
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
   [JupyterLabName]: defaultJupyterLab,
+  [ZoomName]: defaultZoom,
 };
