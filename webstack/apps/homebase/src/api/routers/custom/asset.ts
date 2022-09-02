@@ -224,7 +224,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'VideoViewer',
-              description: 'Video>',
+              description: 'Video>' + elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,

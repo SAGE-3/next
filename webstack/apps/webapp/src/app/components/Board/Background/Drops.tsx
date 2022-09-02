@@ -7,7 +7,7 @@
  */
 
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
-import { initialValues } from '@sage3/applications/apps';
+import { initialValues } from '@sage3/applications/initialValues';
 
 // File information
 import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
