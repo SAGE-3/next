@@ -22,6 +22,7 @@ import { BoardContextMenu } from './UI/BoardContextMenu';
 
 import { InfoPanel } from './UI/InfoPanel';
 import { MiniMap } from './UI/Minimap';
+import { Assets } from './UI/Assets';
 import { ButtonPanel, Panel } from './UI/Panel';
 import { Twilio } from './UI/Twilio';
 import { ClearBoardModal } from './UI/ClearBoardModal';
@@ -43,8 +44,10 @@ export function UILayer(props: UILayerProps) {
   const appPanelPosition = useUIStore((state) => state.appPanelPosition);
   const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
   const minimapPanelPosition = useUIStore((state) => state.minimapPanelPosition);
+  const assetsPanelPosition = useUIStore((state) => state.assetsPanelPosition);
   const infoPanelPosition = useUIStore((state) => state.infoPanelPosition);
   const setminimapPanelPosition = useUIStore((state) => state.setminimapPanelPosition);
+  const setassetsPanelPosition = useUIStore((state) => state.setassetsPanelPosition);
   const setMenuPanelPosition = useUIStore((state) => state.setMenuPanelPosition);
   const setAppPanelPosition = useUIStore((state) => state.setAppPanelPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
@@ -62,7 +65,7 @@ export function UILayer(props: UILayerProps) {
   const deleteApp = useAppStore((state) => state.delete);
 
   // Asset manager modal
-  const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
+  // const { isOpen: assetIsOpen, onOpen: assetOnOpen, onClose: assetOnClose } = useDisclosure();
   // Upload modal
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
   // Clear boar modal
@@ -202,13 +205,13 @@ export function UILayer(props: UILayerProps) {
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
       <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition} height={351}>
         {Object.keys(Applications).map((appName) => (
-          <ButtonPanel key={appName} title={appName} canDrag={true} onClick={(e) => newApplication(appName as AppName)} />
+          <ButtonPanel key={appName} title={appName} candrag={"true"} onClick={(e) => newApplication(appName as AppName)} />
         ))}
       </Panel>
 
-      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={182} stuck={true}>
+      <Panel title={'Menu'} opened={true} setPosition={setMenuPanelPosition} position={menuPanelPosition} height={150} stuck={true}>
         <ButtonPanel title="Home" onClick={handleHomeClick} colorScheme="blackAlpha" />
-        <ButtonPanel title="Asset Browser" onClick={assetOnOpen} />
+        {/* <ButtonPanel title="Asset Browser" onClick={assetOnOpen} /> */}
         <ButtonPanel title="Upload" onClick={uploadOnOpen} />
         <ButtonPanel title="Clear Board" onClick={clearOnOpen} />
       </Panel>
@@ -216,6 +219,7 @@ export function UILayer(props: UILayerProps) {
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 
       <MiniMap position={minimapPanelPosition} setPosition={setminimapPanelPosition} stuck={true} />
+      <Assets position={assetsPanelPosition} setPosition={setassetsPanelPosition} opened={false} />
 
       <ContextMenu divId="board">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} />
@@ -230,7 +234,7 @@ export function UILayer(props: UILayerProps) {
       />
 
       {/* Asset dialog */}
-      <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal>
+      {/* <AssetModal isOpen={assetIsOpen} onOpen={assetOnOpen} onClose={assetOnClose} center={boardPosition}></AssetModal> */}
 
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>

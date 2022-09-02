@@ -9,7 +9,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
 
 import { App } from '../../schema';
-import { Asset, ExtraPDFType, ImageInfoType } from '@sage3/shared/types';
+import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -38,7 +38,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
-  // const [allPagesInfo, setAllPagesInfo] = useState<ImageInfoType[][]>([]);
   const [aspectRatio, setAspecRatio] = useState(1);
 
   // Div around the pages to capture events
@@ -53,7 +52,7 @@ function AppComponent(props: App): JSX.Element {
       // Updte the state of the app
       if (myasset.data.derived) {
         const pages = myasset.data.derived as ExtraPDFType;
-        updateState(props._id, { numPages: pages.length });
+        updateState(props._id, { numPages: pages.length, currentPage: 0, displayPages: 1 });
       }
     }
   }, [s.id, assets]);
@@ -281,38 +280,38 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" >
         <Tooltip placement="bottom" hasArrow={true} label={'Remove Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="bottom" hasArrow={true} label={'1st Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdSkipPrevious />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Previous Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdNavigateBefore />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdNavigateNext />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()}  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdSkipNext />
           </Button>
         </Tooltip>
@@ -320,7 +319,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal" >
         <Menu placement="bottom">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="teal" aria-label="layout"  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MenuButton as={Button} colorScheme="teal" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdMenu />
             </MenuButton>
           </Tooltip>

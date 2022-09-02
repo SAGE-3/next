@@ -25,6 +25,7 @@ const WheelStepZoom = 0.004;
 interface UIState {
   scale: number;
   gridSize: number;
+  zIndex: number;
   showUI: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
@@ -38,6 +39,8 @@ interface UIState {
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
   minimapPanelPosition: { x: number; y: number };
   setminimapPanelPosition: (pos: { x: number; y: number }) => void;
+  assetsPanelPosition: { x: number; y: number };
+  setassetsPanelPosition: (pos: { x: number; y: number }) => void;
   infoPanelPosition: { x: number; y: number };
   setInfoPanelPosition: (position: { x: number; y: number }) => void;
   contextMenuPosition: { x: number; y: number };
@@ -49,6 +52,8 @@ interface UIState {
   flipUI: () => void;
   displayUI: () => void;
   hideUI: () => void;
+  incZ: () => void;
+  resetZIndex: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
@@ -61,6 +66,7 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   scale: 1.0,
   gridSize: 1,
+  zIndex: 1,
   showUI: true,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
@@ -68,11 +74,13 @@ export const useUIStore = create<UIState>((set) => ({
   appPanelPosition: { x: 20, y: 325 },
   appToolbarPanelPosition: { x: 20, y: 850 },
   minimapPanelPosition: { x: 20, y: 690 },
+  assetsPanelPosition: { x: 200, y: 100 },
   infoPanelPosition: { x: 20, y: 20 },
   contextMenuPosition: { x: 0, y: 0 },
   setInfoPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, infoPanelPosition: pos })),
   setContextMenuPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, contextMenuPosition: pos })),
   setminimapPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, minimapPanelPosition: pos })),
+  setassetsPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, assetsPanelPosition: pos })),
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
   setAppPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appPanelPosition: pos })),
   setMenuPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, menuPanelPosition: pos })),
@@ -82,6 +90,8 @@ export const useUIStore = create<UIState>((set) => ({
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
   displayUI: () => set((state) => ({ ...state, showUI: true })),
   hideUI: () => set((state) => ({ ...state, showUI: false })),
+  incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
+  resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
   zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
   zoomInDelta: (d) =>

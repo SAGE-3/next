@@ -130,6 +130,8 @@ class AppTypes(Enum):
     code_cell = "CodeCell"
     slider = "Slider"
     stickie = "Stickie"
+    vegalite = "VegaLite"
+    vegaliteviewer = "VegaLiteViewer"
 
 class Data(TrackedBaseModel):
     name: str

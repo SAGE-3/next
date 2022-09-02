@@ -28,8 +28,6 @@ export function AccountPage() {
   }
 
   return (
-    <div>
-      <CreateUserModal createUser={handleCreateUser} />
-    </div>
+    <CreateUserModal createUser={handleCreateUser} />
   );
 }

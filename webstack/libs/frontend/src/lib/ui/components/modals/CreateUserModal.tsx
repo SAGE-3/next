@@ -8,18 +8,9 @@
 
 import React, { useCallback, useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  InputGroup,
-  InputLeftElement,
-  Input,
-  Button,
-  FormControl,
-  FormLabel,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
+  InputGroup, InputLeftElement, Input,
+  Button, FormControl, FormLabel, Text,
 } from '@chakra-ui/react';
 import { MdPerson, MdEmail } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
@@ -95,7 +86,6 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
           <FormControl isRequired >
             <FormLabel htmlFor='email'>Email</FormLabel>
-
             <InputGroup>
               <InputLeftElement pointerEvents="none" children={<MdEmail size={'1.5rem'} />} />
               <Input
@@ -109,6 +99,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
               />
             </InputGroup>
           </FormControl>
+          <Text mt={3} fontSize={"md"}>Authentication: <em>{auth.auth?.provider}</em></Text>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mx={2} onClick={auth.logout}>Cancel</Button>

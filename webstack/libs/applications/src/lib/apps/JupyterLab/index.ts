@@ -19,7 +19,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  jupyterURL: 'http://localhost:8888',
+  jupyterURL: 'http://localhost',
 };
 
 export const name = 'JupyterLab';

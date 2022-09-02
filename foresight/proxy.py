@@ -23,8 +23,8 @@ from typing import Callable
 from pydantic import BaseModel
 import asyncio
 import json
-import time
-import multiprocessing
+# import time
+# import multiprocessing
 import threading
 import websockets
 import argparse
@@ -36,10 +36,10 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
-import logging
-from jupyterkernelproxy_client import JupyterKernelClient
+# import logging
+# from jupyterkernelproxy_client import JupyterKernelClient
 
-from threading import Thread
+# from threading import Thread
 
 
 # urllib3.disable_warnings()
@@ -53,7 +53,7 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
+    # print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -97,7 +97,7 @@ class SAGEProxy():
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            print(f"Creating {app_info}")
+            # print(f"Creating {app_info}")
             self.__handle_create("APPS", app_info)
 
 
@@ -105,7 +105,7 @@ class SAGEProxy():
         async with websockets.connect(self.__config["socket_server"],
                                       extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
             await subscribe(ws, self.room.room_id)
-            print("completed subscription, checking if boards and apps already there")
+            # print("completed subscription, checking if boards and apps already there")
             self.populate_exisitng()
             async for msg in ws:
                 msg = json.loads(msg)
@@ -114,9 +114,10 @@ class SAGEProxy():
                         msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
                     self.__message_queue.put(msg)
                     self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
-                    print(f"in receive_messages adding: {msg}")
+                    # print(f"in receive_messages adding: {msg}")
                 else:
-                    print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
+                    # print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
+                    pass
 
     def process_messages(self):
         """
@@ -134,14 +135,14 @@ class SAGEProxy():
 
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
-                print(f"updated fields are: {updated_fields}")
+                # print(f"updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
                     # handle callback
-                    print("this app is being tracked for updates")
-                    print(f"tracked field is {self.callbacks[app_id].src_field}")
+                    # print("this app is being tracked for updates")
+                    # print(f"tracked field is {self.callbacks[app_id].src_field}")
                     if f"state.{self.callbacks[app_id].src_field}" in updated_fields:
-                        print("Yes, the tracked fields was updated")
+                        # print("Yes, the tracked fields was updated")
                         # TODO 4: make callback function optional. In which case, jsut update dest with src
                         # TODO 1. We need to dispatch the funciton on a different thread, not run it
                         #  on the same thread as proxy
@@ -155,7 +156,8 @@ class SAGEProxy():
                         self.callbacks[app_id].callback(src_val, dest_app, dest_field)
 
             if len(updated_fields) == 1 and updated_fields[0] == 'raised':
-                print("The received update is discribed a raised app... ignoring it")
+                # print("The received update is discribed a raised app... ignoring it")
+                pass
             else:
                 collection = msg["event"]['col']
                 doc = msg['event']['doc']
@@ -168,11 +170,11 @@ class SAGEProxy():
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
         if collection == "BOARDS":
-            print("BOARD CREATED")
+            # print("BOARD CREATED")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            print("APP CREATED")
+            # print("APP CREATED")
             doc["state"] = doc["data"]["state"]
             del(doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
@@ -182,9 +184,10 @@ class SAGEProxy():
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the comlete object
         if collection == "BOARDS":
-            print("BOARD UPDATED: UNHANDLED")
+            # print("BOARD UPDATED: UNHANDLED")
+            pass
         elif collection == "APPS":
-            print(f"APP UPDATED")
+            # print(f"APP UPDATED")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
 
@@ -201,18 +204,19 @@ class SAGEProxy():
                     _func = getattr(sb, func_name)
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
-                    print(f"About to execute function --{func_name}-- with params --{_params}--")
+                    # print(f"About to execute function --{func_name}-- with params --{_params}--")
                     _func(**_params)
 
 
     def __handle_delete(self, collection, doc):
-        print("HANDLE DELETE: UNHANDLED")
+        # print("HANDLE DELETE: UNHANDLED")
         pass
 
     def clean_up(self):
-        print("cleaning up the queue")
+        # print("cleaning up the queue")
         if self.__message_queue.qsize() > 0:
-            print("Queue was not empty")
+            # print("Queue was not empty")
+            pass
         self.__message_queue.close()
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
@@ -235,9 +239,13 @@ def get_cmdline_parser():
     parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
     return parser
 
-
-
-sage_proxy = SAGEProxy("config/config.json", "c4403c6f-a2e8-40d0-9b4b-c73999340b4c")
+# For development purposes only.
+token = json.load(open('config/config.json', 'r'))['token']
+session = requests.Session()
+session.headers = {'Authorization':'Bearer ' + token}
+room_id = session.get('http://localhost:3333/api/rooms').json()['data'][0]['_id']
+sage_proxy = SAGEProxy("config/config.json", room_id)
+# sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
 
 listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
 listening_process.start()

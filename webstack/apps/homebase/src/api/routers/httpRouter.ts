@@ -22,7 +22,6 @@ import { assetExpressRouter } from './custom/asset';
 // Collection Imports
 import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection } from '../collections';
 import { ConfigRouter } from './config';
-import { checkPermissions } from './permissions';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
@@ -41,9 +40,6 @@ export function expressAPIRouter(): express.Router {
   router.use(SAGEBase.Auth.authenticate);
 
   router.use('/users', UsersCollection.router());
-
-  // Check permissions, after the user router to let people login
-  // router.use(checkPermissions('guest', 'google', 'cilogon', 'jwt'));
 
   router.use('/assets', assetExpressRouter());
 

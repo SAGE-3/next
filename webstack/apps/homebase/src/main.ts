@@ -108,7 +108,7 @@ async function startServer() {
     const room = req.query.room as string;
     const token = twilio.generateVideoToken(authId, room);
     res.send({ token });
-  })
+  });
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
@@ -133,7 +133,7 @@ async function startServer() {
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, message, user?.id || '-', subCache);
+      wsAPIRouter(socket, message, user, subCache);
     });
 
     socket.on('close', () => {
@@ -251,8 +251,15 @@ async function startServer() {
             console.log('Authorization> ws ok', decoded?.sub);
             const payload = decoded as JWTPayload;
             if (decoded?.sub) {
+              const displayName = payload.name;
+              const email = payload.sub;
+              const extras = {
+                displayName: displayName ?? '',
+                email: email ?? '',
+                picture: '',
+              };
               // Find the actual user based on the token information
-              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub);
+              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub, extras);
               // Add the info to the request
               req.user = authRecord;
               if (wsPath === 'api') {

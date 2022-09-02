@@ -10,12 +10,14 @@ import { Box, useColorModeValue, Text, Icon } from '@chakra-ui/react';
 import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
 import { SBDocument } from '@sage3/sagebase';
 
-import { BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
+import e from 'express';
 import { useEffect, useState } from 'react';
 import { MdSettings } from 'react-icons/md';
 import { useNavigate } from 'react-router';
 
 import { BoardList } from '../components/Home/BoardList';
+import { EnterBoardById } from '../components/Home/EnterBoardById';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 
@@ -50,8 +52,12 @@ export function HomePage() {
   function handleEnterBoard(board: SBDocument<BoardSchema>) {
     setSelectedBoard(board);
     if (selectedRoom) {
-      navigate('/board', { state: { roomId: selectedRoom._id, boardId: board._id } });
+      navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
     }
+  }
+
+  function enterBoard(board: Board) {
+    navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
   }
 
   return (
@@ -185,12 +191,13 @@ export function HomePage() {
         </Box>
       </Box>
 
-      <Box position="absolute" left="2" bottom="4">
+      <Box position="absolute" left="2" bottom="4" display="flex" alignItems="center">
         <HomeAvatar />
+        <EnterBoardById enterBoard={enterBoard}/>
       </Box>
 
       {/* The Corner SAGE3 Image */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
+      <Box position="absolute" bottom="2" right="2" opacity={0.7} >
         <img src={imageUrl} width="75px" alt="" />
       </Box>
     </Box>

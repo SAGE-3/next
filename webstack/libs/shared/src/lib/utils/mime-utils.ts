@@ -12,6 +12,7 @@ import * as mime from 'mime';
 // Define extra MIME type for python notebooks
 mime.define({
   'application/x-ipynb+json': ['ipynb'],
+  'application/dzi': ['dzi'],
 });
 
 /**
@@ -125,4 +126,15 @@ export function isHTML(mimeType: string): boolean {
  */
 export function isCSV(mimeType: string): boolean {
   return mimeType === 'text/csv';
+}
+
+/**
+ * Test if a given mime type is a DZI file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isDZI(mimeType: string): boolean {
+  return mimeType === 'application/dzi';
 }

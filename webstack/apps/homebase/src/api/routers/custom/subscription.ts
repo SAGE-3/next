@@ -27,6 +27,7 @@ import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collect
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
+import { SBAuthSchema } from '@sage3/sagebase';
 
 /**
  * This class is for CUSTOM SUBSCRIPTIONS
@@ -38,7 +39,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 export async function subscriptionWSRouter(
   socket: WebSocket,
   message: APIClientWSMessage,
-  userId: string,
+  user: SBAuthSchema,
   cache: SubscriptionCache
 ): Promise<void> {
   switch (message.method) {

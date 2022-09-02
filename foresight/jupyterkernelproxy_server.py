@@ -32,7 +32,7 @@ async def before_first_request():
     global red
     global kc
     global session_id
-    print(f"\n\n\n\nrunning this first and kc is {kc}\n\n\n")
+    # print(f"\n\n\n\nrunning this first and kc is {kc}\n\n\n")
     kernel_config = json.load(open("config/kernel-s3-next.json"))
     kc.load_connection_info(kernel_config)
 
@@ -43,21 +43,21 @@ async def before_first_request():
     red = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
     session_id= kc.session.parent.session.bsession
     # For some reason, sometimes the first execute is ignored
-    print(f"my session id is {session_id}")
+    # print(f"my session id is {session_id}")
 
 
     try:
         kc.execute("")
-        await kc.get_iopub_msg(timeout=0.005)
+        await kc.get_iopub_msg(timeout=0.001)
     except:
-        print("The expected error")
+        # print("The expected error")
         pass
 
 @app.route('/exec', methods=['POST'])
 async def run_code():
     global kc
     result = {}
-    print("In execute")
+    # print("In execute")
     code = request.data.decode("utf-8")
 
     # Flushing the output and empty the queue before running a job
@@ -68,7 +68,7 @@ async def run_code():
     msg = await kc.execute(code, reply=True)
     parent_msg_id = msg["parent_header"]["msg_id"]
     result["request_id"] = parent_msg_id
-    print(f"Executing code {code} and parent message id is {parent_msg_id}")
+    # print(f"Executing code {code} and parent message id is {parent_msg_id}")
     while True:
         try:
             msg = await kc.get_iopub_msg(timeout=0)
@@ -76,19 +76,19 @@ async def run_code():
                 logger.info("\t\t in 1")
                 continue
 
-            print(f"\t parent_msg_id is  {parent_msg_id}  and msg is {msg}")
+            # print(f"\t parent_msg_id is  {parent_msg_id}  and msg is {msg}")
             if 'execution_state' in msg['content'] and msg['content']['execution_state'] == 'idle':
                 logger.info("\t\t in 2")
             if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
                 logger.info("\t\t in 3")
                 result[msg['msg_type']] = msg['content']
         except queue.Empty:
-            print("queue is empty")
+            # print("queue is empty")
             break
         except Exception as e:
             raise Exception(f"Error in jupyter kernel sever: {e} ")
 
-    print(f"Result is {result}")
+    # print(f"Result is {result}")
     # if 'display_data' in result:
     #     del(result['execute_result'])
     red.publish('jupyter_outputs', json.dumps(result))

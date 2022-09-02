@@ -9,7 +9,7 @@
 import { Tag } from '@chakra-ui/react';
 import { Applications, AppError } from '@sage3/applications/apps';
 import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GiArrowCursor } from 'react-icons/gi';
@@ -33,6 +33,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const scale = useUIStore((state) => state.scale);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const resetZIndex = useUIStore((state) => state.resetZIndex);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
@@ -41,7 +42,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
-    setBoardPosition({ x: -data.x, y: -data.y });
+    const x = Math.abs(data.x);
+    const y = Math.abs(data.y);
+    setBoardPosition({ x, y });
   }
 
   // Update the cursor every half second
@@ -60,6 +63,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       throttleCursorFunc.current(e);
     }
   };
+
+  // Reset the global zIndex when no apps
+  useEffect(() => {
+    if (apps.length === 0) resetZIndex();
+  }, [apps]);
 
   return (
     <div style={{ transform: `scale(${scale})` }} onDoubleClick={() => setSelectedApp('')}>
@@ -83,7 +91,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/* Apps - SORT is to zIndex order them */}
         {apps
-          .sort((a, b) => a._updatedAt - b._updatedAt)
+          //.sort((a, b) => a._updatedAt - b._updatedAt)
           .map((app) => {
             const Component = Applications[app.data.type].AppComponent;
             return (

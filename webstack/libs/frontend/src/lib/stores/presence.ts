@@ -22,6 +22,8 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface PresenceState {
   presences: Presence[];
+  error: string | null;
+  clearError: () => void;
   subscribe: () => Promise<void>;
 }
 
@@ -37,11 +39,18 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
   let presenceSub: (() => void) | null = null;
   return {
     presences: [],
+    error: null,
+    clearError: () => {
+      set({ error: null });
+    },
     subscribe: async () => {
       set({ presences: [] });
       const reponse = await APIHttp.GET<PresenceSchema, Presence>('/presence');
       if (reponse.success) {
         set({ presences: reponse.data });
+      } else {
+        set({ error: reponse.message });
+        return;
       }
       // Unsubscribe old subscription
       if (presenceSub) {
@@ -85,4 +94,4 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
 export const usePresenceStore = createReact(PresenceStore);
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('PresenceStore', usePresenceStore);
+if (process.env.NODE_ENV === 'development') mountStoreDevtool('PresenceStore', usePresenceStore);

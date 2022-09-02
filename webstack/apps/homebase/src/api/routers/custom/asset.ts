@@ -18,6 +18,7 @@ import * as express from 'express';
 // Mime type definitions
 import * as mime from 'mime';
 import * as fs from 'fs';
+import { v4 as getUUID } from 'uuid';
 
 import { config } from '../../../config';
 
@@ -34,7 +35,7 @@ import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { isCSV, isImage, isPDF, isText, isJSON } from '@sage3/shared';
+import { isCSV, isImage, isPDF, isText, isJSON, isDZI } from '@sage3/shared';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -123,6 +124,9 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       // Normalize mime types using the mime package
       elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
       // Put the new file into the collection
+      const now = new Date().toISOString();
+      // Process the file (metadata, image, pdf, etc.)
+      const newdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype);
       const assetID = await AssetsCollection.addAsset(
         {
           file: elt.filename,
@@ -133,139 +137,154 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           destination: elt.destination,
           size: elt.size,
           mimetype: elt.mimetype,
-          dateAdded: new Date().toISOString(),
+          dateCreated: now,
+          dateAdded: now,
+          ...newdata,
         },
         user.id
       );
-      if (assetID) {
-        const asset1 = await AssetsCollection.getAsset(assetID);
-        if (asset1) {
-          // Process the file (metadata, image, pdf, etc.)
-          await AssetsCollection.processFile(asset1);
-          // If we need to open the file, do it
-          if (openFIles) {
-            const asset = await AssetsCollection.getAsset(assetID);
-            if (asset) {
-              if (isImage(elt.mimetype)) {
-                // Get metadata information about the image
-                const derived = asset.data.derived as ExtraImageType;
-                const ar = derived.aspectRatio || 1;
-                const width = tw || 300;
-                const height = th || width / ar;
-                AppsCollection.add(
-                  {
-                    name: 'ImageViewer',
-                    description: 'Image Description',
-                    roomId: req.body.room,
-                    boardId: req.body.board,
-                    ownerId: user.id,
-                    position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
-                    size: { width, height, depth: 0 },
-                    rotation: { x: 0, y: 0, z: 0 },
-                    type: 'ImageViewer',
-                    state: { id: assetID },
-                    minimized: false,
-                    raised: false,
-                  },
-                  user.id
-                );
-                posx += width + 10;
-              } else if (isPDF(elt.mimetype)) {
-                // Get metadata information about the PDF
-                const derived = asset.data.derived as ExtraPDFType;
-                const firstPage = derived[0];
-                const ar = firstPage[0].width / firstPage[0].height;
-                const width = tw || 500;
-                const height = th || width / ar;
-                AppsCollection.add(
-                  {
-                    name: 'PDFViewer',
-                    description: 'PDFViewer Description',
-                    roomId: req.body.room,
-                    boardId: req.body.board,
-                    ownerId: user.id,
-                    position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
-                    size: { width, height, depth: 0 },
-                    rotation: { x: 0, y: 0, z: 0 },
-                    type: 'PDFViewer',
-                    state: { id: assetID, currentPage: 0, numPages: derived.length },
-                    minimized: false,
-                    raised: false,
-                  },
-                  user.id
-                );
-                posx += width + 10;
-              } else if (isCSV(elt.mimetype)) {
-                const w = tw || 800;
-                const h = th || 400;
-                AppsCollection.add(
-                  {
-                    name: 'CSVViewer',
-                    description: 'CSVViewer Description',
-                    roomId: req.body.room,
-                    boardId: req.body.board,
-                    ownerId: user.id,
-                    position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-                    size: { width: w, height: h, depth: 0 },
-                    rotation: { x: 0, y: 0, z: 0 },
-                    type: 'CSVViewer',
-                    state: { id: assetID },
-                    minimized: false,
-                    raised: false,
-                  },
-                  user.id
-                );
-                posx += tw || 800;
-                posx += 10;
-              } else if (isText(elt.mimetype)) {
-                const text = fs.readFileSync(elt.path);
-                const w = tw || 400;
-                const h = th || 400;
-                AppsCollection.add(
-                  {
-                    name: 'Stickie',
-                    description: 'Stickie',
-                    roomId: req.body.room,
-                    boardId: req.body.board,
-                    ownerId: user.id,
-                    position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-                    size: { width: w, height: h, depth: 0 },
-                    rotation: { x: 0, y: 0, z: 0 },
-                    type: 'Stickie',
-                    state: { fontSize: 48, color: '#63B3ED', text: text.toString(), executeInfo: { executeFunc: '', params: {} } },
-                    minimized: false,
-                    raised: false,
-                  },
-                  user.id
-                );
-                posx += tw || 400;
-                posx += 10;
-              } else if (isJSON(elt.mimetype)) {
-                const text = fs.readFileSync(elt.path);
-                const w = tw || 500;
-                const h = th || 600;
-                AppsCollection.add(
-                  {
-                    name: 'VegaLite',
-                    description: 'VegaLite> ' + elt.originalname,
-                    roomId: req.body.room,
-                    boardId: req.body.board,
-                    ownerId: user.id,
-                    position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-                    size: { width: w, height: h, depth: 0 },
-                    rotation: { x: 0, y: 0, z: 0 },
-                    type: 'VegaLite',
-                    state: { spec: text.toString() },
-                    minimized: false,
-                    raised: false,
-                  },
-                  user.id
-                );
-                posx += tw || 500;
-                posx += 10;
-              }
-            }
-          }
+
+      // If we need to open the file, do it
+      if (openFIles && assetID) {
+        if (isImage(elt.mimetype)) {
+          // Get metadata information about the image
+          const derived = newdata.derived as ExtraImageType;
+          const ar = derived.aspectRatio || 1;
+          const width = tw || 300;
+          const height = th || width / ar;
+          AppsCollection.add(
+            {
+              name: 'ImageViewer',
+              description: 'Image Description',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'ImageViewer',
+              state: { id: assetID },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += width + 10;
+        } else if (isPDF(elt.mimetype)) {
+          // Get metadata information about the PDF
+          const derived = newdata.derived as ExtraPDFType;
+          const firstPage = derived[0];
+          const ar = firstPage[0].width / firstPage[0].height;
+          const width = tw || 500;
+          const height = th || width / ar;
+          AppsCollection.add(
+            {
+              name: 'PDFViewer',
+              description: 'PDFViewer Description',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'PDFViewer',
+              state: { id: assetID },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += width + 10;
+        } else if (isCSV(elt.mimetype)) {
+          const w = tw || 800;
+          const h = th || 400;
+          AppsCollection.add(
+            {
+              name: 'CSVViewer',
+              description: 'CSVViewer Description',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'CSVViewer',
+              state: { id: assetID },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 800;
+          posx += 10;
+        } else if (isDZI(elt.mimetype)) {
+          const w = tw || 800;
+          const h = th || 400;
+          AppsCollection.add(
+            {
+              name: 'Zoom',
+              description: 'Zoom>',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'Zoom',
+              state: { zid: assetID, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 800;
+          posx += 10;
+        } else if (isText(elt.mimetype)) {
+          const text = fs.readFileSync(elt.path);
+          const w = tw || 400;
+          const h = th || 400;
+          AppsCollection.add(
+            {
+              name: 'Stickie',
+              description: 'Stickie',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'Stickie',
+              state: { fontSize: 48, color: '#63B3ED', text: text.toString(), executeInfo: { executeFunc: '', params: {} } },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 400;
+          posx += 10;
+        } else if (isJSON(elt.mimetype)) {
+          const text = fs.readFileSync(elt.path);
+          const w = tw || 500;
+          const h = th || 600;
+          AppsCollection.add(
+            {
+              name: 'VegaLite',
+              description: 'VegaLite> ' + elt.originalname,
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'VegaLite',
+              state: { spec: text.toString() },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 500;
+          posx += 10;
         }
       }
     });
@@ -285,7 +304,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
 export async function assetWSRouter(
   socket: WebSocket,
   message: APIClientWSMessage,
-  userId: string,
+  user: SBAuthSchema,
   cache: SubscriptionCache
 ): Promise<void> {
   // const auth = request.session.passport.user;
