@@ -6,6 +6,7 @@
  *
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { HStack, InputGroup, Input, ButtonGroup } from '@chakra-ui/react';
 
 import { useAppStore, useAssetStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
@@ -16,33 +17,47 @@ import { AppWindow } from '../../components';
 
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
+import * as esriLeafletGeocoder from "esri-leaflet-geocoder";
 import { MapContainer, TileLayer, LayersControl } from 'react-leaflet';
+
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
+import create from 'zustand';
+
+// Zustand store to communicate with toolbar
+export const useStore = create((set: any) => ({
+  map: {} as { [key: string]: Leaflet.Map },
+  saveMap: (id: string, map: Leaflet.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
+}));
+
+// Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
 
-
+// Leaflet App
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
 
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
   // Keep an handle of the overlay, to show/hide
   const overlayLayer = useRef<Leaflet.GeoJSON>();
-
+  // Assets store
   const assets = useAssetStore((state) => state.assets);
-  const [url, setUrl] = useState<string>();
   const [file, setFile] = useState<Asset>();
+  const saveMap = useStore((state: any) => state.saveMap);
 
   // Convert ID to asset
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.geojson);
     if (myasset) {
       setFile(myasset);
+      // Update the app title
+      update(props._id, { description: 'LeafLet> ' + myasset?.data.originalfilename });
     }
   }, [s.geojson, assets]);
 
@@ -50,7 +65,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (file) {
       const newURL = getStaticAssetUrl(file.data.file);
-      setUrl(newURL);
 
       // Fetch the data from local server
       if (newURL) {
@@ -75,7 +89,12 @@ function AppComponent(props: App): JSX.Element {
             }
           }).addTo(map);
           // Fit view to new data
-          map.fitBounds(overlayLayer.current.getBounds());
+          const bounds = overlayLayer.current.getBounds();
+          const center = bounds.getCenter();
+          map.setView(center);
+          const value: [number, number] = [center.lat, center.lng];
+          updateState(props._id, { location: value });
+          map.fitBounds(bounds);
           // Add a new control (don't know how to add it to main control, need the list of layers)
           Leaflet.control.layers({}, { "Data layer": overlayLayer.current }).addTo(map);
         })
@@ -85,7 +104,8 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (!map) return;
-
+    // put in the  zustand store
+    saveMap(props._id, map);
     // Update the default markers
     Leaflet.Icon.Default.mergeOptions({
       iconRetinaUrl: 'assets/marker-icon-2x.png',
@@ -122,7 +142,7 @@ function AppComponent(props: App): JSX.Element {
         }
       }, 250)
     }
-  }, [props.data.size.width, props.data.size.height, map, s.location]);
+  }, [props.data.size.width, props.data.size.height, map]);
 
   // Location sync
   const onMove = useCallback(() => {
@@ -238,19 +258,64 @@ function AppComponent(props: App): JSX.Element {
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
           </LayersControl.BaseLayer>
+
         </LayersControl>
       </MapContainer>
     </AppWindow>
   );
 }
+
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+  const [addrValue, setAddrValue] = useState("");
+  const map = useStore((state: any) => state.map[props._id]);
+  const update = useAppStore((state) => state.update);
 
-  return (
-    <>
-    </>
-  )
+  const apiKey = "AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B";
+  // @ts-expect-error
+  const geocoder = new esriLeafletGeocoder.geocode({
+    apikey: apiKey
+  });
+
+  // from the UI to the react state
+  const handleAddrChange = (event: any) => setAddrValue(event.target.value);
+  const changeAddr = (evt: any) => {
+    evt.preventDefault();
+
+    geocoder.text(addrValue).run(function (err: any, results: any, response: any) {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      const res = results.results[0];
+      if (res && res.latlng) {
+        const value: [number, number] = [res.latlng.lat, res.latlng.lng];
+        updateState(props._id, { location: value });
+        map.fitBounds(res.bounds);
+        // Update the app title
+        update(props._id, { description: 'LeafLet> ' + res.text });
+      }
+    });
+  };
+
+  return <HStack>
+    <ButtonGroup >
+      <form onSubmit={changeAddr} >
+        <InputGroup size="xs" minWidth="200px" >
+          <Input
+            placeholder="Web Address"
+            defaultValue={addrValue}
+            onChange={handleAddrChange}
+            onPaste={(event) => {
+              event.stopPropagation();
+            }}
+            backgroundColor="whiteAlpha.300"
+          />
+        </InputGroup>
+      </form>
+    </ButtonGroup>
+  </HStack>;
 }
 
 export default { AppComponent, ToolbarComponent };
