@@ -304,13 +304,14 @@ function ToolbarComponent(props: App): JSX.Element {
       <form onSubmit={changeAddr} >
         <InputGroup size="xs" minWidth="200px" >
           <Input
-            placeholder="Web Address"
             defaultValue={addrValue}
             onChange={handleAddrChange}
             onPaste={(event) => {
               event.stopPropagation();
             }}
             backgroundColor="whiteAlpha.300"
+            placeholder="Type a place or address"
+            _placeholder={{ opacity: 1, color: 'gray.400' }}
           />
         </InputGroup>
       </form>
