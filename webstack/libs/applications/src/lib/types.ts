@@ -12,7 +12,7 @@ import { state as WebviewState, name as WebviewName } from './apps/Webview';
 import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
-import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
+import { state as ScreenshareState, name as ScreenshareName } from './apps/TwilioScreenshare';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
