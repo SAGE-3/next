@@ -8,7 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON } from '@sage3/shared';
 
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues} from '@sage3/applications/initialValues';
@@ -95,6 +95,21 @@ export async function setupAppForFile(
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Zoom',
         state: { ...initialValues['Zoom'] as AppState, zid: file.id },
+        minimized: false,
+        raised: true
+      });
+    } else if (isGeoJSON(file.type)) {
+      resolve({
+        name: 'LeafLet',
+        description: 'LeafLet>',
+        roomId: roomId,
+        boardId: boardId,
+        ownerId: userId,
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 800, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'LeafLet',
+        state: { ...initialValues['LeafLet'] as AppState, geojson: file.id },
         minimized: false,
         raised: true
       });
