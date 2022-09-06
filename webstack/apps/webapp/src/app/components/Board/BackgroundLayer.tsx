@@ -31,9 +31,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // UI store
   const scale = useUIStore((state) => state.scale);
+  const boardWidth = useUIStore((state) => state.boardWidth);
+  const boardHeight = useUIStore((state) => state.boardHeight);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const boardPosition = useUIStore((state) => state.boardPosition);
   const resetZIndex = useUIStore((state) => state.resetZIndex);
+  // Board refrence
+  const nodeRef = useRef<Rnd>();
 
   // Presence Information
   const { update: updatePresence } = usePresence();
@@ -42,10 +47,19 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
-    const x = Math.abs(data.x);
-    const y = Math.abs(data.y);
+    // const x = Math.abs(data.x);
+    // const y = Math.abs(data.y);
+    const x = data.x;
+    const y = data.y;
     setBoardPosition({ x, y });
   }
+
+  // Track board position
+  useEffect(() => {
+    if (nodeRef.current) {
+      nodeRef.current.updatePosition({ x: boardPosition.x, y: boardPosition.y });
+    }
+  }, [boardPosition.x, boardPosition.y])
 
   // Update the cursor every half second
   // TODO: we skip events when the cursor is over the applications
@@ -76,18 +90,21 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       {/*Cursors */}
 
       <Rnd
+        // Remember board position and size
         default={{
-          x: 0,
-          y: 0,
-          width: 5000,
-          height: 2500,
+          x: -boardPosition.x,
+          y: -boardPosition.y,
+          width: boardWidth,
+          height: boardHeight,
         }}
         onDragStop={handleDragBoardStop}
         enableResizing={false}
         dragHandleClassName={'board-handle'}
         scale={scale}
-        id="monkey"
         onMouseMove={cursorFunc}
+        // position={{ x: boardPosition.x, y: boardPosition.y }}
+        // Get a ref the board object
+        ref={(c: Rnd) => { nodeRef.current = c; }}
       >
         {/* Apps - SORT is to zIndex order them */}
         {apps
@@ -136,6 +153,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId}></Background>
       </Rnd>
-    </div>
+    </div >
   );
 }
