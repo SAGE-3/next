@@ -39,7 +39,11 @@ export function UILayer(props: UILayerProps) {
   const board = boards.find((el) => el._id === props.boardId);
 
   // UI Store
+  const scale = useUIStore((state) => state.scale);
+  const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+
   const menuPanelPosition = useUIStore((state) => state.menuPanelPosition);
   const appPanelPosition = useUIStore((state) => state.appPanelPosition);
   const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
@@ -54,6 +58,8 @@ export function UILayer(props: UILayerProps) {
   const setInfoPanelPosition = useUIStore((state) => state.setInfoPanelPosition);
   const displayUI = useUIStore((state) => state.displayUI);
   const hideUI = useUIStore((state) => state.hideUI);
+  const boardWidth = useUIStore((state) => state.boardWidth);
+  const boardHeight = useUIStore((state) => state.boardHeight);
 
   // User
   const { user } = useUser();
@@ -201,6 +207,50 @@ export function UILayer(props: UILayerProps) {
     clearOnClose();
   };
 
+  // Show whole board on the screen
+  const fitToBoard = () => {
+    setBoardPosition({ x: 0, y: 0 });
+    // Fit the smaller dimension into the browser size
+    const sm = Math.min(window.innerWidth / boardWidth, window.innerHeight / boardHeight);
+    setScale(sm);
+  };
+
+  // Show all the application, selecting center and scale
+  // BUG: I dont think the math is right but seems OK for now
+  const showAllApps = () => {
+    let x1 = boardWidth;
+    let x2 = 0;
+    let y1 = boardHeight;
+    let y2 = 0;
+    // Bounding box for all applications
+    apps.forEach((a) => {
+      const p = a.data.position;
+      const s = a.data.size;
+      if (p.x < x1) x1 = p.x;
+      if (p.x > x2) x2 = p.x;
+      if (p.y < y1) y1 = p.y;
+      if (p.y > y2) y2 = p.y;
+
+      if (p.x + s.width > x2) x2 = p.x + s.width;
+      if (p.y + s.height > y2) y2 = p.y + s.height;
+    });
+    // Width and height of bounding box
+    const w = (x2 - x1);
+    const h = (y2 - y1);
+    // Center
+    const cx = x1 + w / 2;
+    const cy = y1 + h / 2;
+    // Offset to center the board...
+    const bx = Math.floor(-cx + window.innerWidth / 2);
+    const by = Math.floor(-cy + window.innerHeight / 2);
+    setBoardPosition({ x: bx, y: by });
+    // 85% of the smaller dimension (horizontal or vertical )
+    const sw = 0.85 * (window.innerWidth / w);
+    const sh = 0.85 * (window.innerHeight / h);
+    const sm = Math.min(sw, sh);
+    setScale(sm);
+  };
+
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
       <Panel title={'Applications'} opened={true} setPosition={setAppPanelPosition} position={appPanelPosition} height={351}>
@@ -222,7 +272,11 @@ export function UILayer(props: UILayerProps) {
       <Assets position={assetsPanelPosition} setPosition={setassetsPanelPosition} opened={false} />
 
       <ContextMenu divId="board">
-        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} />
+        <BoardContextMenu boardId={props.boardId} roomId={props.roomId}
+          clearBoard={clearOnOpen}
+          fitToBoard={fitToBoard}
+          showAllApps={showAllApps}
+        />
       </ContextMenu>
 
       <InfoPanel
