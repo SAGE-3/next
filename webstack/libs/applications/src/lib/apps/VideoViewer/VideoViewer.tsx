@@ -84,8 +84,8 @@ function AppComponent(props: App): JSX.Element {
     if (videoRef.current) {
       // The delta between the local video's time and the server's time
       const delta = Math.abs(videoRef.current.currentTime - s.play.currentTime);
-      // If there is a 5 second delta, update the video's time
-      if (delta > 5) {
+      // If there is a 4 second delta, update the video's time
+      if (delta > 4) {
         videoRef.current.currentTime = s.play.currentTime;
       }
     }
