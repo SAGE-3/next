@@ -11,7 +11,7 @@ import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { Asset } from '@sage3/shared/types';
 import { Box, Button, ButtonGroup, Slider, SliderFilledTrack, SliderThumb, SliderTrack, Tooltip } from '@chakra-ui/react';
 import { MdFastForward, MdFastRewind, MdFileDownload, MdGraphicEq, MdPause, MdPlayArrow, MdVolumeOff, MdVolumeUp } from 'react-icons/md';
@@ -71,8 +71,10 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [videoRef]);
 
+  // Set the initial time of the video
   useEffect(() => {
     if (videoRef.current) {
+      console.log('set the current time', videoRef.current.currentTime, s.play.currentTime);
       videoRef.current.currentTime = s.play.currentTime;
     }
   }, []);
@@ -80,42 +82,49 @@ function AppComponent(props: App): JSX.Element {
   // Set the current time of the video
   useEffect(() => {
     if (videoRef.current) {
+      // The delta between the local video's time and the server's time
       const delta = Math.abs(videoRef.current.currentTime - s.play.currentTime);
-      console.log(delta);
-      if (delta > 2) {
+      // If there is a 5 second delta, update the video's time
+      if (delta > 5) {
         videoRef.current.currentTime = s.play.currentTime;
       }
     }
-  }, [s.play.currentTime, user]);
+  }, [s.play.currentTime]);
 
   // If play was updated, update the video
   useEffect(() => {
-    let interval: null | NodeJS.Timeout = null;
+    // Setup an interval to update the current time if this user initiated the play
+    let updateTimeInterval: null | NodeJS.Timeout = null;
     if (s.play.uid === user?._id) {
+      // If the video is playing, update the current time
       if (!s.play.paused) {
-        interval = setInterval(() => {
-          updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: videoRef.current?.currentTime ?? 0 } });
+        updateTimeInterval = setInterval(() => {
+          updateState(props._id, { play: { ...s.play, currentTime: videoRef.current?.currentTime ?? 0 } });
         }, 1000);
       }
     }
+
     async function playVideo() {
       if (videoRef.current) {
-        var isPlaying =
-          videoRef.current.currentTime > 0 &&
-          !videoRef.current.paused &&
-          !videoRef.current.ended &&
-          videoRef.current.readyState > videoRef.current.HAVE_CURRENT_DATA;
+        var isPlaying = videoRef.current.readyState > 2;
 
-        !s.play.paused && !isPlaying ? await videoRef.current.play() : videoRef.current.pause();
+        if (!s.play.paused && isPlaying) {
+          console.log('play video', isPlaying, videoRef.current.readyState);
+          videoRef.current.play();
+        } else {
+          videoRef.current.pause();
+        }
       }
     }
+    // Play the video
     playVideo();
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      // Clear interval if it exists
+      if (updateTimeInterval) {
+        clearInterval(updateTimeInterval);
       }
     };
-  }, [s.play.paused, s.play.uid, user]);
+  }, [s.play.paused, s.play.uid, user, videoRef.current?.readyState]);
 
   const videoContainerStyle: CSSProperties = {
     position: 'relative',
@@ -128,7 +137,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div style={videoContainerStyle}>
-        <video ref={videoRef} id={`${props._id}-video`} src={url} autoPlay={false} height="100%" width="100%" muted={true}></video>
+        <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true}></video>
       </div>
     </AppWindow>
   );
