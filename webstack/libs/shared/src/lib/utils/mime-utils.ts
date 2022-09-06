@@ -107,6 +107,18 @@ export function isZip(mimeType: string): boolean {
 export function isJSON(mimeType: string): boolean {
   return mimeType === 'application/json';
 }
+
+/**
+ * Test if a given mime type is a GeoJSON file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isGeoJSON(mimeType: string): boolean {
+  return mimeType === 'application/geo+json';
+}
+
 /**
  * Test if a given mime type is a HTML file
  *

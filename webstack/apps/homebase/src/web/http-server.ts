@@ -58,6 +58,8 @@ export function createApp(assetPath: string): express.Express {
       contentSecurityPolicy: false,
       // Strict-Transport-Security
       hsts: false,
+      // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
+      crossOriginEmbedderPolicy: false,
     })
   );
 

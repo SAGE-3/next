@@ -35,7 +35,7 @@ import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { isCSV, isImage, isPDF, isText, isJSON, isDZI } from '@sage3/shared';
+import { isCSV, isImage, isPDF, isText, isJSON, isDZI, isGeoJSON } from '@sage3/shared';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -232,6 +232,28 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               rotation: { x: 0, y: 0, z: 0 },
               type: 'Zoom',
               state: { zid: assetID, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 800;
+          posx += 10;
+        } else if (isGeoJSON(elt.mimetype)) {
+          const w = tw || 500;
+          const h = th || 500;
+          AppsCollection.add(
+            {
+              name: 'LeafLet',
+              description: 'LeafLet>',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'LeafLet',
+              state: { geojson: assetID, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
               minimized: false,
               raised: false,
             },

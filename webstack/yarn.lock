@@ -1543,7 +1543,7 @@
   dependencies:
     "@chakra-ui/utils" "2.0.9"
 
-"@chakra-ui/react@^2.2.9":
+"@chakra-ui/react@^2.3.1":
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/@chakra-ui/react/-/react-2.3.1.tgz#da7e393f48e64d3ae64b6e2370d15729259ebd3a"
   integrity sha512-ROaIyQqpN5AXhhxDGkrP37QmnPu/ZJnT1nLdzUxHZE1sO7ujBbir3G+zHlj/Hg2DbYClkB3yfAhA08imeiJh8g==
@@ -1949,7 +1949,7 @@
   resolved "https://registry.yarnpkg.com/@emotion/memoize/-/memoize-0.8.0.tgz#f580f9beb67176fa57aae70b08ed510e1b18980f"
   integrity sha512-G/YwXTkv7Den9mXDO7AhLWkE3q+I92B+VqAE+dYG4NGPaHZGvt3G8Q0p9vmE+sq7rTGphUbAvmQ9YpbfMQGGlA==
 
-"@emotion/react@^11.10.0":
+"@emotion/react@^11.10.4":
   version "11.10.4"
   resolved "https://registry.yarnpkg.com/@emotion/react/-/react-11.10.4.tgz#9dc6bccbda5d70ff68fdb204746c0e8b13a79199"
   integrity sha512-j0AkMpr6BL8gldJZ6XQsQ8DnS9TxEQu1R+OGmDZiWjBAJtCcbt0tS3I/YffoqHXxH6MjgI7KdMbYKw3MEiU9eA==
@@ -1979,7 +1979,7 @@
   resolved "https://registry.yarnpkg.com/@emotion/sheet/-/sheet-1.2.0.tgz#771b1987855839e214fc1741bde43089397f7be5"
   integrity sha512-OiTkRgpxescko+M51tZsMq7Puu/KP55wMT8BgpcXVG2hqXc0Vo0mfymJ/Uj24Hp0i083ji/o0aLddh08UEjq8w==
 
-"@emotion/styled@^11.10.0":
+"@emotion/styled@^11.10.4":
   version "11.10.4"
   resolved "https://registry.yarnpkg.com/@emotion/styled/-/styled-11.10.4.tgz#e93f84a4d54003c2acbde178c3f97b421fce1cd4"
   integrity sha512-pRl4R8Ez3UXvOPfc2bzIoV8u9P97UedgHS4FPX594ntwEuAMA114wlaHvOK24HB48uqfXiGlYIZYCxVJ1R1ttQ==
@@ -3245,6 +3245,18 @@
   resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-0.0.1-alpha.13.tgz#6095cbd579c2f7ec9bacb289dfb63e1d922c7b0c"
   integrity sha512-UZ2sg+ghplheBmqEreplGd3UFp5v8/3BH4NJAntj7bJsnHspnkvWSrjc6whUsC1IBtDfXXX6t+p2Xq5c9aNyOg==
 
+"@terraformer/arcgis@^2.1.0":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@terraformer/arcgis/-/arcgis-2.1.2.tgz#9e05cc5e0ddc400e532f6ccb1d91bdf420e4a756"
+  integrity sha512-IvdfqehcNAUtKU1OFMKwPT8EvdKlVFZ7q7ZKzkIF8XzYZIVsZLuXuOS1UBdRh5u/o+X5Gax7jiZhD8U/4TV+Jw==
+  dependencies:
+    "@terraformer/common" "^2.1.2"
+
+"@terraformer/common@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@terraformer/common/-/common-2.1.2.tgz#7bf83f81f1c3a99069c714c044004f9707f00c97"
+  integrity sha512-cwPdTFzIpekZhZRrgDEkqLKNPoqbyCBQHiemaovnGIeUx0Pl336MY/eCxzJ5zXkrQLVo9zPalq/vYW5HnyKevQ==
+
 "@testing-library/dom@^8.5.0":
   version "8.17.1"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-8.17.1.tgz#2d7af4ff6dad8d837630fecd08835aee08320ad7"
@@ -3688,6 +3700,21 @@
     "@types/estree" "*"
     "@types/json-schema" "*"
 
+"@types/esri-leaflet-geocoder@^2.2.3":
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/@types/esri-leaflet-geocoder/-/esri-leaflet-geocoder-2.2.3.tgz#d372b5f9f13501fb99a3777e6b5b42ac69718a80"
+  integrity sha512-SyJuRZlPARrPWwx7L5KrvKLNZcbyw4CuCzyj7e3kgo7MZFpFCkGpO7Po5J6kvZt+OdT138u3WpXRVnRNNrSeRQ==
+  dependencies:
+    "@types/esri-leaflet" "*"
+    "@types/leaflet" "*"
+
+"@types/esri-leaflet@*":
+  version "2.1.9"
+  resolved "https://registry.yarnpkg.com/@types/esri-leaflet/-/esri-leaflet-2.1.9.tgz#4561969b120801cd0705f873640cb5545ff436aa"
+  integrity sha512-Z3GLyJTepEsEpo2FB3eRqSRxGw1Y2Vohpuu5Qp87tc3MGbXjhSUTRYldoaACZj6JQQJuOnyK9FLMdSziq5C1Ow==
+  dependencies:
+    "@types/leaflet" "*"
+
 "@types/estree@*":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.0.tgz#5fb2e536c1ae9bf35366eed879e827fa59ca41c2"
@@ -3834,7 +3861,7 @@
   resolved "https://registry.yarnpkg.com/@types/keygrip/-/keygrip-1.0.2.tgz#513abfd256d7ad0bf1ee1873606317b33b1b2a72"
   integrity sha512-GJhpTepz2udxGexqos8wgaBx4I/zWIDPh/KOGEwAqtuGDkOUJu5eFvwmdBX4AmB8Odsr+9pHCQqiAqDL/yKMKw==
 
-"@types/leaflet@^1.7.11":
+"@types/leaflet@*", "@types/leaflet@^1.7.11":
   version "1.7.11"
   resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.7.11.tgz#48b33b7a15b015bbb1e8950399298a112c3220c8"
   integrity sha512-VwAYom2pfIAf/pLj1VR5aLltd4tOtHyvfaJlNYCoejzP2nu52PrMi1ehsLRMUS+bgafmIIKBV1cMfKeS+uJ0Vg==
@@ -7725,6 +7752,22 @@ esrecurse@^4.3.0:
   dependencies:
     estraverse "^5.2.0"
 
+esri-leaflet-geocoder@^3.1.3:
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/esri-leaflet-geocoder/-/esri-leaflet-geocoder-3.1.3.tgz#50f536d940a40a99292cd363fa828d03c0b8d5e2"
+  integrity sha512-XuorBaPKOq2XBswyWS3fX4I0EyGamdQsao/NQbn+9wlCZtpDrpIn2iKLY7x4uOaPC4wCjE/rskli8UMCVwlZrg==
+  dependencies:
+    esri-leaflet "^3.0.2"
+    leaflet "^1.0.0"
+
+esri-leaflet@^3.0.2:
+  version "3.0.8"
+  resolved "https://registry.yarnpkg.com/esri-leaflet/-/esri-leaflet-3.0.8.tgz#040aae75226992521ca19abc7b837213e9a7512c"
+  integrity sha512-mLb4pRfDAbkG1YhuajD22erLXIAtrF1R32hmgmlJNI3t47n6KjTppCb8lViia0O7+GDORXFuJ9Lj9RkpsaKhSA==
+  dependencies:
+    "@terraformer/arcgis" "^2.1.0"
+    tiny-binary-search "^1.0.3"
+
 estraverse@^4.1.1, estraverse@^4.2.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/estraverse/-/estraverse-4.3.0.tgz#398ad3f3c5a24948be7725e83d11a7de28cdbd1d"
@@ -10461,7 +10504,7 @@ lazy-ass@^1.6.0:
   resolved "https://registry.yarnpkg.com/lazy-ass/-/lazy-ass-1.6.0.tgz#7999655e8646c17f089fdd187d150d3324d54513"
   integrity sha512-cc8oEVoctTvsFZ/Oje/kGnHbpWHYBe8IAJe4C0QNc3t8uM/0Y8+erSz/7Y1ALuXTEZTMvxXwO6YbX1ey3ujiZw==
 
-leaflet@^1.8.0:
+leaflet@^1.0.0, leaflet@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.8.0.tgz#4615db4a22a304e8e692cae9270b983b38a2055e"
   integrity sha512-gwhMjFCQiYs3x/Sf+d49f10ERXaEFCPr+nVTryhAW8DWbMGqJqt9G4XuIaHmFW08zYvhgdzqXGr8AlW8v8dQkA==
@@ -14371,6 +14414,11 @@ thunky@^1.0.2:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/thunky/-/thunky-1.1.0.tgz#5abaf714a9405db0504732bbccd2cedd9ef9537d"
   integrity sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==
+
+tiny-binary-search@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/tiny-binary-search/-/tiny-binary-search-1.0.3.tgz#9d52e3d16dd1171eb74486caf704ba08c0c62186"
+  integrity sha512-STSHX/L5nI9WTLv6wrzJbAPbO7OIISX83KFBh2GVbX1Uz/vgZOU/ANn/8iV6t35yMTpoPzzO+3OQid3mifE0CA==
 
 tiny-invariant@^1.0.6:
   version "1.2.0"
