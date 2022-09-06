@@ -366,6 +366,7 @@ function AppComponent(props: App): JSX.Element {
   const [headers, setHeaders] = useState([])
   const [indices, setIndices] = useState([])
   const [running, setRunning] = useState((s.executeInfo.executeFunc === "") ? false : true)
+  const [filterInput, setFilterInput] = useState('')
 
   const {onOpen, onClose, isOpen} = useDisclosure()
 
@@ -428,7 +429,7 @@ function AppComponent(props: App): JSX.Element {
   //   console.log("ONE ARRAY selectedCols useEffect")
   // }, [JSON.stringify(s.selectedCols)])
 
-    useEffect(() => {
+  useEffect(() => {
     const colDifference = headers.filter(x => !s.selectedCols.includes(x));
     colDifference.forEach((col) => {
       const cols = document.querySelectorAll("td[data-col='" + col + "']")
@@ -447,7 +448,7 @@ function AppComponent(props: App): JSX.Element {
     console.log("TWO ARRAYS selectedCols useEffect")
   }, [JSON.stringify(s.selectedCols), indices.length])
 
-    //Highlighting for row selection
+  //Highlighting for row selection
   useEffect(() => {
     const rowDifference = indices.filter(x => !s.selectedRows.includes(x));
 
@@ -620,6 +621,11 @@ function AppComponent(props: App): JSX.Element {
     console.log(s)
   }
 
+  function handleFilterInput(ev: any) {
+    setFilterInput(ev.target.value)
+    updateState(props._id,{executeInfo: {"executeFunc": "filter_rows", "params": {"filter_input": ev.target.value}}})
+  }
+
   return (
     <AppWindow app={props}>
 
@@ -627,55 +633,69 @@ function AppComponent(props: App): JSX.Element {
         <div className="URL-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
           <p>s.selectedRows: {s.selectedRows}</p>
           <p>s.selectedCols: {s.selectedCols}</p>
+
+          <HStack>
+            {headers?.map((col: any, index: number) => (
+              <>
+                <p>{col}: {filterInput}</p>
+                <Input
+                  value={filterInput}
+                  onChange={handleFilterInput}
+                  size='sm'
+                />
+              </>
+            ))}
+          </HStack>
+
           <HStack
             position='absolute'
             top='35px'
             right='15px'
           >
             <Box>
-                    <Popover
-        isOpen={isOpen}
-        onOpen={onOpen}
-        onClose={onClose}
-        placement='right'
-        closeOnBlur={false}
-      >
-        <PopoverTrigger>
-          <Button rightIcon={<TbWorldDownload/>}>
-            New Dataset
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent p={5}>
-          <FocusLock returnFocus persistentFocus={true}>
-            <PopoverArrow/>
-            <PopoverCloseButton/>
-            <Stack spacing={4}>
-              <FormControl>
-                <FormLabel>Online Dataset</FormLabel>
-                <Input
-                  size='md'
-                  type="text"
-                  value={s.dataUrl}
-                  onChange={handleUrlChange}
-                />
-                <FormHelperText>Link to online dataset</FormHelperText>
-              </FormControl>
-              <ButtonGroup display='flex' justifyContent='flex-end'>
-                <Button variant='outline' onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button
-                variant='outline'
-                onClick={() => handleLoadData()}
-                isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}
-                >
-                  Load Data
-                </Button>
-              </ButtonGroup>
-            </Stack>
-          </FocusLock>
-        </PopoverContent>
-      </Popover>
+              <Popover
+                isOpen={isOpen}
+                onOpen={onOpen}
+                onClose={onClose}
+                placement='right'
+                closeOnBlur={false}
+              >
+                <PopoverTrigger>
+                  <Button rightIcon={<TbWorldDownload/>}>
+                    New Dataset
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent p={5}>
+                  <FocusLock returnFocus persistentFocus={true}>
+                    <PopoverArrow/>
+                    <PopoverCloseButton/>
+                    <Stack spacing={4}>
+                      <FormControl>
+                        <FormLabel>Online Dataset</FormLabel>
+                        <Input
+                          size='md'
+                          type="text"
+                          value={s.dataUrl}
+                          onChange={handleUrlChange}
+                        />
+                        <FormHelperText>Link to online dataset</FormHelperText>
+                      </FormControl>
+                      <ButtonGroup display='flex' justifyContent='flex-end'>
+                        <Button variant='outline' onClick={onClose}>
+                          Cancel
+                        </Button>
+                        <Button
+                          variant='outline'
+                          onClick={() => handleLoadData()}
+                          isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}
+                        >
+                          Load Data
+                        </Button>
+                      </ButtonGroup>
+                    </Stack>
+                  </FocusLock>
+                </PopoverContent>
+              </Popover>
             </Box>
             <Menu>
               <MenuButton

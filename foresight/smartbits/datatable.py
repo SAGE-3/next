@@ -239,3 +239,14 @@ class DataTable(SmartBit):
         print(f"column: {selected_col}")
         print("I am sending this information")
         self.send_updates()
+
+    def filter_rows(self, filter_input):
+        self._modified_df = self._modified_df.filter(like=filter_input, axis=0)
+        self.paginate()
+        self.state.timestamp = time.time()
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("---------------------------------------------------------")
+        print("filter_rows")
+        print("I am sending this information")
+        self.send_updates()

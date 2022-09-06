@@ -12,6 +12,7 @@ export type state = {
   executeInfo: exec;
   viewData: any;
   dataUrl: string;
+  // filterInput: string;
 
   totalRows: number;
   rowsPerPage: number;
