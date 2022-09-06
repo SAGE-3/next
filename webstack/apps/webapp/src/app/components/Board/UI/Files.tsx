@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // React component for efficiently rendering large lists and tabular data
 import { Virtuoso } from 'react-virtuoso';
@@ -16,6 +17,9 @@ import { Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack }
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { RowFile } from './RowFile';
+
+import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
+import { setupAppForFile } from './CreateApp';
 
 export interface FilesProps {
   show: boolean;
@@ -29,13 +33,21 @@ type sortType = {
 };
 
 export function Files(props: FilesProps): JSX.Element {
+  const { user } = useUser();
   // The data list
   const [filesList, setList] = useState(props.files);
+  // Room and board
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
   // Element to set the focus to when opening the dialog
   const initialRef = React.useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
   const [searchTerm, setSearchTerm] = useState<string>();
+  // UI Store
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  // How to create some applications
+  const createApp = useAppStore((state) => state.create);
 
   // Update the file list to the list passed through props
   useEffect(() => {
@@ -324,6 +336,43 @@ export function Files(props: FilesProps): JSX.Element {
     e.dataTransfer.setData('type', JSON.stringify(tlist));
   };
 
+
+  // Select the file when clicked
+  const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      setList((prev) => {
+        if (e.key === "ArrowDown") {
+          const first = filesList.findIndex((k) => k.selected);
+          if (first < prev.length - 1) {
+            prev[first] = { ...prev[first], selected: false };
+            prev[first + 1] = { ...prev[first + 1], selected: true };
+          }
+        } else if (e.key === "ArrowUp") {
+          // @ts-expect-error
+          const last = filesList.findLastIndex((k) => k.selected);
+          if (last > 0) {
+            prev[last - 1] = { ...prev[last - 1], selected: true };
+            prev[last] = { ...prev[last], selected: false };
+          }
+        }
+        return [...prev];
+      });
+    } else if (e.key === "Enter") {
+      if (!user) return;
+      // Get around  the center of the board
+      const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
+      const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
+
+      const first = filesList.find((k) => k.selected);
+      if (first) {
+        // Create the app
+        const setup = await setupAppForFile(first, xDrop, yDrop,
+          roomId, boardId, user._id);
+        if (setup) createApp(setup);
+      }
+    }
+  };
+
   return (
     <VStack w={"100%"} fontSize={"xs"} display={props.show ? "inherit" : "none"}>
       {/* Search box */}
@@ -372,6 +421,7 @@ export function Files(props: FilesProps): JSX.Element {
         }}
         data={filesList}
         totalCount={filesList.length}
+        onKeyDown={onKeyboard}
         // Content of the table
         itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} />}
       />
