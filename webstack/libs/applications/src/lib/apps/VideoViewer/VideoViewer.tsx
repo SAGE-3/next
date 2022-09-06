@@ -6,7 +6,7 @@
  *
  */
 
-import { isUUIDv4, useAppStore, useAssetStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -14,7 +14,7 @@ import { AppWindow } from '../../components';
 import { CSSProperties, useEffect, useRef, useState } from 'react';
 import { Asset } from '@sage3/shared/types';
 import { Box, Button, ButtonGroup, Slider, SliderFilledTrack, SliderThumb, SliderTrack, Tooltip } from '@chakra-ui/react';
-import { MdFastForward, MdFastRewind, MdGraphicEq, MdPause, MdPlayArrow } from 'react-icons/md';
+import { MdFastForward, MdFastRewind, MdFileDownload, MdGraphicEq, MdPause, MdPlayArrow, MdVolumeOff, MdVolumeUp } from 'react-icons/md';
 
 export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
@@ -94,7 +94,6 @@ function AppComponent(props: App): JSX.Element {
     if (s.play.uid === user?._id) {
       if (!s.play.paused) {
         interval = setInterval(() => {
-
           updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: videoRef.current?.currentTime ?? 0 } });
         }, 1000);
       }
@@ -129,7 +128,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div style={videoContainerStyle}>
-        <video ref={videoRef} id={`${props._id}-video`} src={url} autoPlay={false} height="100%" width="100%"></video>
+        <video ref={videoRef} id={`${props._id}-video`} src={url} autoPlay={false} height="100%" width="100%" muted={true}></video>
       </div>
     </AppWindow>
   );
@@ -138,59 +137,99 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const update = useAppStore((state) => state.updateState);
-  const [videoRef] = useState<HTMLVideoElement>(document.getElementById(`${props._id}-video`) as HTMLVideoElement);
-
-  const [duration, setDuration] = useState(10);
-
-  const [sliderTime, setSliderTime] = useState(s.play.currentTime);
-
+  // User
   const { user } = useUser();
+  // Stores
+  const update = useAppStore((state) => state.updateState);
+  const assets = useAssetStore((state) => state.assets);
 
+  // React State
+  const [videoRef] = useState<HTMLVideoElement>(document.getElementById(`${props._id}-video`) as HTMLVideoElement);
+  const [duration, setDuration] = useState(10);
+  const [sliderTime, setSliderTime] = useState(s.play.currentTime);
+  const [file, setFile] = useState<Asset>();
+
+  // Detect if video is muted
+  let isMute = true;
+  if (videoRef) {
+    isMute = videoRef.muted;
+  }
+
+  // Obtain the asset for download functionality
+  useEffect(() => {
+    const myasset = assets.find((a) => a._id === s.vid);
+    if (myasset) {
+      setFile(myasset);
+    }
+  }, [s.vid, assets]);
+
+  // Set the slider time if curretime or paused state change
   useEffect(() => {
     setSliderTime(s.play.currentTime);
-  }, [s.play.currentTime, s.play]);
+  }, [s.play.currentTime, s.play.paused]);
 
+  // Update duration of the slider
   useEffect(() => {
     if (videoRef) {
       setDuration(videoRef.duration);
     }
   }, [videoRef]);
 
+  // Handle a play action
   const handlePlay = () => {
     if (user) {
       update(props._id, { play: { uid: user._id, paused: !s.play.paused, currentTime: s.play.currentTime } });
     }
   };
 
+  // Handle a rewind action
   const handleRewind = () => {
     if (user) {
       update(props._id, { play: { uid: user._id, paused: s.play.paused, currentTime: Math.max(0, s.play.currentTime - 5) } });
     }
   };
 
+  // Handle a forward action
   const handleForward = () => {
     if (user) {
-      update(props._id, { play: { uid: user._id, paused: s.play.paused, currentTime: Math.min(videoRef.duration, s.play.currentTime + 5) } });
+      update(props._id, {
+        play: { uid: user._id, paused: s.play.paused, currentTime: Math.min(videoRef.duration, s.play.currentTime + 5) },
+      });
     }
   };
+
+  // Handle a mute action, local state only
+  const handleMute = () => {
+    videoRef.muted = !isMute;
+  };
+
+  // Download the file
+  const handleDownload = () => {
+    if (file) {
+      const url = file?.data.file;
+      const filename = file?.data.originalfilename;
+      downloadFile('api/assets/static/' + url, filename);
+    }
+  };
+
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" >
+      {/* App State with server */}
+      <ButtonGroup isAttached size="xs" colorScheme="green" mr={2}>
         <Tooltip placement="bottom" hasArrow={true} label={'Rewind 10 Seconds'} openDelay={400}>
-          <Button onClick={handleRewind} colorScheme={'green'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
+          <Button onClick={handleRewind} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFastRewind />
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={!s.play.paused ? 'Pause Video' : 'Play Video'} openDelay={400}>
-          <Button onClick={handlePlay} colorScheme={'green'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
+          <Button onClick={handlePlay} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {!s.play.paused ? <MdPause /> : <MdPlayArrow />}
           </Button>
         </Tooltip>
 
         <Tooltip placement="bottom" hasArrow={true} label={'Forward 10 Seconds'} openDelay={400}>
-          <Button onClick={handleForward} colorScheme={'green'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
+          <Button onClick={handleForward} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFastForward />
           </Button>
         </Tooltip>
@@ -209,6 +248,20 @@ function ToolbarComponent(props: App): JSX.Element {
           />
         </SliderThumb>
       </Slider>
+
+      {/* Local State Buttons - Only Changes the video state for the local user */}
+      <ButtonGroup isAttached size="xs" colorScheme={'teal'} ml={2}>
+        <Tooltip placement="bottom" hasArrow={true} label={{ isMute } ? 'Unmute' : 'Mute'} openDelay={400}>
+          <Button onClick={handleMute} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
+            {isMute ? <MdVolumeOff /> : <MdVolumeUp />}
+          </Button>
+        </Tooltip>
+        <Tooltip placement="bottom" hasArrow={true} label={'Download Video'} openDelay={400}>
+          <Button onClick={handleDownload} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   );
 }
