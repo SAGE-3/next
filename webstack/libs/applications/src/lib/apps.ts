@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { name as BlankName, init as defaultBlank } from './apps/Blank';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
@@ -20,6 +21,7 @@ import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './app
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as ZoomName, init as defaultZoom } from './apps/Zoom';
 
+import Blank from './apps/Blank/Blank';
 import Counter from './apps/Counter/Counter';
 import Linker from './apps/Linker/Linker';
 import Stickie from './apps/Stickie/Stickie';
@@ -41,6 +43,7 @@ import VegaLite from './apps/VegaLite/VegaLite';
 import Zoom from './apps/Zoom/Zoom';
 
 export const Applications = {
+  [BlankName]: Blank,
   [CounterName]: Counter,
   [LinkerName]: Linker,
   [StickieName]: Stickie,
@@ -63,6 +66,7 @@ export const Applications = {
 } as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export const initialValues = {
+  [BlankName]: defaultBlank,
   [CounterName]: defaultCounter,
   [LinkerName]: defaultLinker,
   [StickieName]: defaultStickie,

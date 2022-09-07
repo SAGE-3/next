@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { state as BlankState, name as BlankName } from './apps/Blank';
 import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
@@ -9,7 +10,7 @@ import { state as ImageViewerState, name as ImageViewerName } from './apps/Image
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTable';
+import { state as DataTableState, name as DataTableName } from './apps/DataTable';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as ScreenshareState, name as ScreenshareName } from './apps/TwilioScreenshare';
@@ -21,6 +22,7 @@ import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as ZoomState, name as ZoomName } from './apps/Zoom';
 
 export type AppState =
+  | BlankState
   | CounterState
   | LinkerState
   | StickieState
@@ -30,7 +32,7 @@ export type AppState =
   | LeafLetState
   | VideoViewerState
   | WebviewState
-  | DataTableAppState
+  | DataTableState
   | CSVViewerState
   | RTCChatState
   | ScreenshareState
@@ -42,6 +44,7 @@ export type AppState =
   | ZoomState;
 
 export type AppName =
+  | typeof BlankName
   | typeof CounterName
   | typeof LinkerName
   | typeof StickieName
@@ -51,7 +54,7 @@ export type AppName =
   | typeof LeafLetName
   | typeof VideoViewerName
   | typeof WebviewName
-  | typeof DataTableAppName
+  | typeof DataTableName
   | typeof CSVViewerName
   | typeof RTCChatName
   | typeof ScreenshareName
