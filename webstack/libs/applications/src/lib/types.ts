@@ -9,7 +9,7 @@ import { state as ImageViewerState, name as ImageViewerName } from './apps/Image
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTableApp';
+import { state as DataTableAppState, name as DataTableAppName } from './apps/DataTable';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as ScreenshareState, name as ScreenshareName } from './apps/TwilioScreenshare';

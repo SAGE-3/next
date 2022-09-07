@@ -9,7 +9,7 @@ import { name as ImageViewerName, init as defaultImageViewer } from './apps/Imag
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
+import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as ScreenshareName, init as defaultScreenshare } from './apps/TwilioScreenshare';
@@ -29,7 +29,7 @@ import ImageViewer from './apps/ImageViewer/ImageViewer';
 import LeafLet from './apps/LeafLet/LeafLet';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
-import DataTableApp from './apps/DataTableApp/DataTableApp';
+import DataTable from './apps/DataTable/DataTable';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import Screenshare from './apps/TwilioScreenshare/TwilioScreenshare';
@@ -50,7 +50,7 @@ export const Applications = {
   [LeafLetName]: LeafLet,
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
-  [DataTableAppName]: DataTableApp,
+  [DataTableName]: DataTable,
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
   [ScreenshareName]: Screenshare,
@@ -72,7 +72,7 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
-  [DataTableAppName]: defaultDataTableApp,
+  [DataTableName]: defaultDataTable,
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
   [ScreenshareName]: defaultScreenshare,
