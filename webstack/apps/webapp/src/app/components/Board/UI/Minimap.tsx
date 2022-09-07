@@ -22,6 +22,8 @@ export function MiniMap(props: MinimapProps) {
   const apps = useAppStore((state) => state.apps);
   // UI store
   const showUI = useUIStore((state) => state.showUI);
+  const boardWidth = useUIStore((state) => state.boardWidth);
+  const boardHeight = useUIStore((state) => state.boardHeight);
   // Theme
   const panelBackground = useColorModeValue('gray.50', '#4A5568');
   const textColor = useColorModeValue('gray.800', 'gray.100');
@@ -93,7 +95,8 @@ export function MiniMap(props: MinimapProps) {
               Minimap
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex">
-              <Box height={2500 / 25 + 'px'} width={5000 / 25 + 'px'} backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
+              <Box backgroundColor="#586274" borderRadius="md" border="solid teal 2px"
+                width={boardWidth / 25 + 'px'} height={boardHeight / 25 + 'px'} >
                 <Box position="absolute">
                   {apps.map((app) => {
                     return (
