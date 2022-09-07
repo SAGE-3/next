@@ -38,7 +38,7 @@ import Webview from './apps/Webview/Webview';
 import DataTableApp from './apps/DataTableApp/DataTableApp';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
-import Screenshare from './apps/Screenshare/Screenshare';
+import Screenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
