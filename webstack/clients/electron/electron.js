@@ -449,7 +449,7 @@ function createWindow() {
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
       // Hack to preload jquery for broken sites
-      // preload: path.resolve(path.join(__dirname, 'preload.js')),
+      preload: path.resolve(path.join(__dirname, 'preload.js')),
     },
   };
 
