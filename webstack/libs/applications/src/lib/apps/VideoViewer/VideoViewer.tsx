@@ -11,9 +11,9 @@ import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useRef, useState } from 'react';
 import { Asset } from '@sage3/shared/types';
-import { Box, Button, ButtonGroup, Slider, SliderFilledTrack, SliderThumb, SliderTrack, Tooltip } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Tooltip } from '@chakra-ui/react';
 import {
   MdArrowRightAlt,
   MdFastForward,
@@ -81,6 +81,18 @@ function AppComponent(props: App): JSX.Element {
       });
     }
   }, [videoRef]);
+
+  // Set the current time of the video
+  useEffect(() => {
+    if (videoRef.current) {
+      // The delta between the local video's time and the server's time
+      const delta = Math.abs(videoRef.current.currentTime - s.play.currentTime);
+      // If there is a 4 second delta, update the video's time
+      if (delta > 4) {
+        videoRef.current.currentTime = s.play.currentTime;
+      }
+    }
+  }, [s.play.currentTime, videoRef.current]);
 
   // Set the initial time of the video
   useEffect(() => {
@@ -156,7 +168,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // React State
   const [videoRef] = useState<HTMLVideoElement>(document.getElementById(`${props._id}-video`) as HTMLVideoElement);
-  const [duration, setDuration] = useState(10);
+  const [duration, setDuration] = useState(videoRef.duration);
   const [sliderTime, setSliderTime] = useState(s.play.currentTime);
   const [file, setFile] = useState<Asset>();
 
@@ -175,18 +187,6 @@ function ToolbarComponent(props: App): JSX.Element {
       setFile(myasset);
     }
   }, [s.vid, assets]);
-
-  // Set the current time of the video
-  useEffect(() => {
-    if (videoRef) {
-      // The delta between the local video's time and the server's time
-      const delta = Math.abs(videoRef.currentTime - s.play.currentTime);
-      // If there is a 4 second delta, update the video's time
-      if (delta > 4 && !seeking) {
-        videoRef.currentTime = s.play.currentTime;
-      }
-    }
-  }, [s.play.currentTime, seeking]);
 
   // Set the slider time if curretime or paused state change
   useEffect(() => {
@@ -246,6 +246,7 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  // Handle user moving slider
   const seekChangeHandle = (value: number) => {
     setSliderTime(value);
     videoRef.currentTime = value;
@@ -306,7 +307,26 @@ function ToolbarComponent(props: App): JSX.Element {
         <SliderTrack bg="green.100">
           <SliderFilledTrack bg="green.400" />
         </SliderTrack>
-        <SliderThumb boxSize={6}>
+        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
+          {new Date(0).toISOString().substring(14, 19)}
+        </SliderMark>
+        <SliderMark value={duration} fontSize="xs" mt="1.5" ml="-5">
+          {new Date(duration * 1000).toISOString().substring(14, 19)}
+        </SliderMark>
+        <SliderMark
+          value={sliderTime}
+          textAlign="center"
+          bg="green.500"
+          color="white"
+          mt="-9"
+          ml="-5"
+          p="0.5"
+          fontSize="xs"
+          borderRadius="md"
+        >
+          {new Date(sliderTime * 1000).toISOString().substring(14, 19)}
+        </SliderMark>
+        <SliderThumb boxSize={4}>
           <Box
             color="green.500"
             as={MdGraphicEq}
