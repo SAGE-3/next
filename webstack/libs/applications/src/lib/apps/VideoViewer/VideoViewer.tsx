@@ -6,7 +6,7 @@
  *
  */
 
-import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUser, downloadFile, useUIStore } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -14,7 +14,18 @@ import { AppWindow } from '../../components';
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { Asset } from '@sage3/shared/types';
 import { Box, Button, ButtonGroup, Slider, SliderFilledTrack, SliderThumb, SliderTrack, Tooltip } from '@chakra-ui/react';
-import { MdFastForward, MdFastRewind, MdFileDownload, MdGraphicEq, MdPause, MdPlayArrow, MdVolumeOff, MdVolumeUp } from 'react-icons/md';
+import {
+  MdArrowRightAlt,
+  MdFastForward,
+  MdFastRewind,
+  MdFileDownload,
+  MdGraphicEq,
+  MdLoop,
+  MdPause,
+  MdPlayArrow,
+  MdVolumeOff,
+  MdVolumeUp,
+} from 'react-icons/md';
 
 export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
@@ -74,22 +85,14 @@ function AppComponent(props: App): JSX.Element {
   // Set the initial time of the video
   useEffect(() => {
     if (videoRef.current) {
-      console.log('set the current time', videoRef.current.currentTime, s.play.currentTime);
       videoRef.current.currentTime = s.play.currentTime;
     }
-  }, []);
-
-  // Set the current time of the video
-  useEffect(() => {
-    if (videoRef.current) {
-      // The delta between the local video's time and the server's time
-      const delta = Math.abs(videoRef.current.currentTime - s.play.currentTime);
-      // If there is a 4 second delta, update the video's time
-      if (delta > 4) {
-        videoRef.current.currentTime = s.play.currentTime;
+    return () => {
+      if (s.play.uid === user?._id) {
+        updateState(props._id, { play: { ...s.play, uid: '' } });
       }
-    }
-  }, [s.play.currentTime]);
+    };
+  }, []);
 
   // If play was updated, update the video
   useEffect(() => {
@@ -109,9 +112,8 @@ function AppComponent(props: App): JSX.Element {
         var isPlaying = videoRef.current.readyState > 2;
 
         if (!s.play.paused && isPlaying) {
-          console.log('play video', isPlaying, videoRef.current.readyState);
           videoRef.current.play();
-        } else {
+        } else if (s.play.paused) {
           videoRef.current.pause();
         }
       }
@@ -124,7 +126,7 @@ function AppComponent(props: App): JSX.Element {
         clearInterval(updateTimeInterval);
       }
     };
-  }, [s.play.paused, s.play.uid, user, videoRef.current?.readyState]);
+  }, [s.play.paused, s.play.uid, s.play.loop, user, videoRef.current?.readyState]);
 
   const videoContainerStyle: CSSProperties = {
     position: 'relative',
@@ -137,7 +139,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div style={videoContainerStyle}>
-        <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true}></video>
+        <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true} loop={s.play.loop}></video>
       </div>
     </AppWindow>
   );
@@ -158,6 +160,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const [sliderTime, setSliderTime] = useState(s.play.currentTime);
   const [file, setFile] = useState<Asset>();
 
+  const [seeking, setSeeking] = useState(false);
+
   // Detect if video is muted
   let isMute = true;
   if (videoRef) {
@@ -171,6 +175,18 @@ function ToolbarComponent(props: App): JSX.Element {
       setFile(myasset);
     }
   }, [s.vid, assets]);
+
+  // Set the current time of the video
+  useEffect(() => {
+    if (videoRef) {
+      // The delta between the local video's time and the server's time
+      const delta = Math.abs(videoRef.currentTime - s.play.currentTime);
+      // If there is a 4 second delta, update the video's time
+      if (delta > 4 && !seeking) {
+        videoRef.currentTime = s.play.currentTime;
+      }
+    }
+  }, [s.play.currentTime, seeking]);
 
   // Set the slider time if curretime or paused state change
   useEffect(() => {
@@ -187,14 +203,14 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a play action
   const handlePlay = () => {
     if (user) {
-      update(props._id, { play: { uid: user._id, paused: !s.play.paused, currentTime: s.play.currentTime } });
+      update(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
     }
   };
 
   // Handle a rewind action
   const handleRewind = () => {
     if (user) {
-      update(props._id, { play: { uid: user._id, paused: s.play.paused, currentTime: Math.max(0, s.play.currentTime - 5) } });
+      update(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
     }
   };
 
@@ -202,7 +218,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleForward = () => {
     if (user) {
       update(props._id, {
-        play: { uid: user._id, paused: s.play.paused, currentTime: Math.min(videoRef.duration, s.play.currentTime + 5) },
+        play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime + 5) },
+      });
+    }
+  };
+
+  // Handle a forward action
+  const handleLoop = () => {
+    if (user) {
+      update(props._id, {
+        play: { ...s.play, uid: user._id, loop: !s.play.loop },
       });
     }
   };
@@ -221,6 +246,24 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const seekChangeHandle = (value: number) => {
+    setSliderTime(value);
+    videoRef.currentTime = value;
+  };
+
+  const seekStartHandle = () => {
+    setSeeking(true);
+  };
+
+  const seekEndHandle = () => {
+    setSeeking(false);
+    if (user) {
+      update(props._id, {
+        play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },
+      });
+    }
+  };
+
   return (
     <>
       {/* App State with server */}
@@ -233,7 +276,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
         <Tooltip placement="bottom" hasArrow={true} label={!s.play.paused ? 'Pause Video' : 'Play Video'} openDelay={400}>
           <Button onClick={handlePlay} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
-            {!s.play.paused ? <MdPause /> : <MdPlayArrow />}
+            {s.play.paused ? <MdPlayArrow /> : <MdPause />}
           </Button>
         </Tooltip>
 
@@ -242,9 +285,24 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFastForward />
           </Button>
         </Tooltip>
+
+        <Tooltip placement="bottom" hasArrow={true} label={'Loop'} openDelay={400}>
+          <Button onClick={handleLoop} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
+            {s.play.loop ? <MdLoop /> : <MdArrowRightAlt />}
+          </Button>
+        </Tooltip>
       </ButtonGroup>
 
-      <Slider aria-label="slider-ex-4" value={sliderTime} max={duration} width="200px" mx={2}>
+      <Slider
+        aria-label="slider-ex-4"
+        value={sliderTime}
+        max={duration}
+        width="200px"
+        mx={2}
+        onChange={seekChangeHandle}
+        onChangeStart={seekStartHandle}
+        onChangeEnd={seekEndHandle}
+      >
         <SliderTrack bg="green.100">
           <SliderFilledTrack bg="green.400" />
         </SliderTrack>
