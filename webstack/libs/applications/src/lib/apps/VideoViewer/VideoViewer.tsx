@@ -34,6 +34,7 @@ function AppComponent(props: App): JSX.Element {
 
   // App Store
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
 
   // Current User
   const { user } = useUser();
@@ -54,6 +55,8 @@ function AppComponent(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.vid);
     if (myasset) {
       setFile(myasset);
+      // Update the app title
+      update(props._id, { description: 'VideoViewer> ' + myasset?.data.originalfilename });
     }
   }, [s.vid, assets]);
 
