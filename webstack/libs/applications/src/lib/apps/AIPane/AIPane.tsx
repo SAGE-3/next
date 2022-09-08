@@ -20,14 +20,9 @@ type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const zindex = useUIStore((state) => state.zIndex);
-  const resetZIndex = useUIStore((state) => state.resetZIndex);
-
-  useEffect(() => {
-    resetZIndex()
-  }, [])
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} lockToBackground={true}>
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
         <p>
           x position {props.data.position.x}<br/>
@@ -47,7 +42,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <IconButton
-        aria-label="Dummy icon"
+        aria-label="Run AI"
         icon={<BsFillTriangleFill/>}
         _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
       />

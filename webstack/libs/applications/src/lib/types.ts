@@ -1,6 +1,6 @@
 // SAGE3 Generated from apps.json file
 
-import { state as BlankState, name as BlankName } from './apps/Blank';
+import { state as AIPaneState, name as AIPaneName } from './apps/AIPane';
 import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
@@ -22,7 +22,7 @@ import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as ZoomState, name as ZoomName } from './apps/Zoom';
 
 export type AppState =
-  | BlankState
+  | AIPaneState
   | CounterState
   | LinkerState
   | StickieState
@@ -44,7 +44,7 @@ export type AppState =
   | ZoomState;
 
 export type AppName =
-  | typeof BlankName
+  | typeof AIPaneName
   | typeof CounterName
   | typeof LinkerName
   | typeof StickieName

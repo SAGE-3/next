@@ -22,6 +22,7 @@ type WindowProps = {
 
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
+  lockToBackground?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -38,10 +39,7 @@ export function AppWindow(props: WindowProps) {
   // Height of the title bar
   const titleBarHeight = 24;
   // Border color when selected
-  const borderColor = useColorModeValue(
-    sageColorByName('blue'),
-    sageColorByName('orange')
-  );
+  const borderColor = useColorModeValue(sageColorByName('blue'), sageColorByName('orange'));
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -54,7 +52,7 @@ export function AppWindow(props: WindowProps) {
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(props.app.data.minimized);
-  const [myZ, setMyZ] = useState(zindex);
+  const [myZ, setMyZ] = useState(props.lockToBackground ? 0 : zindex);
 
   // Track the app store errors
   useEffect(() => {
@@ -87,7 +85,9 @@ export function AppWindow(props: WindowProps) {
     setPos({ x, y });
     update(props.app._id, {
       position: {
-        x, y, z: props.app.data.position.z,
+        x,
+        y,
+        z: props.app.data.position.z,
       },
     });
   }
@@ -128,11 +128,10 @@ export function AppWindow(props: WindowProps) {
     // Set local state
     setSize({ width, height });
     setPos({ x: position.x, y: position.y });
-
   }
 
   // Close the app and delete from server
-  function handleClose() {
+  function handleClose(e: any) {
     deleteApp(props.app._id);
   }
 
@@ -144,10 +143,12 @@ export function AppWindow(props: WindowProps) {
   // Track raised state
   useEffect(() => {
     if (props.app.data.raised) {
-      // raise  my zIndex
-      setMyZ(zindex + 1);
-      // raise the global value
-      incZ();
+      if (!props.lockToBackground) {
+        // raise  my zIndex
+        setMyZ(zindex + 1);
+        // raise the global value
+        incZ();
+      }
     }
   }, [props.app.data.raised]);
 
@@ -155,14 +156,16 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
     // Set the selected app in the UI store
     setSelectedApp(props.app._id);
-    // Raise down
-    apps.forEach((a) => {
-      if (a.data.raised) update(a._id, { raised: false });
-    });
-    // Bring to front function
-    update(props.app._id, { raised: true });
-  }
 
+    if (!props.lockToBackground) {
+      // Raise down
+      apps.forEach((a) => {
+        if (a.data.raised) update(a._id, { raised: false });
+      });
+      // Bring to front function
+      update(props.app._id, { raised: true });
+    }
+  }
 
   return (
     <Rnd
@@ -195,19 +198,18 @@ export function AppWindow(props: WindowProps) {
       enableResizing={!minimized}
     >
       {/* Border Box around app to show it is selected */}
-      {
-        (selectedApp === props.app._id) ? (
-          <Box
-            position="absolute"
-            left="-4px"
-            top="-4px"
-            width={size.width + 8}
-            height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
-            border={`${3 * 1 / scale}px dashed ${borderColor}`}
-            borderRadius="6px"
-            pointerEvents="none"
-          ></Box>) : null
-      }
+      {selectedApp === props.app._id ? (
+        <Box
+          position="absolute"
+          left="-4px"
+          top="-4px"
+          width={size.width + 8}
+          height={minimized ? titleBarHeight + 8 + 'px' : size.height + titleBarHeight + 8 + 'px'}
+          border={`${(3 * 1) / scale}px dashed ${borderColor}`}
+          borderRadius="6px"
+          pointerEvents="none"
+        ></Box>
+      ) : null}
       {/* Title Bar */}
       <Box
         className="handle" // The CSS name react-rnd latches on to for the drag events
@@ -243,9 +245,9 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={(minimized) ? 'none' : 'inherit'}>
+      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
         {props.children}
       </Box>
-    </Rnd >
+    </Rnd>
   );
 }

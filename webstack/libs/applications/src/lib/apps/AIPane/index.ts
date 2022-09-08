@@ -20,4 +20,4 @@ export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
 };
 
-export const name = 'Blank';
+export const name = 'AIPane';
