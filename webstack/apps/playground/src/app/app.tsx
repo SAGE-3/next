@@ -8,7 +8,7 @@
 
 import { useAppStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
-import { initialValues} from '@sage3/applications/initialValues';
+import { initialValues } from '@sage3/applications/initialValues';
 import { Box, Button, Select } from '@chakra-ui/react';
 import { AppName } from '@sage3/applications/schema';
 import { DraggableData, Rnd } from 'react-rnd';

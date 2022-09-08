@@ -6,26 +6,24 @@
  *
  */
 
-import { useAppStore, useAssetStore, useUser, downloadFile, useUIStore } from '@sage3/frontend';
+import { CSSProperties, useEffect, useRef, useState } from 'react';
+import {
+  Box, Button, ButtonGroup, Tooltip,
+  Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack,
+} from '@chakra-ui/react';
+import {
+  MdArrowRightAlt, MdFastForward, MdFastRewind, MdFileDownload,
+  MdGraphicEq, MdLoop, MdPause, MdPlayArrow,
+  MdVolumeOff, MdVolumeUp,
+} from 'react-icons/md';
+
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { CSSProperties, useEffect, useRef, useState } from 'react';
+
 import { Asset } from '@sage3/shared/types';
-import { Box, Button, ButtonGroup, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Tooltip } from '@chakra-ui/react';
-import {
-  MdArrowRightAlt,
-  MdFastForward,
-  MdFastRewind,
-  MdFileDownload,
-  MdGraphicEq,
-  MdLoop,
-  MdPause,
-  MdPlayArrow,
-  MdVolumeOff,
-  MdVolumeUp,
-} from 'react-icons/md';
+import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
 
 export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
@@ -36,7 +34,6 @@ function AppComponent(props: App): JSX.Element {
 
   // App Store
   const updateState = useAppStore((state) => state.updateState);
-  const update = useAppStore((state) => state.update);
 
   // Current User
   const { user } = useUser();
@@ -121,7 +118,7 @@ function AppComponent(props: App): JSX.Element {
 
     async function playVideo() {
       if (videoRef.current) {
-        var isPlaying = videoRef.current.readyState > 2;
+        const isPlaying = videoRef.current.readyState > 2;
 
         if (!s.play.paused && isPlaying) {
           videoRef.current.play();
@@ -130,8 +127,10 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     }
+
     // Play the video
     playVideo();
+
     return () => {
       // Clear interval if it exists
       if (updateTimeInterval) {
@@ -146,7 +145,6 @@ function AppComponent(props: App): JSX.Element {
     height: props.data.size.width / aspectRatio,
     maxHeight: '100%',
   };
-  const videoStyle: CSSProperties = { height: '100%', width: '100%' };
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
@@ -242,7 +240,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (file) {
       const url = file?.data.file;
       const filename = file?.data.originalfilename;
-      downloadFile('api/assets/static/' + url, filename);
+      downloadFile(getStaticAssetUrl(url), filename);
     }
   };
 
@@ -338,7 +336,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
       {/* Local State Buttons - Only Changes the video state for the local user */}
       <ButtonGroup isAttached size="xs" colorScheme={'teal'} ml={2}>
-        <Tooltip placement="bottom" hasArrow={true} label={{ isMute } ? 'Unmute' : 'Mute'} openDelay={400}>
+        <Tooltip placement="bottom" hasArrow={true} label={isMute ? 'Unmute' : 'Mute'} openDelay={400}>
           <Button onClick={handleMute} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {isMute ? <MdVolumeOff /> : <MdVolumeUp />}
           </Button>
