@@ -7,7 +7,7 @@
  */
 
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
-import { initialValues } from '@sage3/applications/apps';
+import { initialValues } from '@sage3/applications/initialValues';
 
 /**
  * Setup data structure to open an application

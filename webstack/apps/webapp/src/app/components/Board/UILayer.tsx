@@ -11,11 +11,12 @@ import { useNavigate } from 'react-router';
 import { Box, useDisclosure, Modal } from '@chakra-ui/react';
 
 import {
-  AssetModal, ContextMenu, UploadModal, useAppStore, useBoardStore, useUIStore,
+  ContextMenu, UploadModal, useAppStore, useBoardStore, useUIStore,
   usePresenceStore, useUser, processContentURL
 } from '@sage3/frontend';
 
-import { Applications, initialValues } from '@sage3/applications/apps';
+import { Applications } from '@sage3/applications/apps';
+import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
