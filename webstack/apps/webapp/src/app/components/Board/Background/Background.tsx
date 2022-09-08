@@ -12,7 +12,7 @@ import { useUIStore, useAppStore, useUser, useAssetStore } from '@sage3/frontend
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -106,6 +106,32 @@ export function Background(props: BackgroundProps) {
               { w: w, h: w / (extras.aspectRatio || 1) },
               { id: fileID }
             ));
+        }
+      });
+    } else if (isVideo(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          //  Get the metadata file
+          const localurl = '/api/assets/static/' + a.data.metadata;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json'
+            },
+          }).then(function (response) {
+            return response.json();
+          }).then(async function (j) {
+            const vw = j['ImageWidth'] || 800;
+            const vh = j['ImageHeight'] || 450;
+            const ar = vw / vh;
+            createApp(
+              setupApp("VideoViewer", xDrop, yDrop, props.roomId, props.boardId, user._id,
+                { w: 500, h: 400 / ar },
+                { vid: fileID }
+              ));
+          });
         }
       });
     } else if (isCSV(fileType)) {
