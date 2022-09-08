@@ -8,7 +8,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, Button, Center } from '@chakra-ui/react';
+import { Box, Button, Center, ButtonGroup, Tooltip } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -99,14 +99,15 @@ function AppComponent(props: App): JSX.Element {
 
     console.log('Cobrowse> Started', mine, user?._id);
 
+    // Get images back from server
     const processRTCMessage = (ev: MessageEvent<any>) => {
       const data = JSON.parse(ev.data);
-      console.log('RTC> Message', data.type);
-      if (data.type === 'paint') {
+      console.log('RTC> Message', props._id, data.type, data.data.app);
+      if (data.type === 'paint' && data.data.app === props._id) {
         const imgid = "image" + props._id;
         const img = document.getElementById(imgid) as HTMLImageElement;
         if (img) {
-          img.src = 'data:image/jpeg;charset=utf-8;base64,' + data.data;
+          img.src = 'data:image/jpeg;charset=utf-8;base64,' + data.data.data;
         }
       }
     };
@@ -227,18 +228,23 @@ function ToolbarComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       const electron = window.require('electron');
       const ipcRenderer = electron.ipcRenderer;
-      ipcRenderer.send('streamview', { url: s.sharedurl, id: s.frame, dpr: window.devicePixelRatio });
+      // request frames from electron main process
+      ipcRenderer.send('streamview', { url: s.sharedurl, id: s.frame, app: props._id, dpr: window.devicePixelRatio });
+      // receive frames from main process
       ipcRenderer.on('paint', (_evt: any, arg: any) => {
-        sock.send(JSON.stringify({ type: 'paint', data: arg.buf }));
+        // forward frames to server
+        console.log("🚀 ~ file: Cobrowse.tsx ~ line 238 ~ ipcRenderer.on ~ arg.app", arg)
+        sock.send(JSON.stringify({ type: 'paint', data: arg.buf, app: arg.dirty.app }));
       });
     }
   };
 
   return (
-    <>
-      <Button colorScheme="green" disabled={!mine} onClick={startStream}>Stream</Button>
-    </>
-  );
+    <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <Tooltip placement="auto" hasArrow={true} label={'Start Streaming'} openDelay={400}>
+        <Button colorScheme="green" disabled={!mine} onClick={startStream}>Stream</Button>
+      </Tooltip>
+    </ButtonGroup>);
 }
 
 export default { AppComponent, ToolbarComponent };

@@ -736,9 +736,10 @@ function createWindow() {
           };
           dataenc = await turbojpg.compress(image.getBitmap(), options);
         }
+        console.log('paint', args.app);
         evt.reply('paint', {
           buf: dataenc.toString('base64'),
-          dirty: { ...dirty, width: neww, height: newh },
+          dirty: { ...dirty, width: neww, height: newh, app: args.app },
         });
       });
     });

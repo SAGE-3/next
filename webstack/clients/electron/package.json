@@ -15,7 +15,7 @@
     "semver": "^7"
   },
   "devDependencies": {
-    "electron": "^20.1.1",
+    "electron": "^20.1.2",
     "electron-notarize": "^1",
     "electron-packager": "latest"
   },

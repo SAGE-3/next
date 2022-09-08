@@ -188,7 +188,7 @@ async function startServer() {
         clients[msg.user] = socket;
         console.log('WebRTC> new group for', msg.app);
       } else if (msg.type === 'paint') {
-        emitRTC('paint', socket, msg.data);
+        emitRTC('paint', socket, { data: msg.data, app: msg.app });
       }
     });
     socket.on('close', (_msg) => {
