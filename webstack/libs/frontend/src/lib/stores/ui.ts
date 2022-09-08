@@ -24,6 +24,8 @@ const WheelStepZoom = 0.004;
 // Typescript interface defining the store
 interface UIState {
   scale: number;
+  boardWidth: number;
+  boardHeight: number;
   gridSize: number;
   zIndex: number;
   showUI: boolean;
@@ -54,6 +56,7 @@ interface UIState {
   hideUI: () => void;
   incZ: () => void;
   resetZIndex: () => void;
+  setScale: (z: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number) => void;
@@ -65,6 +68,8 @@ interface UIState {
  */
 export const useUIStore = create<UIState>((set) => ({
   scale: 1.0,
+  boardWidth: 3840,
+  boardHeight: 2160,
   gridSize: 1,
   zIndex: 1,
   showUI: true,
@@ -74,7 +79,7 @@ export const useUIStore = create<UIState>((set) => ({
   appPanelPosition: { x: 20, y: 325 },
   appToolbarPanelPosition: { x: 20, y: 850 },
   minimapPanelPosition: { x: 20, y: 690 },
-  assetsPanelPosition: { x: 200, y: 100 },
+  assetsPanelPosition: { x: 250, y: 20 },
   infoPanelPosition: { x: 20, y: 20 },
   contextMenuPosition: { x: 0, y: 0 },
   setInfoPanelPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, infoPanelPosition: pos })),
@@ -92,6 +97,7 @@ export const useUIStore = create<UIState>((set) => ({
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
+  setScale: (z: number) => set((state) => ({ ...state, scale: z })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
   zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
   zoomInDelta: (d) =>
