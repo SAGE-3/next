@@ -440,6 +440,8 @@ function createWindow() {
       webviewTag: true,
       // Disable alert and confirm dialogs
       disableDialogs: true,
+      // nodeIntegration: true,
+      // contextIsolation: false,
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: true,
@@ -700,6 +702,11 @@ function createWindow() {
     console.log('will-attach-webview');
     // Disable alert and confirm dialogs
     webPreferences.disableDialogs = true;
+
+    // webPreferences.contextIsolation = true;
+    // webPreferences.nodeIntegration = true;
+
+    // params.nodeIntegration = true;
 
     const sender = event.sender;
     // console.log('Sendder:', sender);
