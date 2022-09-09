@@ -6,8 +6,9 @@
  *
  */
 
-document.addEventListener("DOMNodeInserted", function(event) {
-    if (!!window && !(!!window.$)) {
-        window.$ = window.jQuery = require('jquery');
-    }
+// document.addEventListener("DOMNodeInserted", function(event) {
+document.addEventListener('DOMContentLoaded', function (event) {
+  if (!!window && !!!window.$) {
+    window.$ = window.jQuery = require('jquery');
+  }
 });

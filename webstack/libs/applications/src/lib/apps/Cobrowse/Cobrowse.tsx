@@ -178,7 +178,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       {isElectron() ?
         mine ?
-          <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any} > </webview>
+          <webview nodeintegration={true} webpreferences="nodeintegration" ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any} > </webview>
           : <img id={"image" + props._id}></img>
         :
         mine ?
