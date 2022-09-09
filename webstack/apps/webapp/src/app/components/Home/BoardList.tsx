@@ -21,7 +21,6 @@ import { useUser } from '@sage3/frontend';
 
 type BoardListProps = {
   onBoardClick: (board: SBDocument<BoardSchema>) => void;
-  onEnterClick: (board: SBDocument<BoardSchema>) => void;
   selectedRoom: SBDocument<RoomSchema> | null;
 };
 
@@ -106,7 +105,6 @@ export function BoardList(props: BoardListProps) {
                 onEdit={() => {
                   console.log('edit board');
                 }}
-                onEnter={() => props.onEnterClick(board)}
                 onDelete={() => deleteBoard(board._id)}
               />
             );

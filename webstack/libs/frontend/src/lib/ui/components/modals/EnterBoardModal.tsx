@@ -1,0 +1,90 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import {
+  useToast, Button, Input, InputGroup, InputLeftAddon,
+  Modal, ModalCloseButton, ModalFooter, ModalContent, ModalOverlay, ModalHeader, ModalBody,
+} from '@chakra-ui/react';
+import { v5 as uuidv5 } from 'uuid';
+
+export interface EnterBoardProps {
+  isOpen: boolean;
+  onClose: () => void;
+  id: string;
+  roomId: string;
+  name: string;
+  isPrivate: boolean;
+  privatePin: string;
+}
+
+export const EnterBoardModal = (props: EnterBoardProps) => {
+  const navigate = useNavigate();
+  const [privateText, setPrivateText] = useState('');
+  const toast = useToast();
+  const initialRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // if the room is not protected, go ahead and enter the room
+    if (props.isOpen && !props.isPrivate) {
+      navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
+    }
+  }, [props.isOpen, props.isPrivate, navigate, props.id, props.roomId]);
+
+  // Checks if the user entered pin matches the board pin
+  const compareKey = () => {
+    // feature of UUID v5: private a key to 'sign' a string
+    const sageDomain = '71111d6e-64d8-4eab-953d-f88117f79f9c';
+    const key = uuidv5(privateText, sageDomain);
+
+    // compare the hashed keys
+    if (key === props.privatePin) {
+      navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
+    } else {
+      toast({
+        title: `The password you have entered is incorrect`,
+        status: 'error',
+        duration: 4 * 1000,
+        isClosable: true,
+      });
+    }
+  };
+
+  return (
+    <Modal isCentered initialFocusRef={initialRef} closeOnEsc={true} closeOnOverlayClick={true}
+      size="md" isOpen={props.isOpen} onClose={props.onClose}>
+      <ModalContent>
+        <ModalHeader>Enter the Board Password</ModalHeader>
+        <ModalBody>
+          <InputGroup>
+            <InputLeftAddon children="Password" />
+            <Input
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') compareKey();
+              }}
+              ref={initialRef}
+              width="full"
+              value={privateText}
+              type="password"
+              onChange={(e) => setPrivateText(e.target.value)}
+            />
+          </InputGroup>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={5} onClick={props.onClose}>
+              Cancel
+            </Button>
+            <Button colorScheme="green" onClick={compareKey}>
+              Enter
+            </Button>
+          </ModalFooter>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
+};
