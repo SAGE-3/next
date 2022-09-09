@@ -788,8 +788,8 @@ function createWindow() {
 
   // Retrieve media sources for desktop sharing
   ipcMain.on('request-sources', () => {
-    // Get only the monitors and thumbnails.
-    // The types param can also take "window" or "apps"
+    // Get list of the monitors and windows, requesting thumbnails for each.
+    // available types are screen and window
     const mediaInfo = {
       types: ['screen', 'window'],
       thumbnailSize: { width: 200, height: 200 },

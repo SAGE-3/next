@@ -50,10 +50,11 @@ function AppComponent(props: App): JSX.Element {
   // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
-
   const [selectedSource, setSelectedSource] = useState<ElectronSource | null>(null);
 
+  // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const shareScreen = async () => {
@@ -70,7 +71,6 @@ function AppComponent(props: App): JSX.Element {
           for (const source of sources) {
             allSources.push(source);
           }
-          console.log('sources', allSources);
           setElectronSources(allSources);
           onOpen();
         });
@@ -90,9 +90,9 @@ function AppComponent(props: App): JSX.Element {
   const stopStream = () => {
     if (room) {
       const videoId = s.videoId;
-      console.log(room.localParticipant.tracks);
+      // console.log(room.localParticipant.tracks);
       const track = Array.from(room.localParticipant.videoTracks.values()).find((el) => el.trackName === videoId);
-      console.log(track);
+      // console.log(track);
       track?.unpublish();
       track?.track.stop();
       updateState(props._id, { videoId: '' });
@@ -100,7 +100,7 @@ function AppComponent(props: App): JSX.Element {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => {
-        console.log('STOP:', track);
+        // console.log('STOP:', track);
         track.stop();
       });
       videoRef.current.srcObject = null;
