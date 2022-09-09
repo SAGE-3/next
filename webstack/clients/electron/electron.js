@@ -791,7 +791,7 @@ function createWindow() {
     // Get only the monitors and thumbnails.
     // The types param can also take "window" or "apps"
     const mediaInfo = {
-      types: ['screen'],
+      types: ['screen', 'window'],
       thumbnailSize: { width: 200, height: 200 },
     };
 
