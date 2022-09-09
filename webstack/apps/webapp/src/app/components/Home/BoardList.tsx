@@ -17,6 +17,7 @@ import { MdSearch } from 'react-icons/md';
 import { SBDocument } from '@sage3/sagebase';
 import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore } from '@sage3/frontend';
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { useUser } from '@sage3/frontend';
 
 type BoardListProps = {
   onBoardClick: (board: SBDocument<BoardSchema>) => void;
@@ -39,6 +40,9 @@ export function BoardList(props: BoardListProps) {
   const storeError = useBoardStore((state) => state.error);
   const clearError = useBoardStore((state) => state.clearError);
   const presences = usePresenceStore((state) => state.presences);
+
+  // Me
+  const { user } = useUser();
 
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [filterBoards, setFilterBoards] = useState<SBDocument<BoardSchema>[] | null>(null);
@@ -66,6 +70,7 @@ export function BoardList(props: BoardListProps) {
 
   const borderColor = useColorModeValue('#718096', '#A0AEC0');
 
+  // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
     const filBoards = boards.filter((board) => board.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
@@ -86,7 +91,11 @@ export function BoardList(props: BoardListProps) {
 
       {props.selectedRoom
         ? (filterBoards ? filterBoards : boards)
+          // show only public boards or mine
+          .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
+          // sort by name
           .sort((a, b) => a.data.name.localeCompare(b.data.name))
+          // create the cards
           .map((board) => {
             return (
               <BoardCard

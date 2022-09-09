@@ -69,22 +69,17 @@ export function HomePage() {
         </Box>
 
         {/* Selected Room */}
-        <Box flexGrow="8" mx="5">
+        <Box flexGrow="12" mx="5">
           <Box display="flex" flexDirection="row">
-            <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 500]}>
+            <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 700]}>
               <BoardList onBoardClick={handleBoardClick} onEnterClick={handleEnterBoard} selectedRoom={selectedRoom}></BoardList>
             </Box>
 
             <Box
-              width="100%"
-              height="100%"
-              // background="gray.700"
+              width="100%" height="100%"
               borderRadius="md"
-              m="2"
-              ml="8"
-              p="4"
-              display="flex"
-              flexDirection="column"
+              m="2" ml="8" p="4"
+              display="flex" flexDirection="column"
             >
               {selectedRoom ? (
                 <>
@@ -97,15 +92,13 @@ export function HomePage() {
                   <Box
                     display="flex"
                     justifyContent="center"
-                    width="100%"
-                    height="300px"
+                    width="100%" height="300px"
                     backgroundColor="gray.600"
                     borderRadius="md"
                     p="2"
                   >
                     <Box
-                      width="100%"
-                      height="100%"
+                      width="100%" height="100%"
                       backgroundColor="purple.600"
                       borderRadius="md"
                       display="flex"
@@ -116,8 +109,7 @@ export function HomePage() {
                       {' Info '}
                     </Box>
                     <Box
-                      width="100%"
-                      height="100%"
+                      width="100%" height="100%"
                       backgroundColor="yellow.600"
                       borderRadius="md"
                       display="flex"
@@ -128,8 +120,7 @@ export function HomePage() {
                       {'Chart  '}
                     </Box>
                     <Box
-                      width="100%"
-                      height="100%"
+                      width="100%" height="100%"
                       backgroundColor="blue.600"
                       borderRadius="md"
                       display="flex"
@@ -193,7 +184,7 @@ export function HomePage() {
 
       <Box position="absolute" left="2" bottom="4" display="flex" alignItems="center">
         <HomeAvatar />
-        <EnterBoardById enterBoard={enterBoard}/>
+        <EnterBoardById enterBoard={enterBoard} />
       </Box>
 
       {/* The Corner SAGE3 Image */}

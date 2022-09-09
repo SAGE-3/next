@@ -6,11 +6,11 @@
  *
  */
 
-import { Box, Button, Tooltip, Text } from '@chakra-ui/react';
+import { Box, Button, Tooltip, Text, Icon } from '@chakra-ui/react';
 import { SBDocument } from '@sage3/sagebase';
 import { sageColorByName } from '@sage3/shared';
 import { BoardSchema } from '@sage3/shared/types';
-import { MdPerson } from 'react-icons/md';
+import { MdPerson, MdLock, MdRemoveRedEye } from 'react-icons/md';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
@@ -51,6 +51,20 @@ export function BoardCard(props: BoardCardProps) {
           <Text fontSize="1xl">{props.board.data.description}</Text>
         </Box>
         <Box display="flex" mt="2" alignItems="center" flexShrink="3">
+          <Tooltip label={'This board is unlisted.'} placement="top" hasArrow openDelay={400}>
+            <div>
+              {!props.board.data.isListed ? (
+                <Icon aria-label="unlisted" as={MdRemoveRedEye} boxSize={8} />
+              ) : null}
+            </div>
+          </Tooltip>
+          <Tooltip label={'This board is protected.'} placement="top" hasArrow openDelay={400}>
+            <div>
+              {props.board.data.isPrivate ? (
+                <Icon aria-label="protected" as={MdLock} boxSize={8} />
+              ) : null}
+            </div>
+          </Tooltip>
           <Tooltip label="Enter this board" openDelay={400}>
             <Button
               onClick={props.onEnter}

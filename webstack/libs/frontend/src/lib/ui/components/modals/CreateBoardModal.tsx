@@ -21,7 +21,7 @@ import { MdPerson, MdLock } from 'react-icons/md';
 import { RoomSchema } from '@sage3/shared/types';
 import { useBoardStore } from '../../../stores';
 import { randomSAGEColor } from '@sage3/shared';
-import { useUser } from '../../../hooks';
+import { useUser } from '@sage3/frontend';
 
 interface CreateBoardModalProps {
   isOpen: boolean;
@@ -91,6 +91,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         });
       } else {
         // hash the PIN
+        // TODO: save in configuration file
         const sageDomain = '71111d6e-64d8-4eab-953d-f88117f79f9c';
         const key = uuidv5(password, sageDomain);
         // Create the board
