@@ -145,7 +145,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/* Draw the cursors: filter by board and not myself */}
         {presences
           .filter((el) => el.data.boardId === props.boardId)
-          // .filter((el) => el.data.userId !== user?._id)
+          .filter((el) => el.data.userId !== user?._id)
           .map((presence) => {
             return (
               <div
