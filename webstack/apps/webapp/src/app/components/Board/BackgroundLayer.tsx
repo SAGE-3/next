@@ -45,12 +45,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
 
+  // Local state to detect when users is dragging the board (panning)
   const [dragging, setDragging] = useState(false);
 
+  // Drag start fo the board
   function handleDragBoardStart() {
     setDragging(true);
   }
-
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
     const x = data.x;
@@ -64,15 +65,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     if (apps.length === 0) resetZIndex();
   }, [apps]);
 
-  // Track board position
-  useEffect(() => {
-    if (nodeRef.current) {
-      nodeRef.current.updatePosition({ x: boardPosition.x, y: boardPosition.y });
-    }
-  }, [boardPosition.x, boardPosition.y]);
-
   // Update the cursor every half second
-  // TODO: we skip events when the cursor is over the applications
   const throttleCursor = throttle(500, (e: MouseEvent) => {
     if (dragging) return;
     const winX = e.clientX;
@@ -110,40 +103,33 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       <Rnd
         // Remember board position and size
         default={{
-          x: -boardPosition.x,
-          y: -boardPosition.y,
+          x: boardPosition.x,
+          y: boardPosition.y,
           width: boardWidth,
           height: boardHeight,
         }}
         scale={scale}
-        x={-boardPosition.x}
-        y={-boardPosition.y}
+        position={{ x: boardPosition.x, y: boardPosition.y }}
         onDragStart={handleDragBoardStart}
         onDragStop={handleDragBoardStop}
         enableResizing={false}
         dragHandleClassName={'board-handle'}
-        // Get a ref the board object
-        ref={(c: Rnd) => {
-          nodeRef.current = c;
-        }}
       >
-        {/* Apps - SORT is to zIndex order them */}
-        {apps
-          //.sort((a, b) => a._updatedAt - b._updatedAt)
-          .map((app) => {
-            const Component = Applications[app.data.type].AppComponent;
-            return (
-              // Wrap the components in an errorboundary to protect the board from individual app errors
-              <ErrorBoundary
-                key={app._id}
-                fallbackRender={({ error, resetErrorBoundary }) => (
-                  <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
-                )}
-              >
-                <Component key={app._id} {...app}></Component>
-              </ErrorBoundary>
-            );
-          })}
+        {/* Apps */}
+        {apps.map((app) => {
+          const Component = Applications[app.data.type].AppComponent;
+          return (
+            // Wrap the components in an errorboundary to protect the board from individual app errors
+            <ErrorBoundary
+              key={app._id}
+              fallbackRender={({ error, resetErrorBoundary }) => (
+                <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+              )}
+            >
+              <Component key={app._id} {...app}></Component>
+            </ErrorBoundary>
+          );
+        })}
 
         {/* Draw the cursors: filter by board and not myself */}
         {presences
