@@ -19,7 +19,7 @@ const MaxZoom = 4.0;
 // Zoom step of 10%
 const StepZoom = 0.1;
 // When using mouse wheel, repeated events
-const WheelStepZoom = 0.004;
+const WheelStepZoom = 0.008;
 
 // Typescript interface defining the store
 interface UIState {
@@ -59,14 +59,14 @@ interface UIState {
   setScale: (z: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
-  zoomInDelta: (d: number) => void;
-  zoomOutDelta: (d: number) => void;
+  zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
+  zoomOutDelta: (d: number, cursor?: { x: number; y: number }) => void;
 }
 
 /**
  * The UIStore.
  */
-export const useUIStore = create<UIState>((set) => ({
+export const useUIStore = create<UIState>((set, get) => ({
   scale: 1.0,
   boardWidth: 3840,
   boardHeight: 2160,
@@ -100,20 +100,45 @@ export const useUIStore = create<UIState>((set) => ({
   setScale: (z: number) => set((state) => ({ ...state, scale: z })),
   zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
   zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
-  zoomInDelta: (d) =>
+  zoomInDelta: (d, cursor) =>
     set((state) => {
       const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
-      const zoomInVal = Math.min(state.scale + step * state.scale, MaxZoom);
-      // round off to next 10 value
-      // zoomInVal = Math.ceil(zoomInVal * 10) / 10;
-      return { ...state, scale: zoomInVal };
+      const zoomInVal = Math.min(get().scale + step * get().scale, MaxZoom);
+      if (cursor) {
+        const b = get().boardPosition;
+        const s = get().scale;
+        const x1 = b.x - cursor.x / s;
+        const y1 = b.y - cursor.y / s;
+        const x2 = b.x - cursor.x / zoomInVal;
+        const y2 = b.y - cursor.y / zoomInVal;
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const newX = b.x - dx;
+        const newY = b.y - dy;
+        return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomInVal };
+      } else {
+        return { ...state, scale: zoomInVal };
+      }
     }),
-  zoomOutDelta: (d) =>
+  zoomOutDelta: (d, cursor) =>
     set((state) => {
       const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
-      const zoomOutVal = Math.max(state.scale - step * state.scale, MinZoom);
-      // zoomOutVal = Math.floor(zoomOutVal * 10) / 10;
-      return { ...state, scale: zoomOutVal };
+      const zoomOutVal = Math.max(get().scale - step * get().scale, MinZoom);
+      if (cursor) {
+        const b = get().boardPosition;
+        const s = get().scale;
+        const x1 = b.x - cursor.x / s;
+        const y1 = b.y - cursor.y / s;
+        const x2 = b.x - cursor.x / zoomOutVal;
+        const y2 = b.y - cursor.y / zoomOutVal;
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const newX = b.x - dx;
+        const newY = b.y - dy;
+        return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomOutVal };
+      } else {
+        return { ...state, scale: zoomOutVal };
+      }
     }),
 }));
 

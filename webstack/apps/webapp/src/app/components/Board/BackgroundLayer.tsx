@@ -115,6 +115,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           width: boardWidth,
           height: boardHeight,
         }}
+        scale={scale}
+        x={-boardPosition.x}
+        y={-boardPosition.y}
         onDragStart={handleDragBoardStart}
         onDragStop={handleDragBoardStop}
         enableResizing={false}
