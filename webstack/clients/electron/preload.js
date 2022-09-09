@@ -6,9 +6,11 @@
  *
  */
 
-// document.addEventListener("DOMNodeInserted", function(event) {
-document.addEventListener('DOMContentLoaded', function (event) {
+//document.addEventListener('DOMContentLoaded', function (event) {
+
+document.addEventListener("DOMNodeInserted", function(event) {
   if (!!window && !!!window.$) {
+    console.log('SAGE3> preloading Jquery');
     window.$ = window.jQuery = require('jquery');
   }
 });
