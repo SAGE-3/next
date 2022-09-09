@@ -7,7 +7,6 @@
  */
 
 // The React version of Zustand
-import { Position } from '@sage3/shared/types';
 import create from 'zustand';
 
 // Dev Tools

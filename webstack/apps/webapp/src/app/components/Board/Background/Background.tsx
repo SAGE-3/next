@@ -15,7 +15,6 @@ import { AppName } from '@sage3/applications/schema';
 import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
-import { SyntheticEvent } from 'react';
 
 type BackgroundProps = {
   roomId: string;
