@@ -28,6 +28,7 @@ export function ApplicatiosnMenu(props: ApplicationProps) {
   const deleteApp = useAppStore((state) => state.delete);
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
 
   const position = useUIStore((state) => state.applicationsMenu.position);
   const setPosition = useUIStore((state) => state.applicationsMenu.setPosition);
@@ -63,8 +64,11 @@ export function ApplicatiosnMenu(props: ApplicationProps) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
-    const x = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
-    const y = Math.floor(boardPosition.y + window.innerHeight / 2 - 400 / 2);
+    console.log(boardPosition, scale, window.innerHeight, window.innerWidth);
+
+    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
+    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
+
     createApp({
       name: appName,
       description: appName + '>',
@@ -96,9 +100,11 @@ export function ApplicatiosnMenu(props: ApplicationProps) {
       setStuck={setStuck}
     >
       <Box>
-        {Object.keys(Applications).map((appName) => (
-          <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
-        ))}
+        {Object.keys(Applications)
+          .filter((el) => !el.includes('Viewer'))
+          .map((appName) => (
+            <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
+          ))}
       </Box>
     </Panel>
   );

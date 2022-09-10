@@ -6,110 +6,75 @@
  *
  */
 
- import { useEffect, useState, useRef, createContext } from 'react';
- import { Box, useColorModeValue, Text } from '@chakra-ui/react';
- import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
- import { Rnd } from 'react-rnd';
+import { useEffect } from 'react';
+import { Box } from '@chakra-ui/react';
+import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
 
- import { ButtonPanel, Panel , PanelProps} from '../Panel';
+import { Panel } from '../Panel';
 
- export interface MinimapProps  {
-     width: number;
-  // position: { x: number; y: number };
-  // setPosition: (pos: { x: number; y: number }) => void;
-  // stuck?: boolean;
- };
- 
- export function NavigationMenu(props: MinimapProps) {
-   // App Store
-   const apps = useAppStore((state) => state.apps);
-   // UI store
-   const position = useUIStore((state) => state.navigationMenu.position);
-   const setPosition = useUIStore((state) => state.navigationMenu.setPosition);
-   const opened = useUIStore((state) => state.navigationMenu.opened);
-   const setOpened = useUIStore((state) => state.navigationMenu.setOpened);
-   const show = useUIStore((state) => state.navigationMenu.show);
-   const setShow = useUIStore((state) => state.navigationMenu.setShow);
-   const stuck = useUIStore((state) => state.navigationMenu.stuck);
-   const setStuck = useUIStore((state) => state.navigationMenu.setStuck);
+export interface MinimapProps {}
 
-   const controllerPosition = useUIStore((state) => state.controller.position);
-    // if a menu is currently closed, make it "jump" to the controller
-    useEffect(() => {
-        if (!show) {
-            setPosition({x: controllerPosition.x+190, y: controllerPosition.y + 90});
-            setStuck(StuckTypes.Controller);
-        }
-    }, [show ]);
-    useEffect(() => {
-        if (stuck == StuckTypes.Controller) {
-            setPosition({x: controllerPosition.x+190, y: controllerPosition.y + 90})
-        }
-    }, [controllerPosition ]);
-    
-   const showUI = useUIStore((state) => state.showUI);
-   // Theme
-   const textColor = useColorModeValue('gray.800', 'gray.100');
-   
-   //const setNavPanelPosition = props.setPosition;
-   //const navPanelPosition = props.position;
+export function NavigationMenu() {
+  // App Store
+  const apps = useAppStore((state) => state.apps);
+  // UI store
+  const position = useUIStore((state) => state.navigationMenu.position);
+  const setPosition = useUIStore((state) => state.navigationMenu.setPosition);
+  const opened = useUIStore((state) => state.navigationMenu.opened);
+  const setOpened = useUIStore((state) => state.navigationMenu.setOpened);
+  const show = useUIStore((state) => state.navigationMenu.show);
+  const setShow = useUIStore((state) => state.navigationMenu.setShow);
+  const stuck = useUIStore((state) => state.navigationMenu.stuck);
+  const setStuck = useUIStore((state) => state.navigationMenu.setStuck);
 
-   function handleDblClick(e: any) {
-     e.stopPropagation();
-   }
- 
-  /* useEffect(() => {
-     const resizeObserver = (e: UIEvent) => {
-       props.setPosition({ x: window.innerWidth - 262, y: window.innerHeight - 156 });
-     };
-     if (stuck) {
-       props.setPosition({ x: window.innerWidth - 262, y: window.innerHeight - 156 });
-       window.addEventListener('resize', resizeObserver);
-     }
-     return () => {
-       if (stuck) window.removeEventListener('resize', resizeObserver);
-     }
-   }, [stuck]);
-   */
- 
-     return (
-         
-        <Panel 
-            title={"Mini Map"} 
-            opened={opened} 
-            setOpened={setOpened} 
-            setPosition={setPosition} 
-            position={position} 
-            width={props.width}  
-            showClose={true}
-            show={show} 
-            setShow={setShow}
-            stuck={stuck}
-            setStuck={setStuck}
-            >
-            
-             <Box alignItems="center" p="1" width="100%" display="flex">
-               <Box height={2500 / 25 + 'px'} width={5000 / 25 + 'px'} backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
-                 <Box position="absolute">
-                   {apps.map((app) => {
-                     return (
-                       <Box
-                         key={app._id}
-                         backgroundColor="teal"
-                         position="absolute"
-                         left={app.data.position.x / 25 + 'px'}
-                         top={app.data.position.y / 25 + 'px'}
-                         width={app.data.size.width / 25 + 'px'}
-                         height={app.data.size.height / 25 + 'px'}
-                         transition={'all .2s'}
-                       ></Box>
-                     );
-                   })}
-                 </Box>
-                </Box>
-            </Box>
-            
-       </Panel>);
-     
- }
- 
+  const controllerPosition = useUIStore((state) => state.controller.position);
+  // if a menu is currently closed, make it "jump" to the controller
+  useEffect(() => {
+    if (!show) {
+      setPosition({ x: controllerPosition.x + 190, y: controllerPosition.y + 90 });
+      setStuck(StuckTypes.Controller);
+    }
+  }, [show]);
+  useEffect(() => {
+    if (stuck == StuckTypes.Controller) {
+      setPosition({ x: controllerPosition.x + 190, y: controllerPosition.y + 90 });
+    }
+  }, [controllerPosition]);
+
+  return (
+    <Panel
+      title={'Mini Map'}
+      opened={opened}
+      setOpened={setOpened}
+      setPosition={setPosition}
+      position={position}
+      width={260}
+      showClose={true}
+      show={show}
+      setShow={setShow}
+      stuck={stuck}
+      setStuck={setStuck}
+    >
+      <Box alignItems="center" p="1" width="100%" display="flex">
+        <Box height={2500 / 25 + 'px'} width={5000 / 25 + 'px'} backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
+          <Box position="absolute">
+            {apps.map((app) => {
+              return (
+                <Box
+                  key={app._id}
+                  backgroundColor="teal"
+                  position="absolute"
+                  left={app.data.position.x / 25 + 'px'}
+                  top={app.data.position.y / 25 + 'px'}
+                  width={app.data.size.width / 25 + 'px'}
+                  height={app.data.size.height / 25 + 'px'}
+                  transition={'all .2s'}
+                ></Box>
+              );
+            })}
+          </Box>
+        </Box>
+      </Box>
+    </Panel>
+  );
+}

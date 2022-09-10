@@ -102,7 +102,7 @@ export function AssetsMenu() {
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={810}
+      width={817}
       showClose={true}
       show={show}
       setShow={setShow}

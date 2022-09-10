@@ -107,16 +107,6 @@ export function UILayer(props: UILayerProps) {
 
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
-      <ApplicatiosnMenu boardId={props.boardId} roomId={props.roomId} />
-
-      <MainMenu uploadOnOpen={uploadOnOpen} boardId={props.boardId} />
-
-      <AvatarMenu boardId={props.boardId} roomId={props.roomId} />
-
-      <NavigationMenu width={260} />
-
-      <AssetsMenu />
-
       <ContextMenu divId="board">
         <BoardContextMenu
           boardId={props.boardId}
@@ -126,6 +116,16 @@ export function UILayer(props: UILayerProps) {
           showAllApps={showAllApps}
         />
       </ContextMenu>
+
+      <ApplicatiosnMenu boardId={props.boardId} roomId={props.roomId} />
+
+      <MainMenu uploadOnOpen={uploadOnOpen} boardId={props.boardId} />
+
+      <AvatarMenu boardId={props.boardId} roomId={props.roomId} />
+
+      <NavigationMenu />
+
+      <AssetsMenu />
 
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 

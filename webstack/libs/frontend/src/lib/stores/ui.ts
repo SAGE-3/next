@@ -95,10 +95,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   showUI: true,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
-  appToolbarPanelPosition: { x: 20, y: window.innerHeight - 200 },
+  appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   controller: {
-    position: { x: 20, y: window.innerHeight - 120 },
+    position: { x: 16, y: window.innerHeight - 350 },
     stuck: StuckTypes.None,
     setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, controller: { ...state.controller, position: pos } })),
     setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, controller: { ...state.controller, stuck: stuck } })),
