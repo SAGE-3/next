@@ -22,7 +22,6 @@ import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
 import { setupAppForFile } from './CreateApp';
 
 export interface FilesProps {
-  show: boolean;
   files: FileEntry[];
 }
 
@@ -55,7 +54,7 @@ export function Files(props: FilesProps): JSX.Element {
     const newList = sortFiles(props.files, sorted.order, sorted.reverse);
     setList(newList);
     // Clear the search
-    setSearchTerm("");
+    setSearchTerm('');
   }, [props.files]);
 
   // Create the column headers. Add arrows indicating sorting.
@@ -95,13 +94,15 @@ export function Files(props: FilesProps): JSX.Element {
       if (sorted.reverse)
         headerFile = (
           <Flex>
-            <Box >Filename</Box> <Box>⬇︎</Box><Spacer />
+            <Box>Filename</Box> <Box>⬇︎</Box>
+            <Spacer />
           </Flex>
         );
       else
         headerFile = (
           <Flex>
-            <Box >Filename</Box> <Box>⬆︎</Box><Spacer />
+            <Box>Filename</Box> <Box>⬆︎</Box>
+            <Spacer />
           </Flex>
         );
       break;
@@ -309,13 +310,10 @@ export function Files(props: FilesProps): JSX.Element {
         } else {
           if (!modif) {
             // Deselect any other
-            if (shift && started)
-              return { ...k, selected: true };
-            else
-              return { ...k, selected: k.selected && shift };
+            if (shift && started) return { ...k, selected: true };
+            else return { ...k, selected: k.selected && shift };
           } else return k;
         }
-
       });
       return newList;
     });
@@ -336,18 +334,17 @@ export function Files(props: FilesProps): JSX.Element {
     e.dataTransfer.setData('type', JSON.stringify(tlist));
   };
 
-
   // Select the file when clicked
   const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       setList((prev) => {
-        if (e.key === "ArrowDown") {
+        if (e.key === 'ArrowDown') {
           const first = filesList.findIndex((k) => k.selected);
           if (first < prev.length - 1) {
             prev[first] = { ...prev[first], selected: false };
             prev[first + 1] = { ...prev[first + 1], selected: true };
           }
-        } else if (e.key === "ArrowUp") {
+        } else if (e.key === 'ArrowUp') {
           // @ts-expect-error
           const last = filesList.findLastIndex((k) => k.selected);
           if (last > 0) {
@@ -357,7 +354,7 @@ export function Files(props: FilesProps): JSX.Element {
         }
         return [...prev];
       });
-    } else if (e.key === "Enter") {
+    } else if (e.key === 'Enter') {
       if (!user) return;
       // Get around  the center of the board
       const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
@@ -366,20 +363,21 @@ export function Files(props: FilesProps): JSX.Element {
       const first = filesList.find((k) => k.selected);
       if (first) {
         // Create the app
-        const setup = await setupAppForFile(first, xDrop, yDrop,
-          roomId, boardId, user._id);
+        const setup = await setupAppForFile(first, xDrop, yDrop, roomId, boardId, user._id);
         if (setup) createApp(setup);
       }
     }
   };
 
   return (
-    <VStack w={"100%"} fontSize={"xs"} display={props.show ? "inherit" : "none"}>
+    <VStack w={'100%'} fontSize={'xs'}>
       {/* Search box */}
-      <InputGroup size={"xs"}>
+      <InputGroup size={'xs'}>
         <InputLeftAddon children="Search" />
-        <Input ref={initialRef}
-          size={"xs"} mb={2}
+        <Input
+          ref={initialRef}
+          size={'xs'}
+          mb={2}
           focusBorderColor="gray.500"
           placeholder="name, owner, extension..."
           _placeholder={{ opacity: 1, color: 'gray.400' }}
@@ -389,7 +387,7 @@ export function Files(props: FilesProps): JSX.Element {
       </InputGroup>
 
       {/* Headers */}
-      <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={"none"}>
+      <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'}>
         <Box flex="1" onClick={() => headerClick('file')} pr={4}>
           {headerFile}
         </Box>

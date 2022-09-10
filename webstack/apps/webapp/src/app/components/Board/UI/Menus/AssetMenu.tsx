@@ -7,23 +7,37 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Rnd } from 'react-rnd';
-import { Box, useColorModeValue, Text } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
+import { StuckTypes, useAssetStore, useUIStore, useUsersStore } from '@sage3/frontend';
 
-import { useAppStore, useUIStore, useAssetStore, useUsersStore } from '@sage3/frontend';
-import { FileEntry } from './types';
-import { Files } from './Files';
+import { Panel } from '../Panel';
+import { Files } from '../Files';
+import { useLocation } from 'react-router';
+import { FileEntry } from '../types';
 
-type AssetsProps = {
-  opened: boolean;
-  position: { x: number; y: number };
-  setPosition: (pos: { x: number; y: number }) => void;
-};
+export function AssetsMenu() {
+  const position = useUIStore((state) => state.assetsMenu.position);
+  const setPosition = useUIStore((state) => state.assetsMenu.setPosition);
+  const opened = useUIStore((state) => state.assetsMenu.opened);
+  const setOpened = useUIStore((state) => state.assetsMenu.setOpened);
+  const show = useUIStore((state) => state.assetsMenu.show);
+  const setShow = useUIStore((state) => state.assetsMenu.setShow);
+  const stuck = useUIStore((state) => state.assetsMenu.stuck);
+  const setStuck = useUIStore((state) => state.assetsMenu.setStuck);
 
-
-
-export function Assets(props: AssetsProps) {
+  const controllerPosition = useUIStore((state) => state.controller.position);
+  // if a menu is currently closed, make it "jump" to the controller
+  useEffect(() => {
+    if (!show) {
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 90 });
+      setStuck(StuckTypes.Controller);
+    }
+  }, [show]);
+  useEffect(() => {
+    if (stuck == StuckTypes.Controller) {
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 90 });
+    }
+  }, [controllerPosition]);
   // UI store
   const showUI = useUIStore((state) => state.showUI);
   // Theme
@@ -32,7 +46,6 @@ export function Assets(props: AssetsProps) {
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   // Hover state
   const [hover, setHover] = useState(false);
-  const [showContent, setShowContent] = useState(props.opened);
   // Room and board
   const location = useLocation();
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
@@ -43,11 +56,6 @@ export function Assets(props: AssetsProps) {
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
   const assets = useAssetStore((state) => state.assets);
   const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
-
-  function handleDblClick(e: React.MouseEvent<HTMLDivElement>) {
-    e.stopPropagation();
-    setShowContent(!showContent);
-  }
 
   // subscribe to the asset store
   useEffect(() => {
@@ -87,50 +95,25 @@ export function Assets(props: AssetsProps) {
     );
   }, [assets, roomId]);
 
-  if (showUI)
-    return (
-      <Rnd
-        position={{ ...props.position }}
-        bounds="parent"
-        onDragStart={() => setHover(true)}
-        onDragStop={(e, data) => {
-          setHover(false);
-          props.setPosition({ x: data.x, y: data.y });
-        }}
-        enableResizing={false}
-        dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 0.2s' }}
-      >
-        <Box
-          display="flex"
-          boxShadow={"outline"}
-          transition="all .2s "
-          bg={panelBackground}
-          p="2"
-          rounded="md"
-        >
-          <Box
-            width="25px"
-            backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
-            backgroundPosition="0 0"
-            backgroundSize="8px 8px"
-            mr="2"
-            cursor="move"
-            className="handle"
-            onDoubleClick={handleDblClick}
-          />
-
-          <Box display="flex" flexDirection="column">
-            <Text w="100%" textAlign="center" color={textColor} fontSize={18} fontWeight="bold" h={'auto'}
-              userSelect={'none'} className="handle" cursor="move" onDoubleClick={handleDblClick}>
-              Assets
-            </Text>
-            <Box alignItems="center" p="1" width={"3xl"} display="flex">
-              <Files files={assetsList} show={showContent} />
-            </Box>
-          </Box>
+  return (
+    <Panel
+      title="Assets"
+      opened={opened}
+      setOpened={setOpened}
+      setPosition={setPosition}
+      position={position}
+      width={810}
+      showClose={true}
+      show={show}
+      setShow={setShow}
+      stuck={stuck}
+      setStuck={setStuck}
+    >
+      <Box display="flex" flexDirection="column">
+        <Box alignItems="center" p="1" width={'3xl'} display="flex">
+          <Files files={assetsList} />
         </Box>
-      </Rnd >
-    );
-  else return null;
+      </Box>
+    </Panel>
+  );
 }
