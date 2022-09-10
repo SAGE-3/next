@@ -14,7 +14,6 @@ import { useNavigate } from 'react-router';
 import { ButtonPanel, Panel, PanelProps } from '../Panel';
 
 export interface MainMenuProps {
-  assetOnOpen: () => void;
   uploadOnOpen: () => void;
   boardId: string;
 }
