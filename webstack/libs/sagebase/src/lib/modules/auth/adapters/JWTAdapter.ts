@@ -54,8 +54,14 @@ export function passportJWTSetup(config: SBAuthJWTConfig): boolean {
           if (expiration.getTime() >= now.getTime()) {
             // Check the audience and issuer of the token
             if (payload.aud === opts.audience || payload.iss === opts.issuer) {
-              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub);
-              console.log('JWT auth record:', authRecord);
+              const displayName = payload.name;
+              const email = payload.sub;
+              const extras = {
+                displayName: displayName ?? '',
+                email: email ?? '',
+                picture: '',
+              };
+              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub, extras);
               if (authRecord) {
                 return done(null, authRecord);
               } else {

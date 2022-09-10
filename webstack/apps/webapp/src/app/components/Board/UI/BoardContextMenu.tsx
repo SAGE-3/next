@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { Button, useColorModeValue, VStack, Text, Checkbox, Divider, useColorMode, HStack } from '@chakra-ui/react';
 
-import { initialValues } from '@sage3/applications/apps';
+import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -17,6 +17,8 @@ type ContextProps = {
   roomId: string;
   boardId: string;
   clearBoard: () => void;
+  fitToBoard: () => void;
+  showAllApps: () => void;
 };
 
 // State of the checkboxes in context menu: grid ui
@@ -73,8 +75,8 @@ export function BoardContextMenu(props: ContextProps) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
-    const x = Math.floor(boardPosition.x + (contextMenuPosition.x * 1/scale) );
-    const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1/scale) );
+    const x = Math.floor(boardPosition.x + (contextMenuPosition.x * 1 / scale));
+    const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1 / scale));
     createApp({
       name: appName,
       description: appName + '>',
@@ -111,10 +113,12 @@ export function BoardContextMenu(props: ContextProps) {
           >
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </Button>
-          <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start">
+          <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start"
+            onClick={props.fitToBoard}>
             Fit View to Board
           </Button>
-          <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start">
+          <Button w="100%" borderRadius={2} h="auto" p={1} mt={0} fontSize={14} color={textColor} justifyContent="flex-start"
+            onClick={props.showAllApps}>
             Show all Apps
           </Button>
           <Button
@@ -295,7 +299,7 @@ export function BoardContextMenu(props: ContextProps) {
             Info
           </Button>
         </VStack>
-        
+
 
         <VStack w={'100%'}>
           <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>

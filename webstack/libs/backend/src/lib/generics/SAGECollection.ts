@@ -6,11 +6,10 @@
  *
  */
 
-import { SAGEBase, SBCollectionRef, SBDocumentMessage, SBDocument, SBJSON, SBDocumentUpdate } from '@sage3/sagebase';
+import { SAGEBase, SBCollectionRef, SBDocumentMessage, SBDocument, SBJSON, SBDocumentUpdate, SBAuthSchema } from '@sage3/sagebase';
 import { APIClientWSMessage } from '@sage3/shared/types';
 import { Router } from 'express';
 import { SubscriptionCache } from '../utils';
-import { sageRouter } from './SAGERouter';
 import { sageWSRouter } from './SAGEWSRouter';
 import { WebSocket } from 'ws';
 
@@ -150,8 +149,8 @@ export class SAGE3Collection<T extends SBJSON> {
     return this._httpRouter;
   }
 
-  public wsRouter(socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache): Promise<void> {
-    return sageWSRouter<T>(this, socket, message, userId, cache);
+  public wsRouter(socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache): Promise<void> {
+    return sageWSRouter<T>(this, socket, message, user, cache);
   }
 
   protected printMessage(message: string) {

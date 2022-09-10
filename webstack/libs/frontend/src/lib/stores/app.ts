@@ -26,6 +26,8 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface Applications {
   apps: App[];
+  error: { id?: string; msg: string } | null;
+  clearError: () => void;
   create: (newApp: AppSchema) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
@@ -41,25 +43,41 @@ const AppStore = createVanilla<Applications>((set, get) => {
   let boardSub: (() => void) | null = null;
   return {
     apps: [],
+    error: null,
+    clearError: () => {
+      set({ error: null });
+    },
     create: async (newApp: AppSchema) => {
       const app = await SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
+      if (!app.success) {
+        set({ error: { msg: app.message } });
+      }
       return app;
     },
     update: async (id: string, updates: Partial<AppSchema>) => {
-      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
+      const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
+      if (!res.success) {
+        set({ error: { id, msg: res.message } });
+      }
     },
     updateState: async (id: string, state: Partial<AppState>) => {
       // HOT FIX: This is a hack to make the app state update work.
       // Not really type safe and I need to figure out a way to do nested props properly.
       const update = {} as any;
-      for (let key in state) {
+      for (const key in state) {
         const value = (state as any)[key];
         update[`state.${key}`] = (state as any)[key];
       }
-      SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', update);
+      const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', update);
+      if (!res.success) {
+        set({ error: { msg: res.message } });
+      }
     },
     delete: async (id: string) => {
-      SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
+      const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
+      if (!res.success) {
+        set({ error: { id, msg: res.message } });
+      }
     },
     unsubToBoard: () => {
       // Unsubscribe old subscription
@@ -74,6 +92,9 @@ const AppStore = createVanilla<Applications>((set, get) => {
       const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
       if (apps.success) {
         set({ apps: apps.data });
+      } else {
+        set({ error: { msg: apps.message || 'subscription error' } });
+        return;
       }
 
       // Unsubscribe old subscription
@@ -121,6 +142,10 @@ const AppStore = createVanilla<Applications>((set, get) => {
 const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
   return {
     apps: [],
+    error: null,
+    clearError: () => {
+      set({ error: null });
+    },
     create: async (newApp: AppSchema) => {
       const app = {
         _id: genId(),
@@ -153,12 +178,9 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
   };
 });
 
-
-
-
 const playground = process.env.NX_TASK_TARGET_PROJECT === 'playground';
 // Convert the Zustand JS store to Zustand React Store
 export const useAppStore = playground ? createReact(AppPlaygroundStore) : createReact(AppStore);
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('AppStore', useAppStore);
+if (process.env.NODE_ENV === 'development') mountStoreDevtool('AppStore', useAppStore);

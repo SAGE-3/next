@@ -8,18 +8,9 @@
 
 import React, { useCallback, useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  InputGroup,
-  InputLeftElement,
-  Input,
-  Button,
-  FormControl,
-  FormLabel,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
+  InputGroup, InputLeftElement, Input,
+  Button, FormControl, FormLabel, Text,
 } from '@chakra-ui/react';
 import { MdPerson, MdEmail } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
@@ -31,16 +22,15 @@ type CreateUserProps = {
 }
 
 export function CreateUserModal(props: CreateUserProps): JSX.Element {
+  // get the user information
+  const auth = useAuth();
 
-  const [name, setName] = useState<UserSchema['name']>('');
-  const [email, setEmail] = useState<UserSchema['email']>('');
+  const [name, setName] = useState<UserSchema['name']>(auth.auth?.displayName ?? '');
+  const [email, setEmail] = useState<UserSchema['email']>(auth.auth?.email ?? '');
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)
 
-  const { logout } = useAuth();
-
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
 
@@ -87,6 +77,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
                 type="string"
                 id='first-name'
                 placeholder='First name'
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
                 value={name}
                 onChange={handleNameChange}
                 onKeyDown={onSubmit} />
@@ -95,21 +86,23 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
           <FormControl isRequired >
             <FormLabel htmlFor='email'>Email</FormLabel>
-
             <InputGroup>
               <InputLeftElement pointerEvents="none" children={<MdEmail size={'1.5rem'} />} />
               <Input
                 id='email'
                 type='email'
                 value={email}
+                placeholder='name@email.com'
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
                 onChange={handleEmailChange}
                 onKeyDown={onSubmit}
               />
             </InputGroup>
           </FormControl>
+          <Text mt={3} fontSize={"md"}>Authentication: <em>{auth.auth?.provider}</em></Text>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mx={2} onClick={logout}>Cancel</Button>
+          <Button colorScheme="red" mx={2} onClick={auth.logout}>Cancel</Button>
           <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
             Create Account
           </Button>

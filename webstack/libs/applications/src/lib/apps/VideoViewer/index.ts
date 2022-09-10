@@ -14,12 +14,14 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  id: z.string(),
+  play: z.object({ paused: z.boolean(), uid: z.string(), currentTime: z.number(), loop: z.boolean() }),
+  vid: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
-  id: '',
+export const init: state = {
+  play: { paused: true, uid: '', currentTime: 0, loop: false },
+  vid: '',
 };
 
 export const name = 'VideoViewer';

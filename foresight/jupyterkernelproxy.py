@@ -15,7 +15,7 @@ class AsyncioEventLoopThread(threading.Thread):
 
 
     def run(self):
-        print("I a running the thread......")
+        # print("I a running the thread......")
         self.running = True
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
@@ -27,7 +27,7 @@ class AsyncioEventLoopThread(threading.Thread):
         self.running = False
         # self.kc.shutdown()
         self.loop.call_soon_threadsafe(self.loop.stop)
-        print("waiting for the asyncio loop to stop")
+        # print("waiting for the asyncio loop to stop")
         time.sleep(1)
 
 class Borg:
@@ -107,12 +107,12 @@ class JupyterKernelProxy(Borg):
     @_run_coro
     async def cleanup(self):
         self.stop_thread = True
-        print("Stopping processes")
+        # print("Stopping processes")
         # self.kc.shutdown()
-        await asyncio.sleep(1)
-        print("Done Stopping processes")
+        await asyncio.sleep(.05)
+        # print("Done Stopping processes")
         self.thr.stop()
-        print("Done Stopping processes")
+        # print("Done Stopping processes")
 
 
     @_run_coro
@@ -120,7 +120,7 @@ class JupyterKernelProxy(Borg):
         time_since_logged = 0
         while True:
             if self.stop_thread:
-                print("Stopping thread that checks for messages")
+                # print("Stopping thread that checks for messages")
                 break
             try:
                 msg = await self.kc.get_iopub_msg(timeout=1)
@@ -130,9 +130,9 @@ class JupyterKernelProxy(Borg):
                 msg_exec_state = msg["content"].get("execution_state", None)
                 # if msg_exec_state is valid, it means the info contained is not necessary
                 if msg_exec_state is None and msg["content"].get("code", None) is None:
-                    print(f"Handling message {msg}")
+                    # print(f"Handling message {msg}")
                     parent_msg_id = msg['parent_header']['msg_id']
-                    print(f"Calling fuction responsible and parent message id is {parent_msg_id}")
+                    # print(f"Calling fuction responsible and parent message id is {parent_msg_id}")
 
                     #todo: inspect function and make sure it has a first parameter that is ...
                     self.callback_info[parent_msg_id][1](msg)
@@ -141,11 +141,11 @@ class JupyterKernelProxy(Borg):
             except:
                 time_since_logged += 1
                 if time_since_logged == log_every:
-                    print("Still checking")
+                    # print("Still checking")
                     time_since_logged = 0
-        print("Done with the While True loop that check for messages")
+        # print("Done with the While True loop that check for messages")
         # self.msg_checker.join()
-        print("Successfully joined the loop that check for messages")
+        # print("Successfully joined the loop that check for messages")
 
 
 

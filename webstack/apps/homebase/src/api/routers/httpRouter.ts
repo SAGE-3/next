@@ -13,7 +13,7 @@
  * @version 1.0.0
  */
 
-// Externam imports
+// NPM imports
 import * as express from 'express';
 
 // Asset imports
@@ -23,7 +23,7 @@ import { assetExpressRouter } from './custom/asset';
 import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection } from '../collections';
 import { ConfigRouter } from './config';
 
-// Lib Imports
+// SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
 
 /**
@@ -39,6 +39,8 @@ export function expressAPIRouter(): express.Router {
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
+  router.use('/users', UsersCollection.router());
+
   router.use('/assets', assetExpressRouter());
 
   router.use('/apps', AppsCollection.router());
@@ -46,8 +48,6 @@ export function expressAPIRouter(): express.Router {
   router.use('/boards', BoardsCollection.router());
 
   router.use('/rooms', RoomsCollection.router());
-
-  router.use('/users', UsersCollection.router());
 
   router.use('/presence', PresenceCollection.router());
 

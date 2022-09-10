@@ -6,10 +6,10 @@
  *
  */
 
-import { CreateUserModal, useUser } from '@sage3/frontend';
-import { UserSchema } from '@sage3/shared/types';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CreateUserModal, useUser } from '@sage3/frontend';
+import { UserSchema } from '@sage3/shared/types';
 
 export function AccountPage() {
   const { user, create } = useUser();
@@ -28,8 +28,6 @@ export function AccountPage() {
   }
 
   return (
-    <div>
-      <CreateUserModal createUser={handleCreateUser} />
-    </div>
+    <CreateUserModal createUser={handleCreateUser} />
   );
 }

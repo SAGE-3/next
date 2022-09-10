@@ -6,10 +6,10 @@
  *
  */
 
-import { Tag } from '@chakra-ui/react';
+import { Box, Tag } from '@chakra-ui/react';
 import { Applications, AppError } from '@sage3/applications/apps';
 import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GiArrowCursor } from 'react-icons/gi';
@@ -31,73 +31,105 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // UI store
   const scale = useUIStore((state) => state.scale);
+  const boardWidth = useUIStore((state) => state.boardWidth);
+  const boardHeight = useUIStore((state) => state.boardHeight);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const resetZIndex = useUIStore((state) => state.resetZIndex);
+  // Board refrence
+  const nodeRef = useRef<Rnd>();
 
   // Presence Information
   const { update: updatePresence } = usePresence();
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
 
+  // Local state to detect when users is dragging the board (panning)
+  const [dragging, setDragging] = useState(false);
+
+  // Drag start fo the board
+  function handleDragBoardStart() {
+    setDragging(true);
+  }
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
-    setBoardPosition({ x: -data.x, y: -data.y });
+    const x = data.x;
+    const y = data.y;
+    setDragging(false);
+    setBoardPosition({ x, y });
   }
 
+  // Reset the global zIndex when no apps
+  useEffect(() => {
+    if (apps.length === 0) resetZIndex();
+  }, [apps]);
+
   // Update the cursor every half second
-  // TODO: we skip events when the cursor is over the applications
-  const throttleCursor = throttle(500, (e: React.MouseEvent<HTMLDivElement>) => {
-    updatePresence({ cursor: { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, z: 0 } });
+  const throttleCursor = throttle(500, (e: MouseEvent) => {
+    if (dragging) return;
+    const winX = e.clientX;
+    const winY = e.clientY;
+    const bx = boardPosition.x;
+    const by = boardPosition.y;
+    const s = scale;
+    const x = winX / s - bx;
+    const y = winY / s - by;
+    const z = 0;
+    updatePresence({ cursor: { x, y, z } });
   });
 
   // Keep a copy of the function
-  const throttleCursorFunc = useRef(throttleCursor);
-  const cursorFunc = (e: React.MouseEvent<HTMLDivElement>) => {
-    const boardElt = document.getElementById('board');
+  const throttleCursorFunc = useCallback(throttleCursor, [boardPosition.x, boardPosition.y, scale, dragging]);
+  const cursorFunc = (e: MouseEvent) => {
     // Check if event is on the board
-    if (updatePresence && e.target === boardElt) {
+    if (updatePresence) {
       // Send the throttled version to the server
-      throttleCursorFunc.current(e);
+      throttleCursorFunc(e);
     }
   };
 
+  // Attach the mouse move event to the window
+  useEffect(() => {
+    const mouseMove = (e: MouseEvent) => cursorFunc(e);
+    window.addEventListener('mousemove', mouseMove);
+    return () => window.removeEventListener('mousemove', mouseMove);
+  }, [boardPosition.x, boardPosition.y, scale, dragging]);
+
   return (
-    <div style={{ transform: `scale(${scale})` }} onDoubleClick={() => setSelectedApp('')}>
+    <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }} onDoubleClick={() => setSelectedApp('')}>
       {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
-      {/*Cursors */}
-
       <Rnd
+        // Remember board position and size
         default={{
-          x: 0,
-          y: 0,
-          width: 5000,
-          height: 2500,
+          x: boardPosition.x,
+          y: boardPosition.y,
+          width: boardWidth,
+          height: boardHeight,
         }}
+        scale={scale}
+        position={{ x: boardPosition.x, y: boardPosition.y }}
+        onDragStart={handleDragBoardStart}
         onDragStop={handleDragBoardStop}
         enableResizing={false}
         dragHandleClassName={'board-handle'}
-        scale={scale}
-        id="monkey"
-        onMouseMove={cursorFunc}
       >
-        {/* Apps - SORT is to zIndex order them */}
-        {apps
-          .sort((a, b) => a._updatedAt - b._updatedAt)
-          .map((app) => {
-            const Component = Applications[app.data.type].AppComponent;
-            return (
-              // Wrap the components in an errorboundary to protect the board from individual app errors
-              <ErrorBoundary
-                key={app._id}
-                fallbackRender={({ error, resetErrorBoundary }) => (
-                  <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
-                )}
-              >
-                <Component key={app._id} {...app}></Component>
-              </ErrorBoundary>
-            );
-          })}
+        {/* Apps */}
+        {apps.map((app) => {
+          const Component = Applications[app.data.type].AppComponent;
+          return (
+            // Wrap the components in an errorboundary to protect the board from individual app errors
+            <ErrorBoundary
+              key={app._id}
+              fallbackRender={({ error, resetErrorBoundary }) => (
+                <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+              )}
+            >
+              <Component key={app._id} {...app}></Component>
+            </ErrorBoundary>
+          );
+        })}
 
         {/* Draw the cursors: filter by board and not myself */}
         {presences
@@ -109,11 +141,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
                 key={presence.data.userId}
                 style={{
                   position: 'absolute',
-                  left: presence.data.cursor.x + 'px',
-                  top: presence.data.cursor.y + 'px',
+                  left: presence.data.cursor.x - 4 + 'px',
+                  top: presence.data.cursor.y - 3 + 'px',
                   transition: 'all 0.5s ease-in-out',
                   pointerEvents: 'none',
                   display: 'flex',
+                  zIndex: 100000,
                 }}
               >
                 <GiArrowCursor color="red"></GiArrowCursor>

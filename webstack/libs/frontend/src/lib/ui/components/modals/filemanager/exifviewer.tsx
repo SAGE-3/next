@@ -6,8 +6,6 @@
  *
  */
 
-import React from 'react';
-
 // Ace editor
 import AceEditor from 'react-ace';
 import 'ace-builds/src-min-noconflict/mode-json.js';
@@ -17,15 +15,25 @@ import 'ace-builds/src-min-noconflict/theme-monokai.js';
 import 'ace-builds/src-min-noconflict/theme-github.js';
 
 import { ExifViewerProps } from './types';
+import { useData } from 'libs/frontend/src/lib/hooks';
 
-
+/**
+ * Read-only ace editor showing the exif data of file
+ *
+ * @export
+ * @param {ExifViewerProps} props
+ * @returns {JSX.Element}
+ */
 export function ExifViewer(props: ExifViewerProps): JSX.Element {
-  // props.file.metadata is a file - need a GET request to get the metadata
+  // props.file.metadata is a JSON file
+  // Fetch the data from the server
+  const json = useData('/api/assets/static/' + props.file.metadata);
+
   return <AceEditor
     mode={'json'}
     theme={props.colorMode === 'light' ? 'github' : 'monokai'}
     name="ace-editor"
-    value={JSON.stringify(props.file.metadata, null, 2)}
+    value={JSON.stringify(json, null, 2)}
     readOnly={true}
     focus={true}
     setOptions={{

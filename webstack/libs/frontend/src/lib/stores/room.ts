@@ -23,6 +23,8 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface RoomState {
   rooms: Room[];
+  error: string | null;
+  clearError: () => void;
   create: (newRoom: RoomSchema) => Promise<void>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
   delete: (id: string) => Promise<void>;
@@ -36,19 +38,35 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
   let roomSub: (() => void) | null = null;
   return {
     rooms: [],
+    error: null,
+    clearError: () => {
+      set({ error: null });
+    },
     create: async (newRoom: RoomSchema) => {
-      SocketAPI.sendRESTMessage(`/rooms/`, 'POST', newRoom);
+      const res = await SocketAPI.sendRESTMessage(`/rooms/`, 'POST', newRoom);
+      if (!res.success) {
+        set({ error: res.message });
+      }
     },
     update: async (id: string, updates: Partial<RoomSchema>) => {
-      SocketAPI.sendRESTMessage(`/rooms/${id}`, 'PUT', updates);
+      const res = await SocketAPI.sendRESTMessage(`/rooms/${id}`, 'PUT', updates);
+      if (!res.success) {
+        set({ error: res.message });
+      }
     },
     delete: async (id: string) => {
-      SocketAPI.sendRESTMessage(`/rooms/${id}`, 'DELETE');
+      const res = await SocketAPI.sendRESTMessage(`/rooms/${id}`, 'DELETE');
+      if (!res.success) {
+        set({ error: res.message });
+      }
     },
     subscribeToAllRooms: async () => {
       const rooms = await APIHttp.GET<RoomSchema, Room>('/rooms');
       if (rooms.success) {
         set({ rooms: rooms.data });
+      } else {
+        set({ error: rooms.message });
+        return;
       }
       // Unsubscribe old subscription
       if (roomSub) {
@@ -93,4 +111,4 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
 export const useRoomStore = createReact(RoomStore);
 
 // Add Dev tools
-if (process.env.NODE_ENV === 'development')  mountStoreDevtool('RoomStore', useRoomStore);
+if (process.env.NODE_ENV === 'development') mountStoreDevtool('RoomStore', useRoomStore);

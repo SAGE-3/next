@@ -11,7 +11,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
 
-import { useAppStore, useUser } from '@sage3/frontend';
+import { useAppStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './';
@@ -115,7 +115,7 @@ function AppComponent(props: App): JSX.Element {
       // Create a new stickie
       createApp({
         name: 'Stickie',
-        description: 'Stckie>',
+        description: 'Stickie>',
         roomId: locationState.roomId,
         boardId: locationState.boardId,
         position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
@@ -133,7 +133,7 @@ function AppComponent(props: App): JSX.Element {
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0}  borderRadius="0 0 6px 6px">
+      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px">
         <Textarea
           ref={textbox}
           resize={'none'}
@@ -163,6 +163,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
+  // Access the list of users
+  const users = useUsersStore((state) => state.users);
 
   // Larger font size
   function handleIncreaseFont() {
@@ -196,7 +198,8 @@ function ToolbarComponent(props: App): JSX.Element {
     // Add whitespace at the end of the text to make it a paragraph
     const text = s.text.split('\n').join('  \n');
     const style = `<style type="text/css" rel="stylesheet">body { background-color: ${s.color}} * {color: black} }</style>`;
-    const content = `# Stickie\n${dt}\n___\n${text}\n___\nCreated by ${props.data.ownerId} with SAGE3\n${style}`;
+    const ownerName = users.find((el) => el._id === props.data.ownerId)?.data.name;
+    const content = `# Stickie\n${dt}\n___\n${text}\n___\nCreated by ${ownerName} with SAGE3\n${style}`;
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     // Make a filename with username and date

@@ -6,12 +6,12 @@
  *
  */
 
-import { UserSchema } from "@sage3/shared/types";
-import { SAGE3Collection, sageRouter } from "@sage3/backend";
+import { UserSchema } from '@sage3/shared/types';
+import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
 class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
   constructor() {
-    super("USERS", {
+    super('USERS', {
       name: '',
       email: '',
     });
@@ -21,15 +21,15 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
     router.post('/create', async ({ body, user }, res) => {
       let doc = null;
       const id = (user as any).id;
-      if (user) { doc = await this.add(body, id, id); }
+      if (user) {
+        doc = await this.add(body, id, id);
+      }
       if (doc) res.status(200).send({ success: true, data: [doc] });
-      else res.status(500).send({ success: false, message: "Failed to create user." });
+      else res.status(500).send({ success: false, message: 'Failed to create user.' });
     });
 
     this.httpRouter = router;
   }
-
-
 }
 
 export const UsersCollection = new SAGE3UsersCollection();

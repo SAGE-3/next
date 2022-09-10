@@ -18,27 +18,28 @@ import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
+import { SBAuthSchema } from '@sage3/sagebase';
 
 const wsRoutes = {
   '/assets': assetWSRouter,
-  '/apps': (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) =>
-    AppsCollection.wsRouter(socket, message, userId, cache),
-  '/boards': (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) =>
-    BoardsCollection.wsRouter(socket, message, userId, cache),
-  '/rooms': (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) =>
-    RoomsCollection.wsRouter(socket, message, userId, cache),
-  '/users': (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) =>
-    UsersCollection.wsRouter(socket, message, userId, cache),
-  '/presence': (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) =>
-    PresenceCollection.wsRouter(socket, message, userId, cache),
+  '/apps': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    AppsCollection.wsRouter(socket, message, user, cache),
+  '/boards': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    BoardsCollection.wsRouter(socket, message, user, cache),
+  '/rooms': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    RoomsCollection.wsRouter(socket, message, user, cache),
+  '/users': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    UsersCollection.wsRouter(socket, message, user, cache),
+  '/presence': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    PresenceCollection.wsRouter(socket, message, user, cache),
   '/subscription': subscriptionWSRouter,
 } as {
-  [key: string]: (socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache) => Promise<void>;
+  [key: string]: (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) => Promise<void>;
 };
 
-export function wsAPIRouter(socket: WebSocket, message: APIClientWSMessage, userId: string, cache: SubscriptionCache): void {
+export function wsAPIRouter(socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache): void {
   const route = '/' + message.route.split('/')[2];
   if (wsRoutes[route] != undefined) {
-    wsRoutes[route](socket, message, userId, cache);
+    wsRoutes[route](socket, message, user, cache);
   }
 }

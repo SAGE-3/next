@@ -49,6 +49,7 @@ const schema = z.object({
   room: z.string(),
   originalfilename: z.string(),
   path: z.string(),
+  dateCreated: z.string(),
   dateAdded: z.string(),
   mimetype: z.string(),
   destination: z.string(),

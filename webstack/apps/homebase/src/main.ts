@@ -108,7 +108,7 @@ async function startServer() {
     const room = req.query.room as string;
     const token = twilio.generateVideoToken(authId, room);
     res.send({ token });
-  })
+  });
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
@@ -133,7 +133,7 @@ async function startServer() {
 
     socket.on('message', (msg) => {
       const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, message, user?.id || '-', subCache);
+      wsAPIRouter(socket, message, user, subCache);
     });
 
     socket.on('close', () => {
@@ -177,18 +177,22 @@ async function startServer() {
     }
 
     socket.on('message', (data) => {
-      const msg = JSON.parse(data.toString());
-      console.log('RTC> message', msg);
-      sendRTC('clients', socket, Object.keys(clients));
-
+      const datastr = data.toString();
+      const msg = JSON.parse(datastr);
       if (msg.type === 'join') {
         clients[msg.user] = socket;
-        emitRTC('join', socket, msg.user);
-        console.log('RTC> connection #', Object.keys(clients).length);
+        emitRTC('join', socket, msg);
+        console.log('WebRTC> connection #', Object.keys(clients).length);
+        sendRTC('clients', socket, Object.keys(clients));
+      } else if (msg.type === 'create') {
+        clients[msg.user] = socket;
+        console.log('WebRTC> new group for', msg.app);
+      } else if (msg.type === 'paint') {
+        emitRTC('paint', socket, msg.data);
       }
     });
     socket.on('close', (_msg) => {
-      console.log('RTC> close');
+      console.log('WebRTC> close');
       // Delete the socket from the clients array
       for (const [key, value] of Object.entries(clients)) {
         if (value === socket) {
@@ -196,17 +200,17 @@ async function startServer() {
           emitRTC('left', socket, key);
         }
       }
-      console.log('RTC> connection #', Object.keys(clients).length);
+      console.log('WebRTC> connection #', Object.keys(clients).length);
     });
     socket.on('error', (msg) => {
-      console.log('RTC> error', msg);
+      console.log('WebRTC> error', msg);
       // Delete the socket from the clients array
       for (const [key, value] of Object.entries(clients)) {
         if (value === socket) {
           delete clients[key];
         }
       }
-      console.log('RTC> connection #', Object.keys(clients).length);
+      console.log('WebRTC> connection #', Object.keys(clients).length);
     });
   });
 
@@ -247,8 +251,15 @@ async function startServer() {
             console.log('Authorization> ws ok', decoded?.sub);
             const payload = decoded as JWTPayload;
             if (decoded?.sub) {
+              const displayName = payload.name;
+              const email = payload.sub;
+              const extras = {
+                displayName: displayName ?? '',
+                email: email ?? '',
+                picture: '',
+              };
               // Find the actual user based on the token information
-              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub);
+              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub, extras);
               // Add the info to the request
               req.user = authRecord;
               if (wsPath === 'api') {

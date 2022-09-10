@@ -7,7 +7,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Button, Input, InputGroup, InputRightElement, Text, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import {
+  Button, Input, InputGroup, InputRightElement,
+  Text, Tooltip, useColorModeValue, useToast
+} from '@chakra-ui/react';
 
 import { MdSearch } from 'react-icons/md';
 
@@ -29,15 +32,29 @@ type BoardListProps = {
  * @returns
  */
 export function BoardList(props: BoardListProps) {
+  // Data stores
   const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
+  const storeError = useBoardStore((state) => state.error);
+  const clearError = useBoardStore((state) => state.clearError);
+  const presences = usePresenceStore((state) => state.presences);
 
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [filterBoards, setFilterBoards] = useState<SBDocument<BoardSchema>[] | null>(null);
   const [search, setSearch] = useState('');
 
-  const presences = usePresenceStore((state) => state.presences);
+  // UI elements
+  const toast = useToast();
+
+  useEffect(() => {
+    if (storeError) {
+      // Display a message
+      toast({ description: 'Error - ' + storeError, duration: 3000, isClosable: true });
+      // Clear the error
+      clearError();
+    }
+  }, [storeError]);
 
   useEffect(() => {
     setFilterBoards(null);
@@ -61,28 +78,30 @@ export function BoardList(props: BoardListProps) {
   return (
     <>
       <InputGroup>
-        <Input placeholder="Search Boards..." my="2" value={search} onChange={handleFilterBoards} />
+        <Input my="2" value={search} onChange={handleFilterBoards}
+          placeholder="Search Boards..." _placeholder={{ opacity: 1, color: 'gray.600' }}
+        />
         <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
       </InputGroup>
 
       {props.selectedRoom
         ? (filterBoards ? filterBoards : boards)
-            .sort((a, b) => a.data.name.localeCompare(b.data.name))
-            .map((board) => {
-              return (
-                <BoardCard
-                  key={board._id}
-                  board={board}
-                  userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                  onSelect={() => props.onBoardClick(board)}
-                  onEdit={() => {
-                    console.log('edit board');
-                  }}
-                  onEnter={() => props.onEnterClick(board)}
-                  onDelete={() => deleteBoard(board._id)}
-                />
-              );
-            })
+          .sort((a, b) => a.data.name.localeCompare(b.data.name))
+          .map((board) => {
+            return (
+              <BoardCard
+                key={board._id}
+                board={board}
+                userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                onSelect={() => props.onBoardClick(board)}
+                onEdit={() => {
+                  console.log('edit board');
+                }}
+                onEnter={() => props.onEnterClick(board)}
+                onDelete={() => deleteBoard(board._id)}
+              />
+            );
+          })
         : null}
       {props.selectedRoom ? (
         <Tooltip label="Create a board" openDelay={400}>

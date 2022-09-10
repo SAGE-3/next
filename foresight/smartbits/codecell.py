@@ -7,15 +7,12 @@
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-#from pydantic import PrivateAttr
-
+import json
 
 class CodeCellState(TrackedBaseModel):
     code: str
     output: str
-    output_type: str # "ex. text/plain, stdout, html, etc"
     executeInfo: ExecuteInfo
-    #history: dict
 
 
 class CodeCell(SmartBit):
@@ -25,23 +22,9 @@ class CodeCell(SmartBit):
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(CodeCell, self).__init__(**kwargs)
-        # self._some_private_info = {1: 2}
 
     def handle_exec_result(self, msg):
-        print(f"I am in execute results and msg is: {msg}")
-        self.state.output_type = "NOT USED"
-        if "execute_result" in msg:
-            print("******I am about to set the output. The message is:\n")
-            print(msg)
-            if "text/html" in msg["execute_result"]["data"]:
-                self.state.output = msg["execute_result"]["data"]["text/html"]
-                self.state.output_type = "text/html"
-            elif "text/plain":
-                self.state.output = msg["execute_result"]["data"]["text/plain"]
-                self.state.output_type = "text/plain"
-        elif 'stream' in msg:
-            self.state.output = msg["stream"]["text"]
-
+        self.state.output = json.dumps(msg)
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

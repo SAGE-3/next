@@ -18,6 +18,7 @@ import { BgColor, useAuth } from '@sage3/frontend';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
 
+// Logos
 import sage3DarkMode from '../../assets/SAGE3DarkMode.png';
 import sage3LightMode from '../../assets/SAGE3LightMode.png';
 import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
@@ -80,7 +81,7 @@ export function LoginPage() {
               pl="1rem"
               _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
               justifyContent="flex-start"
-              disabled={!production}
+              disabled={false}
               onClick={googleLogin}
             >
               Login with Google

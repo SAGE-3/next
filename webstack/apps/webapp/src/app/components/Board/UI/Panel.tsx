@@ -20,12 +20,19 @@ const { Provider, Consumer } = createContext(16);
 // Add a title to the chakra button props
 export interface ButtonPanelProps extends ButtonProps {
   title: string;
+  candrag?: string;
   textColor?: string;
 }
 
 // Button with a title and using the font size from parent panel
 export function ButtonPanel(props: ButtonPanelProps) {
   const textColor = useColorModeValue('gray.800', 'gray.100');
+
+  const onDragStart = (e: React.DragEvent<HTMLButtonElement>) => {
+    // storing the app name in the dataTransfer object
+    e.dataTransfer.setData('app', props.title);
+  };
+
   return (
     <Box w="100%">
      
@@ -39,6 +46,9 @@ export function ButtonPanel(props: ButtonPanelProps) {
           fontSize={smallFont}
           color={props.textColor ? props.textColor : textColor}
           justifyContent="flex-start"
+          // Drag and drop the button to create an app
+          onDragStart={onDragStart}
+          draggable={props.candrag === "true" ? true : false}
         >
           {props.title}
         </Button>
