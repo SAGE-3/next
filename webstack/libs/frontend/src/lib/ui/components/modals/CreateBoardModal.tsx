@@ -11,17 +11,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
   InputGroup, InputLeftElement, Input,
-  useToast, Button,
-  Checkbox,
+  useToast, Button, Checkbox,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
-
 import { MdPerson, MdLock } from 'react-icons/md';
+
+import { useData } from 'libs/frontend/src/lib/hooks';
+import { serverConfiguration } from 'libs/frontend/src/lib/config';
+
 import { RoomSchema } from '@sage3/shared/types';
-import { useBoardStore } from '../../../stores';
 import { randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
+import { useBoardStore } from '../../../stores';
 
 interface CreateBoardModalProps {
   isOpen: boolean;
@@ -30,6 +32,9 @@ interface CreateBoardModalProps {
 }
 
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
+  // Fetch configuration from the server
+  const config = useData('/api/configuration') as serverConfiguration;
+
   const toast = useToast();
 
   const createBoard = useBoardStore(state => state.create);
@@ -90,10 +95,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           isClosable: true,
         });
       } else {
-        // hash the PIN
-        // TODO: save in configuration file
-        const sageDomain = '71111d6e-64d8-4eab-953d-f88117f79f9c';
-        const key = uuidv5(password, sageDomain);
+        // hash the PIN: the namespace comes from the server configuration
+        const key = uuidv5(password, config.namespace);
         // Create the board
         createBoard({
           name: cleanedName,

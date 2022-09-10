@@ -6,7 +6,6 @@
  *
  */
 
-
 // limited response from server to the configuration request, for security reasons
 export type serverConfiguration = {
   serverName: string;
@@ -14,7 +13,10 @@ export type serverConfiguration = {
   production: boolean;
   servers: { name: string; url: string }[];
   version: string;
+  // Jupyter token
   token: string;
+  // Namespace for signing uuid v5 keys
+  namespace: string;
 };
 
 /**
@@ -30,9 +32,9 @@ export async function GetServerName(): Promise<string | null> {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-    }
+    },
   });
-  const config = await response.json() as serverConfiguration;
+  const config = (await response.json()) as serverConfiguration;
   return config.serverName || null;
 }
 
@@ -43,10 +45,10 @@ export async function GetPort(): Promise<number | null> {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-    }
+    },
   });
 
-  const config = await response.json() as serverConfiguration;
+  const config = (await response.json()) as serverConfiguration;
   return config.port || null;
 }
 
@@ -61,8 +63,8 @@ export async function GetConfiguration(): Promise<serverConfiguration> {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-    }
+    },
   });
-  const config = await response.json() as serverConfiguration;
+  const config = (await response.json()) as serverConfiguration;
   return config;
 }

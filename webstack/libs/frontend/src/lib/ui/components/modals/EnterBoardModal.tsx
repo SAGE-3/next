@@ -10,9 +10,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import {
   useToast, Button, Input, InputGroup, InputLeftAddon,
-  Modal, ModalCloseButton, ModalFooter, ModalContent, ModalOverlay, ModalHeader, ModalBody,
+  Modal, ModalFooter, ModalContent, ModalHeader, ModalBody,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
+
+import { useData } from 'libs/frontend/src/lib/hooks';
+import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
 export interface EnterBoardProps {
   isOpen: boolean;
@@ -29,6 +32,8 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
   const [privateText, setPrivateText] = useState('');
   const toast = useToast();
   const initialRef = useRef<HTMLInputElement>(null);
+  // Fetch configuration from the server
+  const config = useData('/api/configuration') as serverConfiguration;
 
   useEffect(() => {
     // if the room is not protected, go ahead and enter the room
@@ -39,10 +44,9 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
 
   // Checks if the user entered pin matches the board pin
   const compareKey = () => {
-    // feature of UUID v5: private a key to 'sign' a string
-    const sageDomain = '71111d6e-64d8-4eab-953d-f88117f79f9c';
-    const key = uuidv5(privateText, sageDomain);
-
+    // Feature of UUID v5: private key to 'sign' a string
+    // Hash the PIN: the namespace comes from the server configuration
+    const key = uuidv5(privateText, config.namespace);
     // compare the hashed keys
     if (key === props.privatePin) {
       navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });

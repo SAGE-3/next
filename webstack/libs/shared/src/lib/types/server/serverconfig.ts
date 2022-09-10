@@ -42,7 +42,10 @@ export interface serverConfiguration {
     certificateKeyFile: string;
     certificateChainFile: string;
   };
+  // Twilio service
   twilio: TwilioConfiguration;
+  // Namespace for signing uuid v5 keys
+  namespace: string;
 }
 
 /**
@@ -71,7 +74,7 @@ export interface AuthConfiguration {
     routeEndpoint: string;
     callbackURL: string;
   };
-  // JWT JSON Web Token (JWT)
+  // JSON Web Token (JWT)
   jwtConfig?: {
     publicKey: string;
     issuer: string;
