@@ -6,32 +6,19 @@
  *
  */
 
-import { useState, createContext, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  VStack,
-  Text,
-  Button,
-  ButtonProps,
-  Tooltip,
-  useColorModeValue,
-  Box,
-  Icon,
-  IconButton,
-  CloseButton,
-  HStack,
-  propNames,
-  ComponentWithAs,
-  IconProps,
-  background,
+  Text, Button, ButtonProps,
+  useColorModeValue, Box, IconButton, HStack,
 } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
-import { MdExpandMore, MdExpandLess } from 'react-icons/md';
+import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
+
 import { StuckTypes, useUIStore } from '@sage3/frontend';
 
-// Pass the font size between the panel and the buttons
+// Font sizes
 const bigFont = 18;
 const smallFont = 14;
-const { Provider, Consumer } = createContext(16);
 
 // Add a title to the chakra button props
 export interface ButtonPanelProps extends ButtonProps {
@@ -77,7 +64,6 @@ export interface IconButtonPanelProps extends ButtonProps {
   disabled: boolean;
   used: boolean;
   description: string;
-  //textColor?: string;
 }
 
 // Button with a title and using the font size from parent panel
@@ -130,8 +116,6 @@ export function Panel(props: PanelProps) {
   // Track the size of the panel
   const [w, setW] = props.width ? useState(props.width) : useState(200);
   const [hover, setHover] = useState(false);
-  // Track the font sizes of the panel
-  const [fontsize, setFontsize] = useState(bigFont);
 
   const showActions = props.opened;
   const setShowActions = props.setOpened;
@@ -155,7 +139,6 @@ export function Panel(props: PanelProps) {
   }
 
   useEffect(() => {
-    //console.log("resize event");
     if (ref.current && props.stuck != StuckTypes.None) {
       const we = ref.current['clientWidth'];
       const he = ref.current['clientHeight'];
@@ -176,7 +159,7 @@ export function Panel(props: PanelProps) {
       } else if (props.stuck == StuckTypes.Right) {
         props.setPosition({ x: window.innerWidth - we - 5, y: window.innerHeight / 2 - he / 2 });
       } else {
-        console.log('non of the above');
+        console.log('Error> None of the above');
       }
     }
   }, [window.innerWidth, window.innerHeight]);
@@ -197,13 +180,13 @@ export function Panel(props: PanelProps) {
           position={{ ...props.position }}
           bounds="window"
           size={{ width: w, height: ref.current ? ref.current['clientHeight'] + 5 : '100px' }}
-          //onDoubleClick={handleDblClick}
+          // onDoubleClick={handleDblClick}
 
           onDragStart={() => setHover(true)}
           onDragStop={(e, data) => {
             setHover(false);
             props.setPosition({ x: data.x, y: data.y });
-            //props.setStuck(StuckTypes.None);
+            // props.setStuck(StuckTypes.None);
             if (ref.current) {
               const we = ref.current['clientWidth'];
               const he = ref.current['clientHeight'];
@@ -212,10 +195,9 @@ export function Panel(props: PanelProps) {
                 if (data.y < 5) {
                   // top
                   props.setStuck(StuckTypes.TopLeft);
-                  console.log('top left');
-                  //ref.current["style"] = {...ref.current["style"],background:'red'};
+                  // ref.current["style"] = {...ref.current["style"],background:'red'};
                 } else if (data.y > window.innerHeight - (he + 10)) {
-                  //bottom
+                  // bottom
                   props.setStuck(StuckTypes.BottomLeft);
                   console.log('bottom left');
                 } else {
@@ -230,7 +212,7 @@ export function Panel(props: PanelProps) {
                   props.setStuck(StuckTypes.TopRight);
                   console.log('top right');
                 } else if (data.y > window.innerHeight - (he + 10)) {
-                  //bottom
+                  // bottom
                   props.setStuck(StuckTypes.BottomRight);
                   console.log('bottom right');
                 } else {
@@ -239,7 +221,7 @@ export function Panel(props: PanelProps) {
                   console.log('right');
                 }
               } else if (data.y > window.innerHeight - (he + 10)) {
-                //bottom
+                // bottom
                 props.setStuck(StuckTypes.Bottom);
                 console.log('bottom');
               } else if (data.y < 5) {
@@ -250,7 +232,6 @@ export function Panel(props: PanelProps) {
                 props.setStuck(StuckTypes.None);
                 console.log('none');
               }
-              //console.log(props.stuck);
             }
             // bottom right corner
             /*if (data.x < 5 && data.y > (window.innerHeight - (props.height + 5))) {
@@ -293,7 +274,7 @@ export function Panel(props: PanelProps) {
                     w="100%"
                     textAlign="center"
                     color={textColor}
-                    fontSize={fontsize}
+                    fontSize={bigFont}
                     fontWeight="bold"
                     h={'auto'}
                     userSelect={'none'}
@@ -303,18 +284,16 @@ export function Panel(props: PanelProps) {
                     {props.title}
                   </Text>
                   {props.showClose ? (
-                    <CloseButton
-                      size="xs"
+                    <IconButton as={MdClose} aria-label="close panel" size="xs"
                       onClick={() => {
                         props.setShow(false);
                         props.setStuck(StuckTypes.Controller);
-                      }}
-                    />
+                      }} />
                   ) : null}
                   {showActions ? (
-                    <IconButton as={MdExpandLess} aria-label="show less" onClick={handleClick} size="xs" />
+                    <IconButton size="xs" as={MdExpandLess} aria-label="show less" onClick={handleClick} />
                   ) : (
-                    <IconButton as={MdExpandMore} aria-label="show more" onClick={handleClick} size="xs" />
+                    <IconButton size="xs" as={MdExpandMore} aria-label="show more" onClick={handleClick} />
                   )}
                 </HStack>
 
