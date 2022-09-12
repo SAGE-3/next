@@ -6,14 +6,10 @@
  *
  */
 
-import { MainMenu } from './UI/Menus/MainMenu';
-import { NavigationMenu } from './UI/Menus/NavigationMenu';
-import { ApplicatiosnMenu } from './UI/Menus/ApplicationsMenu';
-import { AvatarMenu } from './UI/Menus/AvatarMenu';
-import { Controller } from './UI/Menus/Controller';
+import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel } from './UI/Panels';
 import { Box, useDisclosure, Modal } from '@chakra-ui/react';
 
-import { ContextMenu, UploadModal, useAppStore, useBoardStore, useUIStore } from '@sage3/frontend';
+import { ContextMenu, UploadModal, useAppStore, useUIStore } from '@sage3/frontend';
 
 import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
@@ -21,7 +17,6 @@ import { BoardContextMenu } from './UI/BoardContextMenu';
 import { Twilio } from './UI/Twilio';
 import { ClearBoardModal } from './UI/ClearBoardModal';
 
-import { AssetsMenu } from './UI/Menus/AssetMenu';
 import { Alfred } from './UI/Alfred';
 
 type UILayerProps = {
@@ -43,8 +38,6 @@ export function UILayer(props: UILayerProps) {
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
 
-  // Upload modal
-  const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
   // Clear boar modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
 
@@ -117,20 +110,15 @@ export function UILayer(props: UILayerProps) {
         />
       </ContextMenu>
 
-      <ApplicatiosnMenu boardId={props.boardId} roomId={props.roomId} />
+      <ApplicationsPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <MainMenu uploadOnOpen={uploadOnOpen} boardId={props.boardId} />
+      <UsersPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <AvatarMenu boardId={props.boardId} roomId={props.roomId} />
+      <NavigationPanel />
 
-      <NavigationMenu />
-
-      <AssetsMenu />
+      <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
       <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
-
-      {/* Upload dialog */}
-      <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
@@ -139,7 +127,7 @@ export function UILayer(props: UILayerProps) {
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
-      <Controller />
+      <Controller boardId={props.boardId} roomId={props.roomId} />
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />
     </Box>

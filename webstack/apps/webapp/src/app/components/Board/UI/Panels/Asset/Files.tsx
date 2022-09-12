@@ -15,11 +15,11 @@ import { Virtuoso } from 'react-virtuoso';
 import { Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack } from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
-import { FileEntry } from './types';
-import { RowFile } from './RowFile';
+import { FileEntry } from '../../types';
+import { RowFile } from '../../RowFile';
 
 import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
-import { setupAppForFile } from './CreateApp';
+import { setupAppForFile } from '../../CreateApp';
 
 export interface FilesProps {
   files: FileEntry[];

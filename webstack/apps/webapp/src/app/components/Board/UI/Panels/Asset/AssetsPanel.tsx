@@ -7,15 +7,19 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue } from '@chakra-ui/react';
-import { StuckTypes, useAssetStore, useUIStore, useUsersStore } from '@sage3/frontend';
+import { Box, Button, useDisclosure } from '@chakra-ui/react';
+import { StuckTypes, UploadModal, useAssetStore, useUIStore, useUsersStore } from '@sage3/frontend';
 
 import { Panel } from '../Panel';
-import { Files } from '../Files';
-import { useLocation } from 'react-router';
-import { FileEntry } from '../types';
+import { Files } from './Files';
+import { FileEntry } from '../../types';
 
-export function AssetsMenu() {
+type AssetsPanelProps = {
+  boardId: string;
+  roomId: string;
+};
+
+export function AssetsPanel(props: AssetsPanelProps) {
   const position = useUIStore((state) => state.assetsMenu.position);
   const setPosition = useUIStore((state) => state.assetsMenu.setPosition);
   const opened = useUIStore((state) => state.assetsMenu.opened);
@@ -26,29 +30,23 @@ export function AssetsMenu() {
   const setStuck = useUIStore((state) => state.assetsMenu.setStuck);
 
   const controllerPosition = useUIStore((state) => state.controller.position);
+
+  // Clear boar modal
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 90 });
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
       setStuck(StuckTypes.Controller);
     }
   }, [show]);
   useEffect(() => {
     if (stuck == StuckTypes.Controller) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 90 });
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
     }
   }, [controllerPosition]);
-  // UI store
-  const showUI = useUIStore((state) => state.showUI);
-  // Theme
-  const panelBackground = useColorModeValue('gray.50', '#4A5568');
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
-  // Hover state
-  const [hover, setHover] = useState(false);
-  // Room and board
-  const location = useLocation();
-  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+
   // Access the list of users
   const users = useUsersStore((state) => state.users);
 
@@ -67,7 +65,7 @@ export function AssetsMenu() {
 
   useEffect(() => {
     // Filter the asset keys for this room
-    const filterbyRoom = assets.filter((k) => k.data.room === roomId);
+    const filterbyRoom = assets.filter((k) => k.data.room === props.roomId);
     const keys = Object.keys(filterbyRoom);
     // Create entries
     setAssetsList(
@@ -93,27 +91,36 @@ export function AssetsMenu() {
         return entry;
       })
     );
-  }, [assets, roomId]);
+  }, [assets, props.roomId]);
 
   return (
-    <Panel
-      title="Assets"
-      opened={opened}
-      setOpened={setOpened}
-      setPosition={setPosition}
-      position={position}
-      width={817}
-      showClose={true}
-      show={show}
-      setShow={setShow}
-      stuck={stuck}
-      setStuck={setStuck}
-    >
-      <Box display="flex" flexDirection="column">
-        <Box alignItems="center" p="1" width={'3xl'} display="flex">
-          <Files files={assetsList} />
+    <>
+      <Panel
+        title="Assets"
+        opened={opened}
+        setOpened={setOpened}
+        setPosition={setPosition}
+        position={position}
+        width={817}
+        showClose={true}
+        show={show}
+        setShow={setShow}
+        stuck={stuck}
+        setStuck={setStuck}
+      >
+        <Box display="flex" flexDirection="column">
+          <Box alignItems="center" p="1" width={'3xl'} display="flex">
+            <Files files={assetsList} />
+          </Box>
+          <Box display="flex" justifyContent="right" width="100%">
+            <Button colorScheme="green" width="100px" size={'sm'} mb="1">
+              Upload
+            </Button>
+          </Box>
         </Box>
-      </Box>
-    </Panel>
+      </Panel>
+      {/* Upload dialog */}
+      <UploadModal isOpen={isOpen} onOpen={onOpen} onClose={onClose}></UploadModal>
+    </>
   );
 }

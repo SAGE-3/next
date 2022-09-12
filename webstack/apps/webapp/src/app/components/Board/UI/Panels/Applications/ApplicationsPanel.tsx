@@ -21,7 +21,7 @@ export interface ApplicationProps {
   roomId: string;
 }
 
-export function ApplicatiosnMenu(props: ApplicationProps) {
+export function ApplicationsPanel(props: ApplicationProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
@@ -43,13 +43,13 @@ export function ApplicatiosnMenu(props: ApplicationProps) {
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 90 });
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
       setStuck(StuckTypes.Controller);
     }
   }, [show]);
   useEffect(() => {
     if (stuck == StuckTypes.Controller) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 90 });
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
     }
   }, [controllerPosition]);
 

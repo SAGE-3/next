@@ -14,7 +14,7 @@ import { Panel } from '../Panel';
 
 export interface MinimapProps {}
 
-export function NavigationMenu() {
+export function NavigationPanel() {
   // App Store
   const apps = useAppStore((state) => state.apps);
   // UI store
@@ -31,13 +31,13 @@ export function NavigationMenu() {
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
-      setPosition({ x: controllerPosition.x + 190, y: controllerPosition.y + 90 });
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
       setStuck(StuckTypes.Controller);
     }
   }, [show]);
   useEffect(() => {
     if (stuck == StuckTypes.Controller) {
-      setPosition({ x: controllerPosition.x + 190, y: controllerPosition.y + 90 });
+      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
     }
   }, [controllerPosition]);
 
