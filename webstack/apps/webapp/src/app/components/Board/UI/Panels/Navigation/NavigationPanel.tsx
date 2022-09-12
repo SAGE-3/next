@@ -26,8 +26,13 @@ export function NavigationPanel() {
   const setShow = useUIStore((state) => state.navigationMenu.setShow);
   const stuck = useUIStore((state) => state.navigationMenu.stuck);
   const setStuck = useUIStore((state) => state.navigationMenu.setStuck);
-
   const controllerPosition = useUIStore((state) => state.controller.position);
+
+  // Board size from the store
+  const boardWidth = useUIStore((state) => state.boardWidth);
+  const boardHeight = useUIStore((state) => state.boardHeight);
+  const displayScale = 25;
+
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
@@ -43,12 +48,12 @@ export function NavigationPanel() {
 
   return (
     <Panel
-      title={'Mini Map'}
+      title={'Minimap'}
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={260}
+      width={50 + boardWidth / displayScale}
       showClose={true}
       show={show}
       setShow={setShow}
@@ -56,7 +61,8 @@ export function NavigationPanel() {
       setStuck={setStuck}
     >
       <Box alignItems="center" p="1" width="100%" display="flex">
-        <Box height={2500 / 25 + 'px'} width={5000 / 25 + 'px'} backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
+        <Box width={boardWidth / displayScale + 'px'} height={boardHeight / displayScale + 'px'}
+          backgroundColor="#586274" borderRadius="md" border="solid teal 2px">
           <Box position="absolute">
             {apps.map((app) => {
               return (
@@ -64,10 +70,10 @@ export function NavigationPanel() {
                   key={app._id}
                   backgroundColor="teal"
                   position="absolute"
-                  left={app.data.position.x / 25 + 'px'}
-                  top={app.data.position.y / 25 + 'px'}
-                  width={app.data.size.width / 25 + 'px'}
-                  height={app.data.size.height / 25 + 'px'}
+                  left={app.data.position.x / displayScale + 'px'}
+                  top={app.data.position.y / displayScale + 'px'}
+                  width={app.data.size.width / displayScale + 'px'}
+                  height={app.data.size.height / displayScale + 'px'}
                   transition={'all .2s'}
                 ></Box>
               );
