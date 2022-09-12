@@ -1,6 +1,7 @@
 // SAGE3 Generated from apps.json file
 
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
+import { name as GrouperName, init as defaultGrouper } from './apps/Grouper';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
@@ -21,6 +22,7 @@ import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as ZoomName, init as defaultZoom } from './apps/Zoom';
 
 import Counter from './apps/Counter/Counter';
+import Grouper from './apps/Grouper/Grouper';
 import Linker from './apps/Linker/Linker';
 import Stickie from './apps/Stickie/Stickie';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
@@ -41,6 +43,7 @@ import VegaLite from './apps/VegaLite/VegaLite';
 import Zoom from './apps/Zoom/Zoom';
 
 export const Applications = {
+  [GrouperName]: Grouper,
   [CounterName]: Counter,
   [LinkerName]: Linker,
   [StickieName]: Stickie,
@@ -63,6 +66,7 @@ export const Applications = {
 } as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export const initialValues = {
+  [GrouperName]: defaultGrouper,
   [CounterName]: defaultCounter,
   [LinkerName]: defaultLinker,
   [StickieName]: defaultStickie,

@@ -34,6 +34,7 @@ interface Applications {
   delete: (id: string) => Promise<void>;
   unsubToBoard: () => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
+  getAppById:(id: string) => App | null;
 }
 
 /**
@@ -46,6 +47,10 @@ const AppStore = createVanilla<Applications>((set, get) => {
     error: null,
     clearError: () => {
       set({ error: null });
+    },
+    getAppById:(id: string) : App | null => {
+      const _apps = get().apps;
+      return _apps.reduce(function(accumulator: App | null, currentValue: App) {if (currentValue._id === id) return currentValue; else return accumulator}, null);
     },
     create: async (newApp: AppSchema) => {
       const app = await SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
@@ -145,6 +150,10 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     error: null,
     clearError: () => {
       set({ error: null });
+    },
+    getAppById:(id: string) : App | null => {
+      const _apps = get().apps;
+      return _apps.reduce(function(accumulator: App | null, currentValue: App) {if (currentValue._id === id) return currentValue; else return accumulator}, null);
     },
     create: async (newApp: AppSchema) => {
       const app = {

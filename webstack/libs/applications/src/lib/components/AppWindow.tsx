@@ -22,6 +22,8 @@ type WindowProps = {
 
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
+  onSelected?: ()=> void;
+  onDeselected?: ()=> void;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -32,6 +34,8 @@ export function AppWindow(props: WindowProps) {
   const gridSize = useUIStore((state) => state.gridSize);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
+
+  const [selected, setSelected] = useState(false);
 
   // Display messages
   const toast = useToast();
@@ -66,6 +70,19 @@ export function AppWindow(props: WindowProps) {
       clearError();
     }
   }, [storeError]);
+
+  useEffect(() => {
+    if (props.app._id == selectedApp && props.onSelected) {
+      props.onSelected();
+      setSelected(true);
+    }
+    if (props.app._id !== selectedApp && props.onDeselected) {
+      if (selected) {
+        props.onDeselected();
+        setSelected(false)
+      }
+    }
+   }, [selectedApp]);
 
   // If size or position change, update the local state.
   useEffect(() => {

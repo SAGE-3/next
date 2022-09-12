@@ -6,6 +6,8 @@
  *
  */
 
+import { Box } from "@chakra-ui/react";
+
 type WhiteboardLayerProps = {
   boardId: string;
   roomId: string;
