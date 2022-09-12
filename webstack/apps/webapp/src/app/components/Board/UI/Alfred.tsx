@@ -58,7 +58,6 @@ export function Alfred(props: props) {
   };
 
   // Alfred quick bar response
-  // TODO: move to another file
   const alfredAction = useCallback(
     (term: string) => {
       if (!user) return;

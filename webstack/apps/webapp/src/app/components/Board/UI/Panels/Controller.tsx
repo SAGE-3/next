@@ -6,12 +6,13 @@
  *
  */
 
-import { HStack, Tooltip, useToast } from '@chakra-ui/react';
-import { StuckTypes, useBoardStore, useRoomStore, useUIStore } from '@sage3/frontend';
 import { useNavigate } from 'react-router';
+import { HStack, Tooltip, useToast } from '@chakra-ui/react';
 
-import { Panel, IconButtonPanel } from './Panel';
 import { MdMap, MdGroups, MdFolder, MdApps, MdHome } from 'react-icons/md';
+
+import { StuckTypes, useBoardStore, useRoomStore, useUIStore } from '@sage3/frontend';
+import { Panel, IconButtonPanel } from './Panel';
 
 export interface ControllerProps {
   roomId: string;

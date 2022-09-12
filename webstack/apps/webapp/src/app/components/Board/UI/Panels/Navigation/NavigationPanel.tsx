@@ -12,7 +12,7 @@ import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
 
 import { Panel } from '../Panel';
 
-export interface MinimapProps {}
+export interface MinimapProps { }
 
 export function NavigationPanel() {
   // App Store

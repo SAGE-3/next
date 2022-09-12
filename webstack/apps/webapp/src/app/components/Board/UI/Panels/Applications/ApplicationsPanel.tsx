@@ -6,15 +6,15 @@
  *
  */
 
-import { useEffect, useState, useRef, createContext } from 'react';
-import { Box, useColorModeValue, Text } from '@chakra-ui/react';
-import { AssetModal, ContextMenu, StuckTypes, UploadModal, useAppStore, useBoardStore, useUIStore, useUser } from '@sage3/frontend';
-import { Rnd } from 'react-rnd';
+import { useEffect } from 'react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
+
+import { StuckTypes, useAppStore, useUIStore, useUser } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName } from '@sage3/applications/schema';
 
-import { ButtonPanel, Panel, PanelProps } from '../Panel';
+import { ButtonPanel, Panel } from '../Panel';
 
 export interface ApplicationProps {
   boardId: string;
@@ -54,17 +54,15 @@ export function ApplicationsPanel(props: ApplicationProps) {
   }, [controllerPosition]);
 
   // Theme
-  const textColor = useColorModeValue('gray.800', 'gray.100');
+  // const textColor = useColorModeValue('gray.800', 'gray.100');
   // User
   const { user } = useUser();
 
-  //const setAppPanelPosition = props.setPosition;
-  //const appPanelPosition = props.position;
+  // const setAppPanelPosition = props.setPosition;
+  // const appPanelPosition = props.position;
 
   const newApplication = (appName: AppName) => {
     if (!user) return;
-
-    console.log(boardPosition, scale, window.innerHeight, window.innerWidth);
 
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);

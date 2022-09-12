@@ -77,7 +77,3 @@ export function UsersPanel(props: AvatarProps) {
     </Panel>
   );
 }
-
-function y(x: any, arg1: number, y: any, arg3: number) {
-  throw new Error('Function not implemented.');
-}

@@ -8,14 +8,14 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
-import { ReactComponent as AppIcon } from './icon.svg';
+// import { ReactComponent as AppIcon } from './icon.svg';
 
 type WindowProps = {
   app: App;

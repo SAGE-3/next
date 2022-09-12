@@ -6,17 +6,14 @@
  *
  */
 
-import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel } from './UI/Panels';
 import { Box, useDisclosure, Modal } from '@chakra-ui/react';
 
+import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel } from './UI/Panels';
 import { ContextMenu, UploadModal, useAppStore, useUIStore } from '@sage3/frontend';
-
 import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
-
 import { Twilio } from './UI/Twilio';
 import { ClearBoardModal } from './UI/ClearBoardModal';
-
 import { Alfred } from './UI/Alfred';
 
 type UILayerProps = {
