@@ -17,7 +17,6 @@ import { MdSettings } from 'react-icons/md';
 import { useNavigate } from 'react-router';
 
 import { BoardList } from '../components/Home/BoardList';
-import { EnterBoardById } from '../components/Home/EnterBoardById';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 
@@ -30,7 +29,7 @@ export function HomePage() {
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const { update: updatePresence } = usePresence();
 
-  const subscribeToUsers = useUsersStore(state => state.subscribeToUsers);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
   useEffect(() => {
     subscribeToPresence();
@@ -193,11 +192,10 @@ export function HomePage() {
 
       <Box position="absolute" left="2" bottom="4" display="flex" alignItems="center">
         <HomeAvatar />
-        <EnterBoardById enterBoard={enterBoard}/>
       </Box>
 
       {/* The Corner SAGE3 Image */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7} >
+      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
         <img src={imageUrl} width="75px" alt="" />
       </Box>
     </Box>

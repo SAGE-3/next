@@ -37,7 +37,7 @@ interface CreateBoardModalProps {
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const toast = useToast();
 
-  const createBoard = useBoardStore(state => state.create);
+  const createBoard = useBoardStore((state) => state.create);
 
   const { user } = useUser();
 
@@ -55,7 +55,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     if (initialRef.current) {
       initialRef.current.select();
     }
-  }, [])
+  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -84,7 +84,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           roomId: props.roomId,
           ownerId: user._id,
           isPrivate: false,
-          color: randomSAGEColor().name
+          color: randomSAGEColor().name,
         });
         props.onClose();
       }
@@ -134,7 +134,3 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     </Modal>
   );
 }
-function userUser() {
-  throw new Error('Function not implemented.');
-}
-
