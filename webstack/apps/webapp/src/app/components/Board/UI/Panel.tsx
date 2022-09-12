@@ -143,7 +143,11 @@ export function Panel(props: PanelProps) {
       const we = ref.current['clientWidth'];
       const he = ref.current['clientHeight'];
       if (props.stuck == StuckTypes.Top) {
-        props.setPosition({ x: window.innerWidth / 2 - we / 2, y: 5 });
+        if (props.position.x > (window.innerWidth - we)) {
+          props.setPosition({ x: window.innerWidth / 2 - we / 2, y: 5 });
+        } else {
+          props.setPosition({ x: props.position.x, y: 5 });
+        }
       } else if (props.stuck == StuckTypes.TopLeft) {
         props.setPosition({ x: 5, y: 5 });
       } else if (props.stuck == StuckTypes.TopRight) {
@@ -153,7 +157,11 @@ export function Panel(props: PanelProps) {
       } else if (props.stuck == StuckTypes.BottomLeft) {
         props.setPosition({ x: 5, y: window.innerHeight - he - 5 });
       } else if (props.stuck == StuckTypes.Bottom) {
-        props.setPosition({ x: window.innerWidth / 2 - we / 2, y: window.innerHeight - he - 5 });
+        if (props.position.x > (window.innerWidth - we)) {
+          props.setPosition({ x: window.innerWidth / 2 - we / 2, y: window.innerHeight - he - 5 });
+        } else {
+          props.setPosition({ x: props.position.x, y: window.innerHeight - he - 5 });
+        }
       } else if (props.stuck == StuckTypes.Left) {
         if (props.position.y > (window.innerHeight - he)) {
           // move to make visible
