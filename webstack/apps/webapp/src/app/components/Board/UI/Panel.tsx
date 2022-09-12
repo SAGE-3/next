@@ -155,9 +155,22 @@ export function Panel(props: PanelProps) {
       } else if (props.stuck == StuckTypes.Bottom) {
         props.setPosition({ x: window.innerWidth / 2 - we / 2, y: window.innerHeight - he - 5 });
       } else if (props.stuck == StuckTypes.Left) {
-        props.setPosition({ x: 5, y: window.innerHeight / 2 - he / 2 });
+        if (props.position.y > (window.innerHeight - he)) {
+          // move to make visible
+          props.setPosition({ x: 5, y: window.innerHeight / 2 - he / 2 });
+        }
+        else {
+          // keep the same y position
+          props.setPosition({ x: 5, y: props.position.y });
+        }
       } else if (props.stuck == StuckTypes.Right) {
-        props.setPosition({ x: window.innerWidth - we - 5, y: window.innerHeight / 2 - he / 2 });
+        if (props.position.y > (window.innerHeight - he)) {
+          // move to make visible
+          props.setPosition({ x: window.innerWidth - we - 5, y: window.innerHeight / 2 - he / 2 });
+        } else {
+          // keep the same y position
+          props.setPosition({ x: window.innerWidth - we - 5, y: props.position.y });
+        }
       } else {
         console.log('Error> None of the above');
       }
