@@ -35,7 +35,7 @@ export function BoardPage() {
   // Presence Information
   const { update: updatePresence } = usePresence();
 
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // Handle joining and leave a board
   useEffect(() => {
@@ -55,8 +55,14 @@ export function BoardPage() {
 
   return (
     <>
+
       {/* The apps live here */}
       <BackgroundLayer boardId={locationState.boardId} roomId={locationState.roomId}></BackgroundLayer>
+
+      {/* The Corner SAGE3 Image */}
+      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
+        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" />
+      </Box>
 
       {/* TODO White Board Layer for marking onto board */}
       <WhiteboardLayer boardId={locationState.boardId} roomId={locationState.roomId}></WhiteboardLayer>
@@ -64,10 +70,6 @@ export function BoardPage() {
       {/* Upper layer for local UI stuff */}
       <UILayer boardId={locationState.boardId} roomId={locationState.roomId}></UILayer>
 
-      {/* The Corner SAGE3 Image */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
-        <img src={imageUrl} width="75px" alt="" />
-      </Box>
     </>
   );
 }
