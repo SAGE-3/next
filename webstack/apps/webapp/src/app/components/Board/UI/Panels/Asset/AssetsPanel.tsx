@@ -7,12 +7,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, Button, useDisclosure } from '@chakra-ui/react';
+import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer } from '@chakra-ui/react';
 import { StuckTypes, UploadModal, useAssetStore, useUIStore, useUsersStore } from '@sage3/frontend';
 
 import { Panel } from '../Panel';
 import { Files } from './Files';
-import { FileEntry } from '../../types';
+import { FileEntry } from './types';
 
 type AssetsPanelProps = {
   boardId: string;
@@ -112,11 +112,16 @@ export function AssetsPanel(props: AssetsPanelProps) {
           <Box alignItems="center" p="1" width={'3xl'} display="flex">
             <Files files={assetsList} />
           </Box>
-          <Box display="flex" justifyContent="right" width="100%">
-            <Button colorScheme="green" width="100px" size={'sm'} mb="1">
+          <Divider p={0} mt={1} mb={2} />
+          <Flex >
+            <Text fontSize={'xs'}>
+              To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder
+            </Text>
+            <Spacer />
+            <Button colorScheme="green" width="100px" size={'xs'} onClick={onOpen}>
               Upload
             </Button>
-          </Box>
+          </Flex>
         </Box>
       </Panel>
       {/* Upload dialog */}

@@ -6,20 +6,20 @@
  *
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 // React component for efficiently rendering large lists and tabular data
-import { Virtuoso } from 'react-virtuoso';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
 import { Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack } from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
-import { FileEntry } from '../../types';
-import { RowFile } from '../../RowFile';
 
 import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
-import { setupAppForFile } from '../../CreateApp';
+import { FileEntry } from './types';
+import { RowFile } from './RowFile';
+import { setupAppForFile } from './CreateApp';
 
 export interface FilesProps {
   files: FileEntry[];
@@ -38,9 +38,11 @@ export function Files(props: FilesProps): JSX.Element {
   // Room and board
   const location = useLocation();
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+  // The table object
+  const virtuoso = useRef<VirtuosoHandle>(null);
 
   // Element to set the focus to when opening the dialog
-  const initialRef = React.useRef<HTMLInputElement>(null);
+  const initialRef = useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
   const [searchTerm, setSearchTerm] = useState<string>();
   // UI Store
@@ -55,6 +57,8 @@ export function Files(props: FilesProps): JSX.Element {
     setList(newList);
     // Clear the search
     setSearchTerm('');
+    // Scroll to the top
+    virtuoso.current?.scrollToIndex({ index: 0 });
   }, [props.files]);
 
   // Create the column headers. Add arrows indicating sorting.
@@ -249,7 +253,7 @@ export function Files(props: FilesProps): JSX.Element {
       // Store the list into the state after sorting by date
       aList.sort((a, b) => {
         // compare dates (number)
-        return a.dateAdded - b.dateAdded;
+        return b.dateAdded - a.dateAdded;
       });
     } else if (order === 'size') {
       // Store the list into the state after sorting by file size
@@ -271,6 +275,8 @@ export function Files(props: FilesProps): JSX.Element {
       const newList = sortFiles(prev, order, !sorted.reverse);
       return newList;
     });
+    // Scroll to the top
+    virtuoso.current?.scrollToIndex({ index: 0 });
   };
 
   // Select the file when clicked
@@ -417,6 +423,7 @@ export function Files(props: FilesProps): JSX.Element {
           width: '100%',
           borderCollapse: 'collapse',
         }}
+        ref={virtuoso}
         data={filesList}
         totalCount={filesList.length}
         onKeyDown={onKeyboard}

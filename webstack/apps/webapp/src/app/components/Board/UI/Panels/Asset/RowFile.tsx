@@ -7,9 +7,10 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // Date manipulation functions for file manager
-import { format as formatDate } from 'date-fns';
+import { format as formatDate, formatDistanceStrict } from 'date-fns';
 import { AssetHTTPService } from '@sage3/frontend';
 
 import {
@@ -17,26 +18,31 @@ import {
   ModalFooter, ModalBody,
   Box, Button, Flex,
   useEventListener, useDisclosure, Portal,
-  useColorMode, useColorModeValue, useToast,
+  useColorModeValue, useToast, Tooltip,
 } from '@chakra-ui/react';
 
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
-import { humanFileSize, downloadFile, useUser } from '@sage3/frontend';
+import { humanFileSize, downloadFile, useUser, useAppStore, useUIStore } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
-import { useUsersStore } from '@sage3/frontend';
-import { ExifViewer } from './exifviewer';
-import { RowFileProps } from './types';
+import { FileEntry } from './types';
+import { setupAppForFile } from './CreateApp';
+
+export type RowFileProps = {
+  file: FileEntry;
+  clickCB: (p: FileEntry, shift: boolean, modif: boolean) => void;
+  dragCB: (e: React.DragEvent<HTMLDivElement>) => void;
+};
 
 /**
- * Component diplaying one file in a row
- * Can be selected with a click
- * Change background color on hover
- * @param p FileEntry
- * @returns
- */
-export function RowFile({ file, clickCB }: RowFileProps) {
+* Component diplaying one file in a row
+* Can be selected with a click
+* Change background color on hover
+* @param p FileEntry
+* @returns
+*/
+export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
 
@@ -46,29 +52,33 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
-  // Modal showing file information
-  const { isOpen, onOpen, onClose } = useDisclosure({ id: 'exif' });
+  // Modal for delete
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
   // show the context menu
   const [showMenu, setShowMenu] = useState(false);
   const [dragImage, setDragImage] = useState<HTMLImageElement>();
-  // Access the list of users
-  const users = useUsersStore((state) => state.users);
-
-  // dark/light modes
-  const { colorMode } = useColorMode();
+  // How to create some applications
+  const createApp = useAppStore((state) => state.create);
+  // Room and board
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+  // UI Store
+  const boardPosition = useUIStore((state) => state.boardPosition);
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
-    // Flip the value
-    setSelected((s) => !s);
-    clickCB(file);
+    // @ts-expect-error
+    const ismac = navigator.userAgentData.platform === 'macOS';
+    const modifier = ismac ? e.metaKey : e.ctrlKey;
+    clickCB(file, e.shiftKey, modifier);
     if (showMenu) setShowMenu(false);
   };
-  // Select the file when double-clicked
-  // const onDoubleClick = (e: MouseEvent): void => {
-  //   dbclickCB(file);
-  // };
+
+  useEffect(() => {
+    setSelected(file.selected);
+    // hide context menu
+    setShowMenu(false);
+  }, [file]);
 
   // Context menu selection handler
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
@@ -88,9 +98,6 @@ export function RowFile({ file, clickCB }: RowFileProps) {
           isClosable: true,
         });
       }
-    } else if (id === 'info') {
-      // open a panel showing EXIF data
-      onOpen();
     }
     // deselect file selection
     setSelected(false);
@@ -111,14 +118,6 @@ export function RowFile({ file, clickCB }: RowFileProps) {
       button?.removeEventListener('click', onSingleClick);
     }
   }, [divRef]);
-
-  // useEffect(() => {
-  //   const button = buttonRef.current;
-  //   button?.addEventListener('dblclick', onDoubleClick);
-  //   return () => {
-  //     button?.removeEventListener('dblclick', onDoubleClick);
-  //   }
-  // }, [buttonRef]);
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {
@@ -154,7 +153,9 @@ export function RowFile({ file, clickCB }: RowFileProps) {
 
   // Generate a human readable string from date
   const modif = formatDate(new Date(file.date), 'MM/dd/yyyy');
-  const added = formatDate(new Date(file.dateAdded), 'MM/dd/yyyy');
+  // const added = formatDate(new Date(file.dateAdded), 'MM/dd/yyyy');
+  const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), { addSuffix: false });
+
   // Select the color when item is selected
   const highlight = selected ? 'teal.600' : 'inherit';
   const colorHover = useColorModeValue('gray.400', 'gray.600');
@@ -163,36 +164,50 @@ export function RowFile({ file, clickCB }: RowFileProps) {
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
   const extension = getExtension(file.type);
 
-  // find the owner of the file, given the user ID
-  const owner = users.find((el) => el._id === file.owner);
-
   const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragImage) {
-      e.dataTransfer.setDragImage(dragImage, 2, 2);
+      e.dataTransfer.setDragImage(dragImage, 1, 1);
     }
+    // call drag callback in the parent
+    if (selected) dragCB(e);
+    else e.preventDefault()
   };
+
+  // Create an app for a file
+  const onDoubleClick = async (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!user) return;
+    // Get around  the center of the board
+    const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
+    const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
+
+    // Create the app
+    const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user._id);
+    if (setup) createApp(setup);
+  }
 
   return (
     <div ref={divRef}>
       <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono"
-        alignItems="center" draggable={true} onDragStart={dragStart}>
+        alignItems="center" draggable={true} onDragStart={dragStart} onDoubleClick={onDoubleClick}>
         <Box w="30px">{whichIcon(extension)}</Box>
-        <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-          {file.originalfilename}
+        <Tooltip hasArrow label={file.originalfilename} placement="auto" openDelay={500}>
+          <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
+            {file.originalfilename}
+          </Box>
+        </Tooltip>
+        <Box w="100px" textAlign="right">
+          {file.ownerName.substring(0, 12) || '-'}
         </Box>
-        <Box w="120px" textAlign="right">
-          {owner?.data.name.substring(0, 12) || '-'}
-        </Box>
-        <Box w="110px" textAlign="center">
+        <Box w="80px" textAlign="right">
           {extension}
         </Box>
-        <Box w="110px" textAlign="right">
+        <Box w="100px" textAlign="right">
           {modif}
         </Box>
-        <Box w="110px" textAlign="right">
+        <Box w="100px" textAlign="right">
           {added}
         </Box>
-        <Box w="110px" textAlign="right" pr={2}>
+        <Box w="90px" textAlign="right" pr={2}>
           {humanFileSize(file.size)}
         </Box>
       </Flex>
@@ -205,6 +220,7 @@ export function RowFile({ file, clickCB }: RowFileProps) {
               left: anchorPoint.x,
               background: bgColor,
               border: border,
+              fontSize: "0.75rem"
             }}
           >
             <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
@@ -213,15 +229,9 @@ export function RowFile({ file, clickCB }: RowFileProps) {
             <li className="s3contextmenuitem" id={'down'} onClick={actionClick}>
               Download
             </li>
-            <hr className="divider" />
-            <li className="s3contextmenuitem" id={'info'} onClick={actionClick}>
-              Info
-            </li>
           </ul>
         </Portal>
-      ) : (
-        <> </>
-      )}
+      ) : (null)}
 
       {/* Delete a file modal */}
       <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose}>
@@ -242,24 +252,6 @@ export function RowFile({ file, clickCB }: RowFileProps) {
               }}
             >
               Yes, Delete
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* EXIF info */}
-      <Modal closeOnEsc={true} closeOnOverlayClick={true} isOpen={isOpen} onClose={onClose} size={'3xl'} isCentered>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>EXIF Metadata Viewer</ModalHeader>
-          <ModalBody>
-            {/* Read-only ace editor showing the JSON data */}
-            <ExifViewer file={file} colorMode={colorMode} />
-          </ModalBody>
-
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={onClose}>
-              Close
             </Button>
           </ModalFooter>
         </ModalContent>

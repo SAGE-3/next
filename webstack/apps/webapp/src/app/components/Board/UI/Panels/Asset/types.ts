@@ -8,14 +8,12 @@
 
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
-/**
- * One row per file
- */
 export type FileEntry = {
   id: string;
   filename: string;
   originalfilename: string;
   owner: string;
+  ownerName: string;
   date: number;
   dateAdded: number;
   room: string;
@@ -25,27 +23,3 @@ export type FileEntry = {
   metadata?: string;
   derived?: ExtraImageType | ExtraPDFType;
 };
-
-export type RowFileProps = {
-  file: FileEntry;
-  clickCB: (p: FileEntry) => void;
-  // dbclickCB: (p: FileEntry) => void;
-  // style: React.CSSProperties; // for react-window
-};
-
-export interface AssetModalProps {
-  isOpen: boolean;
-  center: { x: number; y: number };
-  onOpen: () => void;
-  onClose: () => void;
-}
-
-export interface ExifViewerProps {
-  colorMode: string;
-  file: FileEntry;
-}
-
-export interface FileManagerProps {
-  files: FileEntry[];
-  // openFiles: (f: FileEntry[]) => void;
-}
