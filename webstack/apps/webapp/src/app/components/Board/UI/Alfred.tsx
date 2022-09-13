@@ -43,7 +43,7 @@ export function Alfred(props: props) {
     const y = Math.floor(boardPosition.y + window.innerHeight / 2 - 400 / 2);
     createApp({
       name: appName,
-      description: appName + '>',
+      description: appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },
@@ -118,7 +118,7 @@ export function Alfred(props: props) {
         const content = terms.slice(1).join(' ');
         createApp({
           name: 'Stickie',
-          description: 'Stckie>',
+          description: 'Stckie',
           roomId: props.roomId,
           boardId: props.boardId,
           position: pos,

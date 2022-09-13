@@ -76,7 +76,7 @@ export function BoardContextMenu(props: ContextProps) {
     const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1) / scale);
     createApp({
       name: appName,
-      description: appName + '>',
+      description: appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },

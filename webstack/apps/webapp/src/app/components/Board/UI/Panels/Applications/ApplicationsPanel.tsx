@@ -70,7 +70,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
 
     createApp({
       name: appName,
-      description: appName + '>',
+      description: appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },

@@ -41,7 +41,7 @@ export async function setupAppForFile(
       const extras = file.derived as ExtraImageType;
       resolve({
         name: 'ImageViewer',
-        description: 'Image Description',
+        description: 'Image',
         roomId: roomId,
         boardId: boardId,
         ownerId: userId,
@@ -56,7 +56,7 @@ export async function setupAppForFile(
     } else if (isVideo(file.type)) {
       resolve({
         name: 'VideoViewer',
-        description: 'Video>',
+        description: 'Video',
         roomId: roomId,
         boardId: boardId,
         ownerId: userId,
@@ -71,7 +71,7 @@ export async function setupAppForFile(
     } else if (isCSV(file.type)) {
       resolve({
         name: 'CVSViewer',
-        description: 'CSV Description',
+        description: 'CSV',
         roomId: roomId,
         boardId: boardId,
         ownerId: userId,
@@ -86,7 +86,7 @@ export async function setupAppForFile(
     } else if (isDZI(file.type)) {
       resolve({
         name: 'Zoom',
-        description: 'Zoom>',
+        description: 'Zoom',
         roomId: roomId,
         boardId: boardId,
         ownerId: userId,
@@ -101,7 +101,7 @@ export async function setupAppForFile(
     } else if (isGeoJSON(file.type)) {
       resolve({
         name: 'LeafLet',
-        description: 'LeafLet>',
+        description: 'LeafLet',
         roomId: roomId,
         boardId: boardId,
         ownerId: userId,
@@ -160,7 +160,7 @@ export async function setupAppForFile(
           // Create a note from the text
           resolve({
             name: 'VegaLite',
-            description: 'VegaLite> ' + file.originalfilename,
+            description: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
             ownerId: userId,
@@ -185,7 +185,7 @@ export async function setupAppForFile(
       }
       resolve({
         name: 'PDFViewer',
-        description: 'PDF Description',
+        description: 'PDF',
         roomId: roomId,
         boardId: boardId,
         ownerId: userId,
