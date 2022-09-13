@@ -18,7 +18,7 @@ import { useAssetStore, useAppStore, useUser } from '@sage3/frontend';
 
 import OpenSeadragon from "openseadragon";
 
-/* App component for Zoom */
+/* App component for DeepZoomImage */
 
 function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
@@ -134,7 +134,7 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app Zoom */
+/* App toolbar component for the app DeepZoomImage */
 
 function ToolbarComponent(props: App): JSX.Element {
 

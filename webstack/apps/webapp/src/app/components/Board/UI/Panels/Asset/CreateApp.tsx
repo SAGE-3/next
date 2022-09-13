@@ -85,16 +85,16 @@ export async function setupAppForFile(
       });
     } else if (isDZI(file.type)) {
       resolve({
-        name: 'Zoom',
-        description: 'Zoom',
+        name: 'DeepZoomImage',
+        description: 'DeepZoomImage',
         roomId: roomId,
         boardId: boardId,
         ownerId: userId,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
-        type: 'Zoom',
-        state: { ...initialValues['Zoom'] as AppState, zid: file.id },
+        type: 'DeepZoomImage',
+        state: { ...initialValues['DeepZoomImage'] as AppState, zid: file.id },
         minimized: false,
         raised: true
       });
