@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast, Text } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
@@ -224,7 +224,7 @@ export function AppWindow(props: WindowProps) {
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">
-          {/* <AppIcon width={(titleBarHeight  - 4) + 'px'} height="10px"></AppIcon><Text color="white">{props.app.data.description}</Text> */}
+          <Text color="white">{props.app.data.description}</Text>
         </Box>
         {/* Right Title bar Elements */}
         <Box display="flex" alignItems="center">
