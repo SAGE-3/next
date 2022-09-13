@@ -6,12 +6,13 @@
  *
  */
 
-import { Avatar, Box } from '@chakra-ui/react';
-import { useUIStore, useUser, initials, StuckTypes } from '@sage3/frontend';
-import { AvatarGroup } from '../../AvatarGroup';
-import { sageColorByName } from '@sage3/shared';
-import { Panel } from '../Panel';
 import { useEffect } from 'react';
+import { Avatar, Box, Tooltip } from '@chakra-ui/react';
+
+import { useUIStore, useUser, initials, StuckTypes } from '@sage3/frontend';
+import { sageColorByName } from '@sage3/shared';
+import { AvatarGroup } from '../../AvatarGroup';
+import { Panel } from '../Panel';
 
 export interface AvatarProps {
   boardId: string;
@@ -61,16 +62,18 @@ export function UsersPanel(props: AvatarProps) {
     >
       <Box alignItems="center" p="1" width="100%" display="flex">
         {/* User Avatar */}
-        <Avatar
-          size="sm"
-          pointerEvents={'all'}
-          name={user?.data.name}
-          getInitials={initials}
-          backgroundColor={user ? sageColorByName(user.data.color) : ''}
-          color="white"
-          border="2px solid white"
-          mx={1}
-        />
+        <Tooltip aria-label="username" hasArrow={true} placement="top-start"
+          label={"You"}>
+          <Avatar
+            size="sm"
+            pointerEvents={'all'}
+            name={user?.data.name}
+            getInitials={initials}
+            backgroundColor={user ? sageColorByName(user.data.color) : ''}
+            color="white"
+            border="2px solid white"
+            mx={1}
+          /></Tooltip>
         {/* Avatar Group */}
         <AvatarGroup boardId={props.boardId} />
       </Box>
