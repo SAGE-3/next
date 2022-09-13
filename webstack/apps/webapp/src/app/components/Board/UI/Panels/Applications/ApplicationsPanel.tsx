@@ -7,7 +7,7 @@
  */
 
 import { useEffect } from 'react';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
 
 import { StuckTypes, useAppStore, useUIStore, useUser } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
@@ -55,6 +55,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
 
   // Theme
   // const textColor = useColorModeValue('gray.800', 'gray.100');
+  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   // User
   const { user } = useUser();
 
@@ -97,13 +98,39 @@ export function ApplicationsPanel(props: ApplicationProps) {
       stuck={stuck}
       setStuck={setStuck}
     >
-      <Box>
+      <VStack
+        maxH={300}
+        w={'100%'}
+        m={0}
+        pr={2}
+        spacing={1}
+        overflow="auto"
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: gripColor,
+            borderRadius: 'md',
+          },
+        }}
+      >
+        {/* <Box > */}
         {Object.keys(Applications)
+          // remove viewer applicaitons
           .filter((el) => !el.includes('Viewer'))
+          // sort alphabetically by name
+          .sort((a, b) => a.localeCompare(b))
+          // create a button for each application
           .map((appName) => (
-            <ButtonPanel key={appName} title={appName} onClick={(e) => newApplication(appName as AppName)} />
+            <ButtonPanel key={appName} title={appName} candrag={"true"}
+              onClick={(e) => newApplication(appName as AppName)} />
           ))}
-      </Box>
-    </Panel>
+      </VStack>
+      {/* </Box> */}
+    </Panel >
   );
 }
