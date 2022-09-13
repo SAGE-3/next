@@ -8,11 +8,8 @@
 
 import { useDisclosure, useColorMode, Avatar, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 import { useAuth, useUser, EditUserModal, initials, EnterBoardByIdModal } from '@sage3/frontend';
-import { SBDocument } from '@sage3/sagebase';
 import { sageColorByName } from '@sage3/shared';
-import { BoardSchema } from '@sage3/shared/types';
-import { MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
-import { useNavigate } from 'react-router';
+import { MdInput, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
 
 /**
  * HomeAvatar component
@@ -26,10 +23,6 @@ export function HomeAvatar() {
   const { toggleColorMode } = useColorMode();
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
-  const navigate = useNavigate();
-  function handleEnterBoard(board: SBDocument<BoardSchema>) {
-    navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
-  }
 
   return (
     <>
@@ -51,11 +44,11 @@ export function HomeAvatar() {
           <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>
-          <MenuItem onClick={boardOnOpen} icon={<MdInvertColors fontSize="24px" />}>
-            Enter Board by Id
-          </MenuItem>
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
             Color Mode
+          </MenuItem>
+          <MenuItem onClick={boardOnOpen} icon={<MdInput fontSize="24px" />}>
+            Enter Board by Id
           </MenuItem>
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
             Logout
@@ -63,12 +56,7 @@ export function HomeAvatar() {
         </MenuList>
       </Menu>
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
-      <EnterBoardByIdModal
-        enterBoard={handleEnterBoard}
-        isOpen={boardIsOpen}
-        onOpen={boardOnOpen}
-        onClose={boardOnClose}
-      ></EnterBoardByIdModal>
+      <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
     </>
   );
 }

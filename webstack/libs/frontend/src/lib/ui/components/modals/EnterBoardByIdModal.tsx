@@ -23,13 +23,14 @@ import {
   ModalFooter,
   ModalBody,
 } from '@chakra-ui/react';
-import { Board } from '@sage3/shared/types';
+import { Board, BoardSchema } from '@sage3/shared/types';
 import { ChangeEvent, useState } from 'react';
 import { isUUIDv4 } from '@sage3/frontend';
+import { SBDocument } from '@sage3/sagebase';
+import { useNavigate } from 'react-router';
 
 // Props
 interface enterBoardProps {
-  enterBoard: (board: Board) => void;
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
@@ -47,6 +48,12 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
 
   // Chakra Toast
   const toast = useToast();
+
+  // Navigate to the new board
+  const navigate = useNavigate();
+  function handleEnterBoard(board: SBDocument<BoardSchema>) {
+    navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
+  }
 
   // Input Changes
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +91,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
       // Lets wait again
       await timeout(1000);
       // Enter the board
-      props.enterBoard(board);
+      handleEnterBoard(board);
     } else {
       // Reset local state
       setSubmitStatus('pending');
