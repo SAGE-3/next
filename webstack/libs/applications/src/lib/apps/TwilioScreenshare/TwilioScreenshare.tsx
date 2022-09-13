@@ -16,7 +16,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
-import { useAppStore, useUser, useTwilioStore } from '@sage3/frontend';
+import { useAppStore, useUser, useTwilioStore, useUsersStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Twilio Imports
@@ -40,12 +40,17 @@ function AppComponent(props: App): JSX.Element {
   // Current User
   const { user } = useUser();
 
+  // User store to get name of user who created screenshare
+  const users = useUsersStore((state) => state.users);
+  const userWhoCreated = users.find((u) => u._id === props._createdBy);
+
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
   const tracks = useTwilioStore((state) => state.tracks);
 
   // App Store
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
 
   // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -118,6 +123,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     stopStream();
+    if (user?._id === props._createdBy) update(props._id, { description: `Screenshare> ${user.data.name}` });
     return () => {
       stopStream();
     };
@@ -171,9 +177,9 @@ function AppComponent(props: App): JSX.Element {
                 {videoRef.current?.srcObject ? 'Stop Sharing' : 'Share Screen'}
               </Button>
             ) : (
-              <p>
-                {props._createdBy} - {s.videoId}
-              </p>
+              <Text fontSize="sm" color="white">
+                {userWhoCreated?.data.name} is sharing their screen
+              </Text>
             )}
           </Box>
         </Box>
