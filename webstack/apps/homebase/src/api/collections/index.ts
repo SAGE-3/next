@@ -52,6 +52,8 @@ export async function loadCollections(): Promise<void> {
               roomId: res._id,
               ownerId: '-',
               isPrivate: false,
+              isListed: true,
+              privatePin: '',
             },
             '-'
           );

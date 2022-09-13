@@ -8,12 +8,14 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, usePresenceStore, initials } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
+
+// import { ReactComponent as AppIcon } from './icon.svg';
 
 type WindowProps = {
   app: App;
@@ -22,7 +24,6 @@ type WindowProps = {
 
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
-  lockToBackground?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -40,6 +41,9 @@ export function AppWindow(props: WindowProps) {
   const titleBarHeight = 24;
   // Border color when selected
   const borderColor = useColorModeValue(sageColorByName('blue'), sageColorByName('orange'));
+  // Users
+  const users = useUsersStore(state => state.users);
+  const owner = users.find(el => el._id === props.app._createdBy);
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -52,7 +56,7 @@ export function AppWindow(props: WindowProps) {
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(props.app.data.minimized);
-  const [myZ, setMyZ] = useState(props.lockToBackground ? 0 : zindex);
+  const [myZ, setMyZ] = useState(zindex);
 
   // Track the app store errors
   useEffect(() => {
@@ -143,12 +147,10 @@ export function AppWindow(props: WindowProps) {
   // Track raised state
   useEffect(() => {
     if (props.app.data.raised) {
-      if (!props.lockToBackground) {
-        // raise  my zIndex
-        setMyZ(zindex + 1);
-        // raise the global value
-        incZ();
-      }
+      // raise  my zIndex
+      setMyZ(zindex + 1);
+      // raise the global value
+      incZ();
     }
   }, [props.app.data.raised]);
 
@@ -156,15 +158,12 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
     // Set the selected app in the UI store
     setSelectedApp(props.app._id);
-
-    if (!props.lockToBackground) {
-      // Raise down
-      apps.forEach((a) => {
-        if (a.data.raised) update(a._id, { raised: false });
-      });
-      // Bring to front function
-      update(props.app._id, { raised: true });
-    }
+    // Raise down
+    apps.forEach((a) => {
+      if (a.data.raised) update(a._id, { raised: false });
+    });
+    // Bring to front function
+    update(props.app._id, { raised: true });
   }
 
   return (
@@ -228,26 +227,45 @@ export function AppWindow(props: WindowProps) {
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">
+          <Tooltip label={"Opened by " + owner?.data.name} aria-label="username"
+            hasArrow={true} placement="top-start">
+            <Avatar
+              name={owner?.data.name}
+              getInitials={initials}
+              // src={owner?.data.profilePicture}
+              mr={1}
+              bg={owner ? sageColorByName(owner.data.color) : 'orange'}
+              borderRadius={'100%'}
+              textShadow={'0 0 2px #000'}
+              color={'white'}
+              size={"2xs"}
+              showBorder={true}
+              borderWidth={'0.5px'}
+              borderColor="whiteAlpha.600"
+            />
+          </Tooltip>
           <Text color="white">{props.app.data.description}</Text>
-        </Box>
+        </Box >
         {/* Right Title bar Elements */}
-        <Box display="flex" alignItems="center">
+        < Box display="flex" alignItems="center" >
           {/* Minimize Buttons */}
-          {minimized ? (
-            <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
-          ) : (
-            <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
-          )}
+          {
+            minimized ? (
+              <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
+            ) : (
+              <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
+            )
+          }
           {/* Close Button Name */}
           <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
-        </Box>
-      </Box>
+        </Box >
+      </Box >
       {/* End Title Bar */}
 
       {/* The Application */}
       <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
         {props.children}
       </Box>
-    </Rnd>
+    </Rnd >
   );
 }

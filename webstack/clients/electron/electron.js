@@ -440,6 +440,8 @@ function createWindow() {
       webviewTag: true,
       // Disable alert and confirm dialogs
       disableDialogs: true,
+      // nodeIntegration: true,
+      // contextIsolation: false,
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: true,
@@ -449,7 +451,7 @@ function createWindow() {
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
       // Hack to preload jquery for broken sites
-      // preload: path.resolve(path.join(__dirname, 'preload.js')),
+      preload: path.resolve(path.join(__dirname, 'preload.js')),
     },
   };
 
@@ -701,6 +703,11 @@ function createWindow() {
     // Disable alert and confirm dialogs
     webPreferences.disableDialogs = true;
 
+    // webPreferences.contextIsolation = true;
+    // webPreferences.nodeIntegration = true;
+
+    // params.nodeIntegration = true;
+
     const sender = event.sender;
     // console.log('Sendder:', sender);
     // sender.on('streamview', (event, arg) => {
@@ -788,10 +795,10 @@ function createWindow() {
 
   // Retrieve media sources for desktop sharing
   ipcMain.on('request-sources', () => {
-    // Get only the monitors and thumbnails.
-    // The types param can also take "window" or "apps"
+    // Get list of the monitors and windows, requesting thumbnails for each.
+    // available types are screen and window
     const mediaInfo = {
-      types: ['screen'],
+      types: ['screen', 'window'],
       thumbnailSize: { width: 200, height: 200 },
     };
 

@@ -27,6 +27,7 @@ function sub(update: UpdateFunc, s: AppState, id: string) {
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
+
   return (
     <AppWindow app={props}>
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">

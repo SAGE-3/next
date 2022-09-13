@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
  * @returns
  */
 export function useData(url: string) {
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<any>();
   useEffect(() => {
     let ignore = false;
     fetch(url)

@@ -115,7 +115,7 @@ function AppComponent(props: App): JSX.Element {
       // Create a new stickie
       createApp({
         name: 'Stickie',
-        description: 'Stickie>',
+        description: 'Stickie',
         roomId: locationState.roomId,
         boardId: locationState.boardId,
         position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },

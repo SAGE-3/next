@@ -15,7 +15,7 @@ import { useAppStore, useAssetStore, useUser, useUIStore } from '@sage3/frontend
 import { FileManager } from './filemanager/filemanager';
 import { FileEntry, AssetModalProps } from './filemanager/types';
 
-import { initialValues } from '@sage3/applications/apps';
+import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType } from '@sage3/shared/types';
 import { isImage, isPDF, isCSV, isText, isJSON } from '@sage3/shared';
 import { AppState } from 'libs/applications/src/lib/types';
@@ -103,7 +103,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
           const extras = d.derived as ExtraImageType;
           createApp({
             name: 'ImageViewer',
-            description: 'Image Description',
+            description: 'Image',
             roomId,
             boardId,
             ownerId: user._id,
@@ -119,7 +119,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
         } else if (isCSV(d.type)) {
           createApp({
             name: 'CVSViewer',
-            description: 'CSV Description',
+            description: 'CSV',
             roomId,
             boardId,
             ownerId: user._id,
@@ -177,7 +177,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
               // Create a note from the text
               createApp({
                 name: 'VegaLite',
-                description: 'VegaLite> ' + d.originalfilename,
+                description: d.originalfilename,
                 roomId,
                 boardId,
                 ownerId: user._id,
@@ -195,7 +195,7 @@ export function AssetModal({ isOpen, onClose, center }: AssetModalProps): JSX.El
         } else if (isPDF(d.type)) {
           createApp({
             name: 'PDFViewer',
-            description: 'PDF Description',
+            description: 'PDF',
             roomId,
             boardId,
             ownerId: user._id,
