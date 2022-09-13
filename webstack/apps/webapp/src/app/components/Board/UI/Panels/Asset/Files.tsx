@@ -343,6 +343,7 @@ export function Files(props: FilesProps): JSX.Element {
   // Select the file when clicked
   const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
       setList((prev) => {
         if (e.key === 'ArrowDown') {
           const first = filesList.findIndex((k) => k.selected);
@@ -350,12 +351,20 @@ export function Files(props: FilesProps): JSX.Element {
             prev[first] = { ...prev[first], selected: false };
             prev[first + 1] = { ...prev[first + 1], selected: true };
           }
+          virtuoso.current?.scrollIntoView({
+            index: first + 1,
+            behavior: "auto",
+          });
         } else if (e.key === 'ArrowUp') {
           // @ts-expect-error
           const last = filesList.findLastIndex((k) => k.selected);
           if (last > 0) {
             prev[last - 1] = { ...prev[last - 1], selected: true };
             prev[last] = { ...prev[last], selected: false };
+            virtuoso.current?.scrollIntoView({
+              index: last - 1,
+              behavior: "auto",
+            });
           }
         }
         return [...prev];
