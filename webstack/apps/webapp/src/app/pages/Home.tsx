@@ -7,14 +7,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 import { MdSettings } from 'react-icons/md';
 import { Box, useColorModeValue, Text, Icon } from '@chakra-ui/react';
 
-import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
 import { SBDocument } from '@sage3/sagebase';
-
-import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
+import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 import { BoardList } from '../components/Home/BoardList';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
@@ -27,16 +25,14 @@ export function HomePage() {
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
   const { update: updatePresence } = usePresence();
 
-  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-
+  // Subscribe to user updates
   useEffect(() => {
     subscribeToPresence();
     subscribeToUsers();
   }, []);
-
-  const navigate = useNavigate();
 
   function handleRoomClick(room: SBDocument<RoomSchema>) {
     setSelectedRoom(room);
@@ -46,10 +42,6 @@ export function HomePage() {
 
   function handleBoardClick(board: SBDocument<BoardSchema>) {
     setSelectedBoard(board);
-  }
-
-  function enterBoard(board: Board) {
-    navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
   }
 
   return (
@@ -181,6 +173,7 @@ export function HomePage() {
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
         <img src={imageUrl} width="75px" alt="" />
       </Box>
+
     </Box>
   );
 }

@@ -137,14 +137,14 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create Board</ModalHeader>
+        <ModalHeader>Create a New Board</ModalHeader>
         <ModalBody>
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}
               type="text"
-              placeholder={'Name'}
+              placeholder={'Board Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={name}
@@ -157,7 +157,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               type="text"
-              placeholder={'Description'}
+              placeholder={'Board Description'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={description}
@@ -168,7 +168,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           </InputGroup>
 
           <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
-            Board Publicly Listed
+            Board Listed Publicly
           </Checkbox>
           <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with PIN
