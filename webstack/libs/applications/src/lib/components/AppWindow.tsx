@@ -244,27 +244,28 @@ export function AppWindow(props: WindowProps) {
               borderColor="whiteAlpha.600"
             />
           </Tooltip>
-
           <Text color="white">{props.app.data.description}</Text>
-        </Box>
+        </Box >
         {/* Right Title bar Elements */}
-        <Box display="flex" alignItems="center">
+        < Box display="flex" alignItems="center" >
           {/* Minimize Buttons */}
-          {minimized ? (
-            <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
-          ) : (
-            <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
-          )}
+          {
+            minimized ? (
+              <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
+            ) : (
+              <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
+            )
+          }
           {/* Close Button Name */}
           <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
-        </Box>
-      </Box>
+        </Box >
+      </Box >
       {/* End Title Bar */}
 
       {/* The Application */}
       <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
         {props.children}
       </Box>
-    </Rnd>
+    </Rnd >
   );
 }
