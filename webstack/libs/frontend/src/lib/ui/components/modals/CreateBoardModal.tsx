@@ -9,9 +9,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  InputGroup, InputLeftElement, Input,
-  useToast, Button, Checkbox,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  InputGroup,
+  InputLeftElement,
+  Input,
+  useToast,
+  Button,
+  Checkbox,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -37,7 +46,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const toast = useToast();
 
-  const createBoard = useBoardStore(state => state.create);
+  const createBoard = useBoardStore((state) => state.create);
 
   const { user } = useUser();
 
@@ -72,7 +81,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     if (initialRef.current) {
       initialRef.current.select();
     }
-  }, [])
+  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -124,19 +133,18 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     setPassword(e.target.value);
   };
 
-
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create Board</ModalHeader>
+        <ModalHeader>Create a New Board</ModalHeader>
         <ModalBody>
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}
               type="text"
-              placeholder={'Name'}
+              placeholder={'Board Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={name}
@@ -149,7 +157,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               type="text"
-              placeholder={'Description'}
+              placeholder={'Board Description'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={description}
@@ -159,8 +167,12 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>Board Publicly Listed</Checkbox>
-          <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>Board Protected with PIN</Checkbox>
+          <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
+            Board Listed Publicly
+          </Checkbox>
+          <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
+            Board Protected with PIN
+          </Checkbox>
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
             <Input
@@ -174,7 +186,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
-
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => create()} disabled={!name || !description || (isProtected && !password)}>
@@ -185,7 +196,3 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     </Modal>
   );
 }
-function userUser() {
-  throw new Error('Function not implemented.');
-}
-

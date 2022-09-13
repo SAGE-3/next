@@ -7,17 +7,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 import { MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, Icon, } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Icon } from '@chakra-ui/react';
 
-import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
 import { SBDocument } from '@sage3/sagebase';
-
-import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
+import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 import { BoardList } from '../components/Home/BoardList';
-import { EnterBoardById } from '../components/Home/EnterBoardById';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 
@@ -28,16 +25,14 @@ export function HomePage() {
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
   const { update: updatePresence } = usePresence();
 
-  const subscribeToUsers = useUsersStore(state => state.subscribeToUsers);
-
+  // Subscribe to user updates
   useEffect(() => {
     subscribeToPresence();
     subscribeToUsers();
   }, []);
-
-  const navigate = useNavigate();
 
   function handleRoomClick(room: SBDocument<RoomSchema>) {
     setSelectedRoom(room);
@@ -47,10 +42,6 @@ export function HomePage() {
 
   function handleBoardClick(board: SBDocument<BoardSchema>) {
     setSelectedBoard(board);
-  }
-
-  function enterBoard(board: Board) {
-    navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
   }
 
   return (
@@ -68,12 +59,7 @@ export function HomePage() {
               <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
             </Box>
 
-            <Box
-              width="100%" height="100%"
-              borderRadius="md"
-              m="2" ml="8" p="4"
-              display="flex" flexDirection="column"
-            >
+            <Box width="100%" height="100%" borderRadius="md" m="2" ml="8" p="4" display="flex" flexDirection="column">
               {selectedRoom ? (
                 <>
                   <Box display="flex" justifyContent="center">
@@ -85,13 +71,15 @@ export function HomePage() {
                   <Box
                     display="flex"
                     justifyContent="center"
-                    width="100%" height="300px"
+                    width="100%"
+                    height="300px"
                     backgroundColor="gray.600"
                     borderRadius="md"
                     p="2"
                   >
                     <Box
-                      width="100%" height="100%"
+                      width="100%"
+                      height="100%"
                       backgroundColor="purple.600"
                       borderRadius="md"
                       display="flex"
@@ -102,7 +90,8 @@ export function HomePage() {
                       {' Info '}
                     </Box>
                     <Box
-                      width="100%" height="100%"
+                      width="100%"
+                      height="100%"
                       backgroundColor="yellow.600"
                       borderRadius="md"
                       display="flex"
@@ -113,7 +102,8 @@ export function HomePage() {
                       {'Chart  '}
                     </Box>
                     <Box
-                      width="100%" height="100%"
+                      width="100%"
+                      height="100%"
                       backgroundColor="blue.600"
                       borderRadius="md"
                       display="flex"
@@ -177,13 +167,13 @@ export function HomePage() {
 
       <Box position="absolute" left="2" bottom="4" display="flex" alignItems="center">
         <HomeAvatar />
-        <EnterBoardById enterBoard={enterBoard} />
       </Box>
 
       {/* The Corner SAGE3 Image */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7} >
+      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
         <img src={imageUrl} width="75px" alt="" />
       </Box>
+
     </Box>
   );
 }
