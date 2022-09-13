@@ -20,7 +20,6 @@ import * as d3 from 'd3';
 // SVG clock file
 import { ReactComponent as Clock } from './clock.svg';
 
-
 /* App component for SVGBox */
 
 function AppComponent(props: App): JSX.Element {
@@ -39,7 +38,7 @@ function AppComponent(props: App): JSX.Element {
     setCity(s.city);
     localizeCity(s.city);
     // Update the app title
-    update(props._id, { description: 'Clock> ' + s.city });
+    update(props._id, { description: s.city });
   }, [s.city]);
 
   const localizeCity = (city: string) => {

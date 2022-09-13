@@ -8,12 +8,14 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, usePresenceStore, initials } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
+
+// import { ReactComponent as AppIcon } from './icon.svg';
 
 type WindowProps = {
   app: App;
@@ -39,6 +41,9 @@ export function AppWindow(props: WindowProps) {
   const titleBarHeight = 24;
   // Border color when selected
   const borderColor = useColorModeValue(sageColorByName('blue'), sageColorByName('orange'));
+  // Users
+  const users = useUsersStore(state => state.users);
+  const owner = users.find(el => el._id === props.app._createdBy);
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -222,26 +227,45 @@ export function AppWindow(props: WindowProps) {
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">
+          <Tooltip label={"Opened by " + owner?.data.name} aria-label="username"
+            hasArrow={true} placement="top-start">
+            <Avatar
+              name={owner?.data.name}
+              getInitials={initials}
+              // src={owner?.data.profilePicture}
+              mr={1}
+              bg={owner ? sageColorByName(owner.data.color) : 'orange'}
+              borderRadius={'100%'}
+              textShadow={'0 0 2px #000'}
+              color={'white'}
+              size={"2xs"}
+              showBorder={true}
+              borderWidth={'0.5px'}
+              borderColor="whiteAlpha.600"
+            />
+          </Tooltip>
           <Text color="white">{props.app.data.description}</Text>
-        </Box>
+        </Box >
         {/* Right Title bar Elements */}
-        <Box display="flex" alignItems="center">
+        < Box display="flex" alignItems="center" >
           {/* Minimize Buttons */}
-          {minimized ? (
-            <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
-          ) : (
-            <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
-          )}
+          {
+            minimized ? (
+              <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
+            ) : (
+              <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
+            )
+          }
           {/* Close Button Name */}
           <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
-        </Box>
-      </Box>
+        </Box >
+      </Box >
       {/* End Title Bar */}
 
       {/* The Application */}
       <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
         {props.children}
       </Box>
-    </Rnd>
+    </Rnd >
   );
 }

@@ -6,15 +6,15 @@
  *
  */
 
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { MdSettings } from 'react-icons/md';
 import { Box, useColorModeValue, Text, Icon } from '@chakra-ui/react';
+
 import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
 import { SBDocument } from '@sage3/sagebase';
 
 import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
-import e from 'express';
-import { useEffect, useState } from 'react';
-import { MdSettings } from 'react-icons/md';
-import { useNavigate } from 'react-router';
 
 import { BoardList } from '../components/Home/BoardList';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
@@ -48,13 +48,6 @@ export function HomePage() {
     setSelectedBoard(board);
   }
 
-  function handleEnterBoard(board: SBDocument<BoardSchema>) {
-    setSelectedBoard(board);
-    if (selectedRoom) {
-      navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
-    }
-  }
-
   function enterBoard(board: Board) {
     navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
   }
@@ -70,21 +63,11 @@ export function HomePage() {
         {/* Selected Room */}
         <Box flexGrow="8" mx="5">
           <Box display="flex" flexDirection="row">
-            <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 500]}>
-              <BoardList onBoardClick={handleBoardClick} onEnterClick={handleEnterBoard} selectedRoom={selectedRoom}></BoardList>
+            <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 700]}>
+              <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
             </Box>
 
-            <Box
-              width="100%"
-              height="100%"
-              // background="gray.700"
-              borderRadius="md"
-              m="2"
-              ml="8"
-              p="4"
-              display="flex"
-              flexDirection="column"
-            >
+            <Box width="100%" height="100%" borderRadius="md" m="2" ml="8" p="4" display="flex" flexDirection="column">
               {selectedRoom ? (
                 <>
                   <Box display="flex" justifyContent="center">

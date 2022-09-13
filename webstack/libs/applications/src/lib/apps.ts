@@ -69,3 +69,7 @@ export const Applications = {
 } as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';
+
+//export const icons = {
+//  [CounterAppName]: './assets/layers.png',
+//};

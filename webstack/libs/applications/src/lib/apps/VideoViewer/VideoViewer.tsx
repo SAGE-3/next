@@ -56,7 +56,7 @@ function AppComponent(props: App): JSX.Element {
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: 'VideoViewer> ' + myasset?.data.originalfilename });
+      update(props._id, { description: myasset?.data.originalfilename });
     }
   }, [s.vid, assets]);
 
