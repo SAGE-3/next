@@ -111,7 +111,7 @@ export function UILayer(props: UILayerProps) {
 
       <UsersPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <NavigationPanel />
+      <NavigationPanel clearBoard={clearOnOpen} fitToBoard={fitToBoard} fitApps={showAllApps} />
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
