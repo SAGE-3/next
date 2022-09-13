@@ -52,7 +52,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, { description: 'Image> ' + myasset?.data.originalfilename });
+        update(props._id, { description: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL
@@ -96,7 +96,7 @@ function AppComponent(props: App): JSX.Element {
         maxHeight: '100%'
       }}>
         <Image width="100%" userSelect={"auto"} draggable={false}
-          alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px"/>
+          alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
       </div>
     </AppWindow>
   );

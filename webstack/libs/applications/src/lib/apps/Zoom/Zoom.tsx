@@ -40,7 +40,7 @@ function AppComponent(props: App): JSX.Element {
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: 'Zoom> ' + myasset?.data.originalfilename });
+      update(props._id, { description: myasset?.data.originalfilename });
     }
   }, [s.zid, assets]);
 
@@ -114,7 +114,7 @@ function AppComponent(props: App): JSX.Element {
         const imginfo = { w: viewer.current.source.width, h: viewer.current.source.height };
         const info = imginfo.w.toLocaleString() + " x " + imginfo.h.toLocaleString() + " pixels";
         // Update the app title
-        update(props._id, { description: 'Zoom> ' + file.data.originalfilename + ' ' + info });
+        update(props._id, { description: file.data.originalfilename + ' ' + info });
         // Reset the view
         e.eventSource.viewport.zoomTo(s.zoomLevel);
         e.eventSource.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]));
