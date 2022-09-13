@@ -6,7 +6,7 @@
  *
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, HStack } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
@@ -115,6 +115,9 @@ export function Panel(props: PanelProps) {
   // Track the size of the panel
   const [w, setW] = props.width ? useState(props.width) : useState(200);
   const [hover, setHover] = useState(false);
+  // Window size tracking
+  const [winWidth, setWidth] = useState(window.innerWidth);
+  const [winHeight, setHeight] = useState(window.innerHeight);
 
   const showActions = props.opened;
   const setShowActions = props.setOpened;
@@ -137,51 +140,60 @@ export function Panel(props: PanelProps) {
     setShowActions(!showActions);
   }
 
+  // Update the window size
+  const updateDimensions = () => {
+    setWidth(window.innerWidth);
+    setHeight(window.innerHeight);
+  }
   useEffect(() => {
-    if (ref.current && props.stuck != StuckTypes.None) {
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+
+  useEffect(() => {
+    if (ref.current) {
       const we = ref.current['clientWidth'];
       const he = ref.current['clientHeight'];
       if (props.stuck == StuckTypes.Top) {
-        if (props.position.x > window.innerWidth - we) {
-          props.setPosition({ x: window.innerWidth / 2 - we / 2, y: 5 });
+        if (props.position.x > (winWidth - we)) {
+          props.setPosition({ x: winWidth / 2 - we / 2, y: 5 });
         } else {
           props.setPosition({ x: props.position.x, y: 5 });
         }
       } else if (props.stuck == StuckTypes.TopLeft) {
         props.setPosition({ x: 5, y: 5 });
       } else if (props.stuck == StuckTypes.TopRight) {
-        props.setPosition({ x: window.innerWidth - we - 5, y: 5 });
+        props.setPosition({ x: winWidth - we - 5, y: 5 });
       } else if (props.stuck == StuckTypes.BottomRight) {
-        props.setPosition({ x: window.innerWidth - we - 5, y: window.innerHeight - he - 5 });
+        props.setPosition({ x: winWidth - we - 5, y: winHeight - he - 5 });
       } else if (props.stuck == StuckTypes.BottomLeft) {
-        props.setPosition({ x: 5, y: window.innerHeight - he - 5 });
+        props.setPosition({ x: 5, y: winHeight - he - 5 });
       } else if (props.stuck == StuckTypes.Bottom) {
-        if (props.position.x > window.innerWidth - we) {
-          props.setPosition({ x: window.innerWidth / 2 - we / 2, y: window.innerHeight - he - 5 });
+        if (props.position.x > (winWidth - we)) {
+          props.setPosition({ x: winWidth / 2 - we / 2, y: winHeight - he - 5 });
         } else {
-          props.setPosition({ x: props.position.x, y: window.innerHeight - he - 5 });
+          props.setPosition({ x: props.position.x, y: winHeight - he - 5 });
         }
       } else if (props.stuck == StuckTypes.Left) {
-        if (props.position.y > window.innerHeight - he) {
+        if ((props.position.y + he) > winHeight) {
           // move to make visible
-          props.setPosition({ x: 5, y: window.innerHeight / 2 - he / 2 });
-        } else {
+          props.setPosition({ x: 5, y: winHeight / 2 - he / 2 });
+        }
+        else {
           // keep the same y position
           props.setPosition({ x: 5, y: props.position.y });
         }
       } else if (props.stuck == StuckTypes.Right) {
-        if (props.position.y > window.innerHeight - he) {
+        if (props.position.y > (winHeight - he)) {
           // move to make visible
-          props.setPosition({ x: window.innerWidth - we - 5, y: window.innerHeight / 2 - he / 2 });
+          props.setPosition({ x: winWidth - we - 5, y: winHeight / 2 - he / 2 });
         } else {
           // keep the same y position
-          props.setPosition({ x: window.innerWidth - we - 5, y: props.position.y });
+          props.setPosition({ x: winWidth - we - 5, y: props.position.y });
         }
-      } else {
-        console.log('Error> None of the above');
       }
     }
-  }, [window.innerWidth, window.innerHeight]);
+  }, [props.stuck, winWidth, winHeight]);
 
   const borderTop =
     props.stuck == StuckTypes.TopLeft || props.stuck == StuckTypes.Top || props.stuck == StuckTypes.TopRight ? '2px' : '0px';
@@ -200,12 +212,10 @@ export function Panel(props: PanelProps) {
           bounds="window"
           size={{ width: w, height: ref.current ? ref.current['clientHeight'] + 5 : '100px' }}
           // onDoubleClick={handleDblClick}
-
           onDragStart={() => setHover(true)}
           onDragStop={(e, data) => {
             setHover(false);
             props.setPosition({ x: data.x, y: data.y });
-            // props.setStuck(StuckTypes.None);
             if (ref.current) {
               const we = ref.current['clientWidth'];
               const he = ref.current['clientHeight'];
@@ -214,50 +224,43 @@ export function Panel(props: PanelProps) {
                 if (data.y < 5) {
                   // top
                   props.setStuck(StuckTypes.TopLeft);
-                  // ref.current["style"] = {...ref.current["style"],background:'red'};
-                } else if (data.y > window.innerHeight - (he + 10)) {
-                  // bottom
+                  props.setPosition({ x: 5, y: 5 });
+                } else if (data.y > winHeight - (he + 10)) {
+                  // bottom left
                   props.setStuck(StuckTypes.BottomLeft);
-                  console.log('bottom left');
+                  props.setPosition({ x: 5, y: winHeight - he - 5 });
                 } else {
-                  // middle
+                  // middle left
                   props.setStuck(StuckTypes.Left);
-                  console.log(' left');
+                  props.setPosition({ x: 5, y: data.y });
                 }
-              } else if (data.x > window.innerWidth - (we + 5)) {
+              } else if (data.x > winWidth - (we + 5)) {
                 // right
                 if (data.y < 5) {
-                  // top
+                  // top right
                   props.setStuck(StuckTypes.TopRight);
-                  console.log('top right');
-                } else if (data.y > window.innerHeight - (he + 10)) {
-                  // bottom
+                  props.setPosition({ x: winWidth - we - 5, y: 5 });
+                } else if (data.y > winHeight - (he + 10)) {
+                  // bottom right
                   props.setStuck(StuckTypes.BottomRight);
-                  console.log('bottom right');
+                  props.setPosition({ x: winWidth - we - 5, y: winHeight - he - 5 });
                 } else {
-                  // middle
+                  // middle right
                   props.setStuck(StuckTypes.Right);
-                  console.log('right');
+                  props.setPosition({ x: winWidth - we - 5, y: data.y });
                 }
-              } else if (data.y > window.innerHeight - (he + 10)) {
+              } else if (data.y > winHeight - (he + 10)) {
                 // bottom
                 props.setStuck(StuckTypes.Bottom);
-                console.log('bottom');
+                props.setPosition({ x: data.x, y: winHeight - he - 5 });
               } else if (data.y < 5) {
                 // top
                 props.setStuck(StuckTypes.Top);
-                console.log('top');
+                props.setPosition({ x: data.x, y: 5 });
               } else {
                 props.setStuck(StuckTypes.None);
-                console.log('none');
               }
             }
-            // bottom right corner
-            /*if (data.x < 5 && data.y > (window.innerHeight - (props.height + 5))) {
-            setStuck(true);
-          } else {
-            setStuck(false);
-          }*/
           }}
           enableResizing={false}
           dragHandleClassName="header" // only allow dragging the header
