@@ -6,6 +6,7 @@
  *
  */
 
+import { ChangeEvent, useState } from 'react';
 import {
   Box,
   Button,
@@ -20,14 +21,12 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
   ModalBody,
 } from '@chakra-ui/react';
-import { Board, BoardSchema } from '@sage3/shared/types';
-import { ChangeEvent, useState } from 'react';
-import { isUUIDv4 } from '@sage3/frontend';
-import { SBDocument } from '@sage3/sagebase';
 import { useNavigate } from 'react-router';
+
+import { Board } from '@sage3/shared/types';
+import { isUUIDv4, useData, timeout } from '@sage3/frontend';
 
 // Props
 interface enterBoardProps {
@@ -44,14 +43,17 @@ interface enterBoardProps {
 export function EnterBoardByIdModal(props: enterBoardProps) {
   // Local state
   const [boardId, setBoardId] = useState('');
+  // Status of the request
   const [submitStatus, setSubmitStatus] = useState<'pending' | 'submitted' | 'success'>('pending');
+  // Fetch board from the server
+  const results = useData(`/api/boards/${boardId}`) as { success: boolean, data: Board[] };
 
   // Chakra Toast
   const toast = useToast();
 
   // Navigate to the new board
   const navigate = useNavigate();
-  function handleEnterBoard(board: SBDocument<BoardSchema>) {
+  function handleEnterBoard(board: Board) {
     navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
   }
 
@@ -60,52 +62,36 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
     setBoardId(e.target.value);
   };
 
-  // Handle the for submit
+  // Handle the data from the useData hook
   const handleSubmit = async () => {
     // Update local state
     setSubmitStatus('submitted');
-
-    // Lets wait so the user doesn't spam
-    await timeout(1000);
-
-    // Fetch the board
-    const res = await fetch(`/api/boards/${boardId}`);
-
-    // Was it successful?
-    if (res.status === 200) {
-      // Parse Response
-      const data = await res.json();
-      const board = data.data[0] as Board;
-
+    // Check the data we got back
+    if (results.success) {
       // Update local state
       setSubmitStatus('success');
-
+      // Get the data
+      const board = results.data[0];
       // Give user some feedback
       toast({
-        title: 'Success',
-        description: `Joining Board "${board.data.name}"`,
-        duration: 3000,
-        isClosable: true,
-        status: 'success',
+        title: 'Success', description: `Joining Board "${board.data.name}"`,
+        duration: 3000, isClosable: true, status: 'success',
       });
-      // Lets wait again
-      await timeout(1000);
-      // Enter the board
+      // Slow down transition
+      await timeout(600);
       handleEnterBoard(board);
     } else {
       // Reset local state
       setSubmitStatus('pending');
       setBoardId('');
-
       // Give user some feedback
       toast({
         title: 'Invalid Board ID',
-        duration: 3000,
-        isClosable: true,
-        status: 'error',
+        duration: 3000, isClosable: true, status: 'error',
       });
     }
   };
+
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} size="xl">
       <ModalOverlay />
@@ -156,10 +142,4 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
       </ModalContent>
     </Modal>
   );
-}
-
-// Timeout function
-// Could probably move into a utility function in the libs folder
-function timeout(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
