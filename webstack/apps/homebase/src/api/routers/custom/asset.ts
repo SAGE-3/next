@@ -156,7 +156,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'ImageViewer',
-              description: 'Image Description',
+              description: 'Image',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -181,7 +181,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'PDFViewer',
-              description: 'PDFViewer Description',
+              description: 'PDF',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -202,7 +202,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'CSVViewer',
-              description: 'CSVViewer Description',
+              description: 'CSV',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -224,7 +224,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'VideoViewer',
-              description: 'Video>' + elt.originalname,
+              description: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -246,7 +246,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'Zoom',
-              description: 'Zoom>',
+              description: 'Zoom',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -268,7 +268,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'LeafLet',
-              description: 'LeafLet>',
+              description: 'LeafLet',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -320,7 +320,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'VegaLite',
-              description: 'VegaLite> ' + elt.originalname,
+              description: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,

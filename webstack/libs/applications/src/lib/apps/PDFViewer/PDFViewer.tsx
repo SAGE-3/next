@@ -48,7 +48,7 @@ function AppComponent(props: App): JSX.Element {
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: 'PDF> ' + myasset?.data.originalfilename });
+      update(props._id, { description: myasset?.data.originalfilename });
       // Updte the state of the app
       if (myasset.data.derived) {
         const pages = myasset.data.derived as ExtraPDFType;
@@ -83,7 +83,7 @@ function AppComponent(props: App): JSX.Element {
       if (pages) {
         if (pages.length > 1) {
           const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-          update(props._id, { description: 'PDF> ' + file.data.originalfilename + pageInfo });
+          update(props._id, { description: file.data.originalfilename + pageInfo });
         }
       }
     }

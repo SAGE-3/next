@@ -28,7 +28,7 @@ export function setupApp(appName: AppName, x: number, y: number,
 
   return {
     name: appName,
-    description: appName + '>',
+    description: appName,
     roomId: roomId,
     boardId: boardId,
     position: { x: x, y: y, z: 0 },

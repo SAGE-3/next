@@ -40,7 +40,7 @@ export function App() {
     // Create the new app
     createApp({
       name: appName,
-      description: `${appName} - Description`,
+      description: `${appName}`,
       roomId: '1234',
       boardId: '1234',
       position: { x, y, z: 0 },

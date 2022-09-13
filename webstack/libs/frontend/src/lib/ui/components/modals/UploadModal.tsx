@@ -99,7 +99,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
               {allowFolder ?
                 <Input
                   variant="outline"
-                  padding={"4px 40px"}
+                  padding={"4px 35px"}
                   id="files"
                   type="file"
                   multiple
@@ -108,7 +108,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
                   onClick={() => setInput([])} /> :
                 <Input
                   variant="outline"
-                  padding={"4px 40px"}
+                  padding={"4px 35px"}
                   id="files"
                   type="file"
                   accept={'image/*, video/*, application/pdf, application/json, text/csv, text/plain'}
@@ -121,7 +121,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
           </FormControl>
         </ModalBody>
         <ModalFooter>
-          <Button type="submit" colorScheme='blue' mr={5} onClick={upload}>
+          <Button type="submit" colorScheme='green' mr={5} onClick={upload}>
             Upload
           </Button>
           <Button mr={3} onClick={props.onClose}>

@@ -10,7 +10,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 // Date manipulation functions for file manager
-import { format as formatDate } from 'date-fns';
+import { format as formatDate, formatDistanceStrict } from 'date-fns';
 import { AssetHTTPService } from '@sage3/frontend';
 
 import {
@@ -153,7 +153,9 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   // Generate a human readable string from date
   const modif = formatDate(new Date(file.date), 'MM/dd/yyyy');
-  const added = formatDate(new Date(file.dateAdded), 'MM/dd/yyyy');
+  // const added = formatDate(new Date(file.dateAdded), 'MM/dd/yyyy');
+  const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), { addSuffix: false });
+
   // Select the color when item is selected
   const highlight = selected ? 'teal.600' : 'inherit';
   const colorHover = useColorModeValue('gray.400', 'gray.600');

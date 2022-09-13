@@ -40,7 +40,7 @@ function AppComponent(props: App): JSX.Element {
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: 'CSV> ' + myasset?.data.originalfilename });
+      update(props._id, { description: myasset?.data.originalfilename });
     }
   }, [s.id, assets]);
 
