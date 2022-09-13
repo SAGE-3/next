@@ -6,9 +6,13 @@
  *
  */
 
-import { Box, Button, Input, InputGroup, InputLeftAddon, InputRightAddon, Progress, Tooltip, useToast } from '@chakra-ui/react';
-import { Board } from '@sage3/shared/types';
 import { ChangeEvent, useState } from 'react';
+import {
+  Box, Button, Input, InputGroup, InputLeftAddon, InputRightAddon,
+  Progress, Tooltip, useToast
+} from '@chakra-ui/react';
+
+import { Board } from '@sage3/shared/types';
 import { isUUIDv4 } from '@sage3/frontend';
 
 // Props

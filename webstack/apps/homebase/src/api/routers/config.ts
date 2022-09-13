@@ -36,7 +36,10 @@ export function ConfigRouter(): express.Router {
       production: config.production,
       servers: config.servers,
       version: config.version,
+      // Jupyter token
       token: token,
+      // Namespace for signing uuid v5 keys
+      namespace: config.namespace,
     };
     res.json(configuration);
   });

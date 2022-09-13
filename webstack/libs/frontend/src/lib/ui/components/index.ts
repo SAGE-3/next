@@ -11,6 +11,7 @@ export * from './modals/CreateRoomModal';
 export * from './modals/CreateBoardModal';
 export * from './modals/CreateUserModal';
 export * from './modals/UploadModal';
+export * from './modals/EnterBoardModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';
