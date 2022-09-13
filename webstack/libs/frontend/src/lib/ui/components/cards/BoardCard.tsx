@@ -6,7 +6,7 @@
  *
  */
 
-import { Box, Button, Tooltip, Text, Icon, useDisclosure } from '@chakra-ui/react';
+import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import { MdPerson, MdLock, MdRemoveRedEye } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
@@ -38,7 +38,8 @@ export function BoardCard(props: BoardCardProps) {
   // Custom text
   const heading = yours ? 'Your' : 'This';
   // Custom color
-  const yourColor = yours ? sageColorByName(user.data.color) : 'white';
+  const otherColor = useColorModeValue('black', 'white');
+  const yourColor = yours ? sageColorByName(user.data.color) : otherColor;
 
   return (
     <>

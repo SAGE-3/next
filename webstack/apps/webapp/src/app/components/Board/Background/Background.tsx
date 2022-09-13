@@ -145,7 +145,7 @@ export function Background(props: BackgroundProps) {
     } else if (isCSV(fileType)) {
       createApp(setupApp('CSVViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { id: fileID }));
     } else if (isDZI(fileType)) {
-      createApp(setupApp('Zoom', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { zid: fileID }));
+      createApp(setupApp('DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { zid: fileID }));
     } else if (isGeoJSON(fileType)) {
       createApp(setupApp('LeafLet', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { geojson: fileID }));
     } else if (isText(fileType)) {

@@ -9,7 +9,7 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: Zoom
+ * SAGE3 application: DeepZoomImage
  * created by: Luc Renambot
  */
 
@@ -26,4 +26,4 @@ export const init: Partial<state> = {
   zoomCenter: [0.5, 0.5],
 };
 
-export const name = 'Zoom';
+export const name = 'DeepZoomImage';
