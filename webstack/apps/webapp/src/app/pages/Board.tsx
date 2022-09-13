@@ -55,7 +55,6 @@ export function BoardPage() {
 
   return (
     <>
-
       {/* The apps live here */}
       <BackgroundLayer boardId={locationState.boardId} roomId={locationState.roomId}></BackgroundLayer>
 
@@ -69,7 +68,6 @@ export function BoardPage() {
 
       {/* Upper layer for local UI stuff */}
       <UILayer boardId={locationState.boardId} roomId={locationState.roomId}></UILayer>
-
     </>
   );
 }
