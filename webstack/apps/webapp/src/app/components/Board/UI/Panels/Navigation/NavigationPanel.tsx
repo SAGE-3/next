@@ -7,13 +7,12 @@
  */
 
 import { useEffect } from 'react';
-import { Box, useColorModeValue, Tooltip, Button, IconButton } from '@chakra-ui/react';
-import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
+import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
+import { MdFullscreen, MdGridView, MdDelete } from 'react-icons/md';
 
-import { Panel } from '../Panel';
+import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
-import { MdFullscreen, MdGridView } from 'react-icons/md';
-import { FaTrash, FaTrashAlt } from 'react-icons/fa';
+import { Panel } from '../Panel';
 
 export interface NavProps {
   fitToBoard: () => void;
@@ -40,7 +39,6 @@ export function NavigationPanel(props: NavProps) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const displayScale = 25;
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
@@ -110,13 +108,16 @@ export function NavigationPanel(props: NavProps) {
       <Box alignItems="center" p="1" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
           <Tooltip label="Fit Board" placement="right" hasArrow openDelay={500}>
-            <IconButton colorScheme="teal" size="xs" aria-label="Search database" onClick={props.fitToBoard} icon={<MdFullscreen />} />
+            <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board"
+              onClick={props.fitToBoard} />
           </Tooltip>
           <Tooltip label="Fit Apps" placement="right" hasArrow openDelay={500}>
-            <IconButton colorScheme="teal" my="1" size="xs" aria-label="Search database" onClick={props.fitApps} icon={<MdGridView />} />
+            <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps"
+              onClick={props.fitApps} />
           </Tooltip>
           <Tooltip label="Clear Board" placement="right" hasArrow openDelay={500}>
-            <IconButton colorScheme="teal" size="xs" aria-label="Search database" onClick={props.clearBoard} icon={<FaTrash />} />
+            <IconButton icon={<MdDelete />} colorScheme="teal" size="xs" aria-label="clear"
+              onClick={props.clearBoard} />
           </Tooltip>
         </Box>
         <Box
@@ -129,7 +130,8 @@ export function NavigationPanel(props: NavProps) {
           borderColor={borderColor}
         >
           <Box position="absolute">
-            {apps.map((app) => {
+            {/* Create a copy of app array and sort it by update time */}
+            {apps.slice().sort((a, b) => a._updatedAt - b._updatedAt).map((app) => {
               return (
                 <Tooltip
                   label={
