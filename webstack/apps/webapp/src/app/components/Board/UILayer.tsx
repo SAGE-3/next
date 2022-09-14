@@ -53,9 +53,11 @@ export function UILayer(props: UILayerProps) {
 
   // Show whole board on the screen
   const fitToBoard = () => {
-    setBoardPosition({ x: 0, y: 0 });
     // Fit the smaller dimension into the browser size
     const sm = Math.min(window.innerWidth / boardWidth, window.innerHeight / boardHeight);
+    const x = window.innerWidth / sm / 2 - boardWidth / 2;
+    const y = window.innerHeight / sm / 2 - boardHeight / 2;
+    setBoardPosition({ x, y });
     setScale(sm);
   };
 
@@ -84,14 +86,16 @@ export function UILayer(props: UILayerProps) {
     // Center
     const cx = x1 + w / 2;
     const cy = y1 + h / 2;
-    // Offset to center the board...
-    const bx = Math.floor(-cx + window.innerWidth / 2);
-    const by = Math.floor(-cy + window.innerHeight / 2);
-    setBoardPosition({ x: bx, y: by });
+
     // 85% of the smaller dimension (horizontal or vertical )
     const sw = 0.85 * (window.innerWidth / w);
     const sh = 0.85 * (window.innerHeight / h);
     const sm = Math.min(sw, sh);
+
+    // Offset to center the board...
+    const bx = Math.floor(-cx + window.innerWidth / sm / 2);
+    const by = Math.floor(-cy + window.innerHeight / sm / 2);
+    setBoardPosition({ x: bx, y: by });
     setScale(sm);
   };
 

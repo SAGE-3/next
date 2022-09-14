@@ -108,16 +108,13 @@ export function NavigationPanel(props: NavProps) {
       <Box alignItems="center" p="1" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
           <Tooltip label="Fit Board" placement="right" hasArrow openDelay={500}>
-            <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board"
-              onClick={props.fitToBoard} />
+            <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board" onClick={props.fitToBoard} />
           </Tooltip>
           <Tooltip label="Fit Apps" placement="right" hasArrow openDelay={500}>
-            <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps"
-              onClick={props.fitApps} />
+            <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps" onClick={props.fitApps} />
           </Tooltip>
           <Tooltip label="Clear Board" placement="right" hasArrow openDelay={500}>
-            <IconButton icon={<MdDelete />} colorScheme="teal" size="xs" aria-label="clear"
-              onClick={props.clearBoard} />
+            <IconButton icon={<MdDelete />} colorScheme="teal" size="xs" aria-label="clear" onClick={props.clearBoard} />
           </Tooltip>
         </Box>
         <Box
@@ -131,38 +128,41 @@ export function NavigationPanel(props: NavProps) {
         >
           <Box position="absolute">
             {/* Create a copy of app array and sort it by update time */}
-            {apps.slice().sort((a, b) => a._updatedAt - b._updatedAt).map((app) => {
-              return (
-                <Tooltip
-                  label={
-                    <>
-                      {/* We could show a preview of the app here */}
-                      <div>
-                        {app.data.name}: {app.data.description}
-                      </div>
-                    </>
-                  }
-                  openDelay={500}
-                  hasArrow
-                >
-                  <Box
+            {apps
+              .slice()
+              .sort((a, b) => a._updatedAt - b._updatedAt)
+              .map((app) => {
+                return (
+                  <Tooltip
                     key={app._id}
-                    backgroundColor={borderColor}
-                    position="absolute"
-                    left={app.data.position.x / displayScale + 'px'}
-                    top={app.data.position.y / displayScale + 'px'}
-                    width={app.data.size.width / displayScale + 'px'}
-                    height={app.data.size.height / displayScale + 'px'}
-                    transition={'all .2s'}
-                    _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
-                    onClick={() => moveToApp(app)}
-                    borderWidth="1px"
-                    borderStyle="solid"
-                    borderColor={appBorderColor}
-                  ></Box>
-                </Tooltip>
-              );
-            })}
+                    label={
+                      <>
+                        {/* We could show a preview of the app here */}
+                        <div>
+                          {app.data.name}: {app.data.description}
+                        </div>
+                      </>
+                    }
+                    openDelay={500}
+                    hasArrow
+                  >
+                    <Box
+                      backgroundColor={borderColor}
+                      position="absolute"
+                      left={app.data.position.x / displayScale + 'px'}
+                      top={app.data.position.y / displayScale + 'px'}
+                      width={app.data.size.width / displayScale + 'px'}
+                      height={app.data.size.height / displayScale + 'px'}
+                      transition={'all .2s'}
+                      _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+                      onClick={() => moveToApp(app)}
+                      borderWidth="1px"
+                      borderStyle="solid"
+                      borderColor={appBorderColor}
+                    ></Box>
+                  </Tooltip>
+                );
+              })}
           </Box>
         </Box>
       </Box>
