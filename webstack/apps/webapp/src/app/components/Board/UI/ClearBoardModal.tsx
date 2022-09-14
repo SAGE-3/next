@@ -24,11 +24,7 @@ export function ClearBoardModal(props: ClearBoardProps) {
           <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
             Cancel
           </Button>
-          <Button
-            colorScheme="red"
-            size="sm"
-            onClick={props.onClick}
-          >
+          <Button colorScheme="red" size="sm" onClick={props.onClick}>
             Yes, Clear the Board
           </Button>
         </ModalFooter>

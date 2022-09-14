@@ -28,6 +28,7 @@ import { humanFileSize, downloadFile, useUser, useAppStore, useUIStore } from '@
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
+import "./menu.scss";
 
 export type RowFileProps = {
   file: FileEntry;
@@ -86,6 +87,18 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     if (id === 'down') {
       // download a file
       downloadFile('api/assets/static/' + file.filename, file.originalfilename);
+    } else if (id === 'copy') {
+      // Copy the file URL to the clipboard
+      const publicUrl = window.location.origin + '/api/assets/static/' + file.filename;
+      navigator.clipboard.writeText(publicUrl);
+      // Notify the user
+      toast({
+        title: 'Success',
+        description: `URL Copied to Clipboard`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
     } else if (id === 'del') {
       if (user?.data.userRole !== 'guest') {
         // Delete a file
@@ -121,6 +134,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {
+
     // deselect file selection
     setSelected(false);
     // hide context menu
@@ -164,6 +178,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
   const extension = getExtension(file.type);
 
+  // Add an image to the cursor during the drag
   const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragImage) {
       e.dataTransfer.setDragImage(dragImage, 1, 1);
@@ -221,37 +236,36 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
               background: bgColor,
               border: border,
               fontSize: "0.75rem"
-            }}
-          >
-            <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
-              Delete
+            }}>
+            <li className="s3contextmenuitem" id={'copy'} onClick={actionClick}>
+              Copy URL
             </li>
             <li className="s3contextmenuitem" id={'down'} onClick={actionClick}>
               Download
+            </li>
+            <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
+              Delete
             </li>
           </ul>
         </Portal>
       ) : (null)}
 
       {/* Delete a file modal */}
-      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose}>
+      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={"2xl"}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Delete Asset</ModalHeader>
+          <ModalHeader>Delete an Asset</ModalHeader>
           <ModalBody>Are you sure you want to delete "{file.originalfilename}" ?</ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" size="md" variant="outline" mr={3} onClick={onDeleteClose}>
+            <Button colorScheme="green" size="sm" mr={3} onClick={onDeleteClose}>
               Cancel
             </Button>
-            <Button
-              colorScheme="red"
-              size="md"
-              onClick={() => {
-                AssetHTTPService.del(file.id);
-                onDeleteClose();
-              }}
+            <Button colorScheme="red" size="sm" onClick={() => {
+              AssetHTTPService.del(file.id);
+              onDeleteClose();
+            }}
             >
-              Yes, Delete
+              Yes, Delete it
             </Button>
           </ModalFooter>
         </ModalContent>
