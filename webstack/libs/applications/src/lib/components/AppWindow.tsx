@@ -12,7 +12,7 @@ import { Box, useColorModeValue, useToast, Text, Avatar, Tooltip } from '@chakra
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, usePresenceStore, initials } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 // import { ReactComponent as AppIcon } from './icon.svg';

@@ -37,8 +37,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const resetZIndex = useUIStore((state) => state.resetZIndex);
-  // Board refrence
-  const nodeRef = useRef<Rnd>();
 
   // Presence Information
   const { update: updatePresence } = usePresence();
