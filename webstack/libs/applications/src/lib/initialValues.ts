@@ -25,6 +25,7 @@ import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
+import { name as NotepadYjsName, init as defaultNotepadYjs } from './apps/NotepadYjs';
 
 export const initialValues = {
   [CounterAppName]: defaultCounterApp,
@@ -46,4 +47,5 @@ export const initialValues = {
   [CobrowseName]: defaultCobrowse,
   [JupyterLabName]: defaultJupyterLab,
   [DeepZoomImageName]: defaultDeepZoomImage,
+  [NotepadYjsName]: defaultNotepadYjs,
 };

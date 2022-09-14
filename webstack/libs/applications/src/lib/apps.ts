@@ -25,6 +25,7 @@ import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
+import { name as NotepadYjsName } from './apps/NotepadYjs';
 
 import Counter from './apps/Counter/Counter';
 import Linker from './apps/Linker/Linker';
@@ -45,6 +46,7 @@ import JupyterLab from './apps/JupyterLab/JupyterLab';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VegaLite from './apps/VegaLite/VegaLite';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
+import NotepadYjs from './apps/NotepadYjs/NotepadYjs';
 
 export const Applications = {
   [CounterName]: Counter,
@@ -66,6 +68,7 @@ export const Applications = {
   [VegaLiteViewerName]: VegaLiteViewer,
   [VegaLiteName]: VegaLite,
   [DeepZoomImageName]: DeepZoomImage,
+  [NotepadYjsName]: NotepadYjs,
 } as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';
