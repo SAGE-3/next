@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
 import { MdFullscreen, MdGridView, MdDelete } from 'react-icons/md';
 
-import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
+import { StuckTypes, useAppStore, usePresenceStore, useUIStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 
@@ -18,6 +18,7 @@ export interface NavProps {
   fitToBoard: () => void;
   fitApps: () => void;
   clearBoard: () => void;
+  boardId: string;
 }
 
 export function NavigationPanel(props: NavProps) {
@@ -42,6 +43,9 @@ export function NavigationPanel(props: NavProps) {
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+
+  // Users and Presecnes for cursors
+  const presences = usePresenceStore((state) => state.presences);
 
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -105,7 +109,7 @@ export function NavigationPanel(props: NavProps) {
       stuck={stuck}
       setStuck={setStuck}
     >
-      <Box alignItems="center" p="1" width="100%" display="flex">
+      <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
           <Tooltip label="Fit Board" placement="right" hasArrow openDelay={500}>
             <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board" onClick={props.fitToBoard} />
@@ -161,6 +165,30 @@ export function NavigationPanel(props: NavProps) {
                       borderColor={appBorderColor}
                     ></Box>
                   </Tooltip>
+                );
+              })}
+            {/* Draw the cursors: filter by board and not myself */}
+            {presences
+              .filter((el) => el.data.boardId === props.boardId)
+              // .filter((el) => el.data.userId !== user?._id)
+              .map((presence) => {
+                return (
+                  <Box
+                    key={presence.data.userId}
+                    style={{
+                      position: 'absolute',
+                      left: presence.data.cursor.x / displayScale + 'px',
+                      top: presence.data.cursor.y / displayScale + 'px',
+                      transition: 'all 0.5s ease-in-out',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      zIndex: 100000,
+                    }}
+                    borderRadius="50%"
+                    backgroundColor="orange"
+                    width="4px"
+                    height="4px"
+                  ></Box>
                 );
               })}
           </Box>

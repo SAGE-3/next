@@ -9,7 +9,7 @@
 import { Box, useDisclosure, Modal } from '@chakra-ui/react';
 
 import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel } from './UI/Panels';
-import { ContextMenu, UploadModal, useAppStore, useUIStore } from '@sage3/frontend';
+import { ContextMenu, useAppStore, useUIStore } from '@sage3/frontend';
 import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 import { Twilio } from './UI/Twilio';
@@ -115,7 +115,7 @@ export function UILayer(props: UILayerProps) {
 
       <UsersPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <NavigationPanel clearBoard={clearOnOpen} fitToBoard={fitToBoard} fitApps={showAllApps} />
+      <NavigationPanel clearBoard={clearOnOpen} fitToBoard={fitToBoard} fitApps={showAllApps} boardId={props.boardId} />
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
