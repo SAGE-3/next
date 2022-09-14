@@ -9,9 +9,11 @@
 import { useState } from 'react';
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
 import { useAppStore, useUIStore } from '@sage3/frontend';
-import { Applications } from '@sage3/applications/apps';
+import { AppError, Applications } from '@sage3/applications/apps';
 
 import { Rnd } from 'react-rnd';
+import { ErrorBoundary } from 'react-error-boundary';
+import { App } from '@sage3/applications/schema';
 
 type AppToolbarProps = {
   position: { x: number; y: number };
@@ -51,9 +53,14 @@ export function AppToolbar(props: AppToolbarProps) {
   function getAppToolbar() {
     if (app) {
       const Component = Applications[app.data.type].ToolbarComponent;
-      return <Component key={app._id} {...app}></Component>;
+      return (
+        <ErrorBoundary fallbackRender={({ error, resetErrorBoundary }) => <Text>An error has occured.</Text>}>
+          {' '}
+          <Component key={app._id} {...app}></Component>
+        </ErrorBoundary>
+      );
     } else {
-      return <Text>No App Selected</Text>;
+      return <Text>No app selected</Text>;
     }
   }
 
@@ -72,14 +79,7 @@ export function AppToolbar(props: AppToolbarProps) {
         dragHandleClassName="handle" // only allow dragging the header
         style={{ transition: hover ? 'none' : 'all 0.2s' }}
       >
-        <Box
-          display="flex"
-          boxShadow="outline"
-          transition="all .2s "
-          bg={panelBackground}
-          p="2"
-          rounded="md"
-        >
+        <Box display="flex" boxShadow="outline" transition="all .2s " bg={panelBackground} p="2" rounded="md">
           <Box
             width="25px"
             backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
@@ -91,12 +91,21 @@ export function AppToolbar(props: AppToolbarProps) {
           />
 
           <Box display="flex" flexDirection="column">
-            <Text w="100%" textAlign="left" mx={1} color={textColor} fontSize={14} fontWeight="bold" h={'auto'}
-              userSelect={'none'} className="handle" cursor="move">
+            <Text
+              w="100%"
+              textAlign="left"
+              mx={1}
+              color={textColor}
+              fontSize={14}
+              fontWeight="bold"
+              h={'auto'}
+              userSelect={'none'}
+              className="handle"
+              cursor="move"
+            >
               {app?.data.name}
             </Text>
-            <Box alignItems="center" p="1" width="100%" display="flex" height="32px"
-              userSelect={'none'}>
+            <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
               {getAppToolbar()}
             </Box>
           </Box>
