@@ -7,14 +7,18 @@
  */
 
 import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { Box, Button, ButtonGroup, Tooltip, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack } from '@chakra-ui/react';
 import {
-  Box, Button, ButtonGroup, Tooltip,
-  Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack,
-} from '@chakra-ui/react';
-import {
-  MdArrowRightAlt, MdFastForward, MdFastRewind, MdFileDownload,
-  MdGraphicEq, MdLoop, MdPause, MdPlayArrow,
-  MdVolumeOff, MdVolumeUp,
+  MdArrowRightAlt,
+  MdFastForward,
+  MdFastRewind,
+  MdFileDownload,
+  MdGraphicEq,
+  MdLoop,
+  MdPause,
+  MdPlayArrow,
+  MdVolumeOff,
+  MdVolumeUp,
 } from 'react-icons/md';
 
 import { App } from '../../schema';
@@ -169,7 +173,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // React State
   const [videoRef] = useState<HTMLVideoElement>(document.getElementById(`${props._id}-video`) as HTMLVideoElement);
-  const [duration, setDuration] = useState(videoRef.duration);
+  const [duration, setDuration] = useState(videoRef ? videoRef.duration : 0);
   const [sliderTime, setSliderTime] = useState(s.play.currentTime);
   const [file, setFile] = useState<Asset>();
 
