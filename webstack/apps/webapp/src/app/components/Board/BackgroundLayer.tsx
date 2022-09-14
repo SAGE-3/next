@@ -143,10 +143,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
                   position: 'absolute',
                   left: presence.data.cursor.x - 4 + 'px',
                   top: presence.data.cursor.y - 3 + 'px',
-                  transition: 'all 0.5s ease-in-out',
+                  transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
                   pointerEvents: 'none',
                   display: 'flex',
                   zIndex: 100000,
+                  transform: `scale(${1 / scale})`,
                 }}
               >
                 <GiArrowCursor color="red"></GiArrowCursor>
