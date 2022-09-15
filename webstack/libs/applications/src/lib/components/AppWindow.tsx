@@ -220,7 +220,8 @@ export function AppWindow(props: WindowProps) {
         flexWrap="nowrap"
         justifyContent="space-between"
         alignItems="center"
-        backgroundColor={minimized ? sageColorByName('orange') : selected ? selectColor : 'teal'}
+        // backgroundColor={minimized ? sageColorByName('orange') : selected ? selectColor : 'teal'}
+        backgroundColor={selected ? selectColor : 'teal'}
         px="1"
         cursor={'move'}
         overflow="hidden"
