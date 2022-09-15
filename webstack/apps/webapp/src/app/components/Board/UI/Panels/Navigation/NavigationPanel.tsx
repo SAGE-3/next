@@ -10,9 +10,10 @@ import { useEffect } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
 import { MdFullscreen, MdGridView, MdDelete } from 'react-icons/md';
 
-import { StuckTypes, useAppStore, usePresenceStore, useUIStore } from '@sage3/frontend';
+import { StuckTypes, useAppStore, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
+import { sageColorByName } from '@sage3/shared';
 
 export interface NavProps {
   fitToBoard: () => void;
@@ -46,6 +47,8 @@ export function NavigationPanel(props: NavProps) {
 
   // Users and Presecnes for cursors
   const presences = usePresenceStore((state) => state.presences);
+  const users = useUsersStore((state) => state.users);
+  const { user } = useUser();
 
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -122,34 +125,23 @@ export function NavigationPanel(props: NavProps) {
           </Tooltip>
         </Box>
         <Box
-          width={boardWidth / displayScale + 'px'}
-          height={boardHeight / displayScale + 'px'}
+          width={boardWidth / displayScale + 4 + 'px'}
+          height={boardHeight / displayScale + 4 + 'px'}
           backgroundColor={backgroundColor}
           borderRadius="md"
           borderWidth="2px"
           borderStyle="solid"
           borderColor={borderColor}
+          overflow="hidden"
         >
-          <Box position="absolute">
+          <Box position="absolute" width={boardWidth / displayScale} height={boardHeight / displayScale} overflow="hidden">
             {/* Create a copy of app array and sort it by update time */}
             {apps
               .slice()
               .sort((a, b) => a._updatedAt - b._updatedAt)
               .map((app) => {
                 return (
-                  <Tooltip
-                    key={app._id}
-                    label={
-                      <>
-                        {/* We could show a preview of the app here */}
-                        <div>
-                          {app.data.name}: {app.data.description}
-                        </div>
-                      </>
-                    }
-                    openDelay={500}
-                    hasArrow
-                  >
+                  <Tooltip key={app._id} label={`${app.data.name}: ${app.data.description}`} openDelay={500} hasArrow>
                     <Box
                       backgroundColor={borderColor}
                       position="absolute"
@@ -163,6 +155,7 @@ export function NavigationPanel(props: NavProps) {
                       borderWidth="1px"
                       borderStyle="solid"
                       borderColor={appBorderColor}
+                      borderRadius="sm"
                     ></Box>
                   </Tooltip>
                 );
@@ -170,8 +163,10 @@ export function NavigationPanel(props: NavProps) {
             {/* Draw the cursors: filter by board and not myself */}
             {presences
               .filter((el) => el.data.boardId === props.boardId)
-              // .filter((el) => el.data.userId !== user?._id)
               .map((presence) => {
+                const u = users.find((el) => el._id === presence.data.userId);
+                if (!u) return null;
+                const self = u._id === user?._id;
                 return (
                   <Box
                     key={presence.data.userId}
@@ -185,9 +180,9 @@ export function NavigationPanel(props: NavProps) {
                       zIndex: 100000,
                     }}
                     borderRadius="50%"
-                    backgroundColor="orange"
-                    width="4px"
-                    height="4px"
+                    backgroundColor={self ? 'white' : sageColorByName(u.data.color)}
+                    width={self ? '6px' : '4px'}
+                    height={self ? '6px' : '4px'}
                   ></Box>
                 );
               })}
