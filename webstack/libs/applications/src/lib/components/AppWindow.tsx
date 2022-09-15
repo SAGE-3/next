@@ -24,6 +24,7 @@ type WindowProps = {
 
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
+  lockToBackground?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -147,10 +148,12 @@ export function AppWindow(props: WindowProps) {
   // Track raised state
   useEffect(() => {
     if (props.app.data.raised) {
-      // raise  my zIndex
-      setMyZ(zindex + 1);
-      // raise the global value
-      incZ();
+      if (!props.lockToBackground) {
+        // raise  my zIndex
+        setMyZ(zindex + 1);
+        // raise the global value
+        incZ();
+      }
     }
   }, [props.app.data.raised]);
 
@@ -158,12 +161,15 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
     // Set the selected app in the UI store
     setSelectedApp(props.app._id);
-    // Raise down
-    apps.forEach((a) => {
-      if (a.data.raised) update(a._id, { raised: false });
-    });
-    // Bring to front function
-    update(props.app._id, { raised: true });
+
+    if (!props.lockToBackground) {
+      // Raise down
+      apps.forEach((a) => {
+        if (a.data.raised) update(a._id, { raised: false });
+      });
+      // Bring to front function
+      update(props.app._id, { raised: true });
+    }
   }
 
   return (

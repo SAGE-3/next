@@ -9,7 +9,8 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  hostedAppsArr: z.array(z.any()),
+  hostedApps: z.record(z.number(), z.string()),
+
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -19,7 +20,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
-  hostedAppsArr: [],
+  hostedApps: {},
 };
 
 export const name = 'AIPane';

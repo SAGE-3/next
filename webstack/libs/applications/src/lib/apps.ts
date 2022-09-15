@@ -6,6 +6,7 @@
  *
  */
 
+import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as CounterName } from './apps/Counter';
 import { name as LinkerName } from './apps/Linker';
 import { name as StickieName } from './apps/Stickie';
@@ -15,7 +16,7 @@ import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
-import { name as DataTableAppName } from './apps/DataTableApp';
+import { name as DataTableName } from './apps/DataTable';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as ScreenshareName } from './apps/TwilioScreenshare';
@@ -26,6 +27,7 @@ import { name as CobrowseName } from './apps/Cobrowse';
 import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 
+import AIPane from './apps/AIPane/AIPane';
 import Counter from './apps/Counter/Counter';
 import Linker from './apps/Linker/Linker';
 import Stickie from './apps/Stickie/Stickie';
@@ -35,7 +37,7 @@ import ImageViewer from './apps/ImageViewer/ImageViewer';
 import LeafLet from './apps/LeafLet/LeafLet';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
-import DataTableApp from './apps/DataTableApp/DataTableApp';
+import DataTable from './apps/DataTable/DataTable';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import Screenshare from './apps/TwilioScreenshare/TwilioScreenshare';
@@ -47,6 +49,7 @@ import VegaLite from './apps/VegaLite/VegaLite';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 
 export const Applications = {
+  [AIPaneName]: AIPane,
   [CounterName]: Counter,
   [LinkerName]: Linker,
   [StickieName]: Stickie,
@@ -56,7 +59,7 @@ export const Applications = {
   [LeafLetName]: LeafLet,
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
-  [DataTableAppName]: DataTableApp,
+  [DataTableName]: DataTable,
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
   [ScreenshareName]: Screenshare,

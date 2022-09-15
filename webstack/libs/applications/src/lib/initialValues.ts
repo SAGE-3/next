@@ -6,6 +6,7 @@
  *
  */
 
+import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as CounterAppName, init as defaultCounterApp } from './apps/Counter';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
@@ -15,7 +16,7 @@ import { name as ImageViewerName, init as defaultImageViewer } from './apps/Imag
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
+import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as ScreenshareName, init as defaultScreenshare } from './apps/TwilioScreenshare';
@@ -27,6 +28,7 @@ import { name as JupyterLabName, init as defaultJupyterLab } from './apps/Jupyte
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 
 export const initialValues = {
+  [AIPaneName]: defaultAIPane,
   [CounterAppName]: defaultCounterApp,
   [LinkerName]: defaultLinker,
   [StickieName]: defaultStickie,
@@ -36,7 +38,7 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
-  [DataTableAppName]: defaultDataTableApp,
+  [DataTableName]: defaultDataTable,
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
   [ScreenshareName]: defaultScreenshare,
