@@ -11,7 +11,7 @@ import { Avatar, Box, Tooltip } from '@chakra-ui/react';
 
 import { useUIStore, useUser, initials, StuckTypes } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
-import { AvatarGroup } from '../../AvatarGroup';
+import { UserAvatarGroup } from '../../UserAvatarGroup';
 import { Panel } from '../Panel';
 
 export interface AvatarProps {
@@ -62,8 +62,7 @@ export function UsersPanel(props: AvatarProps) {
     >
       <Box alignItems="center" p="1" width="100%" display="flex">
         {/* User Avatar */}
-        <Tooltip aria-label="username" hasArrow={true} placement="top-start"
-          label={"You"}>
+        <Tooltip aria-label="username" hasArrow={true} placement="top-start" label={'You'}>
           <Avatar
             size="sm"
             pointerEvents={'all'}
@@ -73,9 +72,10 @@ export function UsersPanel(props: AvatarProps) {
             color="white"
             border="2px solid white"
             mx={1}
-          /></Tooltip>
+          />
+        </Tooltip>
         {/* Avatar Group */}
-        <AvatarGroup boardId={props.boardId} />
+        <UserAvatarGroup boardId={props.boardId} />
       </Box>
     </Panel>
   );
