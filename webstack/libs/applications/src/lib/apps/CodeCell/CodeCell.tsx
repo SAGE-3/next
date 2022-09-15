@@ -121,7 +121,7 @@ const InputBox = (props: App): JSX.Element => {
           ]}
         />
         <VStack pr={2}>
-          <Tooltip hasArrow label="Execute" placement="right">
+          <Tooltip hasArrow label="Execute" placement="top-start">
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -133,7 +133,7 @@ const InputBox = (props: App): JSX.Element => {
               icon={<MdPlayArrow size={'2em'} color={useColorModeValue('#008080', '#008080')} />}
             />
           </Tooltip>
-          <Tooltip hasArrow label="Clear All" placement="right" bgColor={'red'}>
+          <Tooltip hasArrow label="Clear All" placement="top-start" bgColor={'red'}>
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -196,44 +196,44 @@ export default { AppComponent, ToolbarComponent };
 
 
 const ProcessedOutput = (output: string) => {
-      try {
-        const parsed = JSON.parse(output);
-        return (
-            <Box p={4} fontSize={'16px'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
-            <Box
-              p={4}
-              // m={4}
-              // mr={0}
-              style={{
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                overflow: 'hidden',
-                backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-                boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
-                borderRadius: '12px',
-              }}
-            >
-              {/* <pre>Real Output: </pre> */}
-              {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
-              {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
-              {parsed.error && RenderTraceBack(parsed.error.evalue)}
-              {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
-              {parsed.execute_result &&
-                parsed.execute_result.data['text/plain'] &&
-                RenderPlainText(parsed.execute_result.data['text/plain'])}
-              {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
-              {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
-            </Box>
-            {/* {JSONOutput(output)} */}
-          </Box>
-        );
-      } catch (e) {
-        return ('');
-        // return (<Box p={4}>Processing...</Box>);
-        // return JSONOutput(output)
-      }
-    };
+  try {
+    const parsed = JSON.parse(output);
+    return (
+      <Box p={4} fontSize={'16px'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
+        <Box
+          p={4}
+          // m={4}
+          // mr={0}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            overflow: 'hidden',
+            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
+            boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
+            borderRadius: '12px',
+          }}
+        >
+          {/* <pre>Real Output: </pre> */}
+          {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
+          {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
+          {parsed.error && RenderTraceBack(parsed.error.evalue)}
+          {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
+          {parsed.execute_result &&
+            parsed.execute_result.data['text/plain'] &&
+            RenderPlainText(parsed.execute_result.data['text/plain'])}
+          {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
+          {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
+        </Box>
+        {/* {JSONOutput(output)} */}
+      </Box>
+    );
+  } catch (e) {
+    return ('');
+    // return (<Box p={4}>Processing...</Box>);
+    // return JSONOutput(output)
+  }
+};
 
 const JSONOutput = (output: string) => {
 
@@ -290,7 +290,7 @@ const RenderMarkdown = (markdown: string | string[]): JSX.Element => {
         variant={'left-accent'}
         backgroundColor={useColorModeValue('#F0F2F6', '#111111')}
       > */}
-        <Markdown data={markdown} />
+      <Markdown data={markdown} />
       {/* </Alert> */}
     </>
   );

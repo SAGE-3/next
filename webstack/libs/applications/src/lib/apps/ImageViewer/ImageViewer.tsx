@@ -125,7 +125,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="bottom" hasArrow={true} label={'Download Image'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Image'} openDelay={400}>
           <Button
             onClick={() => {
               if (file) {

@@ -111,7 +111,7 @@ export function BoardList(props: BoardListProps) {
           })
         : null}
       {props.selectedRoom ? (
-        <Tooltip label="Create a board" openDelay={400}>
+        <Tooltip label="Create a board" placement="top-start" openDelay={400}>
           <Button
             border={`solid ${borderColor} 2px`}
             borderColor={borderColor}

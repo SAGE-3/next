@@ -61,7 +61,7 @@ export function RoomList(props: RoomListProps) {
             ></RoomCard>
           );
         })}
-      <Tooltip label="Create a room" hasArrow placement="right">
+      <Tooltip label="Create a room" hasArrow placement="top-start">
         <Button
           height="60px"
           width="60px"
