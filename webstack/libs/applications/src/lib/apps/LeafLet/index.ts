@@ -18,7 +18,7 @@ export const schema = z.object({
   zoom: z.number(),
   baseLayer: z.string(),
   overlay: z.boolean(),
-  geojson: z.string().optional(),
+  assetid: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 

@@ -19,6 +19,7 @@ type ContextProps = {
   clearBoard: () => void;
   fitToBoard: () => void;
   showAllApps: () => void;
+  downloadBoard: () => void;
 };
 
 // State of the checkboxes in context menu: grid ui
@@ -210,6 +211,19 @@ export function BoardContextMenu(props: ContextProps) {
             onClick={() => setAppToolbarPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
           >
             Bring App Toolbar
+          </Button>
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={props.downloadBoard}
+          >
+            Download Opened Assets
           </Button>
         </VStack>
 

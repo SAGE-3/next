@@ -56,13 +56,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Get Asset from store
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.vid);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
       update(props._id, { description: myasset?.data.originalfilename });
     }
-  }, [s.vid, assets]);
+  }, [s.assetid, assets]);
 
   // If the file is updated, update the url
   useEffect(() => {
@@ -187,11 +187,11 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Obtain the asset for download functionality
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.vid);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
     }
-  }, [s.vid, assets]);
+  }, [s.assetid, assets]);
 
   // Set the slider time if curretime or paused state change
   useEffect(() => {
