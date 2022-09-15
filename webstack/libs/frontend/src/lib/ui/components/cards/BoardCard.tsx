@@ -7,7 +7,7 @@
  */
 
 import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast } from '@chakra-ui/react';
-import { MdPerson, MdLock, MdRemoveRedEye, MdContentCopy } from 'react-icons/md';
+import { MdPerson, MdLock, MdRemoveRedEye, MdContentCopy, MdEdit, MdExitToApp } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { sageColorByName } from '@sage3/shared';
@@ -78,7 +78,6 @@ export function BoardCard(props: BoardCardProps) {
         cursor="pointer"
         _hover={{ transform: 'scale(1.05)' }}
         style={{ background: `linear-gradient(${sageColorByName(props.board.data.color)} 10%, transparent 10% ) no-repeat` }}
-        onClick={props.onSelect}
       >
         <Box px="2" display="flex" flexDirection="row" justifyContent="space-between" alignContent="center">
           <Box display="flex" flexDirection="column">
@@ -95,16 +94,30 @@ export function BoardCard(props: BoardCardProps) {
             <Tooltip label={`${heading} board is protected`} placement="top" hasArrow openDelay={200}>
               <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={yourColor} /> : null}</div>
             </Tooltip>
-            <Tooltip label="Enter this board" openDelay={400} hasArrow>
+
+            <Tooltip label="Enter Board" openDelay={400} hasArrow>
               <Button
                 onClick={onOpen}
                 background={sageColorByName(props.board.data.color)}
                 _hover={{ transform: 'scale(1.15)' }}
                 transition="transform .2s"
+                variant="outline"
+                size="sm"
+              >
+                <MdExitToApp />
+              </Button>
+            </Tooltip>
+            <Tooltip label="Edit Board" openDelay={400} hasArrow>
+              <Button
+                onClick={props.onSelect}
+                background={sageColorByName(props.board.data.color)}
+                _hover={{ transform: 'scale(1.15)' }}
+                transition="transform .2s"
                 mx="2"
                 variant="outline"
+                size="sm"
               >
-                Enter
+                <MdEdit />
               </Button>
             </Tooltip>
             <Tooltip label="Copy Board ID into clipboard" openDelay={400} hasArrow>
@@ -113,7 +126,8 @@ export function BoardCard(props: BoardCardProps) {
                 background={sageColorByName(props.board.data.color)}
                 _hover={{ transform: 'scale(1.15)' }}
                 transition="transform .2s"
-                variant="outline"
+                variant={'ghost'}
+                size="sm"
               >
                 <MdContentCopy />
               </Button>
