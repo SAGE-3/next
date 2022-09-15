@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
 import { MdFullscreen, MdGridView, MdDelete } from 'react-icons/md';
 
-import { StuckTypes, useAppStore, useUIStore } from '@sage3/frontend';
+import { StuckTypes, useAppStore, usePresenceStore, useUIStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 
@@ -18,6 +18,7 @@ export interface NavProps {
   fitToBoard: () => void;
   fitApps: () => void;
   clearBoard: () => void;
+  boardId: string;
 }
 
 export function NavigationPanel(props: NavProps) {
@@ -42,6 +43,9 @@ export function NavigationPanel(props: NavProps) {
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+
+  // Users and Presecnes for cursors
+  const presences = usePresenceStore((state) => state.presences);
 
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -105,19 +109,16 @@ export function NavigationPanel(props: NavProps) {
       stuck={stuck}
       setStuck={setStuck}
     >
-      <Box alignItems="center" p="1" width="100%" display="flex">
+      <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
           <Tooltip label="Fit Board" placement="right" hasArrow openDelay={500}>
-            <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board"
-              onClick={props.fitToBoard} />
+            <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board" onClick={props.fitToBoard} />
           </Tooltip>
           <Tooltip label="Fit Apps" placement="right" hasArrow openDelay={500}>
-            <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps"
-              onClick={props.fitApps} />
+            <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps" onClick={props.fitApps} />
           </Tooltip>
           <Tooltip label="Clear Board" placement="right" hasArrow openDelay={500}>
-            <IconButton icon={<MdDelete />} colorScheme="teal" size="xs" aria-label="clear"
-              onClick={props.clearBoard} />
+            <IconButton icon={<MdDelete />} colorScheme="teal" size="xs" aria-label="clear" onClick={props.clearBoard} />
           </Tooltip>
         </Box>
         <Box
@@ -131,38 +132,65 @@ export function NavigationPanel(props: NavProps) {
         >
           <Box position="absolute">
             {/* Create a copy of app array and sort it by update time */}
-            {apps.slice().sort((a, b) => a._updatedAt - b._updatedAt).map((app) => {
-              return (
-                <Tooltip
-                  label={
-                    <>
-                      {/* We could show a preview of the app here */}
-                      <div>
-                        {app.data.name}: {app.data.description}
-                      </div>
-                    </>
-                  }
-                  openDelay={500}
-                  hasArrow
-                >
-                  <Box
+            {apps
+              .slice()
+              .sort((a, b) => a._updatedAt - b._updatedAt)
+              .map((app) => {
+                return (
+                  <Tooltip
                     key={app._id}
-                    backgroundColor={borderColor}
-                    position="absolute"
-                    left={app.data.position.x / displayScale + 'px'}
-                    top={app.data.position.y / displayScale + 'px'}
-                    width={app.data.size.width / displayScale + 'px'}
-                    height={app.data.size.height / displayScale + 'px'}
-                    transition={'all .2s'}
-                    _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
-                    onClick={() => moveToApp(app)}
-                    borderWidth="1px"
-                    borderStyle="solid"
-                    borderColor={appBorderColor}
+                    label={
+                      <>
+                        {/* We could show a preview of the app here */}
+                        <div>
+                          {app.data.name}: {app.data.description}
+                        </div>
+                      </>
+                    }
+                    openDelay={500}
+                    hasArrow
+                  >
+                    <Box
+                      backgroundColor={borderColor}
+                      position="absolute"
+                      left={app.data.position.x / displayScale + 'px'}
+                      top={app.data.position.y / displayScale + 'px'}
+                      width={app.data.size.width / displayScale + 'px'}
+                      height={app.data.size.height / displayScale + 'px'}
+                      transition={'all .2s'}
+                      _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+                      onClick={() => moveToApp(app)}
+                      borderWidth="1px"
+                      borderStyle="solid"
+                      borderColor={appBorderColor}
+                    ></Box>
+                  </Tooltip>
+                );
+              })}
+            {/* Draw the cursors: filter by board and not myself */}
+            {presences
+              .filter((el) => el.data.boardId === props.boardId)
+              // .filter((el) => el.data.userId !== user?._id)
+              .map((presence) => {
+                return (
+                  <Box
+                    key={presence.data.userId}
+                    style={{
+                      position: 'absolute',
+                      left: presence.data.cursor.x / displayScale + 'px',
+                      top: presence.data.cursor.y / displayScale + 'px',
+                      transition: 'all 0.5s ease-in-out',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      zIndex: 100000,
+                    }}
+                    borderRadius="50%"
+                    backgroundColor="orange"
+                    width="4px"
+                    height="4px"
                   ></Box>
-                </Tooltip>
-              );
-            })}
+                );
+              })}
           </Box>
         </Box>
       </Box>
