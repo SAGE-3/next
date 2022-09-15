@@ -35,14 +35,15 @@ export function AppWindow(props: WindowProps) {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
-  const selectColor = '#4aaf71';
+  const selectColor = '#f39e4a';
 
   // Display messages
   const toast = useToast();
   // Height of the title bar
   const titleBarHeight = 24;
   // Border color when selected
-  const borderColor = useColorModeValue(sageColorByName('blue'), sageColorByName('orange'));
+  // const borderColor = useColorModeValue(sageColorByName('blue'), sageColorByName('orange'));
+
   // Users
   const users = useUsersStore((state) => state.users);
   const owner = users.find((el) => el._id === props.app._createdBy);
@@ -207,7 +208,7 @@ export function AppWindow(props: WindowProps) {
           width={size.width + 6}
           height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
           border={`${4}px solid ${selectColor}`}
-          borderRadius="12px"
+          borderRadius="8px"
           pointerEvents="none"
         ></Box>
       ) : null}
