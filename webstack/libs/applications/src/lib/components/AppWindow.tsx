@@ -253,12 +253,24 @@ export function AppWindow(props: WindowProps) {
         <Box display="flex" alignItems="center">
           {/* Minimize Buttons */}
           {minimized ? (
-            <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
+            <Tooltip placement="top-start" hasArrow={true} label={'Open App'} openDelay={400}>
+              <span>
+                <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
+              </span>
+            </Tooltip>
           ) : (
-            <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
+            <Tooltip placement="top-start" hasArrow={true} label={'Minimize App'} openDelay={400}>
+              <span>
+                <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
+              </span>
+            </Tooltip>
           )}
           {/* Close Button Name */}
-          <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
+          <Tooltip placement="top-start" hasArrow={true} label={'Delete App'} openDelay={400}>
+            <span>
+              <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
+            </span>
+          </Tooltip>
         </Box>
       </Box>
       {/* End Title Bar */}

@@ -62,12 +62,12 @@ export function AppToolbar(props: AppToolbarProps) {
           <>
             <Component key={app._id} {...app}></Component>
             <ButtonGroup isAttached size="xs" ml="2">
-              <Tooltip placement="bottom" hasArrow={true} label={'Minimize App'} openDelay={400}>
+              <Tooltip placement="top" hasArrow={true} label={'Minimize App'} openDelay={400}>
                 <Button onClick={() => updateApp(app._id, { minimized: !app.data.minimized })} backgroundColor={commonButtonColors}>
                   {app.data.minimized ? <MdOpenInFull fontSize="18" /> : <MdOutlineCloseFullscreen fontSize="18" />}
                 </Button>
               </Tooltip>
-              <Tooltip placement="bottom" hasArrow={true} label={'Close App'} openDelay={400}>
+              <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
                 <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors}>
                   <MdClose color={sageColorByName('red')} fontSize="18" />
                 </Button>
