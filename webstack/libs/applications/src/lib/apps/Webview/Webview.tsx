@@ -55,10 +55,10 @@ export const useStore = create((set: any) => ({
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string>(s.webviewurl);
   const setView = useStore((state: any) => state.setView);
+  const [zoom, setZoom] = useState(s.zoom ?? 1.0);
 
   // Using Electron webview functions of the webivew requires the dom-ready event to be called first
   // This is used to track when that function has been called
@@ -142,6 +142,15 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [url, domReady]);
 
+  useEffect(() => {
+    if (domReady === false) return;
+    if (webviewNode.current && s.zoom) {
+      setZoom(s.zoom);
+      webviewNode.current.setZoomFactor(s.zoom);
+      console.log("🚀 ~ file: Webview.tsx ~ line 149 ~ useEffect ~ zoom", zoom)
+    }
+  }, [s.zoom, domReady]);
+
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
     height: props.data.size.height + 'px',
@@ -222,6 +231,19 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const handleZoom = (dir: string) => {
+    const v = view as WebviewTag;
+    if (dir === 'zoom-in') {
+      v.zoomFactor = Math.min(v.zoomFactor + 0.1, 3);
+    } else if (dir === 'zoom-out') {
+      v.zoomFactor = Math.max(v.zoomFactor - 0.1, 0.1)
+    } else if (dir === 'zoom-reset') {
+      v.zoomFactor = 1;
+    }
+    console.log("🚀 ~ file: Webview.tsx ~ line 241 ~ handleZoom ~ v.zoomFactor", v.zoomFactor)
+    updateState(props._id, { zoom: v.zoomFactor });
+  };
+
   return <HStack>
     <ButtonGroup isAttached size="xs" colorScheme="teal">
       <Tooltip placement="bottom" hasArrow={true} label={'Go Back'} openDelay={400}>
@@ -286,17 +308,13 @@ function ToolbarComponent(props: App): JSX.Element {
 
     <ButtonGroup isAttached size="xs" colorScheme="teal">
       <Tooltip placement="bottom" hasArrow={true} label={'Zoom In'} openDelay={400}>
-        <Button
-        // onClick={() => visualDispatch({ type: 'zoom-in' })}
-        >
+        <Button onClick={() => handleZoom('zoom-in')} >
           <MdAdd />
         </Button>
       </Tooltip>
 
       <Tooltip placement="bottom" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-        <Button
-        // onClick={() => visualDispatch({ type: 'zoom-out' })}
-        >
+        <Button onClick={() => handleZoom('zoom-out')} >
           <MdRemove />
         </Button>
       </Tooltip>
