@@ -15,13 +15,13 @@ import { z } from 'zod';
 
 export const schema = z.object({
   play: z.object({ paused: z.boolean(), uid: z.string(), currentTime: z.number(), loop: z.boolean() }),
-  vid: z.string(),
+  assetid: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: state = {
   play: { paused: true, uid: '', currentTime: 0, loop: false },
-  vid: '',
+  assetid: '',
 };
 
 export const name = 'VideoViewer';

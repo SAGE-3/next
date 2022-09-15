@@ -55,6 +55,7 @@
     "hjson": "^3.2.2",
     "hotkeys-js": "^3.8.7",
     "jsonwebtoken": "^8.5.1",
+    "jszip": "^3.10.1",
     "leaflet": "^1.8.0",
     "markdown-to-jsx": "^7.1.1",
     "mime": "^3.0.0",

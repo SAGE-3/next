@@ -111,7 +111,7 @@ export function Background(props: BackgroundProps) {
               props.boardId,
               user._id,
               { w: w, h: w / (extras.aspectRatio || 1) },
-              { id: fileID }
+              { assetid: fileID }
             )
           );
         }
@@ -137,17 +137,17 @@ export function Background(props: BackgroundProps) {
               const vh = j['ImageHeight'] || 450;
               const ar = vw / vh;
               createApp(
-                setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 500, h: 400 / ar }, { vid: fileID })
+                setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 500, h: 400 / ar }, { assetid: fileID })
               );
             });
         }
       });
     } else if (isCSV(fileType)) {
-      createApp(setupApp('CSVViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { id: fileID }));
+      createApp(setupApp('CSVViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isDZI(fileType)) {
-      createApp(setupApp('DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { zid: fileID }));
+      createApp(setupApp('DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isGeoJSON(fileType)) {
-      createApp(setupApp('LeafLet', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { geojson: fileID }));
+      createApp(setupApp('LeafLet', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isText(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
@@ -214,7 +214,7 @@ export function Background(props: BackgroundProps) {
             aspectRatio = page[0].width / page[0].height;
           }
           createApp(
-            setupApp('PDFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 / aspectRatio }, { id: fileID })
+            setupApp('PDFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
           );
         }
       });

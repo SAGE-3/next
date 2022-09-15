@@ -14,14 +14,14 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  zid: z.string(),
+  assetid: z.string(),
   zoomLevel: z.number(),
   zoomCenter: z.array(z.number(), z.number()),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  zid: '',
+  assetid: '',
   zoomLevel: 1,
   zoomCenter: [0.5, 0.5],
 };
