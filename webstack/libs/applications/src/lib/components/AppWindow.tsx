@@ -34,6 +34,8 @@ export function AppWindow(props: WindowProps) {
   const gridSize = useUIStore((state) => state.gridSize);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const selected = selectedApp === props.app._id;
+  const selectColor = '#4aaf71';
 
   // Display messages
   const toast = useToast();
@@ -197,15 +199,15 @@ export function AppWindow(props: WindowProps) {
       enableResizing={!minimized}
     >
       {/* Border Box around app to show it is selected */}
-      {selectedApp === props.app._id ? (
+      {selected ? (
         <Box
           position="absolute"
-          left="-4px"
-          top="-4px"
-          width={size.width + 8}
-          height={minimized ? titleBarHeight + 8 + 'px' : size.height + titleBarHeight + 8 + 'px'}
-          border={`${(3 * 1) / scale}px dashed ${borderColor}`}
-          borderRadius="6px"
+          left="-3px"
+          top="-3px"
+          width={size.width + 6}
+          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
+          border={`${4}px solid ${selectColor}`}
+          borderRadius="12px"
           pointerEvents="none"
         ></Box>
       ) : null}
@@ -217,7 +219,7 @@ export function AppWindow(props: WindowProps) {
         flexWrap="nowrap"
         justifyContent="space-between"
         alignItems="center"
-        backgroundColor={minimized ? sageColorByName('orange') : 'teal'}
+        backgroundColor={minimized ? sageColorByName('orange') : selected ? selectColor : 'teal'}
         px="1"
         cursor={'move'}
         overflow="hidden"
