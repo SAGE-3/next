@@ -19,6 +19,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
 import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
+
 import 'quill/dist/quill.snow.css';
 import './styles.css';
 import { sageColorByName } from '@sage3/shared';
@@ -67,7 +68,9 @@ function AppComponent(props: App): JSX.Element {
       // A Yjs document holds the shared data
       const ydoc = new Y.Doc();
 
-      const provider = new WebsocketProvider(`ws://${window.location.host}/yjs`, props._id, ydoc);
+      // WS Provider
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
 
       // Define a shared text type on the document
       const ytext = ydoc.getText('quill');
