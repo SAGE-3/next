@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, Icon } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Icon, Divider } from '@chakra-ui/react';
 
 import { SBDocument } from '@sage3/sagebase';
 import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
@@ -44,6 +44,8 @@ export function HomePage() {
     setSelectedBoard(board);
   }
 
+  const borderColor = useColorModeValue('gray.300', 'white');
+
   return (
     <Box p="2">
       <Box display="flex" flexDirection="row" flexWrap="nowrap">
@@ -56,73 +58,85 @@ export function HomePage() {
         <Box flexGrow="8" mx="5">
           <Box display="flex" flexDirection="row">
             <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 700]}>
-              <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
-            </Box>
-
-            <Box width="100%" height="100%" borderRadius="md" m="2" ml="8" p="4" display="flex" flexDirection="column">
               {selectedRoom ? (
                 <>
                   <Box display="flex" justifyContent="center">
-                    <Text fontSize={'4xl'}>
-                      {selectedRoom?.data.name} <Icon as={MdSettings} transform="translateY(6px)" />
-                    </Text>
+                    <Text fontSize={'4xl'}>{selectedRoom?.data.name}</Text>
                   </Box>
 
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    width="100%"
-                    height="300px"
-                    backgroundColor="gray.600"
-                    borderRadius="md"
-                    p="2"
-                  >
+                  <Box display="flex" justifyContent="center" width="100%" height="80px" borderRadius="md" py={2}>
                     <Box
                       width="100%"
                       height="100%"
-                      backgroundColor="purple.600"
+                      backgroundColor="purple.500"
                       borderRadius="md"
                       display="flex"
                       justifyContent="center"
                       alignItems={'center'}
-                      mx="2"
+                      mr="2"
+                      fontWeight={'bold'}
+                      transition={'all 0.2s ease-in-out'}
+                      _hover={{ transform: 'scale(1.05)' }}
+                      cursor="pointer"
+                      border="2px solid white"
+                      fontSize="lg"
+                      borderColor={borderColor}
+                      color="white"
                     >
-                      {' Info '}
+                      {'Edit'}
                     </Box>
                     <Box
                       width="100%"
                       height="100%"
-                      backgroundColor="yellow.600"
+                      backgroundColor="yellow.500"
                       borderRadius="md"
                       display="flex"
                       justifyContent="center"
                       alignItems={'center'}
                       mx="2"
+                      fontWeight={'bold'}
+                      transition={'all 0.2s ease-in-out'}
+                      _hover={{ transform: 'scale(1.05)' }}
+                      cursor="pointer"
+                      fontSize="lg"
+                      border="2px solid white"
+                      borderColor={borderColor}
+                      color="white"
                     >
-                      {'Chart  '}
+                      {'Info'}
                     </Box>
                     <Box
                       width="100%"
                       height="100%"
-                      backgroundColor="blue.600"
+                      backgroundColor="blue.500"
                       borderRadius="md"
                       display="flex"
                       justifyContent="center"
                       alignItems={'center'}
-                      mx="2"
+                      ml="2"
+                      fontWeight={'bold'}
+                      transition={'all 0.2s ease-in-out'}
+                      _hover={{ transform: 'scale(1.1)' }}
+                      cursor="pointer"
+                      border="2px solid white"
+                      fontSize="lg"
+                      borderColor={borderColor}
+                      color="white"
                     >
-                      {'Calendar '}
+                      {'Users'}
                     </Box>
                   </Box>
+
+                  <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
                 </>
               ) : null}
+            </Box>
 
+            <Box width="100%" height="100%" borderRadius="md" ml={8} display="flex" flexDirection="column">
               {selectedBoard ? (
                 <>
-                  <Box display="flex" justifyContent="center" mt="8">
-                    <Text fontSize={'4xl'}>
-                      {selectedBoard?.data.name} <Icon as={MdSettings} transform="translateY(6px)" />
-                    </Text>
+                  <Box display="flex" justifyContent="center">
+                    <Text fontSize={'4xl'}>{selectedBoard?.data.name}</Text>
                   </Box>
                   <Box
                     display="flex"
@@ -132,32 +146,7 @@ export function HomePage() {
                     backgroundColor="gray.600"
                     borderRadius="md"
                     p="2"
-                  >
-                    <Box
-                      width="30%"
-                      height="100%"
-                      backgroundColor="red.600"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                    >
-                      {'Chart'}
-                    </Box>
-                    <Box
-                      width="70%"
-                      height="100%"
-                      backgroundColor="green.600"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                    >
-                      {'Chat'}
-                    </Box>
-                  </Box>
+                  ></Box>
                 </>
               ) : null}
             </Box>
@@ -173,7 +162,6 @@ export function HomePage() {
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
         <img src={imageUrl} width="75px" alt="" />
       </Box>
-
     </Box>
   );
 }
