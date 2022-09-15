@@ -49,7 +49,7 @@ export async function setupAppForFile(
         size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'ImageViewer',
-        state: { ...initialValues['ImageViewer'], id: file.id },
+        state: { ...initialValues['ImageViewer'], assetid: file.id },
         minimized: false,
         raised: true,
       });
@@ -64,7 +64,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 450, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'VideoViewer',
-        state: { ...(initialValues['VideoViewer'] as AppState), vid: file.id },
+        state: { ...(initialValues['VideoViewer'] as AppState), assetid: file.id },
         minimized: false,
         raised: true,
       });
@@ -79,7 +79,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'CSVViewer',
-        state: { ...initialValues['CSVViewer'], id: file.id },
+        state: { ...initialValues['CSVViewer'], assetid: file.id },
         minimized: false,
         raised: true,
       });
@@ -94,7 +94,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'DeepZoomImage',
-        state: { ...initialValues['DeepZoomImage'] as AppState, zid: file.id },
+        state: { ...initialValues['DeepZoomImage'] as AppState, assetid: file.id },
         minimized: false,
         raised: true
       });
@@ -109,7 +109,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'LeafLet',
-        state: { ...initialValues['LeafLet'] as AppState, geojson: file.id },
+        state: { ...initialValues['LeafLet'] as AppState, assetid: file.id },
         minimized: false,
         raised: true
       });
@@ -193,7 +193,7 @@ export async function setupAppForFile(
         size: { width: 400, height: 400 / aspectRatio, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'PDFViewer',
-        state: { ...initialValues['PDFViewer'], id: file.id },
+        state: { ...initialValues['PDFViewer'], assetid: file.id },
         minimized: false,
         raised: true,
       });

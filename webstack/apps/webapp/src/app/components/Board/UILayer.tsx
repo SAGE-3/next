@@ -6,15 +6,19 @@
  *
  */
 
-import { Box, useDisclosure, Modal } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast } from '@chakra-ui/react';
+import { format as formatDate } from 'date-fns';
 
 import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel } from './UI/Panels';
-import { ContextMenu, UploadModal, useAppStore, useUIStore } from '@sage3/frontend';
+import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
 import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 import { Twilio } from './UI/Twilio';
 import { ClearBoardModal } from './UI/ClearBoardModal';
 import { Alfred } from './UI/Alfred';
+
+import JSZip from 'jszip';
+// import * as JSZipType from 'jszip';
 
 type UILayerProps = {
   boardId: string;
@@ -30,10 +34,16 @@ export function UILayer(props: UILayerProps) {
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-
+  // Asset store
+  const assets = useAssetStore((state) => state.assets);
+  // Board store
+  const boards = useBoardStore((state) => state.boards);
   // Apps
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
+
+  // Toast
+  const toast = useToast();
 
   // Clear boar modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
@@ -95,6 +105,61 @@ export function UILayer(props: UILayerProps) {
     setScale(sm);
   };
 
+  // How to save a board opened files into a ZIP archive
+  const downloadBoard = async () => {
+    // Create a ZIP object
+    const zip = new JSZip();
+    // Generate a filename using date and board name
+    const boardName = boards.find((b) => b._id === props.boardId)?.data.name || 'session';
+    const prettyDate = formatDate(new Date(), 'yyyy-MM-dd-HH-mm-ss');
+    const name = `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.zip`;
+    // Create a folder in the archive
+    const session = zip.folder(`SAGE3-${boardName}`);
+    // Iterate over all the apps
+    await apps.reduce(async (promise, a) => {
+      // wait for the last async function to finish
+      await promise;
+      // process the next app with an asset
+      if ('assetid' in a.data.state) {
+        const assetid = a.data.state.assetid;
+        if (assetid) {
+          // Get the asset from the store
+          const asset = assets.find((a) => a._id === assetid);
+          // Derive the public URL
+          const url = 'api/assets/static/' + asset?.data.file;
+          // Get the filename for the asset
+          const filename = asset?.data.originalfilename;
+          // if all set, add the file to the zip
+          if (asset && url && filename && session) {
+            // Download the file contents
+            const buffer = await fetch(url).then((r) => r.arrayBuffer());
+            // add to zip
+            session.file(filename, buffer);
+          }
+        }
+      } else if (a.data.name === 'Stickie') {
+        // Stickies are saved as text files
+        if ('text' in a.data.state) {
+          const filename = `stickie-${a._id}.txt`;
+          if (filename && session) {
+            // add to zip
+            session.file(filename, a.data.state.text);
+          }
+        }
+      }
+    }, Promise.resolve());
+    // Display a message
+    toast({ title: 'Assets Packaged', status: 'info', duration: 2000, isClosable: true });
+    // Finish the zip and trigger the download
+    zip.generateAsync({ type: "blob" }).then(function (content) {
+      // Create a URL from the blob
+      const url = URL.createObjectURL(content);
+      //Trigger the download
+      downloadFile(url, name);
+      toast({ title: 'Download in Progress', status: 'success', duration: 2000, isClosable: true });
+    });
+  };
+
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
       <ContextMenu divId="board">
@@ -104,6 +169,7 @@ export function UILayer(props: UILayerProps) {
           clearBoard={clearOnOpen}
           fitToBoard={fitToBoard}
           showAllApps={showAllApps}
+          downloadBoard={downloadBoard}
         />
       </ContextMenu>
 
