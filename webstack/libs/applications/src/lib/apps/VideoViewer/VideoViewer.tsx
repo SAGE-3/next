@@ -151,24 +151,13 @@ function AppComponent(props: App): JSX.Element {
     overflowY: 'hidden',
     height: props.data.size.width / aspectRatio,
     maxHeight: '100%',
+    borderRadius: '0 0 6px 6px',
   };
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div style={videoContainerStyle}>
-        {/* <Box
-          position="absolute"
-          left="0"
-          top="0"
-          width="100%"
-          height="100%"
-          backgroundColor="rgba(10,10,10,0.7)"
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-        > */}
-
-        {/* </Box> */}
+        {/* Pause icon in bottom corner to show if video is paused. */}
         {s.play.paused ? (
           <Box
             color="white"
