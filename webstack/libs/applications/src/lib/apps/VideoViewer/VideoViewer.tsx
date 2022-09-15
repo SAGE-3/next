@@ -116,9 +116,15 @@ function AppComponent(props: App): JSX.Element {
     let updateTimeInterval: null | NodeJS.Timeout = null;
     if (s.play.uid === user?._id) {
       // If the video is playing, update the current time
-      if (!s.play.paused) {
+      if (!s.play.paused && videoRef.current) {
         updateTimeInterval = setInterval(() => {
-          updateState(props._id, { play: { ...s.play, currentTime: videoRef.current?.currentTime ?? 0 } });
+          if (!videoRef.current) return;
+          const currentTime = videoRef.current.currentTime;
+          const duration = videoRef.current.duration;
+          updateState(props._id, { play: { ...s.play, currentTime: currentTime ?? 0 } });
+          const time = new Date(currentTime * 1000).toISOString().substring(14, 19);
+          const length = new Date(duration * 1000).toISOString().substring(14, 19);
+          update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
         }, 1000);
       }
     }
@@ -229,6 +235,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const handlePlay = () => {
     if (user) {
       update(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
+      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
+      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -236,6 +245,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleRewind = () => {
     if (user) {
       update(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
+      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
+      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -245,6 +257,9 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime + 5) },
       });
+      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
+      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -254,6 +269,9 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, loop: !s.play.loop },
       });
+      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
+      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -287,6 +305,9 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },
       });
+      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
+      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
