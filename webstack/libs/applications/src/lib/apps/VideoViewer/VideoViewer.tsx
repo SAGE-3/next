@@ -156,6 +156,37 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div style={videoContainerStyle}>
+        {/* <Box
+          position="absolute"
+          left="0"
+          top="0"
+          width="100%"
+          height="100%"
+          backgroundColor="rgba(10,10,10,0.7)"
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+        > */}
+
+        {/* </Box> */}
+        {s.play.paused ? (
+          <Box
+            color="white"
+            position="absolute"
+            left="0"
+            bottom="0"
+            fontSize="48px"
+            backgroundColor="rgba(10,10,10,.75)"
+            borderRadius="0 100% 0 0"
+            width="75px"
+            height="75px"
+            display="flex"
+            justifyContent="left"
+            alignItems="center"
+          >
+            <MdPause transform={'translate(5, 5)'} />
+          </Box>
+        ) : null}
         <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true} loop={s.play.loop}></video>
       </div>
     </AppWindow>
