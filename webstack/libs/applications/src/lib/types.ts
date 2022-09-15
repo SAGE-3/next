@@ -19,7 +19,7 @@ import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
-import { state as NotepadYjsState, name as NotepadYjsName } from './apps/NotepadYjs';
+import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 
 export type AppState =
   | CounterState
@@ -41,7 +41,7 @@ export type AppState =
   | VegaLiteViewerState
   | VegaLiteState
   | DeepZoomImageState
-  | NotepadYjsState;
+  | NotepadState;
 
 export type AppName =
   | typeof CounterName
@@ -63,4 +63,4 @@ export type AppName =
   | typeof VegaLiteViewerName
   | typeof VegaLiteName
   | typeof DeepZoomImageName
-  | typeof NotepadYjsName;
+  | typeof NotepadName;

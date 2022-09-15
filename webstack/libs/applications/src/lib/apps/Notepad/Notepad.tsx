@@ -7,29 +7,27 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { VStack, Input, InputGroup, useColorModeValue } from '@chakra-ui/react';
 
-import { GetConfiguration, useAppStore, useUser } from '@sage3/frontend';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { App } from '@sage3/applications/schema';
-
+// Editor and collaborative editing
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
 import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
 
+import { useUser } from '@sage3/frontend';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import { App } from '@sage3/applications/schema';
+import { sageColorByName } from '@sage3/shared';
+
+// Styles
 import 'quill/dist/quill.snow.css';
 import './styles.css';
-import { sageColorByName } from '@sage3/shared';
 
 Quill.register('modules/cursors', QuillCursors);
 
 function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const update = useAppStore((state) => state.update);
-
   const divref = useRef(null);
 
   const [quill, setQuill] = useState<Quill>();
@@ -48,16 +46,15 @@ function AppComponent(props: App): JSX.Element {
             [{ font: [] }, { size: [] }],
             ['bold', 'italic', 'underline', 'strike'],
             [{ color: [] }, { background: [] }],
-            [{ script: 'super' }, { script: 'sub' }],
+            ['clean'],
+            // [{ script: 'super' }, { script: 'sub' }],
             ['code-block'],
             [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-            [{ align: [] }],
+            // [{ align: [] }],
             ['link', 'image'],
-            ['clean'],
           ],
           history: {
-            // Local undo shouldn't undo changes
-            // from remote users
+            // Local undo shouldn't undo changes from remote users
             userOnly: true,
           },
         },
