@@ -274,25 +274,25 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       {/* App State with server */}
       <ButtonGroup isAttached size="xs" colorScheme="green" mr={2}>
-        <Tooltip placement="bottom" hasArrow={true} label={'Rewind 10 Seconds'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Rewind 10 Seconds'} openDelay={400}>
           <Button onClick={handleRewind} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFastRewind />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={!s.play.paused ? 'Pause Video' : 'Play Video'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={!s.play.paused ? 'Pause Video' : 'Play Video'} openDelay={400}>
           <Button onClick={handlePlay} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {s.play.paused ? <MdPlayArrow /> : <MdPause />}
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Forward 10 Seconds'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Forward 10 Seconds'} openDelay={400}>
           <Button onClick={handleForward} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFastForward />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Loop'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
           <Button onClick={handleLoop} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {s.play.loop ? <MdLoop /> : <MdArrowRightAlt />}
           </Button>
@@ -343,12 +343,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
       {/* Local State Buttons - Only Changes the video state for the local user */}
       <ButtonGroup isAttached size="xs" colorScheme={'teal'} ml={2}>
-        <Tooltip placement="bottom" hasArrow={true} label={isMute ? 'Unmute' : 'Mute'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={isMute ? 'Unmute' : 'Mute'} openDelay={400}>
           <Button onClick={handleMute} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {isMute ? <MdVolumeOff /> : <MdVolumeUp />}
           </Button>
         </Tooltip>
-        <Tooltip placement="bottom" hasArrow={true} label={'Download Video'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Video'} openDelay={400}>
           <Button onClick={handleDownload} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFileDownload />
           </Button>

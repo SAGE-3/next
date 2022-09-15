@@ -114,13 +114,13 @@ export function NavigationPanel(props: NavProps) {
     >
       <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
-          <Tooltip label="Fit Board" placement="right" hasArrow openDelay={500}>
+          <Tooltip label="Fit Board" placement="top-start" hasArrow openDelay={500}>
             <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board" onClick={props.fitToBoard} />
           </Tooltip>
-          <Tooltip label="Fit Apps" placement="right" hasArrow openDelay={500}>
+          <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
             <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps" onClick={props.fitApps} />
           </Tooltip>
-          <Tooltip label="Clear Board" placement="right" hasArrow openDelay={500}>
+          <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
             <IconButton icon={<MdDelete />} colorScheme="teal" size="xs" aria-label="clear" onClick={props.clearBoard} />
           </Tooltip>
         </Box>
@@ -141,7 +141,7 @@ export function NavigationPanel(props: NavProps) {
               .sort((a, b) => a._updatedAt - b._updatedAt)
               .map((app) => {
                 return (
-                  <Tooltip key={app._id} label={`${app.data.name}: ${app.data.description}`} openDelay={500} hasArrow>
+                  <Tooltip key={app._id} placement="top-start" label={`${app.data.name}: ${app.data.description}`} openDelay={500} hasArrow>
                     <Box
                       backgroundColor={borderColor}
                       position="absolute"

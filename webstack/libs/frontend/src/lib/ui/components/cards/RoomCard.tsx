@@ -42,7 +42,7 @@ export function RoomCard(props: RoomCardProps) {
   const textColor = useColorModeValue("#2D3748", "#E2E8F0");
 
   return (
-    <Tooltip label={<RoomToolTip room={props.room} />} hasArrow placement="right">
+    <Tooltip label={<RoomToolTip room={props.room} />} hasArrow placement="top-start">
       <Box
         display="flex"
         justifyContent="center"
