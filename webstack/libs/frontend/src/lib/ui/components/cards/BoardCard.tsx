@@ -6,8 +6,8 @@
  *
  */
 
-import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorMode, useColorModeValue } from '@chakra-ui/react';
-import { MdPerson, MdLock, MdRemoveRedEye } from 'react-icons/md';
+import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast } from '@chakra-ui/react';
+import { MdPerson, MdLock, MdRemoveRedEye, MdContentCopy } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { sageColorByName } from '@sage3/shared';
@@ -34,18 +34,37 @@ export function BoardCard(props: BoardCardProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user } = useUser();
   // Is it my board?
-  const yours = user?._id === props.board.data.ownerId
+  const yours = user?._id === props.board.data.ownerId;
   // Custom text
   const heading = yours ? 'Your' : 'This';
   // Custom color
   const otherColor = useColorModeValue('black', 'white');
   const yourColor = yours ? sageColorByName(user.data.color) : otherColor;
 
+  // Copy the board id to the clipboard
+  const toast = useToast();
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(props.board._id);
+    toast({
+      title: 'Success',
+      description: `BoardID Copied to Clipboard`,
+      duration: 3000,
+      isClosable: true,
+      status: 'success',
+    });
+  };
+
   return (
     <>
-      <EnterBoardModal id={props.board._id} roomId={props.board.data.roomId} name={props.board.data.name}
-        isPrivate={props.board.data.isPrivate} privatePin={props.board.data.privatePin}
-        isOpen={isOpen} onClose={onClose} />
+      <EnterBoardModal
+        id={props.board._id}
+        roomId={props.board.data.roomId}
+        name={props.board.data.name}
+        isPrivate={props.board.data.isPrivate}
+        privatePin={props.board.data.privatePin}
+        isOpen={isOpen}
+        onClose={onClose}
+      />
       <Box
         borderWidth="2px"
         borderRadius="md"
@@ -65,22 +84,17 @@ export function BoardCard(props: BoardCardProps) {
             <Text fontSize="2xl">{props.board.data.name}</Text>
             <Text fontSize="1xl">{props.board.data.description}</Text>
           </Box>
+
           <Box display="flex" mt="2" alignItems="center" flexShrink="3">
             <Tooltip label={`${heading} board is unlisted`} placement="top" hasArrow openDelay={200}>
               <div>
-                {!props.board.data.isListed ? (
-                  <Icon aria-label="unlisted" as={MdRemoveRedEye} boxSize={8} color={yourColor} />
-                ) : null}
+                {!props.board.data.isListed ? <Icon aria-label="unlisted" as={MdRemoveRedEye} boxSize={8} color={yourColor} /> : null}
               </div>
             </Tooltip>
             <Tooltip label={`${heading} board is protected`} placement="top" hasArrow openDelay={200}>
-              <div>
-                {props.board.data.isPrivate ? (
-                  <Icon aria-label="protected" as={MdLock} boxSize={8} color={yourColor} />
-                ) : null}
-              </div>
+              <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={yourColor} /> : null}</div>
             </Tooltip>
-            <Tooltip label="Enter this board" openDelay={400}>
+            <Tooltip label="Enter this board" openDelay={400} hasArrow>
               <Button
                 onClick={onOpen}
                 background={sageColorByName(props.board.data.color)}
@@ -90,6 +104,17 @@ export function BoardCard(props: BoardCardProps) {
                 variant="outline"
               >
                 Enter
+              </Button>
+            </Tooltip>
+            <Tooltip label="Copy BoardID" openDelay={400} hasArrow>
+              <Button
+                onClick={onOpen}
+                background={sageColorByName(props.board.data.color)}
+                _hover={{ transform: 'scale(1.15)' }}
+                transition="transform .2s"
+                variant="outline"
+              >
+                <MdContentCopy />
               </Button>
             </Tooltip>
             <Box width="50px" display="flex" alignItems="center" justifyContent="right">
