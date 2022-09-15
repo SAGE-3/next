@@ -196,7 +196,7 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      disableDragging={minimized}
+      // disableDragging={minimized}
       enableResizing={!minimized}
     >
       {/* Border Box around app to show it is selected */}
