@@ -7,13 +7,15 @@
  */
 
 import { useState } from 'react';
-import { Box, useColorModeValue, Text } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { AppError, Applications } from '@sage3/applications/apps';
 
 import { Rnd } from 'react-rnd';
 import { ErrorBoundary } from 'react-error-boundary';
 import { App } from '@sage3/applications/schema';
+import { MdClose, MdMinimize, MdOpenInFull, MdOutlineCloseFullscreen } from 'react-icons/md';
+import { sageColorByName } from '@sage3/shared';
 
 type AppToolbarProps = {
   position: { x: number; y: number };
@@ -30,6 +32,8 @@ type AppToolbarProps = {
 export function AppToolbar(props: AppToolbarProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
+  const deleteApp = useAppStore((state) => state.delete);
+  const updateApp = useAppStore((state) => state.update);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -49,14 +53,28 @@ export function AppToolbar(props: AppToolbarProps) {
   }
 
   const app = apps.find((app) => app._id === selectedApp);
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
 
   function getAppToolbar() {
     if (app) {
       const Component = Applications[app.data.type].ToolbarComponent;
       return (
         <ErrorBoundary fallbackRender={({ error, resetErrorBoundary }) => <Text>An error has occured.</Text>}>
-          {' '}
-          <Component key={app._id} {...app}></Component>
+          <>
+            <Component key={app._id} {...app}></Component>
+            <ButtonGroup isAttached size="xs" ml="2">
+              <Tooltip placement="bottom" hasArrow={true} label={'Minimize App'} openDelay={400}>
+                <Button onClick={() => updateApp(app._id, { minimized: !app.data.minimized })} backgroundColor={commonButtonColors}>
+                  {app.data.minimized ? <MdOpenInFull /> : <MdOutlineCloseFullscreen />}
+                </Button>
+              </Tooltip>
+              <Tooltip placement="bottom" hasArrow={true} label={'Close App'} openDelay={400}>
+                <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors}>
+                  <MdClose color={sageColorByName('red')} fontSize="14" />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+          </>
         </ErrorBoundary>
       );
     } else {
