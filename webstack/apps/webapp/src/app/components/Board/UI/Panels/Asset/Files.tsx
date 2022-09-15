@@ -290,7 +290,11 @@ export function Files(props: FilesProps): JSX.Element {
         props.files.filter((item) => {
           // if term is in the filename
           return (
+            // search in the filename
             item.originalfilename.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
+            // search in the type
+            item.type.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
+            // search in the owner name
             item.ownerName.toUpperCase().indexOf(term.toUpperCase()) !== -1
           );
         })
