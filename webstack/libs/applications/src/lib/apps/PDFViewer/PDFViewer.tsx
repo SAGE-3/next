@@ -44,7 +44,7 @@ function AppComponent(props: App): JSX.Element {
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.id);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
@@ -55,7 +55,7 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, { numPages: pages.length, currentPage: 0, displayPages: 1 });
       }
     }
-  }, [s.id, assets]);
+  }, [s.assetid, assets]);
 
   useEffect(() => {
     if (file) {
@@ -204,11 +204,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const [aspectRatio, setAspecRatio] = useState(1);
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.id);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
     }
-  }, [s.id, assets]);
+  }, [s.assetid, assets]);
 
   useEffect(() => {
     if (file) {

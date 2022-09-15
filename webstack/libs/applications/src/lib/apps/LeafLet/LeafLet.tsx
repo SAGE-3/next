@@ -53,13 +53,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Convert ID to asset
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.geojson);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
       update(props._id, { description: myasset?.data.originalfilename });
     }
-  }, [s.geojson, assets]);
+  }, [s.assetid, assets]);
 
   // Convert asset to URL
   useEffect(() => {
