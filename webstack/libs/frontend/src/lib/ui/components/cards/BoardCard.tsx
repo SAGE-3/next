@@ -43,7 +43,8 @@ export function BoardCard(props: BoardCardProps) {
 
   // Copy the board id to the clipboard
   const toast = useToast();
-  const handleCopyId = () => {
+  const handleCopyId = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(props.board._id);
     toast({
       title: 'Success',
@@ -106,9 +107,9 @@ export function BoardCard(props: BoardCardProps) {
                 Enter
               </Button>
             </Tooltip>
-            <Tooltip label="Copy BoardID" openDelay={400} hasArrow>
+            <Tooltip label="Copy Board ID into clipboard" openDelay={400} hasArrow>
               <Button
-                onClick={onOpen}
+                onClick={handleCopyId}
                 background={sageColorByName(props.board.data.color)}
                 _hover={{ transform: 'scale(1.15)' }}
                 transition="transform .2s"
