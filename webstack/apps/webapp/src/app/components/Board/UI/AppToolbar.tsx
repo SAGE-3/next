@@ -9,12 +9,11 @@
 import { useState } from 'react';
 import { Box, useColorModeValue, Text, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 import { useAppStore, useUIStore } from '@sage3/frontend';
-import { AppError, Applications } from '@sage3/applications/apps';
+import { Applications } from '@sage3/applications/apps';
 
 import { Rnd } from 'react-rnd';
 import { ErrorBoundary } from 'react-error-boundary';
-import { App } from '@sage3/applications/schema';
-import { MdClose, MdMinimize, MdOpenInFull, MdOutlineCloseFullscreen } from 'react-icons/md';
+import { MdClose, MdOpenInFull, MdOutlineCloseFullscreen } from 'react-icons/md';
 import { sageColorByName } from '@sage3/shared';
 
 type AppToolbarProps = {
@@ -65,12 +64,12 @@ export function AppToolbar(props: AppToolbarProps) {
             <ButtonGroup isAttached size="xs" ml="2">
               <Tooltip placement="bottom" hasArrow={true} label={'Minimize App'} openDelay={400}>
                 <Button onClick={() => updateApp(app._id, { minimized: !app.data.minimized })} backgroundColor={commonButtonColors}>
-                  {app.data.minimized ? <MdOpenInFull /> : <MdOutlineCloseFullscreen />}
+                  {app.data.minimized ? <MdOpenInFull fontSize="18" /> : <MdOutlineCloseFullscreen fontSize="18" />}
                 </Button>
               </Tooltip>
               <Tooltip placement="bottom" hasArrow={true} label={'Close App'} openDelay={400}>
                 <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors}>
-                  <MdClose color={sageColorByName('red')} fontSize="14" />
+                  <MdClose color={sageColorByName('red')} fontSize="18" />
                 </Button>
               </Tooltip>
             </ButtonGroup>
