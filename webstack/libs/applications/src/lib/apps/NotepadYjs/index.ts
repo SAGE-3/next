@@ -13,4 +13,4 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {};
 
-export const name = 'NotepadYjs';
+export const name = 'Notepad';
