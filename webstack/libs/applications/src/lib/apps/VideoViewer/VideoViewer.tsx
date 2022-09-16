@@ -103,7 +103,7 @@ function AppComponent(props: App): JSX.Element {
         }
       });
     }
-  }, [videoRef]);
+  }, [file, videoRef]);
 
   // Set the current time of the video
   useEffect(() => {
