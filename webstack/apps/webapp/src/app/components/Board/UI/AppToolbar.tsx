@@ -6,7 +6,7 @@
  *
  */
 
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
@@ -44,8 +44,23 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const appToolbar = useUIStore((state) => state.setAppToolbarPosition);
+  const scale = useUIStore((state) => state.scale);
+
   // Hover state
   const [hover, setHover] = useState(false);
+
+  // Div Ref
+  const rndRef = useRef<any>(null);
+
+  const [toolbarWidth, setToolbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    if (rndRef.current && selectedApp) {
+      setToolbarWidth(rndRef.current.clientWidth);
+    }
+  }, [rndRef.current, selectedApp]);
 
   function handleDblClick(e: any) {
     e.stopPropagation();
@@ -53,6 +68,29 @@ export function AppToolbar(props: AppToolbarProps) {
 
   const app = apps.find((app) => app._id === selectedApp);
   const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
+
+  useEffect(() => {
+    if (app) {
+      let ax = app.data.position.x * scale;
+      let ay = app.data.position.y * scale;
+      let ah = app.data.size.height * scale;
+      let aw = app.data.size.width * scale;
+      const bx = boardPosition.x * scale;
+      const by = boardPosition.y * scale;
+      const tw = toolbarWidth / 2;
+      const appWindowX = bx + ax;
+      const appWindowY = by + ay;
+      const appBottomY = appWindowY + ah;
+      const wh = window.innerHeight;
+      const ww = window.innerWidth;
+      const x = appWindowX + aw / 2 - tw;
+      let y = appWindowY + ah + 35 * scale;
+      if (appBottomY + 100 > wh) {
+        y = appWindowY - 65 - 35 * scale;
+      }
+      appToolbar({ x, y });
+    }
+  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
   function getAppToolbar() {
     if (app) {
@@ -69,7 +107,7 @@ export function AppToolbar(props: AppToolbarProps) {
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
                 <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors}>
-                  <MdClose color={sageColorByName('red')} fontSize="18" />
+                  <MdClose fontSize="18" />
                 </Button>
               </Tooltip>
             </ButtonGroup>
@@ -81,7 +119,7 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }
 
-  if (showUI)
+  if (showUI && app)
     return (
       <Rnd
         position={{ ...props.position }}
@@ -96,7 +134,16 @@ export function AppToolbar(props: AppToolbarProps) {
         dragHandleClassName="handle" // only allow dragging the header
         style={{ transition: hover ? 'none' : 'all 0.2s' }}
       >
-        <Box display="flex" boxShadow="outline" transition="all .2s " bg={panelBackground} p="2" rounded="md">
+        <Box
+          display="flex"
+          border="solid 3px"
+          borderColor="orange.400"
+          transition="all .2s "
+          bg={panelBackground}
+          p="2"
+          rounded="md"
+          ref={rndRef}
+        >
           <Box
             width="25px"
             backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
