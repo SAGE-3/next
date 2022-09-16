@@ -47,17 +47,15 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
       if (type === 'contextmenu') {
-        // console.log('ContextMenuHandler event', event.type);
-        setTimeout(() => setShowContextMenu(true));
-      } else {
-        // console.log('ContextMenuHandler false', event.type);
-        if (event.type === 'touchstart') {
-          setShowContextMenu(false);
-        }
-
-        console.log("🚀 ~ file: context-menu.tsx ~ line 59 ~ ctx ~", event.pageX, event.pageY)
         setContextMenuPos({ x: event.pageX, y: event.pageY, });
         setContextMenuPosition({ x: event.pageX, y: event.pageY, });
+        setTimeout(() => setShowContextMenu(true));
+      } else {
+        if (event.type === 'touchstart') {
+          if (event.target.id === 'board') {
+            setTimeout(() => setShowContextMenu(false));
+          }
+        }
       }
     });
     document.addEventListener('click', handleClick);
@@ -72,6 +70,11 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
+
+      document.removeEventListener('touchstart', ctx.onTouchStart);
+      document.removeEventListener('touchcancel', ctx.onTouchCancel);
+      document.removeEventListener('touchend', ctx.onTouchEnd);
+      document.removeEventListener('touchmove', ctx.onTouchMove);
     };
   }, []);
 
