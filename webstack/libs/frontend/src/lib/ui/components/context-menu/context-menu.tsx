@@ -12,6 +12,8 @@ import { useColorModeValue } from "@chakra-ui/react";
 import './style.scss';
 import { useUIStore } from '../../../stores';
 
+import ContextMenuHandler from "./ContextMenuHandler";
+
 /**
  * ContextMenu component
  * @param props children divId
@@ -43,13 +45,38 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   }, [showContextMenu]);
 
   useEffect(() => {
+    const ctx = new ContextMenuHandler((type: string, event: any) => {
+      if (type === 'contextmenu') {
+        setContextMenuPos({ x: event.pageX, y: event.pageY, });
+        setContextMenuPosition({ x: event.pageX, y: event.pageY, });
+        setTimeout(() => setShowContextMenu(true));
+      } else {
+        if (event.type === 'touchstart') {
+          if (event.target.id === 'board') {
+            setTimeout(() => setShowContextMenu(false));
+          }
+        }
+      }
+    });
     document.addEventListener('click', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
+
+    // Touch events
+    document.addEventListener('touchstart', ctx.onTouchStart);
+    document.addEventListener('touchcancel', ctx.onTouchCancel);
+    document.addEventListener('touchend', ctx.onTouchEnd);
+    document.addEventListener('touchmove', ctx.onTouchMove);
+
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
+
+      document.removeEventListener('touchstart', ctx.onTouchStart);
+      document.removeEventListener('touchcancel', ctx.onTouchCancel);
+      document.removeEventListener('touchend', ctx.onTouchEnd);
+      document.removeEventListener('touchmove', ctx.onTouchMove);
     };
-  });
+  }, []);
 
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
 
