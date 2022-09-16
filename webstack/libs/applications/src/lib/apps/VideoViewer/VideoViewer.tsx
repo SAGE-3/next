@@ -20,18 +20,31 @@ import {
   MdVolumeOff,
   MdVolumeUp,
 } from 'react-icons/md';
-
-import { App } from '../../schema';
-
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+// Time functions
+import { format as formatTime } from 'date-fns';
 
 import { Asset } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
 
-export function getStaticAssetUrl(filename: string): string {
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+
+
+function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
+
+/**
+ * Return a string for a duration
+ *
+ * @param {number} n duration in seconds
+ * @returns {string} formatted duration
+ */
+function getDurationString(n: number): string {
+  return formatTime(n * 1000, 'mm:ss');
+}
+
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -81,6 +94,12 @@ function AppComponent(props: App): JSX.Element {
           const h = videoRef.current?.videoHeight ?? 9;
           const ar = w / h;
           setAspecRatio(ar);
+          if (videoRef.current) {
+            // Diplay the video current time and duration
+            const length = getDurationString(videoRef.current.duration);
+            const time = getDurationString(videoRef.current.currentTime);
+            update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+          }
         }
       });
     }
@@ -122,8 +141,9 @@ function AppComponent(props: App): JSX.Element {
           const currentTime = videoRef.current.currentTime;
           const duration = videoRef.current.duration;
           updateState(props._id, { play: { ...s.play, currentTime: currentTime ?? 0 } });
-          const time = new Date(currentTime * 1000).toISOString().substring(14, 19);
-          const length = new Date(duration * 1000).toISOString().substring(14, 19);
+          // Convert time numbers to strings
+          const length = getDurationString(duration);
+          const time = getDurationString(currentTime);
           update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
         }, 1000);
       }
@@ -235,8 +255,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const handlePlay = () => {
     if (user) {
       update(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
-      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
-      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
@@ -245,8 +265,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleRewind = () => {
     if (user) {
       update(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
-      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
-      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
@@ -257,8 +277,8 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime + 5) },
       });
-      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
-      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
@@ -269,8 +289,8 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, loop: !s.play.loop },
       });
-      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
-      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
@@ -305,8 +325,8 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },
       });
-      const time = new Date(videoRef.currentTime * 1000).toISOString().substring(14, 19);
-      const length = new Date(duration * 1000).toISOString().substring(14, 19);
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
@@ -353,11 +373,9 @@ function ToolbarComponent(props: App): JSX.Element {
         <SliderTrack bg="green.100">
           <SliderFilledTrack bg="green.400" />
         </SliderTrack>
-        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
-          {new Date(0).toISOString().substring(14, 19)}
-        </SliderMark>
+        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">  {getDurationString(0)} </SliderMark>
         <SliderMark value={duration} fontSize="xs" mt="1.5" ml="-5">
-          {new Date(duration * 1000).toISOString().substring(14, 19)}
+          {getDurationString(duration)}
         </SliderMark>
         <SliderMark
           value={sliderTime}
@@ -370,7 +388,7 @@ function ToolbarComponent(props: App): JSX.Element {
           fontSize="xs"
           borderRadius="md"
         >
-          {new Date(sliderTime * 1000).toISOString().substring(14, 19)}
+          {getDurationString(sliderTime)}
         </SliderMark>
         <SliderThumb boxSize={4}>
           <Box
