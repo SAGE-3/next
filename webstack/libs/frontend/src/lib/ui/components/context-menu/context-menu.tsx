@@ -12,6 +12,8 @@ import { useColorModeValue } from "@chakra-ui/react";
 import './style.scss';
 import { useUIStore } from '../../../stores';
 
+import ContextMenuHandler from "./ContextMenuHandler";
+
 /**
  * ContextMenu component
  * @param props children divId
@@ -43,13 +45,35 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   }, [showContextMenu]);
 
   useEffect(() => {
+    const ctx = new ContextMenuHandler((type: string, event: any) => {
+      if (type === 'contextmenu') {
+        // console.log('ContextMenuHandler event', event.type);
+        setTimeout(() => setShowContextMenu(true));
+      } else {
+        // console.log('ContextMenuHandler false', event.type);
+        if (event.type === 'touchstart') {
+          setShowContextMenu(false);
+        }
+
+        console.log("🚀 ~ file: context-menu.tsx ~ line 59 ~ ctx ~", event.pageX, event.pageY)
+        setContextMenuPos({ x: event.pageX, y: event.pageY, });
+        setContextMenuPosition({ x: event.pageX, y: event.pageY, });
+      }
+    });
     document.addEventListener('click', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
+
+    // Touch events
+    document.addEventListener('touchstart', ctx.onTouchStart);
+    document.addEventListener('touchcancel', ctx.onTouchCancel);
+    document.addEventListener('touchend', ctx.onTouchEnd);
+    document.addEventListener('touchmove', ctx.onTouchMove);
+
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
     };
-  });
+  }, []);
 
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
 
