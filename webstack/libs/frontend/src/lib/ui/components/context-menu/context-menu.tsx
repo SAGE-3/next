@@ -40,11 +40,10 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   }, [setContextMenuPos, props.divId, setContextMenuPosition]);
 
   const handleClick = useCallback(() => {
-    // console.log("click", showContextMenu);
+    console.log("click", showContextMenu);
     // timeout to allow button click to fire before hiding menu
     // return (showContextMenu ? setTimeout(() => setShowContextMenu(false)) : null);
     if (showContextMenu) setTimeout(() => setShowContextMenu(false));
-
   }, [showContextMenu]);
 
   useEffect(() => {
