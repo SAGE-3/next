@@ -37,11 +37,14 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
       setContextMenuPosition({ x: event.clientX, y: event.clientY, });
       setTimeout(() => setShowContextMenu(true));
     }
-  }, [setContextMenuPos, props.divId]);
+  }, [setContextMenuPos, props.divId, setContextMenuPosition]);
 
   const handleClick = useCallback(() => {
+    // console.log("click", showContextMenu);
     // timeout to allow button click to fire before hiding menu
-    return (showContextMenu ? setTimeout(() => setShowContextMenu(false)) : null);
+    // return (showContextMenu ? setTimeout(() => setShowContextMenu(false)) : null);
+    if (showContextMenu) setTimeout(() => setShowContextMenu(false));
+
   }, [showContextMenu]);
 
   useEffect(() => {
@@ -76,7 +79,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
       document.removeEventListener('touchend', ctx.onTouchEnd);
       document.removeEventListener('touchmove', ctx.onTouchMove);
     };
-  }, []);
+  });
 
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
 
