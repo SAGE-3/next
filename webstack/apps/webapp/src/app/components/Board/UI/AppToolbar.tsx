@@ -47,6 +47,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const appToolbar = useUIStore((state) => state.setAppToolbarPosition);
   const scale = useUIStore((state) => state.scale);
+  const boardDragging = useUIStore((state) => state.boardDragging);
 
   // Hover state
   const [hover, setHover] = useState(false);
@@ -58,7 +59,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
   useLayoutEffect(() => {
     if (rndRef.current && selectedApp) {
-      setToolbarWidth(rndRef.current.clientWidth);
+      setToolbarWidth(rndRef.current.clientWidth + 6); //Borders are 4px each
     }
   }, [rndRef.current, selectedApp]);
 
@@ -76,42 +77,66 @@ export function AppToolbar(props: AppToolbarProps) {
       const ay = app.data.position.y * scale;
       const ah = app.data.size.height * scale;
       const aw = app.data.size.width * scale;
-      const aby = ay + ah * scale; // App Bottom Y
+      const titleBarHeight = 35 * scale; // Titlebar height including borders
+      const aby = ay + ah + titleBarHeight; // App Bottom Y
 
       // Board Pos and Size
       const bx = boardPosition.x * scale;
       const by = boardPosition.y * scale;
 
-      // Toolbar Width
-      const tw = toolbarWidth;
-      const tw2 = tw / 2;
-
       // App Position on Window
       const appXWin = bx + ax;
       const appYWin = by + ay;
-      const appBYWin = by + aby;
+      const appBYWin = by + aby; // App Bottom Y on Window
+
+      // Toolbar Width
+      const tw = toolbarWidth; // Toolbar Width + 8px padding
+      const twhalf = tw / 2;
+      const toolbarHeight = 82;
 
       // Window Size
       const wh = window.innerHeight;
       const ww = window.innerWidth;
 
+      function screenLimit(pos: { x: number; y: number }) {
+        // Check if toolbar is out of screen
+        if (pos.x < 0) {
+          pos.x = 0;
+        } else if (pos.x + tw > ww) {
+          pos.x = ww - tw;
+        }
+        if (pos.y < 0) {
+          pos.y = 0;
+        } else if (pos.y + toolbarHeight > wh) {
+          pos.y = wh - toolbarHeight;
+        }
+
+        return pos;
+      }
+
       // Default Toolbar Poistion. Middle of screen at bottom
-      let x = ww / 2 - tw2;
-      let y = wh - 85;
+      const defaultPosition = { x: ww / 2 - twhalf, y: wh - toolbarHeight };
 
-      // App is  off screen
-      // DEFAULT POSITION
+      // App Bottom Position
+      const appBottomPosition = { x: appXWin + aw / 2 - twhalf, y: appBYWin };
+
+      // App Top Position
+      const appTopPosition = { x: appXWin + aw / 2 - twhalf, y: appYWin - toolbarHeight };
+
       // App is taller than window
-      // DEFAULT POSITOIN
-
-      // App is  off screen
-
-      // App is in view and bottom  is  200px above from bottom of window
-
-      // App is in view and bottom is 200px within bottom of window
-      // App bottom is below window
-
-      appToolbar({ x, y });
+      if (ah * 1.2 > wh) {
+        appToolbar(screenLimit(defaultPosition));
+      }
+      // App is off screen
+      else if (appXWin > ww || appXWin + aw < 0 || appYWin > wh || appYWin + ah < 0) {
+        appToolbar(screenLimit(defaultPosition));
+      }
+      // App is close to bottom of the screen
+      else if (appBYWin + toolbarHeight > wh) {
+        appToolbar(screenLimit(appTopPosition));
+      } else {
+        appToolbar(screenLimit(appBottomPosition));
+      }
     }
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
@@ -155,7 +180,7 @@ export function AppToolbar(props: AppToolbarProps) {
         }}
         enableResizing={false}
         dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 0.2s' }}
+        style={{ opacity: `${boardDragging ? '0' : '1'}`, transition: 'opacity 0.1s' }}
       >
         <Box
           display="flex"
