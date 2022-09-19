@@ -29,11 +29,9 @@ export function UILayer(props: UILayerProps) {
   // UI Store
   const setScale = useUIStore((state) => state.setScale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-
-  const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
-  const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
+
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
@@ -166,7 +164,7 @@ export function UILayer(props: UILayerProps) {
 
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
-      <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
+      <AppToolbar></AppToolbar>
 
       <ContextMenu divId="board">
         <BoardContextMenu
