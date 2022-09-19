@@ -190,11 +190,12 @@ if (commander.clear) {
   store.clear();
 }
 
-// Force using integrated GPU when there are multiple GPUs available
 if (process.platform === 'win32') {
+  // Force using integrated GPU when there are multiple GPUs available
   // console.log('Preferences> force integrated GPU (windows)');
   // app.commandLine.appendSwitch('force_low_power_gpu');
 
+  // Testing touch events in windows
   app.commandLine.appendSwitch('enable-touch-events');
 }
 
