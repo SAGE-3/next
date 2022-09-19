@@ -192,8 +192,10 @@ if (commander.clear) {
 
 // Force using integrated GPU when there are multiple GPUs available
 if (process.platform === 'win32') {
-  console.log('Preferences> force integrated GPU (windows)');
-  app.commandLine.appendSwitch('force_low_power_gpu');
+  // console.log('Preferences> force integrated GPU (windows)');
+  // app.commandLine.appendSwitch('force_low_power_gpu');
+
+  app.commandLine.appendSwitch('enable-touch-events');
 }
 
 // Reset the desktop scaling on Windows
