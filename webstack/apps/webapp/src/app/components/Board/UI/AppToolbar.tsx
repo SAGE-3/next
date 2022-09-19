@@ -71,23 +71,46 @@ export function AppToolbar(props: AppToolbarProps) {
 
   useEffect(() => {
     if (app) {
-      let ax = app.data.position.x * scale;
-      let ay = app.data.position.y * scale;
-      let ah = app.data.size.height * scale;
-      let aw = app.data.size.width * scale;
+      // App Pos and Size
+      const ax = app.data.position.x * scale;
+      const ay = app.data.position.y * scale;
+      const ah = app.data.size.height * scale;
+      const aw = app.data.size.width * scale;
+      const aby = ay + ah * scale; // App Bottom Y
+
+      // Board Pos and Size
       const bx = boardPosition.x * scale;
       const by = boardPosition.y * scale;
-      const tw = toolbarWidth / 2;
-      const appWindowX = bx + ax;
-      const appWindowY = by + ay;
-      const appBottomY = appWindowY + ah;
+
+      // Toolbar Width
+      const tw = toolbarWidth;
+      const tw2 = tw / 2;
+
+      // App Position on Window
+      const appXWin = bx + ax;
+      const appYWin = by + ay;
+      const appBYWin = by + aby;
+
+      // Window Size
       const wh = window.innerHeight;
       const ww = window.innerWidth;
-      const x = appWindowX + aw / 2 - tw;
-      let y = appWindowY + ah + 35 * scale;
-      if (appBottomY + 100 > wh) {
-        y = appWindowY - 65 - 35 * scale;
-      }
+
+      // Default Toolbar Poistion. Middle of screen at bottom
+      let x = ww / 2 - tw2;
+      let y = wh - 85;
+
+      // App is  off screen
+      // DEFAULT POSITION
+      // App is taller than window
+      // DEFAULT POSITOIN
+
+      // App is  off screen
+
+      // App is in view and bottom  is  200px above from bottom of window
+
+      // App is in view and bottom is 200px within bottom of window
+      // App bottom is below window
+
       appToolbar({ x, y });
     }
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
