@@ -12,7 +12,7 @@ import { Button, Text, Tooltip, useColorModeValue, useToast } from "@chakra-ui/r
 import { SBDocument } from "@sage3/sagebase";
 import { RoomSchema } from "@sage3/shared/types";
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from "@sage3/frontend";
-import { useUser } from '@sage3/frontend';
+import { useUser, useAuth } from '@sage3/frontend';
 
 type RoomListProps = {
   onRoomClick: (room: SBDocument<RoomSchema>) => void;
@@ -23,6 +23,7 @@ type RoomListProps = {
 export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
+  const { auth } = useAuth();
   // Data stores
   const rooms = useRoomStore((state) => state.rooms);
   const storeError = useRoomStore((state) => state.error);
@@ -77,6 +78,7 @@ export function RoomList(props: RoomListProps) {
           fontSize="48px"
           p="0"
           _hover={{ transform: 'scale(1.1)' }}
+          disabled={auth?.provider === 'guest'}
           onClick={() => setNewRoomModal(true)}
         >
           <Text fontSize="4xl" fontWeight="bold" transform={'translateY(-3px)'}>

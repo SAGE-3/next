@@ -15,7 +15,7 @@ import {
 import { MdSearch } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 type BoardListProps = {
@@ -42,6 +42,7 @@ export function BoardList(props: BoardListProps) {
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [filterBoards, setFilterBoards] = useState<SBDocument<BoardSchema>[] | null>(null);
   const [search, setSearch] = useState('');
+  const { auth } = useAuth();
 
   // UI elements
   const toast = useToast();
@@ -114,6 +115,7 @@ export function BoardList(props: BoardListProps) {
             transition="transform .1s"
             _hover={{ transform: 'scale(1.1)' }}
             onClick={() => setNewBoardModal(true)}
+            disabled={auth?.provider === 'guest'}
           >
             <Text fontSize="4xl" fontWeight="bold" transform={`translateY(-3px)`}>
               +
