@@ -37,25 +37,24 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const resetZIndex = useUIStore((state) => state.resetZIndex);
+  const boardDragging = useUIStore((state) => state.boardDragging);
+  const setBoardDragging = useUIStore((state) => state.setBoardDragging);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
 
-  // Local state to detect when users is dragging the board (panning)
-  const [dragging, setDragging] = useState(false);
-
   // Drag start fo the board
   function handleDragBoardStart() {
-    setDragging(true);
+    setBoardDragging(true);
   }
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
     const x = data.x;
     const y = data.y;
-    setDragging(false);
     setBoardPosition({ x, y });
+    setBoardDragging(false);
   }
 
   // Reset the global zIndex when no apps
@@ -65,7 +64,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Update the cursor every half second
   const throttleCursor = throttle(500, (e: MouseEvent) => {
-    if (dragging) return;
+    if (boardDragging) return;
     const winX = e.clientX;
     const winY = e.clientY;
     const bx = boardPosition.x;
@@ -78,7 +77,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   });
 
   // Keep a copy of the function
-  const throttleCursorFunc = useCallback(throttleCursor, [boardPosition.x, boardPosition.y, scale, dragging]);
+  const throttleCursorFunc = useCallback(throttleCursor, [boardPosition.x, boardPosition.y, scale, boardDragging]);
   const cursorFunc = (e: MouseEvent) => {
     // Check if event is on the board
     if (updatePresence) {
@@ -92,7 +91,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const mouseMove = (e: MouseEvent) => cursorFunc(e);
     window.addEventListener('mousemove', mouseMove);
     return () => window.removeEventListener('mousemove', mouseMove);
-  }, [boardPosition.x, boardPosition.y, scale, dragging]);
+  }, [boardPosition.x, boardPosition.y, scale, boardDragging]);
 
   return (
     <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }} onDoubleClick={() => setSelectedApp('')}>

@@ -29,11 +29,9 @@ export function UILayer(props: UILayerProps) {
   // UI Store
   const setScale = useUIStore((state) => state.setScale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-
-  const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
-  const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
+
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
@@ -155,7 +153,7 @@ export function UILayer(props: UILayerProps) {
     // Display a message
     toast({ title: 'Assets Packaged', status: 'info', duration: 2000, isClosable: true });
     // Finish the zip and trigger the download
-    zip.generateAsync({ type: "blob" }).then(function (content) {
+    zip.generateAsync({ type: 'blob' }).then(function (content) {
       // Create a URL from the blob
       const url = URL.createObjectURL(content);
       //Trigger the download
@@ -166,6 +164,8 @@ export function UILayer(props: UILayerProps) {
 
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
+      <AppToolbar></AppToolbar>
+
       <ContextMenu divId="board">
         <BoardContextMenu
           boardId={props.boardId}
@@ -184,8 +184,6 @@ export function UILayer(props: UILayerProps) {
       <NavigationPanel clearBoard={clearOnOpen} fitToBoard={fitToBoard} fitApps={showAllApps} boardId={props.boardId} />
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
