@@ -17,6 +17,7 @@ import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { BoardList } from '../components/Home/BoardList';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
+import { BoardPreview } from '../components/Home/BoardPreview';
 
 export function HomePage() {
   const [selectedRoom, setSelectedRoom] = useState<SBDocument<RoomSchema> | null>(null);
@@ -132,21 +133,15 @@ export function HomePage() {
               ) : null}
             </Box>
 
-            <Box width="100%" height="100%" borderRadius="md" ml={8} display="flex" flexDirection="column">
+            <Box width="100%" height="50vh" borderRadius="md" ml={8} display="flex" flexDirection="column">
               {selectedBoard ? (
                 <>
                   <Box display="flex" justifyContent="center">
                     <Text fontSize={'4xl'}>{selectedBoard?.data.name}</Text>
                   </Box>
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    width="100%"
-                    height="300px"
-                    backgroundColor="gray.600"
-                    borderRadius="md"
-                    p="2"
-                  ></Box>
+                  <Box width="100%" height="100%" backgroundColor="gray.600" borderRadius="md" p="2">
+                    <BoardPreview boardId={selectedBoard._id}></BoardPreview>
+                  </Box>
                 </>
               ) : null}
             </Box>
