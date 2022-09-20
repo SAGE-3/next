@@ -5,12 +5,18 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useAppStore } from '@sage3/frontend';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { App } from '../../schema';
-import { useRef, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import {
+  Box, Button, HStack, useColorModeValue, Tooltip,
+  IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
+  useColorMode, Flex
+} from '@chakra-ui/react';
 import { v4 as getUUID } from 'uuid';
+
+import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
+import { MdDelete, MdPlayArrow } from 'react-icons/md';
+
+
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-json';
@@ -18,26 +24,12 @@ import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 
-import {
-  Box,
-  Button,
-  HStack,
-  useColorModeValue,
-  Tooltip,
-  IconButton,
-  VStack,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  Text,
-  Image,
-} from '@chakra-ui/react';
-
+import { useAppStore, useUser } from '@sage3/frontend';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import { App } from '../../schema';
 import { Markdown } from './components/markdown'
 
-import { useColorMode, Flex } from '@chakra-ui/react';
-import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
-import { MdDelete, MdPlayArrow } from 'react-icons/md';
 
 const AppComponent = (props: App): JSX.Element => {
   const updateState = useAppStore((state) => state.updateState);
@@ -56,8 +48,11 @@ const AppComponent = (props: App): JSX.Element => {
 }
 
 const InputBox = (props: App): JSX.Element => {
+  const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const ace = useRef<AceEditor>(null);
+  const [code, setCode] = useState<string>(s.code);
+  const { user } = useUser();
 
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
@@ -80,12 +75,25 @@ const InputBox = (props: App): JSX.Element => {
     ace.current?.editor?.setValue('');
   };
 
+  // To update from server
+  useEffect(() => {
+    setCode(s.code);
+  }, [s.code]);
+
+  //  Update from Ace Editor
+  const updateCode = (c: string) => {
+    setCode(c);
+  };
+
   return (
     <>
       <HStack>
         <AceEditor
           ref={ace}
           name="ace"
+          value={code}
+          onChange={updateCode}
+          readOnly={user?._id !== props._createdBy}
           fontSize={'1em'}
           minLines={6}
           maxLines={6}
@@ -129,6 +137,7 @@ const InputBox = (props: App): JSX.Element => {
               rounded={'full'}
               onClick={handleExecute}
               aria-label={''}
+              disabled={user?._id !== props._createdBy}
               bg={useColorModeValue('#FFFFFF', '#000000')}
               icon={<MdPlayArrow size={'2em'} color={useColorModeValue('#008080', '#008080')} />}
             />
@@ -141,6 +150,7 @@ const InputBox = (props: App): JSX.Element => {
               rounded={'full'}
               onClick={handleClear}
               aria-label={''}
+              disabled={user?._id !== props._createdBy}
               bg={useColorModeValue('#FFFFFF', '#000000')}
               icon={<MdDelete size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
             />
