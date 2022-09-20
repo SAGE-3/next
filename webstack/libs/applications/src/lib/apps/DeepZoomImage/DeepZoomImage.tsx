@@ -18,7 +18,7 @@ import { useAssetStore, useAppStore, useUser } from '@sage3/frontend';
 
 import OpenSeadragon from "openseadragon";
 
-/* App component for Zoom */
+/* App component for DeepZoomImage */
 
 function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
@@ -36,13 +36,13 @@ function AppComponent(props: App): JSX.Element {
   const bgColor = useColorModeValue('white', 'black');
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.zid);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: 'Zoom> ' + myasset?.data.originalfilename });
+      update(props._id, { description: myasset?.data.originalfilename });
     }
-  }, [s.zid, assets]);
+  }, [s.assetid, assets]);
 
   const zoomHandler = (event: OpenSeadragon.ZoomEvent) => {
     updateState(props._id, { zoomLevel: event.zoom });
@@ -114,7 +114,7 @@ function AppComponent(props: App): JSX.Element {
         const imginfo = { w: viewer.current.source.width, h: viewer.current.source.height };
         const info = imginfo.w.toLocaleString() + " x " + imginfo.h.toLocaleString() + " pixels";
         // Update the app title
-        update(props._id, { description: 'Zoom> ' + file.data.originalfilename + ' ' + info });
+        update(props._id, { description: file.data.originalfilename + ' ' + info });
         // Reset the view
         e.eventSource.viewport.zoomTo(s.zoomLevel);
         e.eventSource.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]));
@@ -134,7 +134,7 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app Zoom */
+/* App toolbar component for the app DeepZoomImage */
 
 function ToolbarComponent(props: App): JSX.Element {
 

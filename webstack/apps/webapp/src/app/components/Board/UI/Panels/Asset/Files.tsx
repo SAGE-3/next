@@ -6,23 +6,22 @@
  *
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 // React component for efficiently rendering large lists and tabular data
-import { Virtuoso } from 'react-virtuoso';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
 import { Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack } from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
-import { FileEntry } from './types';
-import { RowFile } from './RowFile';
 
 import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
+import { FileEntry } from './types';
+import { RowFile } from './RowFile';
 import { setupAppForFile } from './CreateApp';
 
 export interface FilesProps {
-  show: boolean;
   files: FileEntry[];
 }
 
@@ -39,9 +38,11 @@ export function Files(props: FilesProps): JSX.Element {
   // Room and board
   const location = useLocation();
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+  // The table object
+  const virtuoso = useRef<VirtuosoHandle>(null);
 
   // Element to set the focus to when opening the dialog
-  const initialRef = React.useRef<HTMLInputElement>(null);
+  const initialRef = useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
   const [searchTerm, setSearchTerm] = useState<string>();
   // UI Store
@@ -55,7 +56,9 @@ export function Files(props: FilesProps): JSX.Element {
     const newList = sortFiles(props.files, sorted.order, sorted.reverse);
     setList(newList);
     // Clear the search
-    setSearchTerm("");
+    setSearchTerm('');
+    // Scroll to the top
+    virtuoso.current?.scrollToIndex({ index: 0 });
   }, [props.files]);
 
   // Create the column headers. Add arrows indicating sorting.
@@ -95,13 +98,15 @@ export function Files(props: FilesProps): JSX.Element {
       if (sorted.reverse)
         headerFile = (
           <Flex>
-            <Box >Filename</Box> <Box>⬇︎</Box><Spacer />
+            <Box>Filename</Box> <Box>⬇︎</Box>
+            <Spacer />
           </Flex>
         );
       else
         headerFile = (
           <Flex>
-            <Box >Filename</Box> <Box>⬆︎</Box><Spacer />
+            <Box>Filename</Box> <Box>⬆︎</Box>
+            <Spacer />
           </Flex>
         );
       break;
@@ -248,7 +253,7 @@ export function Files(props: FilesProps): JSX.Element {
       // Store the list into the state after sorting by date
       aList.sort((a, b) => {
         // compare dates (number)
-        return a.dateAdded - b.dateAdded;
+        return b.dateAdded - a.dateAdded;
       });
     } else if (order === 'size') {
       // Store the list into the state after sorting by file size
@@ -270,6 +275,8 @@ export function Files(props: FilesProps): JSX.Element {
       const newList = sortFiles(prev, order, !sorted.reverse);
       return newList;
     });
+    // Scroll to the top
+    virtuoso.current?.scrollToIndex({ index: 0 });
   };
 
   // Select the file when clicked
@@ -283,7 +290,11 @@ export function Files(props: FilesProps): JSX.Element {
         props.files.filter((item) => {
           // if term is in the filename
           return (
+            // search in the filename
             item.originalfilename.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
+            // search in the type
+            item.type.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
+            // search in the owner name
             item.ownerName.toUpperCase().indexOf(term.toUpperCase()) !== -1
           );
         })
@@ -309,13 +320,10 @@ export function Files(props: FilesProps): JSX.Element {
         } else {
           if (!modif) {
             // Deselect any other
-            if (shift && started)
-              return { ...k, selected: true };
-            else
-              return { ...k, selected: k.selected && shift };
+            if (shift && started) return { ...k, selected: true };
+            else return { ...k, selected: k.selected && shift };
           } else return k;
         }
-
       });
       return newList;
     });
@@ -336,28 +344,36 @@ export function Files(props: FilesProps): JSX.Element {
     e.dataTransfer.setData('type', JSON.stringify(tlist));
   };
 
-
   // Select the file when clicked
   const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
       setList((prev) => {
-        if (e.key === "ArrowDown") {
+        if (e.key === 'ArrowDown') {
           const first = filesList.findIndex((k) => k.selected);
           if (first < prev.length - 1) {
             prev[first] = { ...prev[first], selected: false };
             prev[first + 1] = { ...prev[first + 1], selected: true };
           }
-        } else if (e.key === "ArrowUp") {
+          virtuoso.current?.scrollIntoView({
+            index: first + 1,
+            behavior: "auto",
+          });
+        } else if (e.key === 'ArrowUp') {
           // @ts-expect-error
           const last = filesList.findLastIndex((k) => k.selected);
           if (last > 0) {
             prev[last - 1] = { ...prev[last - 1], selected: true };
             prev[last] = { ...prev[last], selected: false };
+            virtuoso.current?.scrollIntoView({
+              index: last - 1,
+              behavior: "auto",
+            });
           }
         }
         return [...prev];
       });
-    } else if (e.key === "Enter") {
+    } else if (e.key === 'Enter') {
       if (!user) return;
       // Get around  the center of the board
       const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
@@ -366,20 +382,21 @@ export function Files(props: FilesProps): JSX.Element {
       const first = filesList.find((k) => k.selected);
       if (first) {
         // Create the app
-        const setup = await setupAppForFile(first, xDrop, yDrop,
-          roomId, boardId, user._id);
+        const setup = await setupAppForFile(first, xDrop, yDrop, roomId, boardId, user._id);
         if (setup) createApp(setup);
       }
     }
   };
 
   return (
-    <VStack w={"100%"} fontSize={"xs"} display={props.show ? "inherit" : "none"}>
+    <VStack w={'100%'} fontSize={'xs'}>
       {/* Search box */}
-      <InputGroup size={"xs"}>
+      <InputGroup size={'xs'}>
         <InputLeftAddon children="Search" />
-        <Input ref={initialRef}
-          size={"xs"} mb={2}
+        <Input
+          ref={initialRef}
+          size={'xs'}
+          mb={2}
           focusBorderColor="gray.500"
           placeholder="name, owner, extension..."
           _placeholder={{ opacity: 1, color: 'gray.400' }}
@@ -389,7 +406,7 @@ export function Files(props: FilesProps): JSX.Element {
       </InputGroup>
 
       {/* Headers */}
-      <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={"none"}>
+      <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'}>
         <Box flex="1" onClick={() => headerClick('file')} pr={4}>
           {headerFile}
         </Box>
@@ -419,6 +436,7 @@ export function Files(props: FilesProps): JSX.Element {
           width: '100%',
           borderCollapse: 'collapse',
         }}
+        ref={virtuoso}
         data={filesList}
         totalCount={filesList.length}
         onKeyDown={onKeyboard}

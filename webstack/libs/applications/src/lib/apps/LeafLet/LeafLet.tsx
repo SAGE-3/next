@@ -53,13 +53,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Convert ID to asset
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.geojson);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: 'LeafLet> ' + myasset?.data.originalfilename });
+      update(props._id, { description: myasset?.data.originalfilename });
     }
-  }, [s.geojson, assets]);
+  }, [s.assetid, assets]);
 
   // Convert asset to URL
   useEffect(() => {
@@ -294,7 +294,7 @@ function ToolbarComponent(props: App): JSX.Element {
         updateState(props._id, { location: value });
         map.fitBounds(res.bounds);
         // Update the app title
-        update(props._id, { description: 'LeafLet> ' + res.text });
+        update(props._id, { description: res.text });
       }
     });
   };

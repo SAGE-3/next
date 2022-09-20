@@ -35,7 +35,8 @@ import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { isCSV, isImage, isPDF, isText, isJSON, isDZI, isGeoJSON } from '@sage3/shared';
+import { isCSV, isImage, isPDF, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython } from '@sage3/shared';
+import { initialValues } from '@sage3/applications/initialValues';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -155,7 +156,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'ImageViewer',
-              description: 'Image Description',
+              description: 'Image',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -163,7 +164,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'ImageViewer',
-              state: { id: assetID },
+              state: { ...initialValues['ImageViewer'], assetid: assetID },
               minimized: false,
               raised: false,
             },
@@ -180,7 +181,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'PDFViewer',
-              description: 'PDFViewer Description',
+              description: 'PDF',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -188,7 +189,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'PDFViewer',
-              state: { id: assetID },
+              state: { ...initialValues['PDFViewer'], assetid: assetID },
               minimized: false,
               raised: false,
             },
@@ -201,7 +202,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'CSVViewer',
-              description: 'CSVViewer Description',
+              description: 'CSV',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -209,7 +210,29 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'CSVViewer',
-              state: { id: assetID },
+              state: { ...initialValues['CSVViewer'], assetid: assetID },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 800;
+          posx += 10;
+        } else if (isVideo(elt.mimetype)) {
+          const w = tw || 800;
+          const h = th || 450;
+          AppsCollection.add(
+            {
+              name: 'VideoViewer',
+              description: elt.originalname,
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'VideoViewer',
+              state: { ...initialValues['VideoViewer'], assetid: assetID },
               minimized: false,
               raised: false,
             },
@@ -222,16 +245,16 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 400;
           AppsCollection.add(
             {
-              name: 'Zoom',
-              description: 'Zoom>',
+              name: 'DeepZoomImage',
+              description: 'DeepZoomImage',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
-              type: 'Zoom',
-              state: { zid: assetID, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
+              type: 'DeepZoomImage',
+              state: { assetid: assetID, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
               minimized: false,
               raised: false,
             },
@@ -245,7 +268,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'LeafLet',
-              description: 'LeafLet>',
+              description: 'LeafLet',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -253,7 +276,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'LeafLet',
-              state: { geojson: assetID, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
+              state: { assetid: assetID, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
               minimized: false,
               raised: false,
             },
@@ -276,7 +299,39 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'Stickie',
-              state: { fontSize: 48, color: '#63B3ED', text: text.toString(), executeInfo: { executeFunc: '', params: {} } },
+              state: {
+                ...initialValues['Stickie'],
+                fontSize: 48,
+                color: '#63B3ED',
+                text: text.toString(),
+                executeInfo: { executeFunc: '', params: {} },
+              },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 400;
+          posx += 10;
+        } else if (isPython(elt.mimetype)) {
+          const text = fs.readFileSync(elt.path);
+          const w = tw || 400;
+          const h = th || 400;
+          AppsCollection.add(
+            {
+              name: 'CodeCell',
+              description: 'CodeCell',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'CodeCell',
+              state: {
+                ...initialValues['CodeCell'],
+                code: text.toString(),
+              },
               minimized: false,
               raised: false,
             },
@@ -291,7 +346,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           AppsCollection.add(
             {
               name: 'VegaLite',
-              description: 'VegaLite> ' + elt.originalname,
+              description: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -299,7 +354,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'VegaLite',
-              state: { spec: text.toString() },
+              state: { ...initialValues['VegaLite'], spec: text.toString() },
               minimized: false,
               raised: false,
             },

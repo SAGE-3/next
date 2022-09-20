@@ -6,8 +6,8 @@
  *
  */
 
-import { z } from "zod";
-import { SBDoc } from "./SBSchema";
+import { z } from 'zod';
+import { SBDoc } from './SBSchema';
 
 /**
  * @typedef {object} BoardSchema
@@ -24,9 +24,10 @@ const schema = z.object({
   roomId: z.string(),
   // The id of the owner of the room
   ownerId: z.string(),
-  // Is the booard private or public
+  // Is the board password protected?
   isPrivate: z.boolean(),
-})
+  privatePin: z.string(),
+});
 
 export type BoardSchema = z.infer<typeof schema>;
 

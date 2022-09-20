@@ -12,13 +12,18 @@ import { Button, Text, Tooltip, useColorModeValue, useToast } from "@chakra-ui/r
 import { SBDocument } from "@sage3/sagebase";
 import { RoomSchema } from "@sage3/shared/types";
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from "@sage3/frontend";
+import { useUser, useAuth } from '@sage3/frontend';
 
 type RoomListProps = {
   onRoomClick: (room: SBDocument<RoomSchema>) => void;
   selectedRoom: SBDocument<RoomSchema> | null;
 }
 
+
 export function RoomList(props: RoomListProps) {
+  // Me
+  const { user } = useUser();
+  const { auth } = useAuth();
   // Data stores
   const rooms = useRoomStore((state) => state.rooms);
   const storeError = useRoomStore((state) => state.error);
@@ -47,6 +52,8 @@ export function RoomList(props: RoomListProps) {
   return (
     <>
       {rooms
+        // show only public rooms or mine
+        .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
         .sort((a, b) => a.data.name.localeCompare(b.data.name))
         .map((room) => {
           return (
@@ -61,7 +68,7 @@ export function RoomList(props: RoomListProps) {
             ></RoomCard>
           );
         })}
-      <Tooltip label="Create a room" hasArrow placement="right">
+      <Tooltip label="Create a room" hasArrow placement="top-start">
         <Button
           height="60px"
           width="60px"
@@ -71,6 +78,7 @@ export function RoomList(props: RoomListProps) {
           fontSize="48px"
           p="0"
           _hover={{ transform: 'scale(1.1)' }}
+          disabled={auth?.provider === 'guest'}
           onClick={() => setNewRoomModal(true)}
         >
           <Text fontSize="4xl" fontWeight="bold" transform={'translateY(-3px)'}>

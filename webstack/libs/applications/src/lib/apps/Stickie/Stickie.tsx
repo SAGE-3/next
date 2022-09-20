@@ -115,7 +115,7 @@ function AppComponent(props: App): JSX.Element {
       // Create a new stickie
       createApp({
         name: 'Stickie',
-        description: 'Stickie>',
+        description: 'Stickie',
         roomId: locationState.roomId,
         boardId: locationState.boardId,
         position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
@@ -212,13 +212,13 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <HStack>
         <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="bottom" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
             <Button isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdAdd />
             </Button>
           </Tooltip>
 
-          <Tooltip placement="bottom" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
             <Button isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdRemove />
             </Button>
@@ -245,12 +245,12 @@ function ToolbarComponent(props: App): JSX.Element {
         </ButtonGroup>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="bottom" hasArrow={true} label={'Download as Text'} openDelay={400}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
             <Button onClick={downloadTxt} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdFileDownload />
             </Button>
           </Tooltip>
-          <Tooltip placement="bottom" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
             <Button onClick={downloadMd} colorScheme="pink" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdFileDownload />
             </Button>

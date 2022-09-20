@@ -14,7 +14,7 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  id: z.string(),
+  assetid: z.string(),
   currentPage: z.number(),
   numPages: z.number(),
   displayPages: z.number(),
@@ -22,7 +22,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  id: '',
+  assetid: '',
   currentPage: 0,
   numPages: 1,
   displayPages: 1,

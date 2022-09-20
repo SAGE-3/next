@@ -15,12 +15,11 @@ import {
 import { MdSearch } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 type BoardListProps = {
   onBoardClick: (board: SBDocument<BoardSchema>) => void;
-  onEnterClick: (board: SBDocument<BoardSchema>) => void;
   selectedRoom: SBDocument<RoomSchema> | null;
 };
 
@@ -43,6 +42,7 @@ export function BoardList(props: BoardListProps) {
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [filterBoards, setFilterBoards] = useState<SBDocument<BoardSchema>[] | null>(null);
   const [search, setSearch] = useState('');
+  const { auth } = useAuth();
 
   // UI elements
   const toast = useToast();
@@ -66,6 +66,7 @@ export function BoardList(props: BoardListProps) {
 
   const borderColor = useColorModeValue('#718096', '#A0AEC0');
 
+  // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
     const filBoards = boards.filter((board) => board.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
@@ -86,7 +87,9 @@ export function BoardList(props: BoardListProps) {
 
       {props.selectedRoom
         ? (filterBoards ? filterBoards : boards)
+          // sort by name
           .sort((a, b) => a.data.name.localeCompare(b.data.name))
+          // create the cards
           .map((board) => {
             return (
               <BoardCard
@@ -97,14 +100,13 @@ export function BoardList(props: BoardListProps) {
                 onEdit={() => {
                   console.log('edit board');
                 }}
-                onEnter={() => props.onEnterClick(board)}
                 onDelete={() => deleteBoard(board._id)}
               />
             );
           })
         : null}
       {props.selectedRoom ? (
-        <Tooltip label="Create a board" openDelay={400}>
+        <Tooltip label="Create a board" placement="top-start" openDelay={400}>
           <Button
             border={`solid ${borderColor} 2px`}
             borderColor={borderColor}
@@ -113,6 +115,7 @@ export function BoardList(props: BoardListProps) {
             transition="transform .1s"
             _hover={{ transform: 'scale(1.1)' }}
             onClick={() => setNewBoardModal(true)}
+            disabled={auth?.provider === 'guest'}
           >
             <Text fontSize="4xl" fontWeight="bold" transform={`translateY(-3px)`}>
               +

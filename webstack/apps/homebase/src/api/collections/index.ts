@@ -39,6 +39,8 @@ export async function loadCollections(): Promise<void> {
             color: 'green',
             ownerId: '-',
             isPrivate: false,
+            privatePin: '',
+            isListed: true,
           },
           '-'
         );
@@ -52,6 +54,7 @@ export async function loadCollections(): Promise<void> {
               roomId: res._id,
               ownerId: '-',
               isPrivate: false,
+              privatePin: '',
             },
             '-'
           );

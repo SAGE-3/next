@@ -5,12 +5,18 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useAppStore } from '@sage3/frontend';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { App } from '../../schema';
-import { useRef, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import {
+  Box, Button, HStack, useColorModeValue, Tooltip,
+  IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
+  useColorMode, Flex
+} from '@chakra-ui/react';
 import { v4 as getUUID } from 'uuid';
+
+import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
+import { MdDelete, MdPlayArrow } from 'react-icons/md';
+
+
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-json';
@@ -18,26 +24,12 @@ import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 
-import {
-  Box,
-  Button,
-  HStack,
-  useColorModeValue,
-  Tooltip,
-  IconButton,
-  VStack,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  Text,
-  Image,
-} from '@chakra-ui/react';
-
+import { useAppStore, useUser } from '@sage3/frontend';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import { App } from '../../schema';
 import { Markdown } from './components/markdown'
 
-import { useColorMode, Flex } from '@chakra-ui/react';
-import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
-import { MdDelete, MdPlayArrow } from 'react-icons/md';
 
 const AppComponent = (props: App): JSX.Element => {
   const updateState = useAppStore((state) => state.updateState);
@@ -56,8 +48,11 @@ const AppComponent = (props: App): JSX.Element => {
 }
 
 const InputBox = (props: App): JSX.Element => {
+  const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const ace = useRef<AceEditor>(null);
+  const [code, setCode] = useState<string>(s.code);
+  const { user } = useUser();
 
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
@@ -80,12 +75,25 @@ const InputBox = (props: App): JSX.Element => {
     ace.current?.editor?.setValue('');
   };
 
+  // To update from server
+  useEffect(() => {
+    setCode(s.code);
+  }, [s.code]);
+
+  //  Update from Ace Editor
+  const updateCode = (c: string) => {
+    setCode(c);
+  };
+
   return (
     <>
       <HStack>
         <AceEditor
           ref={ace}
           name="ace"
+          value={code}
+          onChange={updateCode}
+          readOnly={user?._id !== props._createdBy}
           fontSize={'1em'}
           minLines={6}
           maxLines={6}
@@ -121,7 +129,7 @@ const InputBox = (props: App): JSX.Element => {
           ]}
         />
         <VStack pr={2}>
-          <Tooltip hasArrow label="Execute" placement="right">
+          <Tooltip hasArrow label="Execute" placement="top-start">
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -129,11 +137,12 @@ const InputBox = (props: App): JSX.Element => {
               rounded={'full'}
               onClick={handleExecute}
               aria-label={''}
+              disabled={user?._id !== props._createdBy}
               bg={useColorModeValue('#FFFFFF', '#000000')}
               icon={<MdPlayArrow size={'2em'} color={useColorModeValue('#008080', '#008080')} />}
             />
           </Tooltip>
-          <Tooltip hasArrow label="Clear All" placement="right" bgColor={'red'}>
+          <Tooltip hasArrow label="Clear All" placement="top-start" bgColor={'red'}>
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -141,6 +150,7 @@ const InputBox = (props: App): JSX.Element => {
               rounded={'full'}
               onClick={handleClear}
               aria-label={''}
+              disabled={user?._id !== props._createdBy}
               bg={useColorModeValue('#FFFFFF', '#000000')}
               icon={<MdDelete size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
             />
@@ -196,44 +206,44 @@ export default { AppComponent, ToolbarComponent };
 
 
 const ProcessedOutput = (output: string) => {
-      try {
-        const parsed = JSON.parse(output);
-        return (
-            <Box p={4} fontSize={'16px'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
-            <Box
-              p={4}
-              // m={4}
-              // mr={0}
-              style={{
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                overflow: 'hidden',
-                backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-                boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
-                borderRadius: '12px',
-              }}
-            >
-              {/* <pre>Real Output: </pre> */}
-              {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
-              {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
-              {parsed.error && RenderTraceBack(parsed.error.evalue)}
-              {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
-              {parsed.execute_result &&
-                parsed.execute_result.data['text/plain'] &&
-                RenderPlainText(parsed.execute_result.data['text/plain'])}
-              {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
-              {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
-            </Box>
-            {/* {JSONOutput(output)} */}
-          </Box>
-        );
-      } catch (e) {
-        return ('');
-        // return (<Box p={4}>Processing...</Box>);
-        // return JSONOutput(output)
-      }
-    };
+  try {
+    const parsed = JSON.parse(output);
+    return (
+      <Box p={4} fontSize={'16px'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
+        <Box
+          p={4}
+          // m={4}
+          // mr={0}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            overflow: 'hidden',
+            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
+            boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
+            borderRadius: '12px',
+          }}
+        >
+          {/* <pre>Real Output: </pre> */}
+          {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
+          {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
+          {parsed.error && RenderTraceBack(parsed.error.evalue)}
+          {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
+          {parsed.execute_result &&
+            parsed.execute_result.data['text/plain'] &&
+            RenderPlainText(parsed.execute_result.data['text/plain'])}
+          {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
+          {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
+        </Box>
+        {/* {JSONOutput(output)} */}
+      </Box>
+    );
+  } catch (e) {
+    return ('');
+    // return (<Box p={4}>Processing...</Box>);
+    // return JSONOutput(output)
+  }
+};
 
 const JSONOutput = (output: string) => {
 
@@ -290,7 +300,7 @@ const RenderMarkdown = (markdown: string | string[]): JSX.Element => {
         variant={'left-accent'}
         backgroundColor={useColorModeValue('#F0F2F6', '#111111')}
       > */}
-        <Markdown data={markdown} />
+      <Markdown data={markdown} />
       {/* </Alert> */}
     </>
   );

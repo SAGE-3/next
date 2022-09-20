@@ -22,6 +22,7 @@
     "baseUrl": ".",
     "paths": {
       "@sage3/applications/apps": ["libs/applications/src/lib/apps.ts"],
+      "@sage3/applications/initialValues": ["libs/applications/src/lib/initialValues.ts"],
       "@sage3/applications/schema": ["libs/applications/src/lib/schema.ts"],
       "@sage3/backend": ["libs/backend/src/index.ts"],
       "@sage3/frontend": ["libs/frontend/src/index.ts"],

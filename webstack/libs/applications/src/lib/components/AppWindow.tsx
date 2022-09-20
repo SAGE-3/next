@@ -8,12 +8,14 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
+
+// import { ReactComponent as AppIcon } from './icon.svg';
 
 type WindowProps = {
   app: App;
@@ -32,16 +34,19 @@ export function AppWindow(props: WindowProps) {
   const gridSize = useUIStore((state) => state.gridSize);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const selected = selectedApp === props.app._id;
+  const selectColor = '#f39e4a';
 
   // Display messages
   const toast = useToast();
   // Height of the title bar
   const titleBarHeight = 24;
   // Border color when selected
-  const borderColor = useColorModeValue(
-    sageColorByName('blue'),
-    sageColorByName('orange')
-  );
+  // const borderColor = useColorModeValue(sageColorByName('blue'), sageColorByName('orange'));
+
+  // Users
+  const users = useUsersStore((state) => state.users);
+  const owner = users.find((el) => el._id === props.app._createdBy);
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -87,7 +92,9 @@ export function AppWindow(props: WindowProps) {
     setPos({ x, y });
     update(props.app._id, {
       position: {
-        x, y, z: props.app.data.position.z,
+        x,
+        y,
+        z: props.app.data.position.z,
       },
     });
   }
@@ -128,11 +135,10 @@ export function AppWindow(props: WindowProps) {
     // Set local state
     setSize({ width, height });
     setPos({ x: position.x, y: position.y });
-
   }
 
   // Close the app and delete from server
-  function handleClose() {
+  function handleClose(e: any) {
     deleteApp(props.app._id);
   }
 
@@ -163,7 +169,6 @@ export function AppWindow(props: WindowProps) {
     update(props.app._id, { raised: true });
   }
 
-
   return (
     <Rnd
       bounds="parent"
@@ -191,23 +196,22 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      disableDragging={minimized}
+      // disableDragging={minimized}
       enableResizing={!minimized}
     >
       {/* Border Box around app to show it is selected */}
-      {
-        (selectedApp === props.app._id) ? (
-          <Box
-            position="absolute"
-            left="-4px"
-            top="-4px"
-            width={size.width + 8}
-            height={(minimized) ? (titleBarHeight + 8 + 'px') : (size.height + titleBarHeight + 8 + 'px')}
-            border={`${3 * 1 / scale}px dashed ${borderColor}`}
-            borderRadius="6px"
-            pointerEvents="none"
-          ></Box>) : null
-      }
+      {selected ? (
+        <Box
+          position="absolute"
+          left="-3px"
+          top="-3px"
+          width={size.width + 6}
+          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
+          border={`${4}px solid ${selectColor}`}
+          borderRadius="8px"
+          pointerEvents="none"
+        ></Box>
+      ) : null}
       {/* Title Bar */}
       <Box
         className="handle" // The CSS name react-rnd latches on to for the drag events
@@ -216,7 +220,8 @@ export function AppWindow(props: WindowProps) {
         flexWrap="nowrap"
         justifyContent="space-between"
         alignItems="center"
-        backgroundColor={minimized ? sageColorByName('orange') : 'teal'}
+        // backgroundColor={minimized ? sageColorByName('orange') : selected ? selectColor : 'teal'}
+        backgroundColor={selected ? selectColor : 'teal'}
         px="1"
         cursor={'move'}
         overflow="hidden"
@@ -226,26 +231,54 @@ export function AppWindow(props: WindowProps) {
       >
         {/* Left Title Bar Elements */}
         <Box display="flex" alignItems="center">
+          <Tooltip label={'Opened by ' + owner?.data.name} aria-label="username" hasArrow={true} placement="top-start">
+            <Avatar
+              name={owner?.data.name}
+              getInitials={initials}
+              // src={owner?.data.profilePicture}
+              mr={1}
+              bg={owner ? sageColorByName(owner.data.color) : 'orange'}
+              borderRadius={'100%'}
+              textShadow={'0 0 2px #000'}
+              color={'white'}
+              size={'2xs'}
+              showBorder={true}
+              borderWidth={'0.5px'}
+              borderColor="whiteAlpha.600"
+            />
+          </Tooltip>
           <Text color="white">{props.app.data.description}</Text>
         </Box>
         {/* Right Title bar Elements */}
         <Box display="flex" alignItems="center">
           {/* Minimize Buttons */}
           {minimized ? (
-            <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
+            <Tooltip placement="top-start" hasArrow={true} label={'Open App'} openDelay={400}>
+              <span>
+                <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
+              </span>
+            </Tooltip>
           ) : (
-            <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
+            <Tooltip placement="top-start" hasArrow={true} label={'Minimize App'} openDelay={400}>
+              <span>
+                <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
+              </span>
+            </Tooltip>
           )}
           {/* Close Button Name */}
-          <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
+          <Tooltip placement="top-start" hasArrow={true} label={'Delete App'} openDelay={400}>
+            <span>
+              <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
+            </span>
+          </Tooltip>
         </Box>
       </Box>
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={(minimized) ? 'none' : 'inherit'}>
+      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
         {props.children}
       </Box>
-    </Rnd >
+    </Rnd>
   );
 }
