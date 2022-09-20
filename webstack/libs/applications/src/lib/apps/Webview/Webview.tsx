@@ -246,26 +246,26 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return <HStack>
     <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="bottom" hasArrow={true} label={'Go Back'} openDelay={400}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
         <Button onClick={() => view.goBack()} >
           <MdArrowBack />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="bottom" hasArrow={true} label={'Go Forward'} openDelay={400}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
         <Button onClick={() => view.goForward()} >
           <MdArrowForward />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="bottom" hasArrow={true} label={'Reload Page'} openDelay={400}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
         <Button onClick={() => view.reload()} >
           <MdRefresh />
         </Button>
       </Tooltip>
 
       <Menu size="xs">
-        <Tooltip placement="bottom" hasArrow={true} label={'History'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'History'} openDelay={400}>
           <MenuButton as={Button} size="xs" variant="solid">
             <MdHistory />
           </MenuButton>
@@ -300,26 +300,26 @@ function ToolbarComponent(props: App): JSX.Element {
       </InputGroup>
     </form>
 
-    <Tooltip placement="bottom" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+    <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
       <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
         <MdOutlineSubdirectoryArrowLeft />
       </Button>
     </Tooltip>
 
     <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="bottom" hasArrow={true} label={'Zoom In'} openDelay={400}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
         <Button onClick={() => handleZoom('zoom-in')} >
           <MdAdd />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="bottom" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
         <Button onClick={() => handleZoom('zoom-out')} >
           <MdRemove />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="bottom" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
         <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
       </Tooltip>
     </ButtonGroup>

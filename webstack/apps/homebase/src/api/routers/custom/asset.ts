@@ -35,7 +35,7 @@ import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { isCSV, isImage, isPDF, isText, isJSON, isVideo, isDZI, isGeoJSON } from '@sage3/shared';
+import { isCSV, isImage, isPDF, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython } from '@sage3/shared';
 import { initialValues } from '@sage3/applications/initialValues';
 
 // Google storage and AWS S3 storage
@@ -305,6 +305,32 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 color: '#63B3ED',
                 text: text.toString(),
                 executeInfo: { executeFunc: '', params: {} },
+              },
+              minimized: false,
+              raised: false,
+            },
+            user.id
+          );
+          posx += tw || 400;
+          posx += 10;
+        } else if (isPython(elt.mimetype)) {
+          const text = fs.readFileSync(elt.path);
+          const w = tw || 400;
+          const h = th || 400;
+          AppsCollection.add(
+            {
+              name: 'CodeCell',
+              description: 'CodeCell',
+              roomId: req.body.room,
+              boardId: req.body.board,
+              ownerId: user.id,
+              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
+              size: { width: w, height: h, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'CodeCell',
+              state: {
+                ...initialValues['CodeCell'],
+                code: text.toString(),
               },
               minimized: false,
               raised: false,

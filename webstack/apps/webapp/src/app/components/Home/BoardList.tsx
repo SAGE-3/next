@@ -15,9 +15,8 @@ import {
 import { MdSearch } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
-import { useUser } from '@sage3/frontend';
 
 type BoardListProps = {
   onBoardClick: (board: SBDocument<BoardSchema>) => void;
@@ -40,12 +39,10 @@ export function BoardList(props: BoardListProps) {
   const clearError = useBoardStore((state) => state.clearError);
   const presences = usePresenceStore((state) => state.presences);
 
-  // Me
-  const { user } = useUser();
-
   const [newBoardModal, setNewBoardModal] = useState(false);
   const [filterBoards, setFilterBoards] = useState<SBDocument<BoardSchema>[] | null>(null);
   const [search, setSearch] = useState('');
+  const { auth } = useAuth();
 
   // UI elements
   const toast = useToast();
@@ -90,8 +87,6 @@ export function BoardList(props: BoardListProps) {
 
       {props.selectedRoom
         ? (filterBoards ? filterBoards : boards)
-          // show only public boards or mine
-          .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
           // sort by name
           .sort((a, b) => a.data.name.localeCompare(b.data.name))
           // create the cards
@@ -111,7 +106,7 @@ export function BoardList(props: BoardListProps) {
           })
         : null}
       {props.selectedRoom ? (
-        <Tooltip label="Create a board" openDelay={400}>
+        <Tooltip label="Create a board" placement="top-start" openDelay={400}>
           <Button
             border={`solid ${borderColor} 2px`}
             borderColor={borderColor}
@@ -120,6 +115,7 @@ export function BoardList(props: BoardListProps) {
             transition="transform .1s"
             _hover={{ transform: 'scale(1.1)' }}
             onClick={() => setNewBoardModal(true)}
+            disabled={auth?.provider === 'guest'}
           >
             <Text fontSize="4xl" fontWeight="bold" transform={`translateY(-3px)`}>
               +

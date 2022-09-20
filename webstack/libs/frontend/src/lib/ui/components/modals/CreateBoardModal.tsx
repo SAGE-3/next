@@ -6,7 +6,7 @@
  *
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   Modal,
@@ -29,7 +29,7 @@ import { MdPerson, MdLock } from 'react-icons/md';
 import { useData } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
-import { RoomSchema } from '@sage3/shared/types';
+import { BoardSchema } from '@sage3/shared/types';
 import { randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore } from '../../../stores';
@@ -50,9 +50,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const { user } = useUser();
 
-  const [name, setName] = useState<RoomSchema['name']>('');
-  const [description, setDescription] = useState<RoomSchema['description']>('');
-  const [isListed, setIsListed] = useState(true);
+  const [name, setName] = useState<BoardSchema['name']>('');
+  const [description, setDescription] = useState<BoardSchema['description']>('');
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
 
@@ -76,12 +75,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-
-  const setRef = useCallback((_node: HTMLInputElement) => {
-    if (initialRef.current) {
-      initialRef.current.select();
-    }
-  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -113,7 +106,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           roomId: props.roomId,
           ownerId: user._id,
           color: randomSAGEColor().name,
-          isListed: isListed,
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
         });
@@ -123,9 +115,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
 
   // To enable/disable
-  const checkListed = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsListed(e.target.checked);
-  };
   const checkProtected = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProtected(e.target.checked);
   };
@@ -167,17 +156,14 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
-            Board Listed Publicly
-          </Checkbox>
           <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
-            Board Protected with PIN
+            Board Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
             <Input
               type="text"
-              placeholder={'Set PIN'}
+              placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={password}

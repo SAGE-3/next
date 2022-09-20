@@ -7,7 +7,7 @@
  */
 
 import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast } from '@chakra-ui/react';
-import { MdPerson, MdLock, MdRemoveRedEye, MdContentCopy, MdEdit, MdExitToApp } from 'react-icons/md';
+import { MdPerson, MdLock, MdContentCopy, MdEdit, MdExitToApp } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { sageColorByName } from '@sage3/shared';
@@ -86,16 +86,11 @@ export function BoardCard(props: BoardCardProps) {
           </Box>
 
           <Box display="flex" mt="2" alignItems="center" flexShrink="3">
-            <Tooltip label={`${heading} board is unlisted`} placement="top" hasArrow openDelay={200}>
-              <div>
-                {!props.board.data.isListed ? <Icon aria-label="unlisted" as={MdRemoveRedEye} boxSize={8} color={yourColor} /> : null}
-              </div>
-            </Tooltip>
-            <Tooltip label={`${heading} board is protected`} placement="top" hasArrow openDelay={200}>
+            <Tooltip label={`${heading} board is protected`} placement="top-start" hasArrow openDelay={200}>
               <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={yourColor} /> : null}</div>
             </Tooltip>
 
-            <Tooltip label="Enter Board" openDelay={400} hasArrow>
+            <Tooltip label="Enter Board" openDelay={400} placement="top-start" hasArrow>
               <Button
                 onClick={onOpen}
                 background={sageColorByName(props.board.data.color)}
@@ -107,7 +102,7 @@ export function BoardCard(props: BoardCardProps) {
                 <MdExitToApp />
               </Button>
             </Tooltip>
-            <Tooltip label="Edit Board" openDelay={400} hasArrow>
+            <Tooltip label="Edit Board" openDelay={400} placement="top-start" hasArrow>
               <Button
                 onClick={props.onSelect}
                 background={sageColorByName(props.board.data.color)}
@@ -120,7 +115,7 @@ export function BoardCard(props: BoardCardProps) {
                 <MdEdit />
               </Button>
             </Tooltip>
-            <Tooltip label="Copy Board ID into clipboard" openDelay={400} hasArrow>
+            <Tooltip label="Copy Board ID into clipboard" openDelay={400} placement="top-start" hasArrow>
               <Button
                 onClick={handleCopyId}
                 background={sageColorByName(props.board.data.color)}

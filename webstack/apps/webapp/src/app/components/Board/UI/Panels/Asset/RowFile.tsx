@@ -24,7 +24,7 @@ import {
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
-import { humanFileSize, downloadFile, useUser, useAppStore, useUIStore } from '@sage3/frontend';
+import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
@@ -46,6 +46,7 @@ export type RowFileProps = {
 export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
+  const { auth } = useAuth();
 
   const toast = useToast();
   // Store if the file is selected or not
@@ -100,7 +101,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         status: 'success',
       });
     } else if (id === 'del') {
-      if (user?.data.userRole !== 'guest') {
+      if (auth?.provider !== 'guest') {
         // Delete a file
         onDeleteOpen();
       } else {
@@ -205,7 +206,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono"
         alignItems="center" draggable={true} onDragStart={dragStart} onDoubleClick={onDoubleClick}>
         <Box w="30px">{whichIcon(extension)}</Box>
-        <Tooltip hasArrow label={file.originalfilename} placement="auto" openDelay={500}>
+        <Tooltip hasArrow label={file.originalfilename} placement="top-start" openDelay={500}>
           <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
             {file.originalfilename}
           </Box>
