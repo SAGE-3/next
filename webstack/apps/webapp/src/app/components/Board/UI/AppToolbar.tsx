@@ -36,6 +36,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const panelBackground = useColorModeValue('gray.500', 'gray.600');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
+  const selectColor = '#f39e4a';
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
@@ -160,7 +161,7 @@ export function AppToolbar(props: AppToolbarProps) {
         ref={boxRef}
         display="flex"
         border="solid 3px"
-        borderColor="orange.400"
+        borderColor={selectColor}
         bg={panelBackground}
         p="2"
         rounded="md"
