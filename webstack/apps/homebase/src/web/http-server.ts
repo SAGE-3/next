@@ -95,7 +95,7 @@ export function createApp(assetPath: string): express.Express {
  */
 export function listenApp(app: express.Express, listenPort: number): Server {
   // HTTP server
-  const server = app.listen(listenPort, () => {
+  const server = app.listen(listenPort, '0.0.0.0', () => {
     const { port } = server.address() as AddressInfo;
     console.log('HTTP> listening on port', port);
   });

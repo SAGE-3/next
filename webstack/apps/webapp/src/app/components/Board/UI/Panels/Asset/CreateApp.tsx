@@ -8,7 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython } from '@sage3/shared';
 
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -119,8 +119,8 @@ export async function setupAppForFile(
       // Get the content of the file
       fetch(localurl, {
         headers: {
-          'Content-Type': 'text/csv',
-          Accept: 'text/csv',
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
         },
       })
         .then(function (response) {
@@ -139,6 +139,36 @@ export async function setupAppForFile(
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
             state: { ...(initialValues['Stickie'] as AppState), text: text },
+            minimized: false,
+            raised: true,
+          });
+        });
+    } else if (isPython(file.type)) {
+      // Look for the file in the asset store
+      const localurl = '/api/assets/static/' + file.filename;
+      // Get the content of the file
+      fetch(localurl, {
+        headers: {
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
+        },
+      })
+        .then(function (response) {
+          return response.text();
+        })
+        .then(function (text) {
+          // Create a note from the text
+          resolve({
+            name: 'CodeCell',
+            description: 'CodeCell',
+            roomId: roomId,
+            boardId: boardId,
+            ownerId: userId,
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 400, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'CodeCell',
+            state: { ...(initialValues['CodeCell'] as AppState), code: text },
             minimized: false,
             raised: true,
           });

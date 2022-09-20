@@ -205,7 +205,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono"
         alignItems="center" draggable={true} onDragStart={dragStart} onDoubleClick={onDoubleClick}>
         <Box w="30px">{whichIcon(extension)}</Box>
-        <Tooltip hasArrow label={file.originalfilename} placement="auto" openDelay={500}>
+        <Tooltip hasArrow label={file.originalfilename} placement="top-start" openDelay={500}>
           <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
             {file.originalfilename}
           </Box>
