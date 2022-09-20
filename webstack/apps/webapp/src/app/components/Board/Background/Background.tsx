@@ -12,7 +12,7 @@ import { useUIStore, useAppStore, useUser, useAssetStore } from '@sage3/frontend
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -156,8 +156,8 @@ export function Background(props: BackgroundProps) {
           // Get the content of the file
           fetch(localurl, {
             headers: {
-              'Content-Type': 'text/csv',
-              Accept: 'text/csv',
+              'Content-Type': 'text/plain',
+              Accept: 'text/plain',
             },
           })
             .then(function (response) {
@@ -166,6 +166,27 @@ export function Background(props: BackgroundProps) {
             .then(async function (text) {
               // Create a note from the text
               createApp(setupApp('Stickie', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { text: text }));
+            });
+        }
+      });
+    } else if (isPython(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const localurl = '/api/assets/static/' + a.data.file;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/plain',
+              Accept: 'text/plain',
+            },
+          })
+            .then(function (response) {
+              return response.text();
+            })
+            .then(async function (text) {
+              // Create a note from the text
+              createApp(setupApp('CodeCell', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
