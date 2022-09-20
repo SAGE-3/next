@@ -12,13 +12,17 @@ import { Button, Text, Tooltip, useColorModeValue, useToast } from "@chakra-ui/r
 import { SBDocument } from "@sage3/sagebase";
 import { RoomSchema } from "@sage3/shared/types";
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from "@sage3/frontend";
+import { useUser } from '@sage3/frontend';
 
 type RoomListProps = {
   onRoomClick: (room: SBDocument<RoomSchema>) => void;
   selectedRoom: SBDocument<RoomSchema> | null;
 }
 
+
 export function RoomList(props: RoomListProps) {
+  // Me
+  const { user } = useUser();
   // Data stores
   const rooms = useRoomStore((state) => state.rooms);
   const storeError = useRoomStore((state) => state.error);
@@ -47,6 +51,8 @@ export function RoomList(props: RoomListProps) {
   return (
     <>
       {rooms
+        // show only public rooms or mine
+        .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
         .sort((a, b) => a.data.name.localeCompare(b.data.name))
         .map((room) => {
           return (

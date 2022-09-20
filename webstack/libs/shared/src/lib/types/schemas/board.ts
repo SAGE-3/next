@@ -24,11 +24,9 @@ const schema = z.object({
   roomId: z.string(),
   // The id of the owner of the room
   ownerId: z.string(),
-  // Is the booard password protected?
+  // Is the board password protected?
   isPrivate: z.boolean(),
   privatePin: z.string(),
-  // Is the booard listed in the room?
-  isListed: z.boolean(),
 });
 
 export type BoardSchema = z.infer<typeof schema>;
