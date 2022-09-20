@@ -5,8 +5,8 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { z } from "zod";
-import { SBDoc } from "./SBSchema";
+import { z } from 'zod';
+import { SBDoc } from './SBSchema';
 
 const schema = z.object({
   // Name of the Room
@@ -19,7 +19,10 @@ const schema = z.object({
   ownerId: z.string(),
   // Is the room private or public
   isPrivate: z.boolean(),
-})
+  privatePin: z.string(),
+  // Is the board listed publicly?
+  isListed: z.boolean(),
+});
 
 export type RoomSchema = z.infer<typeof schema>;
 

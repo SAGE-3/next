@@ -7,7 +7,7 @@
  */
 
 import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast } from '@chakra-ui/react';
-import { MdPerson, MdLock, MdRemoveRedEye, MdContentCopy, MdEdit, MdExitToApp } from 'react-icons/md';
+import { MdPerson, MdLock, MdContentCopy, MdEdit, MdExitToApp } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { sageColorByName } from '@sage3/shared';
@@ -86,11 +86,6 @@ export function BoardCard(props: BoardCardProps) {
           </Box>
 
           <Box display="flex" mt="2" alignItems="center" flexShrink="3">
-            <Tooltip label={`${heading} board is unlisted`} placement="top-start" hasArrow openDelay={200}>
-              <div>
-                {!props.board.data.isListed ? <Icon aria-label="unlisted" as={MdRemoveRedEye} boxSize={8} color={yourColor} /> : null}
-              </div>
-            </Tooltip>
             <Tooltip label={`${heading} board is protected`} placement="top-start" hasArrow openDelay={200}>
               <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={yourColor} /> : null}</div>
             </Tooltip>
