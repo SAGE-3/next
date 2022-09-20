@@ -15,6 +15,28 @@ import { useUIStore } from '../../../stores';
 import ContextMenuHandler from "./ContextMenuHandler";
 
 /**
+ * Convert a touch position to a mouse position
+ *
+ * @param {*} evt
+ * @param {*} parent
+ * @returns { x: number, y: number }
+ */
+function getOffsetPosition(evt: any, parent: any): { x: number, y: number } {
+  const position = {
+    x: (evt.targetTouches) ? evt.targetTouches[0].pageX : evt.clientX,
+    y: (evt.targetTouches) ? evt.targetTouches[0].pageY : evt.clientY
+  };
+
+  while (parent.offsetParent) {
+    position.x -= parent.offsetLeft - parent.scrollLeft;
+    position.y -= parent.offsetTop - parent.scrollTop;
+    parent = parent.offsetParent;
+  }
+
+  return position;
+}
+
+/**
  * ContextMenu component
  * @param props children divId
  * @returns JSX.Element
@@ -40,18 +62,21 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   }, [setContextMenuPos, props.divId, setContextMenuPosition]);
 
   const handleClick = useCallback(() => {
-    // console.log("click", showContextMenu);
     // timeout to allow button click to fire before hiding menu
     // return (showContextMenu ? setTimeout(() => setShowContextMenu(false)) : null);
     if (showContextMenu) setTimeout(() => setShowContextMenu(false));
-
   }, [showContextMenu]);
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
       if (type === 'contextmenu') {
-        setContextMenuPos({ x: event.pageX, y: event.pageY, });
-        setContextMenuPosition({ x: event.pageX, y: event.pageY, });
+        // safari ios
+        // setContextMenuPos({ x: event.pageX, y: event.pageY, });
+        // setContextMenuPosition({ x: event.pageX, y: event.pageY, });
+        // Convert touch position to mouse position
+        const pos = getOffsetPosition(event, event.target);
+        setContextMenuPos({ x: pos.x, y: pos.y });
+        setContextMenuPosition({ x: pos.x, y: pos.y });
         setTimeout(() => setShowContextMenu(true));
       } else {
         if (event.type === 'touchstart') {
