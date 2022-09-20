@@ -6,20 +6,15 @@
  *
  */
 
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
-import { Rnd } from 'react-rnd';
 import { ErrorBoundary } from 'react-error-boundary';
 import { MdClose, MdOpenInFull, MdOutlineCloseFullscreen } from 'react-icons/md';
-import { sageColorByName } from '@sage3/shared';
 
-type AppToolbarProps = {
-  position: { x: number; y: number };
-  setPosition: (pos: { x: number; y: number }) => void;
-};
+type AppToolbarProps = {};
 
 /**
  * AppToolbar Component
@@ -38,21 +33,98 @@ export function AppToolbar(props: AppToolbarProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
 
   // Theme
-  const panelBackground = useColorModeValue('gray.50', '#4A5568');
+  const panelBackground = useColorModeValue('gray.500', 'gray.600');
   const textColor = useColorModeValue('gray.800', 'gray.100');
-  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
+  const selectColor = '#f39e4a';
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
-  // Hover state
-  const [hover, setHover] = useState(false);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
+  const scale = useUIStore((state) => state.scale);
+  const boardDragging = useUIStore((state) => state.boardDragging);
 
-  function handleDblClick(e: any) {
-    e.stopPropagation();
-  }
+  // Position state
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const boxRef = useRef<HTMLDivElement>(null);
 
+  // Apps
   const app = apps.find((app) => app._id === selectedApp);
-  const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
+
+  useLayoutEffect(() => {
+    if (app && boxRef.current) {
+      // App Pos and Size
+      const ax = app.data.position.x * scale;
+      const ay = app.data.position.y * scale;
+      const ah = app.data.size.height * scale;
+      const aw = app.data.size.width * scale;
+      const titleBarHeight = 35 * scale; // Titlebar height including borders
+      const aby = ay + ah + titleBarHeight; // App Bottom Y
+
+      // Board Pos and Size
+      const bx = boardPosition.x * scale;
+      const by = boardPosition.y * scale;
+
+      // App Position on Window
+      const appXWin = bx + ax;
+      const appYWin = by + ay;
+      const appBYWin = by + aby; // App Bottom Y on Window
+
+      // Toolbar Width
+      const tw = boxRef.current.clientWidth + 6; // Toolbar Width + 6px for borders
+      const twhalf = tw / 2;
+      const toolbarHeight = 82;
+
+      // Window Size
+      const wh = window.innerHeight;
+      const ww = window.innerWidth;
+
+      function screenLimit(pos: { x: number; y: number }) {
+        // Check if toolbar is out of screen
+        if (pos.x < 0) {
+          pos.x = 0;
+        } else if (pos.x + tw > ww) {
+          pos.x = ww - tw;
+        }
+        if (pos.y < 0) {
+          pos.y = 0;
+        } else if (pos.y + toolbarHeight > wh) {
+          pos.y = wh - toolbarHeight;
+        }
+
+        return pos;
+      }
+
+      // Default Toolbar Poistion. Middle of screen at bottom
+      const defaultPosition = screenLimit({ x: ww / 2 - twhalf, y: wh - toolbarHeight });
+
+      // App Bottom Position
+      const appBottomPosition = screenLimit({ x: appXWin + aw / 2 - twhalf, y: appBYWin });
+
+      // App Top Position
+      const appTopPosition = screenLimit({ x: appXWin + aw / 2 - twhalf, y: appYWin - toolbarHeight });
+
+      // App is taller than window
+      if (ah * 1.2 > wh) {
+        setPosition(defaultPosition);
+        setAppToolbarPosition(defaultPosition); // Update the UI Store
+      }
+      // App is off screen
+      else if (appXWin > ww || appXWin + aw < 0 || appYWin > wh || appYWin + ah < 0) {
+        setPosition(defaultPosition);
+        setAppToolbarPosition(defaultPosition);
+      }
+      // App is close to bottom of the screen
+      else if (appBYWin + toolbarHeight > wh) {
+        setPosition(appTopPosition);
+        setAppToolbarPosition(appTopPosition);
+      } else {
+        setPosition(appBottomPosition);
+        setAppToolbarPosition(appBottomPosition);
+      }
+    }
+  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth, boardDragging]);
 
   function getAppToolbar() {
     if (app) {
@@ -69,7 +141,7 @@ export function AppToolbar(props: AppToolbarProps) {
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
                 <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors}>
-                  <MdClose color={sageColorByName('red')} fontSize="18" />
+                  <MdClose fontSize="18" />
                 </Button>
               </Tooltip>
             </ButtonGroup>
@@ -77,57 +149,44 @@ export function AppToolbar(props: AppToolbarProps) {
         </ErrorBoundary>
       );
     } else {
-      return <Text>No app selected</Text>;
+      return null;
     }
   }
 
-  if (showUI)
+  if (showUI && app)
     return (
-      <Rnd
-        position={{ ...props.position }}
-        bounds="window"
-        onDoubleClick={handleDblClick}
-        onDragStart={() => setHover(true)}
-        onDragStop={(e, data) => {
-          setHover(false);
-          props.setPosition({ x: data.x, y: data.y });
-        }}
-        enableResizing={false}
-        dragHandleClassName="handle" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 0.2s' }}
+      <Box
+        transform={`translate(${position.x}px, ${position.y}px)`}
+        position="absolute"
+        ref={boxRef}
+        display="flex"
+        border="solid 3px"
+        borderColor={selectColor}
+        bg={panelBackground}
+        p="2"
+        rounded="md"
+        transition="opacity 0.1s"
+        opacity={`${boardDragging ? '0' : '1'}`}
       >
-        <Box display="flex" boxShadow="outline" transition="all .2s " bg={panelBackground} p="2" rounded="md">
-          <Box
-            width="25px"
-            backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
-            backgroundPosition="0 0"
-            backgroundSize="8px 8px"
-            mr="2"
-            cursor="move"
+        <Box display="flex" flexDirection="column">
+          <Text
+            w="100%"
+            textAlign="left"
+            mx={1}
+            color={textColor}
+            fontSize={14}
+            fontWeight="bold"
+            h={'auto'}
+            userSelect={'none'}
             className="handle"
-          />
-
-          <Box display="flex" flexDirection="column">
-            <Text
-              w="100%"
-              textAlign="left"
-              mx={1}
-              color={textColor}
-              fontSize={14}
-              fontWeight="bold"
-              h={'auto'}
-              userSelect={'none'}
-              className="handle"
-              cursor="move"
-            >
-              {app?.data.name}
-            </Text>
-            <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
-              {getAppToolbar()}
-            </Box>
+          >
+            {app?.data.name}
+          </Text>
+          <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
+            {getAppToolbar()}
           </Box>
         </Box>
-      </Rnd>
+      </Box>
     );
   else return null;
 }
