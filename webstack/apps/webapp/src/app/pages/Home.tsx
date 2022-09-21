@@ -58,7 +58,7 @@ export function HomePage() {
         {/* Selected Room */}
         <Box flexGrow="8" mx="5">
           <Box display="flex" flexDirection="row">
-            <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 700]}>
+            <Box display="flex" flexWrap="wrap" flexDirection="column" width="700px" height="100%">
               {selectedRoom ? (
                 <>
                   <Box display="flex" justifyContent="center">

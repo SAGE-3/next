@@ -6,19 +6,18 @@
  *
  */
 
-import { useEffect, useState } from "react";
-import { Button, Text, Tooltip, useColorModeValue, useToast } from "@chakra-ui/react";
+import { useEffect, useState } from 'react';
+import { Button, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { SBDocument } from "@sage3/sagebase";
-import { RoomSchema } from "@sage3/shared/types";
-import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from "@sage3/frontend";
+import { SBDocument } from '@sage3/sagebase';
+import { RoomSchema } from '@sage3/shared/types';
+import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
 
 type RoomListProps = {
   onRoomClick: (room: SBDocument<RoomSchema>) => void;
   selectedRoom: SBDocument<RoomSchema> | null;
-}
-
+};
 
 export function RoomList(props: RoomListProps) {
   // Me
@@ -30,7 +29,7 @@ export function RoomList(props: RoomListProps) {
   const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
   const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
-  const presences = usePresenceStore(state => state.presences);
+  const presences = usePresenceStore((state) => state.presences);
   // UI elements
   const borderColor = useColorModeValue('#718096', '#A0AEC0');
   const toast = useToast();
@@ -51,23 +50,6 @@ export function RoomList(props: RoomListProps) {
   const [newRoomModal, setNewRoomModal] = useState(false);
   return (
     <>
-      {rooms
-        // show only public rooms or mine
-        .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
-        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-        .map((room) => {
-          return (
-            <RoomCard
-              key={room._id}
-              room={room}
-              userCount={presences.filter(p => p.data.roomId === room._id).length}
-              selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
-              onEnter={() => props.onRoomClick(room)}
-              onEdit={() => console.log('edit room')}
-              onDelete={() => deleteRoom(room._id)}
-            ></RoomCard>
-          );
-        })}
       <Tooltip label="Create a room" hasArrow placement="top-start">
         <Button
           height="60px"
@@ -86,6 +68,24 @@ export function RoomList(props: RoomListProps) {
           </Text>
         </Button>
       </Tooltip>
+      {rooms
+        // show only public rooms or mine
+        .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
+        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+        .map((room) => {
+          return (
+            <RoomCard
+              key={room._id}
+              room={room}
+              userCount={presences.filter((p) => p.data.roomId === room._id).length}
+              selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
+              onEnter={() => props.onRoomClick(room)}
+              onEdit={() => console.log('edit room')}
+              onDelete={() => deleteRoom(room._id)}
+            ></RoomCard>
+          );
+        })}
+
       <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
     </>
   );
