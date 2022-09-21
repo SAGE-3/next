@@ -247,12 +247,21 @@ class SAGEProxy():
             self.callbacks[src_app] = []
 
         self.callbacks[src_app].append(LinkedInfo(board_id=board_id,
-                                         src_app=src_app,
-                                         dest_app=dest_app,
-                                         src_field=src_field,
-                                         dest_field=dest_field,
-                                         callback=callback)
-                                                        )
+                                                  src_app=src_app,
+                                                  dest_app=dest_app,
+                                                  src_field=src_field,
+                                                  dest_field=dest_field,
+                                                  callback=callback)
+                                       )
+
+    def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
+
+        remove = None
+        for i, linked_info in enumerate(self.callbacks[src_app]):
+            if linked_info.board_id == board_id and \
+                    linked_info.src_app == src_app and linked_info.dest_app == dest_app and linked_info.src_field == src_field and linked_info.dest_field == dest_field:
+                remove = i
+        self.callbacks[src_app].pop(i)
 
 
 
