@@ -162,19 +162,20 @@ class SAGEProxy():
                     # handle callback
                     # print("this app is being tracked for updates")
                     # print(f"tracked field is {self.callbacks[app_id].src_field}")
-                    if f"state.{self.callbacks[app_id].src_field}" in updated_fields:
-                        # print("Yes, the tracked fields was updated")
-                        # TODO 4: make callback function optional. In which case, jsut update dest with src
-                        # TODO 1. We need to dispatch the function on a different thread, not run it
-                        #  on the same thread as proxy
-                        # TODO 2. Catch to avoid errors here so the thread does not crash
-                        # TODO 3. Refactor the below into a function
-                        board_id = self.callbacks[app_id].board_id
-                        src_val = msg['event']['updates'][f"state.{self.callbacks[app_id].src_field}"]
-                        dest_field = self.callbacks[app_id].dest_field
-                        dest_id = self.callbacks[app_id].dest_app
-                        dest_app = self.room.boards[board_id].smartbits[dest_id]
-                        self.callbacks[app_id].callback(src_val, dest_app, dest_field)
+                    for linked_info in self.callbacks[app_id]:
+                        if f"state.{linked_info.src_field}" in updated_fields:
+                            # print("Yes, the tracked fields was updated")
+                            # TODO 4: make callback function optional. In which case, jsut update dest with src
+                            # TODO 1. We need to dispatch the function on a different thread, not run it
+                            #  on the same thread as proxy
+                            # TODO 2. Catch to avoid errors here so the thread does not crash
+                            # TODO 3. Refactor the below into a function
+                            board_id = linked_info.board_id
+                            src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
+                            dest_field = linked_info.dest_field
+                            dest_id = linked_info.dest_app
+                            dest_app = self.room.boards[board_id].smartbits[dest_id]
+                            linked_info.callback(src_val, dest_app, dest_field)
 
             if len(updated_fields) == 1 and updated_fields[0] == 'raised':
                 # print("The received update is discribed a raised app... ignoring it")
@@ -241,16 +242,18 @@ class SAGEProxy():
         self.__message_queue.close()
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
-        self.callbacks[src_app] = LinkedInfo(board_id=board_id,
+
+        if src_app not in  self.callbacks:
+            self.callbacks[src_app] = []
+
+        self.callbacks[src_app].append(LinkedInfo(board_id=board_id,
                                          src_app=src_app,
                                          dest_app=dest_app,
                                          src_field=src_field,
                                          dest_field=dest_field,
                                          callback=callback)
+                                                        )
 
-    # def handle_linked_app_update(self, board_uuid, app_uuid, value):
-    #     src =
-    #     pass
 
 
 
