@@ -33,7 +33,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
 
   // Theme
-  const panelBackground = useColorModeValue('gray.500', 'gray.600');
+  const panelBackground = useColorModeValue('gray.50', '#4A5568');
+
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
   const selectColor = '#f39e4a';
