@@ -36,6 +36,19 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
+
+
+import builtins
+
+# TODO: (should we) replace this by logging instead.
+ # Does logging still show up in the code cell?
+
+def print(*args, **kwargs):
+    builtins.print("<console-print>", end="")
+    builtins.print(*args, **kwargs, end="")
+    builtins.print("</console-print>")
+
+
 # import logging
 # from jupyterkernelproxy_client import JupyterKernelClient
 
@@ -43,6 +56,8 @@ from utils.sage_communication import SageCommunication
 
 
 # urllib3.disable_warnings()
+
+
 
 class Room:
     def __init__(self, room_id):
@@ -53,7 +68,7 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    # print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
+    print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -97,7 +112,7 @@ class SAGEProxy():
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            # print(f"Creating {app_info}")
+            print(f"Creating {app_info}")
             self.__handle_create("APPS", app_info)
 
 
@@ -204,18 +219,18 @@ class SAGEProxy():
                     _func = getattr(sb, func_name)
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
-                    # print(f"About to execute function --{func_name}-- with params --{_params}--")
+                    print(f"About to execute function --{func_name}-- with params --{_params}--")
                     _func(**_params)
 
 
     def __handle_delete(self, collection, doc):
-        # print("HANDLE DELETE: UNHANDLED")
+        print("HANDLE DELETE: UNHANDLED")
         pass
 
     def clean_up(self):
         # print("cleaning up the queue")
         if self.__message_queue.qsize() > 0:
-            # print("Queue was not empty")
+            print("Queue was not empty")
             pass
         self.__message_queue.close()
 
@@ -245,7 +260,10 @@ session = requests.Session()
 session.headers = {'Authorization':'Bearer ' + token}
 room_id = session.get('http://localhost:3333/api/rooms').json()['data'][0]['_id']
 sage_proxy = SAGEProxy("config/config.json", room_id)
+
 # sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
+
+# b34cf54e-2f9e-4b9a-a458-27f4b6c658a7
 
 listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
 listening_process.start()
