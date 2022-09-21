@@ -117,9 +117,6 @@ export function BoardList(props: BoardListProps) {
                     board={board}
                     userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
                     onSelect={() => props.onBoardClick(board)}
-                    onEdit={() => {
-                      console.log('edit board');
-                    }}
                     onDelete={() => deleteBoard(board._id)}
                   />
                 );

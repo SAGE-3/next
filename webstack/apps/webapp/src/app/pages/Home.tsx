@@ -65,69 +65,6 @@ export function HomePage() {
                     <Text fontSize={'4xl'}>{selectedRoom?.data.name}</Text>
                   </Box>
 
-                  <Box display="flex" justifyContent="center" width="100%" height="80px" borderRadius="md" py={2}>
-                    <Box
-                      width="100%"
-                      height="100%"
-                      backgroundColor="purple.500"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mr="2"
-                      fontWeight={'bold'}
-                      transition={'all 0.2s ease-in-out'}
-                      _hover={{ transform: 'scale(1.05)' }}
-                      cursor="pointer"
-                      border="2px solid white"
-                      fontSize="lg"
-                      borderColor={borderColor}
-                      color="white"
-                    >
-                      {'Edit'}
-                    </Box>
-                    <Box
-                      width="100%"
-                      height="100%"
-                      backgroundColor="yellow.500"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                      fontWeight={'bold'}
-                      transition={'all 0.2s ease-in-out'}
-                      _hover={{ transform: 'scale(1.05)' }}
-                      cursor="pointer"
-                      fontSize="lg"
-                      border="2px solid white"
-                      borderColor={borderColor}
-                      color="white"
-                    >
-                      {'Info'}
-                    </Box>
-                    <Box
-                      width="100%"
-                      height="100%"
-                      backgroundColor="blue.500"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      ml="2"
-                      fontWeight={'bold'}
-                      transition={'all 0.2s ease-in-out'}
-                      _hover={{ transform: 'scale(1.1)' }}
-                      cursor="pointer"
-                      border="2px solid white"
-                      fontSize="lg"
-                      borderColor={borderColor}
-                      color="white"
-                    >
-                      {'Users'}
-                    </Box>
-                  </Box>
-
                   <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
                 </>
               ) : null}

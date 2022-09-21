@@ -14,13 +14,13 @@ import { sageColorByName } from '@sage3/shared';
 import { BoardSchema } from '@sage3/shared/types';
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { useUser } from '../../../hooks';
+import { EditBoardModal } from '../modals/EditBoardModal';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
   userCount: number;
   onSelect: () => void;
   onDelete: () => void;
-  onEdit: () => void;
 };
 
 /**
@@ -40,6 +40,9 @@ export function BoardCard(props: BoardCardProps) {
   // Custom color
   const otherColor = useColorModeValue('black', 'white');
   const yourColor = yours ? sageColorByName(user.data.color) : otherColor;
+
+  // Edit Modal Disclousure
+  const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
 
   // Copy the board id to the clipboard
   const toast = useToast();
@@ -66,6 +69,7 @@ export function BoardCard(props: BoardCardProps) {
         isOpen={isOpen}
         onClose={onClose}
       />
+      <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
       <Box
         borderWidth="2px"
         borderRadius="md"
@@ -128,7 +132,7 @@ export function BoardCard(props: BoardCardProps) {
             {yours ? (
               <Tooltip label="Edit Board" openDelay={400} placement="top-start" hasArrow>
                 <IconButton
-                  onClick={props.onEdit}
+                  onClick={onOpenEdit}
                   color={sageColorByName(props.board.data.color)}
                   aria-label="Board Edit"
                   fontSize="3xl"

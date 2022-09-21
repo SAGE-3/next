@@ -12,6 +12,7 @@ export * from './modals/CreateBoardModal';
 export * from './modals/CreateUserModal';
 export * from './modals/UploadModal';
 export * from './modals/EnterBoardByIdModal';
+export * from './modals/EditBoardModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';
