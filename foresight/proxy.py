@@ -83,6 +83,12 @@ class LinkedInfo(BaseModel):
     dest_field: str
     callback: Callable
 
+# TODO: sample callback for linked app. Other example
+#  needed. Also new home for such functions is also needed
+def update_dest_from_src(src_val, dest_app, dest_field):
+    setattr(dest_app.state, dest_field, src_val)
+    dest_app.send_updates()
+
 class SAGEProxy():
     def __init__(self, config_file, room_id):
         self.room = Room(room_id)
