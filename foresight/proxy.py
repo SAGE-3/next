@@ -144,13 +144,13 @@ class SAGEProxy():
             msg = self.__message_queue.get()
             # I am watching this message for change?
 
-            # print(f"getting ready to process: {msg}")
+            print(f"getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             updated_fields = []
 
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
-                # print(f"updated fields are: {updated_fields}")
+                print(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
                     # handle callback
@@ -159,10 +159,10 @@ class SAGEProxy():
                     if f"state.{self.callbacks[app_id].src_field}" in updated_fields:
                         # print("Yes, the tracked fields was updated")
                         # TODO 4: make callback function optional. In which case, jsut update dest with src
-                        # TODO 1. We need to dispatch the funciton on a different thread, not run it
+                        # TODO 1. We need to dispatch the function on a different thread, not run it
                         #  on the same thread as proxy
                         # TODO 2. Catch to avoid errors here so the thread does not crash
-                        # TODO 3. Refactor into a function
+                        # TODO 3. Refactor the below into a function
                         board_id = self.callbacks[app_id].board_id
                         src_val = msg['event']['updates'][f"state.{self.callbacks[app_id].src_field}"]
                         dest_field = self.callbacks[app_id].dest_field
