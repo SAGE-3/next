@@ -208,7 +208,7 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Bring Menu
           </Button>
-          <Button
+          {/* <Button
             w="100%"
             borderRadius={2}
             h="auto"
@@ -220,7 +220,7 @@ export function BoardContextMenu(props: ContextProps) {
             onClick={() => setAppToolbarPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
           >
             Bring App Toolbar
-          </Button>
+          </Button> */}
           <Button
             w="100%"
             borderRadius={2}
