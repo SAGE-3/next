@@ -7,9 +7,10 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box, Button, ButtonGroup, Center, Tooltip,
-  Input, InputGroup, Menu, MenuButton, HStack,
+  Input, InputGroup, HStack,
 } from '@chakra-ui/react';
 
 import {
@@ -20,14 +21,13 @@ import {
   MdRemove,
   MdVolumeOff,
   MdOutlineSubdirectoryArrowLeft,
-  MdHistory,
   MdVolumeUp,
 } from 'react-icons/md';
 
 
 import { App } from '../../schema';
 
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { isElectron } from './util';
@@ -59,10 +59,20 @@ function AppComponent(props: App): JSX.Element {
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string>(s.webviewurl);
   const setView = useStore((state: any) => state.setView);
+  const [zoom, setZoom] = useState(s.zoom ?? 1.0);
+  const mute = useStore((state: any) => state.mute[props._id]);
+  const setMute = useStore((state: any) => state.setMute);
+  const createApp = useAppStore((state) => state.create);
+  const location = useLocation();
+  const locationState = location.state as {
+    boardId: string;
+    roomId: string;
+  };
+  const { user } = useUser();
 
-  // Using Electron webview functions of the webivew requires the dom-ready event to be called first
-  // This is used to track when that function has been called
+  // Tracking the dom-ready and did-load events
   const [domReady, setDomReady] = useState(false);
+  const [attached, setAttached] = useState(false);
 
   // Update from backend
   useEffect(() => {
@@ -72,13 +82,16 @@ function AppComponent(props: App): JSX.Element {
   // Init the webview
   const setWebviewRef = useCallback(
     (node: WebviewTag) => {
+      // event did-attach callback
+      const didAttachCallback = (evt: any) => {
+        webviewNode.current.removeEventListener('did-attach', didAttachCallback);
+        setAttached(true);
+      };
+
       // event dom-ready callback
-      const domReadyCallback = (webview: any) => {
-        webview.removeEventListener('dom-ready', domReadyCallback);
-        // Timeout for dom-ready race stuff
-        setTimeout(() => {
-          setDomReady(true);
-        }, 100);
+      const domReadyCallback = (evt: any) => {
+        webviewNode.current.removeEventListener('dom-ready', domReadyCallback);
+        setDomReady(true);
       };
 
       if (node) {
@@ -121,7 +134,8 @@ function AppComponent(props: App): JSX.Element {
         }
 
         // Callback when the webview is ready
-        webview.addEventListener('dom-ready', domReadyCallback(webview));
+        webview.addEventListener('dom-ready', domReadyCallback);
+        webview.addEventListener('did-attach', didAttachCallback);
 
         const titleUpdated = (event: any) => {
           // Update the app title
@@ -135,12 +149,153 @@ function AppComponent(props: App): JSX.Element {
     }, []);
 
   useEffect(() => {
-    if (domReady === false) return;
+    if (domReady === false || attached === false) return;
+    // Start page muted
+    webviewNode.current.setAudioMuted(true);
+    setMute(props._id, true);
+  }, [domReady, attached]);
+
+  useEffect(() => {
+    if (domReady === false || attached === false) return;
     if (webviewNode.current) {
       webviewNode.current.stop();
-      webviewNode.current.src = url;
+      webviewNode.current.loadURL(url).catch((err: any) => {
+        console.log("Webview> Error loading URL:", url, err);
+        if (err.code === 'ERR_ABORTED') return;
+      });
     }
-  }, [url, domReady]);
+  }, [url, domReady, attached]);
+
+  useEffect(() => {
+    if (domReady === false || attached === false) return;
+    if (webviewNode.current && s.zoom) {
+      setZoom(s.zoom);
+      webviewNode.current.setZoomFactor(s.zoom);
+    }
+  }, [s.zoom, domReady]);
+
+  /**
+   * Observes for Page Changes
+   */
+  useEffect(() => {
+    if (!isElectron()) return;
+    if (domReady === false || attached === false) return;
+    const webview = webviewNode.current;
+
+    if (webview) {
+      if (webview.getURL() !== url) {
+        try {
+          webviewNode.current.loadURL(url).then(() => {
+            console.log("Loaded URL:", url);
+          }).catch((err: any) => {
+            console.log("Webview> Error loading URL:", url, err);
+          });
+        } catch (e) {
+          console.log(e)
+        }
+      }
+    }
+
+    /**
+     * If a user changes the page by clicking/interacting a link on the webpage
+     */
+    const didNavigateInPage = (evt: any) => {
+      console.log('Webview> did-navigate-in-page', evt.url);
+    };
+
+    webview.addEventListener('did-navigate-in-page', didNavigateInPage);
+
+    return () => {
+      if (webview) {
+        webview.removeEventListener('did-navigate-in-page', didNavigateInPage);
+      }
+    }
+  }, [url, attached, domReady])
+
+  /**
+   * Observes for Mute Changes
+   */
+  useEffect(() => {
+    if (!isElectron()) return;
+    if (domReady === false || attached === false) return;
+    const webview = webviewNode.current;
+    if (webview) {
+      webview.setAudioMuted(mute);
+    }
+  }, [mute, domReady, attached])
+
+  // Open a url in a new webview, should result from event new-window within webview component
+  // Added here since there is access to more relevant information
+  useEffect(() => {
+    if (!isElectron()) return;
+    if (domReady === false || attached === false) return;
+    const webview = webviewNode.current;
+    const openUrlInNewWebviewApp = (url: string): void => {
+      if (!user) return;
+      createApp({
+        name: 'Webview',
+        description: 'Webview',
+        roomId: locationState.roomId,
+        boardId: locationState.boardId,
+        position: { x: props.data.position.x + props.data.size.width + 15, y: props.data.position.y, z: 0 },
+        size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Webview',
+        ownerId: user._id,
+        state: { webviewurl: processContentURL(url) },
+        minimized: false,
+        raised: true,
+      });
+    };
+
+    // When the webview tries to open a new window
+    const newWindow = (event: any) => {
+      // console.log('new-window', event);
+      if (event.url.includes(window.location.hostname)) {
+        // Allow jupyter to stay within the same window
+        setUrl(event.url);
+      }
+      // Open a new window
+      else if (event.url !== "about:blank") {
+        openUrlInNewWebviewApp(event.url);
+      }
+    };
+
+    // Check if destination is a PDF document and open another webview if so
+    const willNavigate = (event: any) => {
+      if (event.url && event.url.includes('.pdf')) {
+        // Dont try to download a PDF
+        event.preventDefault();
+        webview.stop();
+        openUrlInNewWebviewApp(event.url + '#toolbar=1&view=Fit');
+      } else {
+        setUrl(event.url);
+        updateState(props._id, { webviewurl: event.url });
+      }
+    };
+
+    const didNavigate = (event: any) => {
+      // if (event.url != 'about:blank' && event.isInPlace && event.isMainFrame) {
+      if (event.url != 'about:blank' && event.isMainFrame) {
+        setUrl(event.url);
+        updateState(props._id, { webviewurl: event.url });
+      }
+    };
+
+    // Webview opened a new window
+    webview.addEventListener('new-window', newWindow);
+    // Check the url before navigating
+    webview.addEventListener('will-navigate', willNavigate);
+    webview.addEventListener('did-start-navigation', didNavigate);
+
+    return () => {
+      if (webview) {
+        webview.removeEventListener("new-window", newWindow);
+        webview.removeEventListener("will-navigate", willNavigate);
+        webview.removeEventListener('did-start-navigation', didNavigate);
+      }
+    }
+  }, [props.data.position, domReady])
 
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
@@ -183,9 +338,9 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const setMute = useStore((state: any) => state.setMute);
   const [urlValue, setUrlValue] = useState(s.webviewurl);
   const mute = useStore((state: any) => state.mute[props._id]);
+  const setMute = useStore((state: any) => state.setMute);
   const view = useStore((state: any) => state.view[props._id]);
 
   // from the UI to the react state
@@ -218,20 +373,39 @@ function ToolbarComponent(props: App): JSX.Element {
       // update the address bar
       setUrlValue(url);
     } catch (error) {
-      console.log('Webview> Invalid URL');
+      console.log('Webview> Invalid URL', url);
     }
+  };
+
+  const goBack = () => {
+    view.goBack();
+  }
+  const goForward = () => {
+    view.goForward();
+  }
+
+  const handleZoom = (dir: string) => {
+    const v = view as WebviewTag;
+    if (dir === 'zoom-in') {
+      v.zoomFactor = Math.min(v.zoomFactor + 0.1, 3);
+    } else if (dir === 'zoom-out') {
+      v.zoomFactor = Math.max(v.zoomFactor - 0.1, 0.1)
+    } else if (dir === 'zoom-reset') {
+      v.zoomFactor = 1;
+    }
+    updateState(props._id, { zoom: v.zoomFactor });
   };
 
   return <HStack>
     <ButtonGroup isAttached size="xs" colorScheme="teal">
       <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
-        <Button onClick={() => view.goBack()} >
+        <Button onClick={goBack} >
           <MdArrowBack />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
-        <Button onClick={() => view.goForward()} >
+        <Button onClick={goForward} >
           <MdArrowForward />
         </Button>
       </Tooltip>
@@ -241,27 +415,6 @@ function ToolbarComponent(props: App): JSX.Element {
           <MdRefresh />
         </Button>
       </Tooltip>
-
-      <Menu size="xs">
-        <Tooltip placement="top-start" hasArrow={true} label={'History'} openDelay={400}>
-          <MenuButton as={Button} size="xs" variant="solid">
-            <MdHistory />
-          </MenuButton>
-        </Tooltip>
-        {/* <MenuList >
-          {addressState.history.map((el, idx) => {
-            return addressState.historyIdx === idx ? (
-              <MenuItem key={idx} color="teal" onClick={() => addressDispatch({ type: 'navigate-by-history', index: idx })}>
-                {truncateWithEllipsis(el, 40)}
-              </MenuItem>
-            ) : (
-              <MenuItem key={idx} onClick={() => addressDispatch({ type: 'navigate-by-history', index: idx })}>
-                {truncateWithEllipsis(el, 40)}
-              </MenuItem>
-            );
-          })}
-        </MenuList> */}
-      </Menu>
     </ButtonGroup>
 
     <form onSubmit={changeUrl}>
@@ -286,17 +439,13 @@ function ToolbarComponent(props: App): JSX.Element {
 
     <ButtonGroup isAttached size="xs" colorScheme="teal">
       <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-        <Button
-        // onClick={() => visualDispatch({ type: 'zoom-in' })}
-        >
+        <Button onClick={() => handleZoom('zoom-in')} >
           <MdAdd />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-        <Button
-        // onClick={() => visualDispatch({ type: 'zoom-out' })}
-        >
+        <Button onClick={() => handleZoom('zoom-out')} >
           <MdRemove />
         </Button>
       </Tooltip>
