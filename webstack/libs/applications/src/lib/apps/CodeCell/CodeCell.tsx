@@ -9,13 +9,12 @@ import { useRef, useEffect, useState } from 'react';
 import {
   Box, Button, HStack, useColorModeValue, Tooltip,
   IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
-  useColorMode, Flex
+  useColorMode, Flex, ButtonGroup
 } from '@chakra-ui/react';
 import { v4 as getUUID } from 'uuid';
 
 import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
-import { MdDelete, MdPlayArrow } from 'react-icons/md';
-
+import { MdDelete, MdPlayArrow, MdFileDownload } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -29,6 +28,10 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 import { Markdown } from './components/markdown'
+// Utility functions from SAGE3
+import { downloadFile } from '@sage3/frontend';
+// Date manipulation (for filename)
+import dateFormat from 'date-fns/format';
 
 
 const AppComponent = (props: App): JSX.Element => {
@@ -192,12 +195,31 @@ const ColorModeToggle = (): JSX.Element => {
 
 
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
+
+  // Download the stickie as a text file
+  const downloadPy = () => {
+    // Current date
+    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const content = `${s.code}`;
+    // generate a URL containing the text of the note
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    // Make a filename with username and date
+    const filename = 'codecell-' + dt + '.py';
+    // Go for download
+    downloadFile(txturl, filename);
+  };
 
   return (
     <>
-      <ColorModeToggle />
+      {/* <ColorModeToggle /> */}
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+          <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   )
 }
