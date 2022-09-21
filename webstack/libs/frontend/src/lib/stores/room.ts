@@ -59,6 +59,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       if (!res.success) {
         set({ error: res.message });
       }
+      // TO DO Delete all boards belonging to the room
     },
     subscribeToAllRooms: async () => {
       const rooms = await APIHttp.GET<RoomSchema, Room>('/rooms');

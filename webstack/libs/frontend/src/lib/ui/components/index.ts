@@ -13,6 +13,7 @@ export * from './modals/CreateUserModal';
 export * from './modals/UploadModal';
 export * from './modals/EnterBoardByIdModal';
 export * from './modals/EditBoardModal';
+export * from './modals/EditRoomModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';

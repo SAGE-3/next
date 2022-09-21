@@ -12,7 +12,7 @@
  *
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -23,11 +23,8 @@ import {
   InputGroup,
   InputLeftElement,
   Input,
-  useToast,
   Button,
-  Text,
   Box,
-  Select,
   ButtonGroup,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';

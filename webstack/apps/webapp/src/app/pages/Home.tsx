@@ -8,10 +8,10 @@
 
 import { useEffect, useState } from 'react';
 import { MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, Icon, Divider } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Icon, Divider, IconButton, useDisclosure } from '@chakra-ui/react';
 
 import { SBDocument } from '@sage3/sagebase';
-import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
+import { EditRoomModal, useBoardStore, usePresence, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 import { BoardList } from '../components/Home/BoardList';
@@ -20,11 +20,25 @@ import { RoomList } from '../components/Home/RoomList';
 import { BoardPreview } from '../components/Home/BoardPreview';
 
 export function HomePage() {
+  // User
+  const { user } = useUser();
+
+  // Room Store
   const [selectedRoom, setSelectedRoom] = useState<SBDocument<RoomSchema> | null>(null);
+  const rooms = useRoomStore((state) => state.rooms);
+  const roomOwner = selectedRoom?.data.ownerId === user?._id;
+
+  // Edit room Modal disclosure
+  const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
+
+  // Board Sotre
+  const boards = useBoardStore((state) => state.boards);
   const [selectedBoard, setSelectedBoard] = useState<SBDocument<BoardSchema> | null>(null);
 
+  // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
+  // Users anad presence
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
   const { update: updatePresence } = usePresence();
@@ -45,7 +59,16 @@ export function HomePage() {
     setSelectedBoard(board);
   }
 
-  const borderColor = useColorModeValue('gray.300', 'white');
+  useEffect(() => {
+    console.log(rooms);
+    if (!rooms.find((room) => room._id === selectedRoom?._id)) {
+      setSelectedRoom(null);
+      setSelectedBoard(null);
+    }
+    if (!boards.find((board) => board._id === selectedBoard?._id)) {
+      setSelectedBoard(null);
+    }
+  }, [rooms, boards]);
 
   return (
     <Box p="2">
@@ -61,9 +84,23 @@ export function HomePage() {
             <Box display="flex" flexWrap="wrap" flexDirection="column" width="700px" height="100%">
               {selectedRoom ? (
                 <>
-                  <Box display="flex" justifyContent="center">
-                    <Text fontSize={'4xl'}>{selectedRoom?.data.name}</Text>
+                  <Box display="flex" justifyContent="center" alignItems="center">
+                    <Text fontSize={'4xl'} mr="2">
+                      {selectedRoom?.data.name}
+                    </Text>
+                    {roomOwner ? (
+                      <IconButton
+                        aria-label="Edit"
+                        variant="ghost"
+                        fontSize="3xl"
+                        icon={<MdSettings />}
+                        transform="translateY(2px)"
+                        onClick={onOpenEdit}
+                      />
+                    ) : null}
                   </Box>
+
+                  <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={selectedRoom} />
 
                   <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
                 </>
