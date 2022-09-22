@@ -11,9 +11,7 @@ import { RoomSchema } from '@sage3/shared/types';
 import { sageColorByName } from '@sage3/shared';
 import { SBDocument } from '@sage3/sagebase';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
-import { useUser } from '../../../hooks';
 import { MdLock } from 'react-icons/md';
-import { Room } from 'twilio-video';
 
 export type RoomCardProps = {
   room: SBDocument<RoomSchema>;
@@ -73,7 +71,11 @@ export function RoomCard(props: RoomCardProps) {
           position="relative"
           color={props.selected ? sageColorByName(props.room.data.color) : textColor}
           transition="transform .2s"
-          _hover={{ transform: 'scale(1.2)' }}
+          _hover={{
+            transform: 'scale(1.2)',
+            color: sageColorByName(props.room.data.color),
+            borderColor: sageColorByName(props.room.data.color),
+          }}
           onClick={onOpen}
         >
           <Text fontSize="4xl">{props.room.data.name.charAt(0).toLocaleUpperCase()}</Text>
@@ -81,7 +83,7 @@ export function RoomCard(props: RoomCardProps) {
             position="absolute"
             right="-10px"
             bottom="-10px"
-            backgroundColor={sageColorByName(props.room.data.color)}
+            backgroundColor={props.selected ? sageColorByName(props.room.data.color) : borderColor}
             color="white"
             borderRadius="100%"
             width="24px"

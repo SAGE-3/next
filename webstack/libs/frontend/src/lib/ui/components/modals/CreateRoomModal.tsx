@@ -128,9 +128,9 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create Room</ModalHeader>
+        <ModalHeader fontSize="3xl">Create Room</ModalHeader>
         <ModalBody>
-          <InputGroup mt={4}>
+          <InputGroup>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}

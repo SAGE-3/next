@@ -86,7 +86,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
     >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create User Account</ModalHeader>
+        <ModalHeader fontSize="3xl">Create User Account</ModalHeader>
         <ModalBody>
           <FormControl isRequired mb={4}>
             <FormLabel htmlFor="htmlFor">Username</FormLabel>

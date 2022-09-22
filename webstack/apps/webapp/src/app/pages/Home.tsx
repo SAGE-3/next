@@ -79,7 +79,7 @@ export function HomePage() {
         </Box>
 
         {/* Selected Room */}
-        <Box flexGrow="8" mx="5">
+        <Box mx="5">
           <Box display="flex" flexDirection="row">
             <Box display="flex" flexWrap="wrap" flexDirection="column" width="700px" height="100%">
               {selectedRoom ? (
@@ -107,18 +107,7 @@ export function HomePage() {
               ) : null}
             </Box>
 
-            <Box width="100%" height="50vh" borderRadius="md" ml={8} display="flex" flexDirection="column">
-              {selectedBoard ? (
-                <>
-                  <Box display="flex" justifyContent="center">
-                    <Text fontSize={'4xl'}>{selectedBoard?.data.name}</Text>
-                  </Box>
-                  <Box width="100%" height="100%" backgroundColor="gray.600" borderRadius="md" p="2">
-                    <BoardPreview boardId={selectedBoard._id}></BoardPreview>
-                  </Box>
-                </>
-              ) : null}
-            </Box>
+            {selectedBoard ? <BoardPreview board={selectedBoard}></BoardPreview> : null}
           </Box>
         </Box>
       </Box>

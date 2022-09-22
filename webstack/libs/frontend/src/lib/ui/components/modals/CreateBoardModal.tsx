@@ -129,9 +129,9 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create a New Board</ModalHeader>
+        <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>
         <ModalBody>
-          <InputGroup mt={4}>
+          <InputGroup>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}
