@@ -91,7 +91,7 @@ export function Controller(props: ControllerProps) {
     >
       <HStack w="100%">
         <Tooltip label="Home" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} used={false} onClick={handleHomeClick} />
+          <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} isActive={false} onClick={handleHomeClick} />
         </Tooltip>
 
         <Tooltip label="Users" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
@@ -99,7 +99,7 @@ export function Controller(props: ControllerProps) {
             icon={<MdGroups />}
             description="Avatars"
             disabled={false}
-            used={avatarMenu.show}
+            isActive={avatarMenu.show}
             onClick={() => handleShowMenu('avatar')}
           />
         </Tooltip>
@@ -108,7 +108,7 @@ export function Controller(props: ControllerProps) {
             icon={<MdApps />}
             description="Launch applications"
             disabled={false}
-            used={applicationsMenu.show}
+            isActive={applicationsMenu.show}
             onClick={() => handleShowMenu('applications')}
           />
         </Tooltip>
@@ -117,7 +117,7 @@ export function Controller(props: ControllerProps) {
             icon={<MdFolder />}
             description="Assets"
             disabled={false}
-            used={assetMenu.show}
+            isActive={assetMenu.show}
             onClick={() => handleShowMenu('assets')}
           />
         </Tooltip>
@@ -126,7 +126,7 @@ export function Controller(props: ControllerProps) {
             icon={<MdMap />}
             description="Navigation"
             disabled={false}
-            used={navigationMenu.show}
+            isActive={navigationMenu.show}
             onClick={() => handleShowMenu('navigation')}
           />
         </Tooltip>
