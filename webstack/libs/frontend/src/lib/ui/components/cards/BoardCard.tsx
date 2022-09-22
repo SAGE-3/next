@@ -6,7 +6,7 @@
  *
  */
 
-import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast, IconButton } from '@chakra-ui/react';
+import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast, IconButton, border } from '@chakra-ui/react';
 import { MdPerson, MdLock, MdContentCopy, MdEdit, MdExitToApp, MdPreview, MdRemoveRedEye, MdSettings } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
@@ -21,6 +21,7 @@ export type BoardCardProps = {
   userCount: number;
   onSelect: () => void;
   onDelete: () => void;
+  selected: boolean;
 };
 
 /**
@@ -31,18 +32,23 @@ export type BoardCardProps = {
  * @returns
  */
 export function BoardCard(props: BoardCardProps) {
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const { user } = useUser();
+
   // Is it my board?
   const yours = user?._id === props.board.data.ownerId;
+
   // Custom text
   const heading = yours ? 'Your' : 'This';
+
   // Custom color
-  const otherColor = useColorModeValue('black', 'white');
-  const yourColor = yours ? sageColorByName(user.data.color) : otherColor;
+  const borderColor = useColorModeValue('#718096', '#A0AEC0');
+  const boardColor = sageColorByName(props.board.data.color);
 
   // Edit Modal Disclousure
   const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
+
+  // Enter Modal Disclosure
+  const { isOpen: isOpenEnter, onOpen: onOpenEnter, onClose: onCloseEnter } = useDisclosure();
 
   // Copy the board id to the clipboard
   const toast = useToast();
@@ -58,6 +64,16 @@ export function BoardCard(props: BoardCardProps) {
     });
   };
 
+  const handleEnterBoard = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenEnter();
+  };
+
+  const handleOpenSettings = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenEdit();
+  };
+
   return (
     <>
       <EnterBoardModal
@@ -66,8 +82,8 @@ export function BoardCard(props: BoardCardProps) {
         name={props.board.data.name}
         isPrivate={props.board.data.isPrivate}
         privatePin={props.board.data.privatePin}
-        isOpen={isOpen}
-        onClose={onClose}
+        isOpen={isOpenEnter}
+        onClose={onCloseEnter}
       />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
       <Box
@@ -77,10 +93,16 @@ export function BoardCard(props: BoardCardProps) {
         height="80px"
         my="2"
         pt="2"
-        border={`solid ${sageColorByName(props.board.data.color)} 2px`}
+        border={`solid ${props.selected ? boardColor : borderColor} 2px`}
         transition="transform .2s"
-        _hover={{ transform: 'scale(1.05)' }}
-        style={{ background: `linear-gradient(${sageColorByName(props.board.data.color)} 10%, transparent 10% ) no-repeat` }}
+        style={{
+          background: `linear-gradient(${props.selected ? boardColor : borderColor} 10%, transparent 10% ) no-repeat`,
+        }}
+        _hover={{
+          transform: 'scale(1.05)',
+        }}
+        cursor="pointer"
+        onClick={props.onSelect}
       >
         <Box px="2" display="flex" flexDirection="row" justifyContent="space-between" alignContent="center">
           <Box display="flex" flexDirection="column">
@@ -90,13 +112,13 @@ export function BoardCard(props: BoardCardProps) {
 
           <Box display="flex" mt="2" alignItems="center" flexShrink="3">
             <Tooltip label={`${heading} board is protected`} placement="top-start" hasArrow openDelay={200}>
-              <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={yourColor} /> : null}</div>
+              <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={boardColor} /> : null}</div>
             </Tooltip>
 
             <Tooltip label="Enter Board" openDelay={400} placement="top-start" hasArrow>
               <IconButton
-                onClick={onOpen}
-                color={sageColorByName(props.board.data.color)}
+                onClick={handleEnterBoard}
+                color={props.selected ? boardColor : borderColor}
                 aria-label="Preview Board"
                 fontSize="3xl"
                 variant="ghost"
@@ -105,22 +127,10 @@ export function BoardCard(props: BoardCardProps) {
                 icon={<MdExitToApp />}
               />
             </Tooltip>
-            <Tooltip label="Preview Board" openDelay={400} placement="top-start" hasArrow>
-              <IconButton
-                onClick={props.onSelect}
-                color={sageColorByName(props.board.data.color)}
-                aria-label="Preview Board"
-                fontSize="3xl"
-                variant="ghost"
-                _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                transition="transform .2s"
-                icon={<MdRemoveRedEye />}
-              />
-            </Tooltip>
             <Tooltip label="Copy Board ID into clipboard" openDelay={400} placement="top-start" hasArrow>
               <IconButton
                 onClick={handleCopyId}
-                color={sageColorByName(props.board.data.color)}
+                color={props.selected ? boardColor : borderColor}
                 aria-label="Board Copy ID"
                 fontSize="3xl"
                 variant="ghost"
@@ -132,8 +142,8 @@ export function BoardCard(props: BoardCardProps) {
             {yours ? (
               <Tooltip label="Edit Board" openDelay={400} placement="top-start" hasArrow>
                 <IconButton
-                  onClick={onOpenEdit}
-                  color={sageColorByName(props.board.data.color)}
+                  onClick={handleOpenSettings}
+                  color={props.selected ? boardColor : borderColor}
                   aria-label="Board Edit"
                   fontSize="3xl"
                   variant="ghost"

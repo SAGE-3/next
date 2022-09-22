@@ -80,8 +80,8 @@ export function HomePage() {
 
         {/* Selected Room */}
         <Box mx="5">
-          <Box display="flex" flexDirection="row">
-            <Box display="flex" flexWrap="wrap" flexDirection="column" width="700px" height="100%">
+          <Box display="flex" flexDirection="row" width="2000px">
+            <Box display="flex" flexWrap="wrap" flexDirection="column" width="800px" height="100%">
               {selectedRoom ? (
                 <>
                   <Box display="flex" justifyContent="center" alignItems="center">
@@ -102,12 +102,21 @@ export function HomePage() {
 
                   <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={selectedRoom} />
 
-                  <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
+                  <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
                 </>
               ) : null}
             </Box>
 
-            {selectedBoard ? <BoardPreview board={selectedBoard}></BoardPreview> : null}
+            <Box width="1200px" height="100%" mx="8" display="flex" flexDir="column">
+              {selectedBoard ? (
+                <Box>
+                  <Box justifyContent={'center'} alignContent="center" display="flex">
+                    <Text fontSize="4xl">{selectedBoard?.data.name}</Text>
+                  </Box>
+                  <BoardPreview board={selectedBoard}></BoardPreview>
+                </Box>
+              ) : null}
+            </Box>
           </Box>
         </Box>
       </Box>

@@ -18,6 +18,7 @@ import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 type BoardListProps = {
   onBoardClick: (board: SBDocument<BoardSchema>) => void;
   selectedRoom: SBDocument<RoomSchema> | null;
+  selectedBoard: SBDocument<BoardSchema> | null;
 };
 
 /**
@@ -115,6 +116,7 @@ export function BoardList(props: BoardListProps) {
                   <BoardCard
                     key={board._id}
                     board={board}
+                    selected={props.selectedBoard?._id == board._id}
                     userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
                     onSelect={() => props.onBoardClick(board)}
                     onDelete={() => deleteBoard(board._id)}
