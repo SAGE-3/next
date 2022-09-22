@@ -154,7 +154,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
           // Instead of using a scaling factor, we try to get a given dimension
           // on the long end (in pixels)
           // Because different PDFs have different dimension defined (viewbox)
-          const desired = 3200;
+          const desired = 2400;
           const initialviewport = page.getViewport({ scale: 1 });
           // Calculate the scale
           let scale = Math.round(desired / initialviewport.width);

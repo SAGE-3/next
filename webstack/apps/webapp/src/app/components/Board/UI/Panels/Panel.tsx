@@ -6,7 +6,7 @@
  *
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, HStack } from '@chakra-ui/react';
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
@@ -60,7 +60,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
   disabled: boolean;
-  used: boolean;
+  isActive: boolean;
   description: string;
 }
 
@@ -80,7 +80,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
         aria-label={props.description}
         icon={props.icon}
         isDisabled={props.disabled}
-        isActive={props.used}
+        isActive={props.isActive}
         _hover={{ color: 'teal' }}
       />
     </Box>

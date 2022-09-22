@@ -5503,10 +5503,10 @@ canvas-fit@^1.5.0:
   dependencies:
     element-size "^1.1.1"
 
-canvas@^2.9.1:
-  version "2.9.3"
-  resolved "https://registry.yarnpkg.com/canvas/-/canvas-2.9.3.tgz#8723c4f970442d4cdcedba5221579f9660a58bdb"
-  integrity sha512-WOUM7ghii5TV2rbhaZkh1youv/vW1/Canev6Yx6BG2W+1S07w8jKZqKkPnbiPpQEDsnJdN8ouDd7OvQEGXDcUw==
+canvas@^2.10.1:
+  version "2.10.1"
+  resolved "https://registry.yarnpkg.com/canvas/-/canvas-2.10.1.tgz#fbfd4b1b3b106c3454481d79d363ebadf8811c08"
+  integrity sha512-29pIjn9uwTUsIgJUNd7GXxKk8sg4iyJwLm1wIilNIqX1mVzXSc2nUij9exW1LqNpis1d2ebMYfMqTWcokZ4pdA==
   dependencies:
     "@mapbox/node-pre-gyp" "^1.0.0"
     nan "^2.15.0"
@@ -8455,10 +8455,10 @@ fraction.js@^4.2.0:
   resolved "https://registry.yarnpkg.com/fraction.js/-/fraction.js-4.2.0.tgz#448e5109a313a3527f5a3ab2119ec4cf0e0e2950"
   integrity sha512-MhLuK+2gUcnZe8ZHlaaINnQLl0xRIGRfcGk2yl8xoQAfHrSsL3rYu6FCmBdkdbhc9EPlwyGHewaRsvwRMJtAlA==
 
-framer-motion@^7.3.5:
-  version "7.3.5"
-  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-7.3.5.tgz#9a3d30658290a473acca268f19c3b65e4c6aeb70"
-  integrity sha512-JrLLVCi59LMI3+ZvSSbxf/Z7SOIdYRZrgdkUvJkzyT2RXu34HtGy26n41jNrcD5K85boqlZhGTbfqnAIfMHRLQ==
+framer-motion@^7.3.6:
+  version "7.3.6"
+  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-7.3.6.tgz#aff993b9b7064c8d13cf0afa118d24e07713570a"
+  integrity sha512-en8mLpDv6IcieZo54acHg56HSLpOSryRLZtMOd1Sj1s7hBbUTWnJsv68CWaHI2ysPKcbH/olGfAhRh4yrJn5tw==
   dependencies:
     "@motionone/dom" "10.13.1"
     framesync "6.1.2"
@@ -10607,10 +10607,15 @@ lazy-ass@^1.6.0:
   resolved "https://registry.yarnpkg.com/lazy-ass/-/lazy-ass-1.6.0.tgz#7999655e8646c17f089fdd187d150d3324d54513"
   integrity sha512-cc8oEVoctTvsFZ/Oje/kGnHbpWHYBe8IAJe4C0QNc3t8uM/0Y8+erSz/7Y1ALuXTEZTMvxXwO6YbX1ey3ujiZw==
 
-leaflet@^1.0.0, leaflet@^1.8.0:
+leaflet@^1.0.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.8.0.tgz#4615db4a22a304e8e692cae9270b983b38a2055e"
   integrity sha512-gwhMjFCQiYs3x/Sf+d49f10ERXaEFCPr+nVTryhAW8DWbMGqJqt9G4XuIaHmFW08zYvhgdzqXGr8AlW8v8dQkA==
+
+leaflet@^1.9.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.9.0.tgz#4f5adf5ad392107935a20a24298e877520691c1e"
+  integrity sha512-lL8433PmoPoTSfPoPMzsQdTKmH36Rn2bQx9/j0bbZ98LimrsMof0P+7AQ0LntwRbjXe601j/IY1P2mwBRnN/1Q==
 
 less-loader@^10.1.0:
   version "10.2.0"
@@ -12170,7 +12175,7 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-pdfjs-dist@^2.14.305:
+pdfjs-dist@^2.16.105:
   version "2.16.105"
   resolved "https://registry.yarnpkg.com/pdfjs-dist/-/pdfjs-dist-2.16.105.tgz#937b9c4a918f03f3979c88209d84c1ce90122c2a"
   integrity sha512-J4dn41spsAwUxCpEoVf6GVoz908IAA3mYiLmNxg8J9kfRXc2jxpbUepcP0ocp0alVNLFthTAM8DZ1RaHh8sU0A==
@@ -13961,10 +13966,10 @@ shallow-copy@0.0.1:
   resolved "https://registry.yarnpkg.com/shallow-copy/-/shallow-copy-0.0.1.tgz#415f42702d73d810330292cc5ee86eae1a11a170"
   integrity sha512-b6i4ZpVuUxB9h5gfCxPiusKYkqTMOjEbBs4wMaFbkfia4yFv92UKZ6Df8WXcKbn08JNL/abvg3FnMAOfakDvUw==
 
-sharp@^0.30.4:
-  version "0.30.7"
-  resolved "https://registry.yarnpkg.com/sharp/-/sharp-0.30.7.tgz#7862bda98804fdd1f0d5659c85e3324b90d94c7c"
-  integrity sha512-G+MY2YW33jgflKPTXXptVO28HvNOo9G3j0MybYAHeEmby+QuD2U98dT6ueht9cv/XDqZspSpIhoSW+BAKJ7Hig==
+sharp@^0.31.0:
+  version "0.31.0"
+  resolved "https://registry.yarnpkg.com/sharp/-/sharp-0.31.0.tgz#ce9b5202a5667486721cf07fd5b52360b1c2275a"
+  integrity sha512-ft96f8WzGxavg0rkLpMw90MTPMUZDyf0tHjPPh8Ob59xt6KzX8EqtotcqZGUm7kwqpX2pmYiyYX2LL0IZ/FDEw==
   dependencies:
     color "^4.2.3"
     detect-libc "^2.0.1"
