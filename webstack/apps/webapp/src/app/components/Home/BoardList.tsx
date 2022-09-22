@@ -7,10 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  Button, Input, InputGroup, InputRightElement,
-  Text, Tooltip, useColorModeValue, useToast
-} from '@chakra-ui/react';
+import { Box, Button, Input, InputGroup, InputRightElement, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
 
 import { MdSearch } from 'react-icons/md';
 
@@ -21,6 +18,7 @@ import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 type BoardListProps = {
   onBoardClick: (board: SBDocument<BoardSchema>) => void;
   selectedRoom: SBDocument<RoomSchema> | null;
+  selectedBoard: SBDocument<BoardSchema> | null;
 };
 
 /**
@@ -77,34 +75,17 @@ export function BoardList(props: BoardListProps) {
   }
 
   return (
-    <>
+    <Box height="100%" width="100%">
       <InputGroup>
-        <Input my="2" value={search} onChange={handleFilterBoards}
-          placeholder="Search Boards..." _placeholder={{ opacity: 1, color: 'gray.600' }}
+        <Input
+          my="2"
+          value={search}
+          onChange={handleFilterBoards}
+          placeholder="Search Boards..."
+          _placeholder={{ opacity: 1, color: 'gray.600' }}
         />
         <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
       </InputGroup>
-
-      {props.selectedRoom
-        ? (filterBoards ? filterBoards : boards)
-          // sort by name
-          .sort((a, b) => a.data.name.localeCompare(b.data.name))
-          // create the cards
-          .map((board) => {
-            return (
-              <BoardCard
-                key={board._id}
-                board={board}
-                userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                onSelect={() => props.onBoardClick(board)}
-                onEdit={() => {
-                  console.log('edit board');
-                }}
-                onDelete={() => deleteBoard(board._id)}
-              />
-            );
-          })
-        : null}
       {props.selectedRoom ? (
         <Tooltip label="Create a board" placement="top-start" openDelay={400}>
           <Button
@@ -112,6 +93,7 @@ export function BoardList(props: BoardListProps) {
             borderColor={borderColor}
             my="2"
             height="60px"
+            width="100%"
             transition="transform .1s"
             _hover={{ transform: 'scale(1.1)' }}
             onClick={() => setNewBoardModal(true)}
@@ -123,9 +105,29 @@ export function BoardList(props: BoardListProps) {
           </Button>
         </Tooltip>
       ) : null}
+      <Box height="100%" display="flex" flexDir="column">
+        {props.selectedRoom
+          ? (filterBoards ? filterBoards : boards)
+              // sort by name
+              .sort((a, b) => a.data.name.localeCompare(b.data.name))
+              // create the cards
+              .map((board) => {
+                return (
+                  <BoardCard
+                    key={board._id}
+                    board={board}
+                    selected={props.selectedBoard?._id == board._id}
+                    userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                    onSelect={() => props.onBoardClick(board)}
+                    onDelete={() => deleteBoard(board._id)}
+                  />
+                );
+              })
+          : null}
+      </Box>
       {props.selectedRoom ? (
         <CreateBoardModal roomId={props.selectedRoom._id} isOpen={newBoardModal} onClose={() => setNewBoardModal(false)}></CreateBoardModal>
       ) : null}
-    </>
+    </Box>
   );
 }

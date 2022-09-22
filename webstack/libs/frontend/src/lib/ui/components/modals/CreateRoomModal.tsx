@@ -8,8 +8,19 @@
 
 import { useEffect, useState, useRef } from 'react';
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  InputGroup, InputLeftElement, Input, useToast, Button, Checkbox
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  InputGroup,
+  InputLeftElement,
+  Input,
+  useToast,
+  Button,
+  Checkbox,
+  ButtonGroup,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -19,7 +30,7 @@ import { useData } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
 import { RoomSchema } from '@sage3/shared/types';
-import { randomSAGEColor } from '@sage3/shared';
+import { SAGEColors } from '@sage3/shared';
 import { useRoomStore } from '../../../stores';
 import { useUser } from '../../../hooks';
 
@@ -34,7 +45,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const toast = useToast();
 
-  const createRoom = useRoomStore(state => state.create);
+  const createRoom = useRoomStore((state) => state.create);
   const { user } = useUser();
 
   const [name, setName] = useState<RoomSchema['name']>('');
@@ -42,9 +53,11 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   const [isListed, setIsListed] = useState(true);
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
+  const [color, setColor] = useState<RoomSchema['color']>('red');
 
-  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
-  const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value)
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
+  const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
+  const handleColorChange = (color: string) => setColor(color);
 
   useEffect(() => {
     // Generate a PIN
@@ -89,7 +102,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         createRoom({
           name: cleanedName,
           description,
-          color: randomSAGEColor().name,
+          color: color,
           ownerId: user._id,
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
@@ -115,9 +128,9 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create Room</ModalHeader>
+        <ModalHeader fontSize="3xl">Create Room</ModalHeader>
         <ModalBody>
-          <InputGroup mt={4}>
+          <InputGroup>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}
@@ -145,6 +158,25 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             />
           </InputGroup>
 
+          <ButtonGroup isAttached size="xs" colorScheme="teal" py="2" mt="2">
+            {/* Colors */}
+            {SAGEColors.map((s3color) => {
+              return (
+                <Button
+                  key={s3color.name}
+                  value={s3color.name}
+                  bgColor={s3color.value}
+                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
+                  _active={{ background: s3color.value, opacity: 0.9 }}
+                  size="md"
+                  onClick={() => handleColorChange(s3color.name)}
+                  border={s3color.name === color ? '3px solid white' : 'none'}
+                  width="43px"
+                />
+              );
+            })}
+          </ButtonGroup>
+
           <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
             Room Listed Publicly
           </Checkbox>
@@ -164,7 +196,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
-
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>
