@@ -208,7 +208,7 @@ function AppComponent(props: App): JSX.Element {
                         {source.name}
                       </Text>
                     </Box>
-                    <img height="100px" src={source.thumbnail} alt="" />
+                    <img height="200px" width="200px" src={source.thumbnail} alt="" />
                   </Box>
                 ))}
               </SimpleGrid>
