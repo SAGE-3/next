@@ -795,8 +795,8 @@ function createWindow() {
     // Get list of the monitors and windows, requesting thumbnails for each.
     // available types are screen and window
     const mediaInfo = {
-      // types: ['screen', 'window'],
-      types: ['screen'],
+      types: ['screen', 'window'],
+      // types: ['screen'],
       thumbnailSize: { width: 200, height: 200 },
     };
 
