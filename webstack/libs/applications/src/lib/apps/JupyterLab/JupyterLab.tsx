@@ -27,12 +27,16 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string | null>(s.jupyterURL);
+  // Tracking the dom-ready and did-load events
+  const [domReady, setDomReady] = useState(false);
+  const [attached, setAttached] = useState(false);
 
   useEffect(() => {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         console.log('Jupyter> token', conf.token);
         const newUrl = `http://${window.location.hostname}/lab?token=${conf.token}`;
+        // const newUrl = `http://${window.location.hostname}/doc/workspaces/blabla/tree/opencv.ipynb?token=${conf.token}&reset`;
         console.log('Jupyter> url', newUrl)
         setUrl(newUrl);
       }
@@ -43,16 +47,24 @@ function AppComponent(props: App): JSX.Element {
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
     // event dom-ready callback
-    const domReadyCallback = (webview: any) => {
-      webview.removeEventListener('dom-ready', domReadyCallback)
+    const domReadyCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('dom-ready', domReadyCallback)
+      setDomReady(true);
     }
+    // event did-attach callback
+    const didAttachCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('did-attach', didAttachCallback);
+      setAttached(true);
+    };
+
 
     if (node) {
       webviewNode.current = node;
       const webview = webviewNode.current;
 
       // Callback when the webview is ready
-      webview.addEventListener('dom-ready', domReadyCallback(webview))
+      webview.addEventListener('dom-ready', domReadyCallback)
+      webview.addEventListener('did-attach', didAttachCallback);
 
       const titleUpdated = (event: any) => {
         // Update the app title
@@ -64,6 +76,11 @@ function AppComponent(props: App): JSX.Element {
       webview.src = url;
     }
   }, [url]);
+
+  useEffect(() => {
+    if (domReady === false || attached === false) return;
+    console.log('Jupyter> domReady', domReady, 'attached', attached);
+  }, [domReady, attached]);
 
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
