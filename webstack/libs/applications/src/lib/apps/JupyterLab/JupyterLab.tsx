@@ -7,7 +7,9 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Box, Button, Center } from '@chakra-ui/react';
+import { useLocation } from 'react-router-dom';
+import { Box, Center } from '@chakra-ui/react';
+
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -31,14 +33,36 @@ function AppComponent(props: App): JSX.Element {
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
 
+  // Room and board
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+
   useEffect(() => {
     GetConfiguration().then((conf) => {
       if (conf.token) {
-        console.log('Jupyter> token', conf.token);
-        const newUrl = `http://${window.location.hostname}/lab?token=${conf.token}`;
-        // const newUrl = `http://${window.location.hostname}/doc/workspaces/blabla/tree/opencv.ipynb?token=${conf.token}&reset`;
-        console.log('Jupyter> url', newUrl)
-        setUrl(newUrl);
+        // Create a new notebook
+        const base = `http://${window.location.hostname}`;
+        const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
+        const payload = { type: 'notebook', path: '/', format: 'text' };
+        // Talk to the jupyter server API
+        fetch(j_url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + conf.token,
+          },
+          body: JSON.stringify(payload)
+        }).then((response) => response.json())
+          .then((res) => {
+            console.log('Jupyter> notebook created', res);
+            //  Open the notebook in a separate workspace
+            const newUrl = `http://${window.location.hostname}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
+            setUrl(newUrl);
+          })
+          .catch((err) => {
+            console.log('Jupyter> error', err);
+          });
+
       }
     });
   }, []);
