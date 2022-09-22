@@ -190,7 +190,7 @@ function AppComponent(props: App): JSX.Element {
             <ModalCloseButton />
             <ModalBody maxHeight="60vh" overflowY="scroll">
               <SimpleGrid columns={3} spacing={10}>
-                {electronSources.map((source) => (
+                {electronSources.map((source, idx: number) => (
                   <Box
                     display="flex"
                     flexDir="column"
@@ -200,6 +200,7 @@ function AppComponent(props: App): JSX.Element {
                     height="120px"
                     width="100%"
                     p="1"
+                    key={idx}
                     onClick={() => selectElectronSource(source)}
                   >
                     <Box width="100%">
