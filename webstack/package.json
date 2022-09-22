@@ -50,7 +50,7 @@
     "exiftool-vendored": "^16",
     "express": "4.17.2",
     "express-session": "^1.17.2",
-    "framer-motion": "^7.3.5",
+    "framer-motion": "^7.3.6",
     "glob": "^7.2.0",
     "helmet": "^5.1.0",
     "hjson": "^3.2.2",
