@@ -798,12 +798,13 @@ function createWindow() {
     // Get list of the monitors and windows, requesting thumbnails for each.
     // available types are screen and window
     const mediaInfo = {
-      types: ['screen', 'window'],
+      // types: ['screen', 'window'],
+      types: ['screen'],
       thumbnailSize: { width: 200, height: 200 },
     };
 
     // Get the sources and return the result to the renderer
-    desktopCapturer.getSources(mediaInfo).then(async (sources) => {
+    desktopCapturer.getSources(mediaInfo).then((sources) => {
       const values = [];
       for (let s in sources) {
         const source = sources[s];
