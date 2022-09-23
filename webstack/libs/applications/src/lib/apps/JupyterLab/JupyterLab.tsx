@@ -59,7 +59,6 @@ function AppComponent(props: App): JSX.Element {
             // Create a new kernel
             const k_url = base + '/api/kernels';
             const kpayload = { name: 'python3', path: '/' };
-
             fetch(k_url, {
               method: 'POST',
               headers: {
@@ -73,10 +72,11 @@ function AppComponent(props: App): JSX.Element {
                 const kernel = res;
                 // Create a new session
                 const s_url = base + '/api/sessions'
+                const sid = uuidv1();
                 const spayload = {
-                  id: uuidv1().replace(/-/g, ''),
+                  id: sid.replace(/-/g, ''),
                   kernel: kernel,
-                  name: `${boardId}.ipynb`,
+                  name: boardId,
                   path: `boards/${boardId}.ipynb`,
                   notebook: {
                     name: `${boardId}.ipynb`,
