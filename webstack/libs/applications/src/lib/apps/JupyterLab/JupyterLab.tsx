@@ -9,6 +9,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Center } from '@chakra-ui/react';
+import { v1 as uuidv1 } from 'uuid';
 
 import { App } from '../../schema';
 
@@ -55,9 +56,50 @@ function AppComponent(props: App): JSX.Element {
         }).then((response) => response.json())
           .then((res) => {
             console.log('Jupyter> notebook created', res);
-            //  Open the notebook in a separate workspace
-            const newUrl = `http://${window.location.hostname}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
-            setUrl(newUrl);
+            // Create a new kernel
+            const k_url = base + '/api/kernels';
+            const kpayload = { name: 'python3', path: '/' };
+
+            fetch(k_url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + conf.token,
+              },
+              body: JSON.stringify(kpayload)
+            }).then((response) => response.json())
+              .then((res) => {
+                console.log('Jupyter> kernel created', res);
+                const kernel = res;
+                // Create a new session
+                const s_url = base + '/api/sessions'
+                const spayload = {
+                  id: uuidv1().replace(/-/g, ''),
+                  kernel: kernel,
+                  name: `${boardId}.ipynb`,
+                  path: `boards/${boardId}.ipynb`,
+                  notebook: {
+                    name: `${boardId}.ipynb`,
+                    path: `boards/${boardId}.ipynb`,
+                  },
+                  type: 'notebook'
+                }
+                fetch(s_url, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Token ' + conf.token,
+                  },
+                  body: JSON.stringify(spayload)
+                }).then((response) => response.json())
+                  .then((res) => {
+                    console.log('Juypyter> session created', res);
+                    //  Open the notebook in a separate workspace
+                    const newUrl = `http://${window.location.hostname}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
+                    setUrl(newUrl);
+                  });
+              });
+
           })
           .catch((err) => {
             console.log('Jupyter> error', err);
