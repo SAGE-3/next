@@ -14,9 +14,6 @@ import { strict as assert } from 'assert';
 // SAGEBase queue
 import { SBQueue } from '../connectors';
 
-// Image processing tool
-import * as sharp from 'sharp';
-
 // load legacy pdf build
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
@@ -26,6 +23,9 @@ const CMAP_PACKED = true;
 import { createCanvas } from 'canvas';
 import { getStaticAssetUrl } from '@sage3/backend';
 import { ExtraPDFType } from '@sage3/shared/types';
+
+// Image processing tool
+import * as sharp from 'sharp';
 
 ////////////////////////////////////////////////////////////////////////////////
 function NodeCanvasFactory() {
