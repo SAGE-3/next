@@ -6,6 +6,7 @@
  *
  */
 import { useRef, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box, Button, HStack, useColorModeValue, Tooltip,
   IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
@@ -23,7 +24,7 @@ import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 
-import { useAppStore, useUser } from '@sage3/frontend';
+import { GetConfiguration, useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
@@ -33,10 +34,50 @@ import { downloadFile } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-
+/**
+ * CodeCell component
+ * @param props application  props
+ * @returns JSX.Element
+ */
 const AppComponent = (props: App): JSX.Element => {
   const updateState = useAppStore((state) => state.updateState);
   const s = props.data.state as AppState;
+
+  // Room and board location
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+
+  // Get information  about the current Jupyter kernel
+  useEffect(() => {
+    GetConfiguration().then((conf) => {
+      if (conf.token) {
+        // Get list of sessions
+        const base = `http://${window.location.hostname}`;
+        const j_url = base + '/api/sessions';
+        // Talk to the jupyter server API
+        fetch(j_url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + conf.token,
+          }
+        }).then((response) => response.json())
+          .then((res) => {
+            console.log('Jupyter> Got sessions', res);
+            for (const s of res) {
+              if (s.name === boardId) {
+                console.log('Jupyter> Found python3 kernel', s.kernel.id);
+                updateState(props._id, { kernel: s.kernel.id });
+              }
+            }
+          })
+          .catch((err) => {
+            console.log('Jupyter> error', err);
+          });
+
+      }
+    });
+  }, []);
 
   return (
     <AppWindow app={props}>
