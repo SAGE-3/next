@@ -40,6 +40,7 @@ import dateFormat from 'date-fns/format';
  * @returns JSX.Element
  */
 const AppComponent = (props: App): JSX.Element => {
+  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const s = props.data.state as AppState;
 
@@ -63,11 +64,12 @@ const AppComponent = (props: App): JSX.Element => {
           }
         }).then((response) => response.json())
           .then((res) => {
-            console.log('Jupyter> Got sessions', res);
+            // console.log('Jupyter> Got sessions', res);
             for (const s of res) {
               if (s.name === boardId) {
-                console.log('Jupyter> Found python3 kernel', s.kernel.id);
+                // console.log('Jupyter> Found python3 kernel', s.kernel.id);
                 updateState(props._id, { kernel: s.kernel.id });
+                update(props._id, { description: `CodeCell> ${s.kernel.id}` });
               }
             }
           })
