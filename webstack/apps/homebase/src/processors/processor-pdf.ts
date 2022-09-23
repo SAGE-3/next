@@ -20,7 +20,7 @@ const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
 const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
 const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
-import { createCanvas } from 'canvas';
+import { Canvas } from 'skia-canvas';
 import { getStaticAssetUrl } from '@sage3/backend';
 import { ExtraPDFType } from '@sage3/shared/types';
 
@@ -35,12 +35,12 @@ function NodeCanvasFactory() {
 NodeCanvasFactory.prototype = {
   create: function NodeCanvasFactory_create(width: number, height: number) {
     assert(width > 0 && height > 0, 'Invalid canvas size');
-    const canvas = createCanvas(width, height);
+    const canvas = new Canvas(width, height);
     const context = canvas.getContext('2d');
 
     // Rendering quality settings
-    context.patternQuality = 'fast';
-    context.quality = 'fast';
+    // context.patternQuality = 'fast';
+    // context.quality = 'fast';
 
     return { canvas, context };
   },
@@ -188,11 +188,11 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
             canvasFactory,
           };
 
-          const renderResult = await page.render(renderContext).promise.then(() => {
+          const renderResult = await page.render(renderContext).promise.then(async () => {
             // Read the Image and pipe it into Sharp
 
             // Get the buffer directly in PNG, low compression for speed
-            const cdata = canvasAndContext.canvas.toBuffer('image/png', {
+            const cdata = await canvasAndContext.canvas.toBuffer('png', {
               compressionLevel: 1,
               filters: canvasAndContext.canvas.PNG_FILTER_NONE,
             });
