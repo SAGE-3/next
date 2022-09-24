@@ -41,6 +41,8 @@ NodeCanvasFactory.prototype = {
     // Rendering quality settings
     // context.patternQuality = 'fast';
     // context.quality = 'fast';
+    context.imageSmoothingEnabled = false;
+    context.imageSmoothingQuality = 'low';
 
     return { canvas, context };
   },
@@ -147,14 +149,14 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
     return pdfTask.promise.then((pdf: any) => {
       console.log('PDF> num pages', pdf.numPages);
       const arr = Array.from({ length: pdf.numPages }).map((_n, i) => {
-        console.log('PDF> Page', i);
+        // console.log('PDF> Page', i);
         return pdf.getPage(i + 1).then(async (page: any) => {
-          console.log('PDF> got page', i + 1);
+          // console.log('PDF> got page', i + 1);
 
           // Instead of using a scaling factor, we try to get a given dimension
           // on the long end (in pixels)
           // Because different PDFs have different dimension defined (viewbox)
-          const desired = 2400;
+          const desired = 3200;
           const initialviewport = page.getViewport({ scale: 1 });
           // Calculate the scale
           let scale = Math.round(desired / initialviewport.width);
@@ -174,12 +176,12 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
 
           const maxWidth = Math.floor(viewport.width);
           // Maximum resolution
-          const options: { width: number; quality: number }[] = [{ width: maxWidth, quality: 75 }];
+          const options: { width: number; quality: number }[] = [{ width: maxWidth, quality: 70 }];
           // Calculating downscale sizes down to 500pixel
-          let curW = Math.floor(maxWidth / 1.5);
+          let curW = Math.floor(maxWidth / 2);
           while (curW > 500) {
-            options.push({ width: curW, quality: 85 });
-            curW = Math.floor(curW / 1.75);
+            options.push({ width: curW, quality: 75 });
+            curW = Math.floor(curW / 2);
           }
 
           const renderContext = {
@@ -192,19 +194,24 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
             // Read the Image and pipe it into Sharp
 
             // Get the buffer directly in PNG, low compression for speed
-            const cdata = await canvasAndContext.canvas.toBuffer('png', {
-              compressionLevel: 1,
-              filters: canvasAndContext.canvas.PNG_FILTER_NONE,
-            });
-            const sharpStream = sharp(cdata, { failOnError: false });
+            // const cdata = await canvasAndContext.canvas.toBuffer('png', {
+            //   compressionLevel: 1,
+            //   filters: canvasAndContext.canvas.PNG_FILTER_NONE,
+            // });
+            // const sharpStream = sharp(cdata, { failOnError: false });
 
+            // Get RGBA buffer
+            const cdata = await canvasAndContext.context.getImageData(0, 0, viewport.width, viewport.height).data;
+            const sharpStream = sharp(cdata, { raw: { width: viewport.width, height: viewport.height, channels: 4 }, failOnError: false });
+
+            // Generate the WebP in multiple resolutions
             return Promise.all<sharp.OutputInfo>([
               // resize multiple versions based on the option set
               ...options.map(({ width, quality }) =>
                 sharpStream
                   .clone()
-                  .resize({ width })
-                  .webp({ quality })
+                  .resize({ width, kernel: 'lanczos2' })
+                  .webp({ quality, effort: 0 })
                   .toFile(path.join(directory, `${filenameWithoutExt}-${i}-${width}.webp`))
               ),
             ]);
