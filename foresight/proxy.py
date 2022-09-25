@@ -37,16 +37,19 @@ from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
 
+import logging
+logging.getLogger().setLevel(logging.INFO)
+
 
 import builtins
 
 # TODO: (should we) replace this by logging instead.
  # Does logging still show up in the code cell?
 
-def print(*args, **kwargs):
-    builtins.print("<console-print>", end="")
-    builtins.print(*args, **kwargs, end="")
-    builtins.print("</console-print>")
+# def print(*args, **kwargs):
+#     builtins.print("<console-print>", end="")
+#     builtins.print(*args, **kwargs, end="")
+#     builtins.print("</console-print>")
 
 
 # import logging
@@ -68,7 +71,9 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
+    logging.info('Watch out!')
+    logging.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
+    # print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -118,7 +123,8 @@ class SAGEProxy():
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            print(f"Creating {app_info}")
+            logging.info(f"Creating {app_info}")
+            # print(f"Creating {app_info}")
             self.__handle_create("APPS", app_info)
 
 
@@ -150,13 +156,15 @@ class SAGEProxy():
             msg = self.__message_queue.get()
             # I am watching this message for change?
 
-            print(f"getting ready to process: {msg}")
+            #print(f"Getting ready to process: {msg}")
+            logging.info(f"Getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             updated_fields = []
 
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
-                print(f"App updated and updated fields are: {updated_fields}")
+                # print(f"App updated and updated fields are: {updated_fields}")
+                logging.info(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
                     # handle callback
@@ -226,7 +234,9 @@ class SAGEProxy():
                     _func = getattr(sb, func_name)
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
-                    print(f"About to execute function --{func_name}-- with params --{_params}--")
+                    # print(f"About to execute function --{func_name}-- with params --{_params}--")
+                    logging.info(f"About to execute function --{func_name}-- with params --{_params}--")
+
                     _func(**_params)
 
 
@@ -244,24 +254,18 @@ class SAGEProxy():
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
 
         if src_app not in  self.callbacks:
-            self.callbacks[src_app] = []
+            self.callbacks[src_app] = {}
 
-        self.callbacks[src_app].append(LinkedInfo(board_id=board_id,
+        self.callbacks[src_app] = { f"{src_app}:{dest_app}:{src_field}:{dest_field}":
+                                        LinkedInfo(board_id=board_id,
                                                   src_app=src_app,
                                                   dest_app=dest_app,
                                                   src_field=src_field,
                                                   dest_field=dest_field,
-                                                  callback=callback)
-                                       )
+                                                  callback=callback)}
 
     def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
-
-        remove = None
-        for i, linked_info in enumerate(self.callbacks[src_app]):
-            if linked_info.board_id == board_id and \
-                    linked_info.src_app == src_app and linked_info.dest_app == dest_app and linked_info.src_field == src_field and linked_info.dest_field == dest_field:
-                remove = i
-        self.callbacks[src_app].pop(i)
+        del(self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
 
 
