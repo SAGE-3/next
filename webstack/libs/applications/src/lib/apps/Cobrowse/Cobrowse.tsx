@@ -8,7 +8,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, Button, Center } from '@chakra-ui/react';
+import { Box, Button, Center, Tooltip, ButtonGroup } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -41,6 +41,9 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const [mine, setMine] = useState(false);
   const [connected, setConnected] = useState(false);
+  // Tracking the dom-ready and did-load events
+  const [domReady, setDomReady] = useState(false);
+  const [attached, setAttached] = useState(false);
 
   // Websocket to communicate with the server
   const rtcSock = useRef<WebSocket>();
@@ -141,16 +144,23 @@ function AppComponent(props: App): JSX.Element {
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
     // event dom-ready callback
-    const domReadyCallback = (webview: any) => {
-      webview.removeEventListener('dom-ready', domReadyCallback)
+    const domReadyCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('dom-ready', domReadyCallback)
+      setDomReady(true);
     }
+    // event did-attach callback
+    const didAttachCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('did-attach', didAttachCallback);
+      setAttached(true);
+    };
 
     if (node) {
       webviewNode.current = node;
       const webview = webviewNode.current;
 
       // Callback when the webview is ready
-      webview.addEventListener('dom-ready', domReadyCallback(webview))
+      webview.addEventListener('dom-ready', domReadyCallback)
+      webview.addEventListener('did-attach', didAttachCallback);
 
       const titleUpdated = (event: any) => {
         // Update the app title
@@ -172,7 +182,6 @@ function AppComponent(props: App): JSX.Element {
     height: props.data.size.height + 'px',
     objectFit: 'contain',
   };
-
 
   return (
     <AppWindow app={props}>
@@ -235,9 +244,13 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   return (
-    <>
-      <Button colorScheme="green" disabled={!mine} onClick={startStream}>Stream</Button>
-    </>
+    <ButtonGroup isAttached size="xs">
+      <Tooltip placement="top-start" hasArrow={true} label={'Start Streaming Content'} openDelay={400}>
+        <Button colorScheme="green" disabled={!mine} onClick={startStream}>
+          Stream
+        </Button>
+      </Tooltip>
+    </ButtonGroup>
   );
 }
 

@@ -705,39 +705,36 @@ function createWindow() {
 
     // webPreferences.contextIsolation = true;
     // webPreferences.nodeIntegration = true;
-
     // params.nodeIntegration = true;
 
     const sender = event.sender;
-    // console.log('Sendder:', sender);
-    // sender.on('streamview', (event, arg) => {
-    //   console.log('Streamview:', evt);
-    // });
     sender.on('ipc-message', function (evt, channel, args) {
       console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
-      console.log('Webview> Message', channel, args);
-      const viewContent = electron.webContents.fromId(args.id);
-      viewContent.beginFrameSubscription(true, (image, dirty) => {
-        let dataenc;
-        let neww, newh;
-        const devicePixelRatio = 2;
-        const quality = 50;
-        if (devicePixelRatio > 1) {
-          neww = dirty.width / devicePixelRatio;
-          newh = dirty.height / devicePixelRatio;
-          const resizedimage = image.resize({ width: neww, height: newh });
-          dataenc = resizedimage.toJPEG(quality);
-        } else {
-          dataenc = image.toJPEG(quality);
-          neww = dirty.width;
-          newh = dirty.height;
-        }
-        evt.reply('paint', {
-          buf: dataenc.toString('base64'),
-          dirty: { ...dirty, width: neww, height: newh },
+      console.log('Webview>    message', channel, args);
+      // Message for the webview pixel streaming
+      if (channel === 'streamview') {
+        const viewContent = electron.webContents.fromId(args.id);
+        viewContent.beginFrameSubscription(true, (image, dirty) => {
+          let dataenc;
+          let neww, newh;
+          const devicePixelRatio = 2;
+          const quality = 50;
+          if (devicePixelRatio > 1) {
+            neww = dirty.width / devicePixelRatio;
+            newh = dirty.height / devicePixelRatio;
+            const resizedimage = image.resize({ width: neww, height: newh });
+            dataenc = resizedimage.toJPEG(quality);
+          } else {
+            dataenc = image.toJPEG(quality);
+            neww = dirty.width;
+            newh = dirty.height;
+          }
+          evt.reply('paint', {
+            buf: dataenc.toString('base64'),
+            dirty: { ...dirty, width: neww, height: newh },
+          });
         });
-        // console.log('Paint>', neww, newh, dataenc.length);
-      });
+      }
     });
 
     // Override the UserAgent variable: make websites behave better
@@ -799,11 +796,12 @@ function createWindow() {
     // available types are screen and window
     const mediaInfo = {
       types: ['screen', 'window'],
+      // types: ['screen'],
       thumbnailSize: { width: 200, height: 200 },
     };
 
     // Get the sources and return the result to the renderer
-    desktopCapturer.getSources(mediaInfo).then(async (sources) => {
+    desktopCapturer.getSources(mediaInfo).then((sources) => {
       const values = [];
       for (let s in sources) {
         const source = sources[s];

@@ -7,7 +7,10 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Box, Button, Center } from '@chakra-ui/react';
+import { useLocation } from 'react-router-dom';
+import { Box, Center } from '@chakra-ui/react';
+import { v1 as uuidv1 } from 'uuid';
+
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -27,14 +30,81 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string | null>(s.jupyterURL);
+  // Tracking the dom-ready and did-load events
+  const [domReady, setDomReady] = useState(false);
+  const [attached, setAttached] = useState(false);
+
+  // Room and board
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
   useEffect(() => {
     GetConfiguration().then((conf) => {
       if (conf.token) {
-        console.log('Jupyter> token', conf.token);
-        const newUrl = `http://${window.location.hostname}/lab?token=${conf.token}`;
-        console.log('Jupyter> url', newUrl)
-        setUrl(newUrl);
+        // Create a new notebook
+        const base = `http://${window.location.hostname}`;
+        const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
+        const payload = { type: 'notebook', path: '/', format: 'text' };
+        // Talk to the jupyter server API
+        fetch(j_url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + conf.token,
+          },
+          body: JSON.stringify(payload)
+        }).then((response) => response.json())
+          .then((res) => {
+            console.log('Jupyter> notebook created', res);
+            // Create a new kernel
+            const k_url = base + '/api/kernels';
+            const kpayload = { name: 'python3', path: '/' };
+            fetch(k_url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + conf.token,
+              },
+              body: JSON.stringify(kpayload)
+            }).then((response) => response.json())
+              .then((res) => {
+                console.log('Jupyter> kernel created', res);
+                const kernel = res;
+                // Create a new session
+                const s_url = base + '/api/sessions'
+                const sid = uuidv1();
+                const spayload = {
+                  id: sid.replace(/-/g, ''),
+                  kernel: kernel,
+                  name: boardId,
+                  path: `boards/${boardId}.ipynb`,
+                  notebook: {
+                    name: `${boardId}.ipynb`,
+                    path: `boards/${boardId}.ipynb`,
+                  },
+                  type: 'notebook'
+                }
+                fetch(s_url, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Token ' + conf.token,
+                  },
+                  body: JSON.stringify(spayload)
+                }).then((response) => response.json())
+                  .then((res) => {
+                    console.log('Juypyter> session created', res);
+                    //  Open the notebook in a separate workspace
+                    const newUrl = `http://${window.location.hostname}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
+                    setUrl(newUrl);
+                  });
+              });
+
+          })
+          .catch((err) => {
+            console.log('Jupyter> error', err);
+          });
+
       }
     });
   }, []);
@@ -43,16 +113,24 @@ function AppComponent(props: App): JSX.Element {
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
     // event dom-ready callback
-    const domReadyCallback = (webview: any) => {
-      webview.removeEventListener('dom-ready', domReadyCallback)
+    const domReadyCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('dom-ready', domReadyCallback)
+      setDomReady(true);
     }
+    // event did-attach callback
+    const didAttachCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('did-attach', didAttachCallback);
+      setAttached(true);
+    };
+
 
     if (node) {
       webviewNode.current = node;
       const webview = webviewNode.current;
 
       // Callback when the webview is ready
-      webview.addEventListener('dom-ready', domReadyCallback(webview))
+      webview.addEventListener('dom-ready', domReadyCallback)
+      webview.addEventListener('did-attach', didAttachCallback);
 
       const titleUpdated = (event: any) => {
         // Update the app title
@@ -64,6 +142,11 @@ function AppComponent(props: App): JSX.Element {
       webview.src = url;
     }
   }, [url]);
+
+  useEffect(() => {
+    if (domReady === false || attached === false) return;
+    console.log('Jupyter> domReady', domReady, 'attached', attached);
+  }, [domReady, attached]);
 
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
