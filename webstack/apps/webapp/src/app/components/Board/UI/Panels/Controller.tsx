@@ -88,6 +88,7 @@ export function Controller(props: ControllerProps) {
       stuck={stuck}
       setStuck={setStuck}
       titleDblClick={handleCopyId}
+      zIndex={100}
     >
       <HStack w="100%">
         <Tooltip label="Home" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>

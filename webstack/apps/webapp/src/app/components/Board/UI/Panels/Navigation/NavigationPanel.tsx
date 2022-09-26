@@ -111,6 +111,7 @@ export function NavigationPanel(props: NavProps) {
       setShow={setShow}
       stuck={stuck}
       setStuck={setStuck}
+      zIndex={9}
     >
       <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">

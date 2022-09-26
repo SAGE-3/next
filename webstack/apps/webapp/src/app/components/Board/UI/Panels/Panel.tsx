@@ -94,6 +94,7 @@ export type PanelProps = {
   setOpened: (opened: boolean) => void;
   height?: number;
   width?: number;
+  zIndex?: number;
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
   stuck: StuckTypes;
@@ -115,6 +116,7 @@ export function Panel(props: PanelProps) {
   // Track the size of the panel
   const [w, setW] = props.width ? useState(props.width) : useState(200);
   const [hover, setHover] = useState(false);
+  const [zIndex, setZIndex] = useState(props.zIndex ?? 10);
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
   const [winHeight, setHeight] = useState(window.innerHeight);
@@ -206,8 +208,15 @@ export function Panel(props: PanelProps) {
   const borderRight =
     props.stuck == StuckTypes.TopRight || props.stuck == StuckTypes.Right || props.stuck == StuckTypes.BottomRight ? border : '0px';
 
+  // Handle a drag start of the panel
+  const handleDragStart = (event: any, data: DraggableData) => {
+    setZIndex(200);
+    setHover(true);
+  };
+
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
+    setZIndex(props.zIndex ?? 10);
     setHover(false);
     props.setPosition({ x: data.x, y: data.y });
     if (ref.current) {
@@ -264,11 +273,11 @@ export function Panel(props: PanelProps) {
         bounds="window"
         size={{ width: w, height: ref.current ? ref.current['clientHeight'] + 5 : '100px' }}
         // onDoubleClick={handleDblClick}
-        onDragStart={() => setHover(true)}
+        onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
         dragHandleClassName="header" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 0.2s' }}
+        style={{ transition: hover ? 'none' : 'all 0.2s', zIndex: zIndex }}
       >
         <Box
           display="flex"
