@@ -9,6 +9,11 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+  python:
+    image: "python:3.9-bullseye"
+    volumes:
+      - ./configurations/python:/code
+    command: sleep infinity
   jupyter:
     image: "jupyter/base-notebook"
     volumes:
