@@ -9,11 +9,13 @@
 import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
 import {Box, Button, IconButton, Select} from '@chakra-ui/react';
 import {App} from '../../schema';
+import './styles.css';
 
 import {state as AppState} from './index';
 import {AppWindow} from '../../components';
 import {useEffect, useState} from "react";
 import {BsFillTriangleFill} from "react-icons/bs";
+import {FcCancel, FcOk} from "react-icons/fc"
 import {generators} from "openid-client";
 import {useParams} from "react-router";
 import {useLocation} from "react-router-dom";
@@ -54,20 +56,21 @@ function AppComponent(props: App): JSX.Element {
   // const [hostedAppsArr, setHostedAppsArr] = useState<App | never | any>([])
 
   useEffect(() => {
-  //  TODO Track number of boardApps
+    //  TODO Track number of boardApps
     setBoardAppsQty(boardApps.length)
   }, [boardApps.length])
 
   //TODO Ask Ryan if ok to use delete operator, IE support?
   //TODO Remove hostedApps when they are deleted from board, removed from boardApps
+  //TODO lockToBackground doesn't always work. When client is opened, then ai pane, then ai pane remains on top. Need a way to reset zIndex of just ai pane
   useEffect(() => {
     // handleOverlap()
     console.log('hosted useEffect')
 
     for (const app of boardApps) {
       const client = {
-          [app._createdAt]: app._id
-        }
+        [app._createdAt]: app._id
+      }
 
       if (
         app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
@@ -95,11 +98,29 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     }
-    console.log('end of hosted useEffect')
-    console.log('length of hostedappsarr ' + Object.keys(s.hostedApps).length)
 
-    // }
+    console.log('end of hosted useEffect')
+
   }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.position.z, selApp?.data.size.height, selApp?.data.size.width])
+
+  //TODO Change circle color when hosting apps
+  useEffect(() => {
+    console.log('circle useEffect')
+    const circles = document.querySelectorAll("redCircle");
+    // const circles = document.getElementsByClassName("redCircle")
+
+    if (Object.keys(s.hostedApps).length > 0) {
+      for (let i = 0; i < circles.length; i++) {
+        console.log('something here')
+        console.log("nnnnn " + typeof circles[i])
+      }
+    } else {
+      for (let i = 0; i < circles.length; i++) {
+        console.log("no circles")
+      }
+    }
+
+  }, [Object.keys(s.hostedApps).length])
 
   useEffect(() => {
     //    TODO Add indicator that apps are on the pane
@@ -114,20 +135,30 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
-        <p>
-          <>
+        <Box
+          position='absolute'
+          right='50px'
+          top='50px'
+        >
+          {/*<h1>*/}
+          {/*  CIRCLE*/}
+          {/*</h1>*/}
+          <div className="redCircle"></div>
+        </Box>
 
-            z index {zindex}<br/>
-            selectedApp {selectedAppId}<br/>
-            length of hostedappsarr {Object.keys(s.hostedApps).length}
-            {/*Board assests dropdown*/}
-            {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
-            {/*  {roomAssets.map(el =>*/}
-            {/*    <option value={el._id}>{el.data.originalfilename}</option>)*/}
-            {/*  }*/}
-            {/*</Select>*/}
-          </>
-        </p>
+        <>
+
+          z index {zindex}<br/>
+          selectedApp {selectedAppId}<br/>
+          length of hostedappsarr {Object.keys(s.hostedApps).length}<br/>
+          hostedapps: {Object.values(s.hostedApps)}
+          {/*Board assests dropdown*/}
+          {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
+          {/*  {roomAssets.map(el =>*/}
+          {/*    <option value={el._id}>{el.data.originalfilename}</option>)*/}
+          {/*  }*/}
+          {/*</Select>*/}
+        </>
       </Box>
     </AppWindow>
   );
