@@ -27,7 +27,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
 
   return (
     <Box display="flex" flexDirection="row" alignItems="baseline">
-      <AvatarGroup max={7} size="sm">
+      <AvatarGroup max={6} size="sm">
         {presences.map((presence) => {
           const user = users.find((el) => el._id === presence._id);
           if (!user) return null;
