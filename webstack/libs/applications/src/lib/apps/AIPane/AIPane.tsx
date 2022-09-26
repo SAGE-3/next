@@ -7,7 +7,7 @@
  */
 
 import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
-import {Box, Button, IconButton, Select} from '@chakra-ui/react';
+import {Box, Button, Icon, IconButton, Select} from '@chakra-ui/react';
 import {App} from '../../schema';
 import './styles.css';
 
@@ -37,7 +37,7 @@ function AppComponent(props: App): JSX.Element {
   const assets = useAssetStore(state => state.assets);
   const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
 
-  const [boardAppsQty, setBoardAppsQty] = useState(boardApps.length)
+  // const [boardAppsQty, setBoardAppsQty] = useState(boardApps.length)
 
   // Way to manage a collection of App objects in local state
   // const apps = useAppStore(state => state.apps);
@@ -55,16 +55,15 @@ function AppComponent(props: App): JSX.Element {
 
   // const [hostedAppsArr, setHostedAppsArr] = useState<App | never | any>([])
 
-  useEffect(() => {
-    //  TODO Track number of boardApps
-    setBoardAppsQty(boardApps.length)
-  }, [boardApps.length])
+  // useEffect(() => {
+  //   //  TODO Track number of boardApps
+  //   setBoardAppsQty(boardApps.length)
+  // }, [boardApps.length])
 
   //TODO Ask Ryan if ok to use delete operator, IE support?
   //TODO Remove hostedApps when they are deleted from board, removed from boardApps
   //TODO lockToBackground doesn't always work. When client is opened, then ai pane, then ai pane remains on top. Need a way to reset zIndex of just ai pane
   useEffect(() => {
-    // handleOverlap()
     console.log('hosted useEffect')
 
     for (const app of boardApps) {
@@ -103,30 +102,6 @@ function AppComponent(props: App): JSX.Element {
 
   }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.position.z, selApp?.data.size.height, selApp?.data.size.width])
 
-  //TODO Change circle color when hosting apps
-  useEffect(() => {
-    console.log('circle useEffect')
-    const circles = document.querySelectorAll("redCircle");
-    // const circles = document.getElementsByClassName("redCircle")
-
-    if (Object.keys(s.hostedApps).length > 0) {
-      for (let i = 0; i < circles.length; i++) {
-        console.log('something here')
-        console.log("nnnnn " + typeof circles[i])
-      }
-    } else {
-      for (let i = 0; i < circles.length; i++) {
-        console.log("no circles")
-      }
-    }
-
-  }, [Object.keys(s.hostedApps).length])
-
-  useEffect(() => {
-    //    TODO Add indicator that apps are on the pane
-    //    TODO Check what apps are currently client apps and what has been removed
-  }, [selApp])
-
   const handleFileSelected = () => {
     // TODO
   }
@@ -140,10 +115,7 @@ function AppComponent(props: App): JSX.Element {
           right='50px'
           top='50px'
         >
-          {/*<h1>*/}
-          {/*  CIRCLE*/}
-          {/*</h1>*/}
-          <div className="redCircle"></div>
+          {Object.keys(s.hostedApps).length > 0 ? (<Icon as={FcOk}/>) : (<Icon as={FcCancel}/>)}
         </Box>
 
         <>
