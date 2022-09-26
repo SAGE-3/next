@@ -6,7 +6,7 @@
  *
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   Modal,
@@ -21,6 +21,7 @@ import {
   useToast,
   Button,
   Checkbox,
+  ButtonGroup,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -29,8 +30,8 @@ import { MdPerson, MdLock } from 'react-icons/md';
 import { useData } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
-import { RoomSchema } from '@sage3/shared/types';
-import { randomSAGEColor } from '@sage3/shared';
+import { BoardSchema } from '@sage3/shared/types';
+import { SAGEColors } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore } from '../../../stores';
 
@@ -50,14 +51,15 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const { user } = useUser();
 
-  const [name, setName] = useState<RoomSchema['name']>('');
-  const [description, setDescription] = useState<RoomSchema['description']>('');
-  const [isListed, setIsListed] = useState(true);
+  const [name, setName] = useState<BoardSchema['name']>('');
+  const [description, setDescription] = useState<BoardSchema['description']>('');
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
+  const [color, setColor] = useState<BoardSchema['color']>('red');
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
+  const handleColorChange = (color: string) => setColor(color);
 
   useEffect(() => {
     // Generate a PIN
@@ -76,12 +78,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-
-  const setRef = useCallback((_node: HTMLInputElement) => {
-    if (initialRef.current) {
-      initialRef.current.select();
-    }
-  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -112,8 +108,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           description,
           roomId: props.roomId,
           ownerId: user._id,
-          color: randomSAGEColor().name,
-          isListed: isListed,
+          color: color,
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
         });
@@ -123,9 +118,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
 
   // To enable/disable
-  const checkListed = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsListed(e.target.checked);
-  };
   const checkProtected = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProtected(e.target.checked);
   };
@@ -137,9 +129,9 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create a New Board</ModalHeader>
+        <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>
         <ModalBody>
-          <InputGroup mt={4}>
+          <InputGroup>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}
@@ -167,17 +159,33 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
-            Board Listed Publicly
-          </Checkbox>
+          <ButtonGroup isAttached size="xs" colorScheme="teal" py="2" mt="2">
+            {/* Colors */}
+            {SAGEColors.map((s3color) => {
+              return (
+                <Button
+                  key={s3color.name}
+                  value={s3color.name}
+                  bgColor={s3color.value}
+                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
+                  _active={{ background: s3color.value, opacity: 0.9 }}
+                  size="md"
+                  onClick={() => handleColorChange(s3color.name)}
+                  border={s3color.name === color ? '3px solid white' : 'none'}
+                  width="43px"
+                />
+              );
+            })}
+          </ButtonGroup>
+
           <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
-            Board Protected with PIN
+            Board Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
             <Input
               type="text"
-              placeholder={'Set PIN'}
+              placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={password}
@@ -195,4 +203,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       </ModalContent>
     </Modal>
   );
+}
+function handleColorChange(name: string): void {
+  throw new Error('Function not implemented.');
 }

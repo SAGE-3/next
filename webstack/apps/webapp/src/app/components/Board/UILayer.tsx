@@ -6,15 +6,19 @@
  *
  */
 
-import { Box, useDisclosure, Modal } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast } from '@chakra-ui/react';
+import { format as formatDate } from 'date-fns';
 
 import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel } from './UI/Panels';
-import { ContextMenu, UploadModal, useAppStore, useUIStore } from '@sage3/frontend';
+import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
 import { AppToolbar } from './UI/AppToolbar';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 import { Twilio } from './UI/Twilio';
 import { ClearBoardModal } from './UI/ClearBoardModal';
 import { Alfred } from './UI/Alfred';
+
+import JSZip from 'jszip';
+// import * as JSZipType from 'jszip';
 
 type UILayerProps = {
   boardId: string;
@@ -25,15 +29,19 @@ export function UILayer(props: UILayerProps) {
   // UI Store
   const setScale = useUIStore((state) => state.setScale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-
-  const appToolbarPanelPosition = useUIStore((state) => state.appToolbarPanelPosition);
-  const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
 
+  // Asset store
+  const assets = useAssetStore((state) => state.assets);
+  // Board store
+  const boards = useBoardStore((state) => state.boards);
   // Apps
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
+
+  // Toast
+  const toast = useToast();
 
   // Clear boar modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
@@ -53,9 +61,11 @@ export function UILayer(props: UILayerProps) {
 
   // Show whole board on the screen
   const fitToBoard = () => {
-    setBoardPosition({ x: 0, y: 0 });
     // Fit the smaller dimension into the browser size
     const sm = Math.min(window.innerWidth / boardWidth, window.innerHeight / boardHeight);
+    const x = window.innerWidth / sm / 2 - boardWidth / 2;
+    const y = window.innerHeight / sm / 2 - boardHeight / 2;
+    setBoardPosition({ x, y });
     setScale(sm);
   };
 
@@ -84,19 +94,78 @@ export function UILayer(props: UILayerProps) {
     // Center
     const cx = x1 + w / 2;
     const cy = y1 + h / 2;
-    // Offset to center the board...
-    const bx = Math.floor(-cx + window.innerWidth / 2);
-    const by = Math.floor(-cy + window.innerHeight / 2);
-    setBoardPosition({ x: bx, y: by });
+
     // 85% of the smaller dimension (horizontal or vertical )
     const sw = 0.85 * (window.innerWidth / w);
     const sh = 0.85 * (window.innerHeight / h);
     const sm = Math.min(sw, sh);
+
+    // Offset to center the board...
+    const bx = Math.floor(-cx + window.innerWidth / sm / 2);
+    const by = Math.floor(-cy + window.innerHeight / sm / 2);
+    setBoardPosition({ x: bx, y: by });
     setScale(sm);
+  };
+
+  // How to save a board opened files into a ZIP archive
+  const downloadBoard = async () => {
+    // Create a ZIP object
+    const zip = new JSZip();
+    // Generate a filename using date and board name
+    const boardName = boards.find((b) => b._id === props.boardId)?.data.name || 'session';
+    const prettyDate = formatDate(new Date(), 'yyyy-MM-dd-HH-mm-ss');
+    const name = `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.zip`;
+    // Create a folder in the archive
+    const session = zip.folder(`SAGE3-${boardName}`);
+    // Iterate over all the apps
+    await apps.reduce(async (promise, a) => {
+      // wait for the last async function to finish
+      await promise;
+      // process the next app with an asset
+      if ('assetid' in a.data.state) {
+        const assetid = a.data.state.assetid;
+        if (assetid) {
+          // Get the asset from the store
+          const asset = assets.find((a) => a._id === assetid);
+          // Derive the public URL
+          const url = 'api/assets/static/' + asset?.data.file;
+          // Get the filename for the asset
+          const filename = asset?.data.originalfilename;
+          // if all set, add the file to the zip
+          if (asset && url && filename && session) {
+            // Download the file contents
+            const buffer = await fetch(url).then((r) => r.arrayBuffer());
+            // add to zip
+            session.file(filename, buffer);
+          }
+        }
+      } else if (a.data.name === 'Stickie') {
+        // Stickies are saved as text files
+        if ('text' in a.data.state) {
+          const filename = `stickie-${a._id}.txt`;
+          if (filename && session) {
+            // add to zip
+            session.file(filename, a.data.state.text);
+          }
+        }
+      }
+    }, Promise.resolve());
+    // Display a message
+    toast({ title: 'Assets Packaged', status: 'info', duration: 2000, isClosable: true });
+    // Finish the zip and trigger the download
+    zip.generateAsync({ type: 'blob' }).then(function (content) {
+      // Create a URL from the blob
+      const url = URL.createObjectURL(content);
+      //Trigger the download
+      downloadFile(url, name);
+      toast({ title: 'Download in Progress', status: 'success', duration: 2000, isClosable: true });
+    });
   };
 
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
+      <AppToolbar></AppToolbar>
+
       <ContextMenu divId="board">
         <BoardContextMenu
           boardId={props.boardId}
@@ -104,6 +173,7 @@ export function UILayer(props: UILayerProps) {
           clearBoard={clearOnOpen}
           fitToBoard={fitToBoard}
           showAllApps={showAllApps}
+          downloadBoard={downloadBoard}
         />
       </ContextMenu>
 
@@ -111,11 +181,9 @@ export function UILayer(props: UILayerProps) {
 
       <UsersPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <NavigationPanel />
+      <NavigationPanel clearBoard={clearOnOpen} fitToBoard={fitToBoard} fitApps={showAllApps} boardId={props.boardId} />
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <AppToolbar position={appToolbarPanelPosition} setPosition={setAppToolbarPosition}></AppToolbar>
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>

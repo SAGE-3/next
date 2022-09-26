@@ -54,6 +54,7 @@ interface UIState {
   showUI: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
+  boardDragging: boolean;
 
   // Panels & Context Menu
   mainMenu: PanelUI;
@@ -69,6 +70,7 @@ interface UIState {
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
+  setBoardDragging: (dragging: boolean) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
@@ -93,10 +95,12 @@ export const useUIStore = create<UIState>((set, get) => ({
   gridSize: 1,
   zIndex: 1,
   showUI: true,
+  boardDragging: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+
   controller: {
     position: { x: 16, y: window.innerHeight - 350 },
     stuck: StuckTypes.None,
@@ -162,6 +166,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setContextMenuPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, contextMenuPosition: pos })),
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
   setBoardPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, boardPosition: pos })),
+  setBoardDragging: (dragging: boolean) => set((state) => ({ ...state, boardDragging: dragging })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),

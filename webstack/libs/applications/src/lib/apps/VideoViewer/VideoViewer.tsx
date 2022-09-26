@@ -7,27 +7,44 @@
  */
 
 import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { Box, Button, ButtonGroup, Tooltip, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack } from '@chakra-ui/react';
 import {
-  Box, Button, ButtonGroup, Tooltip,
-  Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack,
-} from '@chakra-ui/react';
-import {
-  MdArrowRightAlt, MdFastForward, MdFastRewind, MdFileDownload,
-  MdGraphicEq, MdLoop, MdPause, MdPlayArrow,
-  MdVolumeOff, MdVolumeUp,
+  MdArrowRightAlt,
+  MdFastForward,
+  MdFastRewind,
+  MdFileDownload,
+  MdGraphicEq,
+  MdLoop,
+  MdPause,
+  MdPlayArrow,
+  MdVolumeOff,
+  MdVolumeUp,
 } from 'react-icons/md';
-
-import { App } from '../../schema';
-
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+// Time functions
+import { format as formatTime } from 'date-fns';
 
 import { Asset } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
 
-export function getStaticAssetUrl(filename: string): string {
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+
+
+function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
+
+/**
+ * Return a string for a duration
+ *
+ * @param {number} n duration in seconds
+ * @returns {string} formatted duration
+ */
+function getDurationString(n: number): string {
+  return formatTime(n * 1000, 'mm:ss');
+}
+
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -52,13 +69,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Get Asset from store
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.vid);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
       update(props._id, { description: myasset?.data.originalfilename });
     }
-  }, [s.vid, assets]);
+  }, [s.assetid, assets]);
 
   // If the file is updated, update the url
   useEffect(() => {
@@ -77,10 +94,16 @@ function AppComponent(props: App): JSX.Element {
           const h = videoRef.current?.videoHeight ?? 9;
           const ar = w / h;
           setAspecRatio(ar);
+          if (videoRef.current) {
+            // Diplay the video current time and duration
+            const length = getDurationString(videoRef.current.duration);
+            const time = getDurationString(videoRef.current.currentTime);
+            update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+          }
         }
       });
     }
-  }, [videoRef]);
+  }, [file, videoRef]);
 
   // Set the current time of the video
   useEffect(() => {
@@ -112,9 +135,16 @@ function AppComponent(props: App): JSX.Element {
     let updateTimeInterval: null | NodeJS.Timeout = null;
     if (s.play.uid === user?._id) {
       // If the video is playing, update the current time
-      if (!s.play.paused) {
+      if (!s.play.paused && videoRef.current) {
         updateTimeInterval = setInterval(() => {
-          updateState(props._id, { play: { ...s.play, currentTime: videoRef.current?.currentTime ?? 0 } });
+          if (!videoRef.current) return;
+          const currentTime = videoRef.current.currentTime;
+          const duration = videoRef.current.duration;
+          updateState(props._id, { play: { ...s.play, currentTime: currentTime ?? 0 } });
+          // Convert time numbers to strings
+          const length = getDurationString(duration);
+          const time = getDurationString(currentTime);
+          update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
         }, 1000);
       }
     }
@@ -147,11 +177,31 @@ function AppComponent(props: App): JSX.Element {
     overflowY: 'hidden',
     height: props.data.size.width / aspectRatio,
     maxHeight: '100%',
+    borderRadius: '0 0 6px 6px',
   };
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div style={videoContainerStyle}>
+        {/* Pause icon in bottom corner to show if video is paused. */}
+        {s.play.paused ? (
+          <Box
+            color="white"
+            position="absolute"
+            left="0"
+            bottom="0"
+            fontSize="48px"
+            backgroundColor="rgba(10,10,10,.75)"
+            borderRadius="0 100% 0 0"
+            width="75px"
+            height="75px"
+            display="flex"
+            justifyContent="left"
+            alignItems="center"
+          >
+            <MdPause transform={'translate(5, 5)'} />
+          </Box>
+        ) : null}
         <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true} loop={s.play.loop}></video>
       </div>
     </AppWindow>
@@ -169,7 +219,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // React State
   const [videoRef] = useState<HTMLVideoElement>(document.getElementById(`${props._id}-video`) as HTMLVideoElement);
-  const [duration, setDuration] = useState(videoRef.duration);
+  const [duration, setDuration] = useState(videoRef ? videoRef.duration : 0);
   const [sliderTime, setSliderTime] = useState(s.play.currentTime);
   const [file, setFile] = useState<Asset>();
 
@@ -183,11 +233,11 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Obtain the asset for download functionality
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.vid);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
     }
-  }, [s.vid, assets]);
+  }, [s.assetid, assets]);
 
   // Set the slider time if curretime or paused state change
   useEffect(() => {
@@ -205,6 +255,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const handlePlay = () => {
     if (user) {
       update(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -212,6 +265,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleRewind = () => {
     if (user) {
       update(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -221,6 +277,9 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime + 5) },
       });
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -230,6 +289,9 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, loop: !s.play.loop },
       });
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -263,6 +325,9 @@ function ToolbarComponent(props: App): JSX.Element {
       update(props._id, {
         play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },
       });
+      const time = getDurationString(videoRef.currentTime);
+      const length = getDurationString(duration);
+      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -270,25 +335,25 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       {/* App State with server */}
       <ButtonGroup isAttached size="xs" colorScheme="green" mr={2}>
-        <Tooltip placement="bottom" hasArrow={true} label={'Rewind 10 Seconds'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Rewind 10 Seconds'} openDelay={400}>
           <Button onClick={handleRewind} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFastRewind />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={!s.play.paused ? 'Pause Video' : 'Play Video'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={!s.play.paused ? 'Pause Video' : 'Play Video'} openDelay={400}>
           <Button onClick={handlePlay} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {s.play.paused ? <MdPlayArrow /> : <MdPause />}
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Forward 10 Seconds'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Forward 10 Seconds'} openDelay={400}>
           <Button onClick={handleForward} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFastForward />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Loop'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
           <Button onClick={handleLoop} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {s.play.loop ? <MdLoop /> : <MdArrowRightAlt />}
           </Button>
@@ -308,11 +373,9 @@ function ToolbarComponent(props: App): JSX.Element {
         <SliderTrack bg="green.100">
           <SliderFilledTrack bg="green.400" />
         </SliderTrack>
-        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
-          {new Date(0).toISOString().substring(14, 19)}
-        </SliderMark>
+        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">  {getDurationString(0)} </SliderMark>
         <SliderMark value={duration} fontSize="xs" mt="1.5" ml="-5">
-          {new Date(duration * 1000).toISOString().substring(14, 19)}
+          {getDurationString(duration)}
         </SliderMark>
         <SliderMark
           value={sliderTime}
@@ -325,7 +388,7 @@ function ToolbarComponent(props: App): JSX.Element {
           fontSize="xs"
           borderRadius="md"
         >
-          {new Date(sliderTime * 1000).toISOString().substring(14, 19)}
+          {getDurationString(sliderTime)}
         </SliderMark>
         <SliderThumb boxSize={4}>
           <Box
@@ -339,12 +402,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
       {/* Local State Buttons - Only Changes the video state for the local user */}
       <ButtonGroup isAttached size="xs" colorScheme={'teal'} ml={2}>
-        <Tooltip placement="bottom" hasArrow={true} label={isMute ? 'Unmute' : 'Mute'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={isMute ? 'Unmute' : 'Mute'} openDelay={400}>
           <Button onClick={handleMute} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             {isMute ? <MdVolumeOff /> : <MdVolumeUp />}
           </Button>
         </Tooltip>
-        <Tooltip placement="bottom" hasArrow={true} label={'Download Video'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Video'} openDelay={400}>
           <Button onClick={handleDownload} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
             <MdFileDownload />
           </Button>

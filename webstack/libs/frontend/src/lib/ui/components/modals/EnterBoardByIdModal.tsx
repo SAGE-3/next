@@ -117,7 +117,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
                     children={
                       <Tooltip
                         isOpen={!isUUIDv4(boardId) ? undefined : false}
-                        placement="top"
+                        placement="top-start"
                         gutter={20}
                         hasArrow={true}
                         label={'Enter a Valid BoardID'}

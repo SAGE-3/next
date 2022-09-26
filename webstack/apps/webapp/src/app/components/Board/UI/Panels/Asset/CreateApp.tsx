@@ -8,7 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython } from '@sage3/shared';
 
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -49,7 +49,7 @@ export async function setupAppForFile(
         size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'ImageViewer',
-        state: { ...initialValues['ImageViewer'], id: file.id },
+        state: { ...initialValues['ImageViewer'], assetid: file.id },
         minimized: false,
         raised: true,
       });
@@ -64,7 +64,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 450, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'VideoViewer',
-        state: { ...(initialValues['VideoViewer'] as AppState), vid: file.id },
+        state: { ...(initialValues['VideoViewer'] as AppState), assetid: file.id },
         minimized: false,
         raised: true,
       });
@@ -79,7 +79,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'CSVViewer',
-        state: { ...initialValues['CSVViewer'], id: file.id },
+        state: { ...initialValues['CSVViewer'], assetid: file.id },
         minimized: false,
         raised: true,
       });
@@ -94,7 +94,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'DeepZoomImage',
-        state: { ...initialValues['DeepZoomImage'] as AppState, zid: file.id },
+        state: { ...initialValues['DeepZoomImage'] as AppState, assetid: file.id },
         minimized: false,
         raised: true
       });
@@ -109,7 +109,7 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'LeafLet',
-        state: { ...initialValues['LeafLet'] as AppState, geojson: file.id },
+        state: { ...initialValues['LeafLet'] as AppState, assetid: file.id },
         minimized: false,
         raised: true
       });
@@ -119,8 +119,8 @@ export async function setupAppForFile(
       // Get the content of the file
       fetch(localurl, {
         headers: {
-          'Content-Type': 'text/csv',
-          Accept: 'text/csv',
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
         },
       })
         .then(function (response) {
@@ -139,6 +139,36 @@ export async function setupAppForFile(
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
             state: { ...(initialValues['Stickie'] as AppState), text: text },
+            minimized: false,
+            raised: true,
+          });
+        });
+    } else if (isPython(file.type)) {
+      // Look for the file in the asset store
+      const localurl = '/api/assets/static/' + file.filename;
+      // Get the content of the file
+      fetch(localurl, {
+        headers: {
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
+        },
+      })
+        .then(function (response) {
+          return response.text();
+        })
+        .then(function (text) {
+          // Create a note from the text
+          resolve({
+            name: 'CodeCell',
+            description: 'CodeCell',
+            roomId: roomId,
+            boardId: boardId,
+            ownerId: userId,
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 400, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'CodeCell',
+            state: { ...(initialValues['CodeCell'] as AppState), code: text },
             minimized: false,
             raised: true,
           });
@@ -193,7 +223,7 @@ export async function setupAppForFile(
         size: { width: 400, height: 400 / aspectRatio, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'PDFViewer',
-        state: { ...initialValues['PDFViewer'], id: file.id },
+        state: { ...initialValues['PDFViewer'], assetid: file.id },
         minimized: false,
         raised: true,
       });

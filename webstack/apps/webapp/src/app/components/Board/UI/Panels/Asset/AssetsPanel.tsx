@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer } from '@chakra-ui/react';
-import { StuckTypes, UploadModal, useAssetStore, useUIStore, useUsersStore } from '@sage3/frontend';
+import { StuckTypes, UploadModal, useAssetStore, useRoomStore, useUIStore, useUsersStore } from '@sage3/frontend';
 
 import { Panel } from '../Panel';
 import { Files } from './Files';
@@ -28,11 +28,18 @@ export function AssetsPanel(props: AssetsPanelProps) {
   const setShow = useUIStore((state) => state.assetsMenu.setShow);
   const stuck = useUIStore((state) => state.assetsMenu.stuck);
   const setStuck = useUIStore((state) => state.assetsMenu.setStuck);
-
+  const rooms = useRoomStore((state) => state.rooms);
   const controllerPosition = useUIStore((state) => state.controller.position);
-
-  // Clear boar modal
+  const [roomName, setRoomName] = useState('');
+  // Clear board modal
   const { isOpen, onOpen, onClose } = useDisclosure();
+  // Access the list of users
+  const users = useUsersStore((state) => state.users);
+
+  const subscribe = useAssetStore((state) => state.subscribe);
+  const unsubscribe = useAssetStore((state) => state.unsubscribe);
+  const assets = useAssetStore((state) => state.assets);
+  const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
 
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -41,19 +48,13 @@ export function AssetsPanel(props: AssetsPanelProps) {
       setStuck(StuckTypes.Controller);
     }
   }, [show]);
+
   useEffect(() => {
     if (stuck == StuckTypes.Controller) {
       setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
     }
   }, [controllerPosition]);
 
-  // Access the list of users
-  const users = useUsersStore((state) => state.users);
-
-  const subscribe = useAssetStore((state) => state.subscribe);
-  const unsubscribe = useAssetStore((state) => state.unsubscribe);
-  const assets = useAssetStore((state) => state.assets);
-  const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
 
   // subscribe to the asset store
   useEffect(() => {
@@ -64,6 +65,8 @@ export function AssetsPanel(props: AssetsPanelProps) {
   }, []);
 
   useEffect(() => {
+    // Get the room name
+    setRoomName(rooms.find((el) => el._id === props.roomId)?.data.name ?? 'Main Room');
     // Filter the asset keys for this room
     const filterbyRoom = assets.filter((k) => k.data.room === props.roomId);
     const keys = Object.keys(filterbyRoom);
@@ -96,7 +99,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
   return (
     <>
       <Panel
-        title="Assets"
+        title={`Assets available in "${roomName}"`}
         opened={opened}
         setOpened={setOpened}
         setPosition={setPosition}

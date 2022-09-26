@@ -34,5 +34,5 @@ jupyter nbextension enable 2D-Jupyter/2D-Jupyter --user
 #jupyter notebook --no-browser --NotebookApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
 #jupyter lab --collaborative --no-browser --NotebookApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
 
-jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --notebook-dir="notebooks"
+jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' --notebook-dir="notebooks"
 

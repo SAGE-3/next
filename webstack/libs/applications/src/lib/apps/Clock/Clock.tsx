@@ -51,7 +51,6 @@ function AppComponent(props: App): JSX.Element {
       if (geometry !== undefined && name !== undefined) {
         const lat = geometry.location.lat;
         const lng = geometry.location.lng;
-        console.log('City>', city, lat, lng)
         clockSelected(lat, lng, city);
       }
     });
@@ -77,7 +76,6 @@ function AppComponent(props: App): JSX.Element {
           offset: timeOffset,
           id: id,
         };
-        console.log('clock>', clock);
         setClockOffset(timeOffset);
       })
       .catch((err) => {
@@ -157,7 +155,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const [city, setCity] = useState(s.city);
   const changeCity = () => {
-    console.log('CCCCCCCC', city)
     updateState(props._id, { city: city });
   }
   const handleCityChange = (event: any) => setCity(event.target.value);
@@ -174,7 +171,7 @@ function ToolbarComponent(props: App): JSX.Element {
           backgroundColor="whiteAlpha.300"
         />
       </InputGroup>
-    </form>∏
+    </form>
   </>;
 }
 

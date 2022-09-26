@@ -90,43 +90,43 @@ export function Controller(props: ControllerProps) {
       titleDblClick={handleCopyId}
     >
       <HStack w="100%">
-        <Tooltip label="Home" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} used={false} onClick={handleHomeClick} />
+        <Tooltip label="Home" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+          <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} isActive={false} onClick={handleHomeClick} />
         </Tooltip>
 
-        <Tooltip label="Users" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label="Users" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButtonPanel
             icon={<MdGroups />}
             description="Avatars"
             disabled={false}
-            used={avatarMenu.show}
+            isActive={avatarMenu.show}
             onClick={() => handleShowMenu('avatar')}
           />
         </Tooltip>
-        <Tooltip label="Apps" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label="Apps" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButtonPanel
             icon={<MdApps />}
             description="Launch applications"
             disabled={false}
-            used={applicationsMenu.show}
+            isActive={applicationsMenu.show}
             onClick={() => handleShowMenu('applications')}
           />
         </Tooltip>
-        <Tooltip label="Assets" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label="Assets" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButtonPanel
             icon={<MdFolder />}
             description="Assets"
             disabled={false}
-            used={assetMenu.show}
+            isActive={assetMenu.show}
             onClick={() => handleShowMenu('assets')}
           />
         </Tooltip>
-        <Tooltip label="Map" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label="Map" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButtonPanel
             icon={<MdMap />}
             description="Navigation"
             disabled={false}
-            used={navigationMenu.show}
+            isActive={navigationMenu.show}
             onClick={() => handleShowMenu('navigation')}
           />
         </Tooltip>

@@ -46,9 +46,9 @@ function AppComponent(props: App): JSX.Element {
 
   // Convert the ID to an asset
   useEffect(() => {
-    const isUUID = isUUIDv4(s.id);
+    const isUUID = isUUIDv4(s.assetid);
     if (isUUID) {
-      const myasset = assets.find((a) => a._id === s.id);
+      const myasset = assets.find((a) => a._id === s.assetid);
       if (myasset) {
         setFile(myasset);
         // Update the app title
@@ -56,9 +56,9 @@ function AppComponent(props: App): JSX.Element {
       }
     } else {
       // Assume it is a URL
-      setUrl(s.id);
+      setUrl(s.assetid);
     }
-  }, [s.id, assets]);
+  }, [s.assetid, assets]);
 
   // Once we have the asset, get the image data
   useEffect(() => {
@@ -80,7 +80,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Track the size size and pick the 'best' URL
   useEffect(() => {
-    const isUUID = isUUIDv4(s.id);
+    const isUUID = isUUIDv4(s.assetid);
     if (isUUID) {
       // Match the window size, dpi, and scale of the board to a URL
       const res = getImageUrl(url, sizes, displaySize.width * window.devicePixelRatio * scale);
@@ -116,16 +116,16 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Convert the ID to an asset
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.id);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
     }
-  }, [s.id, assets]);
+  }, [s.assetid, assets]);
 
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="bottom" hasArrow={true} label={'Download Image'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Image'} openDelay={400}>
           <Button
             onClick={() => {
               if (file) {

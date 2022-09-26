@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, usePresenceStore } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 type ContextProps = {
@@ -19,6 +19,7 @@ type ContextProps = {
   clearBoard: () => void;
   fitToBoard: () => void;
   showAllApps: () => void;
+  downloadBoard: () => void;
 };
 
 // State of the checkboxes in context menu: grid ui
@@ -27,6 +28,8 @@ const savedRadios = [false, true];
 export function BoardContextMenu(props: ContextProps) {
   // User information
   const { user } = useUser();
+  const presences = usePresenceStore((state) => state.presences);
+
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
@@ -72,22 +75,29 @@ export function BoardContextMenu(props: ContextProps) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
-    const x = Math.floor(boardPosition.x + (contextMenuPosition.x * 1) / scale);
-    const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1) / scale);
-    createApp({
-      name: appName,
-      description: appName,
-      roomId: props.roomId,
-      boardId: props.boardId,
-      position: { x, y, z: 0 },
-      size: { width: 400, height: 400, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: appName,
-      state: { ...(initialValues[appName] as any) },
-      ownerId: user._id || '',
-      minimized: false,
-      raised: true,
-    });
+    // const x = Math.floor(boardPosition.x + (contextMenuPosition.x * 1) / scale);
+    // const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1) / scale);
+
+    // Get the position of the cursor
+    const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
+    if (me) {
+      const pos = me.data.cursor;
+
+      createApp({
+        name: appName,
+        description: appName,
+        roomId: props.roomId,
+        boardId: props.boardId,
+        position: pos,
+        size: { width: 400, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: appName,
+        state: { ...(initialValues[appName] as any) },
+        ownerId: user._id || '',
+        minimized: false,
+        raised: true,
+      });
+    }
   };
 
   return (
@@ -198,7 +208,7 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Bring Menu
           </Button>
-          <Button
+          {/* <Button
             w="100%"
             borderRadius={2}
             h="auto"
@@ -210,6 +220,19 @@ export function BoardContextMenu(props: ContextProps) {
             onClick={() => setAppToolbarPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
           >
             Bring App Toolbar
+          </Button> */}
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={props.downloadBoard}
+          >
+            Download Opened Assets
           </Button>
         </VStack>
 

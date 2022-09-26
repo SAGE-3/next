@@ -8,14 +8,25 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  InputGroup, InputLeftElement, Input,
-  useToast, Button, Text,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  InputGroup,
+  InputLeftElement,
+  Input,
+  useToast,
+  Button,
+  Text,
+  ButtonGroup,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { useAuth } from '@sage3/frontend';
 import { useUser } from '../../../hooks';
+import { SAGEColors } from '@sage3/shared';
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -29,9 +40,11 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
   const [email, setEmail] = useState<UserSchema['email']>(user?.data.email || '');
+  const [color, setColor] = useState<UserSchema['color']>('red');
 
-  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
+  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
+  const handleColorChange = (color: string) => setColor(color);
 
   // the input element
   // When the modal panel opens, select the text for quick replacing
@@ -61,6 +74,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
     if (email !== user?.data.email && update) {
       update({ email });
     }
+    if (color !== user?.data.color && update) {
+      update({ color });
+    }
     props.onClose();
   };
 
@@ -68,9 +84,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Edit User Account</ModalHeader>
+        <ModalHeader fontSize="3xl">Edit User Account</ModalHeader>
         <ModalBody>
-          <InputGroup mt={4}>
+          <InputGroup>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               ref={initialRef}
@@ -97,7 +113,27 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <Text mt={3} fontSize={"md"}>Authentication: <em>{auth?.provider}</em></Text>
+          <ButtonGroup isAttached size="xs" colorScheme="teal" mt="6">
+            {/* Colors */}
+            {SAGEColors.map((s3color) => {
+              return (
+                <Button
+                  key={s3color.name}
+                  value={s3color.name}
+                  bgColor={s3color.value}
+                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
+                  _active={{ background: s3color.value, opacity: 0.9 }}
+                  size="md"
+                  onClick={() => handleColorChange(s3color.name)}
+                  border={s3color.name === color ? '3px solid white' : 'none'}
+                  width="43px"
+                />
+              );
+            })}
+          </ButtonGroup>
+          <Text mt={3} fontSize={'md'}>
+            Authentication: <em>{auth?.provider}</em>
+          </Text>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name || !email}>

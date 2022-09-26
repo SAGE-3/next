@@ -44,7 +44,7 @@ function AppComponent(props: App): JSX.Element {
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.id);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
@@ -55,7 +55,7 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, { numPages: pages.length, currentPage: 0, displayPages: 1 });
       }
     }
-  }, [s.id, assets]);
+  }, [s.assetid, assets]);
 
   useEffect(() => {
     if (file) {
@@ -204,11 +204,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const [aspectRatio, setAspecRatio] = useState(1);
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.id);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
     }
-  }, [s.id, assets]);
+  }, [s.assetid, assets]);
 
   useEffect(() => {
     if (file) {
@@ -279,45 +279,45 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" >
-        <Tooltip placement="bottom" hasArrow={true} label={'Remove Page'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Remove Page'} openDelay={400}>
           <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Add Page'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Add Page'} openDelay={400}>
           <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="bottom" hasArrow={true} label={'1st Page'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'1st Page'} openDelay={400}>
           <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdSkipPrevious />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Previous Page'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Previous Page'} openDelay={400}>
           <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdNavigateBefore />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Next Page'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Next Page'} openDelay={400}>
           <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdNavigateNext />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Last Page'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Last Page'} openDelay={400}>
           <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdSkipNext />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" >
-        <Menu placement="bottom">
+        <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="teal" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdMenu />

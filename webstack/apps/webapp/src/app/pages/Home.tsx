@@ -8,22 +8,37 @@
 
 import { useEffect, useState } from 'react';
 import { MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, Icon } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Icon, Divider, IconButton, useDisclosure } from '@chakra-ui/react';
 
 import { SBDocument } from '@sage3/sagebase';
-import { usePresence, usePresenceStore, useUsersStore } from '@sage3/frontend';
+import { EditRoomModal, useBoardStore, usePresence, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
 import { BoardSchema, RoomSchema } from '@sage3/shared/types';
 
 import { BoardList } from '../components/Home/BoardList';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
+import { BoardPreview } from '../components/Home/BoardPreview';
 
 export function HomePage() {
+  // User
+  const { user } = useUser();
+
+  // Room Store
   const [selectedRoom, setSelectedRoom] = useState<SBDocument<RoomSchema> | null>(null);
+  const rooms = useRoomStore((state) => state.rooms);
+  const roomOwner = selectedRoom?.data.ownerId === user?._id;
+
+  // Edit room Modal disclosure
+  const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
+
+  // Board Sotre
+  const boards = useBoardStore((state) => state.boards);
   const [selectedBoard, setSelectedBoard] = useState<SBDocument<BoardSchema> | null>(null);
 
+  // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
+  // Users anad presence
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
   const { update: updatePresence } = usePresence();
@@ -44,6 +59,17 @@ export function HomePage() {
     setSelectedBoard(board);
   }
 
+  useEffect(() => {
+    console.log(rooms);
+    if (!rooms.find((room) => room._id === selectedRoom?._id)) {
+      setSelectedRoom(null);
+      setSelectedBoard(null);
+    }
+    if (!boards.find((board) => board._id === selectedBoard?._id)) {
+      setSelectedBoard(null);
+    }
+  }, [rooms, boards]);
+
   return (
     <Box p="2">
       <Box display="flex" flexDirection="row" flexWrap="nowrap">
@@ -53,112 +79,42 @@ export function HomePage() {
         </Box>
 
         {/* Selected Room */}
-        <Box flexGrow="8" mx="5">
-          <Box display="flex" flexDirection="row">
-            <Box display="flex" flexWrap="wrap" flexDirection="column" width={[300, 300, 400, 700]}>
-              <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom}></BoardList>
-            </Box>
-
-            <Box width="100%" height="100%" borderRadius="md" m="2" ml="8" p="4" display="flex" flexDirection="column">
+        <Box mx="5">
+          <Box display="flex" flexDirection="row" width="2000px">
+            <Box display="flex" flexWrap="wrap" flexDirection="column" width="800px" height="100%">
               {selectedRoom ? (
                 <>
-                  <Box display="flex" justifyContent="center">
-                    <Text fontSize={'4xl'}>
-                      {selectedRoom?.data.name} <Icon as={MdSettings} transform="translateY(6px)" />
+                  <Box display="flex" justifyContent="center" alignItems="center">
+                    <Text fontSize={'4xl'} mr="2">
+                      {selectedRoom?.data.name}
                     </Text>
+                    {roomOwner ? (
+                      <IconButton
+                        aria-label="Edit"
+                        variant="ghost"
+                        fontSize="3xl"
+                        icon={<MdSettings />}
+                        transform="translateY(2px)"
+                        onClick={onOpenEdit}
+                      />
+                    ) : null}
                   </Box>
 
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    width="100%"
-                    height="300px"
-                    backgroundColor="gray.600"
-                    borderRadius="md"
-                    p="2"
-                  >
-                    <Box
-                      width="100%"
-                      height="100%"
-                      backgroundColor="purple.600"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                    >
-                      {' Info '}
-                    </Box>
-                    <Box
-                      width="100%"
-                      height="100%"
-                      backgroundColor="yellow.600"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                    >
-                      {'Chart  '}
-                    </Box>
-                    <Box
-                      width="100%"
-                      height="100%"
-                      backgroundColor="blue.600"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                    >
-                      {'Calendar '}
-                    </Box>
-                  </Box>
+                  <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={selectedRoom} />
+
+                  <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
                 </>
               ) : null}
+            </Box>
 
+            <Box width="1200px" height="100%" mx="8" display="flex" flexDir="column">
               {selectedBoard ? (
-                <>
-                  <Box display="flex" justifyContent="center" mt="8">
-                    <Text fontSize={'4xl'}>
-                      {selectedBoard?.data.name} <Icon as={MdSettings} transform="translateY(6px)" />
-                    </Text>
+                <Box>
+                  <Box justifyContent={'center'} alignContent="center" display="flex">
+                    <Text fontSize="4xl">{selectedBoard?.data.name}</Text>
                   </Box>
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    width="100%"
-                    height="300px"
-                    backgroundColor="gray.600"
-                    borderRadius="md"
-                    p="2"
-                  >
-                    <Box
-                      width="30%"
-                      height="100%"
-                      backgroundColor="red.600"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                    >
-                      {'Chart'}
-                    </Box>
-                    <Box
-                      width="70%"
-                      height="100%"
-                      backgroundColor="green.600"
-                      borderRadius="md"
-                      display="flex"
-                      justifyContent="center"
-                      alignItems={'center'}
-                      mx="2"
-                    >
-                      {'Chat'}
-                    </Box>
-                  </Box>
-                </>
+                  <BoardPreview board={selectedBoard}></BoardPreview>
+                </Box>
               ) : null}
             </Box>
           </Box>
@@ -173,7 +129,6 @@ export function HomePage() {
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
         <img src={imageUrl} width="75px" alt="" />
       </Box>
-
     </Box>
   );
 }

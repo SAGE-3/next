@@ -36,13 +36,13 @@ function AppComponent(props: App): JSX.Element {
   const bgColor = useColorModeValue('white', 'black');
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.zid);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
       update(props._id, { description: myasset?.data.originalfilename });
     }
-  }, [s.zid, assets]);
+  }, [s.assetid, assets]);
 
   const zoomHandler = (event: OpenSeadragon.ZoomEvent) => {
     updateState(props._id, { zoomLevel: event.zoom });
