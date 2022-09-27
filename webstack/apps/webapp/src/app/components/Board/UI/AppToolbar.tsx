@@ -172,13 +172,13 @@ export function AppToolbar(props: AppToolbarProps) {
         transform={`translate(${position.x}px, ${position.y}px)`}
         position="absolute"
         ref={boxRef}
-        display="flex"
         border="solid 3px"
         borderColor={selectColor}
         bg={panelBackground}
         p="2"
         rounded="md"
-        transition="opacity 0.1s"
+        transition="opacity 0.7s"
+        display="flex"
         opacity={`${boardDragging || appDragging ? '0' : '1'}`}
       >
         <Box display="flex" flexDirection="column">
