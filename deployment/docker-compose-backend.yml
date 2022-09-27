@@ -13,6 +13,8 @@ services:
     image: "python:3.9-bullseye"
     volumes:
       - ./configurations/python:/code
+    environment:
+      - ENVIRONMENT=backend
     command: sleep infinity
   jupyter:
     image: "jupyter/base-notebook"
@@ -23,7 +25,6 @@ services:
     ports:
       - "80:8888"
     environment:
-      - REDIS_URL=redis-server:6379
       - ENVIRONMENT=development
     depends_on:
       - "redis-server"
