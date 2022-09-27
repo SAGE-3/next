@@ -24,7 +24,7 @@ export async function loadCollections(): Promise<void> {
   await RoomsCollection.initialize();
   await UsersCollection.initialize();
   await AssetsCollection.initialize();
-  await PresenceCollection.initialize();
+  await PresenceCollection.initialize(true);
 
   // Setup default room and board
   RoomsCollection.getAll().then(async (rooms) => {
