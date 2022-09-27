@@ -2,8 +2,8 @@
 {
   "production": true,
 
-   // Name of the server
-  "serverName": "SAGE3next",
+  // Name of the server
+  "serverName": "SERVERNAME",
 
     // HTTP
   "port": 443,
@@ -35,7 +35,7 @@
     }
   ],
 
-    // ID Management
+  // ID Management
   "auth": {
     "sessionSecret": "SUPERSECRET!!$$",
     "sessionMaxAge": 604800000, // 1 weeks in ms
@@ -49,8 +49,8 @@
       "routeEndpoint": "/auth/guest"
     },
     "googleConfig": {
-      "clientID": "773749598438-nnurevcjc640dv5fj7ofp6lp2hvaf57d.apps.googleusercontent.com"
-      "clientSecret": "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",
+      "clientID": "",
+      "clientSecret": "",
       "routeEndpoint": "/auth/google",
       "callbackURL": "/auth/google/redirect"
     },
@@ -61,23 +61,23 @@
       "routeEndpoint": "/auth/jwt"
     },
     "cilogonConfig": {
-      "clientID": "cilogon:/client_id/2f3bdf16be096814b850281d7cc68f99",
-      "clientSecret": "SFCiURlBopDPTKttOestu1KLQbeSc8dsmvgLzEmk8w8au8AJ5OS9j9UW5KFoNnCq8KXVcyUndSOh5mbRL6C42w",
+      "clientID": "",
+      "clientSecret": "",
       "routeEndpoint": "/auth/cilogon",
       "callbackURL": "/auth/cilogon/redirect"
-    },
+    }
   },
   "ssl": {
     // found in the 'keys' folder
-    "certificateFile": "_.evl.uic.edu.crt",
-    "certificateKeyFile": "_.evl.uic.edu.key",
-    "certificateChainFile": "_.evl.uic.edu-ca.crt"
+    "certificateFile": "",
+    "certificateKeyFile": "",
+    "certificateChainFile": ""
   },
-  twilio: {
-    "accountSid": "AC43f67ea8d72208ae398d8d234d365d99",
-    "apiKey": "SKbe39af89723afe3232a9d0abb60b4d85",
-    "apiSecret": "UycFTsz4JrjPJCucCBGP4uIntl4Pg3iT",
+  "twilio": {
+    "accountSid": "",
+    "apiKey": "",
+    "apiSecret": ""
   },
   // Namespace for signing uuid v5 keys
-  "namespace": "71111d6e-64d8-4eab-953d-f88117f79f9c"
+  "namespace": ""
 }
