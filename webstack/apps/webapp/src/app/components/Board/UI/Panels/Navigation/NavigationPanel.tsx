@@ -8,7 +8,7 @@
 
 import { useEffect } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdFullscreen, MdGridView, MdDelete } from 'react-icons/md';
+import { MdFullscreen, MdGridView, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
 
 import { StuckTypes, useAppStore, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
@@ -16,7 +16,6 @@ import { Panel } from '../Panel';
 import { sageColorByName } from '@sage3/shared';
 
 export interface NavProps {
-  fitToBoard: () => void;
   fitApps: () => void;
   clearBoard: () => void;
   boardId: string;
@@ -36,6 +35,8 @@ export function NavigationPanel(props: NavProps) {
   const stuck = useUIStore((state) => state.navigationMenu.stuck);
   const setStuck = useUIStore((state) => state.navigationMenu.setStuck);
   const controllerPosition = useUIStore((state) => state.controller.position);
+  const boardLocked = useUIStore((state) => state.boardLocked);
+  const lockBoard = useUIStore((state) => state.lockBoard);
 
   // Board size from the store
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -116,7 +117,13 @@ export function NavigationPanel(props: NavProps) {
       <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
           <Tooltip label="Fit Board" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdFullscreen />} colorScheme="teal" size="xs" aria-label="fir board" onClick={props.fitToBoard} />
+            <IconButton
+              icon={boardLocked ? <MdLock /> : <MdLockOpen />}
+              colorScheme="teal"
+              size="xs"
+              aria-label="fir board"
+              onClick={() => lockBoard(!boardLocked)}
+            />
           </Tooltip>
           <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
             <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps" onClick={props.fitApps} />

@@ -41,7 +41,7 @@ class SAGE3AssetsCollection {
    */
   public async initialize(): Promise<void> {
     // Get some values from the configuration object
-    const assetFolder = config.assets;
+    const assetFolder = config.public;
     const redisUrl = config.redis.url;
 
     // A queue for metadata processing

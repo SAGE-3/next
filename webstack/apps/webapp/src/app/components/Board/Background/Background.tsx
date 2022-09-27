@@ -32,7 +32,6 @@ export function Background(props: BackgroundProps) {
   const { user } = useUser();
 
   // UI Store
-  // const gridSize = useUIStore((state) => state.gridSize);
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
   const scale = useUIStore((state) => state.scale);
@@ -282,7 +281,6 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={`50px 50px`}
-      // backgroundSize={`${gridSize}px ${gridSize}px`}
       backgroundImage={`linear-gradient(to right, ${gridColor} ${2 / scale}px, transparent ${2 / scale}px),
                linear-gradient(to bottom, ${gridColor} ${2 / scale}px, transparent ${2 / scale}px);`}
       id="board"

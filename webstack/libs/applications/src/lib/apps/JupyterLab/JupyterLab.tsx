@@ -42,7 +42,12 @@ function AppComponent(props: App): JSX.Element {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         // Create a new notebook
-        const base = `http://${window.location.hostname}`;
+        let base: string;
+        if (conf.production) {
+          base = `https://${window.location.hostname}:4443`;
+        } else {
+          base = `http://${window.location.hostname}`;
+        }
         const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
         const payload = { type: 'notebook', path: '/', format: 'text' };
         // Talk to the jupyter server API
@@ -95,7 +100,13 @@ function AppComponent(props: App): JSX.Element {
                   .then((res) => {
                     console.log('Juypyter> session created', res);
                     //  Open the notebook in a separate workspace
-                    const newUrl = `http://${window.location.hostname}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
+                    let base: string;
+                    if (conf.production) {
+                      base = `https://${window.location.hostname}:4443`;
+                    } else {
+                      base = `http://${window.location.hostname}`;
+                    }
+                    const newUrl = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
                     setUrl(newUrl);
                   });
               });

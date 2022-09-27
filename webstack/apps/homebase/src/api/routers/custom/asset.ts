@@ -75,7 +75,7 @@ export function assetExpressRouter(): express.Router {
   });
 
   // Access to uploaded files: GET /api/assets/static/:filename
-  const assetFolder = config.assets;
+  const assetFolder = config.public;
   router.use('/static', express.static(assetFolder));
 
   return router;
