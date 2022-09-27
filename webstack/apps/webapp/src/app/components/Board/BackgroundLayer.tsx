@@ -54,10 +54,19 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       fitApps(apps);
     }
   }, [appsFetched]);
+  // Local State
+  const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
 
   // Drag start fo the board
   function handleDragBoardStart() {
     setBoardDragging(true);
+  }
+
+  // Handle Dragging
+  function handleDragging() {
+    if (!boardDrag) {
+      setBoardDrag(true);
+    }
   }
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
@@ -65,6 +74,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const y = data.y;
     setBoardPosition({ x, y });
     setBoardDragging(false);
+    // If this was just a click, then deselect the app.
+    // If it was a drag, then don't deselect the app.
+    if (!boardDrag) {
+      setSelectedApp('');
+    }
+    setBoardDrag(false);
   }
 
   // Reset the global zIndex when no apps
@@ -104,7 +119,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }, [boardPosition.x, boardPosition.y, scale, boardDragging]);
 
   return (
-    <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }} onDoubleClick={() => setSelectedApp('')}>
+    <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
       {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
       <Rnd
@@ -118,6 +133,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         scale={scale}
         position={{ x: boardPosition.x, y: boardPosition.y }}
         onDragStart={handleDragBoardStart}
+        onDrag={handleDragging}
         onDragStop={handleDragBoardStop}
         enableResizing={false}
         dragHandleClassName={'board-handle'}

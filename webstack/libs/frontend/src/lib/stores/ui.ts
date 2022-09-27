@@ -55,8 +55,9 @@ interface UIState {
   showUI: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
-  boardDragging: boolean;
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
+  boardDragging: boolean; // Is the user dragging the board?
+  appDragging: boolean; // Is the user dragging an app?
 
   // Panels & Context Menu
   mainMenu: PanelUI;
@@ -73,6 +74,7 @@ interface UIState {
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
   setBoardDragging: (dragging: boolean) => void;
+  setAppDragging: (dragging: boolean) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
@@ -101,6 +103,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   zIndex: 1,
   showUI: true,
   boardDragging: false,
+  appDragging: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
@@ -225,6 +228,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
 
   setBoardDragging: (dragging: boolean) => set((state) => ({ ...state, boardDragging: dragging })),
+  setAppDragging: (dragging: boolean) => set((state) => ({ ...state, appDragging: dragging })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
