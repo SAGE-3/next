@@ -65,6 +65,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const y = data.y;
     setBoardPosition({ x, y });
     setBoardDragging(false);
+    // If this was just a click, then deselect the app.
+    // If it was a drag, then don't deselect the app.
     if (!boardDrag) {
       setSelectedApp('');
     }
