@@ -1,10 +1,16 @@
 from flask import Flask, jsonify, request
+
+from funcx import FuncXClient
+
+
 import json
 
 app = Flask(__name__)
+app.config.update(json.load(open("config.json")))
 
+# fxc = FuncXClient()
 
-def tem_funct():
+def temp_funcx_exec(data, URL):
     import httpx
     import json
 
@@ -32,4 +38,6 @@ def ai():
     # run fucntion on endpoint and grb res_uuid
     # Start co-routing that check whether it completed.
     # when it completed return send the result to the proxy (or exec some call back)
-    return json.dumps({"status": "SUCCESS"})
+    #fxc.
+
+    # return json.dumps({"status": "SUCCESS"})
