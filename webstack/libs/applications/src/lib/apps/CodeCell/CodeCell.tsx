@@ -53,7 +53,12 @@ const AppComponent = (props: App): JSX.Element => {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         // Get list of sessions
-        const base = `http://${window.location.hostname}`;
+        let base: string;
+        if (conf.production) {
+          base = `https://${window.location.hostname}:4443`;
+        } else {
+          base = `http://${window.location.hostname}`;
+        }
         const j_url = base + '/api/sessions';
         // Talk to the jupyter server API
         fetch(j_url, {

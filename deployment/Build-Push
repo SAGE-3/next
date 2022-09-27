@@ -8,16 +8,15 @@ cp -r ../foresight configurations/jupyter/notebooks/
 # macOS
 if [[ $OSTYPE == 'darwin'* ]]; then
 
-  # M1
   if [[ `uname -m` == 'arm64' ]]; then
-    docker buildx build -f node_server/Dockerfile.m1 --platform linux/arm64 --tag sage3/next:prod ..
-    docker buildx build -f foresight/Dockerfile      --platform linux/arm64 --tag sage3/foresight ..
+    docker buildx build -f node_server/Dockerfile --platform linux/arm64 --tag sage3/next:prod ..
+    docker buildx build -f foresight/Dockerfile   --platform linux/arm64 --tag sage3/foresight ..
   fi
 
   # Intel
   if [[ `uname -m` == 'x86_64' ]]; then
-    docker buildx build -f node_server/Dockerfile.prod --tag sage3/next:prod ..
-    docker buildx build -f foresight/Dockerfile        --tag sage3/foresight ..
+    docker buildx build -f node_server/Dockerfile --tag sage3/next:prod ..
+    docker buildx build -f foresight/Dockerfile   --tag sage3/foresight ..
   fi
 
 fi
