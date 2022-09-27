@@ -34,8 +34,6 @@ function AppComponent(props: App): JSX.Element {
   const assets = useAssetStore(state => state.assets);
   const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
 
-  const prevBoardsAppsQty = useRef<number>(0)
-
   // Way to manage a collection of App objects in local state
   // const apps = useAppStore(state => state.apps);
 
@@ -71,7 +69,6 @@ function AppComponent(props: App): JSX.Element {
           }
           updateState(props._id, {hostedApps: hosted})
           console.log('app ' + app._id + ' added')
-          prevBoardsAppsQty.current += 1
         } else {
           console.log('app ' + app._id + ' already in hostedApps')
         }
@@ -92,18 +89,28 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     const appIds = boardApps.map(el => el._id);
     const copyofhostapps = {} as {[key: string]: string};
-    // if (boardApps.length <= prevBoardsAppsQty.current) {
 
      Object.keys(s.hostedApps).forEach((key: string) => {
         if (appIds.includes(s.hostedApps[key])) copyofhostapps[key] = key;
       });
      updateState(props._id, {hostedApps: copyofhostapps})
-    // }
   }, [boardApps.length])
 
   useEffect(() => {
     testFunction()
   }, [Object.keys(s.hostedApps).length])
+
+  //TODO Move all apps together with the AIPane
+  // function cluster() {
+  //   for (const app in s.hostedApps) {
+  //     if (props.data.position changes) {
+  //       const x = props.data.position.x - props.data.position.prevX
+  //       const y = props.data.position.y - props.data.position.prevY
+  //       app.data.position.x += x
+  //       app.data.position.y += y
+  //     }
+  //   }
+  // }
 
   const handleFileSelected = () => {
     // TODO
@@ -122,7 +129,7 @@ function AppComponent(props: App): JSX.Element {
           right='50px'
           top='50px'
         >
-          {Object.keys(s.hostedApps).length > 0 ? (<Icon as={FcOk}/>) : (<Icon as={FcCancel}/>)}
+          {Object.keys(s.hostedApps).length > 0 ? (<Icon as={FcOk} boxSize={10}/>) : (<Icon as={FcCancel} boxSize={10}/>)}
         </Box>
 
         <>
