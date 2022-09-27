@@ -9,7 +9,7 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  hostedApps: z.record(z.number(), z.string()),
+  hostedApps: z.record(z.string(), z.string()),
 
   executeInfo: z.object({
     executeFunc: z.string(),

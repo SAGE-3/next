@@ -192,7 +192,7 @@ export function AppWindow(props: WindowProps) {
         boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
-        zIndex: myZ,
+        zIndex: (props.lockToBackground) ? 0 : myZ
       }}
       // minimum size of the app: 1 grid unit
       minWidth={gridSize}
