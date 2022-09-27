@@ -100,7 +100,13 @@ function AppComponent(props: App): JSX.Element {
                   .then((res) => {
                     console.log('Juypyter> session created', res);
                     //  Open the notebook in a separate workspace
-                    const newUrl = `http://${window.location.hostname}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
+                    let base: string;
+                    if (conf.production) {
+                      base = `https://${window.location.hostname}:4443`;
+                    } else {
+                      base = `http://${window.location.hostname}`;
+                    }
+                    const newUrl = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
                     setUrl(newUrl);
                   });
               });
