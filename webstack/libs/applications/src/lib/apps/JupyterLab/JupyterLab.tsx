@@ -42,7 +42,12 @@ function AppComponent(props: App): JSX.Element {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         // Create a new notebook
-        const base = `http://${window.location.hostname}`;
+        let base: string;
+        if (conf.production) {
+          base = `https://${window.location.hostname}:4443`;
+        } else {
+          base = `http://${window.location.hostname}`;
+        }
         const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
         const payload = { type: 'notebook', path: '/', format: 'text' };
         // Talk to the jupyter server API
