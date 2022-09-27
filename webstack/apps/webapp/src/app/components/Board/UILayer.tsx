@@ -59,16 +59,6 @@ export function UILayer(props: UILayerProps) {
     clearOnClose();
   };
 
-  // Show whole board on the screen
-  const fitToBoard = () => {
-    // Fit the smaller dimension into the browser size
-    const sm = Math.min(window.innerWidth / boardWidth, window.innerHeight / boardHeight);
-    const x = window.innerWidth / sm / 2 - boardWidth / 2;
-    const y = window.innerHeight / sm / 2 - boardHeight / 2;
-    setBoardPosition({ x, y });
-    setScale(sm);
-  };
-
   // Show all the application
   const showAllApps = () => {
     fitApps(apps);
@@ -138,7 +128,6 @@ export function UILayer(props: UILayerProps) {
           boardId={props.boardId}
           roomId={props.roomId}
           clearBoard={clearOnOpen}
-          fitToBoard={fitToBoard}
           showAllApps={showAllApps}
           downloadBoard={downloadBoard}
         />
@@ -148,7 +137,7 @@ export function UILayer(props: UILayerProps) {
 
       <UsersPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <NavigationPanel clearBoard={clearOnOpen} fitToBoard={fitToBoard} fitApps={showAllApps} boardId={props.boardId} />
+      <NavigationPanel clearBoard={clearOnOpen} fitApps={showAllApps} boardId={props.boardId} />
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 

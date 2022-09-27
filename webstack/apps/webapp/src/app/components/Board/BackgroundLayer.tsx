@@ -41,6 +41,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardDragging = useUIStore((state) => state.boardDragging);
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const fitApps = useUIStore((state) => state.fitApps);
+  const boardLocked = useUIStore((state) => state.boardLocked);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
@@ -120,6 +121,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         onDragStop={handleDragBoardStop}
         enableResizing={false}
         dragHandleClassName={'board-handle'}
+        disableDragging={boardLocked}
       >
         {/* Apps */}
         {apps.map((app) => {

@@ -86,6 +86,7 @@ interface UIState {
   zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
   zoomOutDelta: (d: number, cursor?: { x: number; y: number }) => void;
   fitApps: (apps: App[]) => void;
+  fitArea: (x: number, y: number, w: number, h: number) => void;
   lockBoard: (lock: boolean) => void;
 }
 
@@ -209,7 +210,17 @@ export const useUIStore = create<UIState>((set, get) => ({
       boardPosition: { x: bx, y: by },
     }));
   },
-
+  fitArea: (x: number, y: number, w: number, h: number) => {
+    // Fit the smaller dimension into the browser size
+    const sm = Math.min(window.innerWidth / w, window.innerHeight / h);
+    const xpos = window.innerWidth / sm / 2 - w / 2;
+    const ypos = window.innerHeight / sm / 2 - h / 2;
+    set((state) => ({
+      ...state,
+      scale: sm,
+      boardPosition: { x: xpos, y: ypos },
+    }));
+  },
   setContextMenuPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, contextMenuPosition: pos })),
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
 
