@@ -13,7 +13,7 @@ import './styles.css';
 
 import {state as AppState} from './index';
 import {AppWindow} from '../../components';
-import {useEffect, useState} from "react";
+import {useEffect, useState, useRef} from "react";
 import {BsFillTriangleFill} from "react-icons/bs";
 import {FcCancel, FcOk} from "react-icons/fc"
 import {generators} from "openid-client";
@@ -37,7 +37,7 @@ function AppComponent(props: App): JSX.Element {
   const assets = useAssetStore(state => state.assets);
   const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
 
-  // const [boardAppsQty, setBoardAppsQty] = useState(boardApps.length)
+  const prevBoardsAppsQty = useRef<number>(0)
 
   // Way to manage a collection of App objects in local state
   // const apps = useAppStore(state => state.apps);
@@ -53,19 +53,10 @@ function AppComponent(props: App): JSX.Element {
   //   setSelApps(selAppsArray);
   // }, [JSON.stringify(s.hostedApps), apps])
 
-  // const [hostedAppsArr, setHostedAppsArr] = useState<App | never | any>([])
-
-  // useEffect(() => {
-  //   //  TODO Track number of boardApps
-  //   setBoardAppsQty(boardApps.length)
-  // }, [boardApps.length])
-
   //TODO Ask Ryan if ok to use delete operator, IE support?
   //TODO Remove hostedApps when they are deleted from board, removed from boardApps
   //TODO lockToBackground doesn't always work. When client is opened, then ai pane, then ai pane remains on top. Need a way to reset zIndex of just ai pane
   useEffect(() => {
-    console.log('hosted useEffect')
-
     for (const app of boardApps) {
       const client = {
         [app._createdAt]: app._id
@@ -77,7 +68,6 @@ function AppComponent(props: App): JSX.Element {
         app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
         app.data.size.height + app.data.position.y > props.data.position.y
       ) {
-        console.log('app ' + app._id + ' added')
 
         if (!Object.values(s.hostedApps).includes(app._id)) {
           const hosted = {
@@ -85,6 +75,8 @@ function AppComponent(props: App): JSX.Element {
             ...client
           }
           updateState(props._id, {hostedApps: hosted})
+          console.log('app ' + app._id + ' added')
+          prevBoardsAppsQty.current += 1
         } else {
           console.log('app ' + app._id + ' already in hostedApps')
         }
@@ -97,13 +89,45 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     }
+  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.position.z, selApp?.data.size.height, selApp?.data.size.width, boardApps.length])
 
-    console.log('end of hosted useEffect')
+  //TODO Detect app deletion from board
+  //TODO If hostedApps contains an app that is no longer in boardApps, remove from hostedApps
+  //TODO Iterate through array of boardApp app ids somehow?
+  useEffect(() => {
+    if (boardApps.length <= prevBoardsAppsQty.current) {
+      console.log("boardApps useEffect activated")
+      console.log(boardApps)
+      console.log(Object.values(boardApps))
+      for (const hostedApp in s.hostedApps) {
+        console.log('hostedApps')
+        console.log(s.hostedApps[hostedApp])
+        // for (const app of boardApps) {
+        //   if (app._id)
+        // }
+        // if (!boardApps.includes(s.hostedApps)[hostedApp]){
+        //
+        // }
+        // for (const app of boardApps) {
+        //   const client = {
+        //     [app._createdAt]: [app._id]
+        //   }
+        //   if ()
+        // }
+      }
+    }
+  }, [boardApps.length])
 
-  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.position.z, selApp?.data.size.height, selApp?.data.size.width])
+  useEffect(() => {
+    testFunction()
+  }, [Object.keys(s.hostedApps).length])
 
   const handleFileSelected = () => {
     // TODO
+  }
+
+  function testFunction() {
+    updateState(props._id, {executeInfo: {"executeFunc": "test_function", "params": {}}})
   }
 
 
@@ -123,13 +147,15 @@ function AppComponent(props: App): JSX.Element {
           z index {zindex}<br/>
           selectedApp {selectedAppId}<br/>
           length of hostedappsarr {Object.keys(s.hostedApps).length}<br/>
-          hostedapps: {Object.values(s.hostedApps)}
+          hostedapps: {Object.values(s.hostedApps)}<br/>
           {/*Board assests dropdown*/}
           {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
           {/*  {roomAssets.map(el =>*/}
           {/*    <option value={el._id}>{el.data.originalfilename}</option>)*/}
           {/*  }*/}
           {/*</Select>*/}
+          boardApps: {boardApps.length}<br/>
+          prev boardApps: {prevBoardsAppsQty.current}
         </>
       </Box>
     </AppWindow>
