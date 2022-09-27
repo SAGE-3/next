@@ -27,6 +27,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 interface Applications {
   apps: App[];
   error: { id?: string; msg: string } | null;
+  fetched: boolean;
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
@@ -45,6 +46,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
   return {
     apps: [],
     error: null,
+    fetched: false,
     clearError: () => {
       set({ error: null });
     },
@@ -89,10 +91,10 @@ const AppStore = createVanilla<Applications>((set, get) => {
       set({ apps: [] });
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
-      set({ apps: [] });
+      set({ apps: [], fetched: false });
       const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
       if (apps.success) {
-        set({ apps: apps.data });
+        set({ apps: apps.data, fetched: true });
       } else {
         set({ error: { msg: apps.message || 'subscription error' } });
         return;
@@ -154,6 +156,7 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
   return {
     apps: [],
     error: null,
+    fetched: false,
     clearError: () => {
       set({ error: null });
     },

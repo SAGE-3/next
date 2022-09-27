@@ -28,6 +28,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Apps Store
   const apps = useAppStore((state) => state.apps);
+  const appsFetched = useAppStore((state) => state.fetched);
 
   // UI store
   const scale = useUIStore((state) => state.scale);
@@ -39,11 +40,19 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const resetZIndex = useUIStore((state) => state.resetZIndex);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
+
+  // Position board when entering board
+  useEffect(() => {
+    if (appsFetched) {
+      fitApps(apps);
+    }
+  }, [appsFetched]);
 
   // Drag start fo the board
   function handleDragBoardStart() {

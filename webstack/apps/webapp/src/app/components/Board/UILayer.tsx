@@ -18,7 +18,6 @@ import { ClearBoardModal } from './UI/ClearBoardModal';
 import { Alfred } from './UI/Alfred';
 
 import JSZip from 'jszip';
-// import * as JSZipType from 'jszip';
 
 type UILayerProps = {
   boardId: string;
@@ -31,6 +30,7 @@ export function UILayer(props: UILayerProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -69,42 +69,9 @@ export function UILayer(props: UILayerProps) {
     setScale(sm);
   };
 
-  // Show all the application, selecting center and scale
-  // BUG: I dont think the math is right but seems OK for now
+  // Show all the application
   const showAllApps = () => {
-    let x1 = boardWidth;
-    let x2 = 0;
-    let y1 = boardHeight;
-    let y2 = 0;
-    // Bounding box for all applications
-    apps.forEach((a) => {
-      const p = a.data.position;
-      const s = a.data.size;
-      if (p.x < x1) x1 = p.x;
-      if (p.x > x2) x2 = p.x;
-      if (p.y < y1) y1 = p.y;
-      if (p.y > y2) y2 = p.y;
-
-      if (p.x + s.width > x2) x2 = p.x + s.width;
-      if (p.y + s.height > y2) y2 = p.y + s.height;
-    });
-    // Width and height of bounding box
-    const w = x2 - x1;
-    const h = y2 - y1;
-    // Center
-    const cx = x1 + w / 2;
-    const cy = y1 + h / 2;
-
-    // 85% of the smaller dimension (horizontal or vertical )
-    const sw = 0.85 * (window.innerWidth / w);
-    const sh = 0.85 * (window.innerHeight / h);
-    const sm = Math.min(sw, sh);
-
-    // Offset to center the board...
-    const bx = Math.floor(-cx + window.innerWidth / sm / 2);
-    const by = Math.floor(-cy + window.innerHeight / sm / 2);
-    setBoardPosition({ x: bx, y: by });
-    setScale(sm);
+    fitApps(apps);
   };
 
   // How to save a board opened files into a ZIP archive

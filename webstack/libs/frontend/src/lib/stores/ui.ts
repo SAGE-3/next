@@ -11,6 +11,7 @@ import create from 'zustand';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+import { App } from '@sage3/applications/schema';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.3;
@@ -55,6 +56,7 @@ interface UIState {
   boardPosition: { x: number; y: number };
   selectedAppId: string;
   boardDragging: boolean;
+  boardLocked: boolean; // Lock the board that restricts dragging and zooming
 
   // Panels & Context Menu
   mainMenu: PanelUI;
@@ -83,6 +85,8 @@ interface UIState {
   zoomOut: () => void;
   zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
   zoomOutDelta: (d: number, cursor?: { x: number; y: number }) => void;
+  fitApps: (apps: App[]) => void;
+  lockBoard: (lock: boolean) => void;
 }
 
 /**
@@ -100,6 +104,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  boardLocked: false,
 
   controller: {
     position: { x: 16, y: window.innerHeight - 350 },
@@ -163,9 +168,51 @@ export const useUIStore = create<UIState>((set, get) => ({
     setShow: (show: boolean) => set((state) => ({ ...state, avatarMenu: { ...state.avatarMenu, show: show } })),
     show: false,
   },
+  fitApps: (apps: App[]) => {
+    if (apps.length <= 0) {
+      return;
+    }
+    let x1 = get().boardWidth;
+    let x2 = 0;
+    let y1 = get().boardHeight;
+    let y2 = 0;
+    // Bounding box for all applications
+    apps.forEach((a) => {
+      const p = a.data.position;
+      const s = a.data.size;
+      if (p.x < x1) x1 = p.x;
+      if (p.x > x2) x2 = p.x;
+      if (p.y < y1) y1 = p.y;
+      if (p.y > y2) y2 = p.y;
+
+      if (p.x + s.width > x2) x2 = p.x + s.width;
+      if (p.y + s.height > y2) y2 = p.y + s.height;
+    });
+    // Width and height of bounding box
+    const w = x2 - x1;
+    const h = y2 - y1;
+    // Center
+    const cx = x1 + w / 2;
+    const cy = y1 + h / 2;
+
+    // 85% of the smaller dimension (horizontal or vertical )
+    const sw = 0.85 * (window.innerWidth / w);
+    const sh = 0.85 * (window.innerHeight / h);
+    const sm = Math.min(sw, sh);
+
+    // Offset to center the board...
+    const bx = Math.floor(-cx + window.innerWidth / sm / 2);
+    const by = Math.floor(-cy + window.innerHeight / sm / 2);
+    set((state) => ({
+      ...state,
+      scale: sm,
+      boardPosition: { x: bx, y: by },
+    }));
+  },
+
   setContextMenuPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, contextMenuPosition: pos })),
   setAppToolbarPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, appToolbarPanelPosition: pos })),
-  setBoardPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, boardPosition: pos })),
+
   setBoardDragging: (dragging: boolean) => set((state) => ({ ...state, boardDragging: dragging })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
@@ -174,49 +221,64 @@ export const useUIStore = create<UIState>((set, get) => ({
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
-  setScale: (z: number) => set((state) => ({ ...state, scale: z })),
-  zoomIn: () => set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) })),
-  zoomOut: () => set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) })),
-  zoomInDelta: (d, cursor) =>
-    set((state) => {
-      const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
-      const zoomInVal = Math.min(get().scale + step * get().scale, MaxZoom);
-      if (cursor) {
-        const b = get().boardPosition;
-        const s = get().scale;
-        const x1 = b.x - cursor.x / s;
-        const y1 = b.y - cursor.y / s;
-        const x2 = b.x - cursor.x / zoomInVal;
-        const y2 = b.y - cursor.y / zoomInVal;
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const newX = b.x - dx;
-        const newY = b.y - dy;
-        return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomInVal };
-      } else {
-        return { ...state, scale: zoomInVal };
-      }
-    }),
-  zoomOutDelta: (d, cursor) =>
-    set((state) => {
-      const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
-      const zoomOutVal = Math.max(get().scale - step * get().scale, MinZoom);
-      if (cursor) {
-        const b = get().boardPosition;
-        const s = get().scale;
-        const x1 = b.x - cursor.x / s;
-        const y1 = b.y - cursor.y / s;
-        const x2 = b.x - cursor.x / zoomOutVal;
-        const y2 = b.y - cursor.y / zoomOutVal;
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const newX = b.x - dx;
-        const newY = b.y - dy;
-        return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomOutVal };
-      } else {
-        return { ...state, scale: zoomOutVal };
-      }
-    }),
+
+  lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
+  setBoardPosition: (pos: { x: number; y: number }) => {
+    if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));
+  },
+  setScale: (z: number) => {
+    if (!get().boardLocked) set((state) => ({ ...state, scale: z }));
+  },
+  zoomIn: () => {
+    if (!get().boardLocked) set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) }));
+  },
+  zoomOut: () => {
+    if (!get().boardLocked) set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) }));
+  },
+  zoomInDelta: (d, cursor) => {
+    if (!get().boardLocked)
+      set((state) => {
+        const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
+        const zoomInVal = Math.min(get().scale + step * get().scale, MaxZoom);
+        if (cursor) {
+          const b = get().boardPosition;
+          const s = get().scale;
+          const x1 = b.x - cursor.x / s;
+          const y1 = b.y - cursor.y / s;
+          const x2 = b.x - cursor.x / zoomInVal;
+          const y2 = b.y - cursor.y / zoomInVal;
+          const dx = x2 - x1;
+          const dy = y2 - y1;
+          const newX = b.x - dx;
+          const newY = b.y - dy;
+          return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomInVal };
+        } else {
+          return { ...state, scale: zoomInVal };
+        }
+      });
+  },
+  zoomOutDelta: (d, cursor) => {
+    if (!get().boardLocked)
+      set((state) => {
+        const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
+        const zoomOutVal = Math.max(get().scale - step * get().scale, MinZoom);
+        if (cursor) {
+          const b = get().boardPosition;
+          const s = get().scale;
+          const x1 = b.x - cursor.x / s;
+          const y1 = b.y - cursor.y / s;
+          const x2 = b.x - cursor.x / zoomOutVal;
+          const y2 = b.y - cursor.y / zoomOutVal;
+          const dx = x2 - x1;
+          const dy = y2 - y1;
+          const newX = b.x - dx;
+          const newY = b.y - dy;
+          return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomOutVal };
+        } else {
+          return { ...state, scale: zoomOutVal };
+        }
+      });
+  },
 }));
 
 // Add Dev tools
