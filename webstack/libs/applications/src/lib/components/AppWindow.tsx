@@ -8,14 +8,12 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, useColorModeValue, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
+import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
 import { useAppStore, useUIStore, useUsersStore, initials } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
-
-// import { ReactComponent as AppIcon } from './icon.svg';
 
 type WindowProps = {
   app: App;
@@ -251,6 +249,7 @@ export function AppWindow(props: WindowProps) {
           height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
           borderRadius="8px"
           cursor="move"
+          userSelect={'none'}
         ></Box>
       ) : null}
       {/* This div is to block the app from being interacted with */}
@@ -263,6 +262,7 @@ export function AppWindow(props: WindowProps) {
           height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
           borderRadius="8px"
           pointerEvents={'none'}
+          userSelect={'none'}
         ></Box>
       ) : null}
 
@@ -274,7 +274,6 @@ export function AppWindow(props: WindowProps) {
         flexWrap="nowrap"
         justifyContent="space-between"
         alignItems="center"
-        // backgroundColor={minimized ? sageColorByName('orange') : selected ? selectColor : 'teal'}
         backgroundColor={selected ? selectColor : 'teal'}
         px="1"
         cursor={'move'}
