@@ -36,13 +36,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Get the asset from the state id value
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.id);
+    const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: 'CSV> ' + myasset?.data.originalfilename });
+      update(props._id, { description: myasset?.data.originalfilename });
     }
-  }, [s.id, assets]);
+  }, [s.assetid, assets]);
 
   // Get the data from the asset
   useEffect(() => {

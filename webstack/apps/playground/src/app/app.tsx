@@ -7,7 +7,8 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Applications, initialValues } from '@sage3/applications/apps';
+import { Applications } from '@sage3/applications/apps';
+import { initialValues } from '@sage3/applications/initialValues';
 import { Box, Button, Select } from '@chakra-ui/react';
 import { AppName } from '@sage3/applications/schema';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -39,7 +40,7 @@ export function App() {
     // Create the new app
     createApp({
       name: appName,
-      description: `${appName} - Description`,
+      description: `${appName}`,
       roomId: '1234',
       boardId: '1234',
       position: { x, y, z: 0 },

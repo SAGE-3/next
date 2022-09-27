@@ -27,6 +27,7 @@ function sub(update: UpdateFunc, s: AppState, id: string) {
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
+
   return (
     <AppWindow app={props}>
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
@@ -52,13 +53,13 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="bottom" hasArrow={true} label={'Increase Count'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Count'} openDelay={400}>
           <Button onClick={handleAddClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="bottom" hasArrow={true} label={'Decrease Count'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Count'} openDelay={400}>
           <Button onClick={handleSubClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="red">
             <MdRemove />
           </Button>

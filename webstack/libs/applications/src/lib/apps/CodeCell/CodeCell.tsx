@@ -5,12 +5,18 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useAppStore } from '@sage3/frontend';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { App } from '../../schema';
-import { useRef, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import {
+  Box, Button, HStack, useColorModeValue, Tooltip,
+  IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
+  useColorMode, Flex, ButtonGroup
+} from '@chakra-ui/react';
 import { v4 as getUUID } from 'uuid';
+
+import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
+import { MdDelete, MdPlayArrow, MdFileDownload } from 'react-icons/md';
+
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-json';
@@ -18,30 +24,62 @@ import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 
-import {
-  Box,
-  Button,
-  HStack,
-  useColorModeValue,
-  Tooltip,
-  IconButton,
-  VStack,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  Text,
-  Image,
-} from '@chakra-ui/react';
-
+import { GetConfiguration, useAppStore, useUser } from '@sage3/frontend';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import { App } from '../../schema';
 import { Markdown } from './components/markdown'
+// Utility functions from SAGE3
+import { downloadFile } from '@sage3/frontend';
+// Date manipulation (for filename)
+import dateFormat from 'date-fns/format';
 
-import { useColorMode, Flex } from '@chakra-ui/react';
-import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
-import { MdDelete, MdPlayArrow } from 'react-icons/md';
-
+/**
+ * CodeCell component
+ * @param props application  props
+ * @returns JSX.Element
+ */
 const AppComponent = (props: App): JSX.Element => {
+  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const s = props.data.state as AppState;
+
+  // Room and board location
+  const location = useLocation();
+  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+
+  // Get information  about the current Jupyter kernel
+  useEffect(() => {
+    GetConfiguration().then((conf) => {
+      if (conf.token) {
+        // Get list of sessions
+        const base = `http://${window.location.hostname}`;
+        const j_url = base + '/api/sessions';
+        // Talk to the jupyter server API
+        fetch(j_url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + conf.token,
+          }
+        }).then((response) => response.json())
+          .then((res) => {
+            // console.log('Jupyter> Got sessions', res);
+            for (const s of res) {
+              if (s.name === boardId) {
+                // console.log('Jupyter> Found python3 kernel', s.kernel.id);
+                updateState(props._id, { kernel: s.kernel.id });
+                update(props._id, { description: `CodeCell> ${s.kernel.id}` });
+              }
+            }
+          })
+          .catch((err) => {
+            console.log('Jupyter> error', err);
+          });
+
+      }
+    });
+  }, []);
 
   return (
     <AppWindow app={props}>
@@ -56,8 +94,11 @@ const AppComponent = (props: App): JSX.Element => {
 }
 
 const InputBox = (props: App): JSX.Element => {
+  const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const ace = useRef<AceEditor>(null);
+  const [code, setCode] = useState<string>(s.code);
+  const { user } = useUser();
 
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
@@ -80,12 +121,25 @@ const InputBox = (props: App): JSX.Element => {
     ace.current?.editor?.setValue('');
   };
 
+  // To update from server
+  useEffect(() => {
+    setCode(s.code);
+  }, [s.code]);
+
+  //  Update from Ace Editor
+  const updateCode = (c: string) => {
+    setCode(c);
+  };
+
   return (
     <>
       <HStack>
         <AceEditor
           ref={ace}
           name="ace"
+          value={code}
+          onChange={updateCode}
+          readOnly={user?._id !== props._createdBy}
           fontSize={'1em'}
           minLines={6}
           maxLines={6}
@@ -121,7 +175,7 @@ const InputBox = (props: App): JSX.Element => {
           ]}
         />
         <VStack pr={2}>
-          <Tooltip hasArrow label="Execute" placement="right">
+          <Tooltip hasArrow label="Execute" placement="top-start">
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -129,11 +183,12 @@ const InputBox = (props: App): JSX.Element => {
               rounded={'full'}
               onClick={handleExecute}
               aria-label={''}
+              disabled={user?._id !== props._createdBy}
               bg={useColorModeValue('#FFFFFF', '#000000')}
               icon={<MdPlayArrow size={'2em'} color={useColorModeValue('#008080', '#008080')} />}
             />
           </Tooltip>
-          <Tooltip hasArrow label="Clear All" placement="right" bgColor={'red'}>
+          <Tooltip hasArrow label="Clear All" placement="top-start" bgColor={'red'}>
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -141,6 +196,7 @@ const InputBox = (props: App): JSX.Element => {
               rounded={'full'}
               onClick={handleClear}
               aria-label={''}
+              disabled={user?._id !== props._createdBy}
               bg={useColorModeValue('#FFFFFF', '#000000')}
               icon={<MdDelete size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
             />
@@ -182,12 +238,31 @@ const ColorModeToggle = (): JSX.Element => {
 
 
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
+
+  // Download the stickie as a text file
+  const downloadPy = () => {
+    // Current date
+    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const content = `${s.code}`;
+    // generate a URL containing the text of the note
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    // Make a filename with username and date
+    const filename = 'codecell-' + dt + '.py';
+    // Go for download
+    downloadFile(txturl, filename);
+  };
 
   return (
     <>
-      <ColorModeToggle />
+      {/* <ColorModeToggle /> */}
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+          <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   )
 }
@@ -196,44 +271,44 @@ export default { AppComponent, ToolbarComponent };
 
 
 const ProcessedOutput = (output: string) => {
-      try {
-        const parsed = JSON.parse(output);
-        return (
-            <Box p={4} fontSize={'16px'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
-            <Box
-              p={4}
-              // m={4}
-              // mr={0}
-              style={{
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                overflow: 'hidden',
-                backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-                boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
-                borderRadius: '12px',
-              }}
-            >
-              {/* <pre>Real Output: </pre> */}
-              {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
-              {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
-              {parsed.error && RenderTraceBack(parsed.error.evalue)}
-              {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
-              {parsed.execute_result &&
-                parsed.execute_result.data['text/plain'] &&
-                RenderPlainText(parsed.execute_result.data['text/plain'])}
-              {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
-              {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
-            </Box>
-            {/* {JSONOutput(output)} */}
-          </Box>
-        );
-      } catch (e) {
-        return ('');
-        // return (<Box p={4}>Processing...</Box>);
-        // return JSONOutput(output)
-      }
-    };
+  try {
+    const parsed = JSON.parse(output);
+    return (
+      <Box p={4} fontSize={'16px'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
+        <Box
+          p={4}
+          // m={4}
+          // mr={0}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            overflow: 'hidden',
+            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
+            boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
+            borderRadius: '12px',
+          }}
+        >
+          {/* <pre>Real Output: </pre> */}
+          {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
+          {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
+          {parsed.error && RenderTraceBack(parsed.error.evalue)}
+          {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
+          {parsed.execute_result &&
+            parsed.execute_result.data['text/plain'] &&
+            RenderPlainText(parsed.execute_result.data['text/plain'])}
+          {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
+          {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
+        </Box>
+        {/* {JSONOutput(output)} */}
+      </Box>
+    );
+  } catch (e) {
+    return ('');
+    // return (<Box p={4}>Processing...</Box>);
+    // return JSONOutput(output)
+  }
+};
 
 const JSONOutput = (output: string) => {
 
@@ -290,7 +365,7 @@ const RenderMarkdown = (markdown: string | string[]): JSX.Element => {
         variant={'left-accent'}
         backgroundColor={useColorModeValue('#F0F2F6', '#111111')}
       > */}
-        <Markdown data={markdown} />
+      <Markdown data={markdown} />
       {/* </Alert> */}
     </>
   );

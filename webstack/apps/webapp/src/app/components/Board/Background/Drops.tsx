@@ -7,7 +7,7 @@
  */
 
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
-import { initialValues } from '@sage3/applications/apps';
+import { initialValues } from '@sage3/applications/initialValues';
 
 /**
  * Setup data structure to open an application
@@ -28,7 +28,7 @@ export function setupApp(appName: AppName, x: number, y: number,
 
   return {
     name: appName,
-    description: appName + '>',
+    description: appName,
     roomId: roomId,
     boardId: boardId,
     position: { x: x, y: y, z: 0 },

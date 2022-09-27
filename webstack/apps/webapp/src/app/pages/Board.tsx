@@ -13,6 +13,7 @@ import { usePresence, useAppStore } from '@sage3/frontend';
 
 // Board Layers
 import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
 type LocationParams = {
   boardId: string;
@@ -34,6 +35,8 @@ export function BoardPage() {
   // Presence Information
   const { update: updatePresence } = usePresence();
 
+  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+
   // Handle joining and leave a board
   useEffect(() => {
     // Subscribe to the board that was selected
@@ -54,6 +57,11 @@ export function BoardPage() {
     <>
       {/* The apps live here */}
       <BackgroundLayer boardId={locationState.boardId} roomId={locationState.roomId}></BackgroundLayer>
+
+      {/* The Corner SAGE3 Image */}
+      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
+        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" />
+      </Box>
 
       {/* TODO White Board Layer for marking onto board */}
       <WhiteboardLayer boardId={locationState.boardId} roomId={locationState.roomId}></WhiteboardLayer>

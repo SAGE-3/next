@@ -60,6 +60,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       if (!res.success) {
         set({ error: res.message });
       }
+      // TO DO Delete all apps belonging to the board
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
       set({ boards: [] });

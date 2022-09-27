@@ -2,11 +2,13 @@ ipython
 jupyter_client
 #python-socketio
 requests
-#websockets
+websockets
 #websocket-client
 httpx
 pydantic
 pandas
+Flask[async]
+redis
 # matplotlib
 
 # pillow

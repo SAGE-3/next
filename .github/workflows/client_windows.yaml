@@ -7,7 +7,7 @@ on:
       - '.github/workflows/**'
     branches:
       - dev
-      - webviews
+      - dev-touch
 
 env:
   SERVER: production

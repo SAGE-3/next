@@ -25,6 +25,10 @@ import { IncomingMessage, Server } from 'http';
 import { WebSocket } from 'ws';
 import { SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
+// YJS
+import * as Y from 'yjs';
+const YUtils = require('y-websocket/bin/utils');
+
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
 import { loadCredentials, listenSecureApp } from './web';
@@ -146,10 +150,8 @@ async function startServer() {
   });
 
   // Websocket API for YJS
-  yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
-    socket.on('message', (msg) => {
-      console.log('YJS> message', msg);
-    });
+  yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
+    YUtils.setupWSConnection(socket, _request, args);
   });
 
   // Websocket API for WebRTC

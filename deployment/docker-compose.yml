@@ -19,6 +19,11 @@ services:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+  python:
+    image: "python:3.9-bullseye"
+    volumes:
+      - ./configurations/python:/code
+    command: sleep infinity
   jupyter:
     image: "jupyter/base-notebook"
     volumes:

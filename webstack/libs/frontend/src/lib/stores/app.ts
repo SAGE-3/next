@@ -34,6 +34,7 @@ interface Applications {
   delete: (id: string) => Promise<void>;
   unsubToBoard: () => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
+  fetchBoardApps: (boardId: AppSchema['boardId']) => Promise<App[] | undefined>;
 }
 
 /**
@@ -133,6 +134,16 @@ const AppStore = createVanilla<Applications>((set, get) => {
         }
       });
     },
+    fetchBoardApps(boardId: AppSchema['boardId']) {
+      return new Promise<App[] | undefined>(async (resolve, reject) => {
+        const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
+        if (apps.success) {
+          resolve(apps.data);
+        } else {
+          reject();
+        }
+      });
+    },
   };
 });
 
@@ -174,6 +185,11 @@ const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
       console.log('Subscribing to apps is not required in the playground');
+    },
+    fetchBoardApps(boardId: AppSchema['boardId']) {
+      return new Promise<App[] | undefined>((resolve, reject) => {
+        resolve(undefined);
+      });
     },
   };
 });

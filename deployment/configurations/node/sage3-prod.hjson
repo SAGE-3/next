@@ -35,7 +35,7 @@
     }
   ],
 
-    // ID Management
+  // ID Management
   "keys": {
     "sessionSecret": "SUPERSECRET!!$$",
     "sessionMaxAge": 604800000, // 1 weeks in ms
@@ -71,5 +71,7 @@
       "certificateKeyFile": "_.evl.uic.edu.key",
       "certificateChainFile": "_.evl.uic.edu-ca.crt"
     }
-  }
+  },
+  // Namespace for signing uuid v5 keys
+  "namespace": "71111d6e-64d8-4eab-953d-f88117f79f9c"
 }

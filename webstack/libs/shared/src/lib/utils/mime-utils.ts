@@ -9,10 +9,11 @@
 // Mime type definitions
 import * as mime from 'mime';
 
-// Define extra MIME type for python notebooks
+// Define extra MIME types
 mime.define({
   'application/x-ipynb+json': ['ipynb'],
   'application/dzi': ['dzi'],
+  'application/python': ['py'],
 });
 
 /**
@@ -149,4 +150,26 @@ export function isCSV(mimeType: string): boolean {
  */
 export function isDZI(mimeType: string): boolean {
   return mimeType === 'application/dzi';
+}
+
+/**
+ * Test if a given mime type is a Markdown file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isMD(mimeType: string): boolean {
+  return mimeType === 'text/markdown';
+}
+
+/**
+ * Test if a given mime type is a Python file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isPython(mimeType: string): boolean {
+  return mimeType === 'application/python';
 }

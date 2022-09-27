@@ -14,7 +14,7 @@
  */
 
 import { niceCollection } from './nice-collection';
-import { Asset, AssetSchema } from '@sage3/shared/types';
+import { AssetSchema } from '@sage3/shared/types';
 import { SBDocument, SBDocumentMessage } from '@sage3/sagebase';
 
 // Queue for tasks

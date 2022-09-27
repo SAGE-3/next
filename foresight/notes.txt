@@ -1,13 +1,14 @@
 # We need to start a private kernel using some kernel configs
-PYTHONUNBUFFERED=TRUE python -m ipykernel_launcher -f config/kernel-s3-next.json
+python -m ipykernel_launcher -f config/kernel-s3-next.json
 
-# note that it's very important to start it with PYTHONUNBUFFERED to avoid getting other print messages that are printed from
-# other threads that are running at the same time.
-
-
+# Start the Flask server which is responsible for handling the work
+export FLASK_APP=jupyterkernelproxy_server
+flask run
 
 # We can connect to the kernel to run code
 jupyter console --existing ~/Documents/GitHub/next/foresight/config/kernel-s3-next.json
+	# whitin the console type
+	run proxy.py
 
 
 

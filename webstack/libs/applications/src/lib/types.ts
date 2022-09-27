@@ -18,7 +18,8 @@ import { state as JupyterLabState, name as JupyterLabName } from './apps/Jupyter
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
-import { state as ZoomState, name as ZoomName } from './apps/Zoom';
+import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
+import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 
 export type AppState =
   | CounterState
@@ -39,7 +40,8 @@ export type AppState =
   | JupyterLabState
   | VegaLiteViewerState
   | VegaLiteState
-  | ZoomState;
+  | DeepZoomImageState
+  | NotepadState;
 
 export type AppName =
   | typeof CounterName
@@ -60,4 +62,5 @@ export type AppName =
   | typeof JupyterLabName
   | typeof VegaLiteViewerName
   | typeof VegaLiteName
-  | typeof ZoomName;
+  | typeof DeepZoomImageName
+  | typeof NotepadName;
