@@ -15,7 +15,7 @@ import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
-import { name as DataTableAppName } from './apps/DataTableApp';
+import { name as DataTableName } from './apps/DataTable';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as ScreenshareName } from './apps/TwilioScreenshare';
@@ -36,7 +36,7 @@ import ImageViewer from './apps/ImageViewer/ImageViewer';
 import LeafLet from './apps/LeafLet/LeafLet';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
-import DataTableApp from './apps/DataTableApp/DataTableApp';
+import DataTable from './apps/DataTable/DataTable';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import Screenshare from './apps/TwilioScreenshare/TwilioScreenshare';
@@ -58,7 +58,7 @@ export const Applications = {
   [LeafLetName]: LeafLet,
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
-  [DataTableAppName]: DataTableApp,
+  [DataTableName]: DataTable,
   [CSVViewerName]: CSVViewer,
   [RTCChatName]: RTCChat,
   [ScreenshareName]: Screenshare,

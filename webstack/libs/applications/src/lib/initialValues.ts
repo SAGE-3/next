@@ -15,7 +15,7 @@ import { name as ImageViewerName, init as defaultImageViewer } from './apps/Imag
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
+import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as ScreenshareName, init as defaultScreenshare } from './apps/TwilioScreenshare';
@@ -37,7 +37,7 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
-  [DataTableAppName]: defaultDataTableApp,
+  [DataTableName]: defaultDataTable,
   [CSVViewerName]: defaultCSVViewer,
   [RTCChatName]: defaultRTCChat,
   [ScreenshareName]: defaultScreenshare,
