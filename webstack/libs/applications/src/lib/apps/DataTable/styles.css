@@ -91,5 +91,5 @@ body:not(.nohover) tbody td:hover {
 }
 
 .search {
-  background-color : ghostwhite;
+  background-color : gray();
 }
