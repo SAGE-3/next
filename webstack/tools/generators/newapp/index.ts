@@ -49,7 +49,7 @@ async function addApplication(root: string, name: string) {
   // Add the new applications
   appSet.add(name);
   // Save the updated array
-  const output = JSON.stringify(Array.from(appSet), null, 4);
+  const output = JSON.stringify(Array.from(appSet).sort(), null, 4);
   await fs.writeFile(filePath, output);
 }
 
@@ -69,7 +69,7 @@ async function updateApps(root: string) {
   let output = '// SAGE3 Generated from apps.json file\n\n';
   for (let i in apps) {
     const it = apps[i];
-    output += `import { name as ${it}Name, init as default${it} } from './apps/${it}';\n`;
+    output += `import { name as ${it}Name } from './apps/${it}';\n`;
   }
 
   output += `\n`;
@@ -89,6 +89,32 @@ async function updateApps(root: string) {
   output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;\n`;
 
   output += `\n`;
+  output += `export * from './components';\n`;
+
+  // Export all the applications and save
+  await fs.writeFile(indexPath, output);
+  console.log('App> ', indexPath, 'updated');
+}
+
+/**
+ * Update the imports in libs/applications/src/initialValues.ts
+ *
+ * @param {string} root
+ */
+async function updateInit(root: string) {
+  console.log('App> updating index file');
+  const filePath = join(root, 'libs', 'applications', 'src', 'lib', 'apps.json');
+  const indexPath = join(root, 'libs', 'applications', 'src', 'lib', 'initialValues.ts');
+  // Read apps.json file
+  const filedata = await fs.readFile(filePath);
+  // Parse it as an array
+  const apps = Array.from(JSON.parse(filedata.toString())) as string[];
+  let output = '// SAGE3 Generated from apps.json file\n\n';
+  for (let i in apps) {
+    const it = apps[i];
+    output += `import { name as ${it}Name, init as default${it} } from './apps/${it}';\n`;
+  }
+
   output += `\n`;
   output += `export const initialValues = {\n`;
   for (let i in apps) {
@@ -96,7 +122,6 @@ async function updateApps(root: string) {
     output += `  [${it}Name]: default${it},\n`;
   }
   output += `};\n\n`;
-  output += `export * from './components';\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);
@@ -185,6 +210,8 @@ export default async function (host: Tree, schema: Schema) {
     await updateApps(host.root);
     // update metadata.ts
     await updateTypes(host.root);
+    // update intialValues.ts
+    await updateInit(host.root);
   } catch (err) {
     console.log('generateFiles error', err);
   }
