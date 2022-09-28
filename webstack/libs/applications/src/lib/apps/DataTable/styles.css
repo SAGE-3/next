@@ -89,3 +89,7 @@ body:not(.nohover) tbody td:hover {
   border-bottom: 1px solid;
   border-color: #29487D;
 }
+
+.search {
+  background-color : ghostwhite;
+}

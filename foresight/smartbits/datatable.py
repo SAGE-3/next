@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 from os.path import splitext
 import pandas as pd
 import numpy as np
+import pyarrow as pa
+import pyarrow.csv as csv
 import time
 import math
 import magic
@@ -122,7 +124,9 @@ class DataTable(SmartBit):
         valid_exts = ['csv', 'tsv', 'json', 'xlxs']
         if extension in valid_exts:
             if extension == 'csv':
-                self._modified_df = pd.read_csv(response)
+                arrow_tbl = csv.read_csv(response)
+                self._modified_df = arrow_tbl.to_pandas()
+                # self._modified_df = pd.read_csv(response)
             elif extension == 'tsv':
                 self._modified_df = pd.read_table(response)
             elif extension == 'json':
@@ -138,19 +142,19 @@ class DataTable(SmartBit):
             pass
         else:
             self._modified_df.reset_index()
-        self._original_df = self._modified_df
-        self.paginate()
-        self.state.selectedCols = []
-        print("--------------")
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
+            self._original_df = self._modified_df
+            self.paginate()
+            self.state.selectedCols = []
+            print("--------------")
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
 
-        print("load_data")
-        print("I am sending this information")
-        print("=======================")
-        end = time.time()
-        print(f"time to load_data: {end - start}")
-        self.send_updates()
+            print("load_data")
+            print("I am sending this information")
+            print("=======================")
+            end = time.time()
+            print(f"time to load_data: {end - start}")
+            self.send_updates()
 
     def table_sort(self, selected_cols):
         self._modified_df.sort_values(by=selected_cols, inplace=True)
@@ -240,13 +244,22 @@ class DataTable(SmartBit):
         print("I am sending this information")
         self.send_updates()
 
-    def filter_rows(self, filter_input):
-        self._modified_df = self._modified_df.filter(like=filter_input, axis=0)
+    def filter_rows(self, filter_input, col):
+        print("Hello helppppp")
+        print("------------------")
+        print(type(filter_input))
+        print(type(col))
+        self._modified_df = self._modified_df.loc[filter_input in self._modified_df[col]]
+        # if col.isnumeric():
+        #     self._modified_df = self._modified_df.loc[self._modified_df[col] == int(filter_input)]
+        # else:
+        #     self._modified_df = self._modified_df.loc[self._modified_df[col] == filter_input]
+        # self._modified_df = self._modified_df.filter(like=filter_input, axis=0)
         self.paginate()
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("---------------------------------------------------------")
-        print("filter_rows")
+        print(f"filter_rows on {col}")
         print("I am sending this information")
         self.send_updates()
