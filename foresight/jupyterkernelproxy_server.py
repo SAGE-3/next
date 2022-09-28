@@ -7,7 +7,7 @@ import datetime
 import websockets
 
 
-# app = Flask(__name__)
+app = Flask(__name__)
 
 
 def format_execute_request_msg(code):
@@ -34,19 +34,22 @@ async def consumer(message):
 
 @app.route('/exec', methods=['POST'])
 async def run_code():
-    #req = request.get_json()
-    s3kern = "2d946c19-00ca-4158-ba3d-49b2334d7f26" #req["kernel"].decode("utf-8")
+    req = request.get_json()
+    print(req)
+    s3kern = "c530ce09-c043-4bdf-9caa-0807eb3e189d" #req["kernel"].decode("utf-8")
     base_ws = "ws://localhost:8888"
     socket_url = f"{base_ws}/api/kernels/{s3kern}/channels"
     session_id = uuid.uuid4().hex
     socket_url += '?session_id=' + session_id
 
-    #headers = {'Authorization': 'Token ' + req["towen"].decode("utf-8")}
-    headers = {'Authorization': 'Token ' + "021a5f3c0f0c286cd06b9337c506e904d8621c0b8c1c6ca3"}
-    ws = await websockets.connect(socket_url, extra_headers=headers)
+    #headers = {'Authorization': 'Token ' + req["token"].decode("utf-8")}
+    headers = {'Authorization': 'Token ' + "c4cfe5a5eea6cb6f0e3b14aed88f8768ddf22aa7ad74a680"}
+    ws = await websockets.connect(socket_url, extra_headers=headers, ping_timeout=None)
 
     # msg = format_execute_request_msg(req["code"])
-    msg = format_execute_request_msg("import pandas as pd\npd.DataFrame({'a':[1,2,3]})")
+    # msg = format_execute_request_msg("import pandas as pd\npd.DataFrame({'a':[1,2,3]})")
+    msg = format_execute_request_msg("a = 19")
+
     parent_msg_id = msg["parent_header"]["msg_id"]
 
     _ = await ws.send(json.dumps(msg))
@@ -72,4 +75,4 @@ async def run_code():
                 print("I am here 3")
                 break
     print(result)
-
+    return result
