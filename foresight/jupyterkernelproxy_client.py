@@ -23,7 +23,7 @@ class JupyterKernelClient(Borg):
     def __init__(self, url, startup_timeout=60):
         Borg.__init__(self)
         if not hasattr(self, "redis_serve"):
-            self.url  = url
+            self.url = url
             self.redis_server = redis.StrictRedis(host='localhost', port=6379, db=0)
             self.pubsub = self.redis_server.pubsub()
             self.pubsub.subscribe('jupyter_outputs')
