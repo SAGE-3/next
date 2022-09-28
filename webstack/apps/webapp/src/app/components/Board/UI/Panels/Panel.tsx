@@ -11,7 +11,7 @@ import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip 
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { StuckTypes, useUIStore } from '@sage3/frontend';
+import { PanelNames, StuckTypes, useUIStore } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -93,11 +93,12 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
 // Props for the Panel
 export type PanelProps = {
   title: string;
+  name: PanelNames;
   opened: boolean;
   setOpened: (opened: boolean) => void;
   height?: number;
   width: number;
-  zIndex?: number;
+  zIndex: number;
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
   stuck: StuckTypes;
@@ -119,7 +120,6 @@ export function Panel(props: PanelProps) {
   // Track the size of the panel
   const [w, setW] = useState(props.width);
   const [hover, setHover] = useState(false);
-  const [zIndex, setZIndex] = useState(props.zIndex ?? 10);
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
   const [winHeight, setHeight] = useState(window.innerHeight);
@@ -135,11 +135,8 @@ export function Panel(props: PanelProps) {
   // UI store
   const showUI = useUIStore((state) => state.showUI);
   const ref = useRef<HTMLDivElement>(null);
+  const bringPanelForward = useUIStore((state) => state.bringPanelForward);
 
-  function handleDblClick(e: any) {
-    e.stopPropagation();
-    setShowActions(!showActions);
-  }
   function handleClick(e: any) {
     e.stopPropagation();
     setShowActions(!showActions);
@@ -213,13 +210,12 @@ export function Panel(props: PanelProps) {
 
   // Handle a drag start of the panel
   const handleDragStart = (event: any, data: DraggableData) => {
-    setZIndex(200);
+    bringPanelForward(props.name);
     setHover(true);
   };
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
-    setZIndex(props.zIndex ?? 10);
     setHover(false);
     props.setPosition({ x: data.x, y: data.y });
     if (ref.current) {
@@ -275,10 +271,11 @@ export function Panel(props: PanelProps) {
         dragHandleClassName="header" // only allow dragging the header
         position={{ ...props.position }}
         bounds="window"
+        onClick={() => bringPanelForward(props.name)}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
-        style={{ transition: hover ? 'none' : 'all 0.2s', zIndex: zIndex, maxWidth: w + 'px' }}
+        style={{ transition: hover ? 'none' : 'all 0.2s', maxWidth: w + 'px', zIndex: props.zIndex }}
       >
         <Box
           display="flex"
@@ -292,6 +289,8 @@ export function Panel(props: PanelProps) {
           borderLeft={borderLeft}
           borderBottom={borderBottom}
           borderRight={borderRight}
+          zIndex={props.zIndex}
+          onClick={() => bringPanelForward(props.name)}
         >
           <Box
             width="25px"

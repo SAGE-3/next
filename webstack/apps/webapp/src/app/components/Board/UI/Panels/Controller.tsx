@@ -33,6 +33,7 @@ export function Controller(props: ControllerProps) {
   const setShow = useUIStore((state) => state.controller.setShow);
   const stuck = useUIStore((state) => state.controller.stuck);
   const setStuck = useUIStore((state) => state.controller.setStuck);
+  const bringPanelForward = useUIStore((state) => state.bringPanelForward);
 
   const avatarMenu = useUIStore((state) => state.avatarMenu);
   const applicationsMenu = useUIStore((state) => state.applicationsMenu);
@@ -59,9 +60,10 @@ export function Controller(props: ControllerProps) {
   };
 
   // Show the various panels
-  const handleShowMenu = (menuName: 'avatar' | 'applications' | 'navigation' | 'assets') => {
+  const handleShowMenu = (menuName: 'users' | 'applications' | 'navigation' | 'assets') => {
+    bringPanelForward(menuName);
     const panels = {
-      avatar: avatarMenu,
+      users: avatarMenu,
       applications: applicationsMenu,
       navigation: navigationMenu,
       assets: assetMenu,
@@ -82,6 +84,7 @@ export function Controller(props: ControllerProps) {
   return (
     <Panel
       title={(room?.data.name ? room.data.name : '') + ': ' + (board?.data.name ? board.data.name : '')}
+      name="controller"
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -98,7 +101,7 @@ export function Controller(props: ControllerProps) {
       <HStack w="100%">
         <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} isActive={false} onClick={handleHomeClick} />
 
-        <IconButtonPanel icon={<MdGroups />} description="Users" isActive={avatarMenu.show} onClick={() => handleShowMenu('avatar')} />
+        <IconButtonPanel icon={<MdGroups />} description="Users" isActive={avatarMenu.show} onClick={() => handleShowMenu('users')} />
         <IconButtonPanel
           icon={<MdApps />}
           description="Applications"

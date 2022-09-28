@@ -34,6 +34,8 @@ export enum StuckTypes {
   BottomLeft, // 9
 }
 
+export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller';
+
 // Typescript interface defining the store
 interface PanelUI {
   position: { x: number; y: number };
@@ -66,6 +68,8 @@ interface UIState {
   avatarMenu: PanelUI;
   controller: PanelUI;
   assetsMenu: PanelUI;
+  panelZ: string[];
+  bringPanelForward: (panel: PanelNames) => void;
 
   appToolbarPanelPosition: { x: number; y: number };
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
@@ -109,7 +113,16 @@ export const useUIStore = create<UIState>((set, get) => ({
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   boardLocked: false,
-
+  panelZ: ['assets', 'applications', 'navigation', 'users'],
+  bringPanelForward: (panel: string) => {
+    const z = get().panelZ;
+    const i = z.indexOf(panel);
+    if (i >= 0) {
+      z.splice(i, 1);
+      z.push(panel);
+      set((state) => ({ ...state, panelZ: z }));
+    }
+  },
   controller: {
     position: { x: 16, y: window.innerHeight - 350 },
     stuck: StuckTypes.None,

@@ -37,6 +37,7 @@ export function NavigationPanel(props: NavProps) {
   const controllerPosition = useUIStore((state) => state.controller.position);
   const boardLocked = useUIStore((state) => state.boardLocked);
   const lockBoard = useUIStore((state) => state.lockBoard);
+  const zIndex = useUIStore((state) => state.panelZ).indexOf('navigation');
 
   // Board size from the store
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -101,7 +102,8 @@ export function NavigationPanel(props: NavProps) {
 
   return (
     <Panel
-      title={'Minimap'}
+      title={'Navigation'}
+      name="navigation"
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -112,7 +114,7 @@ export function NavigationPanel(props: NavProps) {
       setShow={setShow}
       stuck={stuck}
       setStuck={setStuck}
-      zIndex={9}
+      zIndex={zIndex}
     >
       <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">

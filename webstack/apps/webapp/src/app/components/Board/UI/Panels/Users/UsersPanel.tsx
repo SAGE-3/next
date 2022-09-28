@@ -28,6 +28,7 @@ export function UsersPanel(props: AvatarProps) {
   const setShow = useUIStore((state) => state.avatarMenu.setShow);
   const stuck = useUIStore((state) => state.avatarMenu.stuck);
   const setStuck = useUIStore((state) => state.avatarMenu.setStuck);
+  const zIndex = useUIStore((state) => state.panelZ).indexOf('users');
 
   const controllerPosition = useUIStore((state) => state.controller.position);
   // if a menu is currently closed, make it "jump" to the controller
@@ -49,6 +50,7 @@ export function UsersPanel(props: AvatarProps) {
   return (
     <Panel
       title={'Users'}
+      name="users"
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -59,6 +61,7 @@ export function UsersPanel(props: AvatarProps) {
       setShow={setShow}
       stuck={stuck}
       setStuck={setStuck}
+      zIndex={zIndex}
     >
       <Box alignItems="center" p="1" width="100%" display="flex">
         {/* User Avatar */}

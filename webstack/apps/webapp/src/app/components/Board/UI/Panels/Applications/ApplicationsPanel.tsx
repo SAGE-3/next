@@ -39,6 +39,8 @@ export function ApplicationsPanel(props: ApplicationProps) {
   const stuck = useUIStore((state) => state.applicationsMenu.stuck);
   const setStuck = useUIStore((state) => state.applicationsMenu.setStuck);
 
+  const zIndex = useUIStore((state) => state.panelZ).indexOf('applications');
+
   const controllerPosition = useUIStore((state) => state.controller.position);
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -87,6 +89,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
   return (
     <Panel
       title="Applications"
+      name="applications"
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -97,6 +100,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       setShow={setShow}
       stuck={stuck}
       setStuck={setStuck}
+      zIndex={zIndex}
     >
       <VStack
         maxH={300}
@@ -126,11 +130,10 @@ export function ApplicationsPanel(props: ApplicationProps) {
           .sort((a, b) => a.localeCompare(b))
           // create a button for each application
           .map((appName) => (
-            <ButtonPanel key={appName} title={appName} candrag={"true"}
-              onClick={(e) => newApplication(appName as AppName)} />
+            <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
           ))}
       </VStack>
       {/* </Box> */}
-    </Panel >
+    </Panel>
   );
 }
