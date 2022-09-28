@@ -41,7 +41,7 @@ class AIPane(SmartBit):
 
     def test_function(self):
         print("++++++++++++++++++++++++++++++")
-        if len(self.state.hostedApps) != 0:
+        if len(self.state.hostedApps) > 0:
             print("Apps are being hosted: ")
             print(len(self.state.hostedApps.values()))
             print(self.state.hostedApps.values())
