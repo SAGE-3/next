@@ -20,14 +20,14 @@ type AssetsPanelProps = {
 };
 
 export function AssetsPanel(props: AssetsPanelProps) {
-  const position = useUIStore((state) => state.assetsMenu.position);
-  const setPosition = useUIStore((state) => state.assetsMenu.setPosition);
-  const opened = useUIStore((state) => state.assetsMenu.opened);
-  const setOpened = useUIStore((state) => state.assetsMenu.setOpened);
-  const show = useUIStore((state) => state.assetsMenu.show);
-  const setShow = useUIStore((state) => state.assetsMenu.setShow);
-  const stuck = useUIStore((state) => state.assetsMenu.stuck);
-  const setStuck = useUIStore((state) => state.assetsMenu.setStuck);
+  const position = useUIStore((state) => state.assetsPanel.position);
+  const setPosition = useUIStore((state) => state.assetsPanel.setPosition);
+  const opened = useUIStore((state) => state.assetsPanel.opened);
+  const setOpened = useUIStore((state) => state.assetsPanel.setOpened);
+  const show = useUIStore((state) => state.assetsPanel.show);
+  const setShow = useUIStore((state) => state.assetsPanel.setShow);
+  const stuck = useUIStore((state) => state.assetsPanel.stuck);
+  const setStuck = useUIStore((state) => state.assetsPanel.setStuck);
   const zIndex = useUIStore((state) => state.panelZ).indexOf('assets');
   const rooms = useRoomStore((state) => state.rooms);
   const controllerPosition = useUIStore((state) => state.controller.position);

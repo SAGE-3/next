@@ -26,14 +26,14 @@ export function NavigationPanel(props: NavProps) {
   const apps = useAppStore((state) => state.apps);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   // UI store
-  const position = useUIStore((state) => state.navigationMenu.position);
-  const setPosition = useUIStore((state) => state.navigationMenu.setPosition);
-  const opened = useUIStore((state) => state.navigationMenu.opened);
-  const setOpened = useUIStore((state) => state.navigationMenu.setOpened);
-  const show = useUIStore((state) => state.navigationMenu.show);
-  const setShow = useUIStore((state) => state.navigationMenu.setShow);
-  const stuck = useUIStore((state) => state.navigationMenu.stuck);
-  const setStuck = useUIStore((state) => state.navigationMenu.setStuck);
+  const position = useUIStore((state) => state.navigationPanel.position);
+  const setPosition = useUIStore((state) => state.navigationPanel.setPosition);
+  const opened = useUIStore((state) => state.navigationPanel.opened);
+  const setOpened = useUIStore((state) => state.navigationPanel.setOpened);
+  const show = useUIStore((state) => state.navigationPanel.show);
+  const setShow = useUIStore((state) => state.navigationPanel.setShow);
+  const stuck = useUIStore((state) => state.navigationPanel.stuck);
+  const setStuck = useUIStore((state) => state.navigationPanel.setStuck);
   const controllerPosition = useUIStore((state) => state.controller.position);
   const boardLocked = useUIStore((state) => state.boardLocked);
   const lockBoard = useUIStore((state) => state.lockBoard);

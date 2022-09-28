@@ -11,7 +11,7 @@ import { HStack, Tooltip, useToast } from '@chakra-ui/react';
 
 import { MdMap, MdGroups, MdFolder, MdApps, MdHome } from 'react-icons/md';
 
-import { StuckTypes, useBoardStore, useRoomStore, useUIStore } from '@sage3/frontend';
+import { PanelNames, StuckTypes, useBoardStore, useRoomStore, useUIStore } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from './Panel';
 
 export interface ControllerProps {
@@ -35,10 +35,10 @@ export function Controller(props: ControllerProps) {
   const setStuck = useUIStore((state) => state.controller.setStuck);
   const bringPanelForward = useUIStore((state) => state.bringPanelForward);
 
-  const avatarMenu = useUIStore((state) => state.avatarMenu);
-  const applicationsMenu = useUIStore((state) => state.applicationsMenu);
-  const navigationMenu = useUIStore((state) => state.navigationMenu);
-  const assetMenu = useUIStore((state) => state.assetsMenu);
+  const usersPanel = useUIStore((state) => state.usersPanel);
+  const applicationsPanel = useUIStore((state) => state.applicationsPanel);
+  const navigationPanel = useUIStore((state) => state.navigationPanel);
+  const assetsPanel = useUIStore((state) => state.assetsPanel);
 
   // Redirect the user back to the homepage when he clicks the green button in the top left corner
   const navigate = useNavigate();
@@ -60,25 +60,20 @@ export function Controller(props: ControllerProps) {
   };
 
   // Show the various panels
-  const handleShowMenu = (menuName: 'users' | 'applications' | 'navigation' | 'assets') => {
-    bringPanelForward(menuName);
-    const panels = {
-      users: avatarMenu,
-      applications: applicationsMenu,
-      navigation: navigationMenu,
-      assets: assetMenu,
-    };
-    const panel = panels[menuName];
-    delete panels[menuName];
-    Object.values(panels).forEach((p) => {
-      if (p.stuck === StuckTypes.Controller) p.setShow(false);
+  const handleShowPanel = (menuName: PanelNames) => {
+    [applicationsPanel, navigationPanel, usersPanel, assetsPanel].forEach((panel) => {
+      if (panel.name === menuName) {
+        if (panel.stuck == StuckTypes.Controller) {
+          panel.setShow(!panel.show);
+        } else {
+          panel.setShow(false);
+          panel.setStuck(StuckTypes.Controller);
+        }
+        bringPanelForward(menuName);
+      } else {
+        if (panel.stuck === StuckTypes.Controller) panel.setShow(false);
+      }
     });
-    if (panel.stuck == StuckTypes.Controller) {
-      panel.setShow(!panel.show);
-    } else {
-      panel.setShow(false);
-      panel.setStuck(StuckTypes.Controller);
-    }
   };
 
   return (
@@ -101,19 +96,29 @@ export function Controller(props: ControllerProps) {
       <HStack w="100%">
         <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} isActive={false} onClick={handleHomeClick} />
 
-        <IconButtonPanel icon={<MdGroups />} description="Users" isActive={avatarMenu.show} onClick={() => handleShowMenu('users')} />
+        <IconButtonPanel
+          icon={<MdGroups />}
+          description="Users"
+          isActive={usersPanel.show}
+          onClick={() => handleShowPanel(usersPanel.name)}
+        />
         <IconButtonPanel
           icon={<MdApps />}
-          description="Applications"
-          isActive={applicationsMenu.show}
-          onClick={() => handleShowMenu('applications')}
+          description={'Applications'}
+          isActive={applicationsPanel.show}
+          onClick={() => handleShowPanel(applicationsPanel.name)}
         />
-        <IconButtonPanel icon={<MdFolder />} description="Assets" isActive={assetMenu.show} onClick={() => handleShowMenu('assets')} />
+        <IconButtonPanel
+          icon={<MdFolder />}
+          description="Assets"
+          isActive={assetsPanel.show}
+          onClick={() => handleShowPanel(assetsPanel.name)}
+        />
         <IconButtonPanel
           icon={<MdMap />}
           description="Navigation"
-          isActive={navigationMenu.show}
-          onClick={() => handleShowMenu('navigation')}
+          isActive={navigationPanel.show}
+          onClick={() => handleShowPanel(navigationPanel.name)}
         />
       </HStack>
     </Panel>

@@ -46,6 +46,7 @@ interface PanelUI {
   setShow: (show: boolean) => void;
   stuck: StuckTypes; // if the panel is stuck, says direction, otherwise, None or Controller
   setStuck: (show: StuckTypes) => void;
+  name: PanelNames;
 }
 
 interface UIState {
@@ -62,12 +63,11 @@ interface UIState {
   appDragging: boolean; // Is the user dragging an app?
 
   // Panels & Context Menu
-  mainMenu: PanelUI;
-  applicationsMenu: PanelUI;
-  navigationMenu: PanelUI;
-  avatarMenu: PanelUI;
+  applicationsPanel: PanelUI;
+  navigationPanel: PanelUI;
+  usersPanel: PanelUI;
   controller: PanelUI;
-  assetsMenu: PanelUI;
+  assetsPanel: PanelUI;
   panelZ: string[];
   bringPanelForward: (panel: PanelNames) => void;
 
@@ -118,12 +118,14 @@ export const useUIStore = create<UIState>((set, get) => ({
     const z = get().panelZ;
     const i = z.indexOf(panel);
     if (i >= 0) {
-      z.splice(i, 1, panel);
+      z.splice(i, 1);
+      z.push(panel);
       set((state) => ({ ...state, panelZ: z }));
     }
   },
   controller: {
     position: { x: 16, y: window.innerHeight - 350 },
+    name: 'controller',
     stuck: StuckTypes.None,
     setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, controller: { ...state.controller, position: pos } })),
     setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, controller: { ...state.controller, stuck: stuck } })),
@@ -132,56 +134,50 @@ export const useUIStore = create<UIState>((set, get) => ({
     setShow: (show: boolean) => set((state) => ({ ...state, controller: { ...state.controller, show: show } })),
     show: true,
   },
-  assetsMenu: {
+  assetsPanel: {
     position: { x: 220, y: 130 },
+    name: 'assets',
     stuck: StuckTypes.Controller,
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, assetsMenu: { ...state.assetsMenu, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, assetsMenu: { ...state.assetsMenu, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, assetsMenu: { ...state.assetsMenu, opened: opened } })),
+    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, position: pos } })),
+    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, stuck: stuck } })),
+    setOpened: (opened: boolean) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, opened: opened } })),
     opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, assetsMenu: { ...state.assetsMenu, show: show } })),
+    setShow: (show: boolean) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, show: show } })),
     show: false,
   },
-  mainMenu: {
-    position: { x: 20, y: 130 },
-    stuck: StuckTypes.Controller,
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, mainMenu: { ...state.mainMenu, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, mainMenu: { ...state.mainMenu, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, mainMenu: { ...state.mainMenu, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, mainMenu: { ...state.mainMenu, show: show } })),
-    show: false,
-  },
-  applicationsMenu: {
+  applicationsPanel: {
     position: { x: 20, y: 325 },
     stuck: StuckTypes.Controller,
+    name: 'applications',
     setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, applicationsMenu: { ...state.applicationsMenu, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, applicationsMenu: { ...state.applicationsMenu, stuck: stuck } })),
+      set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, position: pos } })),
+    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, stuck: stuck } })),
     opened: true,
-    setOpened: (op: boolean) => set((state) => ({ ...state, applicationsMenu: { ...state.applicationsMenu, opened: op } })),
+    setOpened: (op: boolean) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, opened: op } })),
     show: false,
-    setShow: (show: boolean) => set((state) => ({ ...state, applicationsMenu: { ...state.applicationsMenu, show: show } })),
+    setShow: (show: boolean) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, show: show } })),
   },
-  navigationMenu: {
+  navigationPanel: {
     position: { x: 20, y: 690 },
     stuck: StuckTypes.Controller,
+    name: 'navigation',
     setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, navigationMenu: { ...state.navigationMenu, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, navigationMenu: { ...state.navigationMenu, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, navigationMenu: { ...state.navigationMenu, opened: opened } })),
+      set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, position: pos } })),
+    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, stuck: stuck } })),
+    setOpened: (opened: boolean) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, opened: opened } })),
     opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, navigationMenu: { ...state.navigationMenu, show: show } })),
+    setShow: (show: boolean) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, show: show } })),
     show: false,
   },
-  avatarMenu: {
+  usersPanel: {
     position: { x: 20, y: 20 },
     stuck: StuckTypes.Controller,
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, avatarMenu: { ...state.avatarMenu, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, avatarMenu: { ...state.avatarMenu, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, avatarMenu: { ...state.avatarMenu, opened: opened } })),
+    name: 'users',
+    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, position: pos } })),
+    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, stuck: stuck } })),
+    setOpened: (opened: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, opened: opened } })),
     opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, avatarMenu: { ...state.avatarMenu, show: show } })),
+    setShow: (show: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, show: show } })),
     show: false,
   },
   fitApps: (apps: App[]) => {
