@@ -113,7 +113,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   boardLocked: false,
-  panelZ: ['assets', 'applications', 'navigation', 'users'],
+  panelZ: ['assets', 'applications', 'navigation', 'users'], // List of panels that have zordering
   bringPanelForward: (panel: string) => {
     const z = get().panelZ;
     const i = z.indexOf(panel);

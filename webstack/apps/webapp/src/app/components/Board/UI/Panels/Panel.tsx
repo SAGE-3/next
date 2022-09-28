@@ -119,7 +119,7 @@ export type PanelProps = {
 export function Panel(props: PanelProps) {
   // Track the size of the panel
   const [w, setW] = useState(props.width);
-  const [hover, setHover] = useState(false);
+
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
   const [winHeight, setHeight] = useState(window.innerHeight);
@@ -136,11 +136,6 @@ export function Panel(props: PanelProps) {
   const showUI = useUIStore((state) => state.showUI);
   const ref = useRef<HTMLDivElement>(null);
   const bringPanelForward = useUIStore((state) => state.bringPanelForward);
-
-  function handleClick(e: any) {
-    e.stopPropagation();
-    setShowActions(!showActions);
-  }
 
   // Update the window size
   const updateDimensions = () => {
@@ -208,15 +203,17 @@ export function Panel(props: PanelProps) {
   const borderRight =
     props.stuck == StuckTypes.TopRight || props.stuck == StuckTypes.Right || props.stuck == StuckTypes.BottomRight ? border : '0px';
 
+  function handleMinimizeClick(e: any) {
+    e.stopPropagation();
+    setShowActions(!showActions);
+  }
   // Handle a drag start of the panel
   const handleDragStart = (event: any, data: DraggableData) => {
     bringPanelForward(props.name);
-    setHover(true);
   };
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
-    setHover(false);
     props.setPosition({ x: data.x, y: data.y });
     if (ref.current) {
       const we = ref.current['clientWidth'];
@@ -268,14 +265,14 @@ export function Panel(props: PanelProps) {
   if (showUI && props.show) {
     return (
       <Rnd
-        dragHandleClassName="header" // only allow dragging the header
+        dragHandleClassName="dragHandle" // only allow dragging the header
         position={{ ...props.position }}
         bounds="window"
         onClick={() => bringPanelForward(props.name)}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
-        style={{ transition: hover ? 'none' : 'all 0.2s', maxWidth: w + 'px', zIndex: props.zIndex }}
+        style={{ maxWidth: w + 'px', zIndex: props.zIndex }}
       >
         <Box
           display="flex"
@@ -289,8 +286,6 @@ export function Panel(props: PanelProps) {
           borderLeft={borderLeft}
           borderBottom={borderBottom}
           borderRight={borderRight}
-          zIndex={props.zIndex}
-          onClick={() => bringPanelForward(props.name)}
         >
           <Box
             width="25px"
@@ -299,34 +294,35 @@ export function Panel(props: PanelProps) {
             backgroundSize="8px 8px"
             mr="3"
             cursor="move"
-            className="header"
+            className="dragHandle"
           />
 
           <Box bg={panelBackground} cursor="auto" maxWidth={w - 45 + 'px'}>
             <Box mb={2} display="flex" justifyContent="space-between">
-              <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
-                <Text
-                  whiteSpace={'nowrap'}
-                  overflow={'hidden'}
-                  textAlign="left"
-                  pl="1"
-                  mr="2"
-                  color={textColor}
-                  fontSize={bigFont}
-                  fontWeight="bold"
-                  className="header"
-                  cursor="move"
-                  onDoubleClick={props.titleDblClick}
-                >
-                  {props.title}
-                </Text>
-              </Tooltip>
+              <Box flexGrow={1} className="dragHandle">
+                <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
+                  <Text
+                    whiteSpace={'nowrap'}
+                    overflow={'hidden'}
+                    textAlign="left"
+                    pl="1"
+                    mr="2"
+                    color={textColor}
+                    fontSize={bigFont}
+                    fontWeight="bold"
+                    cursor="move"
+                    onDoubleClick={props.titleDblClick}
+                  >
+                    {props.title}
+                  </Text>
+                </Tooltip>
+              </Box>
 
               <Box>
                 {showActions ? (
-                  <IconButton size="xs" as={MdExpandLess} aria-label="show less" onClick={handleClick} mx="1" cursor="pointer" />
+                  <IconButton size="xs" as={MdExpandLess} aria-label="show less" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
                 ) : (
-                  <IconButton size="xs" as={MdExpandMore} aria-label="show more" onClick={handleClick} mx="1" cursor="pointer" />
+                  <IconButton size="xs" as={MdExpandMore} aria-label="show more" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
                 )}
                 {props.showClose ? (
                   <IconButton
