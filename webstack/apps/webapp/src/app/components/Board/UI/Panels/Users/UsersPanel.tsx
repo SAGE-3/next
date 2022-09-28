@@ -20,14 +20,15 @@ export interface AvatarProps {
 }
 
 export function UsersPanel(props: AvatarProps) {
-  const position = useUIStore((state) => state.avatarMenu.position);
-  const setPosition = useUIStore((state) => state.avatarMenu.setPosition);
-  const opened = useUIStore((state) => state.avatarMenu.opened);
-  const setOpened = useUIStore((state) => state.avatarMenu.setOpened);
-  const show = useUIStore((state) => state.avatarMenu.show);
-  const setShow = useUIStore((state) => state.avatarMenu.setShow);
-  const stuck = useUIStore((state) => state.avatarMenu.stuck);
-  const setStuck = useUIStore((state) => state.avatarMenu.setStuck);
+  const position = useUIStore((state) => state.usersPanel.position);
+  const setPosition = useUIStore((state) => state.usersPanel.setPosition);
+  const opened = useUIStore((state) => state.usersPanel.opened);
+  const setOpened = useUIStore((state) => state.usersPanel.setOpened);
+  const show = useUIStore((state) => state.usersPanel.show);
+  const setShow = useUIStore((state) => state.usersPanel.setShow);
+  const stuck = useUIStore((state) => state.usersPanel.stuck);
+  const setStuck = useUIStore((state) => state.usersPanel.setStuck);
+  const zIndex = useUIStore((state) => state.panelZ).indexOf('users');
 
   const controllerPosition = useUIStore((state) => state.controller.position);
   // if a menu is currently closed, make it "jump" to the controller
@@ -49,6 +50,7 @@ export function UsersPanel(props: AvatarProps) {
   return (
     <Panel
       title={'Users'}
+      name="users"
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -59,6 +61,7 @@ export function UsersPanel(props: AvatarProps) {
       setShow={setShow}
       stuck={stuck}
       setStuck={setStuck}
+      zIndex={zIndex}
     >
       <Box alignItems="center" p="1" width="100%" display="flex">
         {/* User Avatar */}

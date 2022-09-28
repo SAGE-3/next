@@ -18,6 +18,7 @@ import { ClearBoardModal } from './UI/ClearBoardModal';
 import { Alfred } from './UI/Alfred';
 
 import JSZip from 'jszip';
+import { useState } from 'react';
 
 type UILayerProps = {
   boardId: string;
@@ -26,10 +27,6 @@ type UILayerProps = {
 
 export function UILayer(props: UILayerProps) {
   // UI Store
-  const setScale = useUIStore((state) => state.setScale);
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const boardWidth = useUIStore((state) => state.boardWidth);
-  const boardHeight = useUIStore((state) => state.boardHeight);
   const fitApps = useUIStore((state) => state.fitApps);
 
   // Asset store
