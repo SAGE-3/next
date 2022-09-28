@@ -118,8 +118,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     const z = get().panelZ;
     const i = z.indexOf(panel);
     if (i >= 0) {
-      z.splice(i, 1);
-      z.push(panel);
+      z.splice(i, 1, panel);
       set((state) => ({ ...state, panelZ: z }));
     }
   },
