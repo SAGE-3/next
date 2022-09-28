@@ -17,7 +17,6 @@ type ContextProps = {
   roomId: string;
   boardId: string;
   clearBoard: () => void;
-  fitToBoard: () => void;
   showAllApps: () => void;
   downloadBoard: () => void;
 };
@@ -119,19 +118,6 @@ export function BoardContextMenu(props: ContextProps) {
             onClick={toggleColorMode}
           >
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={props.fitToBoard}
-          >
-            Fit View to Board
           </Button>
           <Button
             w="100%"

@@ -6,6 +6,16 @@ import asyncio
 import websockets
 import base64
 
+# Info to connect to the jupyter kernel
+# Inside docker compose, the jupyter server is called 'jupyter' (see docker-compose.yml)
+base = "http://jupyter:8888"
+# Jupyter auth token
+jupyter_token = "4b8802de45fbb34d"
+# The kernel we are going to use
+s3kern = "6fc19ae4-89da-4611-96b3-2acdd268f7ad"
+
+print('Looking for kernel: {}'.format(s3kern))
+
 # A unique session ID
 sessionID = uuid.uuid4().hex
 
@@ -46,15 +56,6 @@ async def consumer(mesg):
   else:
     print('Got>', msg)
 
-# Info to connect to the jupyter kernel
-# Inside docker compose, the jupyter server is called 'jupyter' (see docker-compose.yml)
-base = "http://jupyter:8888"
-# Jupyter auth token
-jupyter_token = "4b8802de45fbb34d"
-# The kernel we are going to use
-s3kern = "6fc19ae4-89da-4611-96b3-2acdd268f7ad"
-
-print('Looking for kernel: {}'.format(s3kern))
 
 # Jupyter token for authentication
 headers = {'Authorization': 'Token ' + jupyter_token}

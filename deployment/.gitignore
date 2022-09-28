@@ -5,6 +5,9 @@ configurations/node/keys/*.crt
 configurations/node/keys/*.key
 configurations/node/keys/*.pem
 
+configurations/jupyter/conf/keys/*.crt
+configurations/jupyter/conf/keys/*.key
+
 foresight/ai_services
 foresight/media_server
 foresight/message_broker
