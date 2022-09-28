@@ -26,17 +26,18 @@ export function NavigationPanel(props: NavProps) {
   const apps = useAppStore((state) => state.apps);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   // UI store
-  const position = useUIStore((state) => state.navigationMenu.position);
-  const setPosition = useUIStore((state) => state.navigationMenu.setPosition);
-  const opened = useUIStore((state) => state.navigationMenu.opened);
-  const setOpened = useUIStore((state) => state.navigationMenu.setOpened);
-  const show = useUIStore((state) => state.navigationMenu.show);
-  const setShow = useUIStore((state) => state.navigationMenu.setShow);
-  const stuck = useUIStore((state) => state.navigationMenu.stuck);
-  const setStuck = useUIStore((state) => state.navigationMenu.setStuck);
+  const position = useUIStore((state) => state.navigationPanel.position);
+  const setPosition = useUIStore((state) => state.navigationPanel.setPosition);
+  const opened = useUIStore((state) => state.navigationPanel.opened);
+  const setOpened = useUIStore((state) => state.navigationPanel.setOpened);
+  const show = useUIStore((state) => state.navigationPanel.show);
+  const setShow = useUIStore((state) => state.navigationPanel.setShow);
+  const stuck = useUIStore((state) => state.navigationPanel.stuck);
+  const setStuck = useUIStore((state) => state.navigationPanel.setStuck);
   const controllerPosition = useUIStore((state) => state.controller.position);
   const boardLocked = useUIStore((state) => state.boardLocked);
   const lockBoard = useUIStore((state) => state.lockBoard);
+  const zIndex = useUIStore((state) => state.panelZ).indexOf('navigation');
 
   // Board size from the store
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -101,7 +102,8 @@ export function NavigationPanel(props: NavProps) {
 
   return (
     <Panel
-      title={'Minimap'}
+      title={'Navigation'}
+      name="navigation"
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -112,6 +114,7 @@ export function NavigationPanel(props: NavProps) {
       setShow={setShow}
       stuck={stuck}
       setStuck={setStuck}
+      zIndex={zIndex}
     >
       <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
