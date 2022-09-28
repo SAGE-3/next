@@ -154,6 +154,19 @@ import {colMenus} from "./colMenus";
 //   )
 // }
 
+// const Input = (props: App) : JSX.Element => {
+//   const s = props.data.state as AppState;
+//   const updateState = useAppStore(state => state.updateState);
+//
+//   function handleKeyDown(e) {
+//     if (e.key == 'Enter') {
+//       props.data.state.
+//     }
+//   }
+//
+//   return()
+// }
+
 
 const Pagination = (props: App): JSX.Element => {
 
@@ -621,10 +634,29 @@ function AppComponent(props: App): JSX.Element {
     console.log(s)
   }
 
-  function handleFilterInput(ev: any) {
-    setFilterInput(ev.target.value)
-    updateState(props._id,{executeInfo: {"executeFunc": "filter_rows", "params": {"filter_input": ev.target.value}}})
+  // function handleFilterInput(ev: React.FormEvent<HTMLInputElement>, col: string) {
+  //   const value = ev.currentTarget.value;
+  //   console.log(col)
+  //   console.log(typeof col)
+  //   setFilterInput(value)
+  //   updateState(props._id,{executeInfo: {"executeFunc": "filter_rows", "params": {"filter_input": value, "col": col}}})
+  // }
+
+  function enterSearch(ev: any, col: string) {
+    if (ev.key === "Enter") {
+      const value = ev.currentTarget.value;
+      console.log(col)
+      console.log(typeof col)
+      setFilterInput(value)
+      updateState(props._id, {
+        executeInfo: {
+          "executeFunc": "filter_rows",
+          "params": {"filter_input": value, "col": col}
+        }
+      })
+    }
   }
+
 
   return (
     <AppWindow app={props}>
@@ -635,14 +667,19 @@ function AppComponent(props: App): JSX.Element {
           <p>s.selectedCols: {s.selectedCols}</p>
 
           <HStack>
-            {headers?.map((col: any, index: number) => (
+            {headers?.map((col: string, index: number) => (
               <>
-                <p>{col}: {filterInput}</p>
-                <Input
-                  value={filterInput}
-                  onChange={handleFilterInput}
-                  size='sm'
+                <p>{col}</p>
+                <input type="text"
+                       className="search"
+                       onKeyDown={(e: React.FormEvent<HTMLInputElement>) => enterSearch(e, col)}
                 />
+                {/*<Input*/}
+                {/*  // value={filterInput}*/}
+                {/*  // onChange={(e: React.FormEvent<HTMLInputElement>) => handleFilterInput(e, col)}*/}
+                {/*  onSubmit={}*/}
+                {/*  size='sm'*/}
+                {/*/>*/}
               </>
             ))}
           </HStack>
