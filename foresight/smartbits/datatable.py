@@ -142,19 +142,18 @@ class DataTable(SmartBit):
             pass
         else:
             self._modified_df.reset_index()
-            self._original_df = self._modified_df
-            self.paginate()
-            self.state.selectedCols = []
-            print("--------------")
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
-
-            print("load_data")
-            print("I am sending this information")
-            print("=======================")
-            end = time.time()
-            print(f"time to load_data: {end - start}")
-            self.send_updates()
+        self._original_df = self._modified_df
+        self.paginate()
+        self.state.selectedCols = []
+        print("--------------")
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        print("load_data")
+        print("I am sending this information")
+        print("=======================")
+        end = time.time()
+        print(f"time to load_data: {end - start}")
+        self.send_updates()
 
     def table_sort(self, selected_cols):
         self._modified_df.sort_values(by=selected_cols, inplace=True)
@@ -206,7 +205,7 @@ class DataTable(SmartBit):
         self.send_updates()
 
     def restore_table(self):
-        self._modified_df = self._df
+        self._modified_df = self._original_df
         self.paginate()
         self.state.selectedCols = []
         self.state.timestamp = time.time()
@@ -245,11 +244,7 @@ class DataTable(SmartBit):
         self.send_updates()
 
     def filter_rows(self, filter_input, col):
-        print("Hello helppppp")
-        print("------------------")
-        print(type(filter_input))
-        print(type(col))
-        self._modified_df = self._modified_df.loc[filter_input in self._modified_df[col]]
+        self._modified_df = self._modified_df[self._modified_df[col].str.contains(filter_input)]
         # if col.isnumeric():
         #     self._modified_df = self._modified_df.loc[self._modified_df[col] == int(filter_input)]
         # else:

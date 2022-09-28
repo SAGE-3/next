@@ -666,10 +666,12 @@ function AppComponent(props: App): JSX.Element {
           <p>s.selectedRows: {s.selectedRows}</p>
           <p>s.selectedCols: {s.selectedCols}</p>
 
-          <HStack>
+          <HStack display="flex" wrap="wrap" justifyContent="space-between">
             {headers?.map((col: string, index: number) => (
               <>
-                <p>{col}</p>
+                <p>
+                  {col}
+                </p>
                 <input type="text"
                        className="search"
                        onKeyDown={(e: React.FormEvent<HTMLInputElement>) => enterSearch(e, col)}

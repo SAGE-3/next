@@ -58,7 +58,8 @@ function AppComponent(props: App): JSX.Element {
       const client = {
         [app._id]: app._id
       }
-      const includedAppTypes: AppName[] = ['AIPane']
+      // TODO Handle AIPanes overlapping AIPanes
+      // const includedAppTypes: AppName[] = ['AIPane']
       if (
         app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
         app.data.position.x + app.data.size.width > props.data.position.x &&
