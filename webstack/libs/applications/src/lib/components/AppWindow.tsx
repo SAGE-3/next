@@ -250,6 +250,7 @@ export function AppWindow(props: WindowProps) {
           borderRadius="8px"
           cursor="move"
           userSelect={'none'}
+          zIndex={999999}
         ></Box>
       ) : null}
       {/* This div is to block the app from being interacted with */}
@@ -263,6 +264,7 @@ export function AppWindow(props: WindowProps) {
           borderRadius="8px"
           pointerEvents={'none'}
           userSelect={'none'}
+          zIndex={999999}
         ></Box>
       ) : null}
 

@@ -60,23 +60,28 @@ export function Controller(props: ControllerProps) {
 
   // Show the various panels
   const handleShowMenu = (menuName: 'avatar' | 'applications' | 'navigation' | 'assets') => {
-    if (avatarMenu.stuck == StuckTypes.Controller) {
-      avatarMenu.setShow(menuName == 'avatar' ? !avatarMenu.show : false);
-    }
-    if (navigationMenu.stuck == StuckTypes.Controller) {
-      navigationMenu.setShow(menuName == 'navigation' ? !navigationMenu.show : false);
-    }
-    if (assetMenu.stuck == StuckTypes.Controller) {
-      assetMenu.setShow(menuName == 'assets' ? !assetMenu.show : false);
-    }
-    if (applicationsMenu.stuck == StuckTypes.Controller) {
-      applicationsMenu.setShow(menuName == 'applications' ? !applicationsMenu.show : false);
+    const panels = {
+      avatar: avatarMenu,
+      applications: applicationsMenu,
+      navigation: navigationMenu,
+      assets: assetMenu,
+    };
+    const panel = panels[menuName];
+    delete panels[menuName];
+    Object.values(panels).forEach((p) => {
+      if (p.stuck === StuckTypes.Controller) p.setShow(false);
+    });
+    if (panel.stuck == StuckTypes.Controller) {
+      panel.setShow(!panel.show);
+    } else {
+      panel.setShow(false);
+      panel.setStuck(StuckTypes.Controller);
     }
   };
 
   return (
     <Panel
-      title={(room?.data.name ? room.data.name : '') + ' > ' + (board?.data.name ? board.data.name : '')}
+      title={(room?.data.name ? room.data.name : '') + ': ' + (board?.data.name ? board.data.name : '')}
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -91,46 +96,22 @@ export function Controller(props: ControllerProps) {
       zIndex={100}
     >
       <HStack w="100%">
-        <Tooltip label="Home" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} isActive={false} onClick={handleHomeClick} />
-        </Tooltip>
+        <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} isActive={false} onClick={handleHomeClick} />
 
-        <Tooltip label="Users" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButtonPanel
-            icon={<MdGroups />}
-            description="Avatars"
-            disabled={false}
-            isActive={avatarMenu.show}
-            onClick={() => handleShowMenu('avatar')}
-          />
-        </Tooltip>
-        <Tooltip label="Apps" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButtonPanel
-            icon={<MdApps />}
-            description="Launch applications"
-            disabled={false}
-            isActive={applicationsMenu.show}
-            onClick={() => handleShowMenu('applications')}
-          />
-        </Tooltip>
-        <Tooltip label="Assets" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButtonPanel
-            icon={<MdFolder />}
-            description="Assets"
-            disabled={false}
-            isActive={assetMenu.show}
-            onClick={() => handleShowMenu('assets')}
-          />
-        </Tooltip>
-        <Tooltip label="Map" placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButtonPanel
-            icon={<MdMap />}
-            description="Navigation"
-            disabled={false}
-            isActive={navigationMenu.show}
-            onClick={() => handleShowMenu('navigation')}
-          />
-        </Tooltip>
+        <IconButtonPanel icon={<MdGroups />} description="Users" isActive={avatarMenu.show} onClick={() => handleShowMenu('avatar')} />
+        <IconButtonPanel
+          icon={<MdApps />}
+          description="Applications"
+          isActive={applicationsMenu.show}
+          onClick={() => handleShowMenu('applications')}
+        />
+        <IconButtonPanel icon={<MdFolder />} description="Assets" isActive={assetMenu.show} onClick={() => handleShowMenu('assets')} />
+        <IconButtonPanel
+          icon={<MdMap />}
+          description="Navigation"
+          isActive={navigationMenu.show}
+          onClick={() => handleShowMenu('navigation')}
+        />
       </HStack>
     </Panel>
   );
