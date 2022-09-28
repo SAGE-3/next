@@ -3,6 +3,7 @@
   width: 30px;
   background-color: red;
   border-radius: 50%;
+  display: inline-block;
 }
 
 .greenCircle {
@@ -10,4 +11,5 @@
   width: 30px;
   background-color: green;
   border-radius: 50%;
+  display: inline-block;
 }

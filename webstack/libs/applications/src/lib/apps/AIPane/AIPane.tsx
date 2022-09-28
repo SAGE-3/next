@@ -7,7 +7,7 @@
  */
 
 import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
-import {Box, Button, Icon, IconButton, Select} from '@chakra-ui/react';
+import {Box, Button, Icon, IconButton, Select, useToast} from '@chakra-ui/react';
 import {App, AppName} from '../../schema';
 import './styles.css';
 
@@ -33,6 +33,10 @@ function AppComponent(props: App): JSX.Element {
   const locationState = location.state as { roomId: string };
   const assets = useAssetStore(state => state.assets);
   const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
+  const update = useAppStore((state) => state.update);
+
+  const prevX = useRef(0)
+  const prevY = useRef(0)
 
   // Way to manage a collection of App objects in local state
   // const apps = useAppStore(state => state.apps);
@@ -48,12 +52,13 @@ function AppComponent(props: App): JSX.Element {
   //   setSelApps(selAppsArray);
   // }, [JSON.stringify(s.hostedApps), apps])
 
+  // Checks for apps on or off the pane
   useEffect(() => {
     for (const app of boardApps) {
       const client = {
         [app._id]: app._id
       }
-  const includedAppTypes: AppName[] = ['AIPane']
+      const includedAppTypes: AppName[] = ['AIPane']
       if (
         app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
         app.data.position.x + app.data.size.width > props.data.position.x &&
@@ -74,43 +79,60 @@ function AppComponent(props: App): JSX.Element {
         }
       } else {
         if (Object.values(s.hostedApps).includes(app._id)) {
-          const localHosted = {...s.hostedApps}
-          delete localHosted[app._id]
-          updateState(props._id, {hostedApps: localHosted})
+          const hostedCopy = {...s.hostedApps}
+          delete hostedCopy[app._id]
+          updateState(props._id, {hostedApps: hostedCopy})
           console.log('app ' + app._id + ' removed from hostedApps')
         }
       }
     }
-  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.position.z, selApp?.data.size.height, selApp?.data.size.width])
+  }, [selApp?.data.position, selApp?.data.size])
 
   //TODO Be mindful of client updates
   // Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
   // Refer to videoViewer play function
   useEffect(() => {
     const appIds = boardApps.map(el => el._id);
-    const copyofhostapps = {} as {[key: string]: string};
+    const copyofhostapps = {} as { [key: string]: string };
 
-     Object.keys(s.hostedApps).forEach((key: string) => {
-        if (appIds.includes(s.hostedApps[key])) copyofhostapps[key] = key;
-      });
-     updateState(props._id, {hostedApps: copyofhostapps})
+    Object.keys(s.hostedApps).forEach((key: string) => {
+      if (appIds.includes(s.hostedApps[key])) copyofhostapps[key] = key;
+    });
+    updateState(props._id, {hostedApps: copyofhostapps})
   }, [boardApps.length])
 
-  useEffect(() => {
-    testFunction()
-  }, [Object.keys(s.hostedApps).length])
+  // // Test function for backend, just prints hosted app ID's
+  // useEffect(() => {
+  //   testFunction()
+  // }, [Object.keys(s.hostedApps).length])
 
   //TODO Move all apps together with the AIPane
-  // function cluster() {
-  //   for (const app in s.hostedApps) {
-  //     if (props.data.position changes) {
-  //       const x = props.data.position.x - props.data.position.prevX
-  //       const y = props.data.position.y - props.data.position.prevY
-  //       app.data.position.x += x
-  //       app.data.position.y += y
-  //     }
-  //   }
-  // }
+  useEffect(() => {
+    const hostedCopy = {...s.hostedApps}
+    const xDiff = props.data.position.x - prevX.current
+    const yDiff = props.data.position.y - prevY.current
+
+    console.log("xDiff " + xDiff)
+    console.log("yDiff " + yDiff)
+
+    for (const app of boardApps) {
+      const client = {
+        [app._id]: app._id
+      }
+      if (Object.values(hostedCopy).includes(app._id)) {
+        update(app._id, {
+          position:{
+            x: app.data.position.x += xDiff,
+            y: app.data.position.y += yDiff,
+            z: app.data.position.z
+          }
+        })
+      }
+    }
+    console.log("Cluster useEffect")
+    prevX.current = props.data.position.x
+    prevY.current = props.data.position.y
+  }, [props.data.position.x, props.data.position.y])
 
   const handleFileSelected = () => {
     // TODO
@@ -129,13 +151,14 @@ function AppComponent(props: App): JSX.Element {
           right='50px'
           top='50px'
         >
-          {Object.keys(s.hostedApps).length > 0 ? (<Icon as={FcOk} boxSize={10}/>) : (<Icon as={FcCancel} boxSize={10}/>)}
+          {Object.keys(s.hostedApps).length > 0 ? (<span className="greenCircle"/>) : (<span className="redCircle"/>)}
         </Box>
 
         <>
           selectedApp {selectedAppId}<br/>
-          length of hostedappsarr {Object.keys(s.hostedApps).length}<br/>
+          length of hostedappsarr: {Object.keys(s.hostedApps).length}<br/>
           hostedapps: {Object.values(s.hostedApps)}<br/>
+
           {/*Board assests dropdown*/}
           {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
           {/*  {roomAssets.map(el =>*/}
@@ -153,12 +176,20 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
+  function testFunction() {
+    updateState(props._id, {executeInfo: {"executeFunc": "test_function", "params": {}}})
+  }
+
   return (
     <>
       <IconButton
         aria-label="Run AI"
         icon={<BsFillTriangleFill/>}
         _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+        onClick={() => {
+          testFunction()
+        }
+        }
       />
     </>
   );
