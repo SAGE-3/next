@@ -239,6 +239,7 @@ export function AppWindow(props: WindowProps) {
           border={`${4}px solid ${selectColor}`}
           borderRadius="8px"
           pointerEvents="none"
+          zIndex={2}
         ></Box>
       ) : null}
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
@@ -253,6 +254,7 @@ export function AppWindow(props: WindowProps) {
           borderRadius="8px"
           cursor="move"
           userSelect={'none'}
+          zIndex={2}
         ></Box>
       ) : null}
       {/* This div is to block the app from being interacted with */}
@@ -266,6 +268,7 @@ export function AppWindow(props: WindowProps) {
           borderRadius="8px"
           pointerEvents={'none'}
           userSelect={'none'}
+          zIndex={2}
         ></Box>
       ) : null}
 
@@ -332,7 +335,15 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
+      <Box
+        id={'app_' + props.app._id}
+        width={size.width}
+        height={size.height}
+        overflow="hidden"
+        zIndex={2}
+        display={minimized ? 'none' : 'inherit'}
+        borderRadius="md"
+      >
         {props.children}
       </Box>
     </Rnd>

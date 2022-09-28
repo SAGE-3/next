@@ -20,14 +20,15 @@ type AssetsPanelProps = {
 };
 
 export function AssetsPanel(props: AssetsPanelProps) {
-  const position = useUIStore((state) => state.assetsMenu.position);
-  const setPosition = useUIStore((state) => state.assetsMenu.setPosition);
-  const opened = useUIStore((state) => state.assetsMenu.opened);
-  const setOpened = useUIStore((state) => state.assetsMenu.setOpened);
-  const show = useUIStore((state) => state.assetsMenu.show);
-  const setShow = useUIStore((state) => state.assetsMenu.setShow);
-  const stuck = useUIStore((state) => state.assetsMenu.stuck);
-  const setStuck = useUIStore((state) => state.assetsMenu.setStuck);
+  const position = useUIStore((state) => state.assetsPanel.position);
+  const setPosition = useUIStore((state) => state.assetsPanel.setPosition);
+  const opened = useUIStore((state) => state.assetsPanel.opened);
+  const setOpened = useUIStore((state) => state.assetsPanel.setOpened);
+  const show = useUIStore((state) => state.assetsPanel.show);
+  const setShow = useUIStore((state) => state.assetsPanel.setShow);
+  const stuck = useUIStore((state) => state.assetsPanel.stuck);
+  const setStuck = useUIStore((state) => state.assetsPanel.setStuck);
+  const zIndex = useUIStore((state) => state.panelZ).indexOf('assets');
   const rooms = useRoomStore((state) => state.rooms);
   const controllerPosition = useUIStore((state) => state.controller.position);
   const [roomName, setRoomName] = useState('');
@@ -54,7 +55,6 @@ export function AssetsPanel(props: AssetsPanelProps) {
       setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
     }
   }, [controllerPosition]);
-
 
   // subscribe to the asset store
   useEffect(() => {
@@ -100,6 +100,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
     <>
       <Panel
         title={`Assets available in "${roomName}"`}
+        name="assets"
         opened={opened}
         setOpened={setOpened}
         setPosition={setPosition}
@@ -110,16 +111,15 @@ export function AssetsPanel(props: AssetsPanelProps) {
         setShow={setShow}
         stuck={stuck}
         setStuck={setStuck}
+        zIndex={zIndex}
       >
         <Box display="flex" flexDirection="column">
           <Box alignItems="center" p="1" width={'3xl'} display="flex">
             <Files files={assetsList} />
           </Box>
           <Divider p={0} mt={1} mb={2} />
-          <Flex >
-            <Text fontSize={'xs'}>
-              To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder
-            </Text>
+          <Flex>
+            <Text fontSize={'xs'}>To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder</Text>
             <Spacer />
             <Button colorScheme="green" width="100px" size={'xs'} onClick={onOpen}>
               Upload

@@ -36,7 +36,7 @@ async def consumer(message):
 async def run_code():
     req = request.get_json()
     print(req)
-    s3kern = "c530ce09-c043-4bdf-9caa-0807eb3e189d" #req["kernel"].decode("utf-8")
+    s3kern = req["kernel"].decode("utf-8")
     base_ws = "ws://localhost:8888"
     socket_url = f"{base_ws}/api/kernels/{s3kern}/channels"
     session_id = uuid.uuid4().hex
