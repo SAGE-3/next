@@ -12,14 +12,13 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
   app: App;
   aspectRatio?: number | boolean;
   children: JSX.Element;
-
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
 };
@@ -60,6 +59,9 @@ export function AppWindow(props: WindowProps) {
   const [minimized, setMinimized] = useState(props.app.data.minimized);
   const [myZ, setMyZ] = useState(zindex);
   const [appWasDragged, setAppWasDragged] = useState(false);
+
+  // Detect if spacebar is held down to allow for board dragging through apps
+  const spaceBar = useKeyPress(' ');
 
   // Track the app store errors
   useEffect(() => {
@@ -214,6 +216,7 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
         zIndex: myZ,
+        pointerEvents: spaceBar ? 'none' : 'auto',
       }}
       // minimum size of the app: 200 px
       minWidth={200}
@@ -236,6 +239,7 @@ export function AppWindow(props: WindowProps) {
           border={`${4}px solid ${selectColor}`}
           borderRadius="8px"
           pointerEvents="none"
+          zIndex={2}
         ></Box>
       ) : null}
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
@@ -250,6 +254,7 @@ export function AppWindow(props: WindowProps) {
           borderRadius="8px"
           cursor="move"
           userSelect={'none'}
+          zIndex={2}
         ></Box>
       ) : null}
       {/* This div is to block the app from being interacted with */}
@@ -263,6 +268,7 @@ export function AppWindow(props: WindowProps) {
           borderRadius="8px"
           pointerEvents={'none'}
           userSelect={'none'}
+          zIndex={2}
         ></Box>
       ) : null}
 
@@ -329,7 +335,15 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
+      <Box
+        id={'app_' + props.app._id}
+        width={size.width}
+        height={size.height}
+        overflow="hidden"
+        zIndex={2}
+        display={minimized ? 'none' : 'inherit'}
+        borderRadius="md"
+      >
         {props.children}
       </Box>
     </Rnd>

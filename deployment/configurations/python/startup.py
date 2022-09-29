@@ -12,64 +12,101 @@ printer = pprint.PrettyPrinter(indent=1, depth=5, width=120, compact=True)
 #########################################################
 ###### Get configuration from environment variable ######
 #########################################################
-prod = os.getenv('ENVIRONMENT')
+prod_type = os.getenv('ENVIRONMENT')
+if prod_type == 'development' and not os.getenv('SAGE3_SERVER'):
+    os.setenv('SAGE3_SERVER', "localhost:3333")
 host = os.getenv('SAGE3_SERVER')
 
-if prod == 'backend' or prod == 'production':
-    print('Mode> Production / Backend')
-    redisServer = 'redis-server'
-    if prod == 'production':
-        # Pass the actual FQDN of the server
-        if host:
-          server = host
-        else:
-          server = 'host.docker.internal'
-        jupyterServer = 'https://' + server + ':4443'
-        webServer = 'https://' + server
-        wsServer = 'wss://' + server + '/api'
-    else:
-        jupyterServer = 'http://jupyter:8888'
-        # host of the docker container in backend mode
-        server = 'host.docker.internal:3333'
-        webServer = 'http://' + server
-        wsServer = 'ws://' + server + '/api'
-else:
-    print('Mode> Development')
-    jupyterServer = 'http://localhost'
-    redisServer = 'localhost'
-    server = 'localhost:3333'
-    webServer = 'http://' + server
-    wsServer = 'ws://' + server + '/api'
+server = host if host else 'host.docker.internal'
+
+# TODO: move this to configuration
+config = {
+    "production": {
+        "jupyterServer": f"https://{server}:4443",
+        "redis_server": "redis-server",
+        "web_server": f"https://{server}",
+        "ws_server": f"wss://{server}/api",
+    },
+    "development": {
+        "jupyter_server": 'http://localhost',
+        "redis_server": "localhost",
+        "web_server": f"http://{server}",
+        "ws_server": f"ws://{server}/api",
+    }
+}
+
+redis_server = config[prod_type]["redis_server"]
+jupyter_server = config[prod_type]["jupyter_server"]
+server = config[prod_type]["server"]
+web_server = config[prod_type]["web_server"]
+ws_server = config[prod_type]["ws_server"]
+
+# if prod == 'backend' or prod == 'production':
+#     print('Mode> Production / Backend')
+#     redisServer = 'redis-server'
+#     if prod == 'production':
+#         # Pass the actual FQDN of the server
+#         if host:
+#           server = host
+#         else:
+#           server = 'host.docker.internal'
+#     else:
+#         jupyterServer = 'http://jupyter:8888'
+#         # host of the docker container in backend mode
+#         server = 'host.docker.internal:3333'
+#         webServer = 'http://' + server
+#         wsServer = 'ws://' + server + '/api'
+# else:
+#     print('Mode> Development')
+#     jupyterServer = 'http://localhost'
+#     redisServer = 'localhost'
+#     server = 'localhost:3333'
+#     webServer = 'http://' + server
+#     wsServer = 'ws://' + server + '/api'
 
 #########################################################
 ###### Connect to REDIS to get Jupyter token       ######
 #########################################################
 
-red = redis.StrictRedis(redisServer, 6379, charset="utf-8", decode_responses=True)
-jtoken = red.get('config:jupyter:token')
-print('Jupyter> Token', jtoken)
+def get_j_token(redis_server, port=6379, token_path="config:jupyter:token"):
+    red = redis.StrictRedis(redis_server, port, charset="utf-8", decode_responses=True)
+    j_token = red.get(token_path)
+    print('Jupyter> Token', j_token)
+    return j_token
 
-#########################################################
-###### Connect to Jupyter and get list of sessions ######
-#########################################################
+
+def print_kernels(jupyter_server, j_headers):
+    # Get list of kernels
+    j_url = jupyter_server + '/api/kernels'
+    print(f"Jupyter url{j_url}")
+    response = requests.get(j_url, headers=j_headers)
+    if response.status_code == 200:
+        kernels = json.loads(response.text)
+        print('Jupyter> kernels:')
+        for k in kernels:
+            print('\t', k['name'], k['id'], k['execution_state'])
+            jsocket = jupyterServer.replace('http', 'ws') + "/api/kernels/" + k["id"] + "/channels"
+            print('\tsocket', jsocket)
+    else:
+        print(f"Jupyter> Error{response.text}")
+
+async def list_boards(sock):
+    """
+    Get the list of boards
+    """
+    messageId = str(uuid.uuid4())
+    msg_sub = { 'route': '/api/boards', 'method': 'GET', 'id': messageId}
+    # send the message
+    await sock.send(json.dumps(msg_sub))
+    return  messageId
+
 
 # Jupyter token for authentication
-jheaders = {'Authorization': 'Token ' + jtoken}
+j_token = get_j_token(redis_server)
+j_headers = {'Authorization': 'Token ' + j_token}
+print_kernels(jupyter_server, j_headers)
 
-# Get list of kernels
-j_url = jupyterServer + '/api/kernels'
-print('Jupyter> url', j_url)
-response = requests.get(j_url, headers=jheaders)
-if response.status_code == 200:
-  kernels = json.loads(response.text)
-  print('Jupyter> kernels:')
-  for k in kernels:
-    print('\t-', k['name'], k['id'], k['execution_state'])
-    jsocket = jupyterServer.replace('http', 'ws') +  "/api/kernels/"+k["id"]+"/channels"
-    print('\t- socket', jsocket)
 
-else:
-  print('Jupyter> Error', response.text)
 
 
 #########################################################
@@ -83,14 +120,6 @@ with open('jwt_sage3.json') as f:
     token = data['token']
 print('SAGE3> Token:', token)
 
-async def listBoards(sock):
-    """Get the list of boards
-    """
-    messageId = str(uuid.uuid4())
-    msg_sub = { 'route': '/api/boards', 'method': 'GET', 'id': messageId}
-    # send the message
-    await sock.send(json.dumps(msg_sub))
-    return  messageId
 
 async def main():
   print('SAGE3> server url', wsServer)
@@ -98,8 +127,8 @@ async def main():
       # async with websockets.connect(socket_server + socket_path) as ws:
       print('SAGE3> connected')
 
-      # listBoards: send the message and wait for the responses
-      msg_id = await listBoards(ws)
+      # list_boards: send the message and wait for the responses
+      msg_id = await list_boards(ws)
 
       # loop to receive messages
       async for msg in ws:

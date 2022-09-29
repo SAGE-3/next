@@ -46,7 +46,6 @@ const AppComponent = (props: App): JSX.Element => {
 
   // Room and board location
   const location = useLocation();
-  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
   // Get information  about the current Jupyter kernel
   useEffect(() => {
@@ -70,6 +69,7 @@ const AppComponent = (props: App): JSX.Element => {
         }).then((response) => response.json())
           .then((res) => {
             // console.log('Jupyter> Got sessions', res);
+            const { boardId } = location.state as { boardId: string; roomId: string };
             for (const s of res) {
               if (s.name === boardId) {
                 // console.log('Jupyter> Found python3 kernel', s.kernel.id);
