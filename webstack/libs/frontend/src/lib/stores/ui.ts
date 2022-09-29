@@ -103,6 +103,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   scale: 1.0,
   boardWidth: 3840,
   boardHeight: 2160,
+  selectedBoardId: '',
   gridSize: 1,
   zIndex: 1,
   showUI: true,
