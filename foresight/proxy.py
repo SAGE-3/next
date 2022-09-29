@@ -23,12 +23,9 @@ from typing import Callable
 from pydantic import BaseModel
 import asyncio
 import json
-# import time
-# import multiprocessing
 import threading
 import websockets
 import argparse
-# import urllib3
 from board import Board
 import uuid
 from multiprocessing import Queue
@@ -36,6 +33,7 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
+from config import config as conf, prod_type
 
 import logging
 logging.getLogger().setLevel(logging.INFO)
@@ -71,7 +69,6 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    logging.info('Watch out!')
     logging.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
     # print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
     msg_sub = {
@@ -95,12 +92,11 @@ def update_dest_from_src(src_val, dest_app, dest_field):
     dest_app.send_updates()
 
 class SAGEProxy():
-    def __init__(self, config_file, room_id):
+    def __init__(self, room_id, conf, prod_type):
         self.room = Room(room_id)
-        # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
-        # NB_TRIALS = 5
-        self.__config = json.load(open(config_file))
-        self.__headers = {'Authorization': f"Bearer {self.__config['token']}"}
+        self.conf = conf
+        self.prod_type = prod_type
+        self.__headers = {'Authorization': f"Bearer {self.conf['token']}"}
         self.__message_queue = Queue()
         self.__OBJECT_CREATION_METHODS = {
             "CREATE": self.__handle_create,
@@ -108,12 +104,12 @@ class SAGEProxy():
             "DELETE": self.__handle_delete,
         }
         self.httpx_client = httpx.Client()
-        self.s3_comm = SageCommunication(config_file)
+        self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}
         self.received_msg_log = {}
 
     def authenticat_new_user(self):
-        r = self.httpx_client.post( self.__config['server'] + '/auth/jwt', headers=self.__headers)
+        r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + '/auth/jwt', headers=self.__headers)
         response = r.json()
 
     def populate_exisitng(self):
@@ -129,8 +125,8 @@ class SAGEProxy():
 
 
     async def receive_messages(self):
-        async with websockets.connect(self.__config["socket_server"],
-                                      extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
+        async with websockets.connect(self.conf[self.prod_type]["ws_server"]+"/api",
+                                      extra_headers={"Authorization": f"Bearer {self.conf['token']}"}) as ws:
             await subscribe(ws, self.room.room_id)
             # print("completed subscription, checking if boards and apps already there")
             self.populate_exisitng()
@@ -277,11 +273,9 @@ def get_cmdline_parser():
     return parser
 
 # For development purposes only.
-token = json.load(open('config/config.json', 'r'))['token']
-session = requests.Session()
-session.headers = {'Authorization':'Bearer ' + token}
-room_id = session.get('http://localhost:3333/api/rooms').json()['data'][0]['_id']
-sage_proxy = SAGEProxy("config/config.json", room_id)
+token = conf['token']
+room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
+sage_proxy = SAGEProxy(room_id, conf, prod_type)
 
 # sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
 

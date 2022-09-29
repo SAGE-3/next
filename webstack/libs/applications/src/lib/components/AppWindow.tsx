@@ -12,7 +12,7 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
@@ -61,7 +61,19 @@ export function AppWindow(props: WindowProps) {
   const [appWasDragged, setAppWasDragged] = useState(false);
 
   // Detect if spacebar is held down to allow for board dragging through apps
-  const spaceBar = useKeyPress(' ');
+  const spacebarPressed = useKeyPress(' ');
+
+  // Delete an app while mouseover and delete pressed
+  const [mouseOver, setMouseOver] = useState(false);
+  useHotkeys(
+    'ctrl+d',
+    () => {
+      if (mouseOver && !selected) {
+        deleteApp(props.app._id);
+      }
+    },
+    { dependencies: [mouseOver, selected] }
+  );
 
   // Track the app store errors
   useEffect(() => {
@@ -216,7 +228,7 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
         zIndex: myZ,
-        pointerEvents: spaceBar ? 'none' : 'auto',
+        pointerEvents: spacebarPressed ? 'none' : 'auto',
       }}
       // minimum size of the app: 200 px
       minWidth={200}
@@ -255,6 +267,12 @@ export function AppWindow(props: WindowProps) {
           cursor="move"
           userSelect={'none'}
           zIndex={2}
+          onMouseEnter={() => {
+            setMouseOver(true);
+          }}
+          onMouseLeave={() => {
+            setMouseOver(false);
+          }}
         ></Box>
       ) : null}
       {/* This div is to block the app from being interacted with */}

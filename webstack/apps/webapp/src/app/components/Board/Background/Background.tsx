@@ -12,7 +12,7 @@ import { useUIStore, useAppStore, useUser, useAssetStore } from '@sage3/frontend
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -145,6 +145,8 @@ export function Background(props: BackgroundProps) {
       createApp(setupApp('CSVViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isDZI(fileType)) {
       createApp(setupApp('DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
+    } else if (isGLTF(fileType)) {
+      createApp(setupApp('GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 600, h: 600 }, { assetid: fileID }));
     } else if (isGeoJSON(fileType)) {
       createApp(setupApp('LeafLet', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isText(fileType)) {
