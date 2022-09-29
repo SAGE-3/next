@@ -9,7 +9,7 @@
 import { useNavigate } from 'react-router';
 import { HStack, Tooltip, useToast } from '@chakra-ui/react';
 
-import { MdMap, MdGroups, MdFolder, MdApps, MdHome } from 'react-icons/md';
+import { MdMap, MdGroups, MdFolder, MdApps, MdHome, MdBackHand, MdDoorBack, MdArrowBack } from 'react-icons/md';
 
 import { PanelNames, StuckTypes, useBoardStore, useRoomStore, useUIStore } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from './Panel';
@@ -43,7 +43,7 @@ export function Controller(props: ControllerProps) {
   // Redirect the user back to the homepage when he clicks the green button in the top left corner
   const navigate = useNavigate();
   function handleHomeClick() {
-    navigate('/home');
+    navigate('/home', { replace: true, state: { roomId: props.roomId } });
   }
 
   // Copy the board id to the clipboard
@@ -94,7 +94,13 @@ export function Controller(props: ControllerProps) {
       zIndex={100}
     >
       <HStack w="100%">
-        <IconButtonPanel icon={<MdHome />} description="Home" disabled={false} isActive={false} onClick={handleHomeClick} />
+        <IconButtonPanel
+          icon={<MdArrowBack />}
+          description={`Back to ${room?.data.name}`}
+          disabled={false}
+          isActive={false}
+          onClick={handleHomeClick}
+        />
 
         <IconButtonPanel
           icon={<MdGroups />}

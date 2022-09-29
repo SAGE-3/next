@@ -1,4 +1,14 @@
-{
+import os
+
+prod_type = os.getenv('ENVIRONMENT')
+if prod_type == 'development' and not os.getenv('SAGE3_SERVER'):
+    os.setenv('SAGE3_SERVER', "localhost:3333")
+
+host = os.getenv('SAGE3_SERVER')
+    
+server = host if host else 'host.docker.internal'
+
+config = {
     "production": {
         "jupyterServer": f"https://{server}:4443",
         "redis_server": "redis-server",

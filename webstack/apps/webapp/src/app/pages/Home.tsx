@@ -8,40 +8,43 @@
 
 import { useEffect, useState } from 'react';
 import { MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, Icon, Divider, IconButton, useDisclosure } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, IconButton, useDisclosure } from '@chakra-ui/react';
 
-import { SBDocument } from '@sage3/sagebase';
 import { EditRoomModal, useBoardStore, usePresence, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
-import { BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { Board, Room } from '@sage3/shared/types';
 
 import { BoardList } from '../components/Home/BoardList';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 import { BoardPreview } from '../components/Home/BoardPreview';
+import { useLocation } from 'react-router-dom';
 
 export function HomePage() {
   // User
   const { user } = useUser();
 
   // Room Store
-  const [selectedRoom, setSelectedRoom] = useState<SBDocument<RoomSchema> | null>(null);
+  const location = useLocation() as any;
+  const [roomId] = useState<string | undefined>(location.state?.roomId);
   const rooms = useRoomStore((state) => state.rooms);
+  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const roomOwner = selectedRoom?.data.ownerId === user?._id;
+  const roomsFetched = useRoomStore((state) => state.fetched);
+
+  // Board Store
+  const boards = useBoardStore((state) => state.boards);
+  const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
+
+  // Users and presence
+  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
+  const { update: updatePresence } = usePresence();
 
   // Edit room Modal disclosure
   const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
 
-  // Board Sotre
-  const boards = useBoardStore((state) => state.boards);
-  const [selectedBoard, setSelectedBoard] = useState<SBDocument<BoardSchema> | null>(null);
-
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-
-  // Users anad presence
-  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
-  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-  const { update: updatePresence } = usePresence();
 
   // Subscribe to user updates
   useEffect(() => {
@@ -49,26 +52,43 @@ export function HomePage() {
     subscribeToUsers();
   }, []);
 
-  function handleRoomClick(room: SBDocument<RoomSchema>) {
+  function handleRoomClick(room: Room) {
     setSelectedRoom(room);
     updatePresence({ roomId: room._id, boardId: '' });
-    setSelectedBoard(null);
+    setSelectedBoard(undefined);
   }
 
-  function handleBoardClick(board: SBDocument<BoardSchema>) {
+  function handleBoardClick(board: Board) {
     setSelectedBoard(board);
   }
 
   useEffect(() => {
-    console.log(rooms);
     if (!rooms.find((room) => room._id === selectedRoom?._id)) {
-      setSelectedRoom(null);
-      setSelectedBoard(null);
+      setSelectedRoom(undefined);
+      setSelectedBoard(undefined);
     }
     if (!boards.find((board) => board._id === selectedBoard?._id)) {
-      setSelectedBoard(null);
+      setSelectedBoard(undefined);
     }
   }, [rooms, boards]);
+
+  // To handle the case where the user is redirected to the home page from a board
+  useEffect(() => {
+    function goToMainRoom() {
+      // Go to Main RoomS hould be the oldest room on the server.
+      const room = rooms.reduce((prev, curr) => (prev._createdAt < curr._createdAt ? prev : curr));
+      handleRoomClick(room);
+    }
+    if (roomsFetched) {
+      if (!roomId) {
+        goToMainRoom();
+      } else {
+        // Go to room with id. Does room exist, if not go to main room
+        const room = rooms.find((room) => room._id === roomId);
+        room ? handleRoomClick(room) : goToMainRoom();
+      }
+    }
+  }, [roomsFetched]);
 
   return (
     <Box p="2">
