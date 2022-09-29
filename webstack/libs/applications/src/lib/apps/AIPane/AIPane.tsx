@@ -7,15 +7,15 @@
  */
 
 import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
-import {Box, Button, Icon, IconButton, Select, useToast} from '@chakra-ui/react';
+import {Box, Button, Icon, IconButton, Menu, MenuButton, MenuItem, MenuList, Select, useToast} from '@chakra-ui/react';
 import {App, AppName} from '../../schema';
 import './styles.css';
 
 import {state as AppState} from './index';
 import {AppWindow} from '../../components';
-import {useEffect, useState, useRef} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import {BsFillTriangleFill} from "react-icons/bs";
-import {FcCancel, FcOk} from "react-icons/fc"
+import {FiChevronDown} from "react-icons/fi";
 import {useLocation} from "react-router-dom";
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
@@ -122,7 +122,7 @@ function AppComponent(props: App): JSX.Element {
       }
       if (Object.values(hostedCopy).includes(app._id)) {
         update(app._id, {
-          position:{
+          position: {
             x: app.data.position.x += xDiff,
             y: app.data.position.y += yDiff,
             z: app.data.position.z
@@ -183,6 +183,27 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
+      <Menu>
+        <MenuButton
+          as={Button}
+          rightIcon={<FiChevronDown/>}
+        >
+          Client Apps
+        </MenuButton>
+        <MenuList>
+          {Object.values(s.hostedApps).map((app, key) => {
+            return (
+              <MenuItem
+                key={key}
+              >
+                {app}
+              </MenuItem>
+            )
+          })
+          }
+        </MenuList>
+
+      </Menu>
       <IconButton
         aria-label="Run AI"
         icon={<BsFillTriangleFill/>}

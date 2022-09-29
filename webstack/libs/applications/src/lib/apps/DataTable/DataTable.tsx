@@ -820,7 +820,7 @@ function AppComponent(props: App): JSX.Element {
         </Center>
 
         <div style={{display: s.totalRows !== 0 ? "block" : "none"}}>
-          <TableContainer overflowY="auto" display="flex" maxHeight="300px">
+          <TableContainer overflowY="auto" display="flex" maxHeight="21.75rem">
             <Table colorScheme="facebook" variant='simple' size="md" className="originalChakra">
               <Thead>
                 <Tr>
