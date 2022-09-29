@@ -56,6 +56,7 @@ function AppComponent(props: App): JSX.Element {
   const [file, setFile] = useState<Asset>();
   const [url, setUrl] = useState<string>('');
 
+  // Board scale
   const scale = useUIStore((state) => state.scale);
 
   // Get the asset from the state id value
@@ -78,17 +79,17 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      {/* <Box bgColor="rgb{156,162,146}" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px"> */}
-      <Canvas style={{ height: props.data.size.height / scale + 'px', width: props.data.size.width / scale + 'px' }}>
-        <CameraController />
-        <ambientLight />
-        <spotLight intensity={0.3} position={[5, 10, 50]} />
-        <primitive object={new THREE.AxesHelper(5)} />
-        <Suspense fallback={null}>
-          <Model3D url={url} />
-        </Suspense>
-      </Canvas>
-      {/* </Box> */}
+      <Box bgColor="rgb{156,162,146}" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px">
+        <Canvas style={{ height: props.data.size.height / scale + 'px', width: props.data.size.width / scale + 'px' }}>
+          <CameraController />
+          <ambientLight />
+          <spotLight intensity={0.3} position={[5, 10, 50]} />
+          <primitive object={new THREE.AxesHelper(5)} />
+          <Suspense fallback={null}>
+            <Model3D url={url} />
+          </Suspense>
+        </Canvas>
+      </Box>
     </AppWindow>
   );
 }
