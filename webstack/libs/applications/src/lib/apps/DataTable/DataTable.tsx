@@ -60,6 +60,7 @@ import './styles.css';
 import React, {useState, useEffect, useMemo} from 'react';
 // import {ColumnMenu} from "./components/ColumnMenu";
 import {colMenus} from "./colMenus";
+import {padding} from "vega-lite/build/src/compile/scale/properties";
 
 // const TextInput = (props: App): JSX.Element => {
 //   const s = props.data.state as AppState;
@@ -663,26 +664,19 @@ function AppComponent(props: App): JSX.Element {
 
       <>
         <div className="URL-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
-          <p>s.selectedRows: {s.selectedRows}</p>
-          <p>s.selectedCols: {s.selectedCols}</p>
+          {/*<p>s.selectedRows: {s.selectedRows}</p>*/}
+          {/*<p>s.selectedCols: {s.selectedCols}</p>*/}
 
-          <HStack display="flex" wrap="wrap" justifyContent="space-between">
+          <HStack display="flex" wrap="wrap" justifyContent="space-between" marginTop="1em">
             {headers?.map((col: string, index: number) => (
-              <>
-                <p>
-                  {col}
-                </p>
+              <div>
+                <label htmlFor={col}>{col}</label>
                 <input type="text"
+                       id={col}
                        className="search"
                        onKeyDown={(e: React.FormEvent<HTMLInputElement>) => enterSearch(e, col)}
                 />
-                {/*<Input*/}
-                {/*  // value={filterInput}*/}
-                {/*  // onChange={(e: React.FormEvent<HTMLInputElement>) => handleFilterInput(e, col)}*/}
-                {/*  onSubmit={}*/}
-                {/*  size='sm'*/}
-                {/*/>*/}
-              </>
+              </div>
             ))}
           </HStack>
 

@@ -244,7 +244,10 @@ class DataTable(SmartBit):
         self.send_updates()
 
     def filter_rows(self, filter_input, col):
-        self._modified_df = self._modified_df[self._modified_df[col].str.contains(filter_input)]
+        if filter_input == "":
+            self.restore_table()
+        else:
+            self._modified_df = self._modified_df[self._modified_df[col].str.lower().str.contains(filter_input.lower())]
         # if col.isnumeric():
         #     self._modified_df = self._modified_df.loc[self._modified_df[col] == int(filter_input)]
         # else:
