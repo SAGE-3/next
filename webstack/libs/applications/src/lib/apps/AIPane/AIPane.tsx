@@ -7,7 +7,19 @@
  */
 
 import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
-import {Box, Button, Icon, IconButton, Menu, MenuButton, MenuItem, MenuList, Select, useToast} from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Icon,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Portal,
+  Select,
+  useToast
+} from '@chakra-ui/react';
 import {App, AppName} from '../../schema';
 import './styles.css';
 
@@ -56,36 +68,41 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     for (const app of boardApps) {
       const client = {
-        [app._id]: app._id
+        [app._id]: app.data.name
       }
       // TODO Handle AIPanes overlapping AIPanes
       // const includedAppTypes: AppName[] = ['AIPane']
-      if (
-        app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
-        app.data.position.x + app.data.size.width > props.data.position.x &&
-        app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
-        app.data.size.height + app.data.position.y > props.data.position.y
-      ) {
-        //TODO do something to ignore AIPanes
-        // if (app.data.type === 'AIPane')
-        if (!Object.values(s.hostedApps).includes(app._id)) {
-          const hosted = {
-            ...s.hostedApps,
-            ...client
-          }
-          updateState(props._id, {hostedApps: hosted})
-          console.log('app ' + app._id + ' added')
-        } else {
-          console.log('app ' + app._id + ' already in hostedApps')
-        }
+      if (app.data.type === 'AIPane' && app._id !== props._id) {
+        break
       } else {
-        if (Object.values(s.hostedApps).includes(app._id)) {
-          const hostedCopy = {...s.hostedApps}
-          delete hostedCopy[app._id]
-          updateState(props._id, {hostedApps: hostedCopy})
-          console.log('app ' + app._id + ' removed from hostedApps')
+        if (
+          app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
+          app.data.position.x + app.data.size.width > props.data.position.x &&
+          app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
+          app.data.size.height + app.data.position.y > props.data.position.y
+        ) {
+          //TODO do something to ignore AIPanes
+
+          if (!Object.keys(s.hostedApps).includes(app._id)) {
+            const hosted = {
+              ...s.hostedApps,
+              ...client
+            }
+            updateState(props._id, {hostedApps: hosted})
+            console.log('app ' + app._id + ' added')
+          } else {
+            console.log('app ' + app._id + ' already in hostedApps')
+          }
+        } else {
+          if (Object.keys(s.hostedApps).includes(app._id)) {
+            const hostedCopy = {...s.hostedApps}
+            delete hostedCopy[app._id]
+            updateState(props._id, {hostedApps: hostedCopy})
+            console.log('app ' + app._id + ' removed from hostedApps')
+          }
         }
       }
+
     }
   }, [selApp?.data.position, selApp?.data.size])
 
@@ -97,7 +114,7 @@ function AppComponent(props: App): JSX.Element {
     const copyofhostapps = {} as { [key: string]: string };
 
     Object.keys(s.hostedApps).forEach((key: string) => {
-      if (appIds.includes(s.hostedApps[key])) copyofhostapps[key] = key;
+      if (appIds.includes(key)) copyofhostapps[key] = key;
     });
     updateState(props._id, {hostedApps: copyofhostapps})
   }, [boardApps.length])
@@ -118,9 +135,9 @@ function AppComponent(props: App): JSX.Element {
 
     for (const app of boardApps) {
       const client = {
-        [app._id]: app._id
+        [app._id]: app.data.name
       }
-      if (Object.values(hostedCopy).includes(app._id)) {
+      if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
             x: app.data.position.x += xDiff,
@@ -177,6 +194,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
+  const models = ["Model 1", "Model 2", "Model 3"]
+
   function testFunction() {
     updateState(props._id, {executeInfo: {"executeFunc": "test_function", "params": {}}})
   }
@@ -188,20 +207,20 @@ function ToolbarComponent(props: App): JSX.Element {
           as={Button}
           rightIcon={<FiChevronDown/>}
         >
-          Client Apps
+          Models
         </MenuButton>
-        <MenuList>
-          {Object.values(s.hostedApps).map((app, key) => {
-            return (
-              <MenuItem
-                key={key}
-              >
-                {app}
-              </MenuItem>
-            )
-          })
-          }
-        </MenuList>
+        <Portal>
+          <MenuList>
+            {models.map((model) => {
+              return (
+                <MenuItem>
+                  {model}
+                </MenuItem>
+              )
+            })
+            }
+          </MenuList>
+        </Portal>
 
       </Menu>
       <IconButton
