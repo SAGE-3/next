@@ -272,7 +272,7 @@ export function Panel(props: PanelProps) {
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
-        style={{ maxWidth: w + 'px', zIndex: props.zIndex }}
+        style={{ maxWidth: w + 'px', zIndex: props.zIndex, overflow: 'hidden' }}
       >
         <Box
           display="flex"
@@ -299,14 +299,14 @@ export function Panel(props: PanelProps) {
 
           <Box bg={panelBackground} cursor="auto" maxWidth={w - 45 + 'px'}>
             <Box mb={2} display="flex" justifyContent="space-between">
-              <Box flexGrow={1} className="dragHandle">
+              <Box flexGrow={1} maxWidth={w - 80 + 'px'} className="dragHandle">
                 <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
                   <Text
                     whiteSpace={'nowrap'}
                     overflow={'hidden'}
+                    textOverflow={'ellipsis'}
                     textAlign="left"
-                    pl="1"
-                    mr="2"
+                    mr="1"
                     color={textColor}
                     fontSize={bigFont}
                     fontWeight="bold"

@@ -13,12 +13,12 @@ import { MdSearch } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
-import { BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { Board, Room } from '@sage3/shared/types';
 
 type BoardListProps = {
-  onBoardClick: (board: SBDocument<BoardSchema>) => void;
-  selectedRoom: SBDocument<RoomSchema> | null;
-  selectedBoard: SBDocument<BoardSchema> | null;
+  onBoardClick: (board: Board) => void;
+  selectedRoom: Room | undefined;
+  selectedBoard: Board | undefined;
 };
 
 /**
@@ -38,7 +38,7 @@ export function BoardList(props: BoardListProps) {
   const presences = usePresenceStore((state) => state.presences);
 
   const [newBoardModal, setNewBoardModal] = useState(false);
-  const [filterBoards, setFilterBoards] = useState<SBDocument<BoardSchema>[] | null>(null);
+  const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
   const { auth } = useAuth();
 

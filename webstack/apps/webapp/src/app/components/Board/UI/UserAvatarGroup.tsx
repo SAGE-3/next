@@ -40,7 +40,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                 mx={1}
                 color="white"
                 showBorder={true}
-                borderWidth={'2px'}
+                borderWidth={'1px'}
                 borderColor="whiteAlpha.600"
               />
             </Tooltip>
