@@ -11,8 +11,10 @@ import { useEffect, useState } from 'react';
 
 // The Board's Clock
 export function BoardClock() {
+  // State of the current time
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
+  // Update the time on an interval every 30secs
   useEffect(() => {
     const interval = setInterval(() => {
       setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -20,6 +22,7 @@ export function BoardClock() {
     return () => clearInterval(interval);
   }, []);
 
+  // Show the clock in the upper right hand corner
   return (
     <Box
       display="flex"
