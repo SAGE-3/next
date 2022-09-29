@@ -6,13 +6,14 @@
  *
  */
 
-import { Box, Text } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
+import { Box, Text, useColorModeValue } from '@chakra-ui/react';
 
 // The Board's Clock
 export function BoardClock() {
   // State of the current time
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  const textColor = useColorModeValue('gray.800', 'gray.100');
 
   // Update the time on an interval every 30secs
   useEffect(() => {
@@ -35,7 +36,7 @@ export function BoardClock() {
       mr="2"
       mt="1"
     >
-      <Text fontSize="xl" fontWeight="bold" opacity={0.7}>
+      <Text fontSize="xl" fontWeight="bold" opacity={0.7} color={textColor} userSelect="none">
         {time}
       </Text>
     </Box>
