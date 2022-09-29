@@ -173,3 +173,14 @@ export function isMD(mimeType: string): boolean {
 export function isPython(mimeType: string): boolean {
   return mimeType === 'application/python';
 }
+
+/**
+ * Test if a given mime type is a GLTF binary file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isGLTF(mimeType: string): boolean {
+  return mimeType === 'model/gltf-binary';
+}
