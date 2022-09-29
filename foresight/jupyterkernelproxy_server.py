@@ -6,13 +6,17 @@ import uuid
 import datetime
 import websockets
 import os
+import redis
+import requests
 
 app = Flask(__name__)
 prod_type = os.getenv('ENVIRONMENT')
 if not prod_type:
     raise Exception("Cannot find ENVIRONMENT value. Should be either production or development")
-base_ws = conf[prod_type]['ws_server']
-print(f"base ws is: {base_ws}")
+base_ws = conf[prod_type]['jupyter_ws']
+print(f"base ws is {base_ws}")
+
+red = redis.StrictRedis(conf[prod_type]["redis_server"], 6379, charset="utf-8", decode_responses=True)
 
 def format_execute_request_msg(code):
     msg_type = 'execute_request'
@@ -33,20 +37,49 @@ def format_execute_request_msg(code):
 async def consumer(message):
     print(f"message is message\n{message}")
 
+def get_board_kernel_id(headers):
+    response = requests.get(conf[prod_type]["jupyter_server"] + "/api/kernels", headers=headers)
+    try:
+        board_kernel = json.loads(response.text)[0]["id"]
+        return board_kernel
+    except:
+        result = {"request_id": str(uuid.uuid4()), "error": "Couldn't connect to Kernel"}
+        print(result)
+        red.publish('jupyter_outputs', json.dumps(result))
+        return result
+
+def get_jupyter_token():
+    return red.get("config:jupyter:token")
+
 
 @app.route('/exec', methods=['POST'])
 async def run_code():
     global open_sockets
     req = request.get_json()
     print(req)
+    token = req["token"]
+    if not token:
+        token = get_jupyter_token()
+    headers = {'Authorization': f"Token {token}"}
+
     kernel_id = req["kernel"]
+    if not kernel_id:
+        kernel_id = get_board_kernel_id(headers)
+
     socket_url = f"{base_ws}/api/kernels/{kernel_id}/channels"
     session_id = uuid.uuid4().hex
     socket_url += '?session_id=' + session_id
 
-    headers = {'Authorization': f"Token {req['token']}"}
-    print(f"My socket URl is {socket_url}")
-    ws = await websockets.connect(socket_url, extra_headers=headers, ping_timeout=None)
+
+
+
+    try:
+        ws = await websockets.connect(socket_url, extra_headers=headers, ping_timeout=None)
+    except:
+        result = {"request_id": str(uuid.uuid4()), "error": "Couldn't connect to Kernel"}
+        print(result)
+        red.publish('jupyter_outputs', json.dumps(result))
+        return result
 
     # msg = format_execute_request_msg(req["code"])
     # msg = format_execute_request_msg("import pandas as pd\npd.DataFrame({'a':[1,2,3]})")
@@ -56,8 +89,8 @@ async def run_code():
     parent_msg_id = msg["parent_header"]["msg_id"]
 
     _ = await ws.send(json.dumps(msg))
-    result = {}
-    result["request_id"] = parent_msg_id
+
+    result = {"request_id": parent_msg_id}
 
     ready_to_end = False
     while not ws.closed:
@@ -77,5 +110,5 @@ async def run_code():
                 'execution_state'] == 'idle':
                 await ws.close()
     print(result)
-
+    red.publish('jupyter_outputs', json.dumps(result))
     return result
