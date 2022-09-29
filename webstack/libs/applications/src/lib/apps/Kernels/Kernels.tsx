@@ -81,7 +81,7 @@ function AppComponent(props: App): JSX.Element {
           {sessions.map((session, i) => {
             return (
               <ListItem key={i}>
-                session {i} - {session.name}
+                <b>Session</b> {i} - {session.name}
                 <UnorderedList >
                   <ListItem>id: {session.id}</ListItem>
                   <ListItem>kernel: {session.kernel.name} {session.kernel.id}</ListItem>
