@@ -7,37 +7,33 @@
  */
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { Box } from '@chakra-ui/react';
-import { Canvas, useLoader, useThree, useFrame } from '@react-three/fiber'
-import { Group } from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import * as THREE from "three";
+import { Canvas, useLoader, useThree, useFrame } from '@react-three/fiber';
+import { Group } from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import * as THREE from 'three';
 
-import { useAppStore, useAssetStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-import { App } from "../../schema";
+import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
-
 
 /**
  * Orbit controller
  */
 const CameraController = () => {
   const { camera, gl } = useThree();
-  useEffect(
-    () => {
-      const controls = new OrbitControls(camera, gl.domElement);
-      controls.minDistance = 2;
-      controls.maxDistance = 200;
-      controls.zoomO = 4;
-      return () => {
-        controls.dispose();
-      };
-    },
-    [camera, gl]
-  );
+  useEffect(() => {
+    const controls = new OrbitControls(camera, gl.domElement);
+    controls.minDistance = 2;
+    controls.maxDistance = 200;
+    controls.zoomO = 4;
+    return () => {
+      controls.dispose();
+    };
+  }, [camera, gl]);
   return null;
 };
 
@@ -46,9 +42,7 @@ const CameraController = () => {
  */
 function Model3D({ url }: { url: string }) {
   const gltf = useLoader(GLTFLoader, url);
-  return (
-    <primitive object={gltf.scene} />
-  )
+  return <primitive object={gltf.scene} />;
 }
 
 function AppComponent(props: App): JSX.Element {
@@ -62,6 +56,7 @@ function AppComponent(props: App): JSX.Element {
   const [file, setFile] = useState<Asset>();
   const [url, setUrl] = useState<string>('');
 
+  const scale = useUIStore((state) => state.scale);
 
   // Get the asset from the state id value
   useEffect(() => {
@@ -83,27 +78,24 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box bgColor="rgb{156,162,146}" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px">
-        <Canvas>
-          <CameraController />
-          <ambientLight />
-          <spotLight intensity={0.3} position={[5, 10, 50]} />
-          <primitive object={new THREE.AxesHelper(5)} />
-          <Suspense fallback={null}>
-            <Model3D url={url} />
-          </Suspense>
-        </Canvas>
-      </Box>
-    </AppWindow >
+      {/* <Box bgColor="rgb{156,162,146}" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px"> */}
+      <Canvas style={{ height: props.data.size.height / scale + 'px', width: props.data.size.width / scale + 'px' }}>
+        <CameraController />
+        <ambientLight />
+        <spotLight intensity={0.3} position={[5, 10, 50]} />
+        <primitive object={new THREE.AxesHelper(5)} />
+        <Suspense fallback={null}>
+          <Model3D url={url} />
+        </Suspense>
+      </Canvas>
+      {/* </Box> */}
+    </AppWindow>
   );
 }
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  return (
-    <>
-    </>
-  )
+  return <></>;
 }
 
 export default { AppComponent, ToolbarComponent };
