@@ -9,6 +9,7 @@
 import { Box, Text } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 
+// The Board's Clock
 export function BoardClock() {
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
