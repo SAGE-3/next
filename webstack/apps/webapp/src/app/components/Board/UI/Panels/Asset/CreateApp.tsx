@@ -91,7 +91,7 @@ export async function setupAppForFile(
         boardId: boardId,
         ownerId: userId,
         position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 400, depth: 0 },
+        size: { width: 600, height: 600, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'GLTFViewer',
         state: { ...initialValues['GLTFViewer'], assetid: file.id },
