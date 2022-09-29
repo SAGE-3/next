@@ -10,13 +10,13 @@ import { useEffect, useState } from 'react';
 import { Button, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
 
 import { SBDocument } from '@sage3/sagebase';
-import { RoomSchema } from '@sage3/shared/types';
+import { Room, RoomSchema } from '@sage3/shared/types';
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
 
 type RoomListProps = {
   onRoomClick: (room: SBDocument<RoomSchema>) => void;
-  selectedRoom: SBDocument<RoomSchema> | null;
+  selectedRoom: Room | undefined;
 };
 
 export function RoomList(props: RoomListProps) {
