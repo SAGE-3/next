@@ -12,7 +12,7 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
@@ -65,10 +65,15 @@ export function AppWindow(props: WindowProps) {
 
   // Delete an app while mouseover and delete pressed
   const [mouseOver, setMouseOver] = useState(false);
-  const deletePressed = useKeyPress('Delete');
-  if (deletePressed && mouseOver && !selected) {
-    deleteApp(props.app._id);
-  }
+  useHotkeys(
+    'ctrl+d',
+    () => {
+      if (mouseOver && !selected) {
+        deleteApp(props.app._id);
+      }
+    },
+    { dependencies: [mouseOver, selected] }
+  );
 
   // Track the app store errors
   useEffect(() => {
