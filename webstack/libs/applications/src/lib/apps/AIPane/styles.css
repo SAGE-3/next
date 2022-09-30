@@ -1,4 +1,4 @@
-.redCircle {
+.red-circle {
   height: 30px;
   width: 30px;
   background-color: red;
@@ -6,10 +6,22 @@
   display: inline-block;
 }
 
-.greenCircle {
+.green-circle {
   height: 30px;
   width: 30px;
   background-color: green;
   border-radius: 50%;
   display: inline-block;
+}
+
+.message-container {
+  position : absolute;
+  left : 2rem;
+  top : 3rem;
+}
+
+.status-container {
+  position : absolute;
+  right : 3rem;
+  top : 3rem;
 }
