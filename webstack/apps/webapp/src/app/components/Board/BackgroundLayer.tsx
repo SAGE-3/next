@@ -6,15 +6,19 @@
  *
  */
 
-import { Box, Tag } from '@chakra-ui/react';
-import { Applications, AppError } from '@sage3/applications/apps';
-import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Tag } from '@chakra-ui/react';
+
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GiArrowCursor } from 'react-icons/gi';
 import { DraggableData, Rnd } from 'react-rnd';
 import { throttle } from 'throttle-debounce';
+
+import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { Applications, AppError } from '@sage3/applications/apps';
+import { sageColorByName } from '@sage3/shared';
+
 import { Background } from './Background/Background';
 
 type BackgroundLayerProps = {
@@ -174,7 +178,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
                   transform: `scale(${1 / scale})`,
                 }}
               >
-                <GiArrowCursor color="red"></GiArrowCursor>
+                <GiArrowCursor color={sageColorByName(users.find((el) => el._id === presence.data.userId)?.data.color || 'red')}></GiArrowCursor>
                 <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
                   {/* using the ID before we can get the name */}
                   {users.find((el) => el._id === presence.data.userId)?.data.name}
