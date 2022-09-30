@@ -196,6 +196,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
+
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>
