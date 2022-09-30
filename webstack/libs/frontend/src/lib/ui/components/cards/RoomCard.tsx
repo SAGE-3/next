@@ -6,13 +6,12 @@
  *
  */
 
-import { Box, Icon, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
+import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { RoomSchema } from '@sage3/shared/types';
 import { sageColorByName } from '@sage3/shared';
 import { SBDocument } from '@sage3/sagebase';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
-import { MdLock, MdMeetingRoom, MdPerson, MdSettings } from 'react-icons/md';
-import { Room } from 'twilio-video';
+import { MdLock, MdPerson, MdSettings } from 'react-icons/md';
 import { useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
 
@@ -89,7 +88,7 @@ export function RoomCard(props: RoomCardProps) {
         }}
         position="relative"
         color={props.selected ? sageColorByName(props.room.data.color) : textColor}
-        onClick={onOpenEnter}
+        onClick={props.onEnter}
       >
         <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
           <Box display="flex" flexDirection={'column'} alignItems="center" ml="2">
@@ -115,7 +114,7 @@ export function RoomCard(props: RoomCardProps) {
               <Tooltip label="Edit Room" openDelay={400} placement="top-start" hasArrow>
                 <IconButton
                   onClick={onOpenEdit}
-                  color={props.selected ? props.room.data.color : borderColor}
+                  color={props.selected ? sageColorByName(props.room.data.color) : borderColor}
                   aria-label="Board Edit"
                   fontSize="3xl"
                   variant="ghost"
