@@ -5,19 +5,21 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
+
 import { useRef, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Box, Button, HStack, useColorModeValue, Tooltip,
   IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
-  // useColorMode, 
-  Flex, ButtonGroup, Spacer
+  Flex, ButtonGroup
 } from '@chakra-ui/react';
-import { v4 as getUUID } from 'uuid';
-import Ansi from 'ansi-to-react';
-import { JSONOutput } from './components/json';
 
-// import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
+import Ansi from 'ansi-to-react';
+// Date manipulation (for filename)
+import dateFormat from 'date-fns/format';
+// UUID generation
+import { v4 as getUUID } from 'uuid';
+
 import { MdDelete, MdPlayArrow, MdFileDownload, MdAdd, MdRemove } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
@@ -27,6 +29,7 @@ import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 
+// SAGE3 imports
 import { GetConfiguration, useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -34,8 +37,7 @@ import { App } from '../../schema';
 import { Markdown } from './components/markdown'
 // Utility functions from SAGE3
 import { downloadFile } from '@sage3/frontend';
-// Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+// import { JSONOutput } from './components/json';
 
 
 /**
@@ -55,7 +57,6 @@ const AppComponent = (props: App): JSX.Element => {
 
   // Get information  about the current Jupyter kernel
   useEffect(() => {
-    // update(props._id, { size: { width: 800, height: 600, depth: props.data.size.depth } });
     GetConfiguration().then((conf) => {
       if (conf.token) {
         updateState(props._id, { token: conf.token });
@@ -67,11 +68,6 @@ const AppComponent = (props: App): JSX.Element => {
           base = `http://${window.location.hostname}`;
         }
         const j_url = base + '/api/sessions';
-        // console.log(j_url);
-        // console.log(conf.token);
-        // console.log(s.language);
-        // console.log(s.kernel);
-        // console.log(s.token);
         // Talk to the jupyter server API
         fetch(j_url, {
           method: 'GET',
@@ -84,7 +80,6 @@ const AppComponent = (props: App): JSX.Element => {
             // console.log('Jupyter> Got sessions', res);
             const { boardId } = location.state as { boardId: string; roomId: string };
             for (const ss of res) {
-              // console.log(ss.name);
               if (ss.name === boardId) {
                 console.log('Jupyter> Found python3 kernel', ss.kernel.id);
                 updateState(props._id, { kernel: ss.kernel.id });
@@ -129,6 +124,7 @@ const InputBox = (props: App): JSX.Element => {
   const ace = useRef<AceEditor>(null);
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
+  const [fontSize, setFontSize] = useState(s.fontSize);
 
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
@@ -166,13 +162,10 @@ const InputBox = (props: App): JSX.Element => {
     setCode(c);
   };
 
-  const [fontSize, setFontSize] = useState(s.fontSize);
-
   useEffect(() => {
     // update local state from global state
     setFontSize(s.fontSize);
   }, [s.fontSize]);
-
 
   return (
     <>
@@ -183,7 +176,7 @@ const InputBox = (props: App): JSX.Element => {
           value={code}
           onChange={updateCode}
           readOnly={user?._id !== props._createdBy}
-          fontSize={s.fontSize+'rem'}
+          fontSize={s.fontSize + 'rem'}
           minLines={2}
           maxLines={20}
           placeholder="Enter code here"
@@ -253,13 +246,18 @@ const InputBox = (props: App): JSX.Element => {
   );
 }
 
-
+/**
+ * UI toolbar for the cell
+ *
+ * @param {App} props
+ * @returns {JSX.Element}
+ */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  
+
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
-  
+
   // Larger font size
   function handleIncreaseFont() {
     const fs = s.fontSize + 0.5;
@@ -349,8 +347,6 @@ const ProcessedOutput = (output: string) => {
   }
 };
 
-
-
 /*****************************************************************
  * 
  * This section reserved for rendering the outputs of the notebook
@@ -399,18 +395,6 @@ const RenderHTML = (html: string): JSX.Element => {
     />
   );
 };
-
-// const RenderTraceBack = (message: any): JSX.Element => {
-//   return (
-//     <>
-//       <Alert status="error" variant="left-accent">
-//         <AlertIcon />
-//         {/* <Ansi>{message.traceback}</Ansi> */}
-//         <AlertTitle mr={2}>{message.evalue}</AlertTitle>
-//       </Alert>
-//     </>
-//   );
-// };
 
 const RenderTraceBack = (line: string): JSX.Element => {
   return (
