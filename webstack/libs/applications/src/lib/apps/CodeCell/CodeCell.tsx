@@ -10,12 +10,15 @@ import { useLocation } from 'react-router-dom';
 import {
   Box, Button, HStack, useColorModeValue, Tooltip,
   IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
-  useColorMode, Flex, ButtonGroup
+  // useColorMode, 
+  Flex, ButtonGroup, Spacer
 } from '@chakra-ui/react';
 import { v4 as getUUID } from 'uuid';
+// import Ansi from 'ansi-to-react';
+import { JSONOutput } from './components/json';
 
-import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
-import { MdDelete, MdPlayArrow, MdFileDownload } from 'react-icons/md';
+// import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
+import { MdDelete, MdPlayArrow, MdFileDownload, MdAdd, MdRemove } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -34,14 +37,17 @@ import { downloadFile } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
+
 /**
- * CodeCell component
- * @param props application  props
- * @returns JSX.Element
+ * CodeCell - SAGE3 application
+ *
+ * @param {AppSchema} props
+ * @returns {JSX.Element}
  */
 const AppComponent = (props: App): JSX.Element => {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+
   const s = props.data.state as AppState;
 
   // Room and board location
@@ -49,8 +55,10 @@ const AppComponent = (props: App): JSX.Element => {
 
   // Get information  about the current Jupyter kernel
   useEffect(() => {
+    // update(props._id, { size: { width: 800, height: 600, depth: props.data.size.depth } });
     GetConfiguration().then((conf) => {
       if (conf.token) {
+        updateState(props._id, { token: conf.token });
         // Get list of sessions
         let base: string;
         if (conf.production) {
@@ -59,6 +67,11 @@ const AppComponent = (props: App): JSX.Element => {
           base = `http://${window.location.hostname}`;
         }
         const j_url = base + '/api/sessions';
+        // console.log(j_url);
+        // console.log(conf.token);
+        // console.log(s.language);
+        // console.log(s.kernel);
+        // console.log(s.token);
         // Talk to the jupyter server API
         fetch(j_url, {
           method: 'GET',
@@ -70,18 +83,20 @@ const AppComponent = (props: App): JSX.Element => {
           .then((res) => {
             // console.log('Jupyter> Got sessions', res);
             const { boardId } = location.state as { boardId: string; roomId: string };
-            for (const s of res) {
-              if (s.name === boardId) {
-                // console.log('Jupyter> Found python3 kernel', s.kernel.id);
-                updateState(props._id, { kernel: s.kernel.id });
-                update(props._id, { description: `CodeCell> ${s.kernel.id}` });
+            for (const ss of res) {
+              // console.log(ss.name);
+              if (ss.name === boardId) {
+                console.log('Jupyter> Found python3 kernel', ss.kernel.id);
+                updateState(props._id, { kernel: ss.kernel.id });
+                // update(props._id, { description: `CodeCell> ${ss.kernel.id}` });
+                update(props._id, { description: `CodeCell (running)` });
               }
             }
           })
           .catch((err) => {
+            update(props._id, { description: `CodeCell (kernel down)` });
             console.log('Jupyter> error', err);
           });
-
       }
     });
   }, []);
@@ -90,13 +105,23 @@ const AppComponent = (props: App): JSX.Element => {
     <AppWindow app={props}>
       <>
         <Box w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
-          {InputBox(props)}
-          {ProcessedOutput(s.output)}
+          <Box>{InputBox(props)}</Box>
+          {/* add a box with a vertical scroll */}
+          <Box w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} overflowY={'scroll'}>
+            <Box p={4} fontSize={s.fontSize + 'rem'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
+              {ProcessedOutput(s.output)}
+            </Box>
+            {/* <Box m={4} mb={'120px'} bg={useColorModeValue('#222', '#1A1A1A')} color={'#FFF'}>
+              <Text>**JSON FOR TESTING OUTPUTS**</Text>
+              {JSONOutput(s.output)}
+            </Box> */}
+          </Box>
         </Box>
       </>
     </AppWindow>
   );
 }
+
 
 const InputBox = (props: App): JSX.Element => {
   const s = props.data.state as AppState;
@@ -108,10 +133,13 @@ const InputBox = (props: App): JSX.Element => {
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
     // console.log(code);
+    console.log('CodeCell> execute', s.kernel);
     if (code) {
       updateState(props._id, {
         code: code,
         output: '',
+        token: s.token,
+        kernel: s.kernel,
         executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
       });
     }
@@ -121,6 +149,8 @@ const InputBox = (props: App): JSX.Element => {
     updateState(props._id, {
       code: '',
       output: '',
+      // token: s.token,
+      // kernel: s.kernel,
       executeInfo: { executeFunc: '', params: {} },
     });
     ace.current?.editor?.setValue('');
@@ -136,6 +166,14 @@ const InputBox = (props: App): JSX.Element => {
     setCode(c);
   };
 
+  const [fontSize, setFontSize] = useState(s.fontSize);
+
+  useEffect(() => {
+    // update local state from global state
+    setFontSize(s.fontSize);
+  }, [s.fontSize]);
+
+
   return (
     <>
       <HStack>
@@ -145,12 +183,11 @@ const InputBox = (props: App): JSX.Element => {
           value={code}
           onChange={updateCode}
           readOnly={user?._id !== props._createdBy}
-          fontSize={'1em'}
-          minLines={6}
-          maxLines={6}
-          // maxLines={Math.floor(props.data.size.height / 28)}
+          fontSize={s.fontSize+'rem'}
+          minLines={2}
+          maxLines={20}
           placeholder="Enter code here"
-          mode={'python'}
+          mode={s.language}
           theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
           editorProps={{ $blockScrolling: true }}
           setOptions={{
@@ -171,8 +208,8 @@ const InputBox = (props: App): JSX.Element => {
             padding: 0,
             overflow: 'hidden',
             backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-            boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
-            borderRadius: '12px',
+            boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
+            borderRadius: '4px',
           }}
           commands={[
             { name: 'Execute', bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' }, exec: handleExecute },
@@ -193,7 +230,7 @@ const InputBox = (props: App): JSX.Element => {
               icon={<MdPlayArrow size={'2em'} color={useColorModeValue('#008080', '#008080')} />}
             />
           </Tooltip>
-          <Tooltip hasArrow label="Clear All" placement="top-start" bgColor={'red'}>
+          <Tooltip hasArrow label="Clear All">
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -217,33 +254,22 @@ const InputBox = (props: App): JSX.Element => {
 }
 
 
-const ColorModeToggle = (): JSX.Element => {
-  const { colorMode, toggleColorMode } = useColorMode();
-
-  return (
-    /**
-     * Adds a random light/dark mode toggle to the app title bar.
-     */
-    <Flex h="0vh" justifyContent="right" alignItems="center">
-      <Button
-        mx={4}
-        mb={0}
-        size={'sm'}
-        variant={'ghost'}
-        _hover={{ bg: 'invisible' }}
-        _active={{ bg: 'invisible' }}
-        _focus={{ boxShadow: 'none' }}
-        onClick={toggleColorMode}
-      >
-        {colorMode === 'light' ? <BsMoonStarsFill color="#FFF" /> : <BsSun color="#FFF" />}
-      </Button>
-    </Flex>
-  );
-};
-
-
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  
+  // Update functions from the store
+  const updateState = useAppStore((state) => state.updateState);
+  
+  // Larger font size
+  function handleIncreaseFont() {
+    const fs = s.fontSize + 0.5;
+    updateState(props._id, { fontSize: fs });
+  }
+  // Smaller font size
+  function handleDecreaseFont() {
+    const fs = s.fontSize - 0.5;
+    updateState(props._id, { fontSize: fs });
+  }
 
   // Download the stickie as a text file
   const downloadPy = () => {
@@ -260,16 +286,29 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      {/* <ColorModeToggle /> */}
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-          <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-            <MdFileDownload />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
+      <HStack>
+        <ButtonGroup isAttached size="xs" colorScheme="teal">
+          <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+            <Button isDisabled={s.fontSize <= 1} onClick={() => handleDecreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+              <MdRemove />
+            </Button>
+          </Tooltip>
+          <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+            <Button isDisabled={s.fontSize > 16} onClick={() => handleIncreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+              <MdAdd />
+            </Button>
+          </Tooltip>
+        </ButtonGroup>
+        <ButtonGroup isAttached size="xs" colorScheme="teal">
+          <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+            <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+              <MdFileDownload />
+            </Button>
+          </Tooltip>
+        </ButtonGroup>
+      </HStack>
     </>
-  )
+  );
 }
 
 export default { AppComponent, ToolbarComponent };
@@ -279,76 +318,51 @@ const ProcessedOutput = (output: string) => {
   try {
     const parsed = JSON.parse(output);
     return (
-      <Box p={4} fontSize={'16px'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
-        <Box
-          p={4}
-          // m={4}
-          // mr={0}
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            overflow: 'hidden',
-            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-            boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
-            borderRadius: '12px',
-          }}
-        >
-          {/* <pre>Real Output: </pre> */}
-          {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
-          {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
-          {parsed.error && RenderTraceBack(parsed.error.evalue)}
-          {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
-          {parsed.execute_result &&
-            parsed.execute_result.data['text/plain'] &&
-            RenderPlainText(parsed.execute_result.data['text/plain'])}
-          {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
-          {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
-        </Box>
-        {/* {JSONOutput(output)} */}
-      </Box>
-    );
-  } catch (e) {
-    return ('');
-    // return (<Box p={4}>Processing...</Box>);
-    // return JSONOutput(output)
-  }
-};
-
-const JSONOutput = (output: string) => {
-
-  return (
-    <Box p={4}>
-      <pre>JSON Output: </pre>
-      <AceEditor
-        mode="json"
-        theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
-        readOnly={true}
-        fontSize={'1em'}
-        minLines={6}
-        maxLines={6}
-        value={output ? JSON.stringify(JSON.parse(output), null, '\t') : ''}
-        wrapEnabled={true}
-        setOptions={{
-          hasCssTransforms: true,
-          showGutter: false,
-          showPrintMargin: false,
-          highlightActiveLine: false,
-          showLineNumbers: false,
-        }}
+      <Box
+        p={4}
         style={{
           width: '100%',
           height: '100%',
           border: 'none',
           overflow: 'hidden',
           backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-          boxShadow: '0 0 0 4px ' + useColorModeValue('rgba(0,0,0,0.1)', 'rgba(0, 128, 128, 0.5)'),
-          borderRadius: '12px',
+          boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
+          borderRadius: '4px',
         }}
-      />
-    </Box>
-  );
-}
+      >
+          {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
+          {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
+          {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
+          {parsed.execute_result && parsed.execute_result.data['text/plain'] && RenderPlainText(parsed.execute_result.data['text/plain'])}
+          {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
+          {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
+          {parsed.display_data && parsed.display_data.data['image/jpeg'] && RenderJPEG(parsed.display_data.data['image/jpeg'])}
+          {parsed.display_data && parsed.display_data.data['image/svg+xml'] && RenderSVG(parsed.display_data.data['image/svg+xml'])}
+          {parsed.display_data && parsed.display_data.data['text/plain'] && RenderPlainText(parsed.display_data.data['text/plain'])}
+          {parsed.display_data && parsed.display_data.data['text/html'] && RenderHTML(parsed.display_data.data['text/html'])}
+        {/* {parsed.error && Array.isArray(parsed.error) ? (
+          parsed.error.map((line: string) => {
+            return (
+              <div style={{ color: 'red' }}>
+                <Ansi>{line}</Ansi>
+                <br />
+              </div>
+            );
+          })
+        ) : (
+          // otherwise, it is a string
+          <div style={{ color: 'red' }}>
+            {parsed.error.toString()}
+            <br />
+          </div>
+        )} */}
+      </Box>
+    );
+  } catch (e) {
+    return ('')
+  }
+};
+
 
 
 /*****************************************************************
@@ -405,10 +419,31 @@ const RenderTraceBack = (message: any): JSX.Element => {
     <>
       <Alert status="error" variant="left-accent">
         <AlertIcon />
-        <AlertTitle mr={2}>{message}</AlertTitle>
+        {/* <Ansi>{message.traceback}</Ansi> */}
+        <AlertTitle mr={2}>{message.evalue}</AlertTitle>
       </Alert>
     </>
   );
+};
+
+const RenderError = (message: any): JSX.Element => {
+  // get the last item in the traceback array
+  // const last = message.traceback[message.traceback.length - 1];
+
+  const messageString = JSON.stringify(message, null, '\t');
+  if (messageString.includes(': ')) {
+    const [ename, evalue] = messageString.split(': ');
+    return (
+      <>
+        <Alert status="error" variant="left-accent">
+          <AlertIcon />
+          <AlertTitle mr={2}>{evalue}</AlertTitle>
+          {/* <AlertTitle mr={2}>{last}</AlertTitle> */}
+        </Alert>
+      </>
+    );
+  }
+  return <>('not parsed')</>;
 };
 
 
