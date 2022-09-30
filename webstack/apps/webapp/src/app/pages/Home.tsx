@@ -109,6 +109,7 @@ export function HomePage() {
         borderColor="gray.800"
       >
         <Box></Box>
+        <Clock />
       </Box>
 
       {/* Middle Section */}

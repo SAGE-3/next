@@ -6,17 +6,29 @@
  *
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 import {
-  Box, Button, IconButton, Menu, MenuButton,
-  MenuItem, MenuList, Popover, PopoverArrow, PopoverBody,
-  PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger,
-  Portal, useToast
+  Box,
+  Button,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  Portal,
+  useToast,
 } from '@chakra-ui/react';
 
-import { BsFillTriangleFill } from "react-icons/bs";
-import { FiChevronDown } from "react-icons/fi";
+import { BsFillTriangleFill } from 'react-icons/bs';
+import { FiChevronDown } from 'react-icons/fi';
 
 import { useAppStore, useUIStore } from '@sage3/frontend';
 
@@ -30,23 +42,25 @@ import './styles.css';
 
 function CustomToastExample(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const updateState = useAppStore(state => state.updateState);
+  const updateState = useAppStore((state) => state.updateState);
   const toast = useToast();
 
-  return (<Button
-    onClick={() =>
-      toast({
-        position: 'top-left',
-        render: () => (
-          <Box color='white' p={3} bg='blue.500'>
-            Hello World
-          </Box>
-        ),
-      })
-    }
-  >
-    Show Toast
-  </Button>);
+  return (
+    <Button
+      onClick={() =>
+        toast({
+          position: 'top-left',
+          render: () => (
+            <Box color="white" p={3} bg="blue.500">
+              Hello World
+            </Box>
+          ),
+        })
+      }
+    >
+      Show Toast
+    </Button>
+  );
 }
 
 /**
@@ -61,11 +75,11 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   const selectedAppId = useUIStore((state) => state.selectedAppId);
-  const boardApps = useAppStore(state => state.apps);
-  const selApp = boardApps.find(el => el._id === selectedAppId);
+  const boardApps = useAppStore((state) => state.apps);
+  const selApp = boardApps.find((el) => el._id === selectedAppId);
 
-  const prevX = useRef(0)
-  const prevY = useRef(0)
+  const prevX = useRef(0);
+  const prevY = useRef(0);
 
   // Way to manage a collection of App objects in local state
   // const apps = useAppStore(state => state.apps);
@@ -101,12 +115,12 @@ function AppComponent(props: App): JSX.Element {
           if (!Object.keys(s.hostedApps).includes(app._id)) {
             const hosted = {
               ...s.hostedApps,
-              ...client
-            }
-            updateState(props._id, { hostedApps: hosted })
+              ...client,
+            };
+            updateState(props._id, { hostedApps: hosted });
             console.log('AIPane> app', app._id, 'added');
           } else {
-            console.log('AIPane> app ' + app._id + ' already in hostedApps')
+            console.log('AIPane> app ' + app._id + ' already in hostedApps');
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
@@ -117,22 +131,21 @@ function AppComponent(props: App): JSX.Element {
           }
         }
       }
-
     }
-  }, [selApp?.data.position, selApp?.data.size])
+  }, [selApp?.data.position, selApp?.data.size, s.hostedApps]);
 
   //TODO Be mindful of client updates
   // Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
   // Refer to videoViewer play function
   useEffect(() => {
-    const appIds = boardApps.map(el => el._id);
+    const appIds = boardApps.map((el) => el._id);
     const copyofhostapps = {} as { [key: string]: string };
 
     Object.keys(s.hostedApps).forEach((key: string) => {
       if (appIds.includes(key)) copyofhostapps[key] = key;
     });
     updateState(props._id, { hostedApps: copyofhostapps });
-  }, [boardApps.length])
+  }, [boardApps.length]);
 
   // // Test function for backend, just prints hosted app ID's
   // useEffect(() => {
@@ -153,30 +166,30 @@ function AppComponent(props: App): JSX.Element {
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
-            x: app.data.position.x += xDiff,
-            y: app.data.position.y += yDiff,
-            z: app.data.position.z
-          }
-        })
+            x: (app.data.position.x += xDiff),
+            y: (app.data.position.y += yDiff),
+            z: app.data.position.z,
+          },
+        });
       }
     }
     // console.log("Cluster useEffect")
     prevX.current = props.data.position.x;
     prevY.current = props.data.position.y;
-  }, [props.data.position.x, props.data.position.y])
+  }, [props.data.position.x, props.data.position.y]);
 
   const handleFileSelected = () => {
     // TODO
-  }
+  };
 
   function testFunction() {
-    updateState(props._id, { executeInfo: { "executeFunc": "test_function", "params": {} } });
+    updateState(props._id, { executeInfo: { executeFunc: 'test_function', params: {} } });
   }
 
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <div className="message-container" style={{ display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none" }}>
+        <div className="message-container" style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
           <Popover>
             <PopoverTrigger>
               <Button>Trigger</Button>
@@ -192,14 +205,16 @@ function AppComponent(props: App): JSX.Element {
         </div>
         <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" position="absolute">
           <Box className="status-container">
-            {Object.keys(s.hostedApps).length > 0 ? (<span className="green-circle" />) : (<span className="red-circle" />)}
+            {Object.keys(s.hostedApps).length > 0 ? <span className="green-circle" /> : <span className="red-circle" />}
           </Box>
 
           <>
-            selectedApp {selectedAppId}<br />
-            length of hostedappsarr: {Object.keys(s.hostedApps).length}<br />
-            hostedapps: {Object.values(s.hostedApps)}<br />
-
+            selectedApp {selectedAppId}
+            <br />
+            length of hostedappsarr: {Object.keys(s.hostedApps).length}
+            <br />
+            hostedapps: {Object.values(s.hostedApps)}
+            <br />
             {/*Board assests dropdown*/}
             {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
             {/*  {roomAssets.map(el =>*/}
@@ -223,10 +238,10 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const models = ["Model 1", "Model 2", "Model 3"];
+  const models = ['Model 1', 'Model 2', 'Model 3'];
 
   function testFunction() {
-    updateState(props._id, { executeInfo: { "executeFunc": "test_function", "params": {} } })
+    updateState(props._id, { executeInfo: { executeFunc: 'test_function', params: {} } });
   }
 
   return (
@@ -238,25 +253,18 @@ function ToolbarComponent(props: App): JSX.Element {
         <Portal>
           <MenuList>
             {models.map((model) => {
-              return (
-                <MenuItem>
-                  {model}
-                </MenuItem>
-              )
-            })
-            }
+              return <MenuItem>{model}</MenuItem>;
+            })}
           </MenuList>
         </Portal>
-
       </Menu>
       <IconButton
         aria-label="Run AI"
         icon={<BsFillTriangleFill />}
         _hover={{ opacity: 0.7 }}
         onClick={() => {
-          testFunction()
-        }
-        }
+          testFunction();
+        }}
       />
     </>
   );
