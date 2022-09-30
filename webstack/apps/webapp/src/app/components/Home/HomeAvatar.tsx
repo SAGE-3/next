@@ -6,7 +6,7 @@
  *
  */
 
-import { useDisclosure, useColorMode, Avatar, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
+import { useDisclosure, useColorMode, Avatar, Menu, MenuButton, MenuList, MenuItem, Box } from '@chakra-ui/react';
 import { useAuth, useUser, EditUserModal, initials, EnterBoardByIdModal } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 import { MdInput, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
@@ -26,18 +26,18 @@ export function HomeAvatar() {
 
   return (
     <>
+      {' '}
       <Menu>
         <MenuButton>
           {/* User Avatar */}
           <Avatar
             size="md"
+            border="solid white 2px"
             pointerEvents={'all'}
             name={user?.data.name}
             getInitials={initials}
             backgroundColor={user ? sageColorByName(user.data.color) : ''}
             color="white"
-            border="2px solid white"
-            mx={1}
           />
         </MenuButton>
         <MenuList>

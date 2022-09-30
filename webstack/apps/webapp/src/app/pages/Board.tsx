@@ -64,7 +64,7 @@ export function BoardPage() {
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" />
       </Box>
 
-      <Clock />
+      <Clock style={{ position: 'absolute', right: 0, top: 0 }} opacity={0.7} />
 
       {/* TODO White Board Layer for marking onto board */}
       <WhiteboardLayer boardId={locationState.boardId} roomId={locationState.roomId}></WhiteboardLayer>

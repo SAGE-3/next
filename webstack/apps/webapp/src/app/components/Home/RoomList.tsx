@@ -6,17 +6,16 @@
  *
  */
 
-import { useEffect, useState } from 'react';
-import { Box, Button, Input, InputGroup, InputRightElement, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import { Box, Button, Input, InputGroup, InputRightElement, Select, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { SBDocument } from '@sage3/sagebase';
-import { Room, RoomSchema } from '@sage3/shared/types';
+import { Room } from '@sage3/shared/types';
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
 import { MdSearch } from 'react-icons/md';
 
 type RoomListProps = {
-  onRoomClick: (room: SBDocument<RoomSchema>) => void;
+  onRoomClick: (room: Room) => void;
   selectedRoom: Room | undefined;
 };
 
@@ -36,6 +35,28 @@ export function RoomList(props: RoomListProps) {
   const toast = useToast();
   const [filterBoards, setFilterBoards] = useState<Room[] | null>(null);
   const [search, setSearch] = useState('');
+
+  const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
+
+  function sortByName(a: Room, b: Room) {
+    return b.data.name.localeCompare(a.data.name);
+  }
+
+  function sortByUpdated(a: Room, b: Room) {
+    return a._updatedAt < b._updatedAt ? -1 : 1;
+  }
+
+  function sortByCreated(a: Room, b: Room) {
+    return a._createdAt < b._createdAt ? -1 : 1;
+  }
+
+  let sortFunction = sortByName;
+  if (sortBy === 'Updated') sortFunction = sortByUpdated;
+  if (sortBy === 'Created') sortFunction = sortByCreated;
+
+  const handleSortChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(event.target.value as any);
+  };
 
   useEffect(() => {
     if (storeError) {
@@ -71,64 +92,79 @@ export function RoomList(props: RoomListProps) {
     }
   };
   return (
-    <Box
-      height="100%"
-      borderColor="gray.500"
-      borderWidth="3px"
-      borderRadius="md"
-      backgroundColor="gray.700"
-      boxShadow="xl"
-      p="4"
-      overflow="hidden"
-    >
-      <InputGroup>
-        <Input
-          my="2"
-          value={search}
-          onChange={handleFilterBoards}
-          placeholder="Search Boards..."
-          _placeholder={{ opacity: 1, color: 'gray.600' }}
-        />
-        <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-      </InputGroup>
-      <Tooltip label="Create a room" hasArrow placement="top-start">
-        <Button
-          height="60px"
-          width="100%"
-          borderRadius="md"
-          border={`solid ${borderColor} 2px`}
-          fontSize="48px"
-          p="0"
-          disabled={auth?.provider === 'guest'}
-          onClick={() => setNewRoomModal(true)}
-        >
-          <Text fontSize="4xl" fontWeight="bold" transform={'translateY(-3px)'}>
-            +
-          </Text>
-        </Button>
-      </Tooltip>
-      <Box overflow="hidden" height="100%" mt="2" borderTop="solid gray 2px" onWheel={handleScrollEvent}>
-        <Box transform={`translateY(${scrollPos + 'px'})`} transition="transform 0.2s">
-          {(filterBoards ? filterBoards : rooms)
-            // show only public rooms or mine
-            .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
-            .sort((a, b) => a.data.name.localeCompare(b.data.name))
-            .map((room) => {
-              return (
-                <RoomCard
-                  key={room._id}
-                  room={room}
-                  userCount={presences.filter((p) => p.data.roomId === room._id).length}
-                  selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
-                  onEnter={() => props.onRoomClick(room)}
-                  onEdit={() => console.log('edit room')}
-                  onDelete={() => deleteRoom(room._id)}
-                ></RoomCard>
-              );
-            })}
-        </Box>
+    <>
+      <Box
+        overflowY="auto"
+        pr="2"
+        mb="2"
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            width: '6px',
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'teal',
+            borderRadius: '8px',
+          },
+        }}
+      >
+        {(filterBoards ? filterBoards : rooms)
+          // show only public rooms or mine
+          .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
+          .sort(sortFunction)
+          .map((room) => {
+            return (
+              <RoomCard
+                key={room._id}
+                room={room}
+                userCount={presences.filter((p) => p.data.roomId === room._id).length}
+                selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
+                onEnter={() => props.onRoomClick(room)}
+                onEdit={() => console.log('edit room')}
+                onDelete={() => deleteRoom(room._id)}
+              ></RoomCard>
+            );
+          })}
       </Box>
-      <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
-    </Box>
+      <Box>
+        <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
+        <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
+          <Button
+            height="60px"
+            width="100%"
+            borderRadius="md"
+            border={`solid ${borderColor} 2px`}
+            fontSize="48px"
+            p="0"
+            disabled={auth?.provider === 'guest'}
+            onClick={() => setNewRoomModal(true)}
+          >
+            <Text fontSize="4xl" fontWeight="bold" transform={'translateY(-3px)'}>
+              +
+            </Text>
+          </Button>
+        </Tooltip>
+        <InputGroup>
+          <Select mt="2" onChange={handleSortChange}>
+            <option value="Name"> Name</option>
+            <option value="Updated">Updated</option>
+            <option value="Created">Created</option>
+          </Select>
+        </InputGroup>
+        <InputGroup>
+          <Input
+            my="2"
+            value={search}
+            onChange={handleFilterBoards}
+            placeholder="Search Rooms..."
+            _placeholder={{ opacity: 1, color: 'gray.600' }}
+          />
+          <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
+        </InputGroup>
+      </Box>
+    </>
   );
 }

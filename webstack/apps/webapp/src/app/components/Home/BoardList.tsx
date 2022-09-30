@@ -6,12 +6,11 @@
  *
  */
 
-import { useEffect, useState } from 'react';
-import { Box, Button, Input, InputGroup, InputRightElement, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import { Box, Button, Input, InputGroup, InputRightElement, Select, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
 
 import { MdSearch } from 'react-icons/md';
 
-import { SBDocument } from '@sage3/sagebase';
 import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
@@ -41,6 +40,28 @@ export function BoardList(props: BoardListProps) {
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
   const { auth } = useAuth();
+
+  const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
+
+  function sortByName(a: Board, b: Board) {
+    return b.data.name.localeCompare(a.data.name);
+  }
+
+  function sortByUpdated(a: Board, b: Board) {
+    return a._updatedAt < b._updatedAt ? -1 : 1;
+  }
+
+  function sortByCreated(a: Board, b: Board) {
+    return a._createdAt < b._createdAt ? -1 : 1;
+  }
+
+  let sortFunction = sortByName;
+  if (sortBy === 'Updated') sortFunction = sortByUpdated;
+  if (sortBy === 'Created') sortFunction = sortByCreated;
+
+  const handleSortChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(event.target.value as any);
+  };
 
   // UI elements
   const toast = useToast();
@@ -78,35 +99,52 @@ export function BoardList(props: BoardListProps) {
   const handleScrollEvent = (e: any) => {
     console.log(e.deltaY, scrollPos);
     if (e.deltaY > 0) {
-      setScrollPos(Math.min(0, scrollPos + 30));
+      setScrollPos(scrollPos + 30);
     } else {
-      setScrollPos(scrollPos - 30);
+      setScrollPos(Math.min(0, scrollPos - 30));
     }
   };
   return (
-    <Box
-      height="100%"
-      borderColor="gray.500"
-      borderWidth="3px"
-      borderRadius="md"
-      backgroundColor="gray.700"
-      boxShadow="xl"
-      p="4"
-      overflow="hidden"
-    >
-      {' '}
-      <InputGroup>
-        <Input
-          my="2"
-          value={search}
-          onChange={handleFilterBoards}
-          placeholder="Search Boards..."
-          _placeholder={{ opacity: 1, color: 'gray.600' }}
-        />
-        <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-      </InputGroup>
+    <>
+      <Box
+        overflowY="auto"
+        pr="2"
+        mb="2"
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            width: '6px',
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'teal',
+            borderRadius: '8px',
+          },
+        }}
+      >
+        {props.selectedRoom
+          ? (filterBoards ? filterBoards : boards)
+              // sort by name
+              .sort(sortFunction)
+              // create the cards
+              .map((board) => {
+                return (
+                  <BoardCard
+                    key={board._id}
+                    board={board}
+                    selected={props.selectedBoard?._id == board._id}
+                    userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                    onSelect={() => props.onBoardClick(board)}
+                    onDelete={() => deleteBoard(board._id)}
+                  />
+                );
+              })
+          : null}
+      </Box>
       {props.selectedRoom ? (
-        <Tooltip label="Create a board" placement="top" openDelay={400}>
+        <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
           <Button
             height="60px"
             width="100%"
@@ -123,31 +161,26 @@ export function BoardList(props: BoardListProps) {
           </Button>
         </Tooltip>
       ) : null}
-      <Box overflow="hidden" height="100%" mt="2" borderTop="solid gray 2px" onWheel={handleScrollEvent}>
-        <Box transform={`translateY(${scrollPos + 'px'})`} transition="transform 0.2s">
-          {props.selectedRoom
-            ? (filterBoards ? filterBoards : boards)
-                // sort by name
-                .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                // create the cards
-                .map((board) => {
-                  return (
-                    <BoardCard
-                      key={board._id}
-                      board={board}
-                      selected={props.selectedBoard?._id == board._id}
-                      userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                      onSelect={() => props.onBoardClick(board)}
-                      onDelete={() => deleteBoard(board._id)}
-                    />
-                  );
-                })
-            : null}
-        </Box>{' '}
-      </Box>{' '}
       {props.selectedRoom ? (
         <CreateBoardModal roomId={props.selectedRoom._id} isOpen={newBoardModal} onClose={() => setNewBoardModal(false)}></CreateBoardModal>
       ) : null}
-    </Box>
+      <InputGroup>
+        <Select mt="2" onChange={handleSortChange}>
+          <option value="Name"> Name</option>
+          <option value="Updated">Updated</option>
+          <option value="Created">Created</option>
+        </Select>
+      </InputGroup>
+      <InputGroup>
+        <Input
+          my="2"
+          value={search}
+          onChange={handleFilterBoards}
+          placeholder="Search Boards..."
+          _placeholder={{ opacity: 1, color: 'gray.600' }}
+        />
+        <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
+      </InputGroup>
+    </>
   );
 }

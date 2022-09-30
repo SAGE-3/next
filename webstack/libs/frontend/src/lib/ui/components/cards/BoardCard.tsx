@@ -86,7 +86,7 @@ export function BoardCard(props: BoardCardProps) {
         onClose={onCloseEnter}
       />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
-      <Tooltip label={<BoardPreview board={props.board} />} placement="bottom-start" backgroundColor="transparent" openDelay={1000}>
+      <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor="transparent" openDelay={1000}>
         <Box
           borderWidth="2px"
           borderRadius="md"
@@ -196,7 +196,7 @@ export function BoardPreview(props: BoardPreviewProps) {
       pointerEvents="none"
       border={`solid ${borderWidth}px ${sageColorByName(props.board.data.color)}`}
       overflow="hidden"
-      transform="translateX(-27px)"
+      transform={`translateX(-${maxWidth / 4}px)`}
     >
       <Box width={maxWidth + 'px'} height={maxHeight + 'px'} transform={`scale(${scale})`} transformOrigin="top left">
         {apps.map((app) => {

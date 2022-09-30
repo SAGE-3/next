@@ -6,11 +6,17 @@
  *
  */
 
-import { useEffect, useState } from 'react';
-import { Box, Text, useColorModeValue } from '@chakra-ui/react';
+import { CSSProperties, useEffect, useState } from 'react';
+import { Box, Text, TypographyProps, useColorModeValue } from '@chakra-ui/react';
 
-// The Board's Clock
-export function Clock() {
+type ClockProps = {
+  style?: CSSProperties;
+  fontSize?: TypographyProps['fontSize'];
+  opacity?: number;
+};
+
+// A digital Clock
+export function Clock(props: ClockProps) {
   // State of the current time
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const textColor = useColorModeValue('gray.800', 'gray.100');
@@ -23,20 +29,14 @@ export function Clock() {
     return () => clearInterval(interval);
   }, []);
 
-  // Show the clock in the upper right hand corner
   return (
-    <Box
-      display="flex"
-      position={'absolute'}
-      top={'0'}
-      right={'0'}
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      mr="2"
-      mt="1"
-    >
-      <Text fontSize="xl" fontWeight="bold" opacity={0.7} color={textColor} userSelect="none">
+    <Box display="flex" style={props.style} alignItems="center" justifyContent="center">
+      <Text
+        fontSize={props.fontSize ? props.fontSize : 'xl'}
+        opacity={props.opacity ? props.opacity : 1.0}
+        color={textColor}
+        userSelect="none"
+      >
         {time}
       </Text>
     </Box>

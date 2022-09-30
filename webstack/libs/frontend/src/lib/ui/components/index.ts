@@ -17,5 +17,6 @@ export * from './modals/EditRoomModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';
+export * from './cards/UserCard';
 
 export * from './context-menu/context-menu';

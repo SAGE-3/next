@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, IconButton, useDisclosure } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, IconButton, useDisclosure, Image } from '@chakra-ui/react';
 
 import { EditRoomModal, useBoardStore, usePresence, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
@@ -18,6 +18,8 @@ import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 import { useLocation } from 'react-router-dom';
 import { Clock } from '../components/Board/UI/Clock';
+import { UserList } from '../components/Home/UserList';
+import { ChatList } from '../components/Home/ChatList';
 
 export function HomePage() {
   // User
@@ -91,40 +93,80 @@ export function HomePage() {
   }, [roomsFetched]);
 
   return (
-    <Box p="2" display="flex" flexDir={'column'} width="100%" alignItems="center">
-      <Box display="flex" flexDirection="row">
-        <Text fontSize="5xl">SERVER_NAME</Text>
+    // Main Container
+    <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
+      {/* Top Bar */}
+      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={2} width="100%" px="2">
+        <Box></Box>
+        <Text fontSize="3xl">Server_Name</Text>
+        <Clock fontSize="2xl" />
       </Box>
 
-      <Box display="flex" flexDirection="row" flexGrow={1} width="1200px" mb="5">
-        <Box width="600px" height="80vh" display="flex" flexDirection="column" justifyContent="flex-start" mr="2">
-          <Text fontSize={'4xl'} width="100%" justifyContent={'center'} textAlign="center">
-            Rooms
-          </Text>
-          <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick}></RoomList>
+      {/* Middle Section */}
+      <Box display="flex" flexDirection="row" flexGrow={1} width="100%" mb="5" pl="4" justifyContent={'space-between'} minHeight={0}>
+        {/* Left Side */}
+        <Box display="flex" justifyContent="flex-start" flexGrow={1} mr="10">
+          {/* Rooms List */}
+          <Box display="flex" flexDirection="column" flexGrow={1} mr="3" justifyContent={'flex-end'}>
+            <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick}></RoomList>
+            <Text fontSize={'3xl'} textAlign="center">
+              Rooms
+            </Text>
+          </Box>
+
+          {/* Boards List */}
+          <Box display="flex" flexDirection="column" flexGrow={4} mr="3" justifyContent={'flex-end'}>
+            {selectedRoom ? (
+              <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
+            ) : null}
+
+            <Text fontSize={'3xl'} textAlign="center">
+              Boards
+            </Text>
+          </Box>
         </Box>
 
-        <Box width="600px" height="80vh" display="flex" flexDirection="column" justifyContent="flex-start" ml="2">
-          <Text fontSize={'4xl'} width="100%" justifyContent={'center'} textAlign="center">
-            Boards
-          </Text>
+        {/* Right Side */}
+        <Box display="flex" justifyContent="flex-start" flexGrow={1} ml="10">
+          {/* Rooms List */}
+          <Box display="flex" flexDirection="column" flexGrow={4} mr="3" justifyContent={'flex-end'}>
+            <ChatList />{' '}
+            <Text fontSize={'3xl'} textAlign="center">
+              Chat
+            </Text>
+          </Box>
 
-          {selectedRoom ? (
-            <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
-          ) : null}
+          {/* Boards List */}
+          <Box display="flex" flexDirection="column" flexGrow={1} mr="3" justifyContent={'flex-end'}>
+            <UserList
+              onUserClick={() => {
+                'hi';
+              }}
+              selectedUser={user}
+            ></UserList>
+
+            <Text fontSize={'3xl'} textAlign="center">
+              Users
+            </Text>
+          </Box>
         </Box>
       </Box>
 
-      <Box position="absolute" left="2" bottom="4" display="flex" alignItems="center">
+      {/* Bottom Bar */}
+      <Box
+        display="flex"
+        flexDirection="row"
+        justifyContent={'space-between'}
+        width="100%"
+        minHeight={'initial'}
+        alignItems="end"
+        pb="2"
+        px="2"
+      >
         <HomeAvatar />
-      </Box>
 
-      {/* The Corner SAGE3 Image */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
-        <img src={imageUrl} width="75px" alt="" />
+        <Image src={imageUrl} height="40px" style={{ opacity: 0.7 }} alt="" />
       </Box>
-
-      <Clock />
     </Box>
   );
 }
