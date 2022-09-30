@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react';
 import { Button, ButtonGroup, Tooltip, Stack, UnorderedList, ListItem } from '@chakra-ui/react';
 // Icons
-import { MdAdd, MdRemove } from 'react-icons/md';
+import { MdAdd, MdRemove, MdRefresh } from 'react-icons/md';
 
 import { GetConfiguration, useAppStore } from '@sage3/frontend';
 
@@ -35,7 +35,8 @@ function AppComponent(props: App): JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (token) {
+    if (token && s.refresh) {
+      updateState(props._id, { refresh: false });
       // Jupyter URL
       let base: string;
       if (prod) {
@@ -60,7 +61,7 @@ function AppComponent(props: App): JSX.Element {
           console.log('Jupyter> error', err);
         });
     }
-  }, [token]);
+  }, [token, s.refresh]);
 
   /*
   0:
@@ -77,7 +78,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <Stack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}
         color="black">
-        <UnorderedList>
+        <UnorderedList overflowY={"scroll"}>
           {sessions.map((session, i) => {
             return (
               <ListItem key={i}>
@@ -109,6 +110,9 @@ function ToolbarComponent(props: App): JSX.Element {
   function handleDeleteKernel() {
     console.log('New Kernel');
   }
+  function handleRefresh() {
+    updateState(props._id, { refresh: true });
+  }
 
   return (
     <>
@@ -121,6 +125,11 @@ function ToolbarComponent(props: App): JSX.Element {
         <Tooltip placement="top-start" hasArrow={true} label={'Add Kernel'} openDelay={400}>
           <Button isDisabled={false} onClick={() => handleNewKernel()} _hover={{ opacity: 0.7 }}>
             <MdAdd />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Refresh'} openDelay={400}>
+          <Button onClick={handleRefresh} >
+            <MdRefresh />
           </Button>
         </Tooltip>
       </ButtonGroup>

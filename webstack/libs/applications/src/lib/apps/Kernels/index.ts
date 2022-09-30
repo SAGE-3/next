@@ -14,12 +14,12 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  xx: z.number(),
+  refresh: z.boolean(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  xx: 42,
+  refresh: true,
 };
 
 export const name = 'Kernels';
