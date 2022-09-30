@@ -6,10 +6,10 @@
  *
  */
 
-import { useDisclosure, useColorMode, Avatar, Menu, MenuButton, MenuList, MenuItem, Box } from '@chakra-ui/react';
+import { useDisclosure, useColorMode, Avatar, Menu, MenuButton, MenuList, MenuItem, Box, Button } from '@chakra-ui/react';
 import { useAuth, useUser, EditUserModal, initials, EnterBoardByIdModal } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
-import { MdInput, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
+import { MdAccountCircle, MdInput, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
 
 /**
  * HomeAvatar component
@@ -28,17 +28,14 @@ export function HomeAvatar() {
     <>
       {' '}
       <Menu>
-        <MenuButton>
-          {/* User Avatar */}
-          <Avatar
-            size="md"
-            border="solid white 2px"
-            pointerEvents={'all'}
-            name={user?.data.name}
-            getInitials={initials}
-            backgroundColor={user ? sageColorByName(user.data.color) : ''}
-            color="white"
-          />
+        <MenuButton
+          as={Button}
+          size="sm"
+          variant="outline"
+          color={sageColorByName(user?.data.color ? user.data.color : 'white')}
+          rightIcon={<MdAccountCircle />}
+        >
+          {user ? user.data.name : ''}
         </MenuButton>
         <MenuList>
           <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px" />}>

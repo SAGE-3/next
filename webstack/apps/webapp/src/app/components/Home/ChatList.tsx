@@ -122,7 +122,7 @@ export function ChatList(props: ChatListProps) {
         Selected User
       </Box>
 
-      <Textarea placeholder="Here is a sample placeholder" my="2" height="88px" />
+      <Textarea placeholder="Here is a sample placeholder" my="2" height="88px" resize={'none'} />
     </>
   );
 }

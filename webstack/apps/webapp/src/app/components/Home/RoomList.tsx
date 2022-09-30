@@ -95,7 +95,6 @@ export function RoomList(props: RoomListProps) {
     <>
       <Box
         overflowY="auto"
-        pr="2"
         mb="2"
         css={{
           '&::-webkit-scrollbar': {
@@ -110,6 +109,10 @@ export function RoomList(props: RoomListProps) {
             borderRadius: '8px',
           },
         }}
+        flexGrow={1}
+        display="flex"
+        flexDirection="column"
+        justifyContent={'end'}
       >
         {(filterBoards ? filterBoards : rooms)
           // show only public rooms or mine
@@ -158,9 +161,11 @@ export function RoomList(props: RoomListProps) {
           <Input
             my="2"
             value={search}
+            variant="flushed"
             onChange={handleFilterBoards}
             placeholder="Search Rooms..."
-            _placeholder={{ opacity: 1, color: 'gray.600' }}
+            _placeholder={{ opacity: 1 }}
+            color="white"
           />
           <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
         </InputGroup>

@@ -71,43 +71,36 @@ export function RoomCard(props: RoomCardProps) {
       <Box
         display="flex"
         justifyContent="left"
-        borderWidth="2px"
+        borderWidth="1px"
         borderRadius="md"
-        border={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 3px`}
-        height="80px"
+        borderLeft={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 6px`}
+        height="60px"
+        my="1 "
         width="100%"
-        my="2"
-        pb="1"
-        boxShadow="md"
         cursor="pointer"
         alignItems="baseline"
-        style={{
-          background: `linear-gradient(transparent 90%, ${
-            props.selected ? sageColorByName(props.room.data.color) : borderColor
-          } 90% ) no-repeat`,
-        }}
         position="relative"
         color={props.selected ? sageColorByName(props.room.data.color) : textColor}
         onClick={props.onEnter}
       >
         <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
           <Box display="flex" flexDirection={'column'} alignItems="center" ml="2">
-            <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%">
+            <Text fontSize="xl" textOverflow={'ellipsis'} width="100%">
               {props.room.data.name}
             </Text>
-            <Text fontSize="md" textOverflow={'ellipsis'} width="100%">
+            <Text fontSize="sm" textOverflow={'ellipsis'} width="100%">
               {props.room.data.description}
             </Text>
           </Box>
 
           <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
             <Box display="flex" alignItems={'center'}>
-              <Text fontSize="xl">{props.userCount}</Text>
-              <MdPerson fontSize="22px" />
+              <Text fontSize="sm">{props.userCount}</Text>
+              <MdPerson fontSize="18px" />
             </Box>
             {props.room.data.isPrivate ? (
               <Box>
-                <MdLock fontSize="22px" />
+                <MdLock fontSize="18px" />
               </Box>
             ) : null}
             {yours ? (

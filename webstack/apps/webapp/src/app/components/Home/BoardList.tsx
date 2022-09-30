@@ -123,6 +123,10 @@ export function BoardList(props: BoardListProps) {
             borderRadius: '8px',
           },
         }}
+        flexGrow={1}
+        display="flex"
+        flexDirection="column"
+        justifyContent={'end'}
       >
         {props.selectedRoom
           ? (filterBoards ? filterBoards : boards)
@@ -150,14 +154,13 @@ export function BoardList(props: BoardListProps) {
             width="100%"
             borderRadius="md"
             border={`solid ${borderColor} 2px`}
-            fontSize="48px"
+            fontSize="4xl"
             p="0"
             disabled={auth?.provider === 'guest'}
             onClick={() => setNewBoardModal(true)}
+            colorScheme="green"
           >
-            <Text fontSize="4xl" fontWeight="bold" transform={'translateY(-3px)'}>
-              +
-            </Text>
+            +
           </Button>
         </Tooltip>
       ) : null}
@@ -175,9 +178,11 @@ export function BoardList(props: BoardListProps) {
         <Input
           my="2"
           value={search}
+          variant="flushed"
           onChange={handleFilterBoards}
           placeholder="Search Boards..."
-          _placeholder={{ opacity: 1, color: 'gray.600' }}
+          _placeholder={{ opacity: 1 }}
+          color="white"
         />
         <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
       </InputGroup>
