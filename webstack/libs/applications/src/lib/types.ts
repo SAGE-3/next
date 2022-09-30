@@ -21,6 +21,7 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
+import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFViewer';
 
 export type AppState =
   | AIPaneState
@@ -43,6 +44,7 @@ export type AppState =
   | VegaLiteViewerState
   | VegaLiteState
   | DeepZoomImageState
+  | GLTFViewerState
   | NotepadState;
 
 export type AppName =
@@ -66,4 +68,5 @@ export type AppName =
   | typeof VegaLiteViewerName
   | typeof VegaLiteName
   | typeof DeepZoomImageName
+  | typeof GLTFViewerName
   | typeof NotepadName;

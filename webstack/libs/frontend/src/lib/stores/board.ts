@@ -25,6 +25,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 interface BoardState {
   boards: Board[];
   error: string | null;
+  fetched: boolean;
   clearError: () => void;
   create: (newBoard: BoardSchema) => void;
   update: (id: string, updates: Partial<BoardSchema>) => void;
@@ -40,6 +41,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
   return {
     boards: [],
     error: null,
+    fetched: false,
     clearError: () => {
       set({ error: null });
     },
@@ -63,10 +65,10 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       // TO DO Delete all apps belonging to the board
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
-      set({ boards: [] });
+      set({ boards: [], fetched: false });
       const boards = await APIHttp.GET<BoardSchema, Board>('/boards', { roomId });
       if (boards.success) {
-        set({ boards: boards.data });
+        set({ boards: boards.data, fetched: true });
       } else {
         set({ error: boards.message });
         return;
@@ -77,6 +79,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
         boardsSub();
         boardsSub = null;
       }
+      console.log('wtf');
 
       // Socket Subscribe Message
       // Subscribe to the boards with property 'roomId' matching the given id

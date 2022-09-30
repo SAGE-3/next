@@ -8,7 +8,7 @@
 
 import { Avatar, Box, Tooltip, AvatarGroup } from '@chakra-ui/react';
 
-import { usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
+import { usePresenceStore, useUser, useUsersStore, initials } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 type AvatarGroupProps = {
@@ -35,12 +35,13 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
             <Tooltip key={presence.data.userId} aria-label="username" hasArrow={true} placement="top-start" label={user.data.name}>
               <Avatar
                 name={user.data.name}
+                getInitials={initials}
                 backgroundColor={sageColorByName(user.data.color || 'orange')}
                 size="sm"
                 mx={1}
                 color="white"
                 showBorder={true}
-                borderWidth={'2px'}
+                borderWidth={'1px'}
                 borderColor="whiteAlpha.600"
               />
             </Tooltip>

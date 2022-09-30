@@ -46,14 +46,18 @@ const AppComponent = (props: App): JSX.Element => {
 
   // Room and board location
   const location = useLocation();
-  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
 
   // Get information  about the current Jupyter kernel
   useEffect(() => {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         // Get list of sessions
-        const base = `http://${window.location.hostname}`;
+        let base: string;
+        if (conf.production) {
+          base = `https://${window.location.hostname}:4443`;
+        } else {
+          base = `http://${window.location.hostname}`;
+        }
         const j_url = base + '/api/sessions';
         // Talk to the jupyter server API
         fetch(j_url, {
@@ -65,6 +69,7 @@ const AppComponent = (props: App): JSX.Element => {
         }).then((response) => response.json())
           .then((res) => {
             // console.log('Jupyter> Got sessions', res);
+            const { boardId } = location.state as { boardId: string; roomId: string };
             for (const s of res) {
               if (s.name === boardId) {
                 // console.log('Jupyter> Found python3 kernel', s.kernel.id);

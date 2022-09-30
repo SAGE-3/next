@@ -27,6 +27,7 @@ import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
+import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
@@ -50,4 +51,5 @@ export const initialValues = {
   [JupyterLabName]: defaultJupyterLab,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [NotepadName]: defaultNotepad,
+  [GLTFViewerName]: defaultGLTFViewer,
 };

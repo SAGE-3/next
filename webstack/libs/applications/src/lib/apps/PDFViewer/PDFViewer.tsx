@@ -44,15 +44,18 @@ function AppComponent(props: App): JSX.Element {
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.assetid);
-    if (myasset) {
-      setFile(myasset);
+    const asset = assets.find((a) => a._id === s.assetid);
+    if (asset) {
+      setFile(asset);
       // Update the app title
-      update(props._id, { description: myasset?.data.originalfilename });
-      // Updte the state of the app
-      if (myasset.data.derived) {
-        const pages = myasset.data.derived as ExtraPDFType;
-        updateState(props._id, { numPages: pages.length, currentPage: 0, displayPages: 1 });
+      update(props._id, { description: asset?.data.originalfilename });
+      // Update the state of the app
+      if (asset.data.derived) {
+        const pages = asset.data.derived as ExtraPDFType;
+        updateState(props._id, { numPages: pages.length });
+        // Update the app title
+        const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
+        update(props._id, { description: asset?.data.originalfilename + pageInfo });
       }
     }
   }, [s.assetid, assets]);
@@ -204,9 +207,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const [aspectRatio, setAspecRatio] = useState(1);
 
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.assetid);
-    if (myasset) {
-      setFile(myasset);
+    const asset = assets.find((a) => a._id === s.assetid);
+    if (asset) {
+      setFile(asset);
     }
   }, [s.assetid, assets]);
 

@@ -27,6 +27,7 @@ import { name as CobrowseName } from './apps/Cobrowse';
 import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as NotepadName } from './apps/Notepad';
+import { name as GLTFViewerName } from './apps/GLTFViewer';
 
 import AIPane from './apps/AIPane/AIPane';
 import Counter from './apps/Counter/Counter';
@@ -49,6 +50,7 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VegaLite from './apps/VegaLite/VegaLite';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import Notepad from './apps/Notepad/Notepad';
+import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 
 export const Applications = {
   [AIPaneName]: AIPane,
@@ -72,6 +74,7 @@ export const Applications = {
   [VegaLiteName]: VegaLite,
   [DeepZoomImageName]: DeepZoomImage,
   [NotepadName]: Notepad,
+  [GLTFViewerName]: GLTFViewer,
 } as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';

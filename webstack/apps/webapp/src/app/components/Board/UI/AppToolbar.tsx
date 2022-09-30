@@ -45,6 +45,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const scale = useUIStore((state) => state.scale);
   const boardDragging = useUIStore((state) => state.boardDragging);
+  const appDragging = useUIStore((state) => state.appDragging);
 
   // Position state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -61,7 +62,8 @@ export function AppToolbar(props: AppToolbarProps) {
       const ah = app.data.size.height * scale;
       const aw = app.data.size.width * scale;
       const titleBarHeight = 35 * scale; // Titlebar height including borders
-      const aby = ay + ah + titleBarHeight; // App Bottom Y
+      let aby = ay + ah + titleBarHeight; // App Bottom Y
+      if (app.data.minimized) aby = ay + titleBarHeight; // If the app is minimized, the bottom of the app is the top of the titlebar
 
       // Board Pos and Size
       const bx = boardPosition.x * scale;
@@ -125,7 +127,17 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(appBottomPosition);
       }
     }
-  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth, boardDragging]);
+  }, [
+    app?.data.position,
+    app?.data.size,
+    scale,
+    boardPosition.x,
+    boardPosition.y,
+    window.innerHeight,
+    window.innerWidth,
+    boardDragging,
+    app?.data.minimized,
+  ]);
 
   function getAppToolbar() {
     if (app) {
@@ -160,14 +172,14 @@ export function AppToolbar(props: AppToolbarProps) {
         transform={`translate(${position.x}px, ${position.y}px)`}
         position="absolute"
         ref={boxRef}
-        display="flex"
         border="solid 3px"
         borderColor={selectColor}
         bg={panelBackground}
         p="2"
         rounded="md"
-        transition="opacity 0.1s"
-        opacity={`${boardDragging ? '0' : '1'}`}
+        transition="opacity 0.7s"
+        display="flex"
+        opacity={`${boardDragging || appDragging ? '0' : '1'}`}
       >
         <Box display="flex" flexDirection="column">
           <Text

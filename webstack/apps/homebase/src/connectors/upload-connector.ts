@@ -33,7 +33,7 @@ const upload = multer({
   // use local storage
   storage: multer.diskStorage({
     destination: function (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
-      return cb(null, config.assets);
+      return cb(null, config.public);
     },
     filename: function (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
       return cb(null, getUUID() + file.originalname.substring(file.originalname.lastIndexOf('.')));

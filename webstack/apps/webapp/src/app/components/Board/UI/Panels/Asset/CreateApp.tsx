@@ -8,7 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF } from '@sage3/shared';
 
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -80,6 +80,21 @@ export async function setupAppForFile(
         rotation: { x: 0, y: 0, z: 0 },
         type: 'CSVViewer',
         state: { ...initialValues['CSVViewer'], assetid: file.id },
+        minimized: false,
+        raised: true,
+      });
+    } else if (isGLTF(file.type)) {
+      resolve({
+        name: 'GLTFViewer',
+        description: 'GLTF',
+        roomId: roomId,
+        boardId: boardId,
+        ownerId: userId,
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 600, height: 600, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'GLTFViewer',
+        state: { ...initialValues['GLTFViewer'], assetid: file.id },
         minimized: false,
         raised: true,
       });

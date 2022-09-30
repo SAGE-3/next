@@ -24,6 +24,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 interface RoomState {
   rooms: Room[];
   error: string | null;
+  fetched: boolean;
   clearError: () => void;
   create: (newRoom: RoomSchema) => Promise<void>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
@@ -39,6 +40,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
   return {
     rooms: [],
     error: null,
+    fetched: false,
     clearError: () => {
       set({ error: null });
     },
@@ -62,9 +64,11 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // TO DO Delete all boards belonging to the room
     },
     subscribeToAllRooms: async () => {
+      set({ ...get(), rooms: [], fetched: false });
+
       const rooms = await APIHttp.GET<RoomSchema, Room>('/rooms');
       if (rooms.success) {
-        set({ rooms: rooms.data });
+        set({ rooms: rooms.data, fetched: true });
       } else {
         set({ error: rooms.message });
         return;

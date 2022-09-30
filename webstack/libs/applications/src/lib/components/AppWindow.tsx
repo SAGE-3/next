@@ -8,20 +8,17 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, useColorModeValue, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
+import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
-
-// import { ReactComponent as AppIcon } from './icon.svg';
 
 type WindowProps = {
   app: App;
   aspectRatio?: number | boolean;
   children: JSX.Element;
-
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
   lockToBackground?: boolean;
@@ -31,6 +28,9 @@ export function AppWindow(props: WindowProps) {
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const zindex = useUIStore((state) => state.zIndex);
+  const boardDragging = useUIStore((state) => state.boardDragging);
+  const appDragging = useUIStore((state) => state.appDragging);
+  const setAppDragging = useUIStore((state) => state.setAppDragging);
   const incZ = useUIStore((state) => state.incZ);
   const gridSize = useUIStore((state) => state.gridSize);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -42,8 +42,6 @@ export function AppWindow(props: WindowProps) {
   const toast = useToast();
   // Height of the title bar
   const titleBarHeight = 24;
-  // Border color when selected
-  // const borderColor = useColorModeValue(sageColorByName('blue'), sageColorByName('orange'));
 
   // Users
   const users = useUsersStore((state) => state.users);
@@ -61,6 +59,22 @@ export function AppWindow(props: WindowProps) {
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [minimized, setMinimized] = useState(props.app.data.minimized);
   const [myZ, setMyZ] = useState(zindex);
+  const [appWasDragged, setAppWasDragged] = useState(false);
+
+  // Detect if spacebar is held down to allow for board dragging through apps
+  const spacebarPressed = useKeyPress(' ');
+
+  // Delete an app while mouseover and delete pressed
+  const [mouseOver, setMouseOver] = useState(false);
+  useHotkeys(
+    'ctrl+d',
+    () => {
+      if (mouseOver && !selected) {
+        deleteApp(props.app._id);
+      }
+    },
+    { dependencies: [mouseOver, selected] }
+  );
 
   // Track the app store errors
   useEffect(() => {
@@ -84,13 +98,25 @@ export function AppWindow(props: WindowProps) {
     setMinimized(props.app.data.minimized);
   }, [props.app.data.minimized]);
 
-  // Handle when the app is dragged by the title bar
+  // Handle when the window starts to drag
+  function handleDragStart() {
+    setAppDragging(true);
+    bringForward();
+  }
+
+  // When the window is being dragged
+  function handleDrag() {
+    setAppWasDragged(true);
+  }
+
+  // Handle when the app is finished being dragged
   function handleDragStop(_e: any, data: DraggableData) {
     let x = data.x;
     let y = data.y;
     x = Math.round(x / gridSize) * gridSize; // Snap to grid
     y = Math.round(y / gridSize) * gridSize;
     setPos({ x, y });
+    setAppDragging(false);
     update(props.app._id, {
       position: {
         x,
@@ -100,7 +126,26 @@ export function AppWindow(props: WindowProps) {
     });
   }
 
-  // Handle when the app is resized
+  // Handle when the window starts to resize
+  function handleResizeStart() {
+    setAppDragging(true);
+    bringForward();
+  }
+
+  // Handle when the app is resizing
+  function handleResize(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
+    // Get the width and height of the app after the resize
+    const width = parseInt(ref.offsetWidth);
+    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
+    const height = parseInt(ref.offsetHeight) - titleBarHeight;
+
+    // Set local state
+    setSize({ width, height });
+    setAppWasDragged(true);
+    setPos({ x: position.x, y: position.y });
+  }
+
+  // Handle when the app is fnished being resized
   function handleResizeStop(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
     // Get the width and height of the app after the resize
     const width = parseInt(ref.offsetWidth);
@@ -110,6 +155,7 @@ export function AppWindow(props: WindowProps) {
     // Set local state
     setPos({ x: position.x, y: position.y });
     setSize({ width, height });
+    setAppDragging(false);
 
     // Update the size and position of the app in the server
     update(props.app._id, {
@@ -124,18 +170,6 @@ export function AppWindow(props: WindowProps) {
         height,
       },
     });
-  }
-
-  // Set the local state on resize
-  function handleResize(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
-    // Get the width and height of the app after the resize
-    const width = parseInt(ref.offsetWidth);
-    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
-    const height = parseInt(ref.offsetHeight) - titleBarHeight;
-
-    // Set local state
-    setSize({ width, height });
-    setPos({ x: position.x, y: position.y });
   }
 
   // Close the app and delete from server
@@ -162,10 +196,15 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppClick(e: any) {
     e.stopPropagation();
+    bringForward();
     // Set the selected app in the UI store
-    setSelectedApp(props.app._id);
+    if (appWasDragged) setAppWasDragged(false);
+    else setSelectedApp(props.app._id);
+  }
 
-    if (!props.lockToBackground) {
+  // Bring the app forward
+  function bringForward() {
+     if (!props.lockToBackground) {
       // Raise down
       apps.forEach((a) => {
         if (a.data.raised) update(a._id, { raised: false });
@@ -181,28 +220,29 @@ export function AppWindow(props: WindowProps) {
       dragHandleClassName={'handle'}
       size={{ width: size.width, height: `${minimized ? titleBarHeight : size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
       position={pos}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
       onDragStop={handleDragStop}
-      onResizeStop={handleResizeStop}
+      onResizeStart={handleResizeStart}
       onResize={handleResize}
-      onResizeStart={handleAppClick}
+      onResizeStop={handleResizeStop}
       onClick={handleAppClick}
-      onDoubleClick={handleAppClick}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
         zIndex: (props.lockToBackground) ? 0 : myZ
+        pointerEvents: spacebarPressed ? 'none' : 'auto',
       }}
-      // minimum size of the app: 1 grid unit
-      minWidth={gridSize}
-      minHeight={gridSize}
+      // minimum size of the app: 200 px
+      minWidth={200}
+      minHeight={200}
       // Scaling of the board
       scale={scale}
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      // disableDragging={minimized}
       enableResizing={!minimized}
     >
       {/* Border Box around app to show it is selected */}
@@ -216,8 +256,45 @@ export function AppWindow(props: WindowProps) {
           border={`${4}px solid ${selectColor}`}
           borderRadius="8px"
           pointerEvents="none"
+          zIndex={2}
         ></Box>
       ) : null}
+      {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
+      {!selected ? (
+        <Box
+          position="absolute"
+          className="handle" // The CSS name react-rnd latches on to for the drag events
+          left="-3px"
+          top="-3px"
+          width={size.width + 6}
+          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
+          borderRadius="8px"
+          cursor="move"
+          userSelect={'none'}
+          zIndex={2}
+          onMouseEnter={() => {
+            setMouseOver(true);
+          }}
+          onMouseLeave={() => {
+            setMouseOver(false);
+          }}
+        ></Box>
+      ) : null}
+      {/* This div is to block the app from being interacted with */}
+      {boardDragging || appDragging ? (
+        <Box
+          position="absolute"
+          left="-3px"
+          top="-3px"
+          width={size.width + 6}
+          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
+          borderRadius="8px"
+          pointerEvents={'none'}
+          userSelect={'none'}
+          zIndex={2}
+        ></Box>
+      ) : null}
+
       {/* Title Bar */}
       <Box
         className="handle" // The CSS name react-rnd latches on to for the drag events
@@ -226,7 +303,6 @@ export function AppWindow(props: WindowProps) {
         flexWrap="nowrap"
         justifyContent="space-between"
         alignItems="center"
-        // backgroundColor={minimized ? sageColorByName('orange') : selected ? selectColor : 'teal'}
         backgroundColor={selected ? selectColor : 'teal'}
         px="1"
         cursor={'move'}
@@ -282,7 +358,15 @@ export function AppWindow(props: WindowProps) {
       {/* End Title Bar */}
 
       {/* The Application */}
-      <Box id={'app_' + props.app._id} width={size.width} height={size.height} overflow="hidden" display={minimized ? 'none' : 'inherit'}>
+      <Box
+        id={'app_' + props.app._id}
+        width={size.width}
+        height={size.height}
+        overflow="hidden"
+        zIndex={2}
+        display={minimized ? 'none' : 'inherit'}
+        borderRadius="md"
+      >
         {props.children}
       </Box>
     </Rnd>

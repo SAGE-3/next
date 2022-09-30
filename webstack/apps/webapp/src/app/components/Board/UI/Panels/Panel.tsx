@@ -7,12 +7,11 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, HStack } from '@chakra-ui/react';
+import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { StuckTypes, useUIStore } from '@sage3/frontend';
-import { sageColorByName } from '@sage3/shared';
+import { PanelNames, StuckTypes, useUIStore } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -59,30 +58,34 @@ export function ButtonPanel(props: ButtonPanelProps) {
 // Add a title to the chakra button props
 export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
-  disabled: boolean;
   isActive: boolean;
   description: string;
 }
 
 // Button with a title and using the font size from parent panel
 export function IconButtonPanel(props: IconButtonPanelProps) {
-  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const textColor = useColorModeValue('gray.700', 'gray.300');
+  const hoverColor = useColorModeValue('gray.400', 'gray.100');
+
+  const iconColor = useColorModeValue('teal.400', 'teal.400');
+  const iconHoverColor = useColorModeValue('teal.300', 'teal.300');
   return (
     <Box>
-      <IconButton
-        {...props}
-        borderRadius="md"
-        h="auto"
-        p={1}
-        fontSize="4xl"
-        color={props.textColor ? props.textColor : textColor}
-        justifyContent="flex-center"
-        aria-label={props.description}
-        icon={props.icon}
-        isDisabled={props.disabled}
-        isActive={props.isActive}
-        _hover={{ color: 'teal' }}
-      />
+      <Tooltip label={props.description} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <IconButton
+          {...props}
+          borderRadius="md"
+          h="auto"
+          p={1}
+          fontSize="4xl"
+          justifyContent="flex-center"
+          aria-label={props.description}
+          icon={props.icon}
+          color={props.isActive ? iconColor : textColor}
+          transition={'all 0.2s'}
+          _hover={{ color: props.isActive ? iconHoverColor : hoverColor, transform: 'scale(1.1)' }}
+        />
+      </Tooltip>
     </Box>
   );
 }
@@ -90,10 +93,12 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
 // Props for the Panel
 export type PanelProps = {
   title: string;
+  name: PanelNames;
   opened: boolean;
   setOpened: (opened: boolean) => void;
   height?: number;
-  width?: number;
+  width: number;
+  zIndex: number;
   position: { x: number; y: number };
   setPosition: (pos: { x: number; y: number }) => void;
   stuck: StuckTypes;
@@ -113,8 +118,8 @@ export type PanelProps = {
  */
 export function Panel(props: PanelProps) {
   // Track the size of the panel
-  const [w, setW] = props.width ? useState(props.width) : useState(200);
-  const [hover, setHover] = useState(false);
+  const [w, setW] = useState(props.width);
+
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
   const [winHeight, setHeight] = useState(window.innerHeight);
@@ -130,15 +135,7 @@ export function Panel(props: PanelProps) {
   // UI store
   const showUI = useUIStore((state) => state.showUI);
   const ref = useRef<HTMLDivElement>(null);
-
-  function handleDblClick(e: any) {
-    e.stopPropagation();
-    setShowActions(!showActions);
-  }
-  function handleClick(e: any) {
-    e.stopPropagation();
-    setShowActions(!showActions);
-  }
+  const bringPanelForward = useUIStore((state) => state.bringPanelForward);
 
   // Update the window size
   const updateDimensions = () => {
@@ -206,9 +203,17 @@ export function Panel(props: PanelProps) {
   const borderRight =
     props.stuck == StuckTypes.TopRight || props.stuck == StuckTypes.Right || props.stuck == StuckTypes.BottomRight ? border : '0px';
 
+  function handleMinimizeClick(e: any) {
+    e.stopPropagation();
+    setShowActions(!showActions);
+  }
+  // Handle a drag start of the panel
+  const handleDragStart = (event: any, data: DraggableData) => {
+    bringPanelForward(props.name);
+  };
+
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
-    setHover(false);
     props.setPosition({ x: data.x, y: data.y });
     if (ref.current) {
       const we = ref.current['clientWidth'];
@@ -260,15 +265,14 @@ export function Panel(props: PanelProps) {
   if (showUI && props.show) {
     return (
       <Rnd
+        dragHandleClassName="dragHandle" // only allow dragging the header
         position={{ ...props.position }}
         bounds="window"
-        size={{ width: w, height: ref.current ? ref.current['clientHeight'] + 5 : '100px' }}
-        // onDoubleClick={handleDblClick}
-        onDragStart={() => setHover(true)}
+        onClick={() => bringPanelForward(props.name)}
+        onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
-        dragHandleClassName="header" // only allow dragging the header
-        style={{ transition: hover ? 'none' : 'all 0.2s' }}
+        style={{ maxWidth: w + 'px', zIndex: props.zIndex, overflow: 'hidden' }}
       >
         <Box
           display="flex"
@@ -284,54 +288,59 @@ export function Panel(props: PanelProps) {
           borderRight={borderRight}
         >
           <Box
-            width="30px"
+            width="25px"
             backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
             backgroundPosition="0 0"
             backgroundSize="8px 8px"
-            mr="2"
+            mr="3"
             cursor="move"
-            className="header"
+            className="dragHandle"
           />
 
-          <Box width="100%">
-            <Box bg={panelBackground} cursor="auto">
-              <HStack w="100%" mb={2}>
-                <Text
-                  w="100%"
-                  textAlign="left"
-                  pl="1"
-                  color={textColor}
-                  fontSize={bigFont}
-                  fontWeight="bold"
-                  h={'auto'}
-                  userSelect={'none'}
-                  className="header"
-                  cursor="move"
-                  onDoubleClick={props.titleDblClick}
-                >
-                  {props.title}
-                </Text>
+          <Box bg={panelBackground} cursor="auto" maxWidth={w - 45 + 'px'}>
+            <Box mb={2} display="flex" justifyContent="space-between">
+              <Box flexGrow={1} maxWidth={w - 80 + 'px'} className="dragHandle">
+                <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
+                  <Text
+                    whiteSpace={'nowrap'}
+                    overflow={'hidden'}
+                    textOverflow={'ellipsis'}
+                    textAlign="left"
+                    mr="1"
+                    color={textColor}
+                    fontSize={bigFont}
+                    fontWeight="bold"
+                    cursor="move"
+                    onDoubleClick={props.titleDblClick}
+                  >
+                    {props.title}
+                  </Text>
+                </Tooltip>
+              </Box>
 
+              <Box>
                 {showActions ? (
-                  <IconButton size="xs" as={MdExpandLess} aria-label="show less" onClick={handleClick} />
+                  <IconButton size="xs" as={MdExpandLess} aria-label="show less" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
                 ) : (
-                  <IconButton size="xs" as={MdExpandMore} aria-label="show more" onClick={handleClick} />
+                  <IconButton size="xs" as={MdExpandMore} aria-label="show more" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
                 )}
                 {props.showClose ? (
                   <IconButton
                     as={MdClose}
                     aria-label="close panel"
                     size="xs"
+                    mx="1"
+                    cursor="pointer"
                     onClick={() => {
                       props.setShow(false);
                       props.setStuck(StuckTypes.Controller);
                     }}
                   />
                 ) : null}
-              </HStack>
-
-              {showActions ? <>{props.children}</> : null}
+              </Box>
             </Box>
+
+            {showActions ? <>{props.children}</> : null}
           </Box>
         </Box>
       </Rnd>

@@ -6,17 +6,16 @@
  *
  */
 
-import { AppSchema } from "@sage3/applications/schema";
-import { SAGE3Collection, sageRouter } from "@sage3/backend";
+import { AppSchema } from '@sage3/applications/schema';
+import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
-
   constructor() {
-    super("APPS", {
-      name: "",
-      ownerId: "",
-      roomId: "",
-      boardId: "",
+    super('APPS', {
+      name: '',
+      ownerId: '',
+      roomId: '',
+      boardId: '',
     });
     const router = sageRouter<AppSchema>(this);
     this.httpRouter = router;

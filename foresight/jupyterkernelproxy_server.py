@@ -1,95 +1,114 @@
 # TODO: Check throught the kernel client that the kernel is actually alive
 from flask import Flask, request
-from  jupyter_client import AsyncKernelClient
-import sys
-import io
+from .config import config as conf
 import json
+import uuid
+import datetime
+import websockets
+import os
 import redis
-import queue
-import logging
-import time
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-import sys
-from collections import defaultdict
-kc = AsyncKernelClient()
-session_id= None
+import requests
+
 app = Flask(__name__)
-red = None
-import os, contextlib
+prod_type = os.getenv('ENVIRONMENT')
+if not prod_type:
+    raise Exception("Cannot find ENVIRONMENT value. Should be either production or development")
+base_ws = conf[prod_type]['jupyter_ws']
+print(f"base ws is {base_ws}")
 
-# def supress_stdout(func):
-#     async def wrapper(*a, **ka):
-#         with open(os.devnull, 'w') as devnull:
-#             with contextlib.redirect_stdout(devnull):
-#                 return await func(*a, **ka)
-#     return wrapper
+red = redis.StrictRedis(conf[prod_type]["redis_server"], 6379, charset="utf-8", decode_responses=True)
 
-
-
-@app.before_first_request
-async def before_first_request():
-    global red
-    global kc
-    global session_id
-    # print(f"\n\n\n\nrunning this first and kc is {kc}\n\n\n")
-    kernel_config = json.load(open("config/kernel-s3-next.json"))
-    kc.load_connection_info(kernel_config)
-
-    # kc.start_channels()
-    # kc.wait_for_ready()
-
-
-    red = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
-    session_id= kc.session.parent.session.bsession
-    # For some reason, sometimes the first execute is ignored
-    # print(f"my session id is {session_id}")
+def format_execute_request_msg(code):
+    msg_type = 'execute_request'
+    content = {'code': code, 'silent': False}
+    hdr = {'msg_id': uuid.uuid1().hex,
+           'username': 'test',
+           'data': datetime.datetime.now().isoformat(),
+           'msg_type': msg_type,
+           'version': '5.0'}
+    msg = {'header': hdr,
+           'parent_header': hdr,
+           'metadata': {},
+           'channel': 'shell',  # requests for code execution, object information, prompts, etc
+           'content': content}
+    return msg
 
 
+async def consumer(message):
+    print(f"message is message\n{message}")
+
+def get_board_kernel_id(headers):
+    response = requests.get(conf[prod_type]["jupyter_server"] + "/api/kernels", headers=headers)
     try:
-        kc.execute("")
-        await kc.get_iopub_msg(timeout=0.001)
+        board_kernel = json.loads(response.text)[0]["id"]
+        return board_kernel
     except:
-        # print("The expected error")
-        pass
+        result = {"request_id": str(uuid.uuid4()), "error": "Couldn't connect to Kernel"}
+        print(result)
+        red.publish('jupyter_outputs', json.dumps(result))
+        return result
+
+def get_jupyter_token():
+    return red.get("config:jupyter:token")
+
 
 @app.route('/exec', methods=['POST'])
 async def run_code():
-    global kc
-    result = {}
-    # print("In execute")
-    code = request.data.decode("utf-8")
+    global open_sockets
+    req = request.get_json()
+    print(req)
+    token = req["token"]
+    if not token:
+        token = get_jupyter_token()
+    headers = {'Authorization': f"Token {token}"}
 
-    # Flushing the output and empty the queue before running a job
-    # TODO: THIS IS A TEMP FIX> THIS DOES NOT GUARANTEE THAT ANOTHER THREAD IS
-    #  NOT GOING TO TRY TO WRITE TO STDOUT, WHICH WILL BE PICKED UP LATER.
-    # NEED TO HANDLE THIS BY TESTING WHETHER WE ARE IN EXECUTE MODE AND DELAYING PRINTING UNTIL DONE WITH EXECUTE MODE
+    kernel_id = req["kernel"]
+    if not kernel_id:
+        kernel_id = get_board_kernel_id(headers)
 
-    msg = await kc.execute(code, reply=True)
+    socket_url = f"{base_ws}/api/kernels/{kernel_id}/channels"
+    session_id = uuid.uuid4().hex
+    socket_url += '?session_id=' + session_id
+
+
+
+
+    try:
+        ws = await websockets.connect(socket_url, extra_headers=headers, ping_timeout=None)
+    except:
+        result = {"request_id": str(uuid.uuid4()), "error": "Couldn't connect to Kernel"}
+        print(result)
+        red.publish('jupyter_outputs', json.dumps(result))
+        return result
+
+    # msg = format_execute_request_msg(req["code"])
+    # msg = format_execute_request_msg("import pandas as pd\npd.DataFrame({'a':[1,2,3]})")
+    code = req["code"]
+    msg = format_execute_request_msg(code)
+
     parent_msg_id = msg["parent_header"]["msg_id"]
-    result["request_id"] = parent_msg_id
-    # print(f"Executing code {code} and parent message id is {parent_msg_id}")
-    while True:
-        try:
-            msg = await kc.get_iopub_msg(timeout=0)
-            if msg["parent_header"]['msg_id'] != parent_msg_id:
-                logger.info("\t\t in 1")
-                continue
 
-            # print(f"\t parent_msg_id is  {parent_msg_id}  and msg is {msg}")
-            if 'execution_state' in msg['content'] and msg['content']['execution_state'] == 'idle':
-                logger.info("\t\t in 2")
-            if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
-                logger.info("\t\t in 3")
-                result[msg['msg_type']] = msg['content']
-        except queue.Empty:
-            # print("queue is empty")
-            break
-        except Exception as e:
-            raise Exception(f"Error in jupyter kernel sever: {e} ")
+    _ = await ws.send(json.dumps(msg))
 
-    # print(f"Result is {result}")
-    # if 'display_data' in result:
-    #     del(result['execute_result'])
+    result = {"request_id": parent_msg_id}
+
+    ready_to_end = False
+    while not ws.closed:
+        response = await ws.recv()
+        print(response)
+        response = json.loads(response)
+        if parent_msg_id == response["parent_header"]["msg_id"]:
+            print("I am here 1")
+            if response['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
+                result[response['msg_type']] = response['content']
+                ready_to_end = True
+            elif response['msg_type'] in ["execute_reply"]:
+                if response['content']["status"] == "error":
+                    result["error"] = response['content']['traceback']
+                await ws.close()
+            elif ready_to_end and 'execution_state' in response['content'] and response['content'][
+                'execution_state'] == 'idle':
+                await ws.close()
+    print(result)
     red.publish('jupyter_outputs', json.dumps(result))
-    return {"request_id": parent_msg_id}
+    return result
