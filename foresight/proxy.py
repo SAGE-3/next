@@ -156,6 +156,7 @@ class SAGEProxy():
             logging.info(f"Getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             updated_fields = []
+            print(f"msg received is {msg}")
 
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
