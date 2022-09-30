@@ -1,4 +1,5 @@
 [
+  "AIPane",
   "Counter",
   "Linker",
   "Stickie",
@@ -8,7 +9,7 @@
   "LeafLet",
   "VideoViewer",
   "Webview",
-  "DataTableApp",
+  "DataTable",
   "CSVViewer",
   "RTCChat",
   "Screenshare",

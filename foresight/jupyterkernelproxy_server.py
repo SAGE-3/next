@@ -43,7 +43,7 @@ def get_board_kernel_id(headers):
         board_kernel = json.loads(response.text)[0]["id"]
         return board_kernel
     except:
-        result = {"request_id": str(uuid.uuid4()), "error": "Couldn't connect to Kernel"}
+        result = {"request_id": str(uuid.uuid4()), "error": {"evalue": "Couldn't connect to Kernel"}}
         print(result)
         red.publish('jupyter_outputs', json.dumps(result))
         return result
@@ -76,7 +76,7 @@ async def run_code():
     try:
         ws = await websockets.connect(socket_url, extra_headers=headers, ping_timeout=None)
     except:
-        result = {"request_id": str(uuid.uuid4()), "error": "Couldn't connect to Kernel"}
+        result = {"request_id": str(uuid.uuid4()), "error": {"evalue": "Couldn't connect to Kernel"}}
         print(result)
         red.publish('jupyter_outputs', json.dumps(result))
         return result

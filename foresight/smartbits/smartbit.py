@@ -125,6 +125,7 @@ class Rotation(TrackedBaseModel):
 
 
 class AppTypes(Enum):
+    ai_pane = "AIPane"
     counter = "Counter"
     note = "Note"
     data_table = "DataTable"
