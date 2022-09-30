@@ -4,15 +4,9 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  *
- */ /**
- * Copyright (c) SAGE3 Development Team
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- *
  */
 
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -26,11 +20,17 @@ import {
   Button,
   Box,
   ButtonGroup,
+  Checkbox
 } from '@chakra-ui/react';
-import { MdPerson } from 'react-icons/md';
+
+import { v5 as uuidv5 } from 'uuid';
+import { MdPerson, MdLock, MdDescription } from 'react-icons/md';
+
 import { Board, BoardSchema } from '@sage3/shared/types';
 import { useBoardStore } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
+import { serverConfiguration } from 'libs/frontend/src/lib/config';
+import { useData } from 'libs/frontend/src/lib/hooks';
 
 interface EditBoardModalProps {
   isOpen: boolean;
@@ -40,6 +40,9 @@ interface EditBoardModalProps {
 }
 
 export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
+  // Fetch configuration from the server
+  const config = useData('/api/configuration') as serverConfiguration;
+
   const [name, setName] = useState<BoardSchema['name']>(props.board.data.name);
   const [description, setEmail] = useState<BoardSchema['description']>(props.board.data.description);
   const [color, setColor] = useState<BoardSchema['color']>(props.board.data.color);
@@ -51,9 +54,22 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   const deleteBoard = useBoardStore((state) => state.delete);
   const updateBoard = useBoardStore((state) => state.update);
 
+  const [isProtected, setProtected] = useState(false);
+  const [password, setPassword] = useState('');
+  const [valid, setValid] = useState(true);
+  const [isPasswordChanged, setPasswordChanged] = useState(false);
+
+  useEffect(() => {
+    setName(props.board.data.name);
+    setEmail(props.board.data.description);
+    setColor(props.board.data.color);
+    setProtected(props.board.data.isPrivate);
+    setPassword('');
+  }, [props.board]);
+
   // the input element
   // When the modal panel opens, select the text for quick replacing
-  const initialRef = React.useRef<HTMLInputElement>(null);
+  const initialRef = useRef<HTMLInputElement>(null);
   // useEffect(() => {
   //   initialRef.current?.select();
   // }, [initialRef.current]);
@@ -72,6 +88,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     }
   };
 
+  // Update button handler
   const handleSubmit = () => {
     if (name !== props.board.data.name) {
       updateBoard(props.board._id, { name });
@@ -82,12 +99,36 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     if (color !== props.board.data.color) {
       updateBoard(props.board._id, { color });
     }
+    if (isProtected !== props.board.data.isPrivate) {
+      updateBoard(props.board._id, { isPrivate: isProtected });
+    }
+    if (isProtected && isPasswordChanged) {
+      if (password) {
+        // hash the PIN: the namespace comes from the server configuration
+        const key = uuidv5(password, config.namespace);
+        updateBoard(props.board._id, { privatePin: key });
+      } else {
+        setValid(false);
+      }
+    }
     props.onClose();
   };
 
   const handleDeleteBoard = () => {
     deleteBoard(props.board._id);
   };
+
+  // To enable/disable
+  const checkProtected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProtected(e.target.checked);
+    setValid(!e.target.checked);
+  };
+  const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPasswordChanged(true);
+    setValid(!!e.target.value);
+    setPassword(e.target.value);
+  };
+
 
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
@@ -141,13 +182,32 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               );
             })}
           </ButtonGroup>
+
+          <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
+            Board Protected with a Password
+          </Checkbox>
+          <InputGroup mt={4}>
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <Input
+              type="text"
+              placeholder={'Set Password'}
+              _placeholder={{ opacity: 1, color: 'gray.600' }}
+              mr={4}
+              value={password}
+              onChange={handlePassword}
+              isRequired={isProtected}
+              disabled={!isProtected}
+            />
+          </InputGroup>
+
         </ModalBody>
         <ModalFooter pl="4" pr="8" mb="2">
           <Box display="flex" justifyContent="space-between" width="100%">
-            <Button colorScheme="red" onClick={handleDeleteBoard} disabled={!name || !description} mx="2">
+            <Button colorScheme="red" onClick={handleDeleteBoard} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description}>
+            <Button colorScheme="green" onClick={handleSubmit}
+              disabled={!name || !description || !valid}>
               Update
             </Button>
           </Box>

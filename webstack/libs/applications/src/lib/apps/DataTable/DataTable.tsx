@@ -60,7 +60,6 @@ import './styles.css';
 import React, {useState, useEffect, useMemo} from 'react';
 // import {ColumnMenu} from "./components/ColumnMenu";
 import {colMenus} from "./colMenus";
-import {padding} from "vega-lite/build/src/compile/scale/properties";
 
 // const TextInput = (props: App): JSX.Element => {
 //   const s = props.data.state as AppState;
@@ -667,9 +666,10 @@ function AppComponent(props: App): JSX.Element {
           {/*<p>s.selectedRows: {s.selectedRows}</p>*/}
           {/*<p>s.selectedCols: {s.selectedCols}</p>*/}
 
-          <HStack display="flex" wrap="wrap" justifyContent="space-between" marginTop="1em">
+          <div className="searchContainer">
+          {/*<HStack display="flex" wrap="wrap" justifyContent="space-between" marginTop="1em">*/}
             {headers?.map((col: string, index: number) => (
-              <div>
+              <div className="card">
                 <label htmlFor={col}>{col}</label>
                 <input type="text"
                        id={col}
@@ -678,7 +678,7 @@ function AppComponent(props: App): JSX.Element {
                 />
               </div>
             ))}
-          </HStack>
+          </div>
 
           <HStack
             position='absolute'
