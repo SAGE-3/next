@@ -14,7 +14,7 @@ import { usePresence, useAppStore } from '@sage3/frontend';
 // Board Layers
 import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
 import { Box, useColorModeValue } from '@chakra-ui/react';
-import { BoardClock } from '../components/Board/UI/Clock';
+import { Clock } from '../components/Board/UI/Clock';
 
 type LocationParams = {
   boardId: string;
@@ -64,7 +64,7 @@ export function BoardPage() {
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" />
       </Box>
 
-      <BoardClock />
+      <Clock />
 
       {/* TODO White Board Layer for marking onto board */}
       <WhiteboardLayer boardId={locationState.boardId} roomId={locationState.roomId}></WhiteboardLayer>

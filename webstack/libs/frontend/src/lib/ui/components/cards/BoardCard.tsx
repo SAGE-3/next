@@ -86,84 +86,134 @@ export function BoardCard(props: BoardCardProps) {
         onClose={onCloseEnter}
       />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
-      <Box
-        borderWidth="2px"
-        borderRadius="md"
-        overflow="hidden"
-        height="80px"
-        my="2"
-        pt="2"
-        border={`solid ${props.selected ? boardColor : borderColor} 2px`}
-        transition="transform .2s"
-        style={{
-          background: `linear-gradient(${props.selected ? boardColor : borderColor} 10%, transparent 10% ) no-repeat`,
-        }}
-        _hover={{
-          transform: 'scale(1.05)',
-        }}
-        cursor="pointer"
-        onClick={props.onSelect}
-      >
-        <Box px="2" display="flex" flexDirection="row" justifyContent="space-between" alignContent="center">
-          <Box display="flex" flexDirection="column">
-            <Text fontSize="2xl">{props.board.data.name}</Text>
-            <Text fontSize="1xl">{props.board.data.description}</Text>
-          </Box>
-
-          <Box display="flex" mt="2" alignItems="center" flexShrink="3">
-            <Tooltip label={`${heading} board is protected`} placement="top-start" hasArrow openDelay={200}>
-              <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={boardColor} /> : null}</div>
-            </Tooltip>
-
-            <Tooltip label="Enter Board" openDelay={400} placement="top-start" hasArrow>
-              <IconButton
-                onClick={handleEnterBoard}
-                color={props.selected ? boardColor : borderColor}
-                aria-label="Preview Board"
-                fontSize="3xl"
-                variant="ghost"
-                _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                transition="transform .2s"
-                icon={<MdExitToApp />}
-              />
-            </Tooltip>
-            <Tooltip label="Copy Board ID into clipboard" openDelay={400} placement="top-start" hasArrow>
-              <IconButton
-                onClick={handleCopyId}
-                color={props.selected ? boardColor : borderColor}
-                aria-label="Board Copy ID"
-                fontSize="3xl"
-                variant="ghost"
-                _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                transition="transform .2s"
-                icon={<MdContentCopy />}
-              />
-            </Tooltip>
-            {yours ? (
-              <Tooltip label="Edit Board" openDelay={400} placement="top-start" hasArrow>
-                <IconButton
-                  onClick={handleOpenSettings}
-                  color={props.selected ? boardColor : borderColor}
-                  aria-label="Board Edit"
-                  fontSize="3xl"
-                  variant="ghost"
-                  _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                  transition="transform .2s"
-                  icon={<MdSettings />}
-                />
-              </Tooltip>
-            ) : null}
-
-            <Box width="50px" display="flex" alignItems="center" justifyContent="right">
-              <Text fontSize="1xl" mx="2">
-                {props.userCount}
-              </Text>
-              <MdPerson size="18" />
+      <Tooltip label={<BoardPreview board={props.board} />} placement="bottom-start" backgroundColor="transparent" openDelay={1000}>
+        <Box
+          borderWidth="2px"
+          borderRadius="md"
+          overflow="hidden"
+          height="80px"
+          width="100%"
+          my="2"
+          boxShadow="md"
+          pt="2"
+          border={`solid ${props.selected ? boardColor : borderColor} 2px`}
+          transition="transform .2s"
+          style={{
+            background: `linear-gradient(${props.selected ? boardColor : borderColor} 10%, transparent 10% ) no-repeat`,
+          }}
+          cursor="pointer"
+          onClick={handleEnterBoard}
+        >
+          <Box px="2" display="flex" flexDirection="row" justifyContent="space-between" alignContent="center">
+            <Box display="flex" flexDirection="column">
+              <Text fontSize="2xl">{props.board.data.name}</Text>
+              <Text fontSize="md">{props.board.data.description}</Text>
             </Box>
-            <Box as="span" ml="2" color="gray.600" fontSize="sm"></Box>
+
+            <Box display="flex" mt="2" alignItems="center" flexShrink="3">
+              <Tooltip label={`${heading} board is protected`} placement="top-start" hasArrow openDelay={200}>
+                <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={boardColor} /> : null}</div>
+              </Tooltip>
+
+              <Box width="200px" display="flex" alignItems="center" justifyContent="right">
+                <Box display="flex" alignItems={'center'}>
+                  <Text fontSize="xl">{props.userCount}</Text>
+                  <MdPerson fontSize="22px" />
+                </Box>
+                {props.board.data.isPrivate ? (
+                  <Box>
+                    <MdLock fontSize="22px" />
+                  </Box>
+                ) : null}
+                <Tooltip label="Copy Board ID into clipboard" openDelay={400} placement="top-start" hasArrow>
+                  <IconButton
+                    onClick={handleCopyId}
+                    color={props.selected ? boardColor : borderColor}
+                    aria-label="Board Copy ID"
+                    fontSize="3xl"
+                    variant="ghost"
+                    _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
+                    transition="transform .2s"
+                    icon={<MdContentCopy />}
+                  />
+                </Tooltip>
+              </Box>
+              <Box as="span" ml="2" color="gray.600" fontSize="sm"></Box>
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </Tooltip>
     </>
+  );
+}
+
+import { AppError, Applications } from '@sage3/applications/apps';
+import { App } from '@sage3/applications/schema';
+import { useAppStore, useUIStore } from '@sage3/frontend';
+import { Board } from '@sage3/shared/types';
+import { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+
+type BoardPreviewProps = {
+  board: Board;
+};
+
+/**
+ * Board Preview component
+ * @returns
+ */
+export function BoardPreview(props: BoardPreviewProps) {
+  const [apps, setApps] = useState<App[]>([]);
+
+  const boardHeight = useUIStore((state) => state.boardHeight);
+  const boardWidth = useUIStore((state) => state.boardWidth);
+
+  const borderWidth = 4;
+  const maxWidth = 600 - borderWidth * 2;
+  const maxHeight = 300 - borderWidth * 2;
+
+  const scale = Math.min(maxWidth / boardWidth, maxHeight / boardHeight);
+
+  const fetchBoardApp = useAppStore((state) => state.fetchBoardApps);
+  const backgroundColor = useColorModeValue('gray.100', 'gray.700');
+
+  useEffect(() => {
+    async function fetchApps() {
+      const resApps = await fetchBoardApp(props.board._id);
+      if (resApps) {
+        setApps(resApps);
+      }
+    }
+    fetchApps();
+  }, [props.board._id]);
+
+  return (
+    <Box
+      width={maxWidth + 'px'}
+      height={maxHeight + 'px'}
+      backgroundColor={backgroundColor}
+      borderRadius="md"
+      pointerEvents="none"
+      border={`solid ${borderWidth}px ${sageColorByName(props.board.data.color)}`}
+      overflow="hidden"
+      transform="translateX(-27px)"
+    >
+      <Box width={maxWidth + 'px'} height={maxHeight + 'px'} transform={`scale(${scale})`} transformOrigin="top left">
+        {apps.map((app) => {
+          const Component = Applications[app.data.type].AppComponent;
+          return (
+            // Wrap the components in an errorboundary to protect the board from individual app errors
+            <ErrorBoundary
+              key={app._id}
+              fallbackRender={({ error, resetErrorBoundary }) => (
+                <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+              )}
+            >
+              <Component key={app._id} {...app}></Component>
+            </ErrorBoundary>
+          );
+        })}
+      </Box>
+    </Box>
   );
 }

@@ -74,8 +74,27 @@ export function BoardList(props: BoardListProps) {
     }
   }
 
+  const [scrollPos, setScrollPos] = useState(0);
+  const handleScrollEvent = (e: any) => {
+    console.log(e.deltaY, scrollPos);
+    if (e.deltaY > 0) {
+      setScrollPos(Math.min(0, scrollPos + 30));
+    } else {
+      setScrollPos(scrollPos - 30);
+    }
+  };
   return (
-    <Box height="100%" width="100%">
+    <Box
+      height="100%"
+      borderColor="gray.500"
+      borderWidth="3px"
+      borderRadius="md"
+      backgroundColor="gray.700"
+      boxShadow="xl"
+      p="4"
+      overflow="hidden"
+    >
+      {' '}
       <InputGroup>
         <Input
           my="2"
@@ -87,44 +106,45 @@ export function BoardList(props: BoardListProps) {
         <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
       </InputGroup>
       {props.selectedRoom ? (
-        <Tooltip label="Create a board" placement="top-start" openDelay={400}>
+        <Tooltip label="Create a board" placement="top" openDelay={400}>
           <Button
-            border={`solid ${borderColor} 2px`}
-            borderColor={borderColor}
-            my="2"
             height="60px"
             width="100%"
-            transition="transform .1s"
-            _hover={{ transform: 'scale(1.1)' }}
-            onClick={() => setNewBoardModal(true)}
+            borderRadius="md"
+            border={`solid ${borderColor} 2px`}
+            fontSize="48px"
+            p="0"
             disabled={auth?.provider === 'guest'}
+            onClick={() => setNewBoardModal(true)}
           >
-            <Text fontSize="4xl" fontWeight="bold" transform={`translateY(-3px)`}>
+            <Text fontSize="4xl" fontWeight="bold" transform={'translateY(-3px)'}>
               +
             </Text>
           </Button>
         </Tooltip>
       ) : null}
-      <Box height="100%" display="flex" flexDir="column">
-        {props.selectedRoom
-          ? (filterBoards ? filterBoards : boards)
-              // sort by name
-              .sort((a, b) => a.data.name.localeCompare(b.data.name))
-              // create the cards
-              .map((board) => {
-                return (
-                  <BoardCard
-                    key={board._id}
-                    board={board}
-                    selected={props.selectedBoard?._id == board._id}
-                    userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                    onSelect={() => props.onBoardClick(board)}
-                    onDelete={() => deleteBoard(board._id)}
-                  />
-                );
-              })
-          : null}
-      </Box>
+      <Box overflow="hidden" height="100%" mt="2" borderTop="solid gray 2px" onWheel={handleScrollEvent}>
+        <Box transform={`translateY(${scrollPos + 'px'})`} transition="transform 0.2s">
+          {props.selectedRoom
+            ? (filterBoards ? filterBoards : boards)
+                // sort by name
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                // create the cards
+                .map((board) => {
+                  return (
+                    <BoardCard
+                      key={board._id}
+                      board={board}
+                      selected={props.selectedBoard?._id == board._id}
+                      userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                      onSelect={() => props.onBoardClick(board)}
+                      onDelete={() => deleteBoard(board._id)}
+                    />
+                  );
+                })
+            : null}
+        </Box>{' '}
+      </Box>{' '}
       {props.selectedRoom ? (
         <CreateBoardModal roomId={props.selectedRoom._id} isOpen={newBoardModal} onClose={() => setNewBoardModal(false)}></CreateBoardModal>
       ) : null}

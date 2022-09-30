@@ -6,12 +6,15 @@
  *
  */
 
-import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
+import { Box, Icon, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { RoomSchema } from '@sage3/shared/types';
 import { sageColorByName } from '@sage3/shared';
 import { SBDocument } from '@sage3/sagebase';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
-import { MdLock } from 'react-icons/md';
+import { MdLock, MdMeetingRoom, MdPerson, MdSettings } from 'react-icons/md';
+import { Room } from 'twilio-video';
+import { useUser } from '../../../hooks';
+import { EditRoomModal } from '../modals/EditRoomModal';
 
 export type RoomCardProps = {
   room: SBDocument<RoomSchema>;
@@ -39,9 +42,18 @@ function RoomToolTip(props: { room: SBDocument<RoomSchema> }) {
  * @returns
  */
 export function RoomCard(props: RoomCardProps) {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { user } = useUser();
 
-  const borderColor = useColorModeValue('#A0AEC0', '#4A5568');
+  // Is it my board?
+  const yours = user?._id === props.room.data.ownerId;
+
+  // Edit Modal Disclousure
+  const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
+
+  // Enter Modal Disclosure
+  const { isOpen: isOpenEnter, onOpen: onOpenEnter, onClose: onCloseEnter } = useDisclosure();
+
+  const borderColor = useColorModeValue('#718096', '#A0AEC0');
   const textColor = useColorModeValue('#2D3748', '#E2E8F0');
 
   return (
@@ -51,65 +63,71 @@ export function RoomCard(props: RoomCardProps) {
         name={props.room.data.name}
         isPrivate={props.room.data.isPrivate}
         privatePin={props.room.data.privatePin}
-        isOpen={isOpen}
-        onClose={onClose}
-        onEnter={props.onEnter}
+        isOpen={isOpenEnter}
+        onClose={onCloseEnter}
+        onEnter={onOpenEnter}
       />
-      <Tooltip label={<RoomToolTip room={props.room} />} hasArrow placement="top-start">
-        <Box
-          display="flex"
-          justifyContent="center"
-          borderWidth="2px"
-          borderRadius="md"
-          border={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 2px`}
-          fontWeight="bold"
-          width="60px"
-          height="60px"
-          m="2"
-          cursor="pointer"
-          alignItems="baseline"
-          position="relative"
-          color={props.selected ? sageColorByName(props.room.data.color) : textColor}
-          transition="transform .2s"
-          _hover={{
-            transform: 'scale(1.2)',
-            color: sageColorByName(props.room.data.color),
-            borderColor: sageColorByName(props.room.data.color),
-          }}
-          onClick={onOpen}
-        >
-          <Text fontSize="4xl">{props.room.data.name.charAt(0).toLocaleUpperCase()}</Text>
-          <Box
-            position="absolute"
-            right="-10px"
-            bottom="-10px"
-            backgroundColor={props.selected ? sageColorByName(props.room.data.color) : borderColor}
-            color="white"
-            borderRadius="100%"
-            width="24px"
-            height="24px"
-            lineHeight={'20px'}
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            fontSize="14px"
-          >
-            {props.userCount}
+      <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
+
+      <Box
+        display="flex"
+        justifyContent="left"
+        borderWidth="2px"
+        borderRadius="md"
+        border={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 3px`}
+        height="80px"
+        width="100%"
+        my="2"
+        pb="1"
+        boxShadow="md"
+        cursor="pointer"
+        alignItems="baseline"
+        style={{
+          background: `linear-gradient(transparent 90%, ${
+            props.selected ? sageColorByName(props.room.data.color) : borderColor
+          } 90% ) no-repeat`,
+        }}
+        position="relative"
+        color={props.selected ? sageColorByName(props.room.data.color) : textColor}
+        onClick={onOpenEnter}
+      >
+        <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
+          <Box display="flex" flexDirection={'column'} alignItems="center" ml="2">
+            <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%">
+              {props.room.data.name}
+            </Text>
+            <Text fontSize="md" textOverflow={'ellipsis'} width="100%">
+              {props.room.data.description}
+            </Text>
           </Box>
-          {props.room.data.isPrivate ? (
-            <IconButton
-              variant="ghost"
-              position="absolute"
-              left="-16px"
-              bottom="-14px"
-              size="lg"
-              colorScheme="white"
-              aria-label="Call Sage"
-              icon={<MdLock />}
-            />
-          ) : null}
+
+          <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
+            <Box display="flex" alignItems={'center'}>
+              <Text fontSize="xl">{props.userCount}</Text>
+              <MdPerson fontSize="22px" />
+            </Box>
+            {props.room.data.isPrivate ? (
+              <Box>
+                <MdLock fontSize="22px" />
+              </Box>
+            ) : null}
+            {yours ? (
+              <Tooltip label="Edit Room" openDelay={400} placement="top-start" hasArrow>
+                <IconButton
+                  onClick={onOpenEdit}
+                  color={props.selected ? props.room.data.color : borderColor}
+                  aria-label="Board Edit"
+                  fontSize="3xl"
+                  variant="ghost"
+                  _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
+                  transition="transform .2s"
+                  icon={<MdSettings />}
+                />
+              </Tooltip>
+            ) : null}
+          </Box>
         </Box>
-      </Tooltip>
+      </Box>
     </>
   );
 }

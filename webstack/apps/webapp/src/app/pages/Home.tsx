@@ -16,8 +16,8 @@ import { Board, Room } from '@sage3/shared/types';
 import { BoardList } from '../components/Home/BoardList';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
-import { BoardPreview } from '../components/Home/BoardPreview';
 import { useLocation } from 'react-router-dom';
+import { Clock } from '../components/Board/UI/Clock';
 
 export function HomePage() {
   // User
@@ -39,9 +39,6 @@ export function HomePage() {
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
   const { update: updatePresence } = usePresence();
-
-  // Edit room Modal disclosure
-  const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -91,53 +88,27 @@ export function HomePage() {
   }, [roomsFetched]);
 
   return (
-    <Box p="2">
-      <Box display="flex" flexDirection="row" flexWrap="nowrap">
-        {/* List of Rooms Sidebar */}
-        <Box display="flex" flexGrow="0" flexDirection="column" flexWrap="nowrap" height="100vh" px="3">
+    <Box p="2" display="flex" flexDir={'column'} width="100%" alignItems="center">
+      <Box display="flex" flexDirection="row">
+        <Text fontSize="5xl">SERVER_NAME</Text>
+      </Box>
+
+      <Box display="flex" flexDirection="row" flexGrow={1} width="1200px" mb="5">
+        <Box width="600px" height="80vh" display="flex" flexDirection="column" justifyContent="flex-start" mr="2">
+          <Text fontSize={'4xl'} width="100%" justifyContent={'center'} textAlign="center">
+            Rooms
+          </Text>
           <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick}></RoomList>
         </Box>
 
-        {/* Selected Room */}
-        <Box mx="5">
-          <Box display="flex" flexDirection="row" width="2000px">
-            <Box display="flex" flexWrap="wrap" flexDirection="column" width="800px" height="100%">
-              {selectedRoom ? (
-                <>
-                  <Box display="flex" justifyContent="center" alignItems="center">
-                    <Text fontSize={'4xl'} mr="2">
-                      {selectedRoom?.data.name}
-                    </Text>
-                    {roomOwner ? (
-                      <IconButton
-                        aria-label="Edit"
-                        variant="ghost"
-                        fontSize="3xl"
-                        icon={<MdSettings />}
-                        transform="translateY(2px)"
-                        onClick={onOpenEdit}
-                      />
-                    ) : null}
-                  </Box>
+        <Box width="600px" height="80vh" display="flex" flexDirection="column" justifyContent="flex-start" ml="2">
+          <Text fontSize={'4xl'} width="100%" justifyContent={'center'} textAlign="center">
+            Boards
+          </Text>
 
-                  <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={selectedRoom} />
-
-                  <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
-                </>
-              ) : null}
-            </Box>
-
-            <Box width="1200px" height="100%" mx="8" display="flex" flexDir="column">
-              {selectedBoard ? (
-                <Box>
-                  <Box justifyContent={'center'} alignContent="center" display="flex">
-                    <Text fontSize="4xl">{selectedBoard?.data.name}</Text>
-                  </Box>
-                  <BoardPreview board={selectedBoard}></BoardPreview>
-                </Box>
-              ) : null}
-            </Box>
-          </Box>
+          {selectedRoom ? (
+            <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
+          ) : null}
         </Box>
       </Box>
 
@@ -149,6 +120,8 @@ export function HomePage() {
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
         <img src={imageUrl} width="75px" alt="" />
       </Box>
+
+      <Clock />
     </Box>
   );
 }
