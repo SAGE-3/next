@@ -61,6 +61,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (color: string) => setColor(color);
 
+  const boards = useBoardStore((state) => state.boards);
+
   useEffect(() => {
     // Generate a PIN
     const makeid = (length: number): string => {
@@ -91,6 +93,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
+      // list of board names in the room
+      const boardNames = boards.map((board) => board.data.name);
 
       if (cleanedName.split(' ').join('').length === 0) {
         toast({
@@ -99,7 +103,16 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           duration: 2 * 1000,
           isClosable: true,
         });
-      } else {
+      } else if (boardNames.includes(cleanedName)) {
+        // board name already exists
+        toast({
+          title: 'Board name already exists',
+          status: 'error',
+          duration: 2 * 1000,
+          isClosable: true,
+        });
+      }
+      else {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
         // Create the board
