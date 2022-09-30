@@ -6,69 +6,63 @@
  *
  */
 
-import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
+import { useEffect, useRef } from "react";
+
 import {
-  Box,
-  Button,
-  Icon,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger,
-  Portal,
-  Select,
-  useToast
+  Box, Button, IconButton, Menu, MenuButton,
+  MenuItem, MenuList, Popover, PopoverArrow, PopoverBody,
+  PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger,
+  Portal, useToast
 } from '@chakra-ui/react';
-import {App, AppName} from '../../schema';
+
+import { BsFillTriangleFill } from "react-icons/bs";
+import { FiChevronDown } from "react-icons/fi";
+
+import { useAppStore, useUIStore } from '@sage3/frontend';
+
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+
 import './styles.css';
 
-import {state as AppState} from './index';
-import {AppWindow} from '../../components';
-import React, {useEffect, useState, useRef} from "react";
-import {BsFillTriangleFill} from "react-icons/bs";
-import {FiChevronDown} from "react-icons/fi";
-import {useLocation} from "react-router-dom";
-
-type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+// type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
 function CustomToastExample(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore(state => state.updateState);
+  const toast = useToast();
 
-  const toast = useToast()
-  return (
-    <Button
-      onClick={() =>
-        toast({
-          position: 'top-left',
-          render: () => (
-            <Box color='white' p={3} bg='blue.500'>
-              Hello World
-            </Box>
-          ),
-        })
-      }
-    >
-      Show Toast
-    </Button>
-  )
+  return (<Button
+    onClick={() =>
+      toast({
+        position: 'top-left',
+        render: () => (
+          <Box color='white' p={3} bg='blue.500'>
+            Hello World
+          </Box>
+        ),
+      })
+    }
+  >
+    Show Toast
+  </Button>);
 }
 
+/**
+ * App
+ *
+ * @param {App} props
+ * @returns {JSX.Element}
+ */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
 
-  const zindex = useUIStore((state) => state.zIndex);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const boardApps = useAppStore(state => state.apps);
   const selApp = boardApps.find(el => el._id === selectedAppId);
-
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore(state => state.assets);
-  const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
-  const update = useAppStore((state) => state.update);
 
   const prevX = useRef(0)
   const prevY = useRef(0)
@@ -90,13 +84,12 @@ function AppComponent(props: App): JSX.Element {
   // Checks for apps on or off the pane
   useEffect(() => {
     for (const app of boardApps) {
-      const client = {
-        [app._id]: app.data.name
-      }
+      const client = { [app._id]: app.data.name };
+
       // TODO Handle AIPanes overlapping AIPanes
       // const includedAppTypes: AppName[] = ['AIPane']
       if (app.data.type === 'AIPane' && app._id !== props._id) {
-        break
+        break;
       } else {
         if (
           app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
@@ -104,24 +97,23 @@ function AppComponent(props: App): JSX.Element {
           app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
           app.data.size.height + app.data.position.y > props.data.position.y
         ) {
-          //TODO do something to ignore AIPanes
-
+          // TODO do something to ignore AIPanes
           if (!Object.keys(s.hostedApps).includes(app._id)) {
             const hosted = {
               ...s.hostedApps,
               ...client
             }
-            updateState(props._id, {hostedApps: hosted})
-            console.log('app ' + app._id + ' added')
+            updateState(props._id, { hostedApps: hosted })
+            console.log('AIPane> app', app._id, 'added');
           } else {
-            console.log('app ' + app._id + ' already in hostedApps')
+            console.log('AIPane> app ' + app._id + ' already in hostedApps')
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
-            const hostedCopy = {...s.hostedApps}
-            delete hostedCopy[app._id]
-            updateState(props._id, {hostedApps: hostedCopy})
-            console.log('app ' + app._id + ' removed from hostedApps')
+            const hostedCopy = { ...s.hostedApps };
+            delete hostedCopy[app._id];
+            updateState(props._id, { hostedApps: hostedCopy });
+            console.log('AIPane> app', app._id, 'removed from hostedApps');
           }
         }
       }
@@ -139,7 +131,7 @@ function AppComponent(props: App): JSX.Element {
     Object.keys(s.hostedApps).forEach((key: string) => {
       if (appIds.includes(key)) copyofhostapps[key] = key;
     });
-    updateState(props._id, {hostedApps: copyofhostapps})
+    updateState(props._id, { hostedApps: copyofhostapps });
   }, [boardApps.length])
 
   // // Test function for backend, just prints hosted app ID's
@@ -149,17 +141,15 @@ function AppComponent(props: App): JSX.Element {
 
   //TODO Move all apps together with the AIPane
   useEffect(() => {
-    const hostedCopy = {...s.hostedApps}
-    const xDiff = props.data.position.x - prevX.current
-    const yDiff = props.data.position.y - prevY.current
+    const hostedCopy = { ...s.hostedApps };
+    const xDiff = props.data.position.x - prevX.current;
+    const yDiff = props.data.position.y - prevY.current;
 
-    console.log("xDiff " + xDiff)
-    console.log("yDiff " + yDiff)
+    // console.log("xDiff " + xDiff);
+    // console.log("yDiff " + yDiff);
 
     for (const app of boardApps) {
-      const client = {
-        [app._id]: app.data.name
-      }
+      const client = { [app._id]: app.data.name };
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
@@ -170,9 +160,9 @@ function AppComponent(props: App): JSX.Element {
         })
       }
     }
-    console.log("Cluster useEffect")
-    prevX.current = props.data.position.x
-    prevY.current = props.data.position.y
+    // console.log("Cluster useEffect")
+    prevX.current = props.data.position.x;
+    prevY.current = props.data.position.y;
   }, [props.data.position.x, props.data.position.y])
 
   const handleFileSelected = () => {
@@ -180,36 +170,35 @@ function AppComponent(props: App): JSX.Element {
   }
 
   function testFunction() {
-    updateState(props._id, {executeInfo: {"executeFunc": "test_function", "params": {}}})
+    updateState(props._id, { executeInfo: { "executeFunc": "test_function", "params": {} } });
   }
-
 
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <div className="message-container" style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+        <div className="message-container" style={{ display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none" }}>
           <Popover>
             <PopoverTrigger>
               <Button>Trigger</Button>
             </PopoverTrigger>
             <PopoverContent>
-              <PopoverArrow/>
-              <PopoverCloseButton/>
+              <PopoverArrow />
+              <PopoverCloseButton />
               <PopoverHeader>Confirmation!</PopoverHeader>
               <PopoverBody>Are you sure you want to have that milkshake?</PopoverBody>
             </PopoverContent>
           </Popover>
-          <CustomToastExample {...props}/>
+          <CustomToastExample {...props} />
         </div>
         <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" position="absolute">
           <Box className="status-container">
-            {Object.keys(s.hostedApps).length > 0 ? (<span className="green-circle"/>) : (<span className="red-circle"/>)}
+            {Object.keys(s.hostedApps).length > 0 ? (<span className="green-circle" />) : (<span className="red-circle" />)}
           </Box>
 
           <>
-            selectedApp {selectedAppId}<br/>
-            length of hostedappsarr: {Object.keys(s.hostedApps).length}<br/>
-            hostedapps: {Object.values(s.hostedApps)}<br/>
+            selectedApp {selectedAppId}<br />
+            length of hostedappsarr: {Object.keys(s.hostedApps).length}<br />
+            hostedapps: {Object.values(s.hostedApps)}<br />
 
             {/*Board assests dropdown*/}
             {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
@@ -218,31 +207,32 @@ function AppComponent(props: App): JSX.Element {
             {/*  }*/}
             {/*</Select>*/}
           </>
-          <CustomToastExample {...props}/>
+          <CustomToastExample {...props} />
         </Box>
       </Box>
     </AppWindow>
   );
 }
 
+/**
+ * UI compoent
+ *
+ * @param {App} props
+ * @returns {JSX.Element}
+ */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
   const updateState = useAppStore((state) => state.updateState);
-
-  const models = ["Model 1", "Model 2", "Model 3"]
+  const models = ["Model 1", "Model 2", "Model 3"];
 
   function testFunction() {
-    updateState(props._id, {executeInfo: {"executeFunc": "test_function", "params": {}}})
+    updateState(props._id, { executeInfo: { "executeFunc": "test_function", "params": {} } })
   }
 
   return (
     <>
       <Menu>
-        <MenuButton
-          as={Button}
-          rightIcon={<FiChevronDown/>}
-        >
+        <MenuButton as={Button} rightIcon={<FiChevronDown />}>
           Models
         </MenuButton>
         <Portal>
@@ -261,8 +251,8 @@ function ToolbarComponent(props: App): JSX.Element {
       </Menu>
       <IconButton
         aria-label="Run AI"
-        icon={<BsFillTriangleFill/>}
-        _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+        icon={<BsFillTriangleFill />}
+        _hover={{ opacity: 0.7 }}
         onClick={() => {
           testFunction()
         }
@@ -272,4 +262,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default {AppComponent, ToolbarComponent};
+export default { AppComponent, ToolbarComponent };
