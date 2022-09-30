@@ -63,9 +63,12 @@ export function HomePage() {
   }
 
   useEffect(() => {
-    if (!rooms.find((room) => room._id === selectedRoom?._id)) {
+    const room = rooms.find((r) => r._id === selectedRoom?._id);
+    if (!room) {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
+    } else {
+      setSelectedRoom(room);
     }
     if (!boards.find((board) => board._id === selectedBoard?._id)) {
       setSelectedBoard(undefined);
