@@ -42,27 +42,29 @@ class AIPane(SmartBit):
     # _original_df: PandasDataFrame = PrivateAttr()
     # _some_private_info: dict = PrivateAttr()
 
-
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(AIPane, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
-
     def new_app_added(self):
+        """
+        :return: tasks supported based on the apps hosted.
+        The tasks returned are exactly as defined in ai_settings above.
+        """
+        supported_tasks = {}
         if len(self.state.hostedApps.values()) > 1:
             print("need to return error message saying that we can on operate on one datatype at a time")
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
             if len(self.state.hostedApps) == 1:
                 app_type = self.state.executeInfo.params["newAppInfo"]
-                supported_tasks = {}
+
                 for type, settings in ai_settings.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
             # ANDY: we need a state variable we can put the supported_tasks in
-            return supported_tasks
-
+        return supported_tasks
 
     def test_function(self):
         print("++++++++++++++++++++++++++++++")
@@ -76,3 +78,5 @@ class AIPane(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.send_updates()
 
+    def execute_model(self):
+        pass
