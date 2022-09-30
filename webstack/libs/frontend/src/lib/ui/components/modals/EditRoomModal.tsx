@@ -56,6 +56,8 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const [isListed, setIsListed] = useState(props.room.data.isListed);
   const [isProtected, setProtected] = useState(props.room.data.isPrivate);
   const [password, setPassword] = useState('');
+  const [valid, setValid] = useState(true);
+  const [isPasswordChanged, setPasswordChanged] = useState(false);
 
   useEffect(() => {
     setName(props.room.data.name);
@@ -102,10 +104,14 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     }
     if (isProtected !== props.room.data.isPrivate) {
       updateRoom(props.room._id, { isPrivate: isProtected });
-      if (isProtected) {
+    }
+    if (isProtected && isPasswordChanged) {
+      if (password) {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
         updateRoom(props.room._id, { privatePin: key });
+      } else {
+        setValid(false);
       }
     }
     props.onClose();
@@ -121,8 +127,11 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
   const checkProtected = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProtected(e.target.checked);
+    setValid(!e.target.checked);
   };
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPasswordChanged(true);
+    setValid(!!e.target.value);
     setPassword(e.target.value);
   };
 
@@ -206,7 +215,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               Delete
             </Button>
             <Button colorScheme="green" onClick={handleSubmit}
-              disabled={!name || !description || (isProtected && !password)}>
+              disabled={!name || !description || !valid}>
               Update
             </Button>
           </Box>
