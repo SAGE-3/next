@@ -79,7 +79,6 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
         boardsSub();
         boardsSub = null;
       }
-      console.log('wtf');
 
       // Socket Subscribe Message
       // Subscribe to the boards with property 'roomId' matching the given id
