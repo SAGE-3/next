@@ -14,7 +14,7 @@ import {
   Flex, ButtonGroup, Spacer
 } from '@chakra-ui/react';
 import { v4 as getUUID } from 'uuid';
-// import Ansi from 'ansi-to-react';
+import Ansi from 'ansi-to-react';
 import { JSONOutput } from './components/json';
 
 // import { BsMoonStarsFill, BsSun } from 'react-icons/bs';
@@ -330,32 +330,18 @@ const ProcessedOutput = (output: string) => {
           borderRadius: '4px',
         }}
       >
-          {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
-          {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
-          {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
-          {parsed.execute_result && parsed.execute_result.data['text/plain'] && RenderPlainText(parsed.execute_result.data['text/plain'])}
-          {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
-          {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
-          {parsed.display_data && parsed.display_data.data['image/jpeg'] && RenderJPEG(parsed.display_data.data['image/jpeg'])}
-          {parsed.display_data && parsed.display_data.data['image/svg+xml'] && RenderSVG(parsed.display_data.data['image/svg+xml'])}
-          {parsed.display_data && parsed.display_data.data['text/plain'] && RenderPlainText(parsed.display_data.data['text/plain'])}
-          {parsed.display_data && parsed.display_data.data['text/html'] && RenderHTML(parsed.display_data.data['text/html'])}
-        {/* {parsed.error && Array.isArray(parsed.error) ? (
-          parsed.error.map((line: string) => {
-            return (
-              <div style={{ color: 'red' }}>
-                <Ansi>{line}</Ansi>
-                <br />
-              </div>
-            );
-          })
-        ) : (
-          // otherwise, it is a string
-          <div style={{ color: 'red' }}>
-            {parsed.error.toString()}
-            <br />
-          </div>
-        )} */}
+        {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
+        {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
+        {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
+        {parsed.execute_result && parsed.execute_result.data['text/plain'] && RenderPlainText(parsed.execute_result.data['text/plain'])}
+        {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
+        {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
+        {parsed.display_data && parsed.display_data.data['image/jpeg'] && RenderJPEG(parsed.display_data.data['image/jpeg'])}
+        {parsed.display_data && parsed.display_data.data['image/svg+xml'] && RenderSVG(parsed.display_data.data['image/svg+xml'])}
+        {parsed.display_data && parsed.display_data.data['text/plain'] && RenderPlainText(parsed.display_data.data['text/plain'])}
+        {parsed.display_data && parsed.display_data.data['text/html'] && RenderHTML(parsed.display_data.data['text/html'])}
+        {parsed.error && Array.isArray(parsed.error) && parsed.error.map((line: string) => RenderTraceBack(line))}
+        {parsed.error && parsed.error.evalue && RenderError(parsed.error.evalue)}
       </Box>
     );
   } catch (e) {
@@ -414,37 +400,60 @@ const RenderHTML = (html: string): JSX.Element => {
   );
 };
 
-const RenderTraceBack = (message: any): JSX.Element => {
+// const RenderTraceBack = (message: any): JSX.Element => {
+//   return (
+//     <>
+//       <Alert status="error" variant="left-accent">
+//         <AlertIcon />
+//         {/* <Ansi>{message.traceback}</Ansi> */}
+//         <AlertTitle mr={2}>{message.evalue}</AlertTitle>
+//       </Alert>
+//     </>
+//   );
+// };
+
+const RenderTraceBack = (line: string): JSX.Element => {
   return (
     <>
       <Alert status="error" variant="left-accent">
-        <AlertIcon />
-        {/* <Ansi>{message.traceback}</Ansi> */}
-        <AlertTitle mr={2}>{message.evalue}</AlertTitle>
+        {/* <AlertIcon /> */}
+        <Ansi>{line}</Ansi>
       </Alert>
     </>
   );
 };
 
-const RenderError = (message: any): JSX.Element => {
-  // get the last item in the traceback array
-  // const last = message.traceback[message.traceback.length - 1];
-
-  const messageString = JSON.stringify(message, null, '\t');
-  if (messageString.includes(': ')) {
-    const [ename, evalue] = messageString.split(': ');
-    return (
-      <>
-        <Alert status="error" variant="left-accent">
-          <AlertIcon />
-          <AlertTitle mr={2}>{evalue}</AlertTitle>
-          {/* <AlertTitle mr={2}>{last}</AlertTitle> */}
-        </Alert>
-      </>
-    );
-  }
-  return <>('not parsed')</>;
+const RenderError = (message: string): JSX.Element => {
+  return (
+    <>
+      <Alert status="error" variant="left-accent">
+        <AlertIcon />
+        <AlertTitle mr={2}>{message}</AlertTitle>
+      </Alert>
+    </>
+  );
 };
+
+
+// const RenderError = (message: any): JSX.Element => {
+//   // get the last item in the traceback array
+//   // const last = message.traceback[message.traceback.length - 1];
+
+//   const messageString = JSON.stringify(message, null, '\t');
+//   if (messageString.includes(': ')) {
+//     const [ename, evalue] = messageString.split(': ');
+//     return (
+//       <>
+//         <Alert status="error" variant="left-accent">
+//           <AlertIcon />
+//           <AlertTitle mr={2}>{evalue}</AlertTitle>
+//           {/* <AlertTitle mr={2}>{last}</AlertTitle> */}
+//         </Alert>
+//       </>
+//     );
+//   }
+//   return <>('not parsed')</>;
+// };
 
 
 const RenderPNG = (encoding: string, ww?: number | string, hh?: number | string): JSX.Element => {
