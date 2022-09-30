@@ -214,7 +214,7 @@ const InputBox = (props: App): JSX.Element => {
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
-              size={'xs'}
+              size={'md'}
               rounded={'full'}
               onClick={handleExecute}
               aria-label={''}
@@ -227,13 +227,13 @@ const InputBox = (props: App): JSX.Element => {
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
-              size={'xs'}
+              size={'md'}
               rounded={'full'}
               onClick={handleClear}
               aria-label={''}
               disabled={user?._id !== props._createdBy}
               bg={useColorModeValue('#FFFFFF', '#000000')}
-              icon={<MdDelete size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+              icon={<MdDelete size={'2em'} color={useColorModeValue('#008080', '#008080')} />}
             />
           </Tooltip>
         </VStack>
@@ -260,12 +260,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Larger font size
   function handleIncreaseFont() {
-    const fs = s.fontSize + 0.5;
+    const fs = Math.min(s.fontSize * 1.2, 2);
     updateState(props._id, { fontSize: fs });
   }
   // Smaller font size
   function handleDecreaseFont() {
-    const fs = s.fontSize - 0.5;
+    const fs = Math.max(0.5, s.fontSize / 1.2);
     updateState(props._id, { fontSize: fs });
   }
 
@@ -287,12 +287,12 @@ function ToolbarComponent(props: App): JSX.Element {
       <HStack>
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize <= 1} onClick={() => handleDecreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button isDisabled={s.fontSize < 0.5} onClick={() => handleDecreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdRemove />
             </Button>
           </Tooltip>
           <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize > 16} onClick={() => handleIncreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button isDisabled={s.fontSize >= 2} onClick={() => handleIncreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
               <MdAdd />
             </Button>
           </Tooltip>
