@@ -232,7 +232,7 @@ export function AppWindow(props: WindowProps) {
         boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
-        zIndex: (props.lockToBackground) ? 0 : myZ
+        zIndex: (props.lockToBackground) ? 0 : myZ,
         pointerEvents: spacebarPressed ? 'none' : 'auto',
       }}
       // minimum size of the app: 200 px

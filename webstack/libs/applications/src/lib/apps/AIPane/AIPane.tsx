@@ -15,7 +15,7 @@ import {
   Menu,
   MenuButton,
   MenuItem,
-  MenuList,
+  MenuList, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger,
   Portal,
   Select,
   useToast
@@ -31,6 +31,29 @@ import {FiChevronDown} from "react-icons/fi";
 import {useLocation} from "react-router-dom";
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+
+function CustomToastExample(props: App): JSX.Element {
+  const s = props.data.state as AppState;
+  const updateState = useAppStore(state => state.updateState);
+
+  const toast = useToast()
+  return (
+    <Button
+      onClick={() =>
+        toast({
+          position: 'top-left',
+          render: () => (
+            <Box color='white' p={3} bg='blue.500'>
+              Hello World
+            </Box>
+          ),
+        })
+      }
+    >
+      Show Toast
+    </Button>
+  )
+}
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -163,27 +186,40 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockToBackground={true}>
-      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
-        <Box
-          position='absolute'
-          right='50px'
-          top='50px'
-        >
-          {Object.keys(s.hostedApps).length > 0 ? (<span className="greenCircle"/>) : (<span className="redCircle"/>)}
+      <Box>
+        <div className="message-container" style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+          <Popover>
+            <PopoverTrigger>
+              <Button>Trigger</Button>
+            </PopoverTrigger>
+            <PopoverContent>
+              <PopoverArrow/>
+              <PopoverCloseButton/>
+              <PopoverHeader>Confirmation!</PopoverHeader>
+              <PopoverBody>Are you sure you want to have that milkshake?</PopoverBody>
+            </PopoverContent>
+          </Popover>
+          <CustomToastExample {...props}/>
+        </div>
+        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" position="absolute">
+          <Box className="status-container">
+            {Object.keys(s.hostedApps).length > 0 ? (<span className="green-circle"/>) : (<span className="red-circle"/>)}
+          </Box>
+
+          <>
+            selectedApp {selectedAppId}<br/>
+            length of hostedappsarr: {Object.keys(s.hostedApps).length}<br/>
+            hostedapps: {Object.values(s.hostedApps)}<br/>
+
+            {/*Board assests dropdown*/}
+            {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
+            {/*  {roomAssets.map(el =>*/}
+            {/*    <option value={el._id}>{el.data.originalfilename}</option>)*/}
+            {/*  }*/}
+            {/*</Select>*/}
+          </>
+          <CustomToastExample {...props}/>
         </Box>
-
-        <>
-          selectedApp {selectedAppId}<br/>
-          length of hostedappsarr: {Object.keys(s.hostedApps).length}<br/>
-          hostedapps: {Object.values(s.hostedApps)}<br/>
-
-          {/*Board assests dropdown*/}
-          {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
-          {/*  {roomAssets.map(el =>*/}
-          {/*    <option value={el._id}>{el.data.originalfilename}</option>)*/}
-          {/*  }*/}
-          {/*</Select>*/}
-        </>
       </Box>
     </AppWindow>
   );
