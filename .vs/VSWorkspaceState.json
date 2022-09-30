@@ -1,0 +1,18 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\webstack",
+    "\\webstack\\apps",
+    "\\webstack\\apps\\webapp\\src",
+    "\\webstack\\apps\\webapp\\src\\app",
+    "\\webstack\\libs",
+    "\\webstack\\libs\\applications",
+    "\\webstack\\libs\\applications\\src",
+    "\\webstack\\libs\\applications\\src\\lib",
+    "\\webstack\\libs\\applications\\src\\lib\\apps",
+    "\\webstack\\libs\\applications\\src\\lib\\apps\\AIPane",
+    "\\webstack\\libs\\applications\\src\\lib\\apps\\Counter"
+  ],
+  "SelectedNode": "\\webstack\\libs\\applications\\src",
+  "PreviewInSolutionExplorer": false
+}

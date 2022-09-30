@@ -1,0 +1,110 @@
+.Table-Container {
+  border: solid red 2px;
+  padding: 10px 10px;
+}
+
+.Subcomponent-Container{
+  border: solid green 2px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px 10px;
+}
+
+.URL-Container{
+  margin-top: 30px;
+  padding: 25px 15px 15px 15px;
+}
+
+.Pagination-Container{
+  margin-top: 20px;
+  padding: 10px 10px;
+}
+
+.Message-Container{
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 25px 10px 5px 10px;
+}
+
+.ColName {
+  position: sticky;
+  inset-block-start: 0;
+  background-color: black;
+  flex-direction: row;
+  justify-content: space-between;
+  z-index: 1;
+}
+
+.indexColumn {
+  position: sticky;
+  inset-block-start: 0;
+  background-color: black;
+  flex-direction: row;
+  justify-content: space-between;
+  z-index: 1;
+}
+
+.indexTd {
+  position: relative;
+  justify-content: center;
+  width: 5%;
+  color: darkblue;
+  font-weight: bolder;
+}
+
+td {
+  position: relative;
+  /*z-index: 3;*/
+}
+
+body:not(.nohover) tbody td:hover {
+  background-color: darkslategray;
+}
+
+.highlight {
+  text-align: match-parent;
+  -webkit-padding-start: 1.5rem;
+  padding-inline-start: 1.5rem;
+  -webkit-padding-end: 1.5rem;
+  padding-inline-end: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  line-height: 1px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid;
+  border-color: #29487D;
+  background-color: purple;
+}
+
+.originalChakra {
+  text-align: justify;
+  -webkit-padding-start: 1.5rem;
+  padding-inline-start: 1.5rem;
+  -webkit-padding-end: 1.5rem;
+  padding-inline-end: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  line-height: 1px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid;
+  border-color: #29487D;
+}
+
+/*.searchContainer {*/
+/*  !*width: 100%;*!*/
+/*  display: grid;*/
+/*  grid-auto-flow: column;*/
+/*  !*grid-template-columns: repeat(4, 1fr);*!*/
+/*  !*grid-template-rows: repeat(auto-fill, 120px);*!*/
+/*  !*grid-row-gap: .5em;*!*/
+/*  !*grid-column-gap: 1em;*!*/
+/*}*/
+
+.search {
+  background-color : dimgray;
+  border-radius: 5px;
+  padding: 0.5px;
+  margin-left: 0.5rem;
+  margin-bottom: 0.25rem;
+  /*padding-left: 50px;*/
+}
