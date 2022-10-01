@@ -70,17 +70,16 @@ export function RoomCard(props: RoomCardProps) {
         borderWidth="1px"
         borderRadius="md"
         borderLeft={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 8px`}
-        height="60px"
+        height="50x"
         my="1"
         width="100%"
         cursor="pointer"
         alignItems="baseline"
         position="relative"
-        color={props.selected ? sageColorByName(props.room.data.color) : textColor}
         onClick={props.onEnter}
       >
-        <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
-          <Box display="flex" flexDirection={'column'} alignItems="center" ml="2">
+        <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
+          <Box display="flex" flexDirection={'column'} alignItems="center" ml="2" transform="translateY(-1px)">
             <Text fontSize="xl" textOverflow={'ellipsis'} width="100%">
               {props.room.data.name}
             </Text>
@@ -92,7 +91,7 @@ export function RoomCard(props: RoomCardProps) {
           <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
             <Box display="flex" alignItems={'center'}>
               <Text fontSize="sm">{props.userCount}</Text>
-              <MdPerson fontSize="18px" />
+              <MdPerson fontSize="22px" />
             </Box>
             <Tooltip
               label={props.room.data.isPrivate ? 'Room is Locked' : 'Room is Unlocked'}
@@ -100,14 +99,14 @@ export function RoomCard(props: RoomCardProps) {
               placement="top-start"
               hasArrow
             >
-              <Box>{props.room.data.isPrivate ? <MdLock fontSize="22px" /> : <MdLockOpen fontSize="22px" />}</Box>
+              <Box>{props.room.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
             </Tooltip>
             <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
               <IconButton
                 onClick={handleOnEdit}
                 color={props.selected ? sageColorByName(props.room.data.color) : borderColor}
-                aria-label="Board Edit"
-                fontSize="3xl"
+                aria-label="Room Edit"
+                fontSize="2xl"
                 variant="unstlyed"
                 disabled={!yours}
                 icon={<MdSettings />}
