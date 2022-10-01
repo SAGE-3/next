@@ -19,9 +19,12 @@ const executeInfoSchema = z.object({
 
 export const schema = z.object({
   code: z.string(),
-  output: z.string(),
+  language: z.string(),
+  fontSize: z.number(),
+  theme: z.string(),
+  token: z.string(),
   kernel: z.string(),
-  // outputs: z.record(z.any()),
+  output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -33,9 +36,12 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
-  output: '',
+  language: 'python',
+  fontSize: 1,
+  theme: 'xcode',
+  token: '',
   kernel: '',
-  // outputs: {},
+  output: '',
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
