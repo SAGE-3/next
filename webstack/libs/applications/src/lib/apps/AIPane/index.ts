@@ -11,6 +11,12 @@ import { z } from 'zod';
 export const schema = z.object({
   hostedApps: z.record(z.string(), z.string()),
 
+  supported_tasks: z.object({
+    models: z.record(z.string()),
+    tasks: z.record(z.string()),
+  }),
+
+
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),

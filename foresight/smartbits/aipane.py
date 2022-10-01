@@ -9,13 +9,6 @@ from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from pydantic import Field, PrivateAttr
 from typing import Optional, TypeVar
-from urllib.request import urlopen
-from urllib.parse import urlparse
-from os.path import splitext
-import pandas as pd
-import numpy as np
-import time
-import math
 
 PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 

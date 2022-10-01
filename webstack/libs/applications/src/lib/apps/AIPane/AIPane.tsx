@@ -17,7 +17,7 @@ import {
   MenuItem,
   MenuList, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger,
   Portal,
-  Select,
+  Select, Tooltip,
   useToast
 } from '@chakra-ui/react';
 import {App, AppName} from '../../schema';
@@ -27,6 +27,9 @@ import {state as AppState} from './index';
 import {AppWindow} from '../../components';
 import React, {useEffect, useState, useRef} from "react";
 import {BsFillTriangleFill} from "react-icons/bs";
+import {BiErrorCircle} from "react-icons/bi";
+import {GiEmptyHourglass} from "react-icons/gi";
+import {CgSmileMouthOpen} from "react-icons/cg"
 import {FiChevronDown} from "react-icons/fi";
 import {useLocation} from "react-router-dom";
 
@@ -39,6 +42,7 @@ function CustomToastExample(props: App): JSX.Element {
   const toast = useToast()
   return (
     <Button
+
       onClick={() =>
         toast({
           position: 'top-left',
@@ -54,6 +58,29 @@ function CustomToastExample(props: App): JSX.Element {
     </Button>
   )
 }
+
+// function statusIcon(props: App): JSX.Element {
+//   const s = props.data.state as AppState;
+//   const updateState = useAppStore(state => state.updateState);
+//
+//   const toast = useToast()
+//   return (
+//     <Button
+//       onClick={() =>
+//         toast({
+//           position: 'top-left',
+//           render: () => (
+//             <Box color='white' p={3} bg='blue.500'>
+//               Hello World
+//             </Box>
+//           ),
+//         })
+//       }
+//     >
+//       Show Toast
+//     </Button>
+//   )
+// }
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -127,7 +154,7 @@ function AppComponent(props: App): JSX.Element {
       }
 
     }
-  }, [selApp?.data.position, selApp?.data.size])
+  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)])
 
   //TODO Be mindful of client updates
   // Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
@@ -173,52 +200,51 @@ function AppComponent(props: App): JSX.Element {
     console.log("Cluster useEffect")
     prevX.current = props.data.position.x
     prevY.current = props.data.position.y
-  }, [props.data.position.x, props.data.position.y])
+  }, [props.data.position.x, props.data.position.y, JSON.stringify(s.hostedApps)])
 
-  const handleFileSelected = () => {
-    // TODO
-  }
-
-  function testFunction() {
-    updateState(props._id, {executeInfo: {"executeFunc": "test_function", "params": {}}})
+  function detectFileType() {
+    updateState(props._id, {executeInfo: {"executeFunc": "detect_file_type", "params": {}}})
   }
 
 
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <div className="message-container" style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-          <Popover>
-            <PopoverTrigger>
-              <Button>Trigger</Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <PopoverArrow/>
-              <PopoverCloseButton/>
-              <PopoverHeader>Confirmation!</PopoverHeader>
-              <PopoverBody>Are you sure you want to have that milkshake?</PopoverBody>
-            </PopoverContent>
-          </Popover>
-          <CustomToastExample {...props}/>
+        <div>
+          {/*<div className="message-container" style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>*/}
+          <div>
+            <Popover>
+              <PopoverTrigger>
+                <Button
+                  isDisabled={Object.keys(s.hostedApps).length !== 0 ? false : true}
+                  variant="ghost"
+                >
+                  Message
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <PopoverArrow/>
+                <PopoverCloseButton/>
+                <PopoverHeader>{Object.keys(s.hostedApps).length !== 0 ? "File type accepted" : "Error. Unsupported file type"}</PopoverHeader>
+                {/*<PopoverBody>{Object.keys(s.hostedApps).length !== 0 ? "File type accepted" : "Error. Unsupported file type"}</PopoverBody>*/}
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" position="absolute">
-          <Box className="status-container">
-            {Object.keys(s.hostedApps).length > 0 ? (<span className="green-circle"/>) : (<span className="red-circle"/>)}
+          <Box className="status-container" position="absolute">
+            {Object.keys(s.hostedApps).length === 0 ? (
+              <Tooltip label='Ready' fontSize='md'><Icon as={CgSmileMouthOpen} w={8} h={8}/></Tooltip>) : (
+              <Tooltip label='Running' fontSize='md'><Icon as={GiEmptyHourglass} w={8} h={8}/></Tooltip>)}
           </Box>
 
-          <>
+          <Box position="relative">
             selectedApp {selectedAppId}<br/>
             length of hostedappsarr: {Object.keys(s.hostedApps).length}<br/>
             hostedapps: {Object.values(s.hostedApps)}<br/>
 
-            {/*Board assests dropdown*/}
-            {/*<Select placeholder='Select File' onChange={handleFileSelected}>*/}
-            {/*  {roomAssets.map(el =>*/}
-            {/*    <option value={el._id}>{el.data.originalfilename}</option>)*/}
-            {/*  }*/}
-            {/*</Select>*/}
-          </>
-          <CustomToastExample {...props}/>
+          </Box>
+
         </Box>
       </Box>
     </AppWindow>
@@ -230,14 +256,32 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
+  const location = useLocation();
+  const locationState = location.state as { roomId: string };
+  const assets = useAssetStore(state => state.assets);
+  const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
+  const update = useAppStore((state) => state.update);
+
   const models = ["Model 1", "Model 2", "Model 3"]
 
   function testFunction() {
     updateState(props._id, {executeInfo: {"executeFunc": "test_function", "params": {}}})
   }
 
+  const handleFileSelected = () => {
+    console.log("Do something with file")
+  }
+
   return (
     <>
+      {/* TODO Temporary - Board assets dropdown */}
+      <Box>
+        <Select placeholder='Select File' onChange={handleFileSelected}>
+          {roomAssets.map(el =>
+            <option value={el._id}>{el.data.originalfilename}</option>)
+          }
+        </Select>
+      </Box>
       <Menu>
         <MenuButton
           as={Button}
