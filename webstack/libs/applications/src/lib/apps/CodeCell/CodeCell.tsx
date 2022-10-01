@@ -177,7 +177,7 @@ const InputBox = (props: App): JSX.Element => {
           onChange={updateCode}
           readOnly={user?._id !== props._createdBy}
           fontSize={s.fontSize + 'rem'}
-          minLines={2}
+          minLines={4}
           maxLines={20}
           placeholder="Enter code here"
           mode={s.language}
@@ -212,7 +212,7 @@ const InputBox = (props: App): JSX.Element => {
         <VStack pr={2}>
           <Tooltip hasArrow label="Execute" placement="top-start">
             <IconButton
-              _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
+              _hover={{ bg: 'invisible', transform: 'scale(1.2)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
               size={'md'}
               rounded={'full'}
@@ -225,7 +225,7 @@ const InputBox = (props: App): JSX.Element => {
           </Tooltip>
           <Tooltip hasArrow label="Clear All">
             <IconButton
-              _hover={{ bg: 'invisible', transform: 'scale(1.5)', transition: 'transform 0.2s' }}
+              _hover={{ bg: 'invisible', transform: 'scale(1.2)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
               size={'md'}
               rounded={'full'}
