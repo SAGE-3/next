@@ -19,7 +19,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  refresh: true,
+  refresh: false,
 };
 
 export const name = 'Kernels';
