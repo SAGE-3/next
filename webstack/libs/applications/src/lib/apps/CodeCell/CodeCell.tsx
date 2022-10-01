@@ -99,11 +99,11 @@ const AppComponent = (props: App): JSX.Element => {
   return (
     <AppWindow app={props}>
       <>
-        <Box w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+        <Box w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} overflowY={'scroll'}>
           <Box>{InputBox(props)}</Box>
           {/* add a box with a vertical scroll */}
-          <Box w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} overflowY={'scroll'}>
-            <Box p={4} fontSize={s.fontSize + 'rem'} color={'GrayText'} overflowY={'auto'} overflowX={'hidden'}>
+          <Box w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+            <Box p={4} fontSize={s.fontSize + 'rem'} color={'GrayText'} overflowX={'hidden'}>
               {ProcessedOutput(s.output)}
             </Box>
             {/* <Box m={4} mb={'120px'} bg={useColorModeValue('#222', '#1A1A1A')} color={'#FFF'}>
@@ -210,7 +210,7 @@ const InputBox = (props: App): JSX.Element => {
           ]}
         />
         <VStack pr={2}>
-          <Tooltip hasArrow label="Execute" placement="top-start">
+          {/* <Tooltip hasArrow label="Execute" placement="top-start">
             <IconButton
               _hover={{ bg: 'invisible', transform: 'scale(1.2)', transition: 'transform 0.2s' }}
               boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
@@ -235,7 +235,7 @@ const InputBox = (props: App): JSX.Element => {
               bg={useColorModeValue('#FFFFFF', '#000000')}
               icon={<MdDelete size={'2em'} color={useColorModeValue('#008080', '#008080')} />}
             />
-          </Tooltip>
+          </Tooltip> */}
         </VStack>
       </HStack>
       <Flex pr={10} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
