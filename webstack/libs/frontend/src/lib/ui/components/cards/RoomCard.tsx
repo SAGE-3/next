@@ -11,7 +11,7 @@ import { RoomSchema } from '@sage3/shared/types';
 import { sageColorByName } from '@sage3/shared';
 import { SBDocument } from '@sage3/sagebase';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
-import { MdLock, MdPerson, MdSettings } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdPerson, MdSettings } from 'react-icons/md';
 import { useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
 
@@ -23,15 +23,6 @@ export type RoomCardProps = {
   onDelete: () => void;
   onEdit: () => void;
 };
-
-function RoomToolTip(props: { room: SBDocument<RoomSchema> }) {
-  return (
-    <div>
-      <p>{props.room.data.name}</p>
-      <p>{props.room.data.description}</p>
-    </div>
-  );
-}
 
 /**
  * Room card
@@ -55,6 +46,11 @@ export function RoomCard(props: RoomCardProps) {
   const borderColor = useColorModeValue('#718096', '#A0AEC0');
   const textColor = useColorModeValue('#2D3748', '#E2E8F0');
 
+  const handleOnEdit = (e: any) => {
+    e.stopPropagation();
+    onOpenEdit();
+  };
+
   return (
     <>
       <EnterRoomModal
@@ -73,9 +69,9 @@ export function RoomCard(props: RoomCardProps) {
         justifyContent="left"
         borderWidth="1px"
         borderRadius="md"
-        borderLeft={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 6px`}
+        borderLeft={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 8px`}
         height="60px"
-        my="1 "
+        my="1"
         width="100%"
         cursor="pointer"
         alignItems="baseline"
@@ -98,25 +94,25 @@ export function RoomCard(props: RoomCardProps) {
               <Text fontSize="sm">{props.userCount}</Text>
               <MdPerson fontSize="18px" />
             </Box>
-            {props.room.data.isPrivate ? (
-              <Box>
-                <MdLock fontSize="18px" />
-              </Box>
-            ) : null}
-            {yours ? (
-              <Tooltip label="Edit Room" openDelay={400} placement="top-start" hasArrow>
-                <IconButton
-                  onClick={onOpenEdit}
-                  color={props.selected ? sageColorByName(props.room.data.color) : borderColor}
-                  aria-label="Board Edit"
-                  fontSize="3xl"
-                  variant="ghost"
-                  _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                  transition="transform .2s"
-                  icon={<MdSettings />}
-                />
-              </Tooltip>
-            ) : null}
+            <Tooltip
+              label={props.room.data.isPrivate ? 'Room is Locked' : 'Room is Unlocked'}
+              openDelay={400}
+              placement="top-start"
+              hasArrow
+            >
+              <Box>{props.room.data.isPrivate ? <MdLock fontSize="22px" /> : <MdLockOpen fontSize="22px" />}</Box>
+            </Tooltip>
+            <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
+              <IconButton
+                onClick={handleOnEdit}
+                color={props.selected ? sageColorByName(props.room.data.color) : borderColor}
+                aria-label="Board Edit"
+                fontSize="3xl"
+                variant="unstlyed"
+                disabled={!yours}
+                icon={<MdSettings />}
+              />
+            </Tooltip>
           </Box>
         </Box>
       </Box>

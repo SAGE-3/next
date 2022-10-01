@@ -123,10 +123,6 @@ export function BoardList(props: BoardListProps) {
             borderRadius: '8px',
           },
         }}
-        flexGrow={1}
-        display="flex"
-        flexDirection="column"
-        justifyContent={'end'}
       >
         {props.selectedRoom
           ? (filterBoards ? filterBoards : boards)
@@ -138,7 +134,6 @@ export function BoardList(props: BoardListProps) {
                   <BoardCard
                     key={board._id}
                     board={board}
-                    selected={props.selectedBoard?._id == board._id}
                     userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
                     onSelect={() => props.onBoardClick(board)}
                     onDelete={() => deleteBoard(board._id)}
@@ -158,7 +153,6 @@ export function BoardList(props: BoardListProps) {
             p="0"
             disabled={auth?.provider === 'guest'}
             onClick={() => setNewBoardModal(true)}
-            colorScheme="green"
           >
             +
           </Button>

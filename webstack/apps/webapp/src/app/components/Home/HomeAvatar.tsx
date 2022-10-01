@@ -30,10 +30,10 @@ export function HomeAvatar() {
       <Menu>
         <MenuButton
           as={Button}
-          size="sm"
+          size="md"
           variant="outline"
           color={sageColorByName(user?.data.color ? user.data.color : 'white')}
-          rightIcon={<MdAccountCircle />}
+          leftIcon={<MdAccountCircle />}
         >
           {user ? user.data.name : ''}
         </MenuButton>

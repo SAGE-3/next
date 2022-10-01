@@ -97,78 +97,44 @@ export function HomePage() {
     // Main Container
     <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
       {/* Top Bar */}
-      <Box
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-        minHeight={2}
-        width="100%"
-        px="2"
-        background="gray.700"
-        borderBottom="solid 4px"
-        borderColor="gray.800"
-      >
+      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={2} width="100%" px="2">
         <Box></Box>
+        <Text fontSize="3xl">SERVER_NAME</Text>
         <Clock />
       </Box>
 
       {/* Middle Section */}
-      <Box display="flex" flexDirection="row" flexGrow={1} width="100%" justifyContent={'space-between'} minHeight={0}>
+      <Box display="flex" flexDirection="row" flexGrow={1} width="100%" justifyContent={'space-between'} minHeight={0} px="2">
         {/* Left Side */}
-        <Box
-          display="flex"
-          justifyContent="flex-start"
-          flexGrow={1}
-          borderRadius="0 16px 16px 0"
-          overflow="hidden"
-          mr="2"
-          borderWidth={4}
-          borderLeftWidth={0}
-          borderColor={'gray.500'}
-          backgroundColor="gray.700"
-        >
+        <Box display="flex" justifyContent="flex-start" flexGrow={1} overflow="hidden" mr="2">
           {/* Rooms List */}
-          <Box
-            display="flex"
-            flexDirection="column"
-            flexGrow={1}
-            justifyContent={'space-between'}
-            background="gray.600"
-            px="2"
-            borderColor={'gray.500'}
-            borderRightWidth={4}
-            backgroundColor="gray.700"
-          >
-            <Text fontSize={'2xl'} textAlign="center">
+
+          <Box display="flex" flexDirection="column" justifyContent={'flex-end'} flexGrow={1}>
+            <Text fontSize={'3xl'} textAlign="center">
               Rooms
             </Text>
-            <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick}></RoomList>
+            <Box background="gray.700" m="4" mt="0" p="4" border="solid 3px" borderColor="blue.700" borderRadius="md">
+              <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick}></RoomList>
+            </Box>
           </Box>
 
           {/* Boards List */}
-
-          <Box display="flex" flexDirection="column" justifyContent={'space-between'} flexGrow={4} background="gray.600" px="2">
-            <Text fontSize={'2xl'} textAlign="center">
+          <Box display="flex" flexDirection="column" justifyContent={'flex-end'} flexGrow={4}>
+            <Text fontSize={'3xl'} textAlign="center">
               Boards
             </Text>
-            {selectedRoom ? (
-              <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
-            ) : null}
+            <Box background="gray.700" m="4" mt="0" p="4" border="solid 3px" borderColor="blue.700" borderRadius="md">
+              {selectedRoom ? (
+                <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
+              ) : null}
+            </Box>
           </Box>
         </Box>
-        <Divider orientation="vertical" mx="5" />
 
         {/* Right Side */}
-        <Box
-          display="flex"
-          justifyContent="flex-start"
-          flexGrow={1}
-          borderColor={'gray.500'}
-          borderLeftWidth={2}
-          backgroundColor="gray.700"
-        >
+        <Box display="flex" justifyContent="flex-start" flexGrow={1} ml="5">
           {/* Chats List */}
-          <Box display="flex" flexDirection="column" flexGrow={4} mr="3" justifyContent={'flex-end'} backgroundColor="gray.600">
+          <Box display="flex" flexDirection="column" flexGrow={4} mr="3" justifyContent={'flex-end'}>
             <Text fontSize={'3xl'} textAlign="center">
               Chat
             </Text>
@@ -200,12 +166,9 @@ export function HomePage() {
         alignItems="center"
         py="2"
         px="2"
-        background="gray.700"
-        borderTop="solid 4px"
-        borderColor="gray.800"
       >
         <HomeAvatar />
-        <Text fontSize="2xl">Server_Name</Text>
+        <Box></Box>
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
       </Box>
     </Box>

@@ -109,10 +109,6 @@ export function RoomList(props: RoomListProps) {
             borderRadius: '8px',
           },
         }}
-        flexGrow={1}
-        display="flex"
-        flexDirection="column"
-        justifyContent={'end'}
       >
         {(filterBoards ? filterBoards : rooms)
           // show only public rooms or mine

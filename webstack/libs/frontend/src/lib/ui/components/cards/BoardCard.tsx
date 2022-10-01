@@ -7,7 +7,7 @@
  */
 
 import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast, IconButton, border } from '@chakra-ui/react';
-import { MdPerson, MdLock, MdContentCopy, MdEdit, MdExitToApp, MdPreview, MdRemoveRedEye, MdSettings } from 'react-icons/md';
+import { MdPerson, MdLock, MdContentCopy, MdEdit, MdExitToApp, MdPreview, MdRemoveRedEye, MdSettings, MdLockOpen } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { sageColorByName } from '@sage3/shared';
@@ -21,7 +21,6 @@ export type BoardCardProps = {
   userCount: number;
   onSelect: () => void;
   onDelete: () => void;
-  selected: boolean;
 };
 
 /**
@@ -88,57 +87,62 @@ export function BoardCard(props: BoardCardProps) {
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
       <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor="transparent" openDelay={1000}>
         <Box
-          borderWidth="2px"
+          display="flex"
+          justifyContent="left"
+          borderWidth="1px"
           borderRadius="md"
-          overflow="hidden"
-          height="80px"
+          borderLeft={`solid ${boardColor} 8px`}
+          height="60px"
+          my="1"
           width="100%"
-          my="2"
-          boxShadow="md"
-          pt="2"
-          border={`solid ${props.selected ? boardColor : borderColor} 2px`}
-          transition="transform .2s"
-          style={{
-            background: `linear-gradient(${props.selected ? boardColor : borderColor} 10%, transparent 10% ) no-repeat`,
-          }}
           cursor="pointer"
+          alignItems="baseline"
+          position="relative"
           onClick={handleEnterBoard}
         >
-          <Box px="2" display="flex" flexDirection="row" justifyContent="space-between" alignContent="center">
-            <Box display="flex" flexDirection="column">
-              <Text fontSize="2xl">{props.board.data.name}</Text>
-              <Text fontSize="md">{props.board.data.description}</Text>
+          <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
+            <Box display="flex" flexDirection={'column'} alignItems="center" ml="2">
+              <Text fontSize="xl" textOverflow={'ellipsis'} width="100%">
+                {props.board.data.name}
+              </Text>
+              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%">
+                {props.board.data.description}
+              </Text>
             </Box>
 
-            <Box display="flex" mt="2" alignItems="center" flexShrink="3">
-              <Tooltip label={`${heading} board is protected`} placement="top-start" hasArrow openDelay={200}>
-                <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={boardColor} /> : null}</div>
-              </Tooltip>
-
+            <Box display="flex" mt="2" alignItems="center">
               <Box width="200px" display="flex" alignItems="center" justifyContent="right">
-                <Box display="flex" alignItems={'center'}>
-                  <Text fontSize="xl">{props.userCount}</Text>
-                  <MdPerson fontSize="22px" />
-                </Box>
+                <Text fontSize="xl">{props.userCount}</Text>
+                <MdPerson fontSize="22px" />
+
                 {props.board.data.isPrivate ? (
-                  <Box>
-                    <MdLock fontSize="22px" />
-                  </Box>
-                ) : null}
+                  <MdLock color={boardColor} fontSize="22px" />
+                ) : (
+                  <MdLockOpen color={boardColor} fontSize="22px" />
+                )}
+
                 <Tooltip label="Copy Board ID into clipboard" openDelay={400} placement="top-start" hasArrow>
                   <IconButton
                     onClick={handleCopyId}
-                    color={props.selected ? boardColor : borderColor}
+                    color={boardColor}
                     aria-label="Board Copy ID"
-                    fontSize="3xl"
-                    variant="ghost"
-                    _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                    transition="transform .2s"
+                    fontSize="xl"
+                    variant="unstlyed"
                     icon={<MdContentCopy />}
                   />
                 </Tooltip>
+                <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
+                  <IconButton
+                    onClick={handleOpenSettings}
+                    color={boardColor}
+                    aria-label="Board Edit"
+                    fontSize="2xl"
+                    variant="unstlyed"
+                    disabled={!yours}
+                    icon={<MdSettings />}
+                  />
+                </Tooltip>
               </Box>
-              <Box as="span" ml="2" color="gray.600" fontSize="sm"></Box>
             </Box>
           </Box>
         </Box>
