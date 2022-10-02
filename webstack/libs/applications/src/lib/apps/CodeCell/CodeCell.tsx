@@ -423,7 +423,7 @@ function ToolbarComponent(props: App): JSX.Element {
           colorScheme="teal"
           icon={<MdArrowDropDown />}
           onChange={selectKernel}
-          variant={'Flushed'}
+          variant={s.kernel ? 'filled' : 'outline'}
         >
           {(s.kernelCount === 0) ? <option value="No kernels running">No kernels running</option> : kernels}
         </Select>
