@@ -22,8 +22,10 @@ export const schema = z.object({
   language: z.string(),
   fontSize: z.number(),
   theme: z.string(),
-  token: z.string(),
   kernel: z.string(),
+  token: z.string(),
+  kernelCount: z.number(),
+  baseUrl: z.string(),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -39,8 +41,10 @@ export const init: Partial<state> = {
   language: 'python',
   fontSize: 1,
   theme: 'xcode',
-  token: '',
   kernel: '',
+  token: '',
+  kernelCount: 0,
+  baseUrl: '',
   output: '',
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
