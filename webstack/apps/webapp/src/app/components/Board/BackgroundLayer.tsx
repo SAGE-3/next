@@ -20,6 +20,7 @@ import { Applications, AppError } from '@sage3/applications/apps';
 import { sageColorByName } from '@sage3/shared';
 
 import { Background } from './Background/Background';
+import { AppWindow } from '@sage3/applications/apps';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -145,18 +146,25 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/* Apps */}
         {apps.map((app) => {
-          const Component = Applications[app.data.type].AppComponent;
-          return (
-            // Wrap the components in an errorboundary to protect the board from individual app errors
-            <ErrorBoundary
-              key={app._id}
-              fallbackRender={({ error, resetErrorBoundary }) => (
-                <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
-              )}
-            >
-              <Component key={app._id} {...app}></Component>
-            </ErrorBoundary>
-          );
+          if (app.data.type in Applications) {
+            const Component = Applications[app.data.type].AppComponent;
+            return (
+              // Wrap the components in an errorboundary to protect the board from individual app errors
+              <ErrorBoundary
+                key={app._id}
+                fallbackRender={({ error, resetErrorBoundary }) => (
+                  <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+                )}
+              >
+                <Component key={app._id} {...app}></Component>
+              </ErrorBoundary>
+            );
+          } else {
+            // App not found: happens if unkonw app in sagebase
+            return (<AppWindow key={app._id} app={app}>
+              <div>App not found</div>
+            </AppWindow>);
+          }
         })}
 
         {/* Draw the cursors: filter by board and not myself */}
