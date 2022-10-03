@@ -69,7 +69,7 @@ export function RoomCard(props: RoomCardProps) {
         justifyContent="left"
         borderWidth="1px"
         borderRadius="md"
-        borderLeft={`solid ${props.selected ? sageColorByName(props.room.data.color) : borderColor} 8px`}
+        borderLeft={`solid ${sageColorByName(props.room.data.color)} 8px`}
         height="50x"
         my="1"
         width="100%"

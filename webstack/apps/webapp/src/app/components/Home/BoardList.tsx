@@ -7,7 +7,21 @@
  */
 
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Box, Button, Input, InputGroup, InputRightElement, Select, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Grid,
+  GridItem,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Select,
+  SimpleGrid,
+  Text,
+  Tooltip,
+  useColorModeValue,
+  useToast,
+} from '@chakra-ui/react';
 
 import { MdSearch } from 'react-icons/md';
 
@@ -16,8 +30,9 @@ import { Board, Room } from '@sage3/shared/types';
 
 type BoardListProps = {
   onBoardClick: (board: Board) => void;
-  selectedRoom: Room | undefined;
+  selectedRoom: Room;
   selectedBoard: Board | undefined;
+  boards: Board[];
 };
 
 /**
@@ -29,7 +44,6 @@ type BoardListProps = {
  */
 export function BoardList(props: BoardListProps) {
   // Data stores
-  const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
   const storeError = useBoardStore((state) => state.error);
@@ -44,15 +58,15 @@ export function BoardList(props: BoardListProps) {
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
 
   function sortByName(a: Board, b: Board) {
-    return b.data.name.localeCompare(a.data.name);
+    return a.data.name.localeCompare(b.data.name);
   }
 
   function sortByUpdated(a: Board, b: Board) {
-    return a._updatedAt < b._updatedAt ? -1 : 1;
+    return a._updatedAt > b._updatedAt ? -1 : 1;
   }
 
   function sortByCreated(a: Board, b: Board) {
-    return a._createdAt < b._createdAt ? -1 : 1;
+    return a._createdAt > b._createdAt ? -1 : 1;
   }
 
   let sortFunction = sortByName;
@@ -88,7 +102,7 @@ export function BoardList(props: BoardListProps) {
   // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
-    const filBoards = boards.filter((board) => board.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
+    const filBoards = props.boards.filter((board) => board.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
     setFilterBoards(filBoards);
     if (event.target.value === '') {
       setFilterBoards(null);
@@ -108,8 +122,10 @@ export function BoardList(props: BoardListProps) {
     <>
       <Box
         overflowY="auto"
+        overflowX="hidden"
         pr="2"
         mb="2"
+        maxHeight="60vh"
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',
@@ -119,45 +135,43 @@ export function BoardList(props: BoardListProps) {
             background: 'transparent',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: 'teal',
+            background: 'gray',
             borderRadius: '8px',
           },
         }}
       >
-        {props.selectedRoom
-          ? (filterBoards ? filterBoards : boards)
-              // sort by name
-              .sort(sortFunction)
-              // create the cards
-              .map((board) => {
-                return (
-                  <BoardCard
-                    key={board._id}
-                    board={board}
-                    userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                    onSelect={() => props.onBoardClick(board)}
-                    onDelete={() => deleteBoard(board._id)}
-                  />
-                );
-              })
-          : null}
+        <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3} height="100%">
+          {(filterBoards ? filterBoards : props.boards)
+
+            .sort(sortFunction)
+            // create the cards
+            .map((board) => {
+              return (
+                <BoardCard
+                  key={board._id}
+                  board={board}
+                  userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                  onSelect={() => props.onBoardClick(board)}
+                  onDelete={() => deleteBoard(board._id)}
+                />
+              );
+            })}
+        </SimpleGrid>
       </Box>
-      {props.selectedRoom ? (
-        <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-          <Button
-            height="60px"
-            width="100%"
-            borderRadius="md"
-            border={`solid ${borderColor} 2px`}
-            fontSize="4xl"
-            p="0"
-            disabled={auth?.provider === 'guest'}
-            onClick={() => setNewBoardModal(true)}
-          >
-            +
-          </Button>
-        </Tooltip>
-      ) : null}
+      <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
+        <Button
+          height="48px"
+          width="100%"
+          borderRadius="md"
+          border={`solid ${borderColor} 2px`}
+          fontSize="4xl"
+          p="0"
+          disabled={auth?.provider === 'guest'}
+          onClick={() => setNewBoardModal(true)}
+        >
+          +
+        </Button>
+      </Tooltip>
       {props.selectedRoom ? (
         <CreateBoardModal roomId={props.selectedRoom._id} isOpen={newBoardModal} onClose={() => setNewBoardModal(false)}></CreateBoardModal>
       ) : null}

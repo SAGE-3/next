@@ -7,10 +7,20 @@
  */
 
 import { useEffect, useState } from 'react';
-import { MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, IconButton, useDisclosure, Image, Divider } from '@chakra-ui/react';
+import { MdArrowBack, MdSettings } from 'react-icons/md';
+import { Box, useColorModeValue, Text, IconButton, useDisclosure, Image, Divider, Button, Tooltip } from '@chakra-ui/react';
 
-import { EditRoomModal, useBoardStore, usePresence, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
+import {
+  EditRoomModal,
+  serverConfiguration,
+  useBoardStore,
+  useData,
+  usePresence,
+  usePresenceStore,
+  useRoomStore,
+  useUser,
+  useUsersStore,
+} from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
 import { BoardList } from '../components/Home/BoardList';
@@ -18,9 +28,7 @@ import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 import { useLocation } from 'react-router-dom';
 import { Clock } from '../components/Board/UI/Clock';
-import { UserList } from '../components/Home/UserList';
-import { ChatList } from '../components/Home/ChatList';
-import { Rnd } from 'react-rnd';
+import { sageColorByName } from '@sage3/shared';
 
 export function HomePage() {
   // User
@@ -30,6 +38,7 @@ export function HomePage() {
   const location = useLocation() as any;
   const [roomId] = useState<string | undefined>(location.state?.roomId);
   const rooms = useRoomStore((state) => state.rooms);
+  const subToRooms = useRoomStore((state) => state.subscribeToAllRooms);
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const roomOwner = selectedRoom?.data.ownerId === user?._id;
   const roomsFetched = useRoomStore((state) => state.fetched);
@@ -45,17 +54,26 @@ export function HomePage() {
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const cardBackgroundColor = useColorModeValue('transparent', 'gray.700');
+  const config = useData('/api/configuration') as serverConfiguration;
 
   // Subscribe to user updates
   useEffect(() => {
     subscribeToPresence();
     subscribeToUsers();
+    subToRooms();
   }, []);
 
-  function handleRoomClick(room: Room) {
-    setSelectedRoom(room);
-    updatePresence({ roomId: room._id, boardId: '' });
-    setSelectedBoard(undefined);
+  function handleRoomClick(room: Room | undefined) {
+    if (room) {
+      setSelectedRoom(room);
+      setSelectedBoard(undefined);
+      updatePresence({ roomId: room._id, boardId: '' });
+    } else {
+      setSelectedRoom(undefined);
+      setSelectedBoard(undefined);
+      updatePresence({ roomId: '', boardId: '' });
+    }
   }
 
   function handleBoardClick(board: Board) {
@@ -64,6 +82,7 @@ export function HomePage() {
 
   useEffect(() => {
     const room = rooms.find((r) => r._id === selectedRoom?._id);
+    console.log('why?');
     if (!room) {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
@@ -73,7 +92,7 @@ export function HomePage() {
     if (!boards.find((board) => board._id === selectedBoard?._id)) {
       setSelectedBoard(undefined);
     }
-  }, [rooms, boards]);
+  }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 
   // To handle the case where the user is redirected to the home page from a board
   useEffect(() => {
@@ -98,62 +117,79 @@ export function HomePage() {
     <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
       {/* Top Bar */}
       <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={2} width="100%" px="2">
-        <Box></Box>
-        <Text fontSize="3xl">SERVER_NAME</Text>
-        <Clock />
+        <Box flex="1 1 0px"></Box>
+        <Text fontSize="3xl" flex="1 1 0px" justifyContent="center" display="flex">
+          {config?.serverName}
+        </Text>
+        <Box flex="1 1 0px" justifyContent="right" display="flex" alignItems={'start'}>
+          <Clock />
+        </Box>
       </Box>
 
       {/* Middle Section */}
-      <Box display="flex" flexDirection="row" flexGrow={1} width="100%" justifyContent={'space-between'} minHeight={0} px="2">
-        {/* Left Side */}
-        <Box display="flex" justifyContent="flex-start" flexGrow={1} overflow="hidden" mr="2">
-          {/* Rooms List */}
-
-          <Box display="flex" flexDirection="column" justifyContent={'flex-end'} flexGrow={1}>
+      <Box
+        display="flex"
+        flexDirection="row"
+        flexGrow={1}
+        width="100%"
+        justifyContent={'center'}
+        minHeight={0}
+        px="2"
+        alignItems={'center'}
+      >
+        {!selectedRoom ? (
+          <Box display="flex" flexDirection="column" justifyContent={'center'}>
             <Text fontSize={'3xl'} textAlign="center">
               Rooms
             </Text>
-            <Box background="gray.700" m="4" mt="0" p="4" border="solid 3px" borderColor="blue.700" borderRadius="md">
-              <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick}></RoomList>
+            <Box
+              m="4"
+              mt="0"
+              p="4"
+              border="solid 3px"
+              borderColor="gray.500"
+              borderRadius="md"
+              boxShadow="xl"
+              backgroundColor={cardBackgroundColor}
+            >
+              <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick} rooms={rooms}></RoomList>
             </Box>
           </Box>
-
-          {/* Boards List */}
-          <Box display="flex" flexDirection="column" justifyContent={'flex-end'} flexGrow={4}>
-            <Text fontSize={'3xl'} textAlign="center">
-              Boards
-            </Text>
-            <Box background="gray.700" m="4" mt="0" p="4" border="solid 3px" borderColor="blue.700" borderRadius="md">
-              {selectedRoom ? (
-                <BoardList onBoardClick={handleBoardClick} selectedRoom={selectedRoom} selectedBoard={selectedBoard}></BoardList>
-              ) : null}
+        ) : (
+          <>
+            <Tooltip label="Back to room list" placement="top" hasArrow={true} openDelay={500}>
+              <IconButton
+                aria-label="back-to-roomlist"
+                size="lg"
+                icon={<MdArrowBack />}
+                onClick={() => handleRoomClick(undefined)}
+              ></IconButton>
+            </Tooltip>
+            <Box display="flex" flexDirection="column" justifyContent={'center'} flexGrow={1}>
+              <Text fontSize={'3xl'} textAlign="center">
+                {selectedRoom.data.name}'s Boards
+              </Text>
+              <Box
+                m="4"
+                mt="0"
+                p="4"
+                border="solid 3px"
+                backgroundColor={cardBackgroundColor}
+                borderColor={sageColorByName(selectedRoom.data.color)}
+                borderRadius="md"
+                boxShadow="xl"
+              >
+                <BoardList
+                  onBoardClick={handleBoardClick}
+                  selectedRoom={selectedRoom}
+                  selectedBoard={selectedBoard}
+                  boards={boards}
+                ></BoardList>
+              </Box>
             </Box>
-          </Box>
-        </Box>
-
-        {/* Right Side */}
-        <Box display="flex" justifyContent="flex-start" flexGrow={1} ml="5">
-          {/* Chats List */}
-          <Box display="flex" flexDirection="column" flexGrow={4} mr="3" justifyContent={'flex-end'}>
-            <Text fontSize={'3xl'} textAlign="center">
-              Chat
-            </Text>
-            <ChatList />{' '}
-          </Box>
-
-          {/* Users List */}
-          <Box display="flex" flexDirection="column" flexGrow={1} justifyContent={'flex-end'}>
-            <Text fontSize={'3xl'} textAlign="center">
-              Users
-            </Text>
-            <UserList
-              onUserClick={() => {
-                'hi';
-              }}
-              selectedUser={user}
-            ></UserList>
-          </Box>
-        </Box>
+          </>
+        )}
+        <Box></Box>
       </Box>
 
       {/* Bottom Bar */}

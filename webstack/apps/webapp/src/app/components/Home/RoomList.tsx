@@ -7,7 +7,21 @@
  */
 
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Box, Button, Input, InputGroup, InputRightElement, Select, Text, Tooltip, useColorModeValue, useToast } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Grid,
+  GridItem,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Select,
+  SimpleGrid,
+  Text,
+  Tooltip,
+  useColorModeValue,
+  useToast,
+} from '@chakra-ui/react';
 
 import { Room } from '@sage3/shared/types';
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from '@sage3/frontend';
@@ -17,6 +31,7 @@ import { MdSearch } from 'react-icons/md';
 type RoomListProps = {
   onRoomClick: (room: Room) => void;
   selectedRoom: Room | undefined;
+  rooms: Room[];
 };
 
 export function RoomList(props: RoomListProps) {
@@ -24,18 +39,18 @@ export function RoomList(props: RoomListProps) {
   const { user } = useUser();
   const { auth } = useAuth();
   // Data stores
-  const rooms = useRoomStore((state) => state.rooms);
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
-  const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
   const presences = usePresenceStore((state) => state.presences);
+
   // UI elements
   const borderColor = useColorModeValue('#718096', '#A0AEC0');
   const toast = useToast();
   const [filterBoards, setFilterBoards] = useState<Room[] | null>(null);
   const [search, setSearch] = useState('');
 
+  const [newRoomModal, setNewRoomModal] = useState(false);
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
 
   function sortByName(a: Room, b: Room) {
@@ -67,35 +82,24 @@ export function RoomList(props: RoomListProps) {
     }
   }, [storeError]);
 
-  useEffect(() => {
-    subToAllRooms();
-  }, [subToAllRooms]);
-
-  const [newRoomModal, setNewRoomModal] = useState(false);
   // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
-    const filBoards = rooms.filter((room) => room.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
+    const filBoards = props.rooms.filter((room) => room.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
     setFilterBoards(filBoards);
     if (event.target.value === '') {
       setFilterBoards(null);
     }
   }
 
-  const [scrollPos, setScrollPos] = useState(0);
-  const handleScrollEvent = (e: any) => {
-    console.log(e.deltaY, scrollPos);
-    if (e.deltaY > 0) {
-      setScrollPos(Math.min(0, scrollPos + 30));
-    } else {
-      setScrollPos(scrollPos - 30);
-    }
-  };
   return (
     <>
       <Box
         overflowY="auto"
+        overflowX="hidden"
+        pr="2"
         mb="2"
+        maxHeight="60vh"
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',
@@ -105,43 +109,45 @@ export function RoomList(props: RoomListProps) {
             background: 'transparent',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: 'teal',
+            background: 'gray',
             borderRadius: '8px',
           },
         }}
       >
-        {(filterBoards ? filterBoards : rooms)
-          // show only public rooms or mine
-          .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
-          .sort(sortFunction)
-          .map((room) => {
-            return (
-              <RoomCard
-                key={room._id}
-                room={room}
-                userCount={presences.filter((p) => p.data.roomId === room._id).length}
-                selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
-                onEnter={() => props.onRoomClick(room)}
-                onEdit={() => console.log('edit room')}
-                onDelete={() => deleteRoom(room._id)}
-              ></RoomCard>
-            );
-          })}
+        <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3} height="100%">
+          {(filterBoards ? filterBoards : props.rooms)
+            // show only public rooms or mine
+            .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
+            .sort(sortFunction)
+            .map((room) => {
+              return (
+                <RoomCard
+                  key={room._id}
+                  room={room}
+                  userCount={presences.filter((p) => p.data.roomId === room._id).length}
+                  selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
+                  onEnter={() => props.onRoomClick(room)}
+                  onEdit={() => console.log('edit room')}
+                  onDelete={() => deleteRoom(room._id)}
+                ></RoomCard>
+              );
+            })}
+        </SimpleGrid>
       </Box>
       <Box>
         <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
         <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
           <Button
-            height="60px"
+            height="51px"
             width="100%"
             borderRadius="md"
-            border={`solid ${borderColor} 2px`}
+            border={`solid ${borderColor} 1px`}
             fontSize="48px"
             p="0"
             disabled={auth?.provider === 'guest'}
             onClick={() => setNewRoomModal(true)}
           >
-            <Text fontSize="4xl" fontWeight="bold" transform={'translateY(-3px)'}>
+            <Text fontSize="4xl" fontWeight="bold">
               +
             </Text>
           </Button>
