@@ -106,6 +106,8 @@ function AppComponent(props: App): JSX.Element {
   );
   const update = useAppStore((state) => state.update);
 
+  // const [supportedApps, setSupportedApps] = useState(["Counter", "Leaflet", "Notepad"])
+
   const prevX = useRef(0);
   const prevY = useRef(0);
 
@@ -200,7 +202,6 @@ function AppComponent(props: App): JSX.Element {
   ]);
 
   function checkAppType(app: string) {
-    console.log("App name: " + app);
     return supportedApps.includes(app);
   }
 
@@ -284,6 +285,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   const models = ["Model 1", "Model 2", "Model 3"];
+  const supportedApps = ["Counter", "Leaflet", "Notepad"];
+
+  function checkAppType(app: string) {
+    return supportedApps.includes(app);
+  }
 
   function testFunction() {
     updateState(props._id, {
@@ -313,10 +319,12 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Portal>
       </Menu>
+
       <IconButton
         aria-label="Run AI"
         icon={<BsFillTriangleFill/>}
         _hover={{opacity: 0.7, transform: "scaleY(1.3)"}}
+        isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
         onClick={() => {
           testFunction();
         }}
