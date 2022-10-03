@@ -8,10 +8,11 @@
 import { useEffect, useState } from 'react';
 import {
   Button, ButtonGroup, Tooltip, Stack, UnorderedList, ListItem, Select,
-  Checkbox, CheckboxGroup, Text
+  Checkbox, CheckboxGroup, Text, Input, InputGroup
 } from '@chakra-ui/react';
 // Zustand store between app and toolbar
 import create from 'zustand';
+import { v1 as uuidv1 } from 'uuid';
 // Icons
 import { MdAdd, MdRemove, MdRefresh } from 'react-icons/md';
 
@@ -21,7 +22,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-
+// Store between app and toolbar
 export const useStore = create((set: any) => ({
   selected: {} as { [key: string]: string[] },
   setSelected: (id: string, s: string[]) => set((state: any) => ({ selected: { ...state.selected, ...{ [id]: s } } })),
@@ -108,7 +109,20 @@ function AppComponent(props: App): JSX.Element {
       <Stack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}
         color="black">
         <Text>Kernels running: {sessions.length}</Text>
-        <UnorderedList overflowY={"scroll"} id="toto">
+        <UnorderedList overflowY={"scroll"}
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: "darkgray",
+              borderRadius: 'sm',
+            },
+          }}
+        >
           <CheckboxGroup>
             {sessions.map((session, i) => {
               return (
@@ -117,8 +131,8 @@ function AppComponent(props: App): JSX.Element {
                     backgroundColor={"teal.200"} borderRadius={2} borderColor={"teal.300"}
                     verticalAlign={"middle"} p={0} ml={1} onChange={onKernelSelected}
                   /> <b>Session</b> {i} - {session.name}
-                  <UnorderedList >
-                    <ListItem>kernel: {session.kernel.name} {session.kernel.id}</ListItem>
+                  <UnorderedList pl={'8'}>
+                    <ListItem>kernel: {session.kernel.name}</ListItem>
                     <ListItem>state: {session.kernel.execution_state}</ListItem>
                     <ListItem>{session.type}: {session.path}</ListItem>
                   </UnorderedList>
@@ -137,23 +151,113 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const selected = useStore((state: any) => state.selected[props._id]);
+  const selected: string[] = useStore((state: any) => state.selected[props._id]);
   const setSelected = useStore((state: any) => state.setSelected);
   const [token, setToken] = useState<string>();
   const [prod, setProd] = useState<boolean>();
+  const [name, setName] = useState<string>();
+  const [kernelType, setKernelType] = useState('python3');
 
   useEffect(() => {
+    let refreshInterval: number;
     GetConfiguration().then((conf) => {
       if (conf.token) {
         setToken(conf.token);
       }
       setProd(conf.production);
+      // refresh list every minute
+      refreshInterval = window.setInterval(handleRefresh, 60 * 1000);
     });
+    return () => {
+      // Cancel interval timer on unmount
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    }
   }, []);
 
+  // Plus button
   function handleNewKernel() {
-    // console.log('New Kernel');
+    if (token) {
+      // Jupyter URL
+      let base: string;
+      if (prod) {
+        base = `https://${window.location.hostname}:4443`;
+      } else {
+        base = `http://${window.location.hostname}`;
+      }
+      // Create a new kernel: notebook + kernel + session
+      const j_url = base + '/api/contents/boards/' + `${name}.ipynb`;
+      const payload = { type: 'notebook', path: '/', format: 'text' };
+      // Create a new notebook
+      fetch(j_url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + token,
+        },
+        body: JSON.stringify(payload)
+      }).then((response) => response.json())
+        .then((res) => {
+          // Create a new kernel
+          const k_url = base + '/api/kernels';
+          const kpayload = { name: kernelType, path: '/' };
+          fetch(k_url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token ' + token,
+            },
+            body: JSON.stringify(kpayload)
+          }).then((response) => response.json())
+            .then((res) => {
+              const kernel = res;
+              // Create a new session
+              const s_url = base + '/api/sessions'
+              const sid = uuidv1();
+              const spayload = {
+                id: sid.replace(/-/g, ''),
+                kernel: kernel,
+                name: name,
+                path: `boards/${name}.ipynb`,
+                notebook: {
+                  name: `${name}.ipynb`,
+                  path: `boards/${name}.ipynb`,
+                },
+                type: 'notebook'
+              }
+              fetch(s_url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Token ' + token,
+                },
+                body: JSON.stringify(spayload)
+              }).then((response) => response.json())
+                .then(() => {
+                  handleRefresh();
+                });
+            });
+        })
+        .catch((err) => {
+          console.log('Jupyter> error', err);
+        });
+    }
   }
+
+  // Triggered on every keystroke
+  function changeName(e: React.ChangeEvent<HTMLInputElement>) {
+    const cleanName = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
+    setName(cleanName);
+  }
+
+  // Triggered on 'enter' key
+  function submitName(e: React.FormEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // Delete a kernel
   function handleDeleteKernel() {
     if (token) {
       // Jupyter URL
@@ -181,6 +285,13 @@ function ToolbarComponent(props: App): JSX.Element {
       });
     }
   }
+
+  // Select the kernel type: python3, r, julia...
+  function handleKernelType(e: React.ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value) setKernelType(e.target.value);
+  }
+
+  // Reload the list of kernels
   function handleRefresh() {
     updateState(props._id, { refresh: true });
   }
@@ -189,12 +300,12 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" >
         <Tooltip placement="top-start" hasArrow={true} label={'Delete Selected Kernel(s)'} openDelay={400}>
-          <Button isDisabled={false} onClick={() => handleDeleteKernel()} _hover={{ opacity: 0.7 }}>
+          <Button isDisabled={!selected || selected.length === 0} onClick={() => handleDeleteKernel()} _hover={{ opacity: 0.7 }}>
             <MdRemove />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'New Kernel'} openDelay={400}>
-          <Button isDisabled={false} onClick={() => handleNewKernel()} _hover={{ opacity: 0.7 }}>
+          <Button isDisabled={!name || !kernelType} onClick={() => handleNewKernel()} _hover={{ opacity: 0.7 }}>
             <MdAdd />
           </Button>
         </Tooltip>
@@ -205,7 +316,25 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
-      <Select placeholder='Select kernel' rounded='lg' size='sm' variant='outline' ml={2} colorScheme="teal">
+      <form onSubmit={submitName}>
+        <InputGroup size="sm" width="150px" px={2}>
+          <Input
+            placeholder="Kernel Name"
+            _placeholder={{ opacity: 1, color: 'gray.600' }}
+            value={name}
+            onChange={changeName}
+            onPaste={(event) => {
+              event.stopPropagation();
+            }}
+            backgroundColor="whiteAlpha.300"
+            padding={"0 4px 0 4px"}
+          />
+        </InputGroup>
+      </form>
+
+      <Select placeholder='Select kernel' width="150px" rounded='lg' size='sm'
+        variant='outline' px={0} colorScheme="teal" defaultValue={kernelType}
+        onChange={handleKernelType}>
         <option value='python3'>python3</option>
       </Select>
     </>
