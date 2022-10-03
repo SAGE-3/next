@@ -19,7 +19,6 @@ ai_settings = {
             "Object Detection": ["image_od_model_1", "image_od_model_2"],
             "Classification": ["image_c_model_1", "image_c_model_2"]
         }
-
     },
     "nlp": {
         "supported_apps": ['PDFViewer', 'Notepad'],

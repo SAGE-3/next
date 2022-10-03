@@ -44,8 +44,9 @@ ai_settings = {
         "vision": {
             "supported_apps": ['ImageViewer'],
             "tasks": {
-                "Object Detection": ["image_od_model_1", "image_od_model_2"],
-                "Classification": ["image_c_model_1", "image_c_model_2"]
+                "Object Detection": {"detr-resnet-50": {"path": "detection",
+                                                        "default": True}},
+                "Classification": {}
             }
         }
 
