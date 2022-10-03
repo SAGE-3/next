@@ -23,9 +23,6 @@ export const schema = z.object({
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
-  token: z.string(),
-  kernelCount: z.number(),
-  baseUrl: z.string(),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -42,11 +39,8 @@ export const init: Partial<state> = {
   fontSize: 1,
   theme: 'xcode',
   kernel: '',
-  token: '',
-  kernelCount: 0,
-  baseUrl: '',
   output: '',
-  executeInfo: { executeFunc: 'get_kernels', params: {} } as executeInfoType,
+  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
 export const name = 'CodeCell';

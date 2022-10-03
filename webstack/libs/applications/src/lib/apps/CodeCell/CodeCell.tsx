@@ -6,14 +6,12 @@
  *
  */
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import {
   Box, Button, HStack, useColorModeValue, Tooltip,
-  IconButton, VStack, Alert, AlertIcon, AlertTitle, Text, Image,
-  Flex, ButtonGroup, Select, Badge
+  IconButton, VStack, Flex, ButtonGroup, Select, Badge
 } from '@chakra-ui/react';
 
-import Ansi from 'ansi-to-react';
 import './components/styles.css';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
@@ -35,14 +33,11 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 
-// COMPONENTS
-// import { Markdown } from './components/markdown'
-import { JSONOutput } from './components/json';
-
 // Utility functions from SAGE3
 import { downloadFile } from '@sage3/frontend';
-import { parse } from 'path';
 
+// Rendering functions
+import { ProcessedOutput } from './render';
 
 /**
  * CodeCell - SAGE3 application
@@ -53,19 +48,6 @@ import { parse } from 'path';
 const AppComponent = (props: App): JSX.Element => {
 
   const s = props.data.state as AppState;
-  const update = useAppStore((state) => state.update);
-
-  // useEffect(() => {
-  //   // Update the app layout
-  //   update(props._id, {
-  //     size: {
-  //       width: 600,
-  //       height: 300,
-  //       depth: 1,
-  //     },
-  //   });
-  // }, []);
-
 
   return (
     <AppWindow app={props}>
@@ -76,7 +58,6 @@ const AppComponent = (props: App): JSX.Element => {
             <Box p={4} fontSize={s.fontSize + 'rem'} color={'GrayText'} overflowX={'hidden'}>
               {ProcessedOutput(s.output)}
             </Box>
-            {/* {JSONOutput(JSON.stringify(s))} */}
           </Box>
         </Box>
       </>
@@ -84,7 +65,11 @@ const AppComponent = (props: App): JSX.Element => {
   );
 }
 
-
+/**
+ *
+ * @param props
+ * @returns
+ */
 const InputBox = (props: App): JSX.Element => {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -93,19 +78,17 @@ const InputBox = (props: App): JSX.Element => {
   const { user } = useUser();
   const [fontSize, setFontSize] = useState(s.fontSize);
 
-  // TODO: make text collaborative with yjs
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
     if (code) {
-    // if (s.code === code && s.kernel) {
       updateState(props._id, {
         code: code,
         output: '',
         executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
       });
-      }
+    }
   };
-    
+
   const handleClear = () => {
     updateState(props._id, {
       code: '',
@@ -115,25 +98,19 @@ const InputBox = (props: App): JSX.Element => {
     ace.current?.editor?.setValue('');
   };
 
-  // To update from server
-  // useLayoutEffect(() => {
-  //   setCode(s.code);
-  // }, [s.code]);
   useEffect(() => {
     setCode(s.code);
   }, [s.code]);
 
-  //  Update from Ace Editor
+  // Update from Ace Editor
   const updateCode = (c: string) => {
     setCode(c);
-    // updateState(props._id, { code: c });
   };
 
   useEffect(() => {
     // update local state from global state
     setFontSize(s.fontSize);
   }, [s.fontSize]);
-
 
   return (
     <>
@@ -175,7 +152,6 @@ const InputBox = (props: App): JSX.Element => {
           commands={[
             { name: 'Execute', bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' }, exec: handleExecute },
             { name: 'Clear', bindKey: { win: 'Ctrl-Alt-Backspace', mac: 'Ctrl-Alt-Backspace' }, exec: handleClear },
-            // { name: 'TabComplete', bindKey: { win: 'Tab', mac: 'Tab' }, exec: tabComplete },
           ]}
         />
         <VStack pr={2}>
@@ -215,11 +191,6 @@ const InputBox = (props: App): JSX.Element => {
   );
 }
 
-
-
-
-
-
 /**
  * UI toolbar for the cell
  *
@@ -228,18 +199,72 @@ const InputBox = (props: App): JSX.Element => {
  */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
+  // List of kernel names
+  const [kernels, setKernels] = useState<{ id: string, name: string }[]>([]);
+  const [selected, setSelected] = useState<string>();
 
-  // // Room and board location
-  // const location = useLocation();
+  // Runs the first time the component is loaded
+  useEffect(() => {
+    let refreshInterval: number;
+    GetConfiguration().then((config) => {
+      if (config) {
+        // Jupyter URL
+        let base: string;
+        if (config.production) {
+          base = `https://${window.location.hostname}:4443`;
+        } else {
+          base = `http://${window.location.hostname}`;
+        }
+        // refresh the list of kernels
+        updateKernelList(base, config.token);
+        // refresh list every minute
+        refreshInterval = window.setInterval(updateKernelList, 5 * 1000, base, config.token);
+      }
+    });
+    return () => {
+      // Cancel interval timer on unmount
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    }
+  }, []);
+
+  const updateKernelList = (base: string, token: string) => {
+    if (token && base) {
+      fetch(base + '/api/sessions', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Token ' + token,
+        },
+      })
+        .then((response) => {
+          return response.json();
+        })
+        .then((sessions) => {
+          setKernels(sessions.map((s: any) => ({ name: s.name, id: s.kernel.id })));
+        });
+    }
+  }
+
+  function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value) {
+      console.log('Selected kernel>', e.target.value);
+      // save local state
+      setSelected(e.target.value);
+      // updae the app
+      updateState(props._id, { kernel: e.target.value });
+    }
+  }
 
   // Larger font size
   function handleIncreaseFont() {
     const fs = Math.min(s.fontSize * 1.2, 2);
     updateState(props._id, { fontSize: fs });
   }
+
   // Smaller font size
   function handleDecreaseFont() {
     const fs = Math.max(0.5, s.fontSize / 1.2);
@@ -259,145 +284,26 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  type options = string[];
-
-  const [kernels, setKernels] = useState<options>([]);
-
-  useEffect(() => {
-    let base = `http://${window.location.hostname}`;
-    const res = GetConfiguration().then((config) => {
-      if (config) {
-        if (config.production) {
-          base = `https://${window.location.hostname}:4443`;
-        }
-        // updateState(props._id, { token: config.token, base_url: base });
-        fetch(base + '/api/sessions', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Token ' + config.token,
-          },
-        })
-          .then((response) => {
-            return response.json();
-          })
-          .then((kernel_sessions) => {
-            updateState(props._id, {
-              token: config.token,
-              baseUrl: base,
-              kernelCount: kernel_sessions.length,
-            });
-            if (kernel_sessions.length === 0) {
-              setKernels(['No kernels running']);
-            } else {
-              setKernels(
-                kernel_sessions.map((kernel: any) => (
-                  // id, path, name, type, kernel, last_activity, execution_state, connections, info = kernel;
-                  // kernel keys {id, name, last_activity, execution_state, connections})
-                  <option key={kernel.id} value={kernel.name}>
-                    {kernel.name === props.data.boardId ? 'Default kernel' : kernel.name}
-                  </option>
-                ))
-              );
-            }
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
-  }, []);
-
-  function startKernel() {
-    fetch(s.baseUrl + '/api/kernels', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Token ' + s.token,
-      },
-      body: JSON.stringify({ name: 'python3', path: '/opt/conda/share/jupyter/kernels/python3' }),
-    })
-    .then((response) => {
-      return response.json();
-    })
-    .then((kernel) => {
-      updateState(props._id, { kernel: kernel.id });
-    });
-  }
-
-  function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
-    updateState(props._id, { kernel: e.target.value });
-    // updateKernelList();
-  }
-
-  // if running in collaborative mode we can execute here
-  function executeCode() {
-    const code = s.code;
-    const kernel = s.kernel;
-
-    if (s.code && s.kernel) {
-      // console.log('CodeCell> execute', src);
-      updateState(props._id, {
-        output: '',
-        executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
-      });
-    }
-  }
-
-  const updateKernelList = () => {
-    fetch(s.baseUrl + '/api/kernels', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Token ' + s.token,
-      },
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((kernels) => {
-        // console.log(kernels);
-        setKernels(
-          kernels.map((kernel: any) => (
-            // id, path, name, type, kernel, last_activity, execution_state, connections, info = kernel;
-            // kernel keys {id, name, last_activity, execution_state, connections})
-            <option key={kernel.id} value={kernel.name}>
-              {kernel.name === props.data.boardId ? 'Current Kernel' : kernel.id}
-            </option>
-          ))
-        );
-      });
-    // updateState(props._id, {
-    //   code: `!jupyter kernelspec list`,
-    //   executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
-    // });
-    // const kernelList = [];
-    // if (s.output && JSON.parse(s.output).stream.text.includes('python3')) {
-    //   console.log('Python3 kernel found');
-    // }
-  };
-
-  const fakePythonData = `import numpy as np; import matplotlib.pyplot as plt; x = np.linspace(0, 2, 100); plt.plot(x, x, label='linear'); plt.plot(x, x**2, label='quadratic'); plt.plot(x, x**3, label='cubic'); plt.xlabel('x label'); plt.ylabel('y label'); plt.title("Simple Plot"); plt.legend(); plt.show();`;
-  const getKernels = `!jupyter kernelspec list`;
-  const getSessions = `!jupyter notebook list`;
-  const getCondaEnvironments = `!conda env list`;
-  const getCondaPackages = `!conda list`;
-  const getPythonPackages = `!pip list`;
-  const getServerInfo = `!jupyter server list`;
-  const funny = `from IPython.display import IFrame; IFrame(src='./sage.html', width=1400, height=700)`;
-  const sampleReturn = { 'Kernel 1': 'SOME ID 1', 'Kernel 2': 'SOME ID 2', 'Kernel 3': 'SOME ID 3' };
-  const sampleCode = [fakePythonData, getKernels, getSessions, getCondaEnvironments, getCondaPackages, getPythonPackages, getServerInfo, funny];
-
   return (
     <>
       <HStack>
-        {s.kernel && s.kernelCount > 0 ? (
+        {selected && kernels.length > 0 ? (
           // show a green light if the kernel is running
-          <Badge colorScheme="green">ONLINE</Badge>
+          <Badge colorScheme="green" rounded="sm" size="lg">Online</Badge>
         ) : (
           // show a red light if the kernel is not running
-          <Badge colorScheme="red">OFFLINE</Badge>
+          <Badge colorScheme="red" rounded="sm" size="lg">Offline</Badge>
         )}
+        <Select
+          placeholder="Select Kernel"
+          rounded="lg" size="sm" width="150px"
+          ml={2} px={0} colorScheme="teal"
+          icon={<MdArrowDropDown />}
+          onChange={selectKernel}
+          variant={'outline'}>
+          {kernels.map((k) => (<option key={k.id} value={k.id}> {k.name} </option>))}
+        </Select>
+
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
             <Button isDisabled={s.fontSize < 0.5} onClick={() => handleDecreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
@@ -417,226 +323,10 @@ function ToolbarComponent(props: App): JSX.Element {
             </Button>
           </Tooltip>
         </ButtonGroup>
-        <Select
-          placeholder="Select kernel"
-          rounded="lg"
-          size="sm"
-          ml={2}
-          colorScheme="teal"
-          icon={<MdArrowDropDown />}
-          onChange={selectKernel}
-          variant={s.kernel ? 'filled' : 'outline'}
-        >
-          {s.output && RenderSelect(s.output) ? RenderSelect(s.output) : kernels}
-        </Select>
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Start Kernel'} openDelay={400}>
-            <Button onClick={startKernel} _hover={{ opacity: 0.7 }}>
-              <MdPlayArrow />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
+
       </HStack>
     </>
   );
 }
 
 export default { AppComponent, ToolbarComponent };
-
-
-const RenderSelect = (output: string) => {
-  if (output) {
-    try {
-      const parsed = JSON.parse(output);
-      if (parsed.kernels && Object.keys(parsed.kernels).length > 0) {
-        return Object.keys(parsed.kernels).map((k) => (
-          <option key={k} value={k}>
-            {k}
-          </option>
-        ));
-      } else {
-        return null;
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  }
-  return null
-};
-        
-
-
-const ProcessedOutput = (output: string) => {
-  try {
-    const parsed = JSON.parse(output);
-    return (
-      <Box
-        p={4}
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          overflowX: 'auto',
-          backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-          boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-          borderRadius: '4px',
-        }}
-      >
-        <HStack>
-          <pre>
-            {parsed.execute_result && RenderExecutionCount(parsed.execute_result.execution_count)}
-            <Box>
-              {parsed.stream && parsed.stream.name === 'stdout' && RenderStdOut(parsed.stream.text)}
-              {parsed.stream && parsed.stream.name === 'stderr' && RenderStdErr(parsed.stream.text)}
-              {parsed.execute_result &&
-                parsed.execute_result.data['text/plain'] &&
-                !parsed.execute_result.data['text/html'] &&
-                RenderPlainText(parsed.execute_result.data['text/plain'])}
-              {parsed.execute_result && parsed.execute_result.data['text/html'] && RenderHTML(parsed.execute_result.data['text/html'])}
-              {parsed.display_data && parsed.display_data.data['image/png'] && RenderPNG(parsed.display_data.data['image/png'])}
-              {parsed.display_data && parsed.display_data.data['image/jpeg'] && RenderJPEG(parsed.display_data.data['image/jpeg'])}
-              {parsed.display_data && parsed.display_data.data['image/svg+xml'] && RenderSVG(parsed.display_data.data['image/svg+xml'])}
-              {parsed.display_data && parsed.display_data.data['text/plain'] && RenderPlainText(parsed.display_data.data['text/plain'])}
-              {parsed.display_data && parsed.display_data.data['text/html'] && RenderHTML(parsed.display_data.data['text/html'])}
-              {parsed.error && Array.isArray(parsed.error) && parsed.error.map((line: string) => RenderTraceBack(line))}
-              {parsed.error && parsed.error.evalue && RenderError(parsed.error.evalue)}
-            </Box>
-          </pre>
-        </HStack>
-      </Box>
-    );
-  } catch (e) {
-    return ('')
-  }
-};
-
-
-
-/***************************************************************************************************
- *
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- *  
- /***************************************************************************************************
- 
-/****************************************************************************************************
- * 
- * This section reserved for rendering the outputs of the notebook
- * 
- * 
- */
-
-// const RenderMarkdown = (markdown: string | string[]): JSX.Element => {
-//   /**
-//    * 
-//    * 
-//    */
-//   return (
-//     <>
-//       {/* <Alert
-//         mb={2}
-//         variant={'left-accent'}
-//         backgroundColor={useColorModeValue('#F0F2F6', '#111111')}
-//       > */}
-//       <Markdown data={markdown} />
-//       {/* </Alert> */}
-//     </>
-//   );
-// };
-
-// const RenderSource = (execution_count: number, source: string | string[]): JSX.Element => {
-//   return (
-//     <>
-//       <HStack w={'100%'}>
-//         <Text fontSize={'sm'} color={'gray'}>
-//           <pre>In [{execution_count}]:</pre>
-//         </Text>
-//         <Text fontSize={'sm'}>
-//           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>{source}</pre>
-//         </Text>
-//       </HStack>
-//     </>
-//   );
-// };
-
-const RenderHTML = (html: string): JSX.Element => {
-  return (
-    <Box
-      dangerouslySetInnerHTML={{ __html: html }}
-      className={'rendered_html'}
-    />
-  );
-};
-
-const RenderTraceBack = (line: string): JSX.Element => {
-  return (
-    <>
-      <Alert status="error" variant="left-accent">
-        {/* <AlertIcon /> */}
-        <Ansi>{line}</Ansi>
-      </Alert>
-    </>
-  );
-};
-
-const RenderError = (msg: string | string[]): JSX.Element => {
-  // Array.isArray(msg) && msg.map((line: string) => RenderTraceBack(line));
-  return (
-    <>
-      <Alert status="error" variant="left-accent">
-        <AlertIcon />
-        <AlertTitle mr={2}>{JSON.stringify(msg)}</AlertTitle>
-      </Alert>
-    </>
-  );
-};
-
-const RenderPNG = (encoding: string, ww?: number | string, hh?: number | string): JSX.Element => {
-  const url = 'data:image/png;base64,' + encoding; // base64 encoded image
-  return <Image src={url} maxWidth="100%" display={'block'} width={ww ? ww : 'auto'} height={hh ? hh : 'auto'} alt="" />;
-};
-
-const RenderJPEG = (encoding: string, ww?: number | string, hh?: number | string): JSX.Element => {
-  const url = 'data:image/jpeg;base64,' + encoding; // base64 encoded image
-  return <Image src={url} maxWidth="100%" display={'block'} width={ww ? ww : 'auto'} height={hh ? hh : 'auto'} alt="" />;
-};
-
-const RenderSVG = (svg: string): JSX.Element => {
-  return <Box dangerouslySetInnerHTML={{ __html: svg }} />;
-};
-
-const RenderStdErr = (stderr: string): JSX.Element => {
-  return <Text color={'red'}>{stderr}</Text>;
-};
-
-const RenderStdOut = (stdout: string): JSX.Element => {
-  return <Text color={'gray'}>{stdout}</Text>;
-};
-
-const RenderExecutionCount = (executionCount: number, color?: string): JSX.Element => {
-  return (
-    <Text fontFamily={'mono'} fontSize={'sm'} color={color ? color : 'gray'}>
-      Out [{executionCount}]:
-    </Text>
-  );
-};
-
-const RenderPlainText = (plaintext: string | string[]): JSX.Element => {
-  return (
-      <Text fontFamily={'mono'} fontSize="xs" fontWeight={'normal'} wordBreak={'break-word'}>
-        {plaintext}
-      </Text>
-  );
-};
