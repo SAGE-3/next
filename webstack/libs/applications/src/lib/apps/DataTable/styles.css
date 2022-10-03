@@ -10,19 +10,46 @@
   padding: 10px 10px;
 }
 
-.Message-Container{
-  margin-top: 50px;
-  margin-bottom: 10px;
+.URL-Container{
+  margin-top: 30px;
+  padding: 25px 15px 15px 15px;
+}
+
+.Pagination-Container{
+  margin-top: 20px;
   padding: 10px 10px;
 }
 
-th {
+.Message-Container{
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 25px 10px 5px 10px;
+}
+
+.ColName {
   position: sticky;
   inset-block-start: 0;
   background-color: black;
   flex-direction: row;
   justify-content: space-between;
   z-index: 1;
+}
+
+.indexColumn {
+  position: sticky;
+  inset-block-start: 0;
+  background-color: black;
+  flex-direction: row;
+  justify-content: space-between;
+  z-index: 1;
+}
+
+.indexTd {
+  position: relative;
+  justify-content: center;
+  width: 5%;
+  color: darkblue;
+  font-weight: bolder;
 }
 
 td {
@@ -34,44 +61,53 @@ body:not(.nohover) tbody td:hover {
   background-color: darkslategray;
 }
 
-/*thead th:not(:empty):active::after {*/
-/*  content: '';*/
-/*  opacity: 30%;*/
-/*  height: 500px;*/
-/*  left: 0;*/
-/*  position: absolute;*/
-/*  top: 65px;*/
-/*  width: 100%;*/
-/*  !*z-index: 2;*!*/
-/*}*/
-
-/*th:active::after {*/
-/*  background-color: purple;*/
-/*}*/
-
 .highlight {
-  text-align: start;
+  text-align: match-parent;
   -webkit-padding-start: 1.5rem;
   padding-inline-start: 1.5rem;
   -webkit-padding-end: 1.5rem;
   padding-inline-end: 1.5rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  line-height: 1.25rem;
+  line-height: 1px;
+  font-size: 0.85rem;
   border-bottom: 1px solid;
   border-color: #29487D;
   background-color: purple;
 }
 
 .originalChakra {
-  text-align: start;
+  text-align: justify;
   -webkit-padding-start: 1.5rem;
   padding-inline-start: 1.5rem;
   -webkit-padding-end: 1.5rem;
   padding-inline-end: 1.5rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  line-height: 1.25rem;
+  line-height: 1px;
+  font-size: 0.85rem;
   border-bottom: 1px solid;
   border-color: #29487D;
+}
+
+.searchContainer {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  white-space: nowrap;
+  margin: 1rem;
+  padding: 1rem;
+}
+
+.card {
+    display: inline-block;
+}
+
+.search {
+  background-color : dimgray;
+  border-radius: 5px;
+  padding: 0.2rem;
+  margin: 0.25rem;
+  margin-left: 0.5rem;
+  margin-right: 1rem;
+  /*padding-left: 50px;*/
 }

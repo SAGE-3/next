@@ -6,7 +6,8 @@ import asyncio
 import threading
 import redis
 import requests
-
+from config import config as conf, prod_type
+import json
 
 class Borg:
     """
@@ -24,7 +25,7 @@ class JupyterKernelClient(Borg):
         Borg.__init__(self)
         if not hasattr(self, "redis_serve"):
             self.url = url
-            self.redis_server = redis.StrictRedis(host='localhost', port=6379, db=0)
+            self.redis_server = redis.StrictRedis(host=conf[prod_type]["redis_server"], port=6379, db=0)
             self.pubsub = self.redis_server.pubsub()
             self.pubsub.subscribe('jupyter_outputs')
 
@@ -39,19 +40,27 @@ class JupyterKernelClient(Borg):
     # execut a command
     def execute(self, command_info):
         """
-        :param command_info: a dict with three keys, 1- uuid, 2-call_fn, a callback function and 3 code to run
+        :param command_info: a dict with 5 keys, 1- uuid, 2-call_fn, a callback function, 3 code to run, 4: kernel id,
+        5: token
         :return:
         """
         user_passed_uuid = command_info["uuid"]
         callback_fn = command_info["call_fn"]
-        command = command_info["code"]
-        # print(f"!!!!!EXECUTING COMMAND {command}!!!!!!")
+
+        payload = json.dumps({
+            "kernel": command_info["kernel"],
+            "token": command_info["token"],
+            "code": command_info["code"]
+        })
+        headers = {
+            'Content-Type': 'application/json'
+        }
 
         try:
-            msg = requests.post(self.url, data = command).json()
+            msg = requests.post(self.url, headers=headers, data=payload).json()
         except:
             raise Exception(f"couldn't run code on {self.url}")
-        # msg={"request_id":"bogus_id"}
+
         self.callback_info[msg['request_id']] = (user_passed_uuid, callback_fn)
         return msg
 
@@ -59,13 +68,11 @@ class JupyterKernelClient(Borg):
 
     def process_reponse(self):
         while True:
-            # print("I am processing reponse")
             msg = self.pubsub.get_message()
             if msg:
                 # ignore first message
                 if msg["data"] == 1:
                     continue
-                # print(f"********************I am the client and I got the following from pubsub  is:\n {msg}")
                 msg = msg['data'].decode("utf-8")
                 msg=eval(msg)
                 request_id = msg['request_id']

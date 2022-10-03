@@ -12,7 +12,7 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys } from '@sage3/frontend';
 import { sageColorByName } from '@sage3/shared';
 
 type WindowProps = {
@@ -21,6 +21,7 @@ type WindowProps = {
   children: JSX.Element;
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
+  lockToBackground?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -61,7 +62,19 @@ export function AppWindow(props: WindowProps) {
   const [appWasDragged, setAppWasDragged] = useState(false);
 
   // Detect if spacebar is held down to allow for board dragging through apps
-  const spaceBar = useKeyPress(' ');
+  const spacebarPressed = useKeyPress(' ');
+
+  // Delete an app while mouseover and delete pressed
+  const [mouseOver, setMouseOver] = useState(false);
+  useHotkeys(
+    'ctrl+d',
+    () => {
+      if (mouseOver && !selected) {
+        deleteApp(props.app._id);
+      }
+    },
+    { dependencies: [mouseOver, selected] }
+  );
 
   // Track the app store errors
   useEffect(() => {
@@ -172,10 +185,12 @@ export function AppWindow(props: WindowProps) {
   // Track raised state
   useEffect(() => {
     if (props.app.data.raised) {
-      // raise  my zIndex
-      setMyZ(zindex + 1);
-      // raise the global value
-      incZ();
+      if (!props.lockToBackground) {
+        // raise  my zIndex
+        setMyZ(zindex + 1);
+        // raise the global value
+        incZ();
+      }
     }
   }, [props.app.data.raised]);
 
@@ -189,12 +204,14 @@ export function AppWindow(props: WindowProps) {
 
   // Bring the app forward
   function bringForward() {
-    // Raise down
-    apps.forEach((a) => {
-      if (a.data.raised) update(a._id, { raised: false });
-    });
-    // Bring to front function
-    update(props.app._id, { raised: true });
+     if (!props.lockToBackground) {
+      // Raise down
+      apps.forEach((a) => {
+        if (a.data.raised) update(a._id, { raised: false });
+      });
+      // Bring to front function
+      update(props.app._id, { raised: true });
+    }
   }
 
   return (
@@ -215,8 +232,8 @@ export function AppWindow(props: WindowProps) {
         boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
-        zIndex: myZ,
-        pointerEvents: spaceBar ? 'none' : 'auto',
+        zIndex: (props.lockToBackground) ? 0 : myZ,
+        pointerEvents: spacebarPressed ? 'none' : 'auto',
       }}
       // minimum size of the app: 200 px
       minWidth={200}
@@ -255,6 +272,12 @@ export function AppWindow(props: WindowProps) {
           cursor="move"
           userSelect={'none'}
           zIndex={2}
+          onMouseEnter={() => {
+            setMouseOver(true);
+          }}
+          onMouseLeave={() => {
+            setMouseOver(false);
+          }}
         ></Box>
       ) : null}
       {/* This div is to block the app from being interacted with */}

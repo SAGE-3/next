@@ -10,11 +10,15 @@ class SageCommunication(Borg):
     # The borg pattern allows us to init the config in the proxy and not have to worry about
     # passing it in the smartbits, i.e. no need to pass it in the smartbis!
 
-    def __init__(self, config_file=None):
+    def __init__(self, conf, prod_type):
         Borg.__init__(self)
-        if config_file is not None:
-            self.__config = json.load(open(config_file))
-        self.__headers = {'Authorization': f"Bearer {self.__config['token']}"}
+
+        self.conf = conf
+        self.prod_type = prod_type
+
+        if conf is None:
+            raise Exception("confifuration not found")
+        self.__headers = {'Authorization': f"Bearer {self.conf['token']}"}
         self.httpx_client = httpx.Client()
 
         # TODO: laod this from config file
@@ -31,7 +35,7 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        r = self.httpx_client.put(self.__config['server'] + self.routes["send_update"].format(app_id),
+        r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
                                    json=data
                                    )
@@ -43,7 +47,7 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        r = self.httpx_client.post(self.__config['server'] + self.routes["create_app"],
+        r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + self.routes["create_app"],
                                    headers=self.__headers,
                                    json=data
                                    )
@@ -58,7 +62,7 @@ class SageCommunication(Borg):
         :return: dict representing the
         """
 
-        r = self.httpx_client.get(self.__config['server']+ self.routes["get_apps"], headers=self.__headers)
+        r = self.httpx_client.get(self.conf[self.prod_type]['web_server']+ self.routes["get_apps"], headers=self.__headers)
         json_data = r.json()
         data = json_data['data']
         if r.is_success:
@@ -78,7 +82,7 @@ class SageCommunication(Borg):
         :param board_id:
         :return: dict representing the
         """
-        r = self.httpx_client.get(self.__config['server']+ self.routes["get_boards"], headers=self.__headers)
+        r = self.httpx_client.get(self.conf[self.prod_type]['web_server']+ self.routes["get_boards"], headers=self.__headers)
         json_data = r.json()
         data = json_data['data']
         if r.is_success:

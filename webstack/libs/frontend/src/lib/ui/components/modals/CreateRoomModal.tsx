@@ -46,6 +46,8 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   const toast = useToast();
 
   const createRoom = useRoomStore((state) => state.create);
+  const rooms = useRoomStore((state) => state.rooms);
+
   const { user } = useUser();
 
   const [name, setName] = useState<RoomSchema['name']>('');
@@ -89,9 +91,17 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
+      const roomNames = rooms.map((room) => room.data.name);
       if (cleanedName.split(' ').join('').length === 0) {
         toast({
           title: 'Name must have at least one character',
+          status: 'error',
+          duration: 2 * 1000,
+          isClosable: true,
+        });
+      } else if (roomNames.includes(cleanedName)) {
+        toast({
+          title: 'Room name already exists',
           status: 'error',
           duration: 2 * 1000,
           isClosable: true,
@@ -196,6 +206,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
+
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>

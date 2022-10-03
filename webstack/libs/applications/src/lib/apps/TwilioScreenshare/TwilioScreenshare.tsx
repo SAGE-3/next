@@ -17,7 +17,7 @@ import { AppWindow } from '../../components';
 
 // SAGE imports
 import { useAppStore, useUser, useTwilioStore, useUsersStore } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
+import { genId, sageColorByName } from '@sage3/shared';
 
 // Twilio Imports
 import { LocalVideoTrack } from 'twilio-video';
@@ -61,6 +61,21 @@ function AppComponent(props: App): JSX.Element {
 
   // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  // State of the current time
+  const now = Date.now();
+  const duration = 30 * 60 * 1000; // 30 minutes
+  const [expirationTime, setExpirationTime] = useState<string>(new Date(duration - (now - props._createdAt)).getMinutes().toString() + 'm');
+
+  // Update the time on an interval every 30secs
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const duration = 30 * 60 * 1000; // 30 minutes
+      setExpirationTime(new Date(duration - (now - props._createdAt)).getMinutes().toString() + 'm');
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const shareScreen = async () => {
     stopStream();
@@ -160,6 +175,9 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
+        <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color={sageColorByName('red')}>
+          {expirationTime}
+        </Text>
         <Box display="flex" flexDir="column" borderRadius="0 0 6px 6px">
           <Box backgroundColor="black" height={props.data.size.height - 50 + 'px'}>
             <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
@@ -178,7 +196,7 @@ function AppComponent(props: App): JSX.Element {
               </Button>
             ) : (
               <Text fontSize="sm" color="white">
-                {userWhoCreated?.data.name} is sharing their screen
+                {userWhoCreated?.data.name} Screenshare
               </Text>
             )}
           </Box>

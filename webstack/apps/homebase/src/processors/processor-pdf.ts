@@ -200,9 +200,13 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
             // });
             // const sharpStream = sharp(cdata, { failOnError: false });
 
+            // Round the dimensions to the nearest integer for sharp library
+            const vw = Math.floor(viewport.width);
+            const vh = Math.floor(viewport.height);
+
             // Get RGBA buffer
-            const cdata = await canvasAndContext.context.getImageData(0, 0, viewport.width, viewport.height).data;
-            const sharpStream = sharp(cdata, { raw: { width: viewport.width, height: viewport.height, channels: 4 }, failOnError: false });
+            const cdata = await canvasAndContext.context.getImageData(0, 0, vw, vh).data;
+            const sharpStream = sharp(cdata, { raw: { width: vw, height: vh, channels: 4 }, failOnError: false });
 
             // Generate the WebP in multiple resolutions
             return Promise.all<sharp.OutputInfo>([

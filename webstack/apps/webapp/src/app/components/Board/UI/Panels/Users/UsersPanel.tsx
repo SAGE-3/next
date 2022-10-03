@@ -55,7 +55,7 @@ export function UsersPanel(props: AvatarProps) {
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={330}
+      width={350}
       showClose={true}
       show={show}
       setShow={setShow}
@@ -63,7 +63,7 @@ export function UsersPanel(props: AvatarProps) {
       setStuck={setStuck}
       zIndex={zIndex}
     >
-      <Box alignItems="center" p="1" width="100%" display="flex">
+      <Box alignItems="center" pb="1" width="100%" display="flex">
         {/* User Avatar */}
         <Tooltip aria-label="username" hasArrow={true} placement="top-start" label={'You'}>
           <Avatar
@@ -74,7 +74,7 @@ export function UsersPanel(props: AvatarProps) {
             backgroundColor={user ? sageColorByName(user.data.color) : ''}
             color="white"
             border="2px solid white"
-            mx={1}
+            mr={1}
           />
         </Tooltip>
         {/* Avatar Group */}

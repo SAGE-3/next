@@ -37,9 +37,13 @@ class CodeCell(SmartBit):
         :param code:
         :return:
         """
-        command_info = {"uuid": uuid,
-                        "call_fn": self.handle_exec_result,
-                        "code": self.state.code}
+        command_info = {
+            "uuid": uuid,
+            "call_fn": self.handle_exec_result,
+            "code": self.state.code,
+            "kernel": "",
+            "token": ""
+        }
 
         # print(f"Command info is {command_info}")
         # print(f"My proxy is: {self._jupyter_proxy}")

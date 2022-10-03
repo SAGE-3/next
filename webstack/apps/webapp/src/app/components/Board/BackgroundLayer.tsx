@@ -6,16 +6,21 @@
  *
  */
 
-import { Box, Tag } from '@chakra-ui/react';
-import { Applications, AppError } from '@sage3/applications/apps';
-import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Tag } from '@chakra-ui/react';
+
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GiArrowCursor } from 'react-icons/gi';
 import { DraggableData, Rnd } from 'react-rnd';
 import { throttle } from 'throttle-debounce';
+
+import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { Applications, AppError } from '@sage3/applications/apps';
+import { sageColorByName } from '@sage3/shared';
+
 import { Background } from './Background/Background';
+import { AppWindow } from '@sage3/applications/apps';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -141,18 +146,25 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/* Apps */}
         {apps.map((app) => {
-          const Component = Applications[app.data.type].AppComponent;
-          return (
-            // Wrap the components in an errorboundary to protect the board from individual app errors
-            <ErrorBoundary
-              key={app._id}
-              fallbackRender={({ error, resetErrorBoundary }) => (
-                <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
-              )}
-            >
-              <Component key={app._id} {...app}></Component>
-            </ErrorBoundary>
-          );
+          if (app.data.type in Applications) {
+            const Component = Applications[app.data.type].AppComponent;
+            return (
+              // Wrap the components in an errorboundary to protect the board from individual app errors
+              <ErrorBoundary
+                key={app._id}
+                fallbackRender={({ error, resetErrorBoundary }) => (
+                  <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+                )}
+              >
+                <Component key={app._id} {...app}></Component>
+              </ErrorBoundary>
+            );
+          } else {
+            // App not found: happens if unkonw app in sagebase
+            return (<AppWindow key={app._id} app={app}>
+              <div>App not found</div>
+            </AppWindow>);
+          }
         })}
 
         {/* Draw the cursors: filter by board and not myself */}
@@ -174,7 +186,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
                   transform: `scale(${1 / scale})`,
                 }}
               >
-                <GiArrowCursor color="red"></GiArrowCursor>
+                <GiArrowCursor color={sageColorByName(users.find((el) => el._id === presence.data.userId)?.data.color || 'red')}></GiArrowCursor>
                 <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
                   {/* using the ID before we can get the name */}
                   {users.find((el) => el._id === presence.data.userId)?.data.name}

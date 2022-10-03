@@ -42,7 +42,7 @@ import * as jwt from 'jsonwebtoken';
 import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './api/routers';
-import { loadCollections, PresenceCollection } from './api/collections';
+import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
 import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
@@ -103,7 +103,7 @@ async function startServer() {
   await loadCollections();
 
   // Twilio Setup
-  const twilio = new SAGETwilio(config.twilio);
+  const twilio = new SAGETwilio(config.twilio, AppsCollection, 10000, 30 * 60 * 1000);
   app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
     if (authId === undefined) {
@@ -136,8 +136,13 @@ async function startServer() {
     presence.init();
 
     socket.on('message', (msg) => {
-      const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, message, user, subCache);
+      try {
+        const message = JSON.parse(msg.toString()) as APIClientWSMessage;
+        wsAPIRouter(socket, message, user, subCache);
+      } catch (err) {
+        console.error('Server> Error parsing message:', msg.toString());
+        console.error('       ', err.message);
+      }
     });
 
     socket.on('close', () => {

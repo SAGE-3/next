@@ -11,12 +11,13 @@ from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
 from jupyterkernelproxy_client import JupyterKernelClient
+from config import config as conf, prod_type
 
 class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
-    _s3_comm: SageCommunication = SageCommunication("config/config.json")
-    _jupyter_client: JupyterKernelClient =  JupyterKernelClient("http://127.0.0.1:5000/exec")
+    _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
+    _jupyter_client: JupyterKernelClient =  JupyterKernelClient(conf[prod_type]["flask_server"])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -124,6 +125,7 @@ class Rotation(TrackedBaseModel):
 
 
 class AppTypes(Enum):
+    ai_pane = "AIPane"
     counter = "Counter"
     note = "Note"
     data_table = "DataTable"
