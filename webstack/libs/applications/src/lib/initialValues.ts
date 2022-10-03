@@ -7,7 +7,6 @@ import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
-import { name as DataTableAppName, init as defaultDataTableApp } from './apps/DataTableApp';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
@@ -18,7 +17,6 @@ import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
-import { name as ScreenshareName, init as defaultScreenshare } from './apps/Screenshare';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -34,7 +32,6 @@ export const initialValues = {
   [CodeCellName]: defaultCodeCell,
   [CounterName]: defaultCounter,
   [DataTableName]: defaultDataTable,
-  [DataTableAppName]: defaultDataTableApp,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [GLTFViewerName]: defaultGLTFViewer,
   [ImageViewerName]: defaultImageViewer,
@@ -45,7 +42,6 @@ export const initialValues = {
   [NotepadName]: defaultNotepad,
   [PDFViewerName]: defaultPDFViewer,
   [RTCChatName]: defaultRTCChat,
-  [ScreenshareName]: defaultScreenshare,
   [StickieName]: defaultStickie,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
