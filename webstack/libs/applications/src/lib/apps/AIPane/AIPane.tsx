@@ -6,7 +6,7 @@
  *
  */
 
-import { useAppStore, useAssetStore, useUIStore } from "@sage3/frontend";
+import {useAppStore, useAssetStore, useUIStore} from "@sage3/frontend";
 import {
   Box,
   Button,
@@ -28,18 +28,18 @@ import {
   Tooltip,
   useToast,
 } from "@chakra-ui/react";
-import { App, AppName } from "../../schema";
+import {App, AppName} from "../../schema";
 import "./styles.css";
 
-import { state as AppState } from "./index";
-import { AppWindow } from "../../components";
-import React, { useEffect, useState, useRef } from "react";
-import { BsFillTriangleFill } from "react-icons/bs";
-import { BiErrorCircle } from "react-icons/bi";
-import { GiEmptyHourglass } from "react-icons/gi";
-import { CgSmileMouthOpen } from "react-icons/cg";
-import { FiChevronDown } from "react-icons/fi";
-import { useLocation } from "react-router-dom";
+import {state as AppState} from "./index";
+import {AppWindow} from "../../components";
+import React, {useEffect, useState, useRef} from "react";
+import {BsFillTriangleFill} from "react-icons/bs";
+import {BiErrorCircle} from "react-icons/bi";
+import {GiEmptyHourglass} from "react-icons/gi";
+import {CgSmileMouthOpen} from "react-icons/cg";
+import {FiChevronDown} from "react-icons/fi";
+import {useLocation} from "react-router-dom";
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -111,20 +111,6 @@ function AppComponent(props: App): JSX.Element {
 
   const supportedApps = ["Counter", "Leaflet", "Notepad"];
 
-  // Way to manage a collection of App objects in local state
-  // const apps = useAppStore(state => state.apps);
-
-  // const [selApps, setSelApps] = useState<App[]>([]);
-  //
-  // useEffect(() => {
-  //   const selAppsArray = [] as App[];
-  //   Object.keys(s.hostedApps).forEach(id => {
-  //     const app = apps.find(app => app._id === id);
-  //     if (app) selAppsArray.push(app)
-  //   });
-  //   setSelApps(selAppsArray);
-  // }, [JSON.stringify(s.hostedApps), apps])
-
   // Checks for apps on or off the pane
   useEffect(() => {
     for (const app of boardApps) {
@@ -138,10 +124,10 @@ function AppComponent(props: App): JSX.Element {
       } else {
         if (
           app.data.position.x + app.data.size.width <
-            props.data.position.x + props.data.size.width &&
+          props.data.position.x + props.data.size.width &&
           app.data.position.x + app.data.size.width > props.data.position.x &&
           app.data.position.y + app.data.size.height <
-            props.data.position.y + props.data.size.height &&
+          props.data.position.y + props.data.size.height &&
           app.data.size.height + app.data.position.y > props.data.position.y
         ) {
           if (!Object.keys(s.hostedApps).includes(app._id)) {
@@ -149,16 +135,16 @@ function AppComponent(props: App): JSX.Element {
               ...s.hostedApps,
               ...client,
             };
-            updateState(props._id, { hostedApps: hosted });
+            updateState(props._id, {hostedApps: hosted});
             console.log("app " + app._id + " added");
           } else {
             console.log("app " + app._id + " already in hostedApps");
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
-            const hostedCopy = { ...s.hostedApps };
+            const hostedCopy = {...s.hostedApps};
             delete hostedCopy[app._id];
-            updateState(props._id, { hostedApps: hostedCopy });
+            updateState(props._id, {hostedApps: hostedCopy});
             console.log("app " + app._id + " removed from hostedApps");
           }
         }
@@ -182,22 +168,14 @@ function AppComponent(props: App): JSX.Element {
     Object.keys(s.hostedApps).forEach((key: string) => {
       if (appIds.includes(key)) copyofhostapps[key] = key;
     });
-    updateState(props._id, { hostedApps: copyofhostapps });
+    updateState(props._id, {hostedApps: copyofhostapps});
   }, [boardApps.length]);
 
-  // // Test function for backend, just prints hosted app ID's
-  // useEffect(() => {
-  //   testFunction()
-  // }, [Object.keys(s.hostedApps).length])
-
-  //TODO Move all apps together with the AIPane
+  // Move all apps together with the AIPane
   useEffect(() => {
-    const hostedCopy = { ...s.hostedApps };
+    const hostedCopy = {...s.hostedApps};
     const xDiff = props.data.position.x - prevX.current;
     const yDiff = props.data.position.y - prevY.current;
-
-    console.log("xDiff " + xDiff);
-    console.log("yDiff " + yDiff);
 
     for (const app of boardApps) {
       const client = {
@@ -213,7 +191,6 @@ function AppComponent(props: App): JSX.Element {
         });
       }
     }
-    console.log("Cluster useEffect");
     prevX.current = props.data.position.x;
     prevY.current = props.data.position.y;
   }, [
@@ -244,15 +221,16 @@ function AppComponent(props: App): JSX.Element {
                   Message
                 </Button>
               </PopoverTrigger>
+
+              {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
               <PopoverContent>
-                <PopoverArrow />
-                <PopoverCloseButton />
+                <PopoverArrow/>
+                <PopoverCloseButton/>
                 <PopoverHeader>
-                  {Object.keys(s.hostedApps).every(checkAppType)
+                  {Object.values(s.hostedApps).every(checkAppType)
                     ? "File type accepted"
                     : "Error. Unsupported file type"}
                 </PopoverHeader>
-                {/*<PopoverBody>{Object.keys(s.hostedApps).length !== 0 ? "File type accepted" : "Error. Unsupported file type"}</PopoverBody>*/}
               </PopoverContent>
             </Popover>
           </div>
@@ -268,23 +246,23 @@ function AppComponent(props: App): JSX.Element {
           <Box className="status-container" position="absolute">
             {Object.keys(s.hostedApps).length === 0 ? (
               <Tooltip label="Ready" fontSize="md">
-                <Icon as={CgSmileMouthOpen} w={8} h={8} />
+                <Icon as={CgSmileMouthOpen} w={8} h={8}/>
               </Tooltip>
             ) : (
               <Tooltip label="Running" fontSize="md">
-                <Icon as={GiEmptyHourglass} w={8} h={8} />
+                <Icon as={GiEmptyHourglass} w={8} h={8}/>
               </Tooltip>
             )}
           </Box>
 
           <Box position="relative">
             selectedApp {selectedAppId}
-            <br />
+            <br/>
             length of hostedappsarr: {Object.keys(s.hostedApps).length}
-            <br />
+            <br/>
             hostedapps: {Object.values(s.hostedApps)}
-            <br />
-            {typeof Object.values(s.hostedApps)[0]}
+            <br/>
+
           </Box>
         </Box>
       </Box>
@@ -309,13 +287,9 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function testFunction() {
     updateState(props._id, {
-      executeInfo: { executeFunc: "test_function", params: {} },
+      executeInfo: {executeFunc: "test_function", params: {}},
     });
   }
-
-  const handleFileSelected = () => {
-    console.log("Do something with file");
-  };
 
   return (
     <>
@@ -328,7 +302,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Select>
       </Box> */}
       <Menu>
-        <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+        <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
           Models
         </MenuButton>
         <Portal>
@@ -341,8 +315,8 @@ function ToolbarComponent(props: App): JSX.Element {
       </Menu>
       <IconButton
         aria-label="Run AI"
-        icon={<BsFillTriangleFill />}
-        _hover={{ opacity: 0.7, transform: "scaleY(1.3)" }}
+        icon={<BsFillTriangleFill/>}
+        _hover={{opacity: 0.7, transform: "scaleY(1.3)"}}
         onClick={() => {
           testFunction();
         }}
@@ -351,4 +325,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+export default {AppComponent, ToolbarComponent};
