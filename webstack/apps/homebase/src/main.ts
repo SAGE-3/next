@@ -136,8 +136,13 @@ async function startServer() {
     presence.init();
 
     socket.on('message', (msg) => {
-      const message = JSON.parse(msg.toString()) as APIClientWSMessage;
-      wsAPIRouter(socket, message, user, subCache);
+      try {
+        const message = JSON.parse(msg.toString()) as APIClientWSMessage;
+        wsAPIRouter(socket, message, user, subCache);
+      } catch (err) {
+        console.error('Server> Error parsing message:', msg.toString());
+        console.error('       ', err.message);
+      }
     });
 
     socket.on('close', () => {
