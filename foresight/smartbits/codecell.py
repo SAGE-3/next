@@ -29,6 +29,14 @@ class CodeCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
+    def get_kernels(self):
+        msg = {"kernels": {"Kernel 1": "SOME ID 1", "Kernel 2": "SOME ID 2", "Kernel 3": "SOME ID 3"}}
+        self.state.output = json.dumps(msg)
+        self.state.kernelCount = len(msg["kernels"])
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
+
     def execute(self, uuid):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code

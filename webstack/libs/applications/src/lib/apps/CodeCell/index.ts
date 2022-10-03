@@ -46,7 +46,7 @@ export const init: Partial<state> = {
   kernelCount: 0,
   baseUrl: '',
   output: '',
-  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
+  executeInfo: { executeFunc: 'get_kernels', params: {} } as executeInfoType,
 };
 
 export const name = 'CodeCell';
