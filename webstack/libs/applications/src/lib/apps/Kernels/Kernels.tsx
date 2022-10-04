@@ -6,6 +6,7 @@
  *
  */
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Button, ButtonGroup, Tooltip, Stack, UnorderedList, ListItem, Select,
   Checkbox, CheckboxGroup, Text, Input, InputGroup
@@ -16,7 +17,7 @@ import { v1 as uuidv1 } from 'uuid';
 // Icons
 import { MdAdd, MdRemove, MdRefresh } from 'react-icons/md';
 
-import { GetConfiguration, useAppStore } from '@sage3/frontend';
+import { GetConfiguration, useAppStore, useUser } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -36,6 +37,10 @@ function AppComponent(props: App): JSX.Element {
   const [prod, setProd] = useState<boolean>();
   const [sessions, setSessions] = useState<any[]>([]);
   const updateState = useAppStore((state) => state.updateState);
+  const createApp = useAppStore((state) => state.create);
+  const { user } = useUser();
+  const location = useLocation();
+  const locationState = location.state as { boardId: string; roomId: string; };
 
   const setSelected = useStore((state: any) => state.setSelected);
   const selected = useStore((state: any) => state.selected[props._id]);
@@ -90,7 +95,7 @@ function AppComponent(props: App): JSX.Element {
     }
   }
 
-  /*
+  /* Info
    id: "bdc55112-02ad-49c2-9171-be81e5048e81"
    kernel: {
     id: 'c3e84c9d-9bf8-4cd8-8448-283df74de8b0',
@@ -103,6 +108,45 @@ function AppComponent(props: App): JSX.Element {
    path: "boards/53f01e78-4fb5-4eea-ab64-f8bfbc389547.ipynb"
    type: "notebook"
   */
+
+  // Open a CodeCell for this kernel
+  function openCell(kid: string) {
+    if (!user) return;
+    createApp({
+      name: 'CodeCell',
+      description: 'CodeCell',
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: 600, height: props.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'CodeCell',
+      state: { kernel: kid },
+      ownerId: user._id,
+      minimized: false,
+      raised: true,
+    });
+  }
+
+  // Open JupyterLab
+  function openJupyter() {
+    if (!user) return;
+    // TODO: open into the right kerne/notebook
+    createApp({
+      name: 'JupyterLab',
+      description: 'JupyterLab',
+      roomId: locationState.roomId,
+      boardId: locationState.boardId,
+      position: { x: props.data.position.x, y: props.data.position.y + props.data.size.height + 50, z: 0 },
+      size: { width: props.data.size.width, height: props.data.size.width, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'JupyterLab',
+      state: {},
+      ownerId: user._id,
+      minimized: false,
+      raised: true,
+    });
+  }
 
   return (
     <AppWindow app={props}>
@@ -124,17 +168,18 @@ function AppComponent(props: App): JSX.Element {
           }}
         >
           <CheckboxGroup>
-            {sessions.map((session, i) => {
+            {sessions.sort((a, b) => a.name.localeCompare(b.name)).map((session, i) => {
               return (
                 <ListItem key={i}>
                   <Checkbox colorScheme={"teal"} value={session.kernel.id} checked={selected.includes(session.id)}
                     backgroundColor={"teal.200"} borderRadius={2} borderColor={"teal.300"}
                     verticalAlign={"middle"} p={0} ml={1} onChange={onKernelSelected}
-                  /> <b>Session</b> {i} - {session.name}
+                  /> <b>Kernel: {session.name}</b>
                   <UnorderedList pl={'8'}>
-                    <ListItem>kernel: {session.kernel.name}</ListItem>
-                    <ListItem>state: {session.kernel.execution_state}</ListItem>
-                    <ListItem>{session.type}: {session.path}</ListItem>
+                    <ListItem>Kernel: {session.kernel.name}, {session.kernel.execution_state}</ListItem>
+                    <ListItem>Notebook: {session.path}</ListItem>
+                    <ListItem>Links: <span onClick={() => openCell(session.kernel.id)} style={{ textDecoration: "underline", cursor: "pointer" }}>new cell</span>
+                      &nbsp;  <span onClick={() => openJupyter()} style={{ textDecoration: "underline", cursor: "pointer" }}>open jupyter</span></ListItem>
                   </UnorderedList>
                 </ListItem>
               );
