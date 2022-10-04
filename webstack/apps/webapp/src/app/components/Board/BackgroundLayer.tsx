@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Tag } from '@chakra-ui/react';
+import { motion, useAnimation } from "framer-motion"
 
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -173,25 +174,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           .filter((el) => el.data.userId !== user?._id)
           .map((presence) => {
             return (
-              <div
+              <UserCursor
                 key={presence.data.userId}
-                style={{
-                  position: 'absolute',
-                  left: presence.data.cursor.x - 4 + 'px',
-                  top: presence.data.cursor.y - 3 + 'px',
-                  transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
-                  pointerEvents: 'none',
-                  display: 'flex',
-                  zIndex: 100000,
-                  transform: `scale(${1 / scale})`,
-                }}
-              >
-                <GiArrowCursor color={sageColorByName(users.find((el) => el._id === presence.data.userId)?.data.color || 'red')}></GiArrowCursor>
-                <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
-                  {/* using the ID before we can get the name */}
-                  {users.find((el) => el._id === presence.data.userId)?.data.name}
-                </Tag>
-              </div>
+                color={users.find((el) => el._id === presence.data.userId)?.data.color || 'red'}
+                position={presence.data.cursor}
+                name={users.find((el) => el._id === presence.data.userId)?.data.name || '-'}
+                scale={scale}
+              />
             );
           })}
 
@@ -199,5 +188,65 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Background boardId={props.boardId} roomId={props.roomId}></Background>
       </Rnd>
     </div>
+  );
+}
+
+/**
+ * User Curor Props
+ */
+interface UserCursorProps {
+  name: string;
+  color: string;
+  position: { x: number, y: number, z: number };
+  scale: number;
+}
+
+/**
+ * Show a user pointer
+ * @param props UserCursorProps
+ * @returns
+ */
+function UserCursor(props: UserCursorProps) {
+  // Create an animation object to control the opacity of pointer
+  // Pointer fades after inactivity
+  const controls = useAnimation();
+
+  // Reset animation if pointer moves
+  useEffect(() => {
+    // Stop previous animation
+    controls.stop();
+    // Set initial opacity
+    controls.set({ opacity: 0.8 });
+    // Start animation
+    controls.start({
+      // final opacity
+      opacity: 0.0,
+      transition: {
+        ease: 'easeIn',
+        // duration in sec.
+        duration: 10,
+      },
+    });
+  }, [props.position.x, props.position.y, props.position.z]);
+
+  return (<motion.div
+    // pass the animation controller
+    animate={controls}
+    style={{
+      position: 'absolute',
+      left: props.position.x - 4 + 'px',
+      top: props.position.y - 3 + 'px',
+      transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
+      pointerEvents: 'none',
+      display: 'flex',
+      zIndex: 100000,
+      transform: `scale(${1 / props.scale})`,
+    }}
+  >
+    <GiArrowCursor color={sageColorByName(props.color)}></GiArrowCursor>
+    <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
+      {props.name}
+    </Tag>
+  </motion.div>
   );
 }
