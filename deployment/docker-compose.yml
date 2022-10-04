@@ -9,6 +9,9 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+    deploy:
+      restart_policy:
+        condition: on-failure
   node-server:
     image: "sage3/next:prod"
     ports:
@@ -19,6 +22,12 @@ services:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 20s
   python:
     image: "python:3.9-bullseye"
     volumes:
@@ -27,6 +36,12 @@ services:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
     command: sleep infinity
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 20s
   jupyter:
     image: "jupyter/base-notebook"
     volumes:
@@ -40,3 +55,6 @@ services:
     depends_on:
       - "redis-server"
     command: /conf/start.sh
+    deploy:
+      restart_policy:
+        condition: on-failure
