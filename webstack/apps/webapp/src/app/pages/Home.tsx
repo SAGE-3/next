@@ -28,7 +28,6 @@ import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 import { useLocation } from 'react-router-dom';
 import { Clock } from '../components/Board/UI/Clock';
-import { sageColorByName } from '@sage3/shared';
 
 export function HomePage() {
   // User
@@ -54,7 +53,6 @@ export function HomePage() {
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-  const cardBackgroundColor = useColorModeValue('transparent', 'gray.700');
   const config = useData('/api/configuration') as serverConfiguration;
 
   // Subscribe to user updates
@@ -137,48 +135,32 @@ export function HomePage() {
         px="2"
         alignItems={'center'}
       >
-        {!selectedRoom ? (
-          <Box display="flex" flexDirection="column" justifyContent={'center'}>
-            <Text fontSize={'3xl'} textAlign="center">
-              Rooms
-            </Text>
+        <Box display="flex" flexDirection="column" justifyContent={'center'}>
+          <Box width="1200px" height="80vh" style={{ perspective: '2400px' }}>
             <Box
-              m="4"
-              mt="0"
-              p="4"
-              border="solid 3px"
-              borderColor="gray.500"
-              borderRadius="md"
-              boxShadow="xl"
-              backgroundColor={cardBackgroundColor}
+              transition=" transform 1.25s"
+              style={{ transformStyle: 'preserve-3d' }}
+              transform={selectedRoom ? 'rotateY(-180deg)' : 'rotateY(0deg)'}
+              position="relative"
+              width="100%"
+              height="100%"
             >
-              <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick} rooms={rooms}></RoomList>
-            </Box>
-          </Box>
-        ) : (
-          <>
-            <Tooltip label="Back to room list" placement="top" hasArrow={true} openDelay={500}>
-              <IconButton
-                aria-label="back-to-roomlist"
-                size="lg"
-                icon={<MdArrowBack />}
-                onClick={() => handleRoomClick(undefined)}
-              ></IconButton>
-            </Tooltip>
-            <Box display="flex" flexDirection="column" justifyContent={'center'} flexGrow={1}>
-              <Text fontSize={'3xl'} textAlign="center">
-                {selectedRoom.data.name}'s Boards
-              </Text>
+              <Box className="front" style={{ backfaceVisibility: 'hidden' }} position="absolute" width="100%" height="100%">
+                <Text fontSize={'3xl'} textAlign="center">
+                  Rooms
+                </Text>
+                <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick} rooms={rooms}></RoomList>
+              </Box>
+
               <Box
-                m="4"
-                mt="0"
-                p="4"
-                border="solid 3px"
-                backgroundColor={cardBackgroundColor}
-                borderColor={sageColorByName(selectedRoom.data.color)}
-                borderRadius="md"
-                boxShadow="xl"
+                className="back"
+                style={{ backfaceVisibility: 'hidden' }}
+                transform="rotateY(-180deg)"
+                position="absolute"
+                width="100%"
+                height="100%"
               >
+                <IconButton aria-label="fuck" variant="unstyled" onClick={() => handleRoomClick(undefined)} icon={<MdArrowBack />} />{' '}
                 <BoardList
                   onBoardClick={handleBoardClick}
                   selectedRoom={selectedRoom}
@@ -187,9 +169,8 @@ export function HomePage() {
                 ></BoardList>
               </Box>
             </Box>
-          </>
-        )}
-        <Box></Box>
+          </Box>
+        </Box>
       </Box>
 
       {/* Bottom Bar */}

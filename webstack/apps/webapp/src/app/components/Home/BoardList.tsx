@@ -27,10 +27,11 @@ import { MdSearch } from 'react-icons/md';
 
 import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
+import { sageColorByName } from '@sage3/shared';
 
 type BoardListProps = {
   onBoardClick: (board: Board) => void;
-  selectedRoom: Room;
+  selectedRoom: Room | undefined;
   selectedBoard: Board | undefined;
   boards: Board[];
 };
@@ -54,6 +55,9 @@ export function BoardList(props: BoardListProps) {
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
   const { auth } = useAuth();
+  // UI elements
+  const borderColor = useColorModeValue('#718096', '#A0AEC0');
+  const backgroundColor = useColorModeValue('transparent', 'gray.700');
 
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
 
@@ -97,8 +101,6 @@ export function BoardList(props: BoardListProps) {
     }
   }, [props.selectedRoom, subByRoomId]);
 
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
-
   // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
@@ -119,7 +121,7 @@ export function BoardList(props: BoardListProps) {
     }
   };
   return (
-    <>
+    <Box m="4" mt="0" p="4" border="solid 3px" backgroundColor={backgroundColor} borderColor={borderColor} borderRadius="md" boxShadow="xl">
       <Box
         overflowY="auto"
         overflowX="hidden"
@@ -194,6 +196,6 @@ export function BoardList(props: BoardListProps) {
         />
         <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
       </InputGroup>
-    </>
+    </Box>
   );
 }

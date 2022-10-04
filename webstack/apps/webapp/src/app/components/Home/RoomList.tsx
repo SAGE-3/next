@@ -46,6 +46,8 @@ export function RoomList(props: RoomListProps) {
 
   // UI elements
   const borderColor = useColorModeValue('#718096', '#A0AEC0');
+  const backgroundColor = useColorModeValue('transparent', 'gray.700');
+
   const toast = useToast();
   const [filterBoards, setFilterBoards] = useState<Room[] | null>(null);
   const [search, setSearch] = useState('');
@@ -93,7 +95,7 @@ export function RoomList(props: RoomListProps) {
   }
 
   return (
-    <>
+    <Box m="4" mt="0" p="4" border="solid 3px" borderColor="gray.500" borderRadius="md" boxShadow="xl" backgroundColor={backgroundColor}>
       <Box
         overflowY="auto"
         overflowX="hidden"
@@ -172,6 +174,6 @@ export function RoomList(props: RoomListProps) {
           <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
         </InputGroup>
       </Box>
-    </>
+    </Box>
   );
 }
