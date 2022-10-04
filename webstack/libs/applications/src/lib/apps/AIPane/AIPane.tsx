@@ -18,15 +18,12 @@ import {
   MenuList,
   Popover,
   PopoverArrow,
-  PopoverBody,
   PopoverCloseButton,
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
   Portal,
-  Select,
-  Tooltip,
-  useToast,
+  VisuallyHidden,
 } from "@chakra-ui/react";
 import {App, AppName} from "../../schema";
 import "./styles.css";
@@ -34,60 +31,14 @@ import "./styles.css";
 import {state as AppState} from "./index";
 import {AppWindow} from "../../components";
 import React, {useEffect, useState, useRef} from "react";
-import {BsFillTriangleFill} from "react-icons/bs";
-import {BiErrorCircle} from "react-icons/bi";
+import {FaPlay} from "react-icons/fa";
+import {BiErrorCircle, BiRun} from "react-icons/bi";
 import {GiEmptyHourglass} from "react-icons/gi";
 import {CgSmileMouthOpen} from "react-icons/cg";
 import {FiChevronDown} from "react-icons/fi";
 import {useLocation} from "react-router-dom";
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
-
-function CustomToastExample(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-  const toast = useToast();
-  return (
-    <Button
-      onClick={() =>
-        toast({
-          position: "top-left",
-          render: () => (
-            <Box color="white" p={3} bg="blue.500">
-              Hello World
-            </Box>
-          ),
-        })
-      }
-    >
-      Show Toast
-    </Button>
-  );
-}
-
-// function statusIcon(props: App): JSX.Element {
-//   const s = props.data.state as AppState;
-//   const updateState = useAppStore(state => state.updateState);
-//
-//   const toast = useToast()
-//   return (
-//     <Button
-//       onClick={() =>
-//         toast({
-//           position: 'top-left',
-//           render: () => (
-//             <Box color='white' p={3} bg='blue.500'>
-//               Hello World
-//             </Box>
-//           ),
-//         })
-//       }
-//     >
-//       Show Toast
-//     </Button>
-//   )
-// }
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -111,7 +62,7 @@ function AppComponent(props: App): JSX.Element {
   const prevX = useRef(0);
   const prevY = useRef(0);
 
-  const supportedApps = ["Counter", "Leaflet", "Notepad"];
+  const supportedApps = ["Counter", "Clock", "Notepad"];
 
   // Checks for apps on or off the pane
   useEffect(() => {
@@ -209,7 +160,6 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} lockToBackground={true}>
       <Box>
         <div>
-          {/*<div className="message-container" style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>*/}
           <div>
             <Popover>
               <PopoverTrigger>
@@ -218,6 +168,8 @@ function AppComponent(props: App): JSX.Element {
                     Object.keys(s.hostedApps).length !== 0 ? false : true
                   }
                   variant="ghost"
+                  size="lg"
+                  color="cyan"
                 >
                   Message
                 </Button>
@@ -245,15 +197,13 @@ function AppComponent(props: App): JSX.Element {
           position="absolute"
         >
           <Box className="status-container" position="absolute">
-            {Object.keys(s.hostedApps).length === 0 ? (
-              <Tooltip label="Ready" fontSize="md">
-                <Icon as={CgSmileMouthOpen} w={8} h={8}/>
-              </Tooltip>
-            ) : (
-              <Tooltip label="Running" fontSize="md">
+            {s.runStatus ? Object.values(s.hostedApps).every(checkAppType) ?
                 <Icon as={GiEmptyHourglass} w={8} h={8}/>
-              </Tooltip>
-            )}
+                :
+                <Icon as={BiErrorCircle} w={8} h={8}/>
+              :
+              <VisuallyHidden>Empty Board</VisuallyHidden>
+            }
           </Box>
 
           <Box position="relative">
@@ -285,15 +235,15 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   const models = ["Model 1", "Model 2", "Model 3"];
-  const supportedApps = ["Counter", "Leaflet", "Notepad"];
+  const supportedApps = ["Counter", "Stickie", "Notepad"];
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
 
-  function testFunction() {
+  function runFunction() {
     updateState(props._id, {
-      executeInfo: {executeFunc: "test_function", params: {}},
+      executeInfo: {executeFunc: "run_function", params: {}},
     });
   }
 
@@ -322,11 +272,11 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <IconButton
         aria-label="Run AI"
-        icon={<BsFillTriangleFill/>}
+        icon={s.runStatus ? <BiRun/> : <FaPlay/>}
         _hover={{opacity: 0.7, transform: "scaleY(1.3)"}}
         isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
         onClick={() => {
-          testFunction();
+          runFunction();
         }}
       />
     </>

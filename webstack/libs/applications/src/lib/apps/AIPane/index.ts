@@ -12,6 +12,7 @@ export const schema = z.object({
   hostedApps: z.record(z.string(), z.string()),
 
   supportedApps: z.record(z.string()),
+  runStatus: z.boolean(),
 
   supported_tasks: z.object({
     models: z.record(z.string()),
@@ -30,6 +31,7 @@ export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
   hostedApps: {},
   supportedApps: {},
+  runStatus: false,
 };
 
 export const name = 'AIPane';

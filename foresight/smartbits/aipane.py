@@ -4,6 +4,7 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
+import time
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
@@ -16,6 +17,7 @@ PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 class AIPaneState(TrackedBaseModel):
     executeInfo: ExecuteInfo
     hostedApps: Optional[dict]
+    runStatus: bool
 
 
 class AIPane(SmartBit):
@@ -32,14 +34,18 @@ class AIPane(SmartBit):
         # self._some_private_info = {1: 2}
 
 
-    def test_function(self):
-        print("++++++++++++++++++++++++++++++")
-        if len(self.state.hostedApps) > 0:
-            print("Apps are being hosted: ")
-            print(len(self.state.hostedApps.values()))
-            print(self.state.hostedApps.values())
-        else:
-            print("Pane is empty")
+    def run_function(self):
+        self.state.runStatus = True
+        print("Apps are being hosted: ")
+        print(self.state.hostedApps.values())
+        self.state.executeInfo.executeFunc = ""
+        self.send_updates()
+        self.done_function()
+
+
+    def done_function(self):
+        time.sleep(5)
+        self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.send_updates()
 
