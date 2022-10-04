@@ -135,39 +135,49 @@ export function HomePage() {
         px="2"
         alignItems={'center'}
       >
-        <Box display="flex" flexDirection="column" justifyContent={'center'} height="75vh" width="75vw">
-          <Box height="75vh" width="75vw" style={{ perspective: '2400px' }}>
-            <Box
-              transition=" transform 1s ease-in-out"
-              style={{ transformStyle: 'preserve-3d' }}
-              transform={selectedRoom ? 'rotateY(-180deg)' : 'rotateY(0deg)'}
-              position="relative"
-              width="100%"
-              height="100%"
-            >
-              <Box className="front" style={{ backfaceVisibility: 'hidden' }} position="absolute" width="100%" height="100%">
-                <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick} rooms={rooms}></RoomList>
-              </Box>
-
+        {roomsFetched ? (
+          <Box display="flex" flexDirection="column" justifyContent={'center'} height="75vh" width="75vw">
+            <Box height="75vh" width="75vw" style={{ perspective: '2400px' }}>
               <Box
-                className="back"
-                style={{ backfaceVisibility: 'hidden' }}
-                transform="rotateY(-180deg)"
-                position="absolute"
+                transition=" transform 1s ease-in-out"
+                style={{ transformStyle: 'preserve-3d' }}
+                transform={selectedRoom ? 'rotateY(180deg)' : 'rotateY(0deg)'}
+                position="relative"
                 width="100%"
                 height="100%"
               >
-                <BoardList
-                  onBoardClick={handleBoardClick}
-                  onBackClick={() => handleRoomClick(undefined)}
-                  selectedRoom={selectedRoom}
-                  selectedBoard={selectedBoard}
-                  boards={boards}
-                ></BoardList>
+                <Box
+                  className="front"
+                  style={{ backfaceVisibility: 'hidden' }}
+                  position="absolute"
+                  width="100%"
+                  height="100%"
+                  pointerEvents={selectedRoom ? 'none' : 'initial'}
+                >
+                  <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick} rooms={rooms}></RoomList>
+                </Box>
+
+                <Box
+                  className="back"
+                  style={{ backfaceVisibility: 'hidden' }}
+                  transform="rotateY(180deg)"
+                  position="absolute"
+                  width="100%"
+                  height="100%"
+                  pointerEvents={!selectedRoom ? 'none' : 'initial'}
+                >
+                  <BoardList
+                    onBoardClick={handleBoardClick}
+                    onBackClick={() => handleRoomClick(undefined)}
+                    selectedRoom={selectedRoom}
+                    selectedBoard={selectedBoard}
+                    boards={boards}
+                  ></BoardList>
+                </Box>
               </Box>
             </Box>
           </Box>
-        </Box>
+        ) : null}
       </Box>
 
       {/* Bottom Bar */}

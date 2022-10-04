@@ -24,7 +24,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 
-import { MdArrowBack, MdSearch } from 'react-icons/md';
+import { MdAdd, MdArrowBack, MdSearch, MdSort } from 'react-icons/md';
 
 import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
@@ -139,14 +139,29 @@ export function BoardList(props: BoardListProps) {
         <Box minHeight="0">
           {/* Top Bar */}
           <Box textAlign="center" display="flex" alignItems="center" justifyContent="space-between" width="100%" mb="2">
-            <Box textAlign="left" minHeight="0">
-              <IconButton aria-label="backbutton" onClick={props.onBackClick} variant="solid" icon={<MdArrowBack />} />{' '}
+            <Box textAlign="left" minHeight="0" width="120px">
+              <IconButton mt="1" aria-label="backbutton" onClick={props.onBackClick} variant="solid" icon={<MdArrowBack />} />{' '}
             </Box>
             <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
               <Text fontSize="3xl">{props.selectedRoom?.data.name}'s Boards</Text>
             </Box>
 
-            <Box></Box>
+            <Box width="120px">
+              {props.selectedRoom ? (
+                <CreateBoardModal
+                  roomId={props.selectedRoom._id}
+                  isOpen={newBoardModal}
+                  onClose={() => setNewBoardModal(false)}
+                ></CreateBoardModal>
+              ) : null}
+              <InputGroup>
+                <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
+                  <option value="Name"> Name</option>
+                  <option value="Updated">Updated</option>
+                  <option value="Created">Created</option>
+                </Select>
+              </InputGroup>
+            </Box>
           </Box>
 
           {/* Boards Area */}
@@ -169,6 +184,18 @@ export function BoardList(props: BoardListProps) {
               },
             }}
           >
+            <InputGroup>
+              <Input
+                my="2"
+                value={search}
+                variant="flushed"
+                onChange={handleFilterBoards}
+                placeholder="Search Boards..."
+                _placeholder={{ opacity: 1 }}
+                color="white"
+              />
+              <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
+            </InputGroup>
             <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3}>
               {(filterBoards ? filterBoards : props.boards)
 
@@ -193,45 +220,18 @@ export function BoardList(props: BoardListProps) {
         <Box minHeight="0">
           <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
             <Button
-              height="48px"
+              height="50px"
               width="100%"
               borderRadius="md"
-              border={`solid ${borderColor} 2px`}
               fontSize="4xl"
               p="0"
               mb="2"
               disabled={auth?.provider === 'guest'}
               onClick={() => setNewBoardModal(true)}
             >
-              +
+              <MdAdd />
             </Button>
           </Tooltip>
-          {props.selectedRoom ? (
-            <CreateBoardModal
-              roomId={props.selectedRoom._id}
-              isOpen={newBoardModal}
-              onClose={() => setNewBoardModal(false)}
-            ></CreateBoardModal>
-          ) : null}
-          <InputGroup>
-            <Select mt="2" onChange={handleSortChange}>
-              <option value="Name"> Name</option>
-              <option value="Updated">Updated</option>
-              <option value="Created">Created</option>
-            </Select>
-          </InputGroup>
-          <InputGroup>
-            <Input
-              my="2"
-              value={search}
-              variant="flushed"
-              onChange={handleFilterBoards}
-              placeholder="Search Boards..."
-              _placeholder={{ opacity: 1 }}
-              color="white"
-            />
-            <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-          </InputGroup>
         </Box>
       </Box>
     </Box>

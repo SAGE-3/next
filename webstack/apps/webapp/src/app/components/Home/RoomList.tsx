@@ -26,7 +26,7 @@ import {
 import { Room } from '@sage3/shared/types';
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
-import { MdSearch } from 'react-icons/md';
+import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
 type RoomListProps = {
   onRoomClick: (room: Room) => void;
@@ -56,15 +56,15 @@ export function RoomList(props: RoomListProps) {
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
 
   function sortByName(a: Room, b: Room) {
-    return b.data.name.localeCompare(a.data.name);
+    return a.data.name.localeCompare(b.data.name);
   }
 
   function sortByUpdated(a: Room, b: Room) {
-    return a._updatedAt < b._updatedAt ? -1 : 1;
+    return a._updatedAt > b._updatedAt ? -1 : 1;
   }
 
   function sortByCreated(a: Room, b: Room) {
-    return a._createdAt < b._createdAt ? -1 : 1;
+    return a._createdAt > b._createdAt ? -1 : 1;
   }
 
   let sortFunction = sortByName;
@@ -110,11 +110,19 @@ export function RoomList(props: RoomListProps) {
       <Box textAlign="center" display="flex" flexDir="column" justifyContent="space-between" height="100%">
         <Box minHeight="0">
           <Box fontSize={'3xl'} textAlign="center" display="flex" alignItems="center" justifyContent="space-between" width="100%" mb="2">
-            <Box flex="1 1 0px"></Box>
-            <Box flex="1 1 0px">
+            <Box width="120px"></Box>
+            <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
               <Text>Rooms</Text>
             </Box>
-            <Box flex="1 1 0px"></Box>
+            <Box width="120px">
+              <InputGroup>
+                <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
+                  <option value="Name"> Name</option>
+                  <option value="Updated">Updated</option>
+                  <option value="Created">Created</option>
+                </Select>
+              </InputGroup>
+            </Box>
           </Box>
 
           <Box
@@ -137,6 +145,18 @@ export function RoomList(props: RoomListProps) {
               },
             }}
           >
+            <InputGroup>
+              <Input
+                my="2"
+                value={search}
+                variant="flushed"
+                onChange={handleFilterBoards}
+                placeholder="Search Rooms..."
+                _placeholder={{ opacity: 1 }}
+                color="white"
+              />
+              <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
+            </InputGroup>
             <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3} height="100%">
               {(filterBoards ? filterBoards : props.rooms)
                 // show only public rooms or mine
@@ -162,40 +182,18 @@ export function RoomList(props: RoomListProps) {
           <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
           <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
             <Button
-              height="51px"
+              height="50px"
               width="100%"
               borderRadius="md"
-              border={`solid ${borderColor} 1px`}
-              fontSize="48px"
+              fontSize="4xl"
               p="0"
               mb="2"
               disabled={auth?.provider === 'guest'}
               onClick={() => setNewRoomModal(true)}
             >
-              <Text fontSize="4xl" fontWeight="bold">
-                +
-              </Text>
+              <MdAdd />
             </Button>
           </Tooltip>
-          <InputGroup>
-            <Select mt="2" onChange={handleSortChange}>
-              <option value="Name"> Name</option>
-              <option value="Updated">Updated</option>
-              <option value="Created">Created</option>
-            </Select>
-          </InputGroup>
-          <InputGroup>
-            <Input
-              my="2"
-              value={search}
-              variant="flushed"
-              onChange={handleFilterBoards}
-              placeholder="Search Rooms..."
-              _placeholder={{ opacity: 1 }}
-              color="white"
-            />
-            <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-          </InputGroup>
         </Box>
       </Box>
     </Box>
