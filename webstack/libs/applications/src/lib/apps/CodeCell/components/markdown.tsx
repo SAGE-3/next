@@ -6,17 +6,17 @@
  *
  */
 
+import React from 'react';
 import { default as MD } from 'markdown-to-jsx';
 
 import './styles.css';
-
 
 const LinkWrapper = (props: { children: React.ReactNode }) => {
   return <span>{props.children}</span>;
 };
 
 export const Markdown = (props: { data: string[] | string }): JSX.Element => {
-  
+
   return (
     <MD
       options={{
