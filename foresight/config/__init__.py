@@ -1,6 +1,8 @@
 import os
 
 prod_type = os.getenv('ENVIRONMENT')
+if prod_type is None:
+    raise Exception("Cannot find ENVIRONMENT env. variable. Exported?")
 
 if prod_type == 'development' and not os.getenv('SAGE3_SERVER'):
     server = "localhost"
@@ -49,6 +51,13 @@ ai_settings = {
                 "Classification": {}
             }
         }
-
     }
 }
+
+funcx = {
+    "endpoint_id": "503aabe7-223e-4679-bb01-0b0da37c0ae6",
+    "test_ai_func_uuid": "0e7c5056-74cd-402c-80fd-375d2bfe48b0",
+    "ai_func_uuid": "ABCD"
+
+}
+
