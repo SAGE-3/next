@@ -8,14 +8,18 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, Center } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Center, Tooltip } from '@chakra-ui/react';
 import { v1 as uuidv1 } from 'uuid';
 
-import { App } from '../../schema';
+import { MdFileDownload } from 'react-icons/md';
+// Date manipulation (for filename)
+import dateFormat from 'date-fns/format';
 
+import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
+
+import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { GetConfiguration, useAppStore } from '@sage3/frontend';
 import { isElectron } from './util';
 
 // Electron and Browser components
@@ -65,6 +69,7 @@ function AppComponent(props: App): JSX.Element {
             // Create a new kernel
             const k_url = base + '/api/kernels';
             const kpayload = { name: 'python3', path: '/' };
+            // Creating a new kernel with HTTP POST
             fetch(k_url, {
               method: 'POST',
               headers: {
@@ -90,6 +95,7 @@ function AppComponent(props: App): JSX.Element {
                   },
                   type: 'notebook'
                 }
+                // Creating a new session with HTTP POST
                 fetch(s_url, {
                   method: 'POST',
                   headers: {
@@ -157,7 +163,6 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (domReady === false || attached === false) return;
-    console.log('Jupyter> domReady', domReady, 'attached', attached);
   }, [domReady, attached]);
 
   const nodeStyle: React.CSSProperties = {
@@ -165,7 +170,6 @@ function AppComponent(props: App): JSX.Element {
     height: props.data.size.height + 'px',
     objectFit: 'contain',
   };
-
 
   return (
     <AppWindow app={props}>
@@ -198,11 +202,57 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app JupyterApp */
 
 function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+  // const s = props.data.state as AppState;
+  // const updateState = useAppStore((state) => state.updateState);
+
+  // Board store
+  const boards = useBoardStore((state) => state.boards);
+
+  // Room and board
+  const location = useLocation();
+  const { boardId } = location.state as { boardId: string; roomId: string };
+
+  // Download the notebook for this board
+  function downloadNotebook() {
+    GetConfiguration().then((conf) => {
+      if (conf.token) {
+        // Create a new notebook
+        let base: string;
+        if (conf.production) {
+          base = `https://${window.location.hostname}:4443`;
+        } else {
+          base = `http://${window.location.hostname}`;
+        }
+        const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb?token=${conf.token}`;
+        console.log("🚀 ~ file: JupyterLab.tsx ~ line 217 ~ GetConfiguration ~ j_url", j_url);
+
+        fetch(j_url).then((response) => response.json()).then((note) => {
+          // Generate a filename using date and board name
+          const boardName = boards.find((b) => b._id === boardId)?.data.name || 'session';
+          // Current date
+          const prettyDate = dateFormat(new Date(), 'yyyy-MM-dd-HH-mm-ss');
+          // Make a filename with board name and date
+          const filename = `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.ipynb`;
+          // Convert JSON object to string
+          const content = JSON.stringify(note.content, null, 4);
+          // Generate a URL containing the text of the note
+          const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+          // Go for download
+          downloadFile(txturl, filename);
+        });
+      }
+    });
+  }
 
   return (
     <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Notebook'} openDelay={400}>
+          <Button onClick={downloadNotebook}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   );
 }
