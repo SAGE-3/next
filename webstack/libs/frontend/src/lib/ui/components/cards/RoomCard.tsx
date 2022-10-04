@@ -104,7 +104,7 @@ export function RoomCard(props: RoomCardProps) {
             <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
               <IconButton
                 onClick={handleOnEdit}
-                color={props.selected ? sageColorByName(props.room.data.color) : borderColor}
+                color={sageColorByName(props.room.data.color)}
                 aria-label="Room Edit"
                 fontSize="2xl"
                 variant="unstlyed"

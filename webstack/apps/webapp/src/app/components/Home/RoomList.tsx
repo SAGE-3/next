@@ -95,84 +95,108 @@ export function RoomList(props: RoomListProps) {
   }
 
   return (
-    <Box m="4" mt="0" p="4" border="solid 3px" borderColor="gray.500" borderRadius="md" boxShadow="xl" backgroundColor={backgroundColor}>
-      <Box
-        overflowY="auto"
-        overflowX="hidden"
-        pr="2"
-        mb="2"
-        maxHeight="60vh"
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-track': {
-            width: '6px',
-            background: 'transparent',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'gray',
-            borderRadius: '8px',
-          },
-        }}
-      >
-        <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3} height="100%">
-          {(filterBoards ? filterBoards : props.rooms)
-            // show only public rooms or mine
-            .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
-            .sort(sortFunction)
-            .map((room) => {
-              return (
-                <RoomCard
-                  key={room._id}
-                  room={room}
-                  userCount={presences.filter((p) => p.data.roomId === room._id).length}
-                  selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
-                  onEnter={() => props.onRoomClick(room)}
-                  onEdit={() => console.log('edit room')}
-                  onDelete={() => deleteRoom(room._id)}
-                ></RoomCard>
-              );
-            })}
-        </SimpleGrid>
-      </Box>
-      <Box>
-        <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
-        <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-          <Button
-            height="51px"
-            width="100%"
-            borderRadius="md"
-            border={`solid ${borderColor} 1px`}
-            fontSize="48px"
-            p="0"
-            disabled={auth?.provider === 'guest'}
-            onClick={() => setNewRoomModal(true)}
+    <Box
+      m="4"
+      mt="0"
+      p="4"
+      pt="0"
+      border="solid 3px"
+      borderColor="gray.500"
+      borderRadius="md"
+      boxShadow="xl"
+      height="100%"
+      backgroundColor={backgroundColor}
+    >
+      <Box textAlign="center" display="flex" flexDir="column" justifyContent="space-between" height="100%">
+        <Box minHeight="0">
+          <Box fontSize={'3xl'} textAlign="center" display="flex" alignItems="center" justifyContent="space-between" width="100%" mb="2">
+            <Box flex="1 1 0px"></Box>
+            <Box flex="1 1 0px">
+              <Text>Rooms</Text>
+            </Box>
+            <Box flex="1 1 0px"></Box>
+          </Box>
+
+          <Box
+            overflowY="auto"
+            overflowX="hidden"
+            pr="2"
+            mb="2"
+            maxHeight="60vh"
+            css={{
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                width: '6px',
+                background: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'gray',
+                borderRadius: '8px',
+              },
+            }}
           >
-            <Text fontSize="4xl" fontWeight="bold">
-              +
-            </Text>
-          </Button>
-        </Tooltip>
-        <InputGroup>
-          <Select mt="2" onChange={handleSortChange}>
-            <option value="Name"> Name</option>
-            <option value="Updated">Updated</option>
-            <option value="Created">Created</option>
-          </Select>
-        </InputGroup>
-        <InputGroup>
-          <Input
-            my="2"
-            value={search}
-            variant="flushed"
-            onChange={handleFilterBoards}
-            placeholder="Search Rooms..."
-            _placeholder={{ opacity: 1 }}
-            color="white"
-          />
-          <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-        </InputGroup>
+            <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3} height="100%">
+              {(filterBoards ? filterBoards : props.rooms)
+                // show only public rooms or mine
+                .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
+                .sort(sortFunction)
+                .map((room) => {
+                  return (
+                    <RoomCard
+                      key={room._id}
+                      room={room}
+                      userCount={presences.filter((p) => p.data.roomId === room._id).length}
+                      selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
+                      onEnter={() => props.onRoomClick(room)}
+                      onEdit={() => console.log('edit room')}
+                      onDelete={() => deleteRoom(room._id)}
+                    ></RoomCard>
+                  );
+                })}
+            </SimpleGrid>
+          </Box>
+        </Box>
+        <Box>
+          <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
+          <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
+            <Button
+              height="51px"
+              width="100%"
+              borderRadius="md"
+              border={`solid ${borderColor} 1px`}
+              fontSize="48px"
+              p="0"
+              mb="2"
+              disabled={auth?.provider === 'guest'}
+              onClick={() => setNewRoomModal(true)}
+            >
+              <Text fontSize="4xl" fontWeight="bold">
+                +
+              </Text>
+            </Button>
+          </Tooltip>
+          <InputGroup>
+            <Select mt="2" onChange={handleSortChange}>
+              <option value="Name"> Name</option>
+              <option value="Updated">Updated</option>
+              <option value="Created">Created</option>
+            </Select>
+          </InputGroup>
+          <InputGroup>
+            <Input
+              my="2"
+              value={search}
+              variant="flushed"
+              onChange={handleFilterBoards}
+              placeholder="Search Rooms..."
+              _placeholder={{ opacity: 1 }}
+              color="white"
+            />
+            <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
+          </InputGroup>
+        </Box>
       </Box>
     </Box>
   );

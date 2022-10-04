@@ -135,10 +135,10 @@ export function HomePage() {
         px="2"
         alignItems={'center'}
       >
-        <Box display="flex" flexDirection="column" justifyContent={'center'}>
-          <Box width="1200px" height="80vh" style={{ perspective: '2400px' }}>
+        <Box display="flex" flexDirection="column" justifyContent={'center'} height="75vh" width="75vw">
+          <Box height="75vh" width="75vw" style={{ perspective: '2400px' }}>
             <Box
-              transition=" transform 1.25s"
+              transition=" transform 1s ease-in-out"
               style={{ transformStyle: 'preserve-3d' }}
               transform={selectedRoom ? 'rotateY(-180deg)' : 'rotateY(0deg)'}
               position="relative"
@@ -146,9 +146,6 @@ export function HomePage() {
               height="100%"
             >
               <Box className="front" style={{ backfaceVisibility: 'hidden' }} position="absolute" width="100%" height="100%">
-                <Text fontSize={'3xl'} textAlign="center">
-                  Rooms
-                </Text>
                 <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick} rooms={rooms}></RoomList>
               </Box>
 
@@ -160,9 +157,9 @@ export function HomePage() {
                 width="100%"
                 height="100%"
               >
-                <IconButton aria-label="fuck" variant="unstyled" onClick={() => handleRoomClick(undefined)} icon={<MdArrowBack />} />{' '}
                 <BoardList
                   onBoardClick={handleBoardClick}
+                  onBackClick={() => handleRoomClick(undefined)}
                   selectedRoom={selectedRoom}
                   selectedBoard={selectedBoard}
                   boards={boards}
