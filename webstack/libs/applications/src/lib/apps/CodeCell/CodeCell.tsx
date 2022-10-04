@@ -201,9 +201,19 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
   // List of kernel names
   const [kernels, setKernels] = useState<{ id: string, name: string }[]>([]);
   const [selected, setSelected] = useState<string>();
+
+  // Update from the props
+  useEffect(() => {
+    if (s.kernel) {
+      setSelected(s.kernel);
+      const name = kernels.find((k) => k.id === s.kernel)?.name || '-';
+      update(props._id, { description: 'CodeCell> kernel ' + name });
+    }
+  }, [s.kernel, kernels]);
 
   // Runs the first time the component is loaded
   useEffect(() => {
@@ -300,7 +310,8 @@ function ToolbarComponent(props: App): JSX.Element {
           ml={2} px={0} colorScheme="teal"
           icon={<MdArrowDropDown />}
           onChange={selectKernel}
-          variant={'outline'}>
+          variant={'outline'}
+          value={selected ?? undefined}>
           {kernels.map((k) => (<option key={k.id} value={k.id}> {k.name} </option>))}
         </Select>
 
