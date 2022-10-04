@@ -49,7 +49,7 @@ export function RoomList(props: RoomListProps) {
   const presences = usePresenceStore((state) => state.presences);
 
   // UI elements
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
+  const borderColor = useColorModeValue('gray.300', 'gray.600');
   const backgroundColor = useColorModeValue('transparent', 'gray.700');
 
   const toast = useToast();
@@ -105,7 +105,7 @@ export function RoomList(props: RoomListProps) {
       p="4"
       pt="0"
       border="solid 3px"
-      borderColor="gray.500"
+      borderColor={borderColor}
       borderRadius="md"
       boxShadow="xl"
       backgroundColor={backgroundColor}
@@ -129,14 +129,7 @@ export function RoomList(props: RoomListProps) {
               <Box flexGrow={1} mr="4" display="flex" alignItems={'baseline'}>
                 <Box>
                   <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                    <Button
-                      borderRadius="md"
-                      fontSize="3xl"
-                      border="solid 1px"
-                      borderColor={borderColor}
-                      disabled={auth?.provider === 'guest'}
-                      onClick={() => setNewRoomModal(true)}
-                    >
+                    <Button borderRadius="md" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={() => setNewRoomModal(true)}>
                       <MdAdd />
                     </Button>
                   </Tooltip>
@@ -169,7 +162,7 @@ export function RoomList(props: RoomListProps) {
           </Box>
 
           <Box
-            overflowY="auto"
+            overflowY="scroll"
             overflowX="hidden"
             pr="2"
             mb="2"
@@ -185,7 +178,7 @@ export function RoomList(props: RoomListProps) {
                 background: 'transparent',
               },
               '&::-webkit-scrollbar-thumb': {
-                background: `${borderColor}`,
+                background: `gray`,
                 borderRadius: '8px',
               },
             }}

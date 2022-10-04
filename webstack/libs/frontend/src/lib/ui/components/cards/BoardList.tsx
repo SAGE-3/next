@@ -57,7 +57,7 @@ export function BoardList(props: BoardListProps) {
   const [search, setSearch] = useState('');
   const { auth } = useAuth();
   // UI elements
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
+  const borderColor = useColorModeValue('gray.300', 'gray.600');
   const backgroundColor = useColorModeValue('transparent', 'gray.700');
 
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
@@ -135,14 +135,7 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'baseline'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button
-                  borderRadius="md"
-                  fontSize="3xl"
-                  border="solid 1px"
-                  borderColor={borderColor}
-                  disabled={auth?.provider === 'guest'}
-                  onClick={() => setNewBoardModal(true)}
-                >
+                <Button borderRadius="md" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={() => setNewBoardModal(true)}>
                   <MdAdd />
                 </Button>
               </Tooltip>
@@ -179,7 +172,7 @@ export function BoardList(props: BoardListProps) {
 
         {/* Boards Area */}
         <Box>
-          <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3}>
+          <SimpleGrid minChildWidth="300px" spacingX={6} spacingY={3}>
             {(filterBoards ? filterBoards : props.boards)
 
               .sort(sortFunction)

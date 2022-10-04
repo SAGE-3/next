@@ -47,7 +47,7 @@ export function RoomCard(props: RoomCardProps) {
   // Enter Modal Disclosure
   const { isOpen: isOpenEnter, onOpen: onOpenEnter, onClose: onCloseEnter } = useDisclosure();
 
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
+  const borderColor = useColorModeValue('gray.300', 'gray.600');
   const textColor = useColorModeValue('#2D3748', '#E2E8F0');
 
   const handleOnEdit = (e: any) => {
@@ -85,11 +85,11 @@ export function RoomCard(props: RoomCardProps) {
           onClick={props.onEnter}
         >
           <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
-            <Box display="flex" flexDirection={'column'} alignItems="center" ml="2" transform="translateY(-1px)">
-              <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'} ml="3">
+            <Box display="flex" flexDirection={'column'} alignItems="center" ml="4" transform="translateY(-1px)">
+              <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
                 {props.room.data.name}
               </Text>
-              <Text fontSize="md" textOverflow={'ellipsis'} width="100%" textAlign={'left'} ml="3">
+              <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
                 {props.room.data.description}
               </Text>
             </Box>

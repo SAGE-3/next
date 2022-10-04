@@ -81,19 +81,19 @@ export function BoardCard(props: BoardCardProps) {
           position="relative"
           onClick={handleEnterBoard}
         >
-          <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
-            <Box display="flex" flexDirection={'column'} alignItems="center" pl="2">
-              <Text fontSize="xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'}>
+          <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
+            <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
+              <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
                 {props.board.data.name}
               </Text>
-              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'}>
+              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
                 {props.board.data.description}
               </Text>
             </Box>
 
-            <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
+            <Box display="flex" alignItems="center" justifyContent="right" mr="2">
               <Box display="flex" alignItems={'center'}>
-                <Text fontSize="sm">{props.userCount}</Text>
+                <Text fontSize="xl">{props.userCount}</Text>
                 <MdPerson fontSize="22px" />
               </Box>
               <Tooltip
@@ -110,7 +110,7 @@ export function BoardCard(props: BoardCardProps) {
                   onClick={handleOpenSettings}
                   color={boardColor}
                   aria-label="Board Edit"
-                  fontSize="2xl"
+                  fontSize="3xl"
                   variant="unstlyed"
                   disabled={!yours}
                   icon={<MdSettings />}
