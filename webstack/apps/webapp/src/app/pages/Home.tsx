@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { MdArrowBack, MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, IconButton, useDisclosure, Image, Divider, Button, Tooltip } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, IconButton, useDisclosure, Image, Divider, Button, Tooltip, Progress } from '@chakra-ui/react';
 
 import {
   EditRoomModal,
@@ -23,7 +23,6 @@ import {
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
-import { BoardList } from '../components/Home/BoardList';
 import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { RoomList } from '../components/Home/RoomList';
 import { useLocation } from 'react-router-dom';
@@ -80,7 +79,6 @@ export function HomePage() {
 
   useEffect(() => {
     const room = rooms.find((r) => r._id === selectedRoom?._id);
-    console.log('why?');
     if (!room) {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
@@ -137,47 +135,18 @@ export function HomePage() {
       >
         {roomsFetched ? (
           <Box display="flex" flexDirection="column" justifyContent={'center'} height="75vh" width="75vw">
-            <Box height="75vh" width="75vw" style={{ perspective: '2400px' }}>
-              <Box
-                transition=" transform 1s ease-in-out"
-                style={{ transformStyle: 'preserve-3d' }}
-                transform={selectedRoom ? 'rotateY(180deg)' : 'rotateY(0deg)'}
-                position="relative"
-                width="100%"
-                height="100%"
-              >
-                <Box
-                  className="front"
-                  style={{ backfaceVisibility: 'hidden' }}
-                  position="absolute"
-                  width="100%"
-                  height="100%"
-                  pointerEvents={selectedRoom ? 'none' : 'initial'}
-                >
-                  <RoomList selectedRoom={selectedRoom} onRoomClick={handleRoomClick} rooms={rooms}></RoomList>
-                </Box>
-
-                <Box
-                  className="back"
-                  style={{ backfaceVisibility: 'hidden' }}
-                  transform="rotateY(180deg)"
-                  position="absolute"
-                  width="100%"
-                  height="100%"
-                  pointerEvents={!selectedRoom ? 'none' : 'initial'}
-                >
-                  <BoardList
-                    onBoardClick={handleBoardClick}
-                    onBackClick={() => handleRoomClick(undefined)}
-                    selectedRoom={selectedRoom}
-                    selectedBoard={selectedBoard}
-                    boards={boards}
-                  ></BoardList>
-                </Box>
-              </Box>
-            </Box>
+            <RoomList
+              selectedRoom={selectedRoom}
+              onRoomClick={handleRoomClick}
+              rooms={rooms}
+              boards={boards}
+              onBackClick={() => handleRoomClick(undefined)}
+              onBoardClick={handleBoardClick}
+            ></RoomList>
           </Box>
-        ) : null}
+        ) : (
+          <Progress isIndeterminate width="50vw" borderRadius="md" />
+        )}
       </Box>
 
       {/* Bottom Bar */}

@@ -23,15 +23,19 @@ import {
   useToast,
 } from '@chakra-ui/react';
 
-import { Room } from '@sage3/shared/types';
+import { Board, Room } from '@sage3/shared/types';
 import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
 type RoomListProps = {
-  onRoomClick: (room: Room) => void;
+  onRoomClick: (room: Room | undefined) => void;
   selectedRoom: Room | undefined;
   rooms: Room[];
+  boards: Board[];
+
+  onBackClick: () => void;
+  onBoardClick: (board: Board) => void;
 };
 
 export function RoomList(props: RoomListProps) {
@@ -104,24 +108,63 @@ export function RoomList(props: RoomListProps) {
       borderColor="gray.500"
       borderRadius="md"
       boxShadow="xl"
-      height="100%"
       backgroundColor={backgroundColor}
     >
       <Box textAlign="center" display="flex" flexDir="column" justifyContent="space-between" height="100%">
         <Box minHeight="0">
-          <Box fontSize={'3xl'} textAlign="center" display="flex" alignItems="center" justifyContent="space-between" width="100%" mb="2">
-            <Box width="120px"></Box>
-            <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
+          <Box
+            textAlign="center"
+            display="flex"
+            flexDir="column"
+            alignItems="center"
+            width="100%"
+            borderBottom="solid 1px"
+            borderColor={borderColor}
+            pb="2"
+          >
+            <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'4xl'}>
               <Text>Rooms</Text>
             </Box>
-            <Box width="120px">
-              <InputGroup>
-                <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
-                  <option value="Name"> Name</option>
-                  <option value="Updated">Updated</option>
-                  <option value="Created">Created</option>
-                </Select>
-              </InputGroup>
+            <Box display="flex" justifyContent={'space-between'} width="100%">
+              <Box flexGrow={1} mr="4" display="flex" alignItems={'baseline'}>
+                <Box>
+                  <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
+                    <Button
+                      borderRadius="md"
+                      fontSize="3xl"
+                      border="solid 1px"
+                      borderColor={borderColor}
+                      disabled={auth?.provider === 'guest'}
+                      onClick={() => setNewRoomModal(true)}
+                    >
+                      <MdAdd />
+                    </Button>
+                  </Tooltip>
+                </Box>
+                <Box flexGrow={1} ml="4">
+                  <InputGroup>
+                    <Input
+                      my="2"
+                      value={search}
+                      variant="outline"
+                      onChange={handleFilterBoards}
+                      placeholder="Search Rooms..."
+                      _placeholder={{ opacity: 1 }}
+                      color="white"
+                    />
+                    <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />{' '}
+                  </InputGroup>
+                </Box>
+              </Box>
+              <Box>
+                <InputGroup>
+                  <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
+                    <option value="Name"> Name</option>
+                    <option value="Updated">Updated</option>
+                    <option value="Created">Created</option>
+                  </Select>
+                </InputGroup>
+              </Box>
             </Box>
           </Box>
 
@@ -130,6 +173,8 @@ export function RoomList(props: RoomListProps) {
             overflowX="hidden"
             pr="2"
             mb="2"
+            borderColor={borderColor}
+            mt="6"
             maxHeight="60vh"
             css={{
               '&::-webkit-scrollbar': {
@@ -140,24 +185,12 @@ export function RoomList(props: RoomListProps) {
                 background: 'transparent',
               },
               '&::-webkit-scrollbar-thumb': {
-                background: 'gray',
+                background: `${borderColor}`,
                 borderRadius: '8px',
               },
             }}
           >
-            <InputGroup>
-              <Input
-                my="2"
-                value={search}
-                variant="flushed"
-                onChange={handleFilterBoards}
-                placeholder="Search Rooms..."
-                _placeholder={{ opacity: 1 }}
-                color="white"
-              />
-              <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-            </InputGroup>
-            <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3} height="100%">
+            <SimpleGrid minChildWidth="100%" spacingX={6} spacingY={3} height="100%">
               {(filterBoards ? filterBoards : props.rooms)
                 // show only public rooms or mine
                 .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
@@ -167,11 +200,14 @@ export function RoomList(props: RoomListProps) {
                     <RoomCard
                       key={room._id}
                       room={room}
+                      boards={props.boards.filter((board) => board.data.roomId === room._id)}
                       userCount={presences.filter((p) => p.data.roomId === room._id).length}
                       selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
                       onEnter={() => props.onRoomClick(room)}
                       onEdit={() => console.log('edit room')}
                       onDelete={() => deleteRoom(room._id)}
+                      onBackClick={() => props.onRoomClick(undefined)}
+                      onBoardClick={props.onBoardClick}
                     ></RoomCard>
                   );
                 })}
@@ -180,20 +216,6 @@ export function RoomList(props: RoomListProps) {
         </Box>
         <Box>
           <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
-          <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-            <Button
-              height="50px"
-              width="100%"
-              borderRadius="md"
-              fontSize="4xl"
-              p="0"
-              mb="2"
-              disabled={auth?.provider === 'guest'}
-              onClick={() => setNewRoomModal(true)}
-            >
-              <MdAdd />
-            </Button>
-          </Tooltip>
         </Box>
       </Box>
     </Box>

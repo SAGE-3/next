@@ -24,7 +24,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 
-import { MdAdd, MdArrowBack, MdSearch, MdSort } from 'react-icons/md';
+import { MdAdd, MdArrowBack, MdArrowUpward, MdSearch, MdSort } from 'react-icons/md';
 
 import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
@@ -34,7 +34,6 @@ type BoardListProps = {
   onBoardClick: (board: Board) => void;
   onBackClick: () => void;
   selectedRoom: Room | undefined;
-  selectedBoard: Board | undefined;
   boards: Board[];
 };
 
@@ -123,37 +122,48 @@ export function BoardList(props: BoardListProps) {
     }
   };
   return (
-    <Box
-      m="4"
-      mt="0"
-      p="4"
-      pt="1"
-      border="solid 3px"
-      height="100%"
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      borderRadius="md"
-      boxShadow="xl"
-    >
+    <Box m="4" mt="0" pt="1" borderTop="solid 1px" borderColor={borderColor}>
       <Box textAlign="center" display="flex" flexDir="column" justifyContent="space-between" height="100%">
-        <Box minHeight="0">
-          {/* Top Bar */}
-          <Box textAlign="center" display="flex" alignItems="center" justifyContent="space-between" width="100%" mb="2">
-            <Box textAlign="left" minHeight="0" width="120px">
-              <IconButton mt="1" aria-label="backbutton" onClick={props.onBackClick} variant="solid" icon={<MdArrowBack />} />{' '}
+        {props.selectedRoom ? (
+          <CreateBoardModal
+            roomId={props.selectedRoom._id}
+            isOpen={newBoardModal}
+            onClose={() => setNewBoardModal(false)}
+          ></CreateBoardModal>
+        ) : null}
+        <Box display="flex" justifyContent={'space-between'}>
+          <Box flexGrow={1} mr="4" display="flex" alignItems={'baseline'}>
+            <Box>
+              <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
+                <Button
+                  borderRadius="md"
+                  fontSize="3xl"
+                  border="solid 1px"
+                  borderColor={borderColor}
+                  disabled={auth?.provider === 'guest'}
+                  onClick={() => setNewBoardModal(true)}
+                >
+                  <MdAdd />
+                </Button>
+              </Tooltip>
             </Box>
-            <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
-              <Text fontSize="3xl">{props.selectedRoom?.data.name}'s Boards</Text>
+            <Box flexGrow={1} ml="4">
+              <InputGroup>
+                <Input
+                  my="2"
+                  value={search}
+                  variant="outline"
+                  onChange={handleFilterBoards}
+                  placeholder="Search Boards..."
+                  _placeholder={{ opacity: 1 }}
+                  color="white"
+                />
+                <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
+              </InputGroup>
             </Box>
-
-            <Box width="120px">
-              {props.selectedRoom ? (
-                <CreateBoardModal
-                  roomId={props.selectedRoom._id}
-                  isOpen={newBoardModal}
-                  onClose={() => setNewBoardModal(false)}
-                ></CreateBoardModal>
-              ) : null}
+          </Box>
+          <Box>
+            <Box mr="4">
               <InputGroup>
                 <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
                   <option value="Name"> Name</option>
@@ -163,77 +173,33 @@ export function BoardList(props: BoardListProps) {
               </InputGroup>
             </Box>
           </Box>
-
-          {/* Boards Area */}
-          <Box
-            overflowY="scroll"
-            overflowX="hidden"
-            pr="2"
-            mb="2"
-            css={{
-              '&::-webkit-scrollbar': {
-                width: '6px',
-              },
-              '&::-webkit-scrollbar-track': {
-                width: '6px',
-                background: 'transparent',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: 'gray',
-                borderRadius: '8px',
-              },
-            }}
-          >
-            <InputGroup>
-              <Input
-                my="2"
-                value={search}
-                variant="flushed"
-                onChange={handleFilterBoards}
-                placeholder="Search Boards..."
-                _placeholder={{ opacity: 1 }}
-                color="white"
-              />
-              <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-            </InputGroup>
-            <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3}>
-              {(filterBoards ? filterBoards : props.boards)
-
-                .sort(sortFunction)
-                // create the cards
-                .map((board) => {
-                  return (
-                    <BoardCard
-                      key={board._id}
-                      board={board}
-                      userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
-                      onSelect={() => props.onBoardClick(board)}
-                      onDelete={() => deleteBoard(board._id)}
-                    />
-                  );
-                })}
-            </SimpleGrid>
-          </Box>
         </Box>
+        {/* Top Bar */}
+        <Box textAlign="center" display="flex" alignItems="center" justifyContent="space-between" width="100%" mb="2"></Box>
 
-        {/* Bottom Area */}
-        <Box minHeight="0">
-          <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-            <Button
-              height="50px"
-              width="100%"
-              borderRadius="md"
-              fontSize="4xl"
-              p="0"
-              mb="2"
-              disabled={auth?.provider === 'guest'}
-              onClick={() => setNewBoardModal(true)}
-            >
-              <MdAdd />
-            </Button>
-          </Tooltip>
+        {/* Boards Area */}
+        <Box>
+          <SimpleGrid minChildWidth="400px" spacingX={6} spacingY={3}>
+            {(filterBoards ? filterBoards : props.boards)
+
+              .sort(sortFunction)
+              // create the cards
+              .map((board) => {
+                return (
+                  <BoardCard
+                    key={board._id}
+                    board={board}
+                    userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                    onSelect={() => props.onBoardClick(board)}
+                    onDelete={() => deleteBoard(board._id)}
+                  />
+                );
+              })}
+          </SimpleGrid>
         </Box>
       </Box>
+
+      {/* Bottom Area */}
     </Box>
   );
 }

@@ -71,10 +71,9 @@ export function BoardCard(props: BoardCardProps) {
         <Box
           display="flex"
           justifyContent="left"
-          borderWidth="1px"
+          borderWidth="2px"
           borderRadius="md"
-          borderLeft={`solid ${boardColor} 8px`}
-          height="50px"
+          height="60px"
           my="1"
           width="100%"
           cursor="pointer"
@@ -83,11 +82,11 @@ export function BoardCard(props: BoardCardProps) {
           onClick={handleEnterBoard}
         >
           <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
-            <Box display="flex" flexDirection={'column'} alignItems="center" ml="2" transform="translateY(-3px)">
-              <Text fontSize="xl" textOverflow={'ellipsis'} width="100%">
+            <Box display="flex" flexDirection={'column'} alignItems="center" pl="2">
+              <Text fontSize="xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'}>
                 {props.board.data.name}
               </Text>
-              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%">
+              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'}>
                 {props.board.data.description}
               </Text>
             </Box>
