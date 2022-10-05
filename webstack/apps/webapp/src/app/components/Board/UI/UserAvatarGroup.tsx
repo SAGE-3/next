@@ -9,7 +9,6 @@
 import { Avatar, Box, Tooltip, AvatarGroup } from '@chakra-ui/react';
 
 import { usePresenceStore, useUser, useUsersStore, initials } from '@sage3/frontend';
-import { sageColorByName } from '@sage3/shared';
 
 type AvatarGroupProps = {
   boardId: string;
@@ -36,7 +35,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
               <Avatar
                 name={user.data.name}
                 getInitials={initials}
-                backgroundColor={sageColorByName(user.data.color || 'orange')}
+                backgroundColor={user.data.color}
                 size="sm"
                 mx={1}
                 color="white"

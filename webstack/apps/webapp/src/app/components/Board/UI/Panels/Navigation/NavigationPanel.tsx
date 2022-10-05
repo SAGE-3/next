@@ -13,7 +13,6 @@ import { MdFullscreen, MdGridView, MdDelete, MdLock, MdLockOpen } from 'react-ic
 import { StuckTypes, useAppStore, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
-import { sageColorByName } from '@sage3/shared';
 
 export interface NavProps {
   fitApps: () => void;
@@ -190,7 +189,7 @@ export function NavigationPanel(props: NavProps) {
                       zIndex: 100000,
                     }}
                     borderRadius="50%"
-                    backgroundColor={self ? 'white' : sageColorByName(u.data.color)}
+                    backgroundColor={self ? 'white' : u.data.color}
                     width={self ? '6px' : '4px'}
                     height={self ? '6px' : '4px'}
                   ></Box>

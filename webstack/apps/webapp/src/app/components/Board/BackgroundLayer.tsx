@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Tag } from '@chakra-ui/react';
-import { motion, useAnimation } from "framer-motion"
+import { motion, useAnimation } from 'framer-motion';
 
 import { DraggableEvent } from 'react-draggable';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -18,7 +18,6 @@ import { throttle } from 'throttle-debounce';
 
 import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { Applications, AppError } from '@sage3/applications/apps';
-import { sageColorByName } from '@sage3/shared';
 
 import { Background } from './Background/Background';
 import { AppWindow } from '@sage3/applications/apps';
@@ -162,9 +161,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
             );
           } else {
             // App not found: happens if unkonw app in sagebase
-            return (<AppWindow key={app._id} app={app}>
-              <div>App not found</div>
-            </AppWindow>);
+            return (
+              <AppWindow key={app._id} app={app}>
+                <div>App not found</div>
+              </AppWindow>
+            );
           }
         })}
 
@@ -197,7 +198,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 interface UserCursorProps {
   name: string;
   color: string;
-  position: { x: number, y: number, z: number };
+  position: { x: number; y: number; z: number };
   scale: number;
 }
 
@@ -229,24 +230,25 @@ function UserCursor(props: UserCursorProps) {
     });
   }, [props.position.x, props.position.y, props.position.z]);
 
-  return (<motion.div
-    // pass the animation controller
-    animate={controls}
-    style={{
-      position: 'absolute',
-      left: props.position.x - 4 + 'px',
-      top: props.position.y - 3 + 'px',
-      transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
-      pointerEvents: 'none',
-      display: 'flex',
-      zIndex: 100000,
-      transform: `scale(${1 / props.scale})`,
-    }}
-  >
-    <GiArrowCursor color={sageColorByName(props.color)}></GiArrowCursor>
-    <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
-      {props.name}
-    </Tag>
-  </motion.div>
+  return (
+    <motion.div
+      // pass the animation controller
+      animate={controls}
+      style={{
+        position: 'absolute',
+        left: props.position.x - 4 + 'px',
+        top: props.position.y - 3 + 'px',
+        transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
+        pointerEvents: 'none',
+        display: 'flex',
+        zIndex: 100000,
+        transform: `scale(${1 / props.scale})`,
+      }}
+    >
+      <GiArrowCursor color={props.color}></GiArrowCursor>
+      <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
+        {props.name}
+      </Tag>
+    </motion.div>
   );
 }

@@ -173,14 +173,14 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             {SAGEColors.map((s3color) => {
               return (
                 <Button
-                  key={s3color.name}
-                  value={s3color.name}
-                  bgColor={s3color.value}
-                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color.value, opacity: 0.9 }}
+                  key={s3color}
+                  value={s3color}
+                  bgColor={s3color}
+                  _hover={{ background: s3color, opacity: 0.7, transform: 'scaleY(1.3)' }}
+                  _active={{ background: s3color, opacity: 0.9 }}
                   size="md"
-                  onClick={() => handleColorChange(s3color.name)}
-                  border={s3color.name === color ? '3px solid white' : 'none'}
+                  onClick={() => handleColorChange(s3color)}
+                  border={s3color === color ? '3px solid white' : 'none'}
                   width="43px"
                 />
               );
@@ -206,7 +206,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
-
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>
