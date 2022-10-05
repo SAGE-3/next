@@ -55,9 +55,9 @@ export function BoardList(props: BoardListProps) {
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
   const { auth } = useAuth();
+
   // UI elements
-  const borderColor = useColorModeValue('gray.300', 'gray.600');
-  const backgroundColor = useColorModeValue('transparent', 'gray.700');
+  const borderColor = useColorModeValue('gray.300', 'gray.500');
 
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
 

@@ -37,7 +37,7 @@ export function Background(props: BackgroundProps) {
   const scale = useUIStore((state) => state.scale);
 
   // Chakra Color Mode for grid color
-  const [gridLight, gridDark] = useToken('colors', ['gray.100', 'gray.900']);
+  const [gridLight, gridDark] = useToken('colors', ['gray.100', 'gray.800']);
   const gridColor = useColorModeValue(gridLight, gridDark);
 
   // Perform the actual upload

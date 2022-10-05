@@ -36,7 +36,9 @@ export function BoardCard(props: BoardCardProps) {
   const yours = user?._id === props.board.data.ownerId;
 
   // Custom color
-  const boardColor = props.board.data.color;
+  const boardColor = props.board.data.color + '.400';
+  const backgroundColor = useColorModeValue('white', 'gray.800');
+  const scale = useUIStore((state) => state.scale);
 
   // Edit Modal Disclousure
   const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
@@ -66,11 +68,10 @@ export function BoardCard(props: BoardCardProps) {
         onClose={onCloseEnter}
       />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
-      <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor="transparent" openDelay={1000}>
+      <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}>
         <Box
           display="flex"
           justifyContent="left"
-          borderWidth="2px"
           borderRadius="md"
           height="60px"
           my="1"
@@ -79,6 +80,10 @@ export function BoardCard(props: BoardCardProps) {
           alignItems="baseline"
           position="relative"
           onClick={handleEnterBoard}
+          boxShadow="md"
+          transition="all 0.25s "
+          backgroundColor={backgroundColor}
+          _hover={{ transform: `scale(${1.02})` }}
         >
           <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
             <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
@@ -151,7 +156,8 @@ export function BoardPreview(props: BoardPreviewProps) {
   const scale = Math.min(maxWidth / boardWidth, maxHeight / boardHeight);
 
   const fetchBoardApp = useAppStore((state) => state.fetchBoardApps);
-  const backgroundColor = useColorModeValue('gray.100', 'gray.700');
+  const backgroundColor = useColorModeValue('gray.100', 'gray.800');
+  const boardColor = props.board.data.color + '.400';
 
   useEffect(() => {
     async function fetchApps() {
@@ -170,10 +176,9 @@ export function BoardPreview(props: BoardPreviewProps) {
       backgroundColor={backgroundColor}
       borderRadius="md"
       pointerEvents="none"
-      border={`solid ${borderWidth}px`}
-      borderColor={props.board.data.color}
       overflow="hidden"
       transform={`translateX(-${maxWidth / 4}px)`}
+      boxShadow="xl"
     >
       <Box width={maxWidth + 'px'} height={maxHeight + 'px'} transform={`scale(${scale})`} transformOrigin="top left">
         {apps.map((app) => {

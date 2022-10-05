@@ -6,7 +6,7 @@
  *
  */
 
-import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
+import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure, useToken } from '@chakra-ui/react';
 import { Board, Room } from '@sage3/shared/types';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
 import { MdLock, MdLockOpen, MdPerson, MdSettings } from 'react-icons/md';
@@ -46,9 +46,10 @@ export function RoomCard(props: RoomCardProps) {
   // Enter Modal Disclosure
   const { isOpen: isOpenEnter, onOpen: onOpenEnter, onClose: onCloseEnter } = useDisclosure();
 
-  const borderColor = useColorModeValue('gray.300', 'gray.600');
-  const textColor = useColorModeValue('#2D3748', '#E2E8F0');
-
+  // Colors
+  const borderColor = useColorModeValue('gray.300', 'gray.700');
+  const boardColor = props.room.data.color + '.400';
+  const backgroundColor = useColorModeValue('whiteAlpha.500', 'gray.900');
   const handleOnEdit = (e: any) => {
     e.stopPropagation();
     onOpenEdit();
@@ -68,15 +69,16 @@ export function RoomCard(props: RoomCardProps) {
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
 
       <Box
-        borderWidth={props.selected ? '2px' : '1px'}
+        boxShadow={'md'}
         borderRadius="md"
-        borderColor={props.selected ? props.room.data.color : borderColor}
         borderLeft="solid 8px"
+        borderColor={props.selected ? boardColor : borderColor}
+        backgroundColor={backgroundColor}
+        my="1"
       >
         <Box
           display="flex"
           justifyContent="left"
-          my="1"
           width="100%"
           cursor="pointer"
           alignItems="baseline"
@@ -95,8 +97,8 @@ export function RoomCard(props: RoomCardProps) {
 
             <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
               <Box display="flex" alignItems={'center'}>
-                <Text fontSize="sm">{props.userCount}</Text>
-                <MdPerson fontSize="22px" />
+                <Text fontSize="20px">{props.userCount}</Text>
+                <MdPerson fontSize="28px" />
               </Box>
               <Tooltip
                 label={props.room.data.isPrivate ? 'Room is Locked' : 'Room is Unlocked'}
@@ -104,14 +106,14 @@ export function RoomCard(props: RoomCardProps) {
                 placement="top-start"
                 hasArrow
               >
-                <Box>{props.room.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
+                <Box>{props.room.data.isPrivate ? <MdLock fontSize="24px" /> : <MdLockOpen fontSize="24px" />}</Box>
               </Tooltip>
               <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
                 <IconButton
                   onClick={handleOnEdit}
-                  color={props.room.data.color}
+                  color={boardColor}
                   aria-label="Room Edit"
-                  fontSize="2xl"
+                  fontSize="3xl"
                   variant="unstlyed"
                   disabled={!yours}
                   icon={<MdSettings />}

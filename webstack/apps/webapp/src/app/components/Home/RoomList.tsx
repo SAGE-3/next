@@ -99,17 +99,7 @@ export function RoomList(props: RoomListProps) {
   }
 
   return (
-    <Box
-      m="4"
-      mt="0"
-      p="4"
-      pt="0"
-      border="solid 3px"
-      borderColor={borderColor}
-      borderRadius="md"
-      boxShadow="xl"
-      backgroundColor={backgroundColor}
-    >
+    <Box m="4" mt="0" p="4" pt="0">
       <Box textAlign="center" display="flex" flexDir="column" justifyContent="space-between" height="100%">
         <Box minHeight="0">
           <Box

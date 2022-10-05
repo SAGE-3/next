@@ -11,7 +11,7 @@
 //
 
 import { extendTheme, StyleFunctionProps, ThemeConfig } from '@chakra-ui/react';
-
+import { mode } from '@chakra-ui/theme-tools';
 import { colors } from './colors';
 
 // Add your color mode config
@@ -24,7 +24,7 @@ const styles = {
   global: (props: StyleFunctionProps) => ({
     // styles for the `body`
     body: {
-      bg: props.colorMode == 'light' ? 'gray.50' : 'gray.800',
+      bg: mode('gray.50', 'blackAlpha')(props),
     },
   }),
 };
