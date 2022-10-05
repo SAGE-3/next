@@ -58,7 +58,8 @@ function AppComponent(props: App): JSX.Element {
     if (quillRef.current) {
       const quill = new Quill(quillRef.current, {
         modules: {
-          cursors: true,
+          // cursors: true,
+          cursors: false, // for now, tracking quill bug with transforms
           toolbar: [
             [{ font: [] }, { size: [] }],
             ['bold', 'italic', 'underline', 'strike'],

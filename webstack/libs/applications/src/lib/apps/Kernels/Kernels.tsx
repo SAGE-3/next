@@ -246,7 +246,9 @@ function ToolbarComponent(props: App): JSX.Element {
         .then((res) => {
           // Create a new kernel
           const k_url = base + '/api/kernels';
-          const kpayload = { name: kernelType, path: '/' };
+          // name (string) – Kernel spec name (defaults to default kernel spec for server)
+          // path (string) – API path from root to the cwd of the kernel
+          const kpayload = { name: kernelType, path: '/boards' };
           fetch(k_url, {
             method: 'POST',
             headers: {

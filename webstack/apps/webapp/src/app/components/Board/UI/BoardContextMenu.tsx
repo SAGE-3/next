@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
@@ -27,8 +28,9 @@ const savedRadios = [false, true];
 export function BoardContextMenu(props: ContextProps) {
   // User information
   const { user } = useUser();
-  const presences = usePresenceStore((state) => state.presences);
+  const navigate = useNavigate();
 
+  const presences = usePresenceStore((state) => state.presences);
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
@@ -71,28 +73,58 @@ export function BoardContextMenu(props: ContextProps) {
   };
   const { colorMode, toggleColorMode } = useColorMode();
 
+  /**
+   * Create a new application
+   * @param appName 
+   */
   const newApplication = (appName: AppName) => {
     if (!user) return;
-
-    // const x = Math.floor(boardPosition.x + (contextMenuPosition.x * 1) / scale);
-    // const y = Math.floor(boardPosition.y + (contextMenuPosition.y * 1) / scale);
-
     // Get the position of the cursor
     const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
     if (me) {
       const pos = me.data.cursor;
-
+      const x = Math.round(pos.x / gridSize) * gridSize; // Snap to grid
+      const y = Math.round(pos.y / gridSize) * gridSize;
+      // Create the app
       createApp({
         name: appName,
         description: appName,
         roomId: props.roomId,
         boardId: props.boardId,
-        position: pos,
+        position: { x, y, z: 0 },
         size: { width: 400, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: appName,
         state: { ...(initialValues[appName] as any) },
         ownerId: user._id || '',
+        minimized: false,
+        raised: true,
+      });
+    }
+  };
+
+  const openJupyter = () => {
+    if (!user) return;
+    // Get the position of the cursor
+    const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
+    if (me) {
+      const pos = me.data.cursor;
+      const width = 700;
+      const height = 700;
+      const x = Math.round(pos.x / gridSize) * gridSize; // Snap to grid
+      const y = Math.round(pos.y / gridSize) * gridSize;
+      // Open a webview into the SAGE3 builtin Jupyter instance
+      createApp({
+        name: 'JupyterLab',
+        description: 'JupyterLab',
+        roomId: props.roomId,
+        boardId: props.boardId,
+        position: { x, y, z: 0 },
+        size: { width, height, depth: 0 },
+        rotation: { x, y, z: 0 },
+        type: 'JupyterLab',
+        ownerId: user?._id || '-',
+        state: { ...initialValues['JupyterLab'], jupyterURL: '' },
         minimized: false,
         raised: true,
       });
@@ -106,6 +138,47 @@ export function BoardContextMenu(props: ContextProps) {
           <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold">
             Actions
           </Text>
+
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={() => navigate('/home', { replace: true, state: { roomId: props.roomId } })}
+          >
+            Back to Room
+          </Button>
+
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={() => setControllerPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
+          >
+            Bring Menu
+          </Button>
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={props.clearBoard}
+          >
+            Clear Board
+          </Button>
           <Button
             w="100%"
             borderRadius={2}
@@ -132,82 +205,8 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Show all Apps
           </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={props.clearBoard}
-          >
-            Clear Board
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => {
-              const width = 700;
-              const height = 700;
-              // Calculate X and Y of app based on the current board position and the width and height of the viewport
-              let x = Math.floor(boardPosition.x + window.innerWidth / 2 - width / 2);
-              let y = Math.floor(boardPosition.y + window.innerHeight / 2 - height / 2);
-              x = Math.round(x / gridSize) * gridSize; // Snap to grid
-              y = Math.round(y / gridSize) * gridSize;
-              // Open a webview into the SAGE3 builtin Jupyter instance
-              createApp({
-                name: 'JupyterLab',
-                description: 'JupyterLab',
-                roomId: props.roomId,
-                boardId: props.boardId,
-                position: { x, y, z: 0 },
-                size: { width, height, depth: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                type: 'JupyterLab',
-                ownerId: user?._id || '-',
-                state: { ...initialValues['JupyterLab'], jupyterURL: '' },
-                minimized: false,
-                raised: true,
-              });
-            }}
-          >
-            Open Jupyter
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => setControllerPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
-          >
-            Bring Menu
-          </Button>
+
           {/* <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => setAppToolbarPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
-          >
-            Bring App Toolbar
-          </Button> */}
-          <Button
             w="100%"
             borderRadius={2}
             h="auto"
@@ -219,26 +218,14 @@ export function BoardContextMenu(props: ContextProps) {
             onClick={props.downloadBoard}
           >
             Download Opened Assets
-          </Button>
+          </Button> */}
+
         </VStack>
 
         <VStack w={'100%'}>
           <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
             Quick Apps
           </Text>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => newApplication('Stickie')}
-          >
-            Stickie
-          </Button>
           <Button
             w="100%"
             borderRadius={2}
@@ -261,9 +248,9 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => newApplication('Webview')}
+            onClick={() => openJupyter()}
           >
-            Webview
+            Jupyter
           </Button>
           <Button
             w="100%"
@@ -277,6 +264,32 @@ export function BoardContextMenu(props: ContextProps) {
             onClick={() => newApplication('Screenshare')}
           >
             Screenshare
+          </Button>
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={() => newApplication('Stickie')}
+          >
+            Stickie
+          </Button>
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={() => newApplication('Webview')}
+          >
+            Webview
           </Button>
         </VStack>
 
@@ -307,7 +320,7 @@ export function BoardContextMenu(props: ContextProps) {
             Show Interface
           </Checkbox>
         </VStack>
-      </HStack>
-    </VStack>
+      </HStack >
+    </VStack >
   );
 }
