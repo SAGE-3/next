@@ -8,7 +8,6 @@
 
 import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { Board, Room } from '@sage3/shared/types';
-import { sageColorByName } from '@sage3/shared';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
 import { MdLock, MdLockOpen, MdPerson, MdSettings } from 'react-icons/md';
 import { useUser } from '../../../hooks';
@@ -71,8 +70,8 @@ export function RoomCard(props: RoomCardProps) {
       <Box
         borderWidth={props.selected ? '2px' : '1px'}
         borderRadius="md"
-        borderColor={props.selected ? sageColorByName(props.room.data.color) : borderColor}
-        borderLeft={`solid ${sageColorByName(props.room.data.color)} 8px`}
+        borderColor={props.selected ? props.room.data.color : borderColor}
+        borderLeft="solid 8px"
       >
         <Box
           display="flex"
@@ -110,7 +109,7 @@ export function RoomCard(props: RoomCardProps) {
               <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
                 <IconButton
                   onClick={handleOnEdit}
-                  color={sageColorByName(props.room.data.color)}
+                  color={props.room.data.color}
                   aria-label="Room Edit"
                   fontSize="2xl"
                   variant="unstlyed"

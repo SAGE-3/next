@@ -6,13 +6,9 @@
  *
  */
 
-import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
+import { Box, Text, useColorModeValue } from '@chakra-ui/react';
 import { User } from '@sage3/shared/types';
-import { sageColorByName } from '@sage3/shared';
-import { EnterRoomModal } from '../modals/EnterRoomModal';
-import { MdLock, MdPerson, MdSettings } from 'react-icons/md';
 import { useUser } from '../../../hooks';
-import { EditRoomModal } from '../modals/EditRoomModal';
 
 export type UserCardProps = {
   user: User;
@@ -48,7 +44,8 @@ export function UserCard(props: UserCardProps) {
         justifyContent="left"
         borderWidth="2px"
         borderRadius="md"
-        border={`solid ${props.selected ? sageColorByName(props.user.data.color) : borderColor} 3px`}
+        border={`solid  3px`}
+        borderColor={props.selected ? props.user.data.color : borderColor}
         height="80px"
         width="100%"
         my="2"
@@ -57,12 +54,10 @@ export function UserCard(props: UserCardProps) {
         cursor="pointer"
         alignItems="baseline"
         style={{
-          background: `linear-gradient(transparent 90%, ${
-            props.selected ? sageColorByName(props.user.data.color) : borderColor
-          } 90% ) no-repeat`,
+          background: `linear-gradient(transparent 90%, ${props.selected ? props.user.data.color : borderColor} 90% ) no-repeat`,
         }}
         position="relative"
-        color={props.selected ? sageColorByName(props.user.data.color) : textColor}
+        color={props.selected ? props.user.data.color : textColor}
         onClick={props.onClick}
       >
         <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">

@@ -10,7 +10,9 @@
 // SAGE3 Chakra UI Theme
 //
 
-import { extendTheme, ThemeConfig } from '@chakra-ui/react'
+import { extendTheme, StyleFunctionProps, ThemeConfig } from '@chakra-ui/react';
+
+import { colors } from './colors';
 
 // Add your color mode config
 const config: ThemeConfig = {
@@ -18,5 +20,14 @@ const config: ThemeConfig = {
   useSystemColorMode: false,
 };
 
+const styles = {
+  global: (props: StyleFunctionProps) => ({
+    // styles for the `body`
+    body: {
+      bg: props.colorMode == 'light' ? 'gray.50' : 'gray.800',
+    },
+  }),
+};
+
 // Extend the theme
-export const theme = extendTheme({ config });
+export const theme = extendTheme({ config, colors, styles });

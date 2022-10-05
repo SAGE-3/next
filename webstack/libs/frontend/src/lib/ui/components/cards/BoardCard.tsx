@@ -10,7 +10,6 @@ import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton } from
 import { MdPerson, MdLock, MdSettings, MdLockOpen } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
-import { sageColorByName } from '@sage3/shared';
 import { BoardSchema } from '@sage3/shared/types';
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { useUser } from '../../../hooks';
@@ -37,7 +36,7 @@ export function BoardCard(props: BoardCardProps) {
   const yours = user?._id === props.board.data.ownerId;
 
   // Custom color
-  const boardColor = sageColorByName(props.board.data.color);
+  const boardColor = props.board.data.color;
 
   // Edit Modal Disclousure
   const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
@@ -171,7 +170,8 @@ export function BoardPreview(props: BoardPreviewProps) {
       backgroundColor={backgroundColor}
       borderRadius="md"
       pointerEvents="none"
-      border={`solid ${borderWidth}px ${sageColorByName(props.board.data.color)}`}
+      border={`solid ${borderWidth}px`}
+      borderColor={props.board.data.color}
       overflow="hidden"
       transform={`translateX(-${maxWidth / 4}px)`}
     >

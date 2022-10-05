@@ -24,11 +24,10 @@ import {
   useToast,
 } from '@chakra-ui/react';
 
-import { MdAdd, MdArrowBack, MdArrowUpward, MdSearch, MdSort } from 'react-icons/md';
+import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
 import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
-import { sageColorByName } from '@sage3/shared';
 
 type BoardListProps = {
   onBoardClick: (board: Board) => void;

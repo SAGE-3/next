@@ -6,7 +6,7 @@
  *
  */
 
-import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast, useToken } from '@chakra-ui/react';
 
 import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
@@ -37,7 +37,8 @@ export function Background(props: BackgroundProps) {
   const scale = useUIStore((state) => state.scale);
 
   // Chakra Color Mode for grid color
-  const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
+  const [gridLight, gridDark] = useToken('colors', ['gray.100', 'gray.900']);
+  const gridColor = useColorModeValue(gridLight, gridDark);
 
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {
@@ -117,7 +118,8 @@ export function Background(props: BackgroundProps) {
   function OpenFile(fileID: string, fileType: string, xDrop: number, yDrop: number) {
     if (!user) return;
     const w = 400;
-    if (isGIF(fileType)) {      // Look for the file in the asset store
+    if (isGIF(fileType)) {
+      // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {
           createApp(
@@ -274,7 +276,16 @@ export function Background(props: BackgroundProps) {
             aspectRatio = page[0].width / page[0].height;
           }
           createApp(
-            setupApp('PDFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
+            setupApp(
+              'PDFViewer',
+              xDrop,
+              yDrop,
+              props.roomId,
+              props.boardId,
+              user._id,
+              { w: 400, h: 400 / aspectRatio },
+              { assetid: fileID }
+            )
           );
         }
       });
@@ -321,8 +332,8 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={`50px 50px`}
-      backgroundImage={`linear-gradient(to right, ${gridColor} ${2 / scale}px, transparent ${2 / scale}px),
-               linear-gradient(to bottom, ${gridColor} ${2 / scale}px, transparent ${2 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px),
+               linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}

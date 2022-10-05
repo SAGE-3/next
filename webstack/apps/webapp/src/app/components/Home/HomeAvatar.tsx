@@ -8,7 +8,6 @@
 
 import { useDisclosure, useColorMode, Avatar, Menu, MenuButton, MenuList, MenuItem, Box, Button } from '@chakra-ui/react';
 import { useAuth, useUser, EditUserModal, initials, EnterBoardByIdModal } from '@sage3/frontend';
-import { sageColorByName } from '@sage3/shared';
 import { MdAccountCircle, MdInput, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
 
 /**
@@ -32,7 +31,7 @@ export function HomeAvatar() {
           as={Button}
           size="md"
           variant="outline"
-          color={sageColorByName(user?.data.color ? user.data.color : 'white')}
+          colorScheme={user?.data.color ? user.data.color : 'white'}
           leftIcon={<MdAccountCircle />}
         >
           {user ? user.data.name : ''}
