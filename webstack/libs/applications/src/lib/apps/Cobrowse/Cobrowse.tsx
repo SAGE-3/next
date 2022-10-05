@@ -68,6 +68,17 @@ function AppComponent(props: App): JSX.Element {
   }, [s.title]);
 
   useEffect(() => {
+    if (s.lastFrame) {
+      const imgid = "image" + props._id;
+      const img = document.getElementById(imgid) as HTMLImageElement;
+      if (img) {
+        console.log('Showing last frame');
+        img.src = 'data:image/jpeg;charset=utf-8;base64,' + s.lastFrame;
+      }
+    }
+  }, [s.lastFrame]);
+
+  useEffect(() => {
     if (user && props.data.ownerId === user._id) {
       // Update the local state
       setMine(true);
@@ -106,12 +117,14 @@ function AppComponent(props: App): JSX.Element {
   }, [user]);
 
   useEffect(() => {
-    console.log('Goign to update title')
-    if (mine && running) {
-      // Update the app title
-      update(props._id, { description: 'Streaming> ' + title });
-    } else {
-      update(props._id, { description: 'Waiting> ' + title });
+    console.log('Going to update title')
+    if (mine) {
+      if (running) {
+        // Update the app title
+        update(props._id, { description: 'Streaming> ' + title });
+      } else {
+        update(props._id, { description: 'Waiting>' });
+      }
     }
   }, [running, mine, title]);
 
@@ -207,7 +220,7 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ?
         mine ?
           <webview nodeintegration={true} webpreferences="nodeintegration" ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any} > </webview>
-          : <img id={"image" + props._id}></img>
+          : <img id={"image" + props._id} style={{ objectFit: "contain", width: "100%", height: "100%" }}></img>
         :
         mine ?
           <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
@@ -228,7 +241,7 @@ function AppComponent(props: App): JSX.Element {
               </Box>
             </Center>
           </div>
-          : <img id={"image" + props._id}></img>
+          : <img id={"image" + props._id} style={{ objectFit: "contain", width: "100%", height: "100%" }}></img>
       }
     </AppWindow >
   );
@@ -246,13 +259,14 @@ function ToolbarComponent(props: App): JSX.Element {
   useEffect(() => {
     if (user && props.data.ownerId === user._id) {
       setMine(true);
+      if (s.running) startStream();
     }
   }, [user]);
 
   const startStream = () => {
     if (isElectron()) {
       console.log('Cobrowse> startStream');
-      updateState(props._id, { running: true });
+      updateState(props._id, { running: true, lastFrame: '' });
       // Load electron and the IPCRender
       const electron = window.require('electron');
       const ipcRenderer = electron.ipcRenderer;
@@ -271,6 +285,10 @@ function ToolbarComponent(props: App): JSX.Element {
       const electron = window.require('electron');
       const ipcRenderer = electron.ipcRenderer;
       ipcRenderer.removeAllListeners('paint');
+      ipcRenderer.once('paint', (_evt: any, arg: any) => {
+        console.log('Cobrowse> stopStream: last paint event received');
+        updateState(props._id, { lastFrame: arg.buf });
+      });
     }
   };
 

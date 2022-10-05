@@ -18,14 +18,16 @@ export const schema = z.object({
   running: z.boolean(),
   frame: z.number(),
   title: z.string(),
+  lastFrame: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   sharedurl: 'https://www.google.com',
-  running: false,
+  running: true,
   frame: 0,
   title: '',
+  lastFrame: '',
 };
 
 export const name = 'Cobrowse';
