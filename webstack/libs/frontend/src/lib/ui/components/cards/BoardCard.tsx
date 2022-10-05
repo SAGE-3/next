@@ -15,6 +15,13 @@ import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { useUser } from '../../../hooks';
 import { EditBoardModal } from '../modals/EditBoardModal';
 
+import { AppError, Applications } from '@sage3/applications/apps';
+import { App } from '@sage3/applications/schema';
+import { useAppStore, useUIStore } from '@sage3/frontend';
+import { Board } from '@sage3/shared/types';
+import { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
   userCount: number;
@@ -38,7 +45,7 @@ export function BoardCard(props: BoardCardProps) {
   // Custom color
   const boardColor = props.board.data.color + '.400';
   const backgroundColor = useColorModeValue('white', 'gray.800');
-  const scale = useUIStore((state) => state.scale);
+  // const scale = useUIStore((state) => state.scale);
 
   // Edit Modal Disclousure
   const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
@@ -128,13 +135,6 @@ export function BoardCard(props: BoardCardProps) {
   );
 }
 
-import { AppError, Applications } from '@sage3/applications/apps';
-import { App } from '@sage3/applications/schema';
-import { useAppStore, useUIStore } from '@sage3/frontend';
-import { Board } from '@sage3/shared/types';
-import { useEffect, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
-
 type BoardPreviewProps = {
   board: Board;
 };
@@ -157,7 +157,7 @@ export function BoardPreview(props: BoardPreviewProps) {
 
   const fetchBoardApp = useAppStore((state) => state.fetchBoardApps);
   const backgroundColor = useColorModeValue('gray.100', 'gray.800');
-  const boardColor = props.board.data.color + '.400';
+  // const boardColor = props.board.data.color + '.400';
 
   useEffect(() => {
     async function fetchApps() {

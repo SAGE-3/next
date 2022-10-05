@@ -7,11 +7,10 @@
  */
 
 import { CSSProperties, useEffect, useState } from 'react';
-import { Box, Text, TypographyProps, useColorModeValue } from '@chakra-ui/react';
+import { Box, Text, useColorModeValue } from '@chakra-ui/react';
 
 type ClockProps = {
   style?: CSSProperties;
-  fontSize?: TypographyProps['fontSize'];
   opacity?: number;
 };
 
@@ -23,16 +22,16 @@ export function Clock(props: ClockProps) {
 
   // Update the time on an interval every 30secs
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    }, 30000);
+    }, 30 * 1000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <Box display="flex" style={props.style} alignItems="center" justifyContent="center">
       <Text
-        fontSize={props.fontSize ? props.fontSize : 'xl'}
+        fontSize={'xl'}
         opacity={props.opacity ? props.opacity : 1.0}
         color={textColor}
         userSelect="none"
