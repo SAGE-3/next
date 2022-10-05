@@ -58,114 +58,6 @@ import {AppWindow} from '../../components';
 import './styles.css';
 
 import React, {useState, useEffect, useMemo} from 'react';
-// import {ColumnMenu} from "./components/ColumnMenu";
-import {colMenus} from "./colMenus";
-
-// const TextInput = (props: App): JSX.Element => {
-//   const s = props.data.state as AppState;
-//   const updateState = useAppStore(state => state.updateState);
-//
-//   return (
-//     <FormControl>
-//       <FormLabel>Online Dataset</FormLabel>
-//         <InputGroup size='md'>
-//           <Input
-//             type="text"
-//             value={s.dataUrl}
-//             onChange={handleUrlChange}
-//           />
-//           <InputRightElement width='5rem'>
-//             <Button variant='outline' onClick={handleLoadData} disabled={running}>Load Data</Button>
-//           </InputRightElement>
-//         </InputGroup>
-//     </FormControl>
-//   )
-// })
-
-// const Form = (props: App): JSX.Element => {
-//   return (
-//     <Stack spacing={4}>
-//       <FormControl>
-//       <FormLabel>Online Dataset</FormLabel>
-//         <Input
-//           size='md'
-//           type="text"
-//           value={s.dataUrl}
-//           onChange={handleUrlChange}
-//         />
-//       </FormControl>
-//       <ButtonGroup display='flex' justifyContent='flex-end'>
-//         <Button variant='outline' onClick={onCancel}>
-//           Cancel
-//         </Button>
-//         <Button variant='outline' onClick={handleLoadData} disabled={running}>Load Data</Button>
-//       </ButtonGroup>
-//     </Stack>
-//   )
-// }
-
-// const PopoverForm = (props: App): JSX.Element => {
-//   const {onOpen, onClose, isOpen} = useDisclosure()
-//   // const firstFieldRef = React.useRef(null)
-//
-//   const s = props.data.state as AppState;
-//   const updateState = useAppStore(state => state.updateState);
-//
-//   return (
-//     <>
-//       <Popover
-//         isOpen={isOpen}
-//         onOpen={onOpen}
-//         onClose={onClose}
-//         placement='right'
-//         closeOnBlur={false}
-//       >
-//         <PopoverTrigger>
-//           <Button rightIcon={<TbWorldDownload/>}>
-//             New Dataset
-//           </Button>
-//         </PopoverTrigger>
-//         <PopoverContent p={5}>
-//           <FocusLock returnFocus persistentFocus={true}>
-//             <PopoverArrow/>
-//             <PopoverCloseButton/>
-//             <Stack spacing={4}>
-//               <FormControl>
-//                 <FormLabel>Online Dataset</FormLabel>
-//                 <Input
-//                   size='md'
-//                   type="text"
-//                   value={s.dataUrl}
-//                   onChange={this.props.handleUrlChange}
-//                 />
-//                 <FormHelperText>Link to online dataset</FormHelperText>
-//               </FormControl>
-//               <ButtonGroup display='flex' justifyContent='flex-end'>
-//                 <Button variant='outline' onClick={onClose}>
-//                   Cancel
-//                 </Button>
-//                 <Button variant='outline' onClick={() => props.handleLoadData()}>Load Data</Button>
-//               </ButtonGroup>
-//             </Stack>
-//           </FocusLock>
-//         </PopoverContent>
-//       </Popover>
-//     </>
-//   )
-// }
-
-// const Input = (props: App) : JSX.Element => {
-//   const s = props.data.state as AppState;
-//   const updateState = useAppStore(state => state.updateState);
-//
-//   function handleKeyDown(e) {
-//     if (e.key == 'Enter') {
-//       props.data.state.
-//     }
-//   }
-//
-//   return()
-// }
 
 
 const Pagination = (props: App): JSX.Element => {
@@ -634,14 +526,6 @@ function AppComponent(props: App): JSX.Element {
     console.log(s)
   }
 
-  // function handleFilterInput(ev: React.FormEvent<HTMLInputElement>, col: string) {
-  //   const value = ev.currentTarget.value;
-  //   console.log(col)
-  //   console.log(typeof col)
-  //   setFilterInput(value)
-  //   updateState(props._id,{executeInfo: {"executeFunc": "filter_rows", "params": {"filter_input": value, "col": col}}})
-  // }
-
   function enterSearch(ev: any, col: string) {
     if (ev.key === "Enter") {
       const value = ev.currentTarget.value;
@@ -663,8 +547,6 @@ function AppComponent(props: App): JSX.Element {
 
       <>
         <div className="URL-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
-          {/*<p>s.selectedRows: {s.selectedRows}</p>*/}
-          {/*<p>s.selectedCols: {s.selectedCols}</p>*/}
 
           <div className="searchContainer">
           {/*<HStack display="flex" wrap="wrap" justifyContent="space-between" marginTop="1em">*/}
@@ -820,8 +702,13 @@ function AppComponent(props: App): JSX.Element {
         </Center>
 
         <div style={{display: s.totalRows !== 0 ? "block" : "none"}}>
-          <TableContainer overflowY="auto" display="flex" maxHeight="21.75rem">
-            <Table colorScheme="facebook" variant='simple' size="md" className="originalChakra">
+          <TableContainer
+            overflowY="auto"
+            overflowX="auto"
+            display="flex"
+            maxHeight="21.75rem"
+          >
+            <Table variant='simple' size="md" className="originalChakra">
               <Thead>
                 <Tr>
                   <>
@@ -829,11 +716,11 @@ function AppComponent(props: App): JSX.Element {
                     {
                       headers?.map((header: any, index: number) => (
                         <Th className="ColName">
-                          <ButtonGroup colorScheme="black" display="flex" size='sm'>
+                          <ButtonGroup colorScheme="black" display="flex" size='lg'>
                             <Button
                               key={index}
                               onClick={(e) => handleColClick(header)}
-                              width='80%'
+                              width='100%'
                               variant='ghost'
                               border-radius='0px'
                               justifyContent='flex-start'
