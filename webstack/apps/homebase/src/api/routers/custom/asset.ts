@@ -35,7 +35,7 @@ import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { isCSV, isImage, isPDF, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF } from '@sage3/shared';
+import { isCSV, isImage, isPDF, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF } from '@sage3/shared';
 import { initialValues } from '@sage3/applications/initialValues';
 
 // Google storage and AWS S3 storage
@@ -148,29 +148,54 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       // If we need to open the file, do it
       if (openFIles && assetID) {
         if (isImage(elt.mimetype)) {
-          // Get metadata information about the image
-          const derived = newdata.derived as ExtraImageType;
-          const ar = derived.aspectRatio || 1;
-          const width = tw || 300;
-          const height = th || width / ar;
-          AppsCollection.add(
-            {
-              name: 'ImageViewer',
-              description: 'Image',
-              roomId: req.body.room,
-              boardId: req.body.board,
-              ownerId: user.id,
-              position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
-              size: { width, height, depth: 0 },
-              rotation: { x: 0, y: 0, z: 0 },
-              type: 'ImageViewer',
-              state: { ...initialValues['ImageViewer'], assetid: assetID },
-              minimized: false,
-              raised: false,
-            },
-            user.id
-          );
-          posx += width + 10;
+          if (isGIF(elt.mimetype)) {
+            // Get metadata information about the image
+            const width = 300;
+            const height = 300;
+            // Just open it by URL
+            AppsCollection.add(
+              {
+                name: 'ImageViewer',
+                description: 'Image',
+                roomId: req.body.room,
+                boardId: req.body.board,
+                ownerId: user.id,
+                position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
+                size: { width, height, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: 'ImageViewer',
+                state: { ...initialValues['ImageViewer'], assetid: `/api/assets/static/${elt.filename}` },
+                minimized: false,
+                raised: false,
+              },
+              user.id
+            );
+            posx += width + 10;
+          } else {
+            // Get metadata information about the image
+            const derived = newdata.derived as ExtraImageType;
+            const ar = derived.aspectRatio || 1;
+            const width = tw || 300;
+            const height = th || width / ar;
+            AppsCollection.add(
+              {
+                name: 'ImageViewer',
+                description: 'Image',
+                roomId: req.body.room,
+                boardId: req.body.board,
+                ownerId: user.id,
+                position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
+                size: { width, height, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: 'ImageViewer',
+                state: { ...initialValues['ImageViewer'], assetid: assetID },
+                minimized: false,
+                raised: false,
+              },
+              user.id
+            );
+            posx += width + 10;
+          }
         } else if (isPDF(elt.mimetype)) {
           // Get metadata information about the PDF
           const derived = newdata.derived as ExtraPDFType;

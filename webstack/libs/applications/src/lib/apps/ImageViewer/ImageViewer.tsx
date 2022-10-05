@@ -17,8 +17,8 @@ import { AppWindow } from '../../components';
 import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
-
 import { state as AppState } from './index';
+import { isGIF } from '@sage3/shared';
 
 /**
  * ImageViewer app
@@ -64,16 +64,18 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (file) {
       const extra = file.data.derived as ExtraImageType;
-      // Store the extra data in the state
-      setSizes(extra.sizes);
-      // Save the aspect ratio
-      setAspectRatio(extra.aspectRatio);
       if (extra) {
-        // find the smallest image for this page (multi-resolution)
-        const res = extra.sizes.reduce(function (p, v) {
-          return p.width < v.width ? p : v;
-        });
-        setUrl(res.url);
+        // Store the extra data in the state
+        setSizes(extra.sizes);
+        // Save the aspect ratio
+        setAspectRatio(extra.aspectRatio);
+        if (extra) {
+          // find the smallest image for this page (multi-resolution)
+          const res = extra.sizes.reduce(function (p, v) {
+            return p.width < v.width ? p : v;
+          });
+          setUrl(res.url);
+        }
       }
     }
   }, [file]);
