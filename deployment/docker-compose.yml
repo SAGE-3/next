@@ -43,7 +43,7 @@ services:
         max_attempts: 3
         window: 20s
   jupyter:
-    image: "jupyter/base-notebook"
+    image: "jupyter/datascience-notebook"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
