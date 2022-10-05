@@ -36,7 +36,7 @@ function AppComponent(props: App): JSX.Element {
   // URL used in the image tag
   const [url, setUrl] = useState('');
   // Image aspect ratio
-  const [aspectRatio, setAspectRatio] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState<number | boolean>(1);
   // Array of URLs for the image with multiple resolutions
   const [sizes, setSizes] = useState<ImageInfoType[]>([]);
   // Scale of the board
@@ -57,6 +57,7 @@ function AppComponent(props: App): JSX.Element {
     } else {
       // Assume it is a URL
       setUrl(s.assetid);
+      setAspectRatio(false);
     }
   }, [s.assetid, assets]);
 
@@ -94,7 +95,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div ref={ref} style={{
         position: 'relative', overflowY: 'hidden',
-        height: displaySize.width / aspectRatio,
+        height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
         maxHeight: '100%'
       }}>
         <Image width="100%" userSelect={"auto"} draggable={false}
