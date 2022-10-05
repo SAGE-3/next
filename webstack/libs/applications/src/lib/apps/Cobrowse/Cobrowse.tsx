@@ -44,6 +44,8 @@ function AppComponent(props: App): JSX.Element {
   // Tracking the dom-ready and did-load events
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
+  const [running, setRunning] = useState(s.running);
+  const [title, setTitle] = useState(s.title);
 
   // Websocket to communicate with the server
   const rtcSock = useRef<WebSocket>();
@@ -57,6 +59,13 @@ function AppComponent(props: App): JSX.Element {
       setConnected(false);
     }
   }
+
+  useEffect(() => {
+    setRunning(s.running);
+  }, [s.running]);
+  useEffect(() => {
+    setTitle(s.title);
+  }, [s.title]);
 
   useEffect(() => {
     if (user && props.data.ownerId === user._id) {
@@ -95,6 +104,16 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   }, [user]);
+
+  useEffect(() => {
+    console.log('Goign to update title')
+    if (mine && running) {
+      // Update the app title
+      update(props._id, { description: 'Streaming> ' + title });
+    } else {
+      update(props._id, { description: 'Waiting> ' + title });
+    }
+  }, [running, mine, title]);
 
   useEffect(() => {
     if (!user) return;
@@ -164,7 +183,7 @@ function AppComponent(props: App): JSX.Element {
 
       const titleUpdated = (event: any) => {
         // Update the app title
-        update(props._id, { description: event.title });
+        updateState(props._id, { title: event.title });
 
         const id = webview.getWebContentsId();
         console.log('getWebContentsId Webview id', id);
@@ -233,6 +252,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const startStream = () => {
     if (isElectron()) {
       console.log('Cobrowse> startStream');
+      updateState(props._id, { running: true });
       // Load electron and the IPCRender
       const electron = window.require('electron');
       const ipcRenderer = electron.ipcRenderer;
@@ -243,11 +263,27 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const stopStream = () => {
+    if (isElectron()) {
+      console.log('Cobrowse> stopStream');
+      updateState(props._id, { running: false });
+      // Load electron and the IPCRender
+      const electron = window.require('electron');
+      const ipcRenderer = electron.ipcRenderer;
+      ipcRenderer.removeAllListeners('paint');
+    }
+  };
+
   return (
     <ButtonGroup isAttached size="xs">
       <Tooltip placement="top-start" hasArrow={true} label={'Start Streaming Content'} openDelay={400}>
         <Button colorScheme="green" disabled={!mine} onClick={startStream}>
-          Stream
+          Start
+        </Button>
+      </Tooltip>
+      <Tooltip placement="top-start" hasArrow={true} label={'Start Streaming Content'} openDelay={400}>
+        <Button colorScheme="red" disabled={!mine} onClick={stopStream}>
+          Stop
         </Button>
       </Tooltip>
     </ButtonGroup>

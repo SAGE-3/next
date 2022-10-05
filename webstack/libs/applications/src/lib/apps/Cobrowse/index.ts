@@ -15,13 +15,17 @@ import { z } from 'zod';
 
 export const schema = z.object({
   sharedurl: z.string(),
+  running: z.boolean(),
   frame: z.number(),
+  title: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   sharedurl: 'https://www.google.com',
+  running: false,
   frame: 0,
+  title: '',
 };
 
 export const name = 'Cobrowse';
