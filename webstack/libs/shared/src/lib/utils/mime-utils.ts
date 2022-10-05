@@ -38,6 +38,18 @@ export function getExtension(mimeType: string): string {
 export function isImage(mimeType: string): boolean {
   return mimeType.startsWith('image/');
 }
+
+/**
+ * Test if a given mime type is a GIF image
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isGIF(mimeType: string): boolean {
+  return mimeType === 'image/gif';
+}
+
 /**
  * Test if a given mime type is a PDF file
  *
@@ -183,4 +195,33 @@ export function isPython(mimeType: string): boolean {
  */
 export function isGLTF(mimeType: string): boolean {
   return mimeType === 'model/gltf-binary';
+}
+
+/**
+ * Test if a given mime type is a GLTF binary file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isValid(mimeType: string): boolean {
+  // Excluded for now
+  // isZip(mimeType) ||
+  // isAudio(mimeType) ||
+  // isHTML(mimeType) ||
+  // isMD(mimeType) ||
+
+  return (
+    isImage(mimeType) ||
+    isPDF(mimeType) ||
+    isVideo(mimeType) ||
+    isPythonNotebook(mimeType) ||
+    isText(mimeType) ||
+    isJSON(mimeType) ||
+    isGeoJSON(mimeType) ||
+    isCSV(mimeType) ||
+    isDZI(mimeType) ||
+    isPython(mimeType) ||
+    isGLTF(mimeType)
+  );
 }

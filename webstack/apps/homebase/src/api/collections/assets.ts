@@ -22,7 +22,7 @@ import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processor
 
 import { config } from '../../config';
 
-import { isPDF, isImage } from '@sage3/shared';
+import { isPDF, isImage, isGIF } from '@sage3/shared';
 
 /**
  * The database model for SAGE3 rooms.
@@ -74,7 +74,7 @@ class SAGE3AssetsCollection {
       const t1 = this.metaQ.addFile(id, file);
       tasks.push(t1);
       // convert image to multiple sizes
-      if (isImage(fileType)) {
+      if (isImage(fileType) && !isGIF(fileType)) {
         const t2 = this.imgQ.addFile(id, file);
         tasks.push(t2);
       } else if (isPDF(fileType)) {
@@ -95,7 +95,7 @@ class SAGE3AssetsCollection {
         } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
           realDate = new Date(exif.FileModifyDate);
         }
-        if (isImage(fileType) || isPDF(fileType)) {
+        if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
           // image or pdf processed
           resolve({
             dateCreated: realDate.toISOString(),
