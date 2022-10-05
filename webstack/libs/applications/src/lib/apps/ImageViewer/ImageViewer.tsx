@@ -17,8 +17,8 @@ import { AppWindow } from '../../components';
 import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
-
 import { state as AppState } from './index';
+import { isGIF } from '@sage3/shared';
 
 /**
  * ImageViewer app
@@ -36,7 +36,7 @@ function AppComponent(props: App): JSX.Element {
   // URL used in the image tag
   const [url, setUrl] = useState('');
   // Image aspect ratio
-  const [aspectRatio, setAspectRatio] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState<number | boolean>(1);
   // Array of URLs for the image with multiple resolutions
   const [sizes, setSizes] = useState<ImageInfoType[]>([]);
   // Scale of the board
@@ -57,6 +57,7 @@ function AppComponent(props: App): JSX.Element {
     } else {
       // Assume it is a URL
       setUrl(s.assetid);
+      setAspectRatio(false);
     }
   }, [s.assetid, assets]);
 
@@ -64,16 +65,18 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (file) {
       const extra = file.data.derived as ExtraImageType;
-      // Store the extra data in the state
-      setSizes(extra.sizes);
-      // Save the aspect ratio
-      setAspectRatio(extra.aspectRatio);
       if (extra) {
-        // find the smallest image for this page (multi-resolution)
-        const res = extra.sizes.reduce(function (p, v) {
-          return p.width < v.width ? p : v;
-        });
-        setUrl(res.url);
+        // Store the extra data in the state
+        setSizes(extra.sizes);
+        // Save the aspect ratio
+        setAspectRatio(extra.aspectRatio);
+        if (extra) {
+          // find the smallest image for this page (multi-resolution)
+          const res = extra.sizes.reduce(function (p, v) {
+            return p.width < v.width ? p : v;
+          });
+          setUrl(res.url);
+        }
       }
     }
   }, [file]);
@@ -92,7 +95,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div ref={ref} style={{
         position: 'relative', overflowY: 'hidden',
-        height: displaySize.width / aspectRatio,
+        height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
         maxHeight: '100%'
       }}>
         <Image width="100%" userSelect={"auto"} draggable={false}

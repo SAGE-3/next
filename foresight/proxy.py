@@ -156,6 +156,7 @@ class SAGEProxy():
             logging.info(f"Getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             updated_fields = []
+            print(f"msg received is {msg}")
 
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
@@ -272,13 +273,13 @@ def get_cmdline_parser():
     parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
     return parser
 
+
 # For development purposes only.
 token = conf['token']
 room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
 sage_proxy = SAGEProxy(room_id, conf, prod_type)
 
 # sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
-
 # b34cf54e-2f9e-4b9a-a458-27f4b6c658a7
 
 listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
