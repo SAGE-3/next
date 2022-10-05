@@ -8,11 +8,11 @@
 
 import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser, useAssetStore } from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF } from '@sage3/shared';
+import { isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -42,12 +42,25 @@ export function Background(props: BackgroundProps) {
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {
     if (input) {
+      let filenames = '';
       // Uploaded with a Form object
       const fd = new FormData();
       // Add each file to the form
       const fileListLength = input.length;
       for (let i = 0; i < fileListLength; i++) {
-        fd.append('files', input[i]);
+        if (isValid(input[i].type)) {
+          fd.append('files', input[i]);
+          if (filenames) filenames += ', ' + input[i].name;
+          else filenames = input[i].name;
+        } else {
+          toast({
+            title: 'Invalid file type',
+            description: `Type not recognized: ${input[i].type} for file ${input[i].name}`,
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+          });
+        }
       }
 
       // Add fields to the upload form
@@ -69,14 +82,22 @@ export function Background(props: BackgroundProps) {
         .finally(() => {
           // Close the modal UI
           // props.onClose();
-          console.log('Upload> Upload complete');
-          // Display a message
-          toast({
-            title: 'Upload Done',
-            status: 'info',
-            duration: 4000,
-            isClosable: true,
-          });
+
+          if (filenames) {
+            toast({
+              title: 'Upload Done:' + truncateWithEllipsis(filenames, 50),
+              status: 'info',
+              duration: 3000,
+              isClosable: true,
+            });
+          } else {
+            toast({
+              title: 'Upload with Errors',
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          }
         });
     }
   };
@@ -96,7 +117,24 @@ export function Background(props: BackgroundProps) {
   function OpenFile(fileID: string, fileType: string, xDrop: number, yDrop: number) {
     if (!user) return;
     const w = 400;
-    if (isImage(fileType)) {
+    if (isGIF(fileType)) {      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          createApp(
+            setupApp(
+              'ImageViewer',
+              xDrop,
+              yDrop,
+              props.roomId,
+              props.boardId,
+              user._id,
+              { w: w, h: w },
+              { assetid: '/api/assets/static/' + a.data.file }
+            )
+          );
+        }
+      });
+    } else if (isImage(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {

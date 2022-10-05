@@ -8,7 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF } from '@sage3/shared';
 
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -36,7 +36,22 @@ export async function setupAppForFile(
 ): Promise<AppSchema> {
   return new Promise((resolve) => {
     const w = 400;
-    if (isImage(file.type)) {
+    if (isGIF(file.type)) {
+      resolve({
+        name: 'ImageViewer',
+        description: 'Image',
+        roomId: roomId,
+        boardId: boardId,
+        ownerId: userId,
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: w, height: w, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'ImageViewer',
+        state: { ...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename },
+        minimized: false,
+        raised: true,
+      });
+    } else if (isImage(file.type)) {
       // Look for the file in the asset store
       const extras = file.derived as ExtraImageType;
       resolve({
