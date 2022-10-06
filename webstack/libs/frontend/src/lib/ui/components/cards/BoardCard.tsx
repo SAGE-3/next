@@ -6,22 +6,27 @@
  *
  */
 
-import { Box, Button, Tooltip, Text, Icon, useDisclosure, useColorModeValue, useToast, IconButton, border } from '@chakra-ui/react';
-import { MdPerson, MdLock, MdContentCopy, MdEdit, MdExitToApp, MdPreview, MdRemoveRedEye, MdSettings } from 'react-icons/md';
+import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton } from '@chakra-ui/react';
+import { MdPerson, MdLock, MdSettings, MdLockOpen } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
-import { sageColorByName } from '@sage3/shared';
 import { BoardSchema } from '@sage3/shared/types';
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { useUser } from '../../../hooks';
 import { EditBoardModal } from '../modals/EditBoardModal';
+
+import { AppError, Applications } from '@sage3/applications/apps';
+import { App } from '@sage3/applications/schema';
+import { useAppStore, useUIStore } from '@sage3/frontend';
+import { Board } from '@sage3/shared/types';
+import { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
   userCount: number;
   onSelect: () => void;
   onDelete: () => void;
-  selected: boolean;
 };
 
 /**
@@ -37,32 +42,16 @@ export function BoardCard(props: BoardCardProps) {
   // Is it my board?
   const yours = user?._id === props.board.data.ownerId;
 
-  // Custom text
-  const heading = yours ? 'Your' : 'This';
-
   // Custom color
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
-  const boardColor = sageColorByName(props.board.data.color);
+  const boardColor = props.board.data.color + '.400';
+  const backgroundColor = useColorModeValue('white', 'gray.800');
+  // const scale = useUIStore((state) => state.scale);
 
   // Edit Modal Disclousure
   const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
 
   // Enter Modal Disclosure
   const { isOpen: isOpenEnter, onOpen: onOpenEnter, onClose: onCloseEnter } = useDisclosure();
-
-  // Copy the board id to the clipboard
-  const toast = useToast();
-  const handleCopyId = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(props.board._id);
-    toast({
-      title: 'Success',
-      description: `BoardID Copied to Clipboard`,
-      duration: 3000,
-      isClosable: true,
-      status: 'success',
-    });
-  };
 
   const handleEnterBoard = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -86,84 +75,127 @@ export function BoardCard(props: BoardCardProps) {
         onClose={onCloseEnter}
       />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
-      <Box
-        borderWidth="2px"
-        borderRadius="md"
-        overflow="hidden"
-        height="80px"
-        my="2"
-        pt="2"
-        border={`solid ${props.selected ? boardColor : borderColor} 2px`}
-        transition="transform .2s"
-        style={{
-          background: `linear-gradient(${props.selected ? boardColor : borderColor} 10%, transparent 10% ) no-repeat`,
-        }}
-        _hover={{
-          transform: 'scale(1.05)',
-        }}
-        cursor="pointer"
-        onClick={props.onSelect}
-      >
-        <Box px="2" display="flex" flexDirection="row" justifyContent="space-between" alignContent="center">
-          <Box display="flex" flexDirection="column">
-            <Text fontSize="2xl">{props.board.data.name}</Text>
-            <Text fontSize="1xl">{props.board.data.description}</Text>
-          </Box>
+      <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}>
+        <Box
+          display="flex"
+          justifyContent="left"
+          borderRadius="md"
+          height="60px"
+          my="1"
+          width="100%"
+          cursor="pointer"
+          alignItems="baseline"
+          position="relative"
+          onClick={handleEnterBoard}
+          boxShadow="md"
+          transition="all 0.25s "
+          backgroundColor={backgroundColor}
+          _hover={{ transform: `scale(${1.02})` }}
+        >
+          <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
+            <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
+              <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
+                {props.board.data.name}
+              </Text>
+              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
+                {props.board.data.description}
+              </Text>
+            </Box>
 
-          <Box display="flex" mt="2" alignItems="center" flexShrink="3">
-            <Tooltip label={`${heading} board is protected`} placement="top-start" hasArrow openDelay={200}>
-              <div>{props.board.data.isPrivate ? <Icon aria-label="protected" as={MdLock} boxSize={8} color={boardColor} /> : null}</div>
-            </Tooltip>
+            <Box display="flex" alignItems="center" justifyContent="right" mr="2">
+              <Box display="flex" alignItems={'center'}>
+                <Text fontSize="xl">{props.userCount}</Text>
+                <MdPerson fontSize="22px" />
+              </Box>
+              <Tooltip
+                label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
+                openDelay={400}
+                placement="top-start"
+                hasArrow
+              >
+                <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
+              </Tooltip>
 
-            <Tooltip label="Enter Board" openDelay={400} placement="top-start" hasArrow>
-              <IconButton
-                onClick={handleEnterBoard}
-                color={props.selected ? boardColor : borderColor}
-                aria-label="Preview Board"
-                fontSize="3xl"
-                variant="ghost"
-                _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                transition="transform .2s"
-                icon={<MdExitToApp />}
-              />
-            </Tooltip>
-            <Tooltip label="Copy Board ID into clipboard" openDelay={400} placement="top-start" hasArrow>
-              <IconButton
-                onClick={handleCopyId}
-                color={props.selected ? boardColor : borderColor}
-                aria-label="Board Copy ID"
-                fontSize="3xl"
-                variant="ghost"
-                _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                transition="transform .2s"
-                icon={<MdContentCopy />}
-              />
-            </Tooltip>
-            {yours ? (
-              <Tooltip label="Edit Board" openDelay={400} placement="top-start" hasArrow>
+              <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
                 <IconButton
                   onClick={handleOpenSettings}
-                  color={props.selected ? boardColor : borderColor}
+                  color={boardColor}
                   aria-label="Board Edit"
                   fontSize="3xl"
-                  variant="ghost"
-                  _hover={{ transform: 'scale(1.3)', opacity: 0.75 }}
-                  transition="transform .2s"
+                  variant="unstlyed"
+                  disabled={!yours}
                   icon={<MdSettings />}
                 />
               </Tooltip>
-            ) : null}
-
-            <Box width="50px" display="flex" alignItems="center" justifyContent="right">
-              <Text fontSize="1xl" mx="2">
-                {props.userCount}
-              </Text>
-              <MdPerson size="18" />
             </Box>
-            <Box as="span" ml="2" color="gray.600" fontSize="sm"></Box>
           </Box>
         </Box>
-      </Box>
+      </Tooltip>
     </>
+  );
+}
+
+type BoardPreviewProps = {
+  board: Board;
+};
+
+/**
+ * Board Preview component
+ * @returns
+ */
+export function BoardPreview(props: BoardPreviewProps) {
+  const [apps, setApps] = useState<App[]>([]);
+
+  const boardHeight = useUIStore((state) => state.boardHeight);
+  const boardWidth = useUIStore((state) => state.boardWidth);
+
+  const borderWidth = 4;
+  const maxWidth = 600 - borderWidth * 2;
+  const maxHeight = 300 - borderWidth * 2;
+
+  const scale = Math.min(maxWidth / boardWidth, maxHeight / boardHeight);
+
+  const fetchBoardApp = useAppStore((state) => state.fetchBoardApps);
+  const backgroundColor = useColorModeValue('gray.100', 'gray.800');
+  // const boardColor = props.board.data.color + '.400';
+
+  useEffect(() => {
+    async function fetchApps() {
+      const resApps = await fetchBoardApp(props.board._id);
+      if (resApps) {
+        setApps(resApps);
+      }
+    }
+    fetchApps();
+  }, [props.board._id]);
+
+  return (
+    <Box
+      width={maxWidth + 'px'}
+      height={maxHeight + 'px'}
+      backgroundColor={backgroundColor}
+      borderRadius="md"
+      pointerEvents="none"
+      overflow="hidden"
+      transform={`translateX(-${maxWidth / 4}px)`}
+      boxShadow="xl"
+    >
+      <Box width={maxWidth + 'px'} height={maxHeight + 'px'} transform={`scale(${scale})`} transformOrigin="top left">
+        {apps.map((app) => {
+          const Component = Applications[app.data.type].AppComponent;
+          return (
+            // Wrap the components in an errorboundary to protect the board from individual app errors
+            <ErrorBoundary
+              key={app._id}
+              fallbackRender={({ error, resetErrorBoundary }) => (
+                <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+              )}
+            >
+              <Component key={app._id} {...app}></Component>
+            </ErrorBoundary>
+          );
+        })}
+      </Box>
+    </Box>
   );
 }

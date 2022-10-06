@@ -17,6 +17,17 @@ mime.define({
 });
 
 /**
+ * Get the mime type for a given filename.
+ *
+ * @export
+ * @param {string} filename
+ * @returns {string}
+ */
+export function getMime(filename: string): string | null {
+  return mime.getType(filename);
+}
+
+/**
  * Get the file extension for a given mime type.
  *
  * @export

@@ -20,7 +20,7 @@ import {
   Button,
   Box,
   ButtonGroup,
-  Checkbox
+  Checkbox,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
@@ -174,14 +174,14 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             {SAGEColors.map((s3color) => {
               return (
                 <Button
-                  key={s3color.name}
-                  value={s3color.name}
-                  bgColor={s3color.value}
-                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color.value, opacity: 0.9 }}
+                  key={s3color}
+                  value={s3color}
+                  bgColor={s3color}
+                  _hover={{ background: s3color, opacity: 0.7, transform: 'scaleY(1.3)' }}
+                  _active={{ background: s3color, opacity: 0.9 }}
                   size="md"
-                  onClick={() => handleColorChange(s3color.name)}
-                  border={s3color.name === color ? '3px solid white' : 'none'}
+                  onClick={() => handleColorChange(s3color)}
+                  border={s3color === color ? '3px solid white' : 'none'}
                   width="43px"
                 />
               );
@@ -207,15 +207,13 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
-
         </ModalBody>
         <ModalFooter pl="4" pr="8" mb="2">
           <Box display="flex" justifyContent="space-between" width="100%">
             <Button colorScheme="red" onClick={handleDeleteRoom} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit}
-              disabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description || !valid}>
               Update
             </Button>
           </Box>

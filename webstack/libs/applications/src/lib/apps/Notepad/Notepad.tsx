@@ -30,7 +30,6 @@ import { useUser } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '@sage3/applications/schema';
-import { sageColorByName } from '@sage3/shared';
 
 import { MdFileDownload } from 'react-icons/md';
 
@@ -96,7 +95,7 @@ function AppComponent(props: App): JSX.Element {
       if (user) {
         provider.awareness.setLocalStateField('user', {
           name: user.data.name,
-          color: sageColorByName(user.data.color), // should be a hex color
+          color: user.data.color, // should be a hex color
         });
       }
     }
@@ -143,15 +142,17 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  return <>
-    <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="top-start" hasArrow={true} label={'Download as HTML'} openDelay={400}>
-        <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }}>
-          <MdFileDownload />
-        </Button>
-      </Tooltip>
-    </ButtonGroup>
-  </>;
+  return (
+    <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Download as HTML'} openDelay={400}>
+          <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };
