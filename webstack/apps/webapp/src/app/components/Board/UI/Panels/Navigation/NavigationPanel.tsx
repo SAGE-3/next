@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
 import { MdFullscreen, MdGridView, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
 
-import { StuckTypes, useAppStore, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { StuckTypes, useAppStore, useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 
@@ -177,6 +177,7 @@ export function NavigationPanel(props: NavProps) {
                 const u = users.find((el) => el._id === presence.data.userId);
                 if (!u) return null;
                 const self = u._id === user?._id;
+                const color = useHexColor(u.data.color);
                 return (
                   <Box
                     key={presence.data.userId}
@@ -190,7 +191,7 @@ export function NavigationPanel(props: NavProps) {
                       zIndex: 100000,
                     }}
                     borderRadius="50%"
-                    backgroundColor={self ? 'white' : u.data.color}
+                    backgroundColor={self ? 'white' : color}
                     width={self ? '6px' : '4px'}
                     height={self ? '6px' : '4px'}
                   ></Box>

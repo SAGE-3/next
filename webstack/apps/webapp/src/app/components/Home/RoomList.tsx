@@ -130,7 +130,6 @@ export function RoomList(props: RoomListProps) {
                   onChange={handleFilterBoards}
                   placeholder="Search Rooms..."
                   _placeholder={{ opacity: 1 }}
-                  color="white"
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />{' '}
               </InputGroup>
