@@ -10,8 +10,6 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import {
   Box,
   Button,
-  Grid,
-  GridItem,
   Input,
   InputGroup,
   InputRightElement,
@@ -21,11 +19,10 @@ import {
   Tooltip,
   useColorModeValue,
   useToast,
-  useToken,
 } from '@chakra-ui/react';
 
 import { Board, Room } from '@sage3/shared/types';
-import { CreateRoomModal, RoomCard, usePresenceStore, useRoomStore } from '@sage3/frontend';
+import { CreateRoomModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
@@ -51,8 +48,8 @@ export function RoomList(props: RoomListProps) {
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.600');
+  const borderHex = useHexColor(borderColor);
   const backgroundColor = useColorModeValue('transparent', 'gray.900');
-  const bgColor = useToken('colors', backgroundColor);
 
   const toast = useToast();
   const [filterBoards, setFilterBoards] = useState<Room[] | null>(null);
@@ -168,7 +165,7 @@ export function RoomList(props: RoomListProps) {
             background: 'transparent',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: `gray`,
+            background: borderHex,
             borderRadius: '8px',
           },
         }}

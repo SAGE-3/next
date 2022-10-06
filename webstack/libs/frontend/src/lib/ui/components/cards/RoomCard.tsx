@@ -6,11 +6,11 @@
  *
  */
 
-import { background, Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure, useToken } from '@chakra-ui/react';
+import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { Board, Room } from '@sage3/shared/types';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
-import { MdLock, MdLockOpen, MdPerson, MdSettings } from 'react-icons/md';
-import { useUser } from '../../../hooks';
+import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
+import { useHexColor, useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
 import { BoardList } from './BoardList';
 
@@ -48,15 +48,15 @@ export function RoomCard(props: RoomCardProps) {
 
   // Colors
   const borderColor = useColorModeValue('gray.300', 'gray.700');
-  const boardColor = props.room.data.color + '.400';
+  const boardColor = useHexColor(props.room.data.color);
   const backgroundColor = useColorModeValue('whiteAlpha.500', 'gray.900');
+  const bgColor = useHexColor(backgroundColor);
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
-  const bgColor = useToken('colors', backgroundColor);
   const handleOnEdit = (e: any) => {
     e.stopPropagation();
     onOpenEdit();
@@ -76,13 +76,16 @@ export function RoomCard(props: RoomCardProps) {
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
 
       <Box
-        boxShadow={'xl'}
+        boxShadow={'lg'}
         borderRadius="md"
+        border={props.selected ? 'solid 2px' : ''}
         borderLeft="solid 8px"
         borderColor={props.selected ? boardColor : boardColor}
         background={linearBGColor}
+        onClick={props.onEnter}
+        cursor="pointer"
       >
-        <Box display="flex" justifyContent="left" width="100%" cursor="pointer" position="relative" onClick={props.onEnter}>
+        <Box display="flex" justifyContent="left" width="100%" position="relative">
           <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
             <Box display="flex" flexDirection={'column'} alignItems="center" ml="4" transform="translateY(-1px)">
               <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">

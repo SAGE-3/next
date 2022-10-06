@@ -7,9 +7,9 @@
  */
 
 import { useEffect } from 'react';
-import { Avatar, Box, Tooltip, useColorModeValue, useToken } from '@chakra-ui/react';
+import { Avatar, Box, Tooltip } from '@chakra-ui/react';
 
-import { useUIStore, useUser, initials, StuckTypes } from '@sage3/frontend';
+import { useUIStore, useUser, initials, StuckTypes, useHexColor } from '@sage3/frontend';
 import { UserAvatarGroup } from '../../UserAvatarGroup';
 import { Panel } from '../Panel';
 
@@ -45,7 +45,8 @@ export function UsersPanel(props: AvatarProps) {
 
   // User information
   const { user } = useUser();
-  const color = useToken('colors', user ? user.data.color + '.400' : 'orange.400');
+  const color = useHexColor(user?.data.color || 'gray');
+
   return (
     <Panel
       title={'Users'}

@@ -34,6 +34,7 @@ import { BoardSchema } from '@sage3/shared/types';
 import { SAGEColors } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore } from '../../../stores';
+import { ColorPicker } from '../general';
 
 interface CreateBoardModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
-  const handleColorChange = (color: string) => setColor(color);
+  const handleColorChange = (color: SAGEColors) => setColor(color);
 
   const boards = useBoardStore((state) => state.boards);
 
@@ -171,24 +172,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal" py="2" mt="2">
-            {/* Colors */}
-            {SAGEColors.map((s3color) => {
-              return (
-                <Button
-                  key={s3color}
-                  value={s3color}
-                  bgColor={s3color}
-                  _hover={{ background: s3color, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color, opacity: 0.9 }}
-                  size="md"
-                  onClick={() => handleColorChange(s3color)}
-                  border={s3color === color ? '3px solid white' : 'none'}
-                  width="43px"
-                />
-              );
-            })}
-          </ButtonGroup>
+          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
