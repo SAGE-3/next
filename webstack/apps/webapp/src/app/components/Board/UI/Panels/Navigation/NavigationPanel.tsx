@@ -64,9 +64,9 @@ export function NavigationPanel(props: NavProps) {
     }
   }, [controllerPosition]);
 
-  const backgroundColor = useColorModeValue('gray.200', 'gray.600');
-  const borderColor = useColorModeValue('teal.400', 'teal.600');
-  const appBorderColor = useColorModeValue('teal.600', 'teal.400');
+  const backgroundColor = useColorModeValue('gray.100', 'gray.600');
+  const borderColor = useColorModeValue('teal.500', 'teal.500');
+  const appBorderColor = useColorModeValue('teal.600', 'teal.100');
 
   const moveToApp = (app: App) => {
     // set the app as selected
@@ -165,6 +165,7 @@ export function NavigationPanel(props: NavProps) {
                       borderStyle="solid"
                       borderColor={appBorderColor}
                       borderRadius="sm"
+                      cursor="pointer"
                     ></Box>
                   </Tooltip>
                 );

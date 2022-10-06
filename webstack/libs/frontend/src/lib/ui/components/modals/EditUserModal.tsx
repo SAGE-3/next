@@ -29,6 +29,7 @@ import { UserSchema } from '@sage3/shared/types';
 import { useAuth } from '@sage3/frontend';
 import { useUser } from '../../../hooks';
 import { SAGEColors } from '@sage3/shared';
+import { ColorPicker } from '../general';
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -117,24 +118,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <ButtonGroup isAttached size="xs" colorScheme="teal" mt="6">
-            {/* Colors */}
-            {SAGEColors.map((s3color) => {
-              return (
-                <Button
-                  key={s3color}
-                  value={s3color}
-                  _hover={{ transform: 'scaleY(1.3)' }}
-                  size="md"
-                  onClick={() => handleColorChange(s3color)}
-                  border={s3color === color ? '3px solid' : 'none'}
-                  borderColor={s3color === color ? modalBackground : 'none'}
-                  width="43px"
-                  colorScheme={s3color}
-                />
-              );
-            })}
-          </ButtonGroup>
+          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
           <Text mt={3} fontSize={'md'}>
             Authentication: <em>{auth?.provider}</em>
           </Text>

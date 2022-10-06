@@ -12,7 +12,7 @@ import { MdPerson, MdLock, MdSettings, MdLockOpen } from 'react-icons/md';
 import { SBDocument } from '@sage3/sagebase';
 import { BoardSchema } from '@sage3/shared/types';
 import { EnterBoardModal } from '../modals/EnterBoardModal';
-import { useUser } from '../../../hooks';
+import { useHexColor, useUser } from '../../../hooks';
 import { EditBoardModal } from '../modals/EditBoardModal';
 
 import { AppError, Applications } from '@sage3/applications/apps';
@@ -43,8 +43,10 @@ export function BoardCard(props: BoardCardProps) {
   const yours = user?._id === props.board.data.ownerId;
 
   // Custom color
-  const boardColor = props.board.data.color + '.400';
+  const boardColor = useHexColor(props.board.data.color);
   const backgroundColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.300', 'gray.700');
+  const bColor = useHexColor(borderColor);
   // const scale = useUIStore((state) => state.scale);
 
   // Edit Modal Disclousure
@@ -87,10 +89,11 @@ export function BoardCard(props: BoardCardProps) {
           alignItems="baseline"
           position="relative"
           onClick={handleEnterBoard}
-          boxShadow="md"
           transition="all 0.25s "
           backgroundColor={backgroundColor}
-          _hover={{ transform: `scale(${1.02})` }}
+          border="1px solid"
+          borderColor={`${bColor + 'FF'}`}
+          _hover={{ boxShadow: 'md', borderColor: bColor + '00' }}
         >
           <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
             <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
@@ -103,10 +106,11 @@ export function BoardCard(props: BoardCardProps) {
             </Box>
 
             <Box display="flex" alignItems="center" justifyContent="right" mr="2">
-              <Box display="flex" alignItems={'center'}>
-                <Text fontSize="xl">{props.userCount}</Text>
-                <MdPerson fontSize="22px" />
-              </Box>
+              <Tooltip label={props.userCount + ' users'} openDelay={400} placement="top-start" hasArrow>
+                <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                  {props.userCount}
+                </Text>
+              </Tooltip>
               <Tooltip
                 label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
                 openDelay={400}

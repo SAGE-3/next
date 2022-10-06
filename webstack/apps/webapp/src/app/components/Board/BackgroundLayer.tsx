@@ -16,7 +16,7 @@ import { GiArrowCursor } from 'react-icons/gi';
 import { DraggableData, Rnd } from 'react-rnd';
 import { throttle } from 'throttle-debounce';
 
-import { useAppStore, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { Applications, AppError } from '@sage3/applications/apps';
 
 import { Background } from './Background/Background';
@@ -174,10 +174,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           .filter((el) => el.data.boardId === props.boardId)
           .filter((el) => el.data.userId !== user?._id)
           .map((presence) => {
+            const color = useHexColor(users.find((el) => el._id === presence.data.userId)?.data.color || 'red');
             return (
               <UserCursor
                 key={presence.data.userId}
-                color={users.find((el) => el._id === presence.data.userId)?.data.color || 'red'}
+                color={color}
                 position={presence.data.cursor}
                 name={users.find((el) => el._id === presence.data.userId)?.data.name || '-'}
                 scale={scale}

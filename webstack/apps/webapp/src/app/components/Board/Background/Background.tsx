@@ -6,9 +6,9 @@
  *
  */
 
-import { Box, useColorModeValue, useToast, useToken } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis } from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
@@ -37,8 +37,8 @@ export function Background(props: BackgroundProps) {
   const scale = useUIStore((state) => state.scale);
 
   // Chakra Color Mode for grid color
-  const [gridLight, gridDark] = useToken('colors', ['gray.100', 'gray.800']);
-  const gridColor = useColorModeValue(gridLight, gridDark);
+  const gc = useColorModeValue('gray.100', 'gray.800');
+  const gridColor = useHexColor(gc);
 
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {

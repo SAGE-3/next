@@ -30,6 +30,7 @@ import { Room, RoomSchema } from '@sage3/shared/types';
 import { useRoomStore } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { useData } from 'libs/frontend/src/lib/hooks';
+import { ColorPicker } from '../general';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -169,24 +170,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal" py="2">
-            {/* Colors */}
-            {SAGEColors.map((s3color) => {
-              return (
-                <Button
-                  key={s3color}
-                  value={s3color}
-                  bgColor={s3color}
-                  _hover={{ background: s3color, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color, opacity: 0.9 }}
-                  size="md"
-                  onClick={() => handleColorChange(s3color)}
-                  border={s3color === color ? '3px solid white' : 'none'}
-                  width="43px"
-                />
-              );
-            })}
-          </ButtonGroup>
+          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
             Room Listed Publicly

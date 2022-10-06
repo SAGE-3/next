@@ -6,9 +6,9 @@
  *
  */
 
-import { Avatar, Box, Tooltip, AvatarGroup, useToken } from '@chakra-ui/react';
+import { Avatar, Box, Tooltip, AvatarGroup } from '@chakra-ui/react';
 
-import { usePresenceStore, useUser, useUsersStore, initials } from '@sage3/frontend';
+import { usePresenceStore, useUser, useUsersStore, initials, useHexColor } from '@sage3/frontend';
 
 type AvatarGroupProps = {
   boardId: string;
@@ -41,7 +41,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
           {presences.map((presence) => {
             const user = users.find((el) => el._id === presence._id);
             if (!user) return null;
-            const color = useToken('colors', user.data.color + '.400');
+            const color = useHexColor(user.data.color);
             return (
               <Tooltip key={presence.data.userId} aria-label="username" hasArrow={true} placement="top-start" label={user.data.name}>
                 <Avatar

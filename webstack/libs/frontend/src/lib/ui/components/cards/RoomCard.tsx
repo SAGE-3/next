@@ -6,11 +6,11 @@
  *
  */
 
-import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure, useToken } from '@chakra-ui/react';
+import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { Board, Room } from '@sage3/shared/types';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
-import { MdLock, MdLockOpen, MdPerson, MdSettings } from 'react-icons/md';
-import { useUser } from '../../../hooks';
+import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
+import { useHexColor, useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
 import { BoardList } from './BoardList';
 
@@ -48,8 +48,15 @@ export function RoomCard(props: RoomCardProps) {
 
   // Colors
   const borderColor = useColorModeValue('gray.300', 'gray.700');
-  const boardColor = props.room.data.color + '.400';
+  const boardColor = useHexColor(props.room.data.color);
   const backgroundColor = useColorModeValue('whiteAlpha.500', 'gray.900');
+  const bgColor = useHexColor(backgroundColor);
+
+  const linearBGColor = useColorModeValue(
+    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
+    `linear-gradient(178deg, #303030, #252525, #262626)`
+  );
+
   const handleOnEdit = (e: any) => {
     e.stopPropagation();
     onOpenEdit();
@@ -69,22 +76,16 @@ export function RoomCard(props: RoomCardProps) {
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
 
       <Box
-        boxShadow={'md'}
+        boxShadow={'lg'}
         borderRadius="md"
+        border={props.selected ? 'solid 2px' : ''}
         borderLeft="solid 8px"
-        borderColor={props.selected ? boardColor : borderColor}
-        backgroundColor={backgroundColor}
-        my="1"
+        borderColor={props.selected ? boardColor : boardColor}
+        background={linearBGColor}
+        onClick={props.onEnter}
+        cursor="pointer"
       >
-        <Box
-          display="flex"
-          justifyContent="left"
-          width="100%"
-          cursor="pointer"
-          alignItems="baseline"
-          position="relative"
-          onClick={props.onEnter}
-        >
+        <Box display="flex" justifyContent="left" width="100%" position="relative">
           <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
             <Box display="flex" flexDirection={'column'} alignItems="center" ml="4" transform="translateY(-1px)">
               <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
@@ -96,22 +97,21 @@ export function RoomCard(props: RoomCardProps) {
             </Box>
 
             <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
-              <Box display="flex" alignItems={'center'}>
-                <Text fontSize="20px">{props.userCount}</Text>
-                <MdPerson fontSize="28px" />
-              </Box>
+              <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                {props.userCount}
+              </Text>
+
               <Tooltip
                 label={props.room.data.isPrivate ? 'Room is Locked' : 'Room is Unlocked'}
                 openDelay={400}
                 placement="top-start"
                 hasArrow
               >
-                <Box>{props.room.data.isPrivate ? <MdLock fontSize="24px" /> : <MdLockOpen fontSize="24px" />}</Box>
+                <Box pointerEvents="none">{props.room.data.isPrivate ? <MdLock fontSize="24px" /> : <MdLockOpen fontSize="24px" />}</Box>
               </Tooltip>
               <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
                 <IconButton
                   onClick={handleOnEdit}
-                  color={boardColor}
                   aria-label="Room Edit"
                   fontSize="3xl"
                   variant="unstlyed"
@@ -123,14 +123,12 @@ export function RoomCard(props: RoomCardProps) {
           </Box>
         </Box>
         {props.selected ? (
-          <Box>
-            <BoardList
-              onBoardClick={props.onBackClick}
-              onBackClick={() => props.onBackClick()}
-              selectedRoom={props.room}
-              boards={props.boards}
-            ></BoardList>
-          </Box>
+          <BoardList
+            onBoardClick={props.onBackClick}
+            onBackClick={() => props.onBackClick()}
+            selectedRoom={props.room}
+            boards={props.boards}
+          ></BoardList>
         ) : null}
       </Box>
     </>
