@@ -11,7 +11,7 @@ import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip 
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, StuckTypes, useUIStore } from '@sage3/frontend';
+import { PanelNames, StuckTypes, useHexColor, useUIStore } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -128,9 +128,13 @@ export function Panel(props: PanelProps) {
   const setShowActions = props.setOpened;
 
   // Theme
-  const panelBackground = useColorModeValue('gray.50', '#4A5568');
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+  const panelBackground = useColorModeValue('gray.50', 'gray.700');
+  const textColor = useColorModeValue('gray.800', 'gray.50');
+  const shadow = useColorModeValue('gray.500', 'gray.900');
+  const shadowColor = useHexColor(shadow);
+  console.log(shadowColor);
+  const grip = useColorModeValue('gray.200', 'gray.900');
+  const gripColor = useHexColor(grip);
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
@@ -272,11 +276,10 @@ export function Panel(props: PanelProps) {
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
-        style={{ maxWidth: w + 'px', zIndex: props.zIndex, overflow: 'hidden' }}
+        style={{ maxWidth: w + 'px', zIndex: props.zIndex }}
       >
         <Box
           display="flex"
-          boxShadow="base"
           transition="all .2s "
           bg={panelBackground}
           p="2"
@@ -286,6 +289,7 @@ export function Panel(props: PanelProps) {
           borderLeft={borderLeft}
           borderBottom={borderBottom}
           borderRight={borderRight}
+          boxShadow={`4px 4px 10px 0px ${shadowColor}`}
         >
           <Box
             width="25px"
