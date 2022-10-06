@@ -15,12 +15,10 @@ import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { useHexColor, useUser } from '../../../hooks';
 import { EditBoardModal } from '../modals/EditBoardModal';
 
-import { AppError, Applications } from '@sage3/applications/apps';
 import { App } from '@sage3/applications/schema';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
@@ -77,63 +75,63 @@ export function BoardCard(props: BoardCardProps) {
         onClose={onCloseEnter}
       />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
-      <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}>
-        <Box
-          display="flex"
-          justifyContent="left"
-          borderRadius="md"
-          height="60px"
-          my="1"
-          width="100%"
-          cursor="pointer"
-          alignItems="baseline"
-          position="relative"
-          onClick={handleEnterBoard}
-          transition="all 0.25s "
-          backgroundColor={backgroundColor}
-          border="1px solid"
-          borderColor={`${bColor + 'FF'}`}
-          _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
-        >
-          <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
-            <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
-              <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
-                {props.board.data.name}
-              </Text>
-              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
-                {props.board.data.description}
-              </Text>
-            </Box>
+      {/* <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}> */}
+      <Box
+        display="flex"
+        justifyContent="left"
+        borderRadius="md"
+        height="60px"
+        my="1"
+        width="100%"
+        cursor="pointer"
+        alignItems="baseline"
+        position="relative"
+        onClick={handleEnterBoard}
+        transition="all 0.25s "
+        backgroundColor={backgroundColor}
+        border="1px solid"
+        borderColor={`${bColor + 'FF'}`}
+        _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
+      >
+        <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
+          <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
+            <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
+              {props.board.data.name}
+            </Text>
+            <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
+              {props.board.data.description}
+            </Text>
+          </Box>
 
-            <Box display="flex" alignItems="center" justifyContent="right" mr="2">
-              <Tooltip label={props.userCount + ' users'} openDelay={400} placement="top-start" hasArrow>
-                <Text fontSize="22px" mr="2" transform="translateY(1px)">
-                  {props.userCount}
-                </Text>
-              </Tooltip>
-              <Tooltip
-                label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
-                openDelay={400}
-                placement="top-start"
-                hasArrow
-              >
-                <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
-              </Tooltip>
+          <Box display="flex" alignItems="center" justifyContent="right" mr="2">
+            <Tooltip label={props.userCount + ' users'} openDelay={400} placement="top-start" hasArrow>
+              <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                {props.userCount}
+              </Text>
+            </Tooltip>
+            <Tooltip
+              label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
+              openDelay={400}
+              placement="top-start"
+              hasArrow
+            >
+              <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
+            </Tooltip>
 
-              <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
-                <IconButton
-                  onClick={handleOpenSettings}
-                  aria-label="Board Edit"
-                  fontSize="3xl"
-                  variant="unstlyed"
-                  disabled={!yours}
-                  icon={<MdSettings />}
-                />
-              </Tooltip>
-            </Box>
+            <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
+              <IconButton
+                onClick={handleOpenSettings}
+                aria-label="Board Edit"
+                fontSize="3xl"
+                variant="unstlyed"
+                disabled={!yours}
+                icon={<MdSettings />}
+              />
+            </Tooltip>
           </Box>
         </Box>
-      </Tooltip>
+      </Box>
+      {/* </Tooltip> */}
     </>
   );
 }
