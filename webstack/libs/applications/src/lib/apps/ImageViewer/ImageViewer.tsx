@@ -119,9 +119,10 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Convert the ID to an asset
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.assetid);
-    if (myasset) {
-      setFile(myasset);
+    const isUUID = isUUIDv4(s.assetid);
+    if (isUUID) {
+      const appasset = assets.find((a) => a._id === s.assetid);
+      setFile(appasset);
     }
   }, [s.assetid, assets]);
 
@@ -135,9 +136,13 @@ function ToolbarComponent(props: App): JSX.Element {
                 const url = file?.data.file;
                 const filename = file?.data.originalfilename;
                 downloadFile('api/assets/static/' + url, filename);
+              } else {
+                const url = s.assetid;
+                const filename = s.assetid.split('/').pop();
+                const appasset = assets.find((a) => a.data.file === filename);
+                downloadFile(url, appasset?.data.originalfilename);
               }
-            }}
-          >
+            }}>
             <MdFileDownload />
           </Button>
         </Tooltip>
