@@ -148,7 +148,6 @@ export function BoardList(props: BoardListProps) {
                   onChange={handleFilterBoards}
                   placeholder="Search Boards..."
                   _placeholder={{ opacity: 1 }}
-                  color="white"
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
               </InputGroup>
