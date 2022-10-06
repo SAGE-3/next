@@ -32,7 +32,7 @@ class CodeCell(SmartBit):
     def get_kernels(self):
 
         available_kernels = self._jupyter_client.available_kernels
-        self.state.output = json.dumps(available_kernels)
+        self.state.kernels = json.dumps(available_kernels)
 
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
