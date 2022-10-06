@@ -5,11 +5,11 @@
       "version": "1.0.0-alpha.42",
       "notes": "Bug fixes and performances issues",
       "name": "Alpha release 1.0.0",
-      "darwin-intel": {
+      "darwinintel": {
         "pub_date": "2021-12-10T00:00:00.000Z",
         "url": "https://sage3.sagecommons.org/?download=next-macos-intel"
       },
-      "darwin-arm64": {
+      "darwinarm64": {
         "pub_date": "2021-12-10T00:00:00.000Z",
         "url": "https://sage3.sagecommons.org/?download=next-macos-arm"
       },

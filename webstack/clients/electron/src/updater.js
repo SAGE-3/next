@@ -39,6 +39,7 @@ async function checkForUpdates(server, opendialog = false) {
   try {
     const response = await fetch(update_url, update_server.startsWith('https') ? { agent } : undefined);
     const data = await response.json();
+    console.log('DATA', data.releases[0]);
     // if not the expected data structure, stop
     if (!data.currentRelease) return;
     const remotev = semver.parse(data.currentRelease);
@@ -88,9 +89,9 @@ function showUpdateDialog(current, release) {
           let platform = process.platform;
           if (platform === 'darwin') {
             if (process.arch === 'arm64') {
-              platform = 'darwin-arm64';
+              platform = 'darwinarm64';
             } else {
-              platform = 'darwin-intel';
+              platform = 'darwinintel';
             }
           }
           const dl = release[platform].url;
