@@ -1,21 +1,25 @@
 {
-  "currentRelease": "1.0.0-alpha.12",
+  "currentRelease": "1.0.0-alpha.42",
   "releases": [
     {
-      "version": "1.0.0-alpha.12",
+      "version": "1.0.0-alpha.42",
       "notes": "Bug fixes and performances issues",
       "name": "Alpha release 1.0.0",
-      "darwin": {
+      "darwin-intel": {
         "pub_date": "2021-12-10T00:00:00.000Z",
-        "url": "https://sage3.sagecommons.org?download=sage3-mac-version-1a12"
+        "url": "https://sage3.sagecommons.org/?download=next-macos-intel"
+      },
+      "darwin-arm64": {
+        "pub_date": "2021-12-10T00:00:00.000Z",
+        "url": "https://sage3.sagecommons.org/?download=next-macos-arm"
       },
       "win32": {
         "pub_date": "2021-12-10T00:00:00.000Z",
-        "url": "https://sage3.sagecommons.org?download=sage3-windows-version-1a12"
+        "url": "https://sage3.sagecommons.org/?download=next-windows"
       },
       "linux": {
         "pub_date": "2021-12-10T00:00:00.000Z",
-        "url": "https://sage3.sagecommons.org?download=sage3-linux-version-1a12"
+        "url": "https://sage3.sagecommons.org/?download=next-linux"
       }
     }
   ]

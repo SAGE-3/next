@@ -84,7 +84,16 @@ function showUpdateDialog(current, release) {
       if (response === 0) {
         setImmediate(() => {
           // pick the right url for current machine
-          const dl = release[process.platform].url;
+          console.log('update url', process.platform, process.arch);
+          let platform = process.platform;
+          if (platform === 'darwin') {
+            if (process.arch === 'arm64') {
+              platform = 'darwin-arm64';
+            } else {
+              platform = 'darwin-intel';
+            }
+          }
+          const dl = release[platform].url;
           // open web browser
           electron.shell.openExternal(dl);
         });
