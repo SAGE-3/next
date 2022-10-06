@@ -152,6 +152,14 @@ function AppComponent(props: App): JSX.Element {
     JSON.stringify(s.hostedApps),
   ]);
 
+  // Mock useEffect to fake run and idle status of app
+  useEffect(() => {
+    if (s.runStatus === true) {
+      setTimeout(function() { updateState(props._id, {runStatus: false});; }, 5000)
+      console.log("set runStatus false")
+    }
+  }, [s.runStatus])
+
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
@@ -213,6 +221,7 @@ function AppComponent(props: App): JSX.Element {
             <br/>
             hostedapps: {Object.values(s.hostedApps)}
             <br/>
+            runStatus: {s.runStatus.toString()}
 
           </Box>
         </Box>
