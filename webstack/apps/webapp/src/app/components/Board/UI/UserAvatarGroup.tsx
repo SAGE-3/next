@@ -36,6 +36,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
             })}
           </ul>
         }
+        placement="bottom"
       >
         <AvatarGroup max={6} size="sm">
           {presences.map((presence) => {
@@ -43,7 +44,14 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
             if (!user) return null;
             const color = useHexColor(user.data.color);
             return (
-              <Tooltip key={presence.data.userId} aria-label="username" hasArrow={true} placement="top-start" label={user.data.name}>
+              <Tooltip
+                key={presence.data.userId}
+                aria-label="username"
+                hasArrow={true}
+                placement="top"
+                label={user.data.name}
+                shouldWrapChildren={true}
+              >
                 <Avatar
                   name={user.data.name}
                   getInitials={initials}

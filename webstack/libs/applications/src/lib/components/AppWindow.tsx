@@ -12,7 +12,7 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys, useHexColor } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -45,6 +45,7 @@ export function AppWindow(props: WindowProps) {
   // Users
   const users = useUsersStore((state) => state.users);
   const owner = users.find((el) => el._id === props.app._createdBy);
+  const ownercolor = useHexColor(owner ? owner?.data.color : 'orange');
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -316,12 +317,10 @@ export function AppWindow(props: WindowProps) {
             <Avatar
               name={owner?.data.name}
               getInitials={initials}
-              // src={owner?.data.profilePicture}
               mr={1}
-              bg={owner ? owner.data.color : 'orange'}
+              bg={ownercolor}
               borderRadius={'100%'}
-              textShadow={'0 0 2px #000'}
-              color={'white'}
+              color="white"
               size={'2xs'}
               showBorder={true}
               borderWidth={'0.5px'}
