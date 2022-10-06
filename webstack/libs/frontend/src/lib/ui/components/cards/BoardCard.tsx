@@ -93,7 +93,7 @@ export function BoardCard(props: BoardCardProps) {
           backgroundColor={backgroundColor}
           border="1px solid"
           borderColor={`${bColor + 'FF'}`}
-          _hover={{ boxShadow: 'md', borderColor: bColor + '00' }}
+          _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
         >
           <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
             <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
@@ -123,7 +123,6 @@ export function BoardCard(props: BoardCardProps) {
               <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
                 <IconButton
                   onClick={handleOpenSettings}
-                  color={boardColor}
                   aria-label="Board Edit"
                   fontSize="3xl"
                   variant="unstlyed"
@@ -153,7 +152,8 @@ export function BoardPreview(props: BoardPreviewProps) {
   const boardHeight = useUIStore((state) => state.boardHeight);
   const boardWidth = useUIStore((state) => state.boardWidth);
 
-  const borderWidth = 4;
+  const borderWidth = 2;
+  const borderColor = useHexColor(props.board.data.color);
   const maxWidth = 600 - borderWidth * 2;
   const maxHeight = 300 - borderWidth * 2;
 
@@ -182,7 +182,9 @@ export function BoardPreview(props: BoardPreviewProps) {
       pointerEvents="none"
       overflow="hidden"
       transform={`translateX(-${maxWidth / 4}px)`}
-      boxShadow="xl"
+      boxShadow="md"
+      border={`${borderWidth}px solid`}
+      borderColor={borderColor}
     >
       <Box width={maxWidth + 'px'} height={maxHeight + 'px'} transform={`scale(${scale})`} transformOrigin="top left">
         {apps.map((app) => {
