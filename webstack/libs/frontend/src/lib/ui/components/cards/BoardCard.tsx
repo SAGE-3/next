@@ -15,12 +15,10 @@ import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { useHexColor, useUser } from '../../../hooks';
 import { EditBoardModal } from '../modals/EditBoardModal';
 
-import { AppError, Applications } from '@sage3/applications/apps';
 import { App } from '@sage3/applications/schema';
 import { useAppStore, useUIStore } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
@@ -77,63 +75,63 @@ export function BoardCard(props: BoardCardProps) {
         onClose={onCloseEnter}
       />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
-      <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}>
-        <Box
-          display="flex"
-          justifyContent="left"
-          borderRadius="md"
-          height="60px"
-          my="1"
-          width="100%"
-          cursor="pointer"
-          alignItems="baseline"
-          position="relative"
-          onClick={handleEnterBoard}
-          transition="all 0.25s "
-          backgroundColor={backgroundColor}
-          border="1px solid"
-          borderColor={`${bColor + 'FF'}`}
-          _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
-        >
-          <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
-            <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
-              <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
-                {props.board.data.name}
-              </Text>
-              <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
-                {props.board.data.description}
-              </Text>
-            </Box>
+      {/* <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}> */}
+      <Box
+        display="flex"
+        justifyContent="left"
+        borderRadius="md"
+        height="60px"
+        my="1"
+        width="100%"
+        cursor="pointer"
+        alignItems="baseline"
+        position="relative"
+        onClick={handleEnterBoard}
+        transition="all 0.25s "
+        backgroundColor={backgroundColor}
+        border="1px solid"
+        borderColor={`${bColor + 'FF'}`}
+        _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
+      >
+        <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
+          <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
+            <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
+              {props.board.data.name}
+            </Text>
+            <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
+              {props.board.data.description}
+            </Text>
+          </Box>
 
-            <Box display="flex" alignItems="center" justifyContent="right" mr="2">
-              <Tooltip label={props.userCount + ' users'} openDelay={400} placement="top-start" hasArrow>
-                <Text fontSize="22px" mr="2" transform="translateY(1px)">
-                  {props.userCount}
-                </Text>
-              </Tooltip>
-              <Tooltip
-                label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
-                openDelay={400}
-                placement="top-start"
-                hasArrow
-              >
-                <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
-              </Tooltip>
+          <Box display="flex" alignItems="center" justifyContent="right" mr="2">
+            <Tooltip label={props.userCount + ' users'} openDelay={400} placement="top-start" hasArrow>
+              <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                {props.userCount}
+              </Text>
+            </Tooltip>
+            <Tooltip
+              label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
+              openDelay={400}
+              placement="top-start"
+              hasArrow
+            >
+              <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
+            </Tooltip>
 
-              <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
-                <IconButton
-                  onClick={handleOpenSettings}
-                  aria-label="Board Edit"
-                  fontSize="3xl"
-                  variant="unstlyed"
-                  disabled={!yours}
-                  icon={<MdSettings />}
-                />
-              </Tooltip>
-            </Box>
+            <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
+              <IconButton
+                onClick={handleOpenSettings}
+                aria-label="Board Edit"
+                fontSize="3xl"
+                variant="unstlyed"
+                disabled={!yours}
+                icon={<MdSettings />}
+              />
+            </Tooltip>
           </Box>
         </Box>
-      </Tooltip>
+      </Box>
+      {/* </Tooltip> */}
     </>
   );
 }
@@ -151,11 +149,13 @@ export function BoardPreview(props: BoardPreviewProps) {
 
   const boardHeight = useUIStore((state) => state.boardHeight);
   const boardWidth = useUIStore((state) => state.boardWidth);
+  const aspectRatio = boardWidth / boardHeight;
 
   const borderWidth = 2;
   const borderColor = useHexColor(props.board.data.color);
-  const maxWidth = 600 - borderWidth * 2;
-  const maxHeight = 300 - borderWidth * 2;
+
+  let maxWidth = 600;
+  let maxHeight = maxWidth / aspectRatio;
 
   const scale = Math.min(maxWidth / boardWidth, maxHeight / boardHeight);
 
@@ -180,28 +180,56 @@ export function BoardPreview(props: BoardPreviewProps) {
       backgroundColor={backgroundColor}
       borderRadius="md"
       pointerEvents="none"
-      overflow="hidden"
+      // overflow="hidden"
       transform={`translateX(-${maxWidth / 4}px)`}
       boxShadow="md"
       border={`${borderWidth}px solid`}
       borderColor={borderColor}
     >
-      <Box width={maxWidth + 'px'} height={maxHeight + 'px'} transform={`scale(${scale})`} transformOrigin="top left">
-        {apps.map((app) => {
-          const Component = Applications[app.data.type].AppComponent;
-          return (
-            // Wrap the components in an errorboundary to protect the board from individual app errors
-            <ErrorBoundary
-              key={app._id}
-              fallbackRender={({ error, resetErrorBoundary }) => (
-                <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
-              )}
-            >
-              <Component key={app._id} {...app}></Component>
-            </ErrorBoundary>
-          );
-        })}
-      </Box>
+      {apps.map((app) => {
+        const left = app.data.position.x * scale;
+        const top = app.data.position.y * scale;
+        const width = app.data.size.width * scale;
+        const height = app.data.size.height * scale;
+        return (
+          <Box
+            position="absolute"
+            left={left + 'px'}
+            top={top + 'px'}
+            width={width + 'px'}
+            height={height + 'px'}
+            transition={'all .2s'}
+            _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+            borderWidth="1px"
+            borderStyle="solid"
+            borderColor={borderColor}
+            backgroundColor={'gray.700'}
+            borderRadius="md"
+            cursor="pointer"
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Box backgroundColor="gray.700" p="1" borderRadius="md">
+              <Text fontSize="2xs" color="white">
+                {app.data.type}
+              </Text>
+            </Box>
+          </Box>
+        );
+        // const Component = Applications[app.data.type].AppComponent;
+        // return (
+        //   // Wrap the components in an errorboundary to protect the board from individual app errors
+        //   <ErrorBoundary
+        //     key={app._id}
+        //     fallbackRender={({ error, resetErrorBoundary }) => (
+        //       <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+        //     )}
+        //   >
+        //     <Component key={app._id} {...app}></Component>
+        //   </ErrorBoundary>
+        // );
+      })}
     </Box>
   );
 }
