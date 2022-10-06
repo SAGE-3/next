@@ -52,7 +52,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
     async function attemptToEnter() {
       if (props.isOpen && !props.isPrivate) {
         setLoading(true);
-        await timeout(1000);
+        await timeout(600);
         navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
       }
     }
@@ -68,7 +68,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
     // compare the hashed keys
     if (key === props.privatePin) {
       setLoading(true);
-      await timeout(1000);
+      await timeout(600);
       navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
     } else {
       toast({
