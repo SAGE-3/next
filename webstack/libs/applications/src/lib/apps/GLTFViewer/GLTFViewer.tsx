@@ -5,10 +5,9 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Box } from '@chakra-ui/react';
 import { Canvas, useLoader, useThree, useFrame } from '@react-three/fiber';
-import { Group } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as THREE from 'three';
@@ -20,16 +19,37 @@ import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
+type CameraProps = {
+  id: string;
+  // o: { p: number; a: number; d: number };
+};
+
 /**
  * Orbit controller
  */
-const CameraController = () => {
+const CameraController = (props: CameraProps) => {
+  const [params, setParams] = useState({ p: 0, a: 0, d: 0 })
   const { camera, gl } = useThree();
+  const updateState = useAppStore((state) => state.updateState);
+
+  useFrame(() => {
+    console.log('Frame', params.p, params.a, params.d);
+    updateState(props.id, { orientation: params });
+  });
+
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
     controls.minDistance = 2;
     controls.maxDistance = 200;
     controls.zoomO = 4;
+
+    controls.addEventListener("change", (e: any) => {
+      const p = controls.getPolarAngle();
+      const a = controls.getAzimuthalAngle();
+      const d = controls.getDistance();
+      setParams({ p, a, d });
+    });
+
     return () => {
       controls.dispose();
     };
@@ -37,11 +57,37 @@ const CameraController = () => {
   return null;
 };
 
+function FrameLimiter({ limit = 10 }) {
+  const { invalidate, clock } = useThree();
+  useEffect(() => {
+    let delta = 0;
+    const interval = 1 / limit;
+    const update = () => {
+      requestAnimationFrame(update);
+      delta += clock.getDelta();
+      if (delta > interval) {
+        invalidate();
+        delta = delta % interval;
+      }
+    }
+    update();
+  }, [])
+  return null;
+}
+
 /**
  * GLTF loader
  */
 function Model3D({ url }: { url: string }) {
   const gltf = useLoader(GLTFLoader, url);
+  // const mesh = useRef<THREE.Group>();
+  // useFrame(() => {
+  //   if (mesh.current) {
+  //     mesh.current.rotation.x = mesh.current.rotation.y += 0.01;
+  //   }
+  // });
+  // return <primitive ref={mesh} object={gltf.scene} />;
+
   return <primitive object={gltf.scene} />;
 }
 
@@ -55,6 +101,12 @@ function AppComponent(props: App): JSX.Element {
   // Get the asset
   const [file, setFile] = useState<Asset>();
   const [url, setUrl] = useState<string>('');
+  const [orientation, setOrientation] = useState({ p: s.p, a: s.a, d: s.d });
+
+  useEffect(() => {
+    console.log('Got>', s.p, s.a, s.d);
+    setOrientation({ p: s.p, a: s.a, d: s.d });
+  }, [s.a, s.p, s.d]);
 
   // Board scale
   const scale = useUIStore((state) => state.scale);
@@ -79,9 +131,11 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box bgColor="rgb{156,162,146}" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px">
-        <Canvas style={{ height: props.data.size.height / scale + 'px', width: props.data.size.width / scale + 'px' }}>
-          <CameraController />
+      <Box bgColor='rgb{156,162,146}' w={'100%'} h={'100%'} p={0} borderRadius='0 0 6px 6px'>
+        <Canvas style={{ height: props.data.size.height / scale + 'px', width: props.data.size.width / scale + 'px' }}
+          shadows={false} dpr={2} frameloop={'demand'} gl={{ powerPreference: "low-power", antialias: false }}>
+          <CameraController id={props._id} />
+          <FrameLimiter limit={2} />
           <ambientLight />
           <spotLight intensity={0.3} position={[5, 10, 50]} />
           <primitive object={new THREE.AxesHelper(5)} />
