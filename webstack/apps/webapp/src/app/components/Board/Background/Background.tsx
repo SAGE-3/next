@@ -12,7 +12,7 @@ import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis }
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF } from '@sage3/shared';
+import { getMime, isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -49,7 +49,9 @@ export function Background(props: BackgroundProps) {
       // Add each file to the form
       const fileListLength = input.length;
       for (let i = 0; i < fileListLength; i++) {
-        if (isValid(input[i].type)) {
+        // check the mime type we got from the browser, and check with mime lib. if needed
+        const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
+        if (isValid(filetype)) {
           fd.append('files', input[i]);
           if (filenames) filenames += ', ' + input[i].name;
           else filenames = input[i].name;
