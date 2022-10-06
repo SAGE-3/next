@@ -9,8 +9,7 @@
 import { useEffect } from 'react';
 import { Avatar, Box, Tooltip } from '@chakra-ui/react';
 
-import { useUIStore, useUser, initials, StuckTypes } from '@sage3/frontend';
-import { sageColorByName } from '@sage3/shared';
+import { useUIStore, useUser, initials, StuckTypes, useHexColor } from '@sage3/frontend';
 import { UserAvatarGroup } from '../../UserAvatarGroup';
 import { Panel } from '../Panel';
 
@@ -46,6 +45,7 @@ export function UsersPanel(props: AvatarProps) {
 
   // User information
   const { user } = useUser();
+  const color = useHexColor(user?.data.color || 'gray');
 
   return (
     <Panel
@@ -71,7 +71,7 @@ export function UsersPanel(props: AvatarProps) {
             pointerEvents={'all'}
             name={user?.data.name}
             getInitials={initials}
-            backgroundColor={user ? sageColorByName(user.data.color) : ''}
+            backgroundColor={color}
             color="white"
             border="2px solid white"
             mr={1}

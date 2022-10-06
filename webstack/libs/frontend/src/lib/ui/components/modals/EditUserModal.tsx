@@ -21,12 +21,15 @@ import {
   Button,
   Text,
   ButtonGroup,
+  useColorMode,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { useAuth } from '@sage3/frontend';
 import { useUser } from '../../../hooks';
 import { SAGEColors } from '@sage3/shared';
+import { ColorPicker } from '../general';
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -45,6 +48,8 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (color: string) => setColor(color);
+
+  const modalBackground = useColorModeValue('white', 'gray.700');
 
   // the input element
   // When the modal panel opens, select the text for quick replacing
@@ -113,24 +118,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <ButtonGroup isAttached size="xs" colorScheme="teal" mt="6">
-            {/* Colors */}
-            {SAGEColors.map((s3color) => {
-              return (
-                <Button
-                  key={s3color.name}
-                  value={s3color.name}
-                  bgColor={s3color.value}
-                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color.value, opacity: 0.9 }}
-                  size="md"
-                  onClick={() => handleColorChange(s3color.name)}
-                  border={s3color.name === color ? '3px solid white' : 'none'}
-                  width="43px"
-                />
-              );
-            })}
-          </ButtonGroup>
+          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
           <Text mt={3} fontSize={'md'}>
             Authentication: <em>{auth?.provider}</em>
           </Text>

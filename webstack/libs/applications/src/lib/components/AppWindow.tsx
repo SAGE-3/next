@@ -12,8 +12,7 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys } from '@sage3/frontend';
-import { sageColorByName } from '@sage3/shared';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys, useHexColor } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -46,6 +45,7 @@ export function AppWindow(props: WindowProps) {
   // Users
   const users = useUsersStore((state) => state.users);
   const owner = users.find((el) => el._id === props.app._createdBy);
+  const ownercolor = useHexColor(owner ? owner?.data.color : 'orange');
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -204,7 +204,7 @@ export function AppWindow(props: WindowProps) {
 
   // Bring the app forward
   function bringForward() {
-     if (!props.lockToBackground) {
+    if (!props.lockToBackground) {
       // Raise down
       apps.forEach((a) => {
         if (a.data.raised) update(a._id, { raised: false });
@@ -232,12 +232,12 @@ export function AppWindow(props: WindowProps) {
         boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
-        zIndex: (props.lockToBackground) ? 0 : myZ,
+        zIndex: props.lockToBackground ? 0 : myZ,
         pointerEvents: spacebarPressed ? 'none' : 'auto',
       }}
       // minimum size of the app: 200 px
       minWidth={200}
-      minHeight={200}
+      minHeight={100}
       // Scaling of the board
       scale={scale}
       // resize and move snapping to grid
@@ -317,12 +317,10 @@ export function AppWindow(props: WindowProps) {
             <Avatar
               name={owner?.data.name}
               getInitials={initials}
-              // src={owner?.data.profilePicture}
               mr={1}
-              bg={owner ? sageColorByName(owner.data.color) : 'orange'}
+              bg={ownercolor}
               borderRadius={'100%'}
-              textShadow={'0 0 2px #000'}
-              color={'white'}
+              color="white"
               size={'2xs'}
               showBorder={true}
               borderWidth={'0.5px'}

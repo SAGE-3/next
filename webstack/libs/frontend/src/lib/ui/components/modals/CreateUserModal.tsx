@@ -25,8 +25,9 @@ import {
 } from '@chakra-ui/react';
 import { MdPerson, MdEmail } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
-import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+import { SAGEColors } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
+import { ColorPicker } from '../general';
 
 type CreateUserProps = {
   createUser: (user: UserSchema) => void;
@@ -121,24 +122,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
           <FormControl isRequired mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
-            <ButtonGroup isAttached size="xs" colorScheme="teal" py="2">
-              {/* Colors */}
-              {SAGEColors.map((s3color) => {
-                return (
-                  <Button
-                    key={s3color.name}
-                    value={s3color.name}
-                    bgColor={s3color.value}
-                    _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                    _active={{ background: s3color.value, opacity: 0.9 }}
-                    size="md"
-                    onClick={() => handleColorChange(s3color.name)}
-                    border={s3color.name === color ? '3px solid white' : 'none'}
-                    width="43px"
-                  />
-                );
-              })}
-            </ButtonGroup>
+            <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
           </FormControl>
           <Text mt={3} fontSize={'md'}>
             Authentication: <em>{auth.auth?.provider}</em>

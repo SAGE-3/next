@@ -10,10 +10,9 @@ import { useEffect } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
 import { MdFullscreen, MdGridView, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
 
-import { StuckTypes, useAppStore, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { StuckTypes, useAppStore, useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
-import { sageColorByName } from '@sage3/shared';
 
 export interface NavProps {
   fitApps: () => void;
@@ -65,9 +64,9 @@ export function NavigationPanel(props: NavProps) {
     }
   }, [controllerPosition]);
 
-  const backgroundColor = useColorModeValue('gray.200', 'gray.600');
-  const borderColor = useColorModeValue('teal.400', 'teal.600');
-  const appBorderColor = useColorModeValue('teal.600', 'teal.400');
+  const backgroundColor = useColorModeValue('gray.100', 'gray.600');
+  const borderColor = useColorModeValue('teal.500', 'teal.500');
+  const appBorderColor = useColorModeValue('teal.600', 'teal.100');
 
   const moveToApp = (app: App) => {
     // set the app as selected
@@ -166,6 +165,7 @@ export function NavigationPanel(props: NavProps) {
                       borderStyle="solid"
                       borderColor={appBorderColor}
                       borderRadius="sm"
+                      cursor="pointer"
                     ></Box>
                   </Tooltip>
                 );
@@ -177,6 +177,7 @@ export function NavigationPanel(props: NavProps) {
                 const u = users.find((el) => el._id === presence.data.userId);
                 if (!u) return null;
                 const self = u._id === user?._id;
+                const color = useHexColor(u.data.color);
                 return (
                   <Box
                     key={presence.data.userId}
@@ -190,7 +191,7 @@ export function NavigationPanel(props: NavProps) {
                       zIndex: 100000,
                     }}
                     borderRadius="50%"
-                    backgroundColor={self ? 'white' : sageColorByName(u.data.color)}
+                    backgroundColor={self ? 'white' : color}
                     width={self ? '6px' : '4px'}
                     height={self ? '6px' : '4px'}
                   ></Box>

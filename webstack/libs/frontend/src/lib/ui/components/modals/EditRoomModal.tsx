@@ -20,7 +20,7 @@ import {
   Button,
   Box,
   ButtonGroup,
-  Checkbox
+  Checkbox,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
@@ -30,6 +30,7 @@ import { Room, RoomSchema } from '@sage3/shared/types';
 import { useRoomStore } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { useData } from 'libs/frontend/src/lib/hooks';
+import { ColorPicker } from '../general';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -169,24 +170,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal" py="2">
-            {/* Colors */}
-            {SAGEColors.map((s3color) => {
-              return (
-                <Button
-                  key={s3color.name}
-                  value={s3color.name}
-                  bgColor={s3color.value}
-                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color.value, opacity: 0.9 }}
-                  size="md"
-                  onClick={() => handleColorChange(s3color.name)}
-                  border={s3color.name === color ? '3px solid white' : 'none'}
-                  width="43px"
-                />
-              );
-            })}
-          </ButtonGroup>
+          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
             Room Listed Publicly
@@ -207,15 +191,13 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
-
         </ModalBody>
         <ModalFooter pl="4" pr="8" mb="2">
           <Box display="flex" justifyContent="space-between" width="100%">
             <Button colorScheme="red" onClick={handleDeleteRoom} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit}
-              disabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description || !valid}>
               Update
             </Button>
           </Box>

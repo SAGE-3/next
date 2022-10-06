@@ -8,11 +8,11 @@
 
 import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis } from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF } from '@sage3/shared';
+import { getMime, isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -37,7 +37,8 @@ export function Background(props: BackgroundProps) {
   const scale = useUIStore((state) => state.scale);
 
   // Chakra Color Mode for grid color
-  const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
+  const gc = useColorModeValue('gray.100', 'gray.800');
+  const gridColor = useHexColor(gc);
 
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {
@@ -48,7 +49,9 @@ export function Background(props: BackgroundProps) {
       // Add each file to the form
       const fileListLength = input.length;
       for (let i = 0; i < fileListLength; i++) {
-        if (isValid(input[i].type)) {
+        // check the mime type we got from the browser, and check with mime lib. if needed
+        const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
+        if (isValid(filetype)) {
           fd.append('files', input[i]);
           if (filenames) filenames += ', ' + input[i].name;
           else filenames = input[i].name;
@@ -117,7 +120,8 @@ export function Background(props: BackgroundProps) {
   function OpenFile(fileID: string, fileType: string, xDrop: number, yDrop: number) {
     if (!user) return;
     const w = 400;
-    if (isGIF(fileType)) {      // Look for the file in the asset store
+    if (isGIF(fileType)) {
+      // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {
           createApp(
@@ -274,7 +278,16 @@ export function Background(props: BackgroundProps) {
             aspectRatio = page[0].width / page[0].height;
           }
           createApp(
-            setupApp('PDFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
+            setupApp(
+              'PDFViewer',
+              xDrop,
+              yDrop,
+              props.roomId,
+              props.boardId,
+              user._id,
+              { w: 400, h: 400 / aspectRatio },
+              { assetid: fileID }
+            )
           );
         }
       });
@@ -321,12 +334,15 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={`50px 50px`}
-      backgroundImage={`linear-gradient(to right, ${gridColor} ${2 / scale}px, transparent ${2 / scale}px),
-               linear-gradient(to bottom, ${gridColor} ${2 / scale}px, transparent ${2 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px),
+               linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
+      onScroll={(evt => {
+        console.log('onScroll> event', evt);
+      })}
       onWheel={(evt: any) => {
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };

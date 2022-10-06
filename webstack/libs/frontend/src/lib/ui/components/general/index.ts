@@ -6,4 +6,4 @@
  *
  */
 
-export * from './theme';
+export * from './ColorPicker';

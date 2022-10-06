@@ -8,8 +8,7 @@
 
 import { Avatar, Box, Tooltip, AvatarGroup } from '@chakra-ui/react';
 
-import { usePresenceStore, useUser, useUsersStore, initials } from '@sage3/frontend';
-import { sageColorByName } from '@sage3/shared';
+import { usePresenceStore, useUser, useUsersStore, initials, useHexColor } from '@sage3/frontend';
 
 type AvatarGroupProps = {
   boardId: string;
@@ -27,27 +26,48 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
 
   return (
     <Box display="flex" flexDirection="row" alignItems="baseline">
-      <AvatarGroup max={6} size="sm">
-        {presences.map((presence) => {
-          const user = users.find((el) => el._id === presence._id);
-          if (!user) return null;
-          return (
-            <Tooltip key={presence.data.userId} aria-label="username" hasArrow={true} placement="top-start" label={user.data.name}>
-              <Avatar
-                name={user.data.name}
-                getInitials={initials}
-                backgroundColor={sageColorByName(user.data.color || 'orange')}
-                size="sm"
-                mx={1}
-                color="white"
-                showBorder={true}
-                borderWidth={'1px'}
-                borderColor="whiteAlpha.600"
-              />
-            </Tooltip>
-          );
-        })}
-      </AvatarGroup>
+      <Tooltip
+        label={
+          <ul>
+            {presences.map((presence) => {
+              const user = users.find((el) => el._id === presence._id);
+              if (!user) return null;
+              return <li>{user.data.name}</li>;
+            })}
+          </ul>
+        }
+        placement="bottom"
+      >
+        <AvatarGroup max={6} size="sm">
+          {presences.map((presence) => {
+            const user = users.find((el) => el._id === presence._id);
+            if (!user) return null;
+            const color = useHexColor(user.data.color);
+            return (
+              <Tooltip
+                key={presence.data.userId}
+                aria-label="username"
+                hasArrow={true}
+                placement="top"
+                label={user.data.name}
+                shouldWrapChildren={true}
+              >
+                <Avatar
+                  name={user.data.name}
+                  getInitials={initials}
+                  backgroundColor={color || 'orange'}
+                  size="sm"
+                  mx={1}
+                  color="white"
+                  showBorder={true}
+                  borderWidth={'1px'}
+                  borderColor="whiteAlpha.600"
+                />
+              </Tooltip>
+            );
+          })}
+        </AvatarGroup>
+      </Tooltip>
     </Box>
   );
 }

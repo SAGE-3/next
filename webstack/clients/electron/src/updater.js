@@ -39,6 +39,7 @@ async function checkForUpdates(server, opendialog = false) {
   try {
     const response = await fetch(update_url, update_server.startsWith('https') ? { agent } : undefined);
     const data = await response.json();
+    console.log('DATA', data.releases[0]);
     // if not the expected data structure, stop
     if (!data.currentRelease) return;
     const remotev = semver.parse(data.currentRelease);
@@ -84,7 +85,16 @@ function showUpdateDialog(current, release) {
       if (response === 0) {
         setImmediate(() => {
           // pick the right url for current machine
-          const dl = release[process.platform].url;
+          console.log('update url', process.platform, process.arch);
+          let platform = process.platform;
+          if (platform === 'darwin') {
+            if (process.arch === 'arm64') {
+              platform = 'darwinarm64';
+            } else {
+              platform = 'darwinintel';
+            }
+          }
+          const dl = release[platform].url;
           // open web browser
           electron.shell.openExternal(dl);
         });

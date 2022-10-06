@@ -17,7 +17,7 @@ import { AppWindow } from '../../components';
 
 // SAGE imports
 import { useAppStore, useUser, useTwilioStore, useUsersStore } from '@sage3/frontend';
-import { genId, sageColorByName } from '@sage3/shared';
+import { genId } from '@sage3/shared';
 
 // Twilio Imports
 import { LocalVideoTrack } from 'twilio-video';
@@ -175,7 +175,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color={sageColorByName('red')}>
+        <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color="red">
           {expirationTime}
         </Text>
         <Box display="flex" flexDir="column" borderRadius="0 0 6px 6px">
