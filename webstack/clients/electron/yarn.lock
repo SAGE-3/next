@@ -711,10 +711,10 @@ electron-winstaller@latest:
     lodash.template "^4.2.2"
     temp "^0.9.0"
 
-electron@^21.0.0:
-  version "21.0.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-21.0.0.tgz#d4f23c9cf457e6b64d4158f2c21f75c98b241c81"
-  integrity sha512-7HGxgaH0goYsq5m23rbLuKNwxOP4wS/JTNVTYt4n+a4sPkxI97Fcngh55pHaIvvMO3jKZ9yzll7L/D1dHwMdLA==
+electron@^21.1.0:
+  version "21.1.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-21.1.0.tgz#7272dfe1a5d6a00fd58d17b26215e541b6ff10dd"
+  integrity sha512-CM5VZpZPtAoPgTPcmEbRaZWXlxGuD5a5DTeAwm0F0F6/k6R3HZAi8vZnE77gwuHK/Qqcinw4/MAbiCwAKh2W+g==
   dependencies:
     "@electron/get" "^1.14.1"
     "@types/node" "^16.11.26"
