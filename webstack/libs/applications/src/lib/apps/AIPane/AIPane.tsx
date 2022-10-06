@@ -155,13 +155,22 @@ function AppComponent(props: App): JSX.Element {
   // Mock useEffect to fake run and idle status of app
   useEffect(() => {
     if (s.runStatus === true) {
-      setTimeout(function() { updateState(props._id, {runStatus: false});; }, 5000)
+      setTimeout(function () {
+        updateState(props._id, {runStatus: false});
+        ;
+      }, 5000)
       console.log("set runStatus false")
     }
   }, [s.runStatus])
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
+  }
+
+  function newAppAdded() {
+    updateState(props._id, {
+      executeInfo: {executeFunc: "new_app_added", params: {}},
+    });
   }
 
   return (
@@ -221,7 +230,7 @@ function AppComponent(props: App): JSX.Element {
             <br/>
             hostedapps: {Object.values(s.hostedApps)}
             <br/>
-            runStatus: {s.runStatus.toString()}
+            supported_tasks: {JSON.stringify(s.supported_tasks)}
 
           </Box>
         </Box>
@@ -253,6 +262,13 @@ function ToolbarComponent(props: App): JSX.Element {
   function runFunction() {
     updateState(props._id, {
       executeInfo: {executeFunc: "run_function", params: {}},
+    });
+    // newAppAdded()
+  }
+
+  function newAppAdded() {
+    updateState(props._id, {
+      executeInfo: {executeFunc: "new_app_added", params: {}},
     });
   }
 

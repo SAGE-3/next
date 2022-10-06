@@ -74,11 +74,6 @@ class AIPane(SmartBit):
         print(self.state.hostedApps.values())
         self.state.executeInfo.executeFunc = ""
         self.send_updates()
-    #     self.done_function()
-    #
-    # def done_function(self):
-    #     time.sleep(5)
-    #     self.state.runStatus = False
 
     def test_function(self):
         print("++++++++++++++++++++++++++++++")
