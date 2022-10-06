@@ -123,18 +123,17 @@ export function HomePage() {
       </Box>
 
       {/* Middle Section */}
-      <Box
-        display="flex"
-        flexDirection="row"
-        flexGrow={1}
-        width="100%"
-        justifyContent={'center'}
-        minHeight={0}
-        px="2"
-        alignItems={'center'}
-      >
+      <Box display="flex" flexDirection="row" flexGrow={1} justifyContent={'center'} minHeight={0} width="1200px">
         {roomsFetched ? (
-          <Box display="flex" flexDirection="column" justifyContent={'center'} height="75vh" width="75vw">
+          <Box
+            display="flex"
+            flexDirection="column"
+            justifyContent={'center'}
+            alignItems="flex-start"
+            height="100%"
+            width="100%"
+            maxWidth="1200"
+          >
             <RoomList
               selectedRoom={selectedRoom}
               onRoomClick={handleRoomClick}
@@ -145,7 +144,9 @@ export function HomePage() {
             ></RoomList>
           </Box>
         ) : (
-          <Progress isIndeterminate width="50vw" borderRadius="md" />
+          <Box display="flex" flexDirection="column" justifyContent={'center'} alignItems="center" height="100%" width="100%">
+            <Progress isIndeterminate width="100%" borderRadius="md" />
+          </Box>
         )}
       </Box>
 

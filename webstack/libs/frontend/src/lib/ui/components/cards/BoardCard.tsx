@@ -103,10 +103,11 @@ export function BoardCard(props: BoardCardProps) {
             </Box>
 
             <Box display="flex" alignItems="center" justifyContent="right" mr="2">
-              <Box display="flex" alignItems={'center'}>
-                <Text fontSize="xl">{props.userCount}</Text>
-                <MdPerson fontSize="22px" />
-              </Box>
+              <Tooltip label={props.userCount + ' users'} openDelay={400} placement="top-start" hasArrow>
+                <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                  {props.userCount}
+                </Text>
+              </Tooltip>
               <Tooltip
                 label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
                 openDelay={400}
