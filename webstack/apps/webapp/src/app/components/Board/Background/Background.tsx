@@ -340,6 +340,9 @@ export function Background(props: BackgroundProps) {
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
+      onScroll={(evt => {
+        console.log('onScroll> event', evt);
+      })}
       onWheel={(evt: any) => {
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
