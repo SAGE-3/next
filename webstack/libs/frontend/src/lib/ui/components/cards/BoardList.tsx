@@ -104,7 +104,12 @@ export function BoardList(props: BoardListProps) {
   // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
-    const filBoards = props.boards.filter((board) => board.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
+    const filBoards = props.boards.filter((board) =>
+      // search board name 
+      board.data.name.toLowerCase().includes(event.target.value.toLowerCase()) ||
+      // search description
+      board.data.description.toLowerCase().includes(event.target.value.toLowerCase())
+    );
     setFilterBoards(filBoards);
     if (event.target.value === '') {
       setFilterBoards(null);
@@ -146,7 +151,7 @@ export function BoardList(props: BoardListProps) {
                   value={search}
                   variant="outline"
                   onChange={handleFilterBoards}
-                  placeholder="Search Boards..."
+                  placeholder="Find Board..."
                   _placeholder={{ opacity: 1 }}
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />

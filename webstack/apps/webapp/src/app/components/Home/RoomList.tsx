@@ -90,7 +90,12 @@ export function RoomList(props: RoomListProps) {
   // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
-    const filBoards = props.rooms.filter((room) => room.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
+    const filBoards = props.rooms.filter((room) =>
+      // search in room name
+      room.data.name.toLowerCase().includes(event.target.value.toLowerCase()) ||
+      // search in room description
+      room.data.description.toLowerCase().includes(event.target.value.toLowerCase())
+    );
     setFilterBoards(filBoards);
     if (event.target.value === '') {
       setFilterBoards(null);
@@ -128,7 +133,7 @@ export function RoomList(props: RoomListProps) {
                   value={search}
                   variant="outline"
                   onChange={handleFilterBoards}
-                  placeholder="Search Rooms..."
+                  placeholder="Find Room..."
                   _placeholder={{ opacity: 1 }}
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />{' '}

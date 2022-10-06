@@ -237,7 +237,7 @@ export function AppWindow(props: WindowProps) {
       }}
       // minimum size of the app: 200 px
       minWidth={200}
-      minHeight={200}
+      minHeight={100}
       // Scaling of the board
       scale={scale}
       // resize and move snapping to grid
