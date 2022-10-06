@@ -6,7 +6,7 @@
  *
  */
 
-import { Avatar, Box, Tooltip, AvatarGroup } from '@chakra-ui/react';
+import { Avatar, Box, Tooltip, AvatarGroup, useToken } from '@chakra-ui/react';
 
 import { usePresenceStore, useUser, useUsersStore, initials } from '@sage3/frontend';
 
@@ -26,27 +26,40 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
 
   return (
     <Box display="flex" flexDirection="row" alignItems="baseline">
-      <AvatarGroup max={6} size="sm">
-        {presences.map((presence) => {
-          const user = users.find((el) => el._id === presence._id);
-          if (!user) return null;
-          return (
-            <Tooltip key={presence.data.userId} aria-label="username" hasArrow={true} placement="top-start" label={user.data.name}>
-              <Avatar
-                name={user.data.name}
-                getInitials={initials}
-                backgroundColor={user.data.color}
-                size="sm"
-                mx={1}
-                color="white"
-                showBorder={true}
-                borderWidth={'1px'}
-                borderColor="whiteAlpha.600"
-              />
-            </Tooltip>
-          );
-        })}
-      </AvatarGroup>
+      <Tooltip
+        label={
+          <ul>
+            {presences.map((presence) => {
+              const user = users.find((el) => el._id === presence._id);
+              if (!user) return null;
+              return <li>{user.data.name}</li>;
+            })}
+          </ul>
+        }
+      >
+        <AvatarGroup max={6} size="sm">
+          {presences.map((presence) => {
+            const user = users.find((el) => el._id === presence._id);
+            if (!user) return null;
+            const color = useToken('colors', user.data.color + '.400');
+            return (
+              <Tooltip key={presence.data.userId} aria-label="username" hasArrow={true} placement="top-start" label={user.data.name}>
+                <Avatar
+                  name={user.data.name}
+                  getInitials={initials}
+                  backgroundColor={color || 'orange'}
+                  size="sm"
+                  mx={1}
+                  color="white"
+                  showBorder={true}
+                  borderWidth={'1px'}
+                  borderColor="whiteAlpha.600"
+                />
+              </Tooltip>
+            );
+          })}
+        </AvatarGroup>
+      </Tooltip>
     </Box>
   );
 }
