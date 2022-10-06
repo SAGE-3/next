@@ -54,7 +54,7 @@ function AppComponent(props: App): JSX.Element {
         }
         // Talk to the jupyter server API
         const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
-        const payload = { type: 'notebook', path: '/', format: 'text' };
+        const payload = { type: 'notebook', path: '/boards', format: 'text' };
         // Create a new notebook
         fetch(j_url, {
           method: 'PUT',
