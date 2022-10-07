@@ -6,8 +6,8 @@
  *
  */
 
-import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton } from '@chakra-ui/react';
-import { MdPerson, MdLock, MdSettings, MdLockOpen } from 'react-icons/md';
+import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useToast } from '@chakra-ui/react';
+import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { BoardSchema } from '@sage3/shared/types';
@@ -63,17 +63,23 @@ export function BoardCard(props: BoardCardProps) {
     onOpenEdit();
   };
 
+  // Copy the board id to the clipboard
+  const toast = useToast();
+  const handleCopyId = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(props.board._id);
+    toast({
+      title: 'Success',
+      description: `BoardID Copied to Clipboard`,
+      duration: 3000,
+      isClosable: true,
+      status: 'success',
+    });
+  };
+
   return (
     <>
-      <EnterBoardModal
-        id={props.board._id}
-        roomId={props.board.data.roomId}
-        name={props.board.data.name}
-        isPrivate={props.board.data.isPrivate}
-        privatePin={props.board.data.privatePin}
-        isOpen={isOpenEnter}
-        onClose={onCloseEnter}
-      />
+      <EnterBoardModal board={props.board} isOpen={isOpenEnter} onClose={onCloseEnter} />
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
       {/* <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}> */}
       <Box
@@ -104,11 +110,12 @@ export function BoardCard(props: BoardCardProps) {
           </Box>
 
           <Box display="flex" alignItems="center" justifyContent="right" mr="2">
-            <Tooltip label={props.userCount + ' users'} openDelay={400} placement="top-start" hasArrow>
-              <Text fontSize="22px" mr="2" transform="translateY(1px)">
+            <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
+              <Text fontSize="22px" mr="2">
                 {props.userCount}
               </Text>
             </Tooltip>
+
             <Tooltip
               label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
               openDelay={400}
@@ -118,13 +125,18 @@ export function BoardCard(props: BoardCardProps) {
               <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
             </Tooltip>
 
+            <Tooltip label={'Copy Board ID'} openDelay={400} placement="top-start" hasArrow>
+              <IconButton onClick={handleCopyId} aria-label="Board Edit" fontSize="2xl" variant="unstlyed" icon={<MdOutlineCopyAll />} />
+            </Tooltip>
+
             <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
               <IconButton
                 onClick={handleOpenSettings}
                 aria-label="Board Edit"
-                fontSize="3xl"
+                fontSize="2xl"
                 variant="unstlyed"
                 disabled={!yours}
+                marginLeft={-3} // Weird margin on the icon
                 icon={<MdSettings />}
               />
             </Tooltip>
