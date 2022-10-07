@@ -19,4 +19,7 @@ export * from './cards/BoardCard';
 export * from './cards/RoomCard';
 export * from './cards/UserCard';
 
+export * from './lists/BoardList';
+export * from './lists/RoomList';
+
 export * from './context-menu/context-menu';
