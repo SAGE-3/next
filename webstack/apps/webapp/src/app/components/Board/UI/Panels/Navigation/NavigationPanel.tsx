@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdFullscreen, MdGridView, MdDelete, MdLock, MdLockOpen, MdZoomOutMap } from 'react-icons/md';
+import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen } from 'react-icons/md';
 
 import { StuckTypes, useAppStore, useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
@@ -24,6 +24,7 @@ export function NavigationPanel(props: NavProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const updateApp = useAppStore((state) => state.update);
   // UI store
   const position = useUIStore((state) => state.navigationPanel.position);
   const setPosition = useUIStore((state) => state.navigationPanel.setPosition);
@@ -38,16 +39,25 @@ export function NavigationPanel(props: NavProps) {
   const lockBoard = useUIStore((state) => state.lockBoard);
   const zIndex = useUIStore((state) => state.panelZ).indexOf('navigation');
 
-  const displayScale = 25;
   const scale = useUIStore((state) => state.scale);
+  const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+
+  // Users and Presecnes for cursors
+  const presences = usePresenceStore((state) => state.presences);
+  const users = useUsersStore((state) => state.users);
+  const { user } = useUser();
+
+  const backgroundColor = useColorModeValue('gray.100', 'gray.600');
+  const borderColor = useColorModeValue('teal.500', 'teal.500');
+  const appBorderColor = useColorModeValue('teal.600', 'teal.100');
 
   const mapWidth = 200;
   const mapHeight = 140;
 
-  const [centerX, setCenterX] = useState(0);
-  const [centerY, setCenterY] = useState(0);
+  const [appsX, setAppsX] = useState(0);
+  const [appsY, setAppsY] = useState(0);
   const [mapScale, setMapScale] = useState(1);
   const [appWidth, setAppWidth] = useState(0);
   const [appHeight, setAppHeight] = useState(0);
@@ -64,25 +74,16 @@ export function NavigationPanel(props: NavProps) {
       const aspectRatio = width / height;
 
       const mapScale = Math.min(mapWidth / width, mapHeight / height) * 0.95;
-      const centerX = Math.min(...appsLeft);
-      const centerY = Math.min(...appsTop);
+      const x = Math.min(...appsLeft);
+      const y = Math.min(...appsTop);
 
-      console.log(apps);
-      console.log('centerX', centerX);
-      console.log('centerY', centerY);
-      console.log('mapScale', mapScale);
       setAppHeight(height * mapScale);
       setAppWidth(width * mapScale);
-      setCenterX(centerX);
-      setCenterY(centerY);
+      setAppsX(x);
+      setAppsY(y);
       setMapScale(mapScale);
     }
   }, [apps]);
-
-  // Users and Presecnes for cursors
-  const presences = usePresenceStore((state) => state.presences);
-  const users = useUsersStore((state) => state.users);
-  const { user } = useUser();
 
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -96,10 +97,6 @@ export function NavigationPanel(props: NavProps) {
       setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
     }
   }, [controllerPosition]);
-
-  const backgroundColor = useColorModeValue('gray.100', 'gray.600');
-  const borderColor = useColorModeValue('teal.500', 'teal.500');
-  const appBorderColor = useColorModeValue('teal.600', 'teal.100');
 
   const moveToApp = (app: App) => {
     // set the app as selected
@@ -132,6 +129,40 @@ export function NavigationPanel(props: NavProps) {
     setScale(zoom);
   };
 
+  // Organize the apps to the current user's screen
+  const oraganizeApps = () => {
+    if (apps.length > 0) {
+      const winWidth = window.innerWidth / scale;
+      const winHeight = window.innerHeight / scale;
+
+      const bX = -boardPosition.x;
+      const bY = -boardPosition.y;
+
+      const xSpacing = 20;
+      const ySpacing = 40;
+      const numCols = Math.max(1, Math.ceil(Math.sqrt(apps.length)));
+      const numRows = Math.ceil(Math.sqrt(apps.length));
+
+      const colWidth = winWidth / numCols;
+      const rowHeight = winHeight / numRows;
+      let currentCol = 0;
+      let currentRow = 0;
+      apps.forEach((el) => {
+        const x = bX + currentCol * xSpacing + currentCol * colWidth;
+        const y = bY + currentRow * ySpacing + currentRow * rowHeight;
+        const width = colWidth;
+        const height = rowHeight;
+        if (currentCol >= numCols - 1) {
+          currentCol = 0;
+          currentRow++;
+        } else {
+          currentCol++;
+        }
+        updateApp(el._id, { position: { x, y, z: 0 }, size: { width, height, depth: 0 } });
+      });
+    }
+  };
+
   return (
     <Panel
       title={'Navigation'}
@@ -162,7 +193,7 @@ export function NavigationPanel(props: NavProps) {
           alignItems="center"
           justifyContent="center"
         >
-          <Box overflow="hidden" position="relative" height={appHeight} width={appWidth}>
+          <Box position="relative" height={appHeight} width={appWidth}>
             {/* Create a copy of app array and sort it by update time */}
             {apps
               .slice()
@@ -173,8 +204,8 @@ export function NavigationPanel(props: NavProps) {
                     <Box
                       backgroundColor={borderColor}
                       position="absolute"
-                      left={(app.data.position.x - centerX) * mapScale + 'px'}
-                      top={(app.data.position.y - centerY) * mapScale + 'px'}
+                      left={(app.data.position.x - appsX) * mapScale + 'px'}
+                      top={(app.data.position.y - appsY) * mapScale + 'px'}
                       width={app.data.size.width * mapScale + 'px'}
                       height={app.data.size.height * mapScale + 'px'}
                       transition={'all .5s'}
@@ -202,8 +233,8 @@ export function NavigationPanel(props: NavProps) {
                     key={presence.data.userId}
                     style={{
                       position: 'absolute',
-                      left: presence.data.cursor.x / displayScale + 'px',
-                      top: presence.data.cursor.y / displayScale + 'px',
+                      left: (presence.data.cursor.x - appsX) * mapScale + 'px',
+                      top: (presence.data.cursor.y - appsY) * mapScale + 'px',
                       transition: 'all 0.5s ease-in-out',
                       pointerEvents: 'none',
                       display: 'flex',
@@ -230,10 +261,10 @@ export function NavigationPanel(props: NavProps) {
             />
           </Tooltip>
           <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdGridView />} colorScheme="teal" mb="1" size="sm" aria-label="fit apps" onClick={props.fitApps} />
+            <IconButton icon={<MdFitScreen />} colorScheme="teal" mb="1" size="sm" aria-label="fit apps" onClick={props.fitApps} />
           </Tooltip>
-          <Tooltip label="Reset Zoom" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdZoomOutMap />} colorScheme="teal" mb="1" size="sm" aria-label="clear" onClick={() => setScale(1)} />
+          <Tooltip label="Oraganize Apps" placement="top-start" hasArrow openDelay={500}>
+            <IconButton icon={<MdGridView />} colorScheme="teal" mb="1" size="sm" aria-label="clear" onClick={oraganizeApps} />
           </Tooltip>
           <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
             <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />

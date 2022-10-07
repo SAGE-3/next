@@ -14,7 +14,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 
 // Zoom limits, from 30% to 400%
-const MinZoom = 0.3;
+const MinZoom = 0.1;
 const MaxZoom = 4.0;
 // Zoom step of 10%
 const StepZoom = 0.1;
