@@ -42,7 +42,7 @@ class JupyterKernelClient(Borg):
         j_url = f"{conf[prod_type]['jupyter_server']}/api/kernels"
         response = requests.get(j_url, headers=headers)
         kernels = json.loads(response.text)
-        self.available_kernels = {(x["id"],x["id"]) for x in kernels}
+        self.available_kernels = { x["id"] : x["id"] for x in kernels}
 
     # execut a command
     def execute(self, command_info):
