@@ -51,6 +51,10 @@
 
 td {
   position: relative;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 body:not(.nohover) tbody td:hover {
