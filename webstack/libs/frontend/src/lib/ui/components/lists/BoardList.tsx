@@ -10,15 +10,11 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import {
   Box,
   Button,
-  Grid,
-  GridItem,
-  IconButton,
   Input,
   InputGroup,
   InputRightElement,
   Select,
   SimpleGrid,
-  Text,
   Tooltip,
   useColorModeValue,
   useToast,
@@ -59,14 +55,16 @@ export function BoardList(props: BoardListProps) {
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');
 
-  const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
+  const [sortBy, setSortBy] = useState<'Name' | 'Users' | 'Created'>('Name');
 
   function sortByName(a: Board, b: Board) {
     return a.data.name.localeCompare(b.data.name);
   }
 
-  function sortByUpdated(a: Board, b: Board) {
-    return a._updatedAt > b._updatedAt ? -1 : 1;
+  function sortByUsers(a: Board, b: Board) {
+    const aUsers = presences.filter((p) => p.data.boardId === a._id).length;
+    const bUsers = presences.filter((p) => p.data.boardId === b._id).length;
+    return bUsers - aUsers;
   }
 
   function sortByCreated(a: Board, b: Board) {
@@ -74,7 +72,7 @@ export function BoardList(props: BoardListProps) {
   }
 
   let sortFunction = sortByName;
-  if (sortBy === 'Updated') sortFunction = sortByUpdated;
+  if (sortBy === 'Users') sortFunction = sortByUsers;
   if (sortBy === 'Created') sortFunction = sortByCreated;
 
   const handleSortChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -104,11 +102,12 @@ export function BoardList(props: BoardListProps) {
   // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
-    const filBoards = props.boards.filter((board) =>
-      // search board name 
-      board.data.name.toLowerCase().includes(event.target.value.toLowerCase()) ||
-      // search description
-      board.data.description.toLowerCase().includes(event.target.value.toLowerCase())
+    const filBoards = props.boards.filter(
+      (board) =>
+        // search board name
+        board.data.name.toLowerCase().includes(event.target.value.toLowerCase()) ||
+        // search description
+        board.data.description.toLowerCase().includes(event.target.value.toLowerCase())
     );
     setFilterBoards(filBoards);
     if (event.target.value === '') {
@@ -136,7 +135,7 @@ export function BoardList(props: BoardListProps) {
           ></CreateBoardModal>
         ) : null}
         <Box display="flex" justifyContent={'space-between'}>
-          <Box flexGrow={1} mr="4" display="flex" alignItems={'baseline'}>
+          <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
                 <Button borderRadius="md" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={() => setNewBoardModal(true)}>
@@ -163,7 +162,7 @@ export function BoardList(props: BoardListProps) {
               <InputGroup>
                 <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
                   <option value="Name"> Name</option>
-                  <option value="Updated">Updated</option>
+                  <option value="Users">Users</option>
                   <option value="Created">Created</option>
                 </Select>
               </InputGroup>

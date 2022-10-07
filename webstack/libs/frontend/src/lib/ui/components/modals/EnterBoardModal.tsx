@@ -27,15 +27,12 @@ import { v5 as uuidv5 } from 'uuid';
 import { useData } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { timeout } from '../../../utils';
+import { Board } from '@sage3/shared/types';
 
 export interface EnterBoardProps {
   isOpen: boolean;
   onClose: () => void;
-  id: string;
-  roomId: string;
-  name: string;
-  isPrivate: boolean;
-  privatePin: string;
+  board: Board;
 }
 
 export const EnterBoardModal = (props: EnterBoardProps) => {
@@ -50,15 +47,15 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
 
   useEffect(() => {
     async function attemptToEnter() {
-      if (props.isOpen && !props.isPrivate) {
+      if (props.isOpen && !props.board.data.isPrivate) {
         setLoading(true);
         await timeout(600);
-        navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
+        navigate('/board', { state: { roomId: props.board.data.roomId, boardId: props.board._id } });
       }
     }
     attemptToEnter();
     // if the room is not protected, go ahead and enter the room
-  }, [props.isOpen, props.isPrivate, navigate, props.id, props.roomId]);
+  }, [props.isOpen, props.board.data.isPrivate, navigate, props.board._id, props.board.data.roomId]);
 
   // Checks if the user entered pin matches the board pin
   const compareKey = async () => {
@@ -66,10 +63,10 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
     // Hash the PIN: the namespace comes from the server configuration
     const key = uuidv5(privateText, config.namespace);
     // compare the hashed keys
-    if (key === props.privatePin) {
+    if (key === props.board.data.privatePin) {
       setLoading(true);
       await timeout(600);
-      navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
+      navigate('/board', { state: { roomId: props.board.data.roomId, boardId: props.board._id } });
     } else {
       toast({
         title: `The password you have entered is incorrect`,

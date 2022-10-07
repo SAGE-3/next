@@ -41,6 +41,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardHeight = useUIStore((state) => state.boardHeight);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const resetZIndex = useUIStore((state) => state.resetZIndex);
   const boardDragging = useUIStore((state) => state.boardDragging);
@@ -56,7 +57,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Position board when entering board
   useEffect(() => {
     if (appsFetched) {
-      fitApps(apps);
+      if (apps.length > 0) {
+        fitApps(apps);
+      } else {
+        setBoardPosition({ x: -boardWidth / 2, y: -boardHeight / 2 });
+        setScale(1);
+      }
     }
   }, [appsFetched]);
   // Local State

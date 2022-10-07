@@ -129,8 +129,7 @@ export function Panel(props: PanelProps) {
   // Theme
   const panelBackground = useColorModeValue('gray.50', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'gray.50');
-  const shadow = useColorModeValue('gray.500', 'gray.900');
-  const shadowColor = useHexColor(shadow);
+  const shadowColor = useColorModeValue('#00000050', '#00000080');
   const grip = useColorModeValue('gray.200', 'gray.900');
   const gripColor = useHexColor(grip);
 

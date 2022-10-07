@@ -12,7 +12,7 @@ import { EnterRoomModal } from '../modals/EnterRoomModal';
 import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
 import { useHexColor, useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
-import { BoardList } from './BoardList';
+import { BoardList } from '../lists/BoardList';
 
 export type RoomCardProps = {
   room: Room;
@@ -100,9 +100,11 @@ export function RoomCard(props: RoomCardProps) {
             </Box>
 
             <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
-              <Text fontSize="22px" mr="2" transform="translateY(1px)">
-                {props.userCount}
-              </Text>
+              <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
+                <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                  {props.userCount}
+                </Text>
+              </Tooltip>
 
               <Tooltip
                 label={props.room.data.isPrivate ? 'Room is Locked' : 'Room is Unlocked'}
@@ -110,7 +112,7 @@ export function RoomCard(props: RoomCardProps) {
                 placement="top-start"
                 hasArrow
               >
-                <Box pointerEvents="none">{props.room.data.isPrivate ? <MdLock fontSize="24px" /> : <MdLockOpen fontSize="24px" />}</Box>
+                <Box>{props.room.data.isPrivate ? <MdLock fontSize="24px" /> : <MdLockOpen fontSize="24px" />}</Box>
               </Tooltip>
               <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
                 <IconButton

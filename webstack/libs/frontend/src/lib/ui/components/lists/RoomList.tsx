@@ -18,13 +18,14 @@ import {
   Text,
   Tooltip,
   useColorModeValue,
+  useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 
 import { Board, Room } from '@sage3/shared/types';
-import { CreateRoomModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
+import { CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
-import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
+import { MdAdd, MdEject, MdExitToApp, MdSearch, MdSort } from 'react-icons/md';
 
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
@@ -56,9 +57,12 @@ export function RoomList(props: RoomListProps) {
   const [search, setSearch] = useState('');
 
   const [newRoomModal, setNewRoomModal] = useState(false);
-  const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
+  const [sortBy, setSortBy] = useState<'Name' | 'Users' | 'Created'>('Name');
 
   const selRoomCardRef = useRef<any>();
+
+  // Enter Board by ID Modal
+  const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
 
   useEffect(() => {
     if (selRoomCardRef.current) {
@@ -73,8 +77,10 @@ export function RoomList(props: RoomListProps) {
     return a.data.name.localeCompare(b.data.name);
   }
 
-  function sortByUpdated(a: Room, b: Room) {
-    return a._updatedAt > b._updatedAt ? -1 : 1;
+  function sortByUsers(a: Room, b: Room) {
+    const aUsers = presences.filter((p) => p.data.roomId === a._id).length;
+    const bUsers = presences.filter((p) => p.data.roomId === b._id).length;
+    return bUsers - aUsers;
   }
 
   function sortByCreated(a: Room, b: Room) {
@@ -82,7 +88,7 @@ export function RoomList(props: RoomListProps) {
   }
 
   let sortFunction = sortByName;
-  if (sortBy === 'Updated') sortFunction = sortByUpdated;
+  if (sortBy === 'Users') sortFunction = sortByUsers;
   if (sortBy === 'Created') sortFunction = sortByCreated;
 
   const handleSortChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -116,16 +122,22 @@ export function RoomList(props: RoomListProps) {
 
   return (
     <Box textAlign="center" display="flex" flexDir="column" height="100%" width="100%" borderBottom="solid 1px" borderColor={borderColor}>
+      <EnterBoardByIdModal isOpen={isOpenEnterBoard} onOpen={onOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardByIdModal>
       <Box textAlign="center" display="flex" flexDir="column" alignItems="center" width="100%" borderColor={borderColor}>
         <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'3xl'}>
           <Text>Rooms</Text>
         </Box>
         <Box display="flex" justifyContent={'space-between'} width="100%">
-          <Box flexGrow={1} mr="4" display="flex" alignItems={'baseline'}>
-            <Box>
+          <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
+            <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
               <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={() => setNewRoomModal(true)}>
+                <Button borderRadius="md" mr="2" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={() => setNewRoomModal(true)}>
                   <MdAdd />
+                </Button>
+              </Tooltip>
+              <Tooltip label="Enter Board by ID" placement="top" hasArrow={true} openDelay={400}>
+                <Button borderRadius="md" fontSize="3xl" onClick={onOpenEnterBoard}>
+                  <MdExitToApp />
                 </Button>
               </Tooltip>
             </Box>
@@ -143,11 +155,11 @@ export function RoomList(props: RoomListProps) {
               </InputGroup>
             </Box>
           </Box>
-          <Box>
+          <Box pr="4">
             <InputGroup>
               <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
                 <option value="Name"> Name</option>
-                <option value="Updated">Updated</option>
+                <option value="Users">Users</option>
                 <option value="Created">Created</option>
               </Select>
             </InputGroup>

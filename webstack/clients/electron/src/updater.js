@@ -75,7 +75,7 @@ function showUpdateDialog(current, release) {
       title: electron.app.getName(),
       type: 'info',
       textWidth: 400,
-      message: `New release available\n\nDowload, Update and Restart SAGE3`,
+      message: `New release available\n\nDownload, Update and Restart SAGE3`,
       detail: `Installed Version: ${current}\nLatest Version: ${release.version}\n\nNotes: ${release.notes}`.trim(),
       buttons: ['Download', 'Later'],
       defaultId: 0,
