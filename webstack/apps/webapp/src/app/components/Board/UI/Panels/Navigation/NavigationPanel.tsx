@@ -255,7 +255,7 @@ export function NavigationPanel(props: NavProps) {
               icon={boardLocked ? <MdLock /> : <MdLockOpen />}
               colorScheme="teal"
               size="sm"
-              aria-label="fir board"
+              aria-label="for board"
               mb="1"
               onClick={() => lockBoard(!boardLocked)}
             />
@@ -263,7 +263,7 @@ export function NavigationPanel(props: NavProps) {
           <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
             <IconButton icon={<MdFitScreen />} colorScheme="teal" mb="1" size="sm" aria-label="fit apps" onClick={props.fitApps} />
           </Tooltip>
-          <Tooltip label="Oraganize Apps" placement="top-start" hasArrow openDelay={500}>
+          <Tooltip label="Organize Apps" placement="top-start" hasArrow openDelay={500}>
             <IconButton icon={<MdGridView />} colorScheme="teal" mb="1" size="sm" aria-label="clear" onClick={oraganizeApps} />
           </Tooltip>
           <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
