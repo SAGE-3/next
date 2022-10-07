@@ -1,33 +1,21 @@
-/*.Table-Container {*/
-/*  border: solid red 2px;*/
-/*  padding: 10px 10px;*/
-/*  width: 100%;*/
-/*  max-width: 400px;*/
-/*  height: 240px;*/
-/*  margin: 0 auto;*/
-/*  display: block;*/
-/*  overflow-x: auto;*/
-/*  border-spacing: 0;*/
-/*}*/
-
-.Subcomponent-Container{
+.Subcomponent-Container {
   border: solid green 2px;
   margin-top: 10px;
   margin-bottom: 10px;
   padding: 10px 10px;
 }
 
-.URL-Container{
+.URL-Container {
   margin-top: 30px;
   padding: 25px 15px 15px 15px;
 }
 
-.Pagination-Container{
+.Pagination-Container {
   margin-top: 20px;
   padding: 10px 10px;
 }
 
-.Message-Container{
+.Message-Container {
   margin-top: 10px;
   margin-bottom: 10px;
   padding: 25px 10px 5px 10px;
@@ -41,7 +29,7 @@
   justify-content: space-between;
   z-index: 1;
   max-width: 100%;
-  white-space:nowrap;
+  white-space: nowrap;
 }
 
 .indexColumn {
@@ -63,7 +51,6 @@
 
 td {
   position: relative;
-  /*z-index: 3;*/
 }
 
 body:not(.nohover) tbody td:hover {
@@ -82,10 +69,7 @@ body:not(.nohover) tbody td:hover {
   font-size: 1.5rem;
   font-weight: bold;
   border-bottom: 1px solid;
-  /*border-color: #29487D;*/
   background-color: purple;
-  max-width: 100%;
-  white-space:nowrap;
 }
 
 .originalChakra {
@@ -100,9 +84,6 @@ body:not(.nohover) tbody td:hover {
   font-size: 1.5rem;
   font-weight: bold;
   border-bottom: 1px solid;
-  /*border-color: #29487D;*/
-  max-width: 100%;
-  white-space:nowrap;
 }
 
 .searchContainer {
@@ -114,15 +95,14 @@ body:not(.nohover) tbody td:hover {
 }
 
 .card {
-    display: inline-block;
+  display: inline-block;
 }
 
 .search {
-  background-color : dimgray;
+  background-color: dimgray;
   border-radius: 5px;
   padding: 0.2rem;
   margin: 0.25rem;
   margin-left: 0.5rem;
   margin-right: 1rem;
-  /*padding-left: 50px;*/
 }

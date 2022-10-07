@@ -230,8 +230,6 @@ function AppComponent(props: App): JSX.Element {
             <br/>
             hostedapps: {Object.values(s.hostedApps)}
             <br/>
-            supported_tasks: {JSON.stringify(s.supported_tasks)}
-
           </Box>
         </Box>
       </Box>
