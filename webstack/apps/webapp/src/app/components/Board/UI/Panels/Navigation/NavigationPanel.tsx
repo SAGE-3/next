@@ -117,7 +117,7 @@ export function NavigationPanel(props: NavProps) {
     >
       <Box alignItems="center" width="100%" display="flex">
         <Box display="flex" flexDir={'column'} mr="2">
-          <Tooltip label="Fit Board" placement="top-start" hasArrow openDelay={500}>
+          <Tooltip label={boardLocked ? 'Unlock board' : 'Lock board'} placement="top-start" hasArrow openDelay={500}>
             <IconButton
               icon={boardLocked ? <MdLock /> : <MdLockOpen />}
               colorScheme="teal"
