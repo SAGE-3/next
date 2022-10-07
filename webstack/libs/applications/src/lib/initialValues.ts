@@ -23,6 +23,7 @@ import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
+import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
@@ -48,5 +49,6 @@ export const initialValues = {
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
+  [SageCellName]: defaultSageCell,
 };
 

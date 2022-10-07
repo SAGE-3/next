@@ -23,6 +23,7 @@ import { name as VegaLiteName } from './apps/VegaLite';
 import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
+import { name as SageCellName } from './apps/SageCell';
 
 
 import AIPane from './apps/AIPane/AIPane';
@@ -48,6 +49,7 @@ import VegaLite from './apps/VegaLite/VegaLite';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
+import SageCell from './apps/SageCell/SageCell';
 
 
 export const Applications = {
@@ -74,6 +76,7 @@ export const Applications = {
   [VegaLiteViewerName]: VegaLiteViewer,
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
+  [SageCellName]: SageCell,
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';
