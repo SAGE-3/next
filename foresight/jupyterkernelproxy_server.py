@@ -56,6 +56,7 @@ def get_jupyter_token():
 async def run_code():
     global open_sockets
     req = request.get_json()
+    print("The request is: ")
     print(req)
     token = req["token"]
     if not token:
@@ -69,9 +70,8 @@ async def run_code():
     socket_url = f"{base_ws}/api/kernels/{kernel_id}/channels"
     session_id = uuid.uuid4().hex
     socket_url += '?session_id=' + session_id
-
-
-
+    print(f"The socket URL is {socket_url}")
+    print(f"The headers is {headers}")
 
     try:
         ws = await websockets.connect(socket_url, extra_headers=headers, ping_timeout=None)
@@ -110,5 +110,6 @@ async def run_code():
                 'execution_state'] == 'idle':
                 await ws.close()
     print(result)
+    print("Publishing the results back")
     red.publish('jupyter_outputs', json.dumps(result))
     return result

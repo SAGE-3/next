@@ -12,6 +12,7 @@ import json
 class SageCellState(TrackedBaseModel):
     code: str
     output: str
+    kernel: str
     kernels: str
     executeInfo: ExecuteInfo
 
@@ -51,7 +52,7 @@ class SageCell(SmartBit):
             "uuid": uuid,
             "call_fn": self.handle_exec_result,
             "code": self.state.code,
-            "kernel": "",
+            "kernel": self.state.kernel,
             "token": ""
         }
 
