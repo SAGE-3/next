@@ -50,7 +50,8 @@ export function BoardContextMenu(props: ContextProps) {
 
   // Theme
   const textColor = useColorModeValue('gray.800', 'gray.100');
-  const panelBackground = useColorModeValue('gray.50', '#4A5568');
+  const panelBackground = useColorModeValue('gray.50', 'gray.700');
+  const shadowColor = useColorModeValue('#00000050', '#00000080');
 
   // Enable/disable the grid
   const onGridChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,7 +76,7 @@ export function BoardContextMenu(props: ContextProps) {
 
   /**
    * Create a new application
-   * @param appName 
+   * @param appName
    */
   const newApplication = (appName: AppName) => {
     if (!user) return;
@@ -132,7 +133,7 @@ export function BoardContextMenu(props: ContextProps) {
   };
 
   return (
-    <VStack boxShadow="lg" p="2" rounded="md" bg={panelBackground} cursor="auto" w={'100%'}>
+    <VStack boxShadow={`4px 4px 10px 0px ${shadowColor}`} p="2" rounded="md" bg={panelBackground} cursor="auto" w={'100%'}>
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
         <VStack w={'100%'}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold">
@@ -219,7 +220,6 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Download Opened Assets
           </Button> */}
-
         </VStack>
 
         <VStack w={'100%'}>
@@ -320,7 +320,7 @@ export function BoardContextMenu(props: ContextProps) {
             Show Interface
           </Checkbox>
         </VStack>
-      </HStack >
-    </VStack >
+      </HStack>
+    </VStack>
   );
 }
