@@ -7,11 +7,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { MdArrowBack, MdSettings } from 'react-icons/md';
-import { Box, useColorModeValue, Text, IconButton, useDisclosure, Image, Divider, Button, Tooltip, Progress } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Image, Progress } from '@chakra-ui/react';
 
 import {
   EditRoomModal,
+  RoomList,
   serverConfiguration,
   useBoardStore,
   useData,
@@ -24,7 +24,6 @@ import {
 import { Board, Room } from '@sage3/shared/types';
 
 import { HomeAvatar } from '../components/Home/HomeAvatar';
-import { RoomList } from '../components/Home/RoomList';
 import { useLocation } from 'react-router-dom';
 import { Clock } from '../components/Board/UI/Clock';
 

@@ -19,7 +19,8 @@ import { MdAccountCircle, MdInput, MdInvertColors, MdManageAccounts, MdOutlineLo
 export function HomeAvatar() {
   const { user } = useUser();
   const { logout } = useAuth();
-  const { toggleColorMode } = useColorMode();
+  const { toggleColorMode, colorMode } = useColorMode();
+  console.log(colorMode);
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
 
@@ -41,10 +42,7 @@ export function HomeAvatar() {
             Account
           </MenuItem>
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
-            Color Mode
-          </MenuItem>
-          <MenuItem onClick={boardOnOpen} icon={<MdInput fontSize="24px" />}>
-            Enter Board by Id
+            {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </MenuItem>
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
             Logout
