@@ -144,92 +144,92 @@ type BoardPreviewProps = {
  * Board Preview component
  * @returns
  */
-export function BoardPreview(props: BoardPreviewProps) {
-  const [apps, setApps] = useState<App[]>([]);
+// export function BoardPreview(props: BoardPreviewProps) {
+//   const [apps, setApps] = useState<App[]>([]);
 
-  const boardHeight = useUIStore((state) => state.boardHeight);
-  const boardWidth = useUIStore((state) => state.boardWidth);
-  const aspectRatio = boardWidth / boardHeight;
+//   const boardHeight = useUIStore((state) => state.boardHeight);
+//   const boardWidth = useUIStore((state) => state.boardWidth);
+//   const aspectRatio = boardWidth / boardHeight;
 
-  const borderWidth = 2;
-  const borderColor = useHexColor(props.board.data.color);
+//   const borderWidth = 2;
+//   const borderColor = useHexColor(props.board.data.color);
 
-  let maxWidth = 600;
-  let maxHeight = maxWidth / aspectRatio;
+//   let maxWidth = 600;
+//   let maxHeight = maxWidth / aspectRatio;
 
-  const scale = Math.min(maxWidth / boardWidth, maxHeight / boardHeight);
+//   const scale = Math.min(maxWidth / boardWidth, maxHeight / boardHeight);
 
-  const fetchBoardApp = useAppStore((state) => state.fetchBoardApps);
-  const backgroundColor = useColorModeValue('gray.100', 'gray.800');
-  // const boardColor = props.board.data.color + '.400';
+//   const fetchBoardApp = useAppStore((state) => state.fetchBoardApps);
+//   const backgroundColor = useColorModeValue('gray.100', 'gray.800');
+//   // const boardColor = props.board.data.color + '.400';
 
-  useEffect(() => {
-    async function fetchApps() {
-      const resApps = await fetchBoardApp(props.board._id);
-      if (resApps) {
-        setApps(resApps);
-      }
-    }
-    fetchApps();
-  }, [props.board._id]);
+//   useEffect(() => {
+//     async function fetchApps() {
+//       const resApps = await fetchBoardApp(props.board._id);
+//       if (resApps) {
+//         setApps(resApps);
+//       }
+//     }
+//     fetchApps();
+//   }, [props.board._id]);
 
-  return (
-    <Box
-      width={maxWidth + 'px'}
-      height={maxHeight + 'px'}
-      backgroundColor={backgroundColor}
-      borderRadius="md"
-      pointerEvents="none"
-      // overflow="hidden"
-      transform={`translateX(-${maxWidth / 4}px)`}
-      boxShadow="md"
-      border={`${borderWidth}px solid`}
-      borderColor={borderColor}
-    >
-      {apps.map((app) => {
-        const left = app.data.position.x * scale;
-        const top = app.data.position.y * scale;
-        const width = app.data.size.width * scale;
-        const height = app.data.size.height * scale;
-        return (
-          <Box
-            position="absolute"
-            left={left + 'px'}
-            top={top + 'px'}
-            width={width + 'px'}
-            height={height + 'px'}
-            transition={'all .2s'}
-            _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
-            borderWidth="1px"
-            borderStyle="solid"
-            borderColor={borderColor}
-            backgroundColor={'gray.700'}
-            borderRadius="md"
-            cursor="pointer"
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Box backgroundColor="gray.700" p="1" borderRadius="md">
-              <Text fontSize="2xs" color="white">
-                {app.data.type}
-              </Text>
-            </Box>
-          </Box>
-        );
-        // const Component = Applications[app.data.type].AppComponent;
-        // return (
-        //   // Wrap the components in an errorboundary to protect the board from individual app errors
-        //   <ErrorBoundary
-        //     key={app._id}
-        //     fallbackRender={({ error, resetErrorBoundary }) => (
-        //       <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
-        //     )}
-        //   >
-        //     <Component key={app._id} {...app}></Component>
-        //   </ErrorBoundary>
-        // );
-      })}
-    </Box>
-  );
-}
+//   return (
+//     <Box
+//       width={maxWidth + 'px'}
+//       height={maxHeight + 'px'}
+//       backgroundColor={backgroundColor}
+//       borderRadius="md"
+//       pointerEvents="none"
+//       // overflow="hidden"
+//       transform={`translateX(-${maxWidth / 4}px)`}
+//       boxShadow="md"
+//       border={`${borderWidth}px solid`}
+//       borderColor={borderColor}
+//     >
+//       {apps.map((app) => {
+//         const left = app.data.position.x * scale;
+//         const top = app.data.position.y * scale;
+//         const width = app.data.size.width * scale;
+//         const height = app.data.size.height * scale;
+//         return (
+//           <Box
+//             position="absolute"
+//             left={left + 'px'}
+//             top={top + 'px'}
+//             width={width + 'px'}
+//             height={height + 'px'}
+//             transition={'all .2s'}
+//             _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+//             borderWidth="1px"
+//             borderStyle="solid"
+//             borderColor={borderColor}
+//             backgroundColor={'gray.700'}
+//             borderRadius="md"
+//             cursor="pointer"
+//             display="flex"
+//             justifyContent="center"
+//             alignItems="center"
+//           >
+//             <Box backgroundColor="gray.700" p="1" borderRadius="md">
+//               <Text fontSize="2xs" color="white">
+//                 {app.data.type}
+//               </Text>
+//             </Box>
+//           </Box>
+//         );
+//         // const Component = Applications[app.data.type].AppComponent;
+//         // return (
+//         //   // Wrap the components in an errorboundary to protect the board from individual app errors
+//         //   <ErrorBoundary
+//         //     key={app._id}
+//         //     fallbackRender={({ error, resetErrorBoundary }) => (
+//         //       <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
+//         //     )}
+//         //   >
+//         //     <Component key={app._id} {...app}></Component>
+//         //   </ErrorBoundary>
+//         // );
+//       })}
+//     </Box>
+//   );
+// }

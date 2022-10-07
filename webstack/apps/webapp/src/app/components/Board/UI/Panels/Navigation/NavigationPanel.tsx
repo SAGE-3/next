@@ -6,9 +6,9 @@
  *
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdFullscreen, MdGridView, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
+import { MdFullscreen, MdGridView, MdDelete, MdLock, MdLockOpen, MdZoomOutMap } from 'react-icons/md';
 
 import { StuckTypes, useAppStore, useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
@@ -38,13 +38,46 @@ export function NavigationPanel(props: NavProps) {
   const lockBoard = useUIStore((state) => state.lockBoard);
   const zIndex = useUIStore((state) => state.panelZ).indexOf('navigation');
 
-  // Board size from the store
-  const boardWidth = useUIStore((state) => state.boardWidth);
-  const boardHeight = useUIStore((state) => state.boardHeight);
   const displayScale = 25;
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+
+  const mapWidth = 200;
+  const mapHeight = 140;
+
+  const [centerX, setCenterX] = useState(0);
+  const [centerY, setCenterY] = useState(0);
+  const [mapScale, setMapScale] = useState(1);
+  const [appWidth, setAppWidth] = useState(0);
+  const [appHeight, setAppHeight] = useState(0);
+
+  useEffect(() => {
+    if (apps.length > 0) {
+      const appsLeft = apps.map((app) => app.data.position.x);
+      const appsRight = apps.map((app) => app.data.position.x + app.data.size.width);
+      const appsTop = apps.map((app) => app.data.position.y);
+      const appsBottom = apps.map((app) => app.data.position.y + app.data.size.height);
+
+      const width = Math.max(...appsRight) - Math.min(...appsLeft);
+      const height = Math.max(...appsBottom) - Math.min(...appsTop);
+      const aspectRatio = width / height;
+
+      const mapScale = Math.min(mapWidth / width, mapHeight / height) * 0.95;
+      const centerX = Math.min(...appsLeft);
+      const centerY = Math.min(...appsTop);
+
+      console.log(apps);
+      console.log('centerX', centerX);
+      console.log('centerY', centerY);
+      console.log('mapScale', mapScale);
+      setAppHeight(height * mapScale);
+      setAppWidth(width * mapScale);
+      setCenterX(centerX);
+      setCenterY(centerY);
+      setMapScale(mapScale);
+    }
+  }, [apps]);
 
   // Users and Presecnes for cursors
   const presences = usePresenceStore((state) => state.presences);
@@ -107,7 +140,7 @@ export function NavigationPanel(props: NavProps) {
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={90 + boardWidth / displayScale}
+      width={400}
       showClose={true}
       show={show}
       setShow={setShow}
@@ -115,35 +148,21 @@ export function NavigationPanel(props: NavProps) {
       setStuck={setStuck}
       zIndex={zIndex}
     >
-      <Box alignItems="center" width="100%" display="flex">
-        <Box display="flex" flexDir={'column'} mr="2">
-          <Tooltip label={boardLocked ? 'Unlock board' : 'Lock board'} placement="top-start" hasArrow openDelay={500}>
-            <IconButton
-              icon={boardLocked ? <MdLock /> : <MdLockOpen />}
-              colorScheme="teal"
-              size="xs"
-              aria-label="fir board"
-              onClick={() => lockBoard(!boardLocked)}
-            />
-          </Tooltip>
-          <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdGridView />} colorScheme="teal" my="1" size="xs" aria-label="fit apps" onClick={props.fitApps} />
-          </Tooltip>
-          <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdDelete />} colorScheme="teal" size="xs" aria-label="clear" onClick={props.clearBoard} />
-          </Tooltip>
-        </Box>
+      <Box alignItems="center" display="flex">
         <Box
-          width={boardWidth / displayScale + 4 + 'px'}
-          height={boardHeight / displayScale + 4 + 'px'}
+          width={mapWidth}
+          height={mapHeight}
           backgroundColor={backgroundColor}
           borderRadius="md"
           borderWidth="2px"
           borderStyle="solid"
           borderColor={borderColor}
           overflow="hidden"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
         >
-          <Box position="absolute" width={boardWidth / displayScale} height={boardHeight / displayScale} overflow="hidden">
+          <Box overflow="hidden" position="relative" height={appHeight} width={appWidth}>
             {/* Create a copy of app array and sort it by update time */}
             {apps
               .slice()
@@ -154,11 +173,11 @@ export function NavigationPanel(props: NavProps) {
                     <Box
                       backgroundColor={borderColor}
                       position="absolute"
-                      left={app.data.position.x / displayScale + 'px'}
-                      top={app.data.position.y / displayScale + 'px'}
-                      width={app.data.size.width / displayScale + 'px'}
-                      height={app.data.size.height / displayScale + 'px'}
-                      transition={'all .2s'}
+                      left={(app.data.position.x - centerX) * mapScale + 'px'}
+                      top={(app.data.position.y - centerY) * mapScale + 'px'}
+                      width={app.data.size.width * mapScale + 'px'}
+                      height={app.data.size.height * mapScale + 'px'}
+                      transition={'all .5s'}
                       _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
                       onClick={() => moveToApp(app)}
                       borderWidth="1px"
@@ -198,6 +217,27 @@ export function NavigationPanel(props: NavProps) {
                 );
               })}
           </Box>
+        </Box>
+        <Box display="flex" flexDir={'column'} ml="2" alignContent={'flexStart'}>
+          <Tooltip label={boardLocked ? 'Unlock board' : 'Lock board'} placement="top-start" hasArrow openDelay={500}>
+            <IconButton
+              icon={boardLocked ? <MdLock /> : <MdLockOpen />}
+              colorScheme="teal"
+              size="sm"
+              aria-label="fir board"
+              mb="1"
+              onClick={() => lockBoard(!boardLocked)}
+            />
+          </Tooltip>
+          <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
+            <IconButton icon={<MdGridView />} colorScheme="teal" mb="1" size="sm" aria-label="fit apps" onClick={props.fitApps} />
+          </Tooltip>
+          <Tooltip label="Reset Zoom" placement="top-start" hasArrow openDelay={500}>
+            <IconButton icon={<MdZoomOutMap />} colorScheme="teal" mb="1" size="sm" aria-label="clear" onClick={() => setScale(1)} />
+          </Tooltip>
+          <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
+            <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
+          </Tooltip>
         </Box>
       </Box>
     </Panel>

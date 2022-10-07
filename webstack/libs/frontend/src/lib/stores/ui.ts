@@ -101,8 +101,8 @@ interface UIState {
  */
 export const useUIStore = create<UIState>((set, get) => ({
   scale: 1.0,
-  boardWidth: 3840,
-  boardHeight: 2160,
+  boardWidth: 5000000,
+  boardHeight: 5000000,
   selectedBoardId: '',
   gridSize: 1,
   zIndex: 1,
