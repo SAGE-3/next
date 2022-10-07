@@ -12,7 +12,7 @@ import { EnterRoomModal } from '../modals/EnterRoomModal';
 import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
 import { useHexColor, useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
-import { BoardList } from './BoardList';
+import { BoardList } from '../lists/BoardList';
 
 export type RoomCardProps = {
   room: Room;
@@ -20,7 +20,6 @@ export type RoomCardProps = {
   userCount: number;
   onEnter: () => void;
   onDelete: () => void;
-  onEdit: () => void;
 
   onBackClick: () => void;
   onBoardClick: (board: Board) => void;
@@ -76,7 +75,7 @@ export function RoomCard(props: RoomCardProps) {
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
 
       <Box
-        boxShadow={'lg'}
+        boxShadow={'md'}
         borderRadius="md"
         border={props.selected ? 'solid 2px' : ''}
         borderLeft="solid 8px"
@@ -84,9 +83,13 @@ export function RoomCard(props: RoomCardProps) {
         background={linearBGColor}
         onClick={props.onEnter}
         cursor="pointer"
+        transition="max-height 2s ease"
+        py="1"
+        overflow="hidden"
+        maxHeight={props.selected ? '1600px' : '200px'} //This is to get the animation to work.
       >
-        <Box display="flex" justifyContent="left" width="100%" position="relative">
-          <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
+        <Box display="flex" justifyContent="left" width="100%" position="relative" flexDir="column" height="100%">
+          <Box display="flex" alignContent={'baseline'} justifyContent="space-between" width="100%">
             <Box display="flex" flexDirection={'column'} alignItems="center" ml="4" transform="translateY(-1px)">
               <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
                 {props.room.data.name}
@@ -97,9 +100,11 @@ export function RoomCard(props: RoomCardProps) {
             </Box>
 
             <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
-              <Text fontSize="22px" mr="2" transform="translateY(1px)">
-                {props.userCount}
-              </Text>
+              <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
+                <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                  {props.userCount}
+                </Text>
+              </Tooltip>
 
               <Tooltip
                 label={props.room.data.isPrivate ? 'Room is Locked' : 'Room is Unlocked'}
@@ -107,7 +112,7 @@ export function RoomCard(props: RoomCardProps) {
                 placement="top-start"
                 hasArrow
               >
-                <Box pointerEvents="none">{props.room.data.isPrivate ? <MdLock fontSize="24px" /> : <MdLockOpen fontSize="24px" />}</Box>
+                <Box>{props.room.data.isPrivate ? <MdLock fontSize="24px" /> : <MdLockOpen fontSize="24px" />}</Box>
               </Tooltip>
               <Tooltip label={yours ? 'Edit Room' : "Only the room's owner can edit"} openDelay={400} placement="top-start" hasArrow>
                 <IconButton
@@ -121,15 +126,17 @@ export function RoomCard(props: RoomCardProps) {
               </Tooltip>
             </Box>
           </Box>
+          <Box height="100%">
+            {props.selected ? (
+              <BoardList
+                onBoardClick={props.onBackClick}
+                onBackClick={() => props.onBackClick()}
+                selectedRoom={props.room}
+                boards={props.boards}
+              ></BoardList>
+            ) : null}
+          </Box>
         </Box>
-        {props.selected ? (
-          <BoardList
-            onBoardClick={props.onBackClick}
-            onBackClick={() => props.onBackClick()}
-            selectedRoom={props.room}
-            boards={props.boards}
-          ></BoardList>
-        ) : null}
       </Box>
     </>
   );
