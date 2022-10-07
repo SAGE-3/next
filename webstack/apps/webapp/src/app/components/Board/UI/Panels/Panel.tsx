@@ -132,7 +132,6 @@ export function Panel(props: PanelProps) {
   const textColor = useColorModeValue('gray.800', 'gray.50');
   const shadow = useColorModeValue('gray.500', 'gray.900');
   const shadowColor = useHexColor(shadow);
-  console.log(shadowColor);
   const grip = useColorModeValue('gray.200', 'gray.900');
   const gripColor = useHexColor(grip);
 

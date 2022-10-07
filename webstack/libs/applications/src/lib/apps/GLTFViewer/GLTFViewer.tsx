@@ -5,7 +5,7 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { Box } from '@chakra-ui/react';
 import { Canvas, useLoader, useThree, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -21,35 +21,42 @@ import { state as AppState } from './index';
 
 type CameraProps = {
   id: string;
-  // o: { p: number; a: number; d: number };
+  state: { p: number; a: number; d: number };
 };
 
 /**
  * Orbit controller
  */
 const CameraController = (props: CameraProps) => {
-  const [params, setParams] = useState({ p: 0, a: 0, d: 0 })
-  const { camera, gl } = useThree();
+  const { camera, gl, invalidate } = useThree();
   const updateState = useAppStore((state) => state.updateState);
 
-  useFrame(() => {
-    console.log('Frame', params.p, params.a, params.d);
-    updateState(props.id, { orientation: params });
-  });
+  // useFrame(() => {
+  //   console.log('Frame>', props.id);
+  // });
+
+  useEffect(() => {
+    console.log('Need to update camera state', props.state.p, props.state.a, props.state.d);
+    // const sph = new THREE.Spherical(props.state.d, props.state.p, props.state.a);
+  }, [props.state.p, props.state.a, props.state.d]);
 
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
-    controls.minDistance = 2;
+    controls.minDistance = 1;
     controls.maxDistance = 200;
     controls.zoomO = 4;
 
     controls.addEventListener("change", (e: any) => {
+      // redraw
+      invalidate();
+    });
+    controls.addEventListener("end", (e: any) => {
       const p = controls.getPolarAngle();
       const a = controls.getAzimuthalAngle();
       const d = controls.getDistance();
-      setParams({ p, a, d });
+      console.log('Motion> end', p, a, d);
+      updateState(props.id, { p, a, d });
     });
-
     return () => {
       controls.dispose();
     };
@@ -57,7 +64,8 @@ const CameraController = (props: CameraProps) => {
   return null;
 };
 
-function FrameLimiter({ limit = 10 }) {
+
+function FrameLimiter({ limit = 2 }) {
   const { invalidate, clock } = useThree();
   useEffect(() => {
     let delta = 0;
@@ -80,7 +88,7 @@ function FrameLimiter({ limit = 10 }) {
  */
 function Model3D({ url }: { url: string }) {
   const gltf = useLoader(GLTFLoader, url);
-  // const mesh = useRef<THREE.Group>();
+  const mesh = useRef<THREE.Group>();
   // useFrame(() => {
   //   if (mesh.current) {
   //     mesh.current.rotation.x = mesh.current.rotation.y += 0.01;
@@ -103,8 +111,9 @@ function AppComponent(props: App): JSX.Element {
   const [url, setUrl] = useState<string>('');
   const [orientation, setOrientation] = useState({ p: s.p, a: s.a, d: s.d });
 
+  // Update from server
   useEffect(() => {
-    console.log('Got>', s.p, s.a, s.d);
+    // console.log('Got>', s.p, s.a, s.d);
     setOrientation({ p: s.p, a: s.a, d: s.d });
   }, [s.a, s.p, s.d]);
 
@@ -132,19 +141,19 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box bgColor='rgb{156,162,146}' w={'100%'} h={'100%'} p={0} borderRadius='0 0 6px 6px'>
-        <Canvas style={{ height: props.data.size.height / scale + 'px', width: props.data.size.width / scale + 'px' }}
-          shadows={false} dpr={2} frameloop={'demand'} gl={{ powerPreference: "low-power", antialias: false }}>
-          <CameraController id={props._id} />
-          <FrameLimiter limit={2} />
-          <ambientLight />
-          <spotLight intensity={0.3} position={[5, 10, 50]} />
+        <Canvas style={{ height: (props.data.size.height / scale) + 'px', width: (props.data.size.width / scale) + 'px' }}
+          shadows={false} dpr={1} frameloop={'demand'} gl={{ powerPreference: "low-power", antialias: false }}>
+          {/* <FrameLimiter limit={20} /> */}
+          <CameraController id={props._id} state={orientation} />
+          <ambientLight intensity={0.1} />
+          <spotLight intensity={0.5} position={[15, 100, 50]} />
           <primitive object={new THREE.AxesHelper(5)} />
           <Suspense fallback={null}>
             <Model3D url={url} />
           </Suspense>
         </Canvas>
       </Box>
-    </AppWindow>
+    </AppWindow >
   );
 }
 
