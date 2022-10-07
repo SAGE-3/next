@@ -58,22 +58,18 @@ export function ButtonPanel(props: ButtonPanelProps) {
 // Add a title to the chakra button props
 export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
-  isActive: boolean;
   description: string;
 }
 
 // Button with a title and using the font size from parent panel
 export function IconButtonPanel(props: IconButtonPanelProps) {
-  const textColor = useColorModeValue('gray.700', 'gray.300');
-  const hoverColor = useColorModeValue('gray.400', 'gray.100');
+  const iconColor = useColorModeValue('gray.600', 'gray.100');
+  const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
 
-  const iconColor = useColorModeValue('teal.400', 'teal.400');
-  const iconHoverColor = useColorModeValue('teal.300', 'teal.300');
   return (
     <Box>
       <Tooltip label={props.description} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
         <IconButton
-          {...props}
           borderRadius="md"
           h="auto"
           p={1}
@@ -81,9 +77,12 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           justifyContent="flex-center"
           aria-label={props.description}
           icon={props.icon}
-          color={props.isActive ? iconColor : textColor}
+          background="transparent"
+          color={props.isActive ? iconHoverColor : iconColor}
           transition={'all 0.2s'}
-          _hover={{ color: props.isActive ? iconHoverColor : hoverColor, transform: 'scale(1.1)' }}
+          variant="ghost"
+          onClick={props.onClick}
+          _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
         />
       </Tooltip>
     </Box>
@@ -132,7 +131,6 @@ export function Panel(props: PanelProps) {
   const textColor = useColorModeValue('gray.800', 'gray.50');
   const shadow = useColorModeValue('gray.500', 'gray.900');
   const shadowColor = useHexColor(shadow);
-  console.log(shadowColor);
   const grip = useColorModeValue('gray.200', 'gray.900');
   const gripColor = useHexColor(grip);
 

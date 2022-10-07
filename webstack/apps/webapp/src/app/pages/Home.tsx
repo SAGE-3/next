@@ -112,9 +112,9 @@ export function HomePage() {
     // Main Container
     <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
       {/* Top Bar */}
-      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={2} width="100%" px="2">
+      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100%" px="2">
         <Box flex="1 1 0px"></Box>
-        <Text fontSize="3xl" flex="1 1 0px" justifyContent="center" display="flex">
+        <Text fontSize="4xl" flex="1 1 0px" justifyContent="center" display="flex">
           {config?.serverName}
         </Text>
         <Box flex="1 1 0px" justifyContent="right" display="flex" alignItems={'start'}>
@@ -123,7 +123,18 @@ export function HomePage() {
       </Box>
 
       {/* Middle Section */}
-      <Box display="flex" flexDirection="row" flexGrow={1} justifyContent={'center'} minHeight={0} width="1200px">
+
+      <Box
+        display="flex"
+        flexDirection="row"
+        flexGrow={1}
+        justifyContent={'center'}
+        minHeight={0}
+        width="100%"
+        maxWidth="1200px"
+        minWidth="400px"
+        px="4"
+      >
         {roomsFetched ? (
           <Box
             display="flex"
