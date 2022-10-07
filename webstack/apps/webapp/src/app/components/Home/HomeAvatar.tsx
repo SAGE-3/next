@@ -20,7 +20,6 @@ export function HomeAvatar() {
   const { user } = useUser();
   const { logout } = useAuth();
   const { toggleColorMode, colorMode } = useColorMode();
-  console.log(colorMode);
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
 
