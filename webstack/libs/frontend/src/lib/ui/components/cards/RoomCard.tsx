@@ -20,7 +20,6 @@ export type RoomCardProps = {
   userCount: number;
   onEnter: () => void;
   onDelete: () => void;
-  onEdit: () => void;
 
   onBackClick: () => void;
   onBoardClick: (board: Board) => void;
@@ -76,7 +75,7 @@ export function RoomCard(props: RoomCardProps) {
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
 
       <Box
-        boxShadow={'lg'}
+        boxShadow={'md'}
         borderRadius="md"
         border={props.selected ? 'solid 2px' : ''}
         borderLeft="solid 8px"
@@ -84,9 +83,13 @@ export function RoomCard(props: RoomCardProps) {
         background={linearBGColor}
         onClick={props.onEnter}
         cursor="pointer"
+        transition="max-height 2s ease"
+        py="1"
+        overflow="hidden"
+        maxHeight={props.selected ? '1600px' : '200px'} //This is to get the animation to work.
       >
-        <Box display="flex" justifyContent="left" width="100%" position="relative">
-          <Box display="flex" height="100%" alignContent={'baseline'} justifyContent="space-between" width="100%">
+        <Box display="flex" justifyContent="left" width="100%" position="relative" flexDir="column" height="100%">
+          <Box display="flex" alignContent={'baseline'} justifyContent="space-between" width="100%">
             <Box display="flex" flexDirection={'column'} alignItems="center" ml="4" transform="translateY(-1px)">
               <Text fontSize="2xl" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
                 {props.room.data.name}
@@ -121,15 +124,17 @@ export function RoomCard(props: RoomCardProps) {
               </Tooltip>
             </Box>
           </Box>
+          <Box height="100%">
+            {props.selected ? (
+              <BoardList
+                onBoardClick={props.onBackClick}
+                onBackClick={() => props.onBackClick()}
+                selectedRoom={props.room}
+                boards={props.boards}
+              ></BoardList>
+            ) : null}
+          </Box>
         </Box>
-        {props.selected ? (
-          <BoardList
-            onBoardClick={props.onBackClick}
-            onBackClick={() => props.onBackClick()}
-            selectedRoom={props.room}
-            boards={props.boards}
-          ></BoardList>
-        ) : null}
       </Box>
     </>
   );

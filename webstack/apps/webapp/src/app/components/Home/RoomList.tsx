@@ -6,7 +6,7 @@
  *
  */
 
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, createRef, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -58,6 +58,17 @@ export function RoomList(props: RoomListProps) {
   const [newRoomModal, setNewRoomModal] = useState(false);
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
 
+  const selRoomCardRef = useRef<any>();
+
+  useEffect(() => {
+    if (selRoomCardRef.current) {
+      selRoomCardRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  }, [selRoomCardRef.current]);
+
   function sortByName(a: Room, b: Room) {
     return a.data.name.localeCompare(b.data.name);
   }
@@ -90,11 +101,12 @@ export function RoomList(props: RoomListProps) {
   // Filter boards with the search string
   function handleFilterBoards(event: any) {
     setSearch(event.target.value);
-    const filBoards = props.rooms.filter((room) =>
-      // search in room name
-      room.data.name.toLowerCase().includes(event.target.value.toLowerCase()) ||
-      // search in room description
-      room.data.description.toLowerCase().includes(event.target.value.toLowerCase())
+    const filBoards = props.rooms.filter(
+      (room) =>
+        // search in room name
+        room.data.name.toLowerCase().includes(event.target.value.toLowerCase()) ||
+        // search in room description
+        room.data.description.toLowerCase().includes(event.target.value.toLowerCase())
     );
     setFilterBoards(filBoards);
     if (event.target.value === '') {
@@ -103,18 +115,9 @@ export function RoomList(props: RoomListProps) {
   }
 
   return (
-    <Box textAlign="center" display="flex" flexDir="column" height="100%" width="100%" maxWidth="1200">
-      <Box
-        textAlign="center"
-        display="flex"
-        flexDir="column"
-        alignItems="center"
-        width="100%"
-        borderBottom="solid 1px"
-        borderColor={borderColor}
-        pb="2"
-      >
-        <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'4xl'}>
+    <Box textAlign="center" display="flex" flexDir="column" height="100%" width="100%" borderBottom="solid 1px" borderColor={borderColor}>
+      <Box textAlign="center" display="flex" flexDir="column" alignItems="center" width="100%" borderColor={borderColor}>
+        <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'3xl'}>
           <Text>Rooms</Text>
         </Box>
         <Box display="flex" justifyContent={'space-between'} width="100%">
@@ -156,7 +159,6 @@ export function RoomList(props: RoomListProps) {
         overflowY="scroll"
         overflowX="hidden"
         pr="2"
-        mb="2"
         borderColor={borderColor}
         mt="6"
         height="100%"
@@ -174,28 +176,31 @@ export function RoomList(props: RoomListProps) {
           },
         }}
       >
-        <SimpleGrid minChildWidth="100%" spacingY={8} height="100%">
+        <ul>
           {(filterBoards ? filterBoards : props.rooms)
             // show only public rooms or mine
             .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
             .sort(sortFunction)
-            .map((room) => {
+            .map((room, idx) => {
+              const selected = props.selectedRoom ? room._id === props.selectedRoom._id : false;
+
               return (
-                <RoomCard
-                  key={room._id}
-                  room={room}
-                  boards={props.boards.filter((board) => board.data.roomId === room._id)}
-                  userCount={presences.filter((p) => p.data.roomId === room._id).length}
-                  selected={props.selectedRoom ? room._id === props.selectedRoom._id : false}
-                  onEnter={() => props.onRoomClick(room)}
-                  onEdit={() => console.log('edit room')}
-                  onDelete={() => deleteRoom(room._id)}
-                  onBackClick={() => props.onRoomClick(undefined)}
-                  onBoardClick={props.onBoardClick}
-                ></RoomCard>
+                <li key={idx} ref={selected ? selRoomCardRef : null} style={{ marginTop: idx === 0 ? '' : '20px' }}>
+                  <RoomCard
+                    key={room._id}
+                    room={room}
+                    boards={props.boards.filter((board) => board.data.roomId === room._id)}
+                    userCount={presences.filter((p) => p.data.roomId === room._id).length}
+                    selected={selected}
+                    onEnter={() => props.onRoomClick(room)}
+                    onDelete={() => deleteRoom(room._id)}
+                    onBackClick={() => props.onRoomClick(undefined)}
+                    onBoardClick={props.onBoardClick}
+                  ></RoomCard>
+                </li>
               );
             })}
-        </SimpleGrid>
+        </ul>
       </Box>
 
       <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
