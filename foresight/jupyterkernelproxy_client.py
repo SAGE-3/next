@@ -25,6 +25,7 @@ class JupyterKernelClient(Borg):
         Borg.__init__(self)
         if not hasattr(self, "redis_serve"):
             self.url = url
+            # TODO: change port so it's read from configuration
             self.redis_server = redis.StrictRedis(host=conf[prod_type]["redis_server"], port=6379, db=0)
             self.pubsub = self.redis_server.pubsub()
             self.pubsub.subscribe('jupyter_outputs')
@@ -91,8 +92,9 @@ class JupyterKernelClient(Borg):
 
             time.sleep(1)  # be nice to the system :)
             if check_kernels_every == 0:
-                print("I am still here")
+                # TODO: check if kernels changed and update accordingly
                 self.set_available_kernels()
+
                 check_kernels_every = 10
             else:
                 check_kernels_every -= 1
