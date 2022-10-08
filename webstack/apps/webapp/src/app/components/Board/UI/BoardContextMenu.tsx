@@ -133,7 +133,7 @@ export function BoardContextMenu(props: ContextProps) {
   };
 
   return (
-    <VStack boxShadow={`4px 4px 10px 0px ${shadowColor}`} p="2" rounded="md" bg={panelBackground} cursor="auto" w={'100%'}>
+    <VStack whiteSpace={"nowrap"} boxShadow={`4px 4px 10px 0px ${shadowColor}`} p="2" rounded="md" bg={panelBackground} cursor="auto" w={'100%'}>
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
         <VStack w={'100%'}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold">
