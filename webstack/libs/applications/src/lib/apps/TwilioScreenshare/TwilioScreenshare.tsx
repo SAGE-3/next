@@ -16,7 +16,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
-import { useAppStore, useUser, useTwilioStore, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useUser, useTwilioStore, useUsersStore, useHexColor } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Twilio Imports
@@ -32,6 +32,7 @@ type ElectronSource = {
   name: string;
   thumbnail: string;
 };
+const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
@@ -39,6 +40,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Current User
   const { user } = useUser();
+  const yours = user?._id === props._createdBy;
 
   // User store to get name of user who created screenshare
   const users = useUsersStore((state) => state.users);
@@ -55,6 +57,9 @@ function AppComponent(props: App): JSX.Element {
   // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // UI
+  const red = useHexColor('red.500');
+
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
   const [selectedSource, setSelectedSource] = useState<ElectronSource | null>(null);
@@ -64,14 +69,15 @@ function AppComponent(props: App): JSX.Element {
 
   // State of the current time
   const now = Date.now();
-  const duration = 30 * 60 * 1000; // 30 minutes
-  const [expirationTime, setExpirationTime] = useState<string>(new Date(duration - (now - props._createdAt)).getMinutes().toString() + 'm');
+  const [expirationTime, setExpirationTime] = useState<string>(
+    new Date(screenShareTimeLimit - (now - props._createdAt)).getMinutes().toString() + 'm'
+  );
 
   // Update the time on an interval every 30secs
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      const duration = 30 * 60 * 1000; // 30 minutes
+      const duration = screenShareTimeLimit; // 60 minutes
       setExpirationTime(new Date(duration - (now - props._createdAt)).getMinutes().toString() + 'm');
     }, 60 * 1000);
     return () => clearInterval(interval);
@@ -175,32 +181,62 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color="red">
-          {expirationTime}
-        </Text>
-        <Box display="flex" flexDir="column" borderRadius="0 0 6px 6px">
-          <Box backgroundColor="black" height={props.data.size.height - 50 + 'px'}>
+        <Box
+          display="flex"
+          flexDir="column"
+          height="calc(100% - 25px)"
+          width="100%"
+          position="absolute"
+          left={0}
+          top={6}
+          background="red"
+          overflow="hidden"
+        >
+          <Box backgroundColor="black" width="100%" height="100%">
             <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
           </Box>
-
-          <Box backgroundColor="gray" display="flex" justifyContent="center" height="50px" p="5px" borderRadius="0 0 6px 6px">
-            {user?._id === props._createdBy ? (
-              <Button
-                colorScheme={videoRef.current?.srcObject ? 'red' : 'green'}
-                onClick={videoRef.current?.srcObject ? stopStream : shareScreen}
-                disabled={!room}
-                mx={1}
-                rightIcon={<MdScreenShare />}
-              >
-                {videoRef.current?.srcObject ? 'Stop Sharing' : 'Share Screen'}
-              </Button>
-            ) : (
-              <Text fontSize="sm" color="white">
-                {userWhoCreated?.data.name} Screenshare
-              </Text>
-            )}
-          </Box>
         </Box>
+
+        <Box
+          display="flex"
+          flexDir="column"
+          height="calc(100% - 25px)"
+          width="100%"
+          position="absolute"
+          left={0}
+          top={6}
+          backgroundColor="gray"
+          justifyContent="center"
+          p="5px"
+          alignItems={'center'}
+          opacity={videoRef.current?.srcObject ? 0 : 1}
+        >
+          {yours ? (
+            <Button
+              colorScheme={videoRef.current?.srcObject ? 'red' : 'green'}
+              onClick={videoRef.current?.srcObject ? stopStream : shareScreen}
+              disabled={!room}
+              mx={1}
+              size="lg"
+              rightIcon={<MdScreenShare />}
+            >
+              {videoRef.current?.srcObject ? 'Stop Sharing' : 'Share Screen'}
+            </Button>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems={'center'} height="100%" p="5px">
+              <Text>{!videoRef.current?.src ? `Waiting for '${userWhoCreated?.data.name}' to share their screen.` : ''}</Text>
+            </Box>
+          )}
+        </Box>
+        {yours && videoRef.current?.srcObject ? (
+          <Button onClick={stopStream} position="absolute" left={2} bottom={2} colorScheme="red">
+            Stop Stream
+          </Button>
+        ) : null}
+        <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color={red}>
+          {expirationTime}
+        </Text>
+
         <Modal isOpen={isOpen} onClose={onClose} size="xl">
           <ModalOverlay />
           <ModalContent>
