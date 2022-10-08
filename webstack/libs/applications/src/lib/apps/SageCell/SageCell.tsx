@@ -91,7 +91,7 @@ const AppComponent = (props: App): JSX.Element => {
 }
 
 /**
- * UI toolbar for the cell
+ * UI toolbar for the SageCell application
  *
  * @param {App} props
  * @returns {JSX.Element}
@@ -137,15 +137,16 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <HStack>
-        {selected && s.kernels.length > 0 ? (
-          // show a green light if the kernel is running
-          <Badge colorScheme="green" rounded="sm" size="lg">
-            Online
-          </Badge>
-        ) : (
+        {/* check if the object is empty */}
+        {s.kernels && Object.keys(s.kernels).length === 0 && selected ? (
           // show a red light if the kernel is not running
           <Badge colorScheme="red" rounded="sm" size="lg">
             Offline
+          </Badge>
+        ) : (
+          // show a green light if the kernel is running
+          <Badge colorScheme="green" rounded="sm" size="lg">
+            Online
           </Badge>
         )}
         <Select
@@ -161,11 +162,13 @@ function ToolbarComponent(props: App): JSX.Element {
           variant={'outline'}
           value={selected ?? undefined}
         >
-          {s.kernels ? Object.keys(JSON.parse(s.kernels)).map((kernel) => (
-            <option key={kernel} value={kernel}>
-              {kernel}
-            </option>
-          )) : null}
+          {s.kernels
+            ? Object.keys(JSON.parse(s.kernels)).map((kernel) => (
+                <option key={kernel} value={kernel}>
+                  {kernel}
+                </option>
+              ))
+            : null}
         </Select>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">

@@ -11,19 +11,20 @@ import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
+import { name as KernelDashboardName, init as defaultKernelDashboard } from './apps/KernelDashboard';
 import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
+import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
@@ -37,18 +38,19 @@ export const initialValues = {
   [GLTFViewerName]: defaultGLTFViewer,
   [ImageViewerName]: defaultImageViewer,
   [JupyterLabName]: defaultJupyterLab,
+  [KernelDashboardName]: defaultKernelDashboard,
   [KernelsName]: defaultKernels,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [NotepadName]: defaultNotepad,
   [PDFViewerName]: defaultPDFViewer,
   [RTCChatName]: defaultRTCChat,
+  [SageCellName]: defaultSageCell,
   [StickieName]: defaultStickie,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
-  [SageCellName]: defaultSageCell,
 };
 
