@@ -132,19 +132,20 @@ export function NavigationPanel(props: NavProps) {
   // Organize the apps to the current user's screen
   const oraganizeApps = () => {
     if (apps.length > 0) {
-      const winWidth = window.innerWidth / scale;
-      const winHeight = window.innerHeight / scale;
+      const buffer = 100 / scale;
+      const winWidth = window.innerWidth / scale - buffer;
+      const winHeight = window.innerHeight / scale - buffer;
 
-      const bX = -boardPosition.x;
-      const bY = -boardPosition.y;
+      const bX = -boardPosition.x + buffer / 2;
+      const bY = -boardPosition.y + buffer / 2;
 
       const xSpacing = 20;
       const ySpacing = 40;
       const numCols = Math.max(1, Math.ceil(Math.sqrt(apps.length)));
       const numRows = Math.ceil(Math.sqrt(apps.length));
 
-      const colWidth = winWidth / numCols;
-      const rowHeight = winHeight / numRows;
+      const colWidth = (winWidth - xSpacing * numCols) / numCols;
+      const rowHeight = (winHeight - ySpacing * numRows) / numRows;
       let currentCol = 0;
       let currentRow = 0;
       apps.forEach((el) => {
@@ -158,7 +159,7 @@ export function NavigationPanel(props: NavProps) {
         } else {
           currentCol++;
         }
-        updateApp(el._id, { position: { x, y, z: 0 }, size: { width, height, depth: 0 } });
+        updateApp(el._id, { position: { x, y, z: el.data.position.z }, size: { width, height, depth: el.data.size.depth } });
       });
     }
   };
