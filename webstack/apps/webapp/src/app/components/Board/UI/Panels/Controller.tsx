@@ -94,13 +94,7 @@ export function Controller(props: ControllerProps) {
       zIndex={100}
     >
       <HStack w="100%">
-        <IconButtonPanel
-          icon={<MdArrowBack />}
-          description={`Back to ${room?.data.name}`}
-          disabled={false}
-          isActive={false}
-          onClick={handleHomeClick}
-        />
+        <IconButtonPanel icon={<MdArrowBack />} description={`Back to ${room?.data.name}`} isActive={false} onClick={handleHomeClick} />
 
         <IconButtonPanel
           icon={<MdGroups />}

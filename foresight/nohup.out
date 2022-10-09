@@ -1,0 +1,31 @@
+[22;0t]0;IPython: next/foresightException in thread Thread-1:
+Traceback (most recent call last):
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/threading.py", line 973, in _bootstrap_inner
+    self.run()
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/threading.py", line 910, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/Users/imac/dev/next/foresight/proxy.py", line 128, in receive_messages
+    async with websockets.connect(self.conf[self.prod_type]["ws_server"]+"/api",
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/site-packages/websockets/legacy/client.py", line 632, in __aenter__
+    return await self
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/site-packages/websockets/legacy/client.py", line 649, in __await_impl_timeout__
+    return await asyncio.wait_for(self.__await_impl__(), self.open_timeout)
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/asyncio/tasks.py", line 481, in wait_for
+    return fut.result()
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/site-packages/websockets/legacy/client.py", line 653, in __await_impl__
+    transport, protocol = await self._create_connection()
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/asyncio/base_events.py", line 1017, in create_connection
+    infos = await self._ensure_resolved(
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/asyncio/base_events.py", line 1396, in _ensure_resolved
+    return await loop.getaddrinfo(host, port, family=family, type=type,
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/asyncio/base_events.py", line 856, in getaddrinfo
+    return await self.run_in_executor(
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/asyncio/base_events.py", line 814, in run_in_executor
+    executor.submit(func, *args), loop=self)
+  File "/Users/imac/opt/miniconda3/envs/sage/lib/python3.9/concurrent/futures/thread.py", line 163, in submit
+    raise RuntimeError('cannot schedule new futures after '
+RuntimeError: cannot schedule new futures after interpreter shutdown
