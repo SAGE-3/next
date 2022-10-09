@@ -1,8 +1,8 @@
 from funcx.sdk.client import FuncXClient
-from config import funcx
+# from config import funcx
 import time
 import threading
-from utils.borg import Borg
+from foresight.utils.borg import Borg
 # TODO: move the borg class to its own file
 
 
@@ -11,14 +11,16 @@ class AIClient(Borg):
     ai Client get requests to execute a model, executed it, gets the results and propagates them to the client.
     """
 
-    def __init__(self):
+    def __init__(self, check_every=5):
         Borg.__init__(self)
+        self.check_every = check_every
         self.callback_info = {}
         self.running_jobs = set()
         self.fxc = FuncXClient()
 
         self.stop_thread = False  # keep on checking until this changes to false
-        self.msg_checker = threading.Thread(target=self.process_response)
+        self.msg_checker = threading.Thread(target=self.process_response,
+                                            kwargs={"check_every": self.check_every})
         self.msg_checker.start()
 
     def execute(self, command_info):
@@ -44,7 +46,7 @@ class AIClient(Borg):
 
         return resp
 
-    def process_response(self):
+    def process_response(self, check_every=5):
         while not self.stop_thread:
             tasks_to_remove = set()
             for task_id in self.running_jobs:
@@ -57,14 +59,14 @@ class AIClient(Borg):
                         print("sending the results back")
                         result = resp['result']
                         try:
-                            self.callback_info[task_id][1](result)
+                            self.callback_info[task_id][2](result)
                             del self.callback_info[task_id]
                             tasks_to_remove.add(task_id)
                         except Exception as e:
                             print(f"Error executing calls back.\n{e}")
             self.running_jobs -= tasks_to_remove
 
-            time.sleep(5)  # be nice to the system :)
+            time.sleep(self.check_every)  # be nice to the system :)
             if self.stop_thread:
                 if len(self.running_jobs):
                     print("Exiting the AI Client but queue still contains not communicated jobs")
