@@ -95,8 +95,7 @@ export function BoardCard(props: BoardCardProps) {
         transition="all 0.25s "
         backgroundColor={backgroundColor}
         borderRadius="md"
-        border="1px solid"
-        borderLeft="solid 4px"
+        border="2px solid"
         borderColor={boardColor}
         // borderColor={`${bColor + 'FF'}`}
         _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
