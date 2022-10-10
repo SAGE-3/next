@@ -2,10 +2,10 @@
 	"handle_ai_calls_uuid": "SOME_UUID",
 	"tasks": {
 		"object_detection": {
-			"default": "facebook/detr-resnet-50",
+			"default": "detr_resnet_50",
 			"available_models": [
 				"facebook/detr-resnet-50",
-				"lai_lab/fertilized_egg_detect"
+				"fertilized_egg_detect"
 			]
 		},
 		"text_summarization": {
@@ -16,10 +16,10 @@
 			]
 		}
 	},
-    
+  
 	"urls": {
 		"facebook/detr-resnet-50": "SOME-URL",
-		"lai_lab/fertilized_egg_detect": "SOME-OTHER-URL",
+		"fertilized_egg_detect": "SOME-OTHER-URL",
 		"facebook/bart-large-cnn": "",
 		"sshleifer/distilbart-cnn-12-6": ""
 	}
