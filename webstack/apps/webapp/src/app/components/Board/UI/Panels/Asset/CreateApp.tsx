@@ -251,7 +251,6 @@ export async function setupAppForFile(
           return response.json();
         })
         .then(function (spec) {
-
           // Create a notebook file in Jupyter with the content of the file
           GetConfiguration().then((conf) => {
             if (conf.token) {
@@ -263,8 +262,8 @@ export async function setupAppForFile(
                 base = `http://${window.location.hostname}`;
               }
               // Talk to the jupyter server API
-              const j_url = base + '/api/contents/boards/' + file.originalfilename;
-              const payload = { type: 'notebook', path: '/boards', format: 'json', content: spec };
+              const j_url = base + '/api/contents/notebooks/' + file.originalfilename;
+              const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };
               // Create a new notebook
               fetch(j_url, {
                 method: 'PUT',
@@ -284,10 +283,10 @@ export async function setupAppForFile(
                     boardId: boardId,
                     ownerId: userId,
                     position: { x: xDrop, y: yDrop, z: 0 },
-                    size: { width: 800, height: 800, depth: 0 },
+                    size: { width: 700, height: 700, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'JupyterLab',
-                    state: {},
+                    state: { ...initialValues['JupyterLab'], notebook: file.originalfilename },
                     minimized: false,
                     raised: true,
                   });
@@ -295,7 +294,6 @@ export async function setupAppForFile(
                 });
             }
           });
-
         });
     } else if (isPDF(file.type)) {
       // Look for the file in the asset store
