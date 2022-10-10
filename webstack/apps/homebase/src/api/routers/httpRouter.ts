@@ -21,7 +21,7 @@ import { assetExpressRouter } from './custom/asset';
 
 // Collection Imports
 import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection } from '../collections';
-import { ConfigRouter } from './config';
+import { ConfigRouter, InfoRouter } from './config';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
@@ -35,6 +35,9 @@ import { SAGEBase } from '@sage3/sagebase';
 export function expressAPIRouter(): express.Router {
   // Express routing
   const router = express.Router();
+
+  // Before auth, so can be accessed by anyone
+  router.use('/info', InfoRouter());
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);

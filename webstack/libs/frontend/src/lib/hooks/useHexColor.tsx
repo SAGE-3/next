@@ -7,7 +7,6 @@
  */
 
 import { useToken } from '@chakra-ui/react';
-import { colors } from '../ui/theme/colors';
 
 /**
  * Return a HEX code of the chakra color.

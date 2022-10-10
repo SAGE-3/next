@@ -6,7 +6,7 @@
  *
  */
 
-import { ChangeEvent, createRef, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -14,7 +14,6 @@ import {
   InputGroup,
   InputRightElement,
   Select,
-  SimpleGrid,
   Text,
   Tooltip,
   useColorModeValue,
@@ -25,7 +24,7 @@ import {
 import { Board, Room } from '@sage3/shared/types';
 import { CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
-import { MdAdd, MdEject, MdExitToApp, MdSearch, MdSort } from 'react-icons/md';
+import { MdAdd, MdExitToApp, MdSearch, MdSort } from 'react-icons/md';
 
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
@@ -50,13 +49,13 @@ export function RoomList(props: RoomListProps) {
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.600');
   const borderHex = useHexColor(borderColor);
-  const backgroundColor = useColorModeValue('transparent', 'gray.900');
+
+  // Create room dialog
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const toast = useToast();
   const [filterBoards, setFilterBoards] = useState<Room[] | null>(null);
   const [search, setSearch] = useState('');
-
-  const [newRoomModal, setNewRoomModal] = useState(false);
   const [sortBy, setSortBy] = useState<'Name' | 'Users' | 'Created'>('Name');
 
   const selRoomCardRef = useRef<any>();
@@ -87,6 +86,7 @@ export function RoomList(props: RoomListProps) {
     return a._createdAt > b._createdAt ? -1 : 1;
   }
 
+  // Sorting functions
   let sortFunction = sortByName;
   if (sortBy === 'Users') sortFunction = sortByUsers;
   if (sortBy === 'Created') sortFunction = sortByCreated;
@@ -131,7 +131,7 @@ export function RoomList(props: RoomListProps) {
           <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
             <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
               <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" mr="2" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={() => setNewRoomModal(true)}>
+                <Button borderRadius="md" mr="2" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
@@ -215,7 +215,7 @@ export function RoomList(props: RoomListProps) {
         </ul>
       </Box>
 
-      <CreateRoomModal isOpen={newRoomModal} onClose={() => setNewRoomModal(false)}></CreateRoomModal>
+      <CreateRoomModal isOpen={isOpen} onClose={onClose} />
     </Box>
   );
 }
