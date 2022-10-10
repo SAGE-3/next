@@ -32,7 +32,9 @@ ai_settings = {
 
 class AIPaneState(TrackedBaseModel):
     executeInfo: ExecuteInfo
+    messages: dict
     hostedApps: Optional[dict]
+    supported_tasks: dict
     runStatus: bool
 
 
@@ -54,14 +56,16 @@ class AIPane(SmartBit):
         :return: tasks supported based on the apps hosted.
         The tasks returned are exactly as defined in ai_settings above.
         """
+        print("New app added")
+
         supported_tasks = {}
         if len(self.state.hostedApps.values()) > 1:
-            print("need to return error message saying that we can on operate on one datatype at a time")
+            self.state.messages[time.time()] = """need to return error message saying that we 
+            can on operate on one datatype at a time"""
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
             if len(self.state.hostedApps) == 1:
                 app_type = self.state.executeInfo.params["newAppInfo"]
-
                 for type, settings in ai_settings.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
@@ -71,6 +75,7 @@ class AIPane(SmartBit):
     def run_function(self):
         self.state.runStatus = True
         print("Apps are being hosted: ")
+
         print(self.state.hostedApps.values())
         self.state.executeInfo.executeFunc = ""
         self.send_updates()
