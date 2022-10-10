@@ -85,7 +85,6 @@ export function BoardCard(props: BoardCardProps) {
       <Box
         display="flex"
         justifyContent="left"
-        borderRadius="md"
         height="60px"
         my="1"
         width="100%"
@@ -95,8 +94,11 @@ export function BoardCard(props: BoardCardProps) {
         onClick={handleEnterBoard}
         transition="all 0.25s "
         backgroundColor={backgroundColor}
+        borderRadius="md"
         border="1px solid"
-        borderColor={`${bColor + 'FF'}`}
+        borderLeft="solid 4px"
+        borderColor={boardColor}
+        // borderColor={`${bColor + 'FF'}`}
         _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
       >
         <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
