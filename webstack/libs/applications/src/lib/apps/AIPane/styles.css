@@ -33,3 +33,10 @@
   right : 3rem;
   top : 1rem;
 }
+
+.output-container {
+  position: absolute;
+  bottom: 10rem;
+  left: 5rem;
+  display: flex;
+}

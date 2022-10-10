@@ -27,6 +27,7 @@ import {
 } from "@chakra-ui/react";
 import {App, AppName} from "../../schema";
 import "./styles.css";
+// import outputData from './test.json'
 
 import {state as AppState} from "./index";
 import {AppWindow} from "../../components";
@@ -61,6 +62,8 @@ function AppComponent(props: App): JSX.Element {
 
   const prevX = useRef(0);
   const prevY = useRef(0);
+
+  const [testOutput, setTestOutput] = useState<string>("")
 
   const supportedApps = ["Counter", "Clock", "Notepad"];
 
@@ -160,6 +163,7 @@ function AppComponent(props: App): JSX.Element {
         ;
       }, 5000)
       console.log("set runStatus false")
+      setTestOutput("This is some output data")
     }
   }, [s.runStatus])
 
@@ -213,7 +217,7 @@ function AppComponent(props: App): JSX.Element {
           justifyContent="center"
           position="absolute"
         >
-          <Box className="status-container" position="absolute">
+          <Box className="status-container">
             {s.runStatus ? Object.values(s.hostedApps).every(checkAppType) ?
                 <Icon as={GiEmptyHourglass} w={8} h={8}/>
                 :
@@ -230,6 +234,12 @@ function AppComponent(props: App): JSX.Element {
             <br/>
             hostedapps: {Object.values(s.hostedApps)}
             <br/>
+          </Box>
+
+          <Box className="output-container">
+            Output
+            <br/>
+            {JSON.stringify(testOutput)}
           </Box>
         </Box>
       </Box>
