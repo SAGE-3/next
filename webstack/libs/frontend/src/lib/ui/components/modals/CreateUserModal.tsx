@@ -21,11 +21,10 @@ import {
   FormControl,
   FormLabel,
   Text,
-  ButtonGroup,
 } from '@chakra-ui/react';
 import { MdPerson, MdEmail } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
-import { SAGEColors } from '@sage3/shared';
+import { randomSAGEColor } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
 import { ColorPicker } from '../general';
 
@@ -122,7 +121,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
           <FormControl isRequired mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
-            <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
+            <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
           </FormControl>
           <Text mt={3} fontSize={'md'}>
             Authentication: <em>{auth.auth?.provider}</em>

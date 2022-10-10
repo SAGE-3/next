@@ -21,7 +21,6 @@ import {
   useToast,
   Button,
   Checkbox,
-  ButtonGroup,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -31,7 +30,7 @@ import { useData } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
 import { BoardSchema } from '@sage3/shared/types';
-import { SAGEColors } from '@sage3/shared';
+import { SAGEColors, randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore } from '../../../stores';
 import { ColorPicker } from '../general';
@@ -46,24 +45,23 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // Fetch configuration from the server
   const config = useData('/api/configuration') as serverConfiguration;
 
+  const { user } = useUser();
   const toast = useToast();
 
   const createBoard = useBoardStore((state) => state.create);
-
-  const { user } = useUser();
+  const boards = useBoardStore((state) => state.boards);
 
   const [name, setName] = useState<BoardSchema['name']>('');
   const [description, setDescription] = useState<BoardSchema['description']>('');
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
-  const [color, setColor] = useState<BoardSchema['color']>('red');
+  const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (color: SAGEColors) => setColor(color);
 
-  const boards = useBoardStore((state) => state.boards);
-
+  // Run on every open of the dialog
   useEffect(() => {
     // Generate a PIN
     const makeid = (length: number): string => {
@@ -76,7 +74,12 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       return result;
     };
     setPassword(makeid(6));
-  }, []);
+    // Reset the form fields
+    setName('')
+    setDescription('');
+    setColor(randomSAGEColor());
+    setProtected(false);
+  }, [props.isOpen]);
 
   // the input element
   // When the modal panel opens, select the text for quick replacing
@@ -172,7 +175,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
+          <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
@@ -199,7 +202,4 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       </ModalContent>
     </Modal>
   );
-}
-function handleColorChange(name: string): void {
-  throw new Error('Function not implemented.');
 }
