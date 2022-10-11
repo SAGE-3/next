@@ -15,11 +15,13 @@ import { z } from 'zod';
 
 export const schema = z.object({
   jupyterURL: z.string(),
+  notebook: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   jupyterURL: 'http://localhost',
+  notebook: '',
 };
 
 export const name = 'JupyterLab';

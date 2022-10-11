@@ -19,7 +19,6 @@ import {
   Input,
   Button,
   Box,
-  ButtonGroup,
   Checkbox,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
@@ -45,11 +44,11 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
 
   const [name, setName] = useState<RoomSchema['name']>(props.room.data.name);
   const [description, setEmail] = useState<RoomSchema['description']>(props.room.data.description);
-  const [color, setColor] = useState<RoomSchema['color']>(props.room.data.color);
+  const [color, setColor] = useState(props.room.data.color as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
-  const handleColorChange = (color: string) => setColor(color);
+  const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
   const deleteRoom = useRoomStore((state) => state.delete);
   const updateRoom = useRoomStore((state) => state.update);
@@ -63,7 +62,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   useEffect(() => {
     setName(props.room.data.name);
     setEmail(props.room.data.description);
-    setColor(props.room.data.color);
+    setColor(props.room.data.color as SAGEColors);
     setIsListed(props.room.data.isListed);
     setProtected(props.room.data.isPrivate);
     setPassword('');
@@ -170,7 +169,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
+          <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
             Room Listed Publicly

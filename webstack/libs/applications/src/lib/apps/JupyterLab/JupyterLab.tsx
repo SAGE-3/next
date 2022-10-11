@@ -31,7 +31,6 @@ import { WebviewTag } from 'electron';
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string | null>(s.jupyterURL);
   // Tracking the dom-ready and did-load events
@@ -53,80 +52,136 @@ function AppComponent(props: App): JSX.Element {
           base = `http://${window.location.hostname}`;
         }
         // Talk to the jupyter server API
-        const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
-        const payload = { type: 'notebook', path: '/boards', format: 'text' };
-        // Create a new notebook
-        fetch(j_url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Token ' + conf.token,
-          },
-          body: JSON.stringify(payload)
-        }).then((response) => response.json())
-          .then((res) => {
-            console.log('Jupyter> notebook created', res);
-            // Create a new kernel
-            const k_url = base + '/api/kernels';
-            const kpayload = { name: 'python3', path: '/' };
-            // Creating a new kernel with HTTP POST
-            fetch(k_url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Token ' + conf.token,
-              },
-              body: JSON.stringify(kpayload)
-            }).then((response) => response.json())
-              .then((res) => {
-                console.log('Jupyter> kernel created', res);
-                const kernel = res;
-                // Create a new session
-                const s_url = base + '/api/sessions'
-                const sid = uuidv1();
-                const spayload = {
-                  id: sid.replace(/-/g, ''),
-                  kernel: kernel,
-                  name: boardId,
+        let j_url: string;
+        if (s.notebook) {
+          j_url = base + '/api/contents/notebooks/' + `${s.notebook}`;
+          // Create a new kernel
+          const k_url = base + '/api/kernels';
+          const kpayload = { name: 'python3', path: '/' };
+          // Creating a new kernel with HTTP POST
+          fetch(k_url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token ' + conf.token,
+            },
+            body: JSON.stringify(kpayload)
+          }).then((response) => response.json())
+            .then((res) => {
+              console.log('Jupyter> kernel created', res);
+              const kernel = res;
+              // Create a new session
+              const s_url = base + '/api/sessions'
+              const sid = uuidv1();
+              const spayload = {
+                id: sid.replace(/-/g, ''),
+                kernel: kernel,
+                name: boardId,
+                path: `boards/${boardId}.ipynb`,
+                notebook: {
+                  name: `${boardId}.ipynb`,
                   path: `boards/${boardId}.ipynb`,
-                  notebook: {
-                    name: `${boardId}.ipynb`,
+                },
+                type: 'notebook'
+              }
+              // Creating a new session with HTTP POST
+              fetch(s_url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Token ' + conf.token,
+                },
+                body: JSON.stringify(spayload)
+              }).then((response) => response.json())
+                .then((res) => {
+                  console.log('Juypyter> session created', res);
+                  //  Open the notebook in a separate workspace
+                  let base: string;
+                  if (conf.production) {
+                    base = `https://${window.location.hostname}:4443`;
+                  } else {
+                    base = `http://${window.location.hostname}`;
+                  }
+                  const newUrl = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
+                  setUrl(newUrl);
+                });
+            })
+            .catch((err) => {
+              console.log('Jupyter> error', err);
+            });
+        } else {
+          j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
+          const payload = { type: 'notebook', path: '/boards', format: 'text' };
+          // Create a new notebook
+          fetch(j_url, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token ' + conf.token,
+            },
+            body: JSON.stringify(payload)
+          }).then((response) => response.json())
+            .then((res) => {
+              console.log('Jupyter> notebook created', res);
+              // Create a new kernel
+              const k_url = base + '/api/kernels';
+              const kpayload = { name: 'python3', path: '/' };
+              // Creating a new kernel with HTTP POST
+              fetch(k_url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Token ' + conf.token,
+                },
+                body: JSON.stringify(kpayload)
+              }).then((response) => response.json())
+                .then((res) => {
+                  console.log('Jupyter> kernel created', res);
+                  const kernel = res;
+                  // Create a new session
+                  const s_url = base + '/api/sessions'
+                  const sid = uuidv1();
+                  const spayload = {
+                    id: sid.replace(/-/g, ''),
+                    kernel: kernel,
+                    name: boardId,
                     path: `boards/${boardId}.ipynb`,
-                  },
-                  type: 'notebook'
-                }
-                // Creating a new session with HTTP POST
-                fetch(s_url, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Token ' + conf.token,
-                  },
-                  body: JSON.stringify(spayload)
-                }).then((response) => response.json())
-                  .then((res) => {
-                    console.log('Juypyter> session created', res);
-                    //  Open the notebook in a separate workspace
-                    let base: string;
-                    if (conf.production) {
-                      base = `https://${window.location.hostname}:4443`;
-                    } else {
-                      base = `http://${window.location.hostname}`;
-                    }
-                    const newUrl = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
-                    setUrl(newUrl);
-                  });
-              });
-
-          })
-          .catch((err) => {
-            console.log('Jupyter> error', err);
-          });
-
+                    notebook: {
+                      name: `${boardId}.ipynb`,
+                      path: `boards/${boardId}.ipynb`,
+                    },
+                    type: 'notebook'
+                  }
+                  // Creating a new session with HTTP POST
+                  fetch(s_url, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Token ' + conf.token,
+                    },
+                    body: JSON.stringify(spayload)
+                  }).then((response) => response.json())
+                    .then((res) => {
+                      console.log('Juypyter> session created', res);
+                      //  Open the notebook in a separate workspace
+                      let base: string;
+                      if (conf.production) {
+                        base = `https://${window.location.hostname}:4443`;
+                      } else {
+                        base = `http://${window.location.hostname}`;
+                      }
+                      const newUrl = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
+                      setUrl(newUrl);
+                    });
+                });
+            })
+            .catch((err) => {
+              console.log('Jupyter> error', err);
+            });
+        }
       }
     });
   }, []);
-
 
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
@@ -202,7 +257,7 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app JupyterApp */
 
 function ToolbarComponent(props: App): JSX.Element {
-  // const s = props.data.state as AppState;
+  const s = props.data.state as AppState;
   // const updateState = useAppStore((state) => state.updateState);
 
   // Board store
@@ -223,16 +278,19 @@ function ToolbarComponent(props: App): JSX.Element {
         } else {
           base = `http://${window.location.hostname}`;
         }
-        const j_url = base + '/api/contents/boards/' + `${boardId}.ipynb?token=${conf.token}`;
-        console.log("🚀 ~ file: JupyterLab.tsx ~ line 217 ~ GetConfiguration ~ j_url", j_url);
-
+        let j_url: string;
+        if (s.notebook) {
+          j_url = base + '/api/contents/notebooks/' + `${s.notebook}?token=${conf.token}`;
+        } else {
+          j_url = base + '/api/contents/boards/' + `${boardId}.ipynb?token=${conf.token}`;
+        }
         fetch(j_url).then((response) => response.json()).then((note) => {
           // Generate a filename using date and board name
           const boardName = boards.find((b) => b._id === boardId)?.data.name || 'session';
           // Current date
           const prettyDate = dateFormat(new Date(), 'yyyy-MM-dd-HH-mm-ss');
           // Make a filename with board name and date
-          const filename = `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.ipynb`;
+          const filename = s.notebook || `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.ipynb`;
           // Convert JSON object to string
           const content = JSON.stringify(note.content, null, 4);
           // Generate a URL containing the text of the note

@@ -46,3 +46,22 @@ export function ConfigRouter(): express.Router {
 
   return router;
 }
+
+export function InfoRouter(): express.Router {
+  const router = express.Router();
+
+  // Get server configuration data structure
+  router.get('/', async (req, res) => {
+    // Configuration public values
+    const configuration = {
+      serverName: config.serverName,
+      port: config.port,
+      production: config.production,
+      servers: config.servers,
+      version: config.version,
+    };
+    res.json(configuration);
+  });
+
+  return router;
+}

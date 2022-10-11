@@ -114,7 +114,7 @@ export function HomePage() {
       <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100%" px="2">
         <Box flex="1 1 0px"></Box>
         <Text fontSize="4xl" flex="1 1 0px" justifyContent="center" display="flex">
-          {config?.serverName}
+          SAGE3: {config?.serverName}
         </Text>
         <Box flex="1 1 0px" justifyContent="right" display="flex" alignItems={'start'}>
           <Clock />

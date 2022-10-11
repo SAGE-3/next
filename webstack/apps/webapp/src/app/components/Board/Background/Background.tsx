@@ -8,11 +8,11 @@
 
 import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor, GetConfiguration } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { getMime, isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF } from '@sage3/shared';
+import { getMime, isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -230,6 +230,54 @@ export function Background(props: BackgroundProps) {
             .then(async function (text) {
               // Create a note from the text
               createApp(setupApp('CodeCell', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { code: text }));
+            });
+        }
+      });
+    } else if (isPythonNotebook(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const localurl = '/api/assets/static/' + a.data.file;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+          })
+            .then(function (response) {
+              return response.json();
+            })
+            .then(async function (json) {
+              // Create a notebook file in Jupyter with the content of the file
+              GetConfiguration().then((conf) => {
+                if (conf.token) {
+                  // Create a new notebook
+                  let base: string;
+                  if (conf.production) {
+                    base = `https://${window.location.hostname}:4443`;
+                  } else {
+                    base = `http://${window.location.hostname}`;
+                  }
+                  // Talk to the jupyter server API
+                  const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+                  const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
+                  // Create a new notebook
+                  fetch(j_url, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Token ' + conf.token,
+                    },
+                    body: JSON.stringify(payload)
+                  }).then((response) => response.json())
+                    .then((res) => {
+                      console.log('Jupyter> notebook created', res);
+                      // Create a note from the json
+                      createApp(setupApp('JupyterLab', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 700, h: 700 }, { notebook: a.data.originalfilename }));
+                    });
+                }
+              });
             });
         }
       });

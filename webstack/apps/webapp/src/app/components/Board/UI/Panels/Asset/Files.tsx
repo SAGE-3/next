@@ -47,6 +47,7 @@ export function Files(props: FilesProps): JSX.Element {
   const [searchTerm, setSearchTerm] = useState<string>();
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
 
@@ -376,8 +377,8 @@ export function Files(props: FilesProps): JSX.Element {
     } else if (e.key === 'Enter') {
       if (!user) return;
       // Get around  the center of the board
-      const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
-      const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
+      const xDrop = Math.floor(-boardPosition.x + (window.innerWidth / scale) / 2);
+      const yDrop = Math.floor(-boardPosition.y + (window.innerHeight / scale) / 2);
 
       const first = filesList.find((k) => k.selected);
       if (first) {
