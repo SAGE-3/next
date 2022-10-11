@@ -8,7 +8,10 @@ import time
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-from typing import Optional, TypeVar
+from typing import Optional
+import json
+from config import ai_models, funcx as funcx_config
+
 
 # PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 
@@ -92,5 +95,26 @@ class AIPane(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.send_updates()
 
-    def execute_model(self):
-        pass
+    def handle_exec_result(self, msg):
+        print("I am handling the execution results")
+        self.state.output = json.dumps(msg)
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
+
+    def execute_model(self, some_uuid, model_id):
+        params = {
+            'model_id': model_id,
+            'model_url': ai_models["urls"][model_id],
+            'data': {'urls': ['http://aishelf.org/wp-content/uploads/2021/05/yolo_2.jpg',
+                              'http://farm9.staticflickr.com/8245/8622384284_d5535dfc3d_z.jpg']}
+        }
+        payload = {
+            "app_uuid": "SOMETHING",
+            "msg_uuid": some_uuid,
+            "callback_fn": self.handle_exec_result,
+            "funcx_uuid": funcx_config["ai_func_uuid"],
+            "endpoint_uuid": funcx_config["endpoint_uuid"],
+            "data": params
+        }
+        self._ai_client.execute(payload)

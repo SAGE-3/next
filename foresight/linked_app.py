@@ -53,7 +53,7 @@ async def subscribe(sock, room_id):
 
 
 class LinkedApp():
-    def __init__(self, room_id, config_file = "config/config.json"):
+    def __init__(self, room_id, config_file = "config/funcx.json"):
         self.room = Room(room_id)
         # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
         # NB_TRIALS = 5

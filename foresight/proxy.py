@@ -279,7 +279,7 @@ token = conf['token']
 room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
 sage_proxy = SAGEProxy(room_id, conf, prod_type)
 
-# sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
+# sage_proxy = SAGEProxy("config/funcx.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
 # b34cf54e-2f9e-4b9a-a458-27f4b6c658a7
 
 listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
@@ -295,7 +295,7 @@ worker_process.start()
 #     # multiprocessing.set_start_method("fork")
 #     # parser = get_cmdline_parser()
 #     # args = parser.parse_args()
-#     sage_proxy = SAGEProxy("config.json", "05828804-d87f-4498-857e-02f288effd3d")
+#     sage_proxy = SAGEProxy("funcx.json", "05828804-d87f-4498-857e-02f288effd3d")
 #
 #     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
 #     # sage_proxy = SAGEProxy(args.config_file, args.room_id)

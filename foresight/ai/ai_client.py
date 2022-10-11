@@ -2,7 +2,9 @@ from funcx.sdk.client import FuncXClient
 # from config import funcx
 import time
 import threading
-from foresight.utils.borg import Borg
+from utils.borg import Borg
+import json
+
 # TODO: move the borg class to its own file
 
 
@@ -23,6 +25,7 @@ class AIClient(Borg):
                                             kwargs={"check_every": self.check_every})
         self.msg_checker.start()
 
+
     def execute(self, command_info):
         """
         Got request to exectue. everything i need is in command_info
@@ -38,7 +41,7 @@ class AIClient(Borg):
         endpoint_uuid = command_info["endpoint_uuid"]
         data = command_info["data"]
 
-        resp = self.fxc.run(*data, function_id=funcx_uuid,
+        resp = self.fxc.run(**data, function_id=funcx_uuid,
                             endpoint_id=endpoint_uuid)
         self.running_jobs.add(resp)
 
@@ -46,7 +49,7 @@ class AIClient(Borg):
 
         return resp
 
-    def process_response(self, check_every=5):
+    def process_response(self, check_every):
         while not self.stop_thread:
             tasks_to_remove = set()
             for task_id in self.running_jobs:
