@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Text, Image, Progress, useDisclosure } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Image, Progress } from '@chakra-ui/react';
 
 import {
   JoinBoardCheck,
