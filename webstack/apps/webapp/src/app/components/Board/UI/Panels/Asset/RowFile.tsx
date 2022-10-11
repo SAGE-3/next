@@ -66,6 +66,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const { boardId, roomId } = location.state as { boardId: string; roomId: string };
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -193,8 +194,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const onDoubleClick = async (event: React.MouseEvent<HTMLDivElement>) => {
     if (!user) return;
     // Get around  the center of the board
-    const xDrop = Math.floor(boardPosition.x + window.innerWidth / 2 - 400 / 2);
-    const yDrop = Math.floor(boardPosition.y + window.innerHeight / 2);
+    const xDrop = Math.floor(-boardPosition.x + (window.innerWidth / scale) / 2);
+    const yDrop = Math.floor(-boardPosition.y + (window.innerHeight / scale) / 2);
 
     // Create the app
     const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user._id);

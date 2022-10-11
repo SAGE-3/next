@@ -8,8 +8,12 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF } from '@sage3/shared';
+import {
+  isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF,
+  isGIF, isPythonNotebook
+} from '@sage3/shared';
 
+import { GetConfiguration } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
@@ -231,6 +235,64 @@ export async function setupAppForFile(
             state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
             minimized: false,
             raised: true,
+          });
+        });
+    } else if (isPythonNotebook(file.type)) {
+      // Look for the file in the asset store
+      const localurl = '/api/assets/static/' + file.filename;
+      // Get the content of the file
+      fetch(localurl, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (spec) {
+          // Create a notebook file in Jupyter with the content of the file
+          GetConfiguration().then((conf) => {
+            if (conf.token) {
+              // Create a new notebook
+              let base: string;
+              if (conf.production) {
+                base = `https://${window.location.hostname}:4443`;
+              } else {
+                base = `http://${window.location.hostname}`;
+              }
+              // Talk to the jupyter server API
+              const j_url = base + '/api/contents/notebooks/' + file.originalfilename;
+              const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };
+              // Create a new notebook
+              fetch(j_url, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Token ' + conf.token,
+                },
+                body: JSON.stringify(payload)
+              }).then((response) => response.json())
+                .then((res) => {
+                  console.log('Jupyter> notebook created', res);
+
+                  resolve({
+                    name: 'JupyterLab',
+                    description: 'JupyterLab',
+                    roomId: roomId,
+                    boardId: boardId,
+                    ownerId: userId,
+                    position: { x: xDrop, y: yDrop, z: 0 },
+                    size: { width: 700, height: 700, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'JupyterLab',
+                    state: { ...initialValues['JupyterLab'], notebook: file.originalfilename },
+                    minimized: false,
+                    raised: true,
+                  });
+
+                });
+            }
           });
         });
     } else if (isPDF(file.type)) {
