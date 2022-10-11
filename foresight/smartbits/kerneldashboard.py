@@ -22,7 +22,7 @@ class KernelDashboardState(TrackedBaseModel):
     This class represents the state of the kernel dashboard
     """
     kernels: list = []
-    sessions: list = []
+    # sessions: list = []
     defaultKernel: str = ""
     kernelSpecs: list = []
     executeInfo: ExecuteInfo
@@ -36,7 +36,10 @@ class KernelDashboard(SmartBit):
     # _msg_checker = threading.Thread(target=self.process_every)
 
     def __init__(self, **kwargs):
+        print("I am here 1")
         super(KernelDashboard, self).__init__(**kwargs)
+        print("I am here 2")
+
         redis_server = redis.StrictRedis(host=conf[prod_type]["redis_server"], port=6379, db=0)
         jupyter_token = redis_server.get("config:jupyter:token").decode()
         self._headers = {'Authorization': f"Token  {jupyter_token}"}
@@ -51,7 +54,7 @@ class KernelDashboard(SmartBit):
         return self._base_url
 
     def get_kernel_specs(self):
-        j_url = self.get_base_url() + '/kernelspecs'
+        j_url = f"{self.get_base_url()}/kernelspecs"
         response = requests.get(j_url, headers=self.get_headers())
         kernel_specs = json.loads(response.text)
         self.state.defaultKernel = kernel_specs['default']
@@ -61,22 +64,35 @@ class KernelDashboard(SmartBit):
         self.send_updates()
 
     def get_kernels(self):
-        j_url = self.get_base_url() + '/kernels'
+        j_url = f"{self.get_base_url()}/kernels"
         response = requests.get(j_url, headers=self.get_headers())
         kernels = json.loads(response.text)
         return kernels
 
-    def get_sessions(self):
-        j_url = self.get_base_url() + '/sessions'
-        response = requests.get(j_url, headers=self.get_headers())
-        sessions = json.loads(response.text)
-        return sessions
+    # def get_sessions(self):
+    #     j_url = self.get_base_url() + '/sessions'
+    #     response = requests.get(j_url, headers=self.get_headers())
+    #     sessions = json.loads(response.text)
+    #     return sessions
 
-    def add_kernel(self, kernel_name="python3", path="/boards"):
+    def add_kernel(self, kernel_alias, room_uuid, board_uuid, owner_uuid, is_private, kernel_name="python3"):
         j_url = self.get_base_url() + '/kernels'
-        body = {"name": kernel_name, "path": path}
+        body = {"name": kernel_name}
         response = requests.post(j_url, headers=self.get_headers(), json=body)
-        if response.status_code == 200:
+
+        if response.status_code == 201:
+            response_data = response.json()
+            kernel_info = {
+                "kerel_alias": kernel_alias,
+                "kernel_name": kernel_name,
+                "kernel id": response_data['id'],
+                "room": room_uuid,
+                "board": board_uuid,
+                "owner_uuid": owner_uuid,
+                "is_private": is_private,
+                "auth_usr": []
+            }
+            self._jupyter_client.redis_server.set("JUPYTER:KERNELS", ".", kernel_info)
             self.refresh_list()
 
     def delete_kernel(self, kernel_id):
@@ -108,16 +124,15 @@ class KernelDashboard(SmartBit):
 
     def refresh_list(self):
         self.state.kernels = self.get_kernels()
-        self.state.sessions = self.get_sessions() 
+        # self.state.sessions = self.get_sessions()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def process_every(self, seconds=1):
+    def process_every(self, seconds=10):
         # TODO: check if kernels changed and only refresh if they did
         while True:
-            if self.state.kernels != self.get_kernels() or self.state.sessions != self.get_sessions():
+            if self.state.kernels != self.get_kernels():
                 self.refresh_list()
-            if self.state.executeInfo.executeFunc == "refresh_list":
-                self.refresh_list()
+
             time.sleep(seconds)
