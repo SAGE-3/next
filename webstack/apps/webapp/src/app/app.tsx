@@ -8,8 +8,18 @@
 
 import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 
-import { Box, Button, ChakraProvider, Text, Image, useColorModeValue } from '@chakra-ui/react';
-import { PresenceProvider, theme, UserProvider, useUser, AuthProvider, useAuth, SocketAPI, useHexColor } from '@sage3/frontend';
+import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
+import {
+  PresenceProvider,
+  theme,
+  UserProvider,
+  useUser,
+  AuthProvider,
+  useAuth,
+  CheckUrlForBoardId,
+  SocketAPI,
+  useHexColor,
+} from '@sage3/frontend';
 
 import { LoginPage } from './pages/Login';
 import { HomePage } from './pages/Home';
@@ -32,10 +42,13 @@ export function App() {
       <AuthProvider>
         <UserProvider>
           <PresenceProvider>
-            {!status ? (
+            {status ? (
               <Routes>
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/enter">
+                  <Route path=":boardId" element={<CheckUrlForBoardId />} />
+                </Route>
 
                 <Route
                   path="/createuser"

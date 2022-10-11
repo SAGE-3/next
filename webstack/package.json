@@ -17,7 +17,6 @@
     "buildall": "nx run-many --target=build --all",
     "homebase": "nx serve homebase",
     "webapp": "nx serve webapp",
-    "playground": "nx serve playground",
     "stage": "rimraf dist && yarn build homebase && yarn build webapp && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
     "prod": "rimraf dist && yarn build homebase --prod && yarn build webapp --prod && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
     "newapp": "nx workspace-generator newapp",
