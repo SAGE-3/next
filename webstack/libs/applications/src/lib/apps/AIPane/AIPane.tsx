@@ -260,7 +260,7 @@ function AppComponent(props: App): JSX.Element {
           <Box className="output-container">
             Output
             <br/>
-            {JSON.stringify(testOutput)}
+            {JSON.stringify(s.output)}
           </Box>
         </Box>
       </Box>
