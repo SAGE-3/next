@@ -41,8 +41,8 @@ export class SAGE3Collection<T extends SBJSON> {
    * Initialize the collection
    * @param clear Clear the whole collection before initializing
    */
-  public async initialize(clear?: boolean): Promise<void> {
-    this._collection = await SAGEBase.Database.collection<T>(this.name, this._queryableAttributes);
+  public async initialize(clear?: boolean, ttl?: number): Promise<void> {
+    this._collection = await SAGEBase.Database.collection<T>(this.name, this._queryableAttributes, ttl);
     // Clear the collection at initialization
     if (clear) {
       this.deleteAll();

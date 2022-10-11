@@ -28,7 +28,7 @@ import { config } from '../../../config';
 import { uploadMiddleware } from '../../../connectors/upload-connector';
 
 // Asset model
-import { AssetsCollection, AppsCollection } from '../../collections';
+import { AssetsCollection, AppsCollection, MessageCollection } from '../../collections';
 
 // External Imports
 import { WebSocket } from 'ws';
@@ -129,6 +129,9 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       // Put the new file into the collection
       const now = new Date().toISOString();
       // Process the file (metadata, image, pdf, etc.)
+
+      MessageCollection.add({ type: 'info', payload: `Processing file ${elt.originalname}...` }, 'sage3');
+
       const newdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype);
       const assetID = await AssetsCollection.addAsset(
         {
