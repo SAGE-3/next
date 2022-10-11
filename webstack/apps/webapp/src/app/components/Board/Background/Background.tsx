@@ -89,10 +89,26 @@ export function Background(props: BackgroundProps) {
           if (filenames) {
             toast({
               title: 'Upload Done:' + truncateWithEllipsis(filenames, 50),
-              status: 'info',
-              duration: 3000,
+              status: 'success',
+              duration: 2000,
               isClosable: true,
             });
+
+            // TODO: make the toast disapear when the asset is done
+            for (let i = 0; i < fileListLength; i++) {
+              // check the mime type we got from the browser, and check with mime lib. if needed
+              const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
+              if (isValid(filetype)) {
+                toast({
+                  title: 'Processing asset "' + input[i].name + '"',
+                  status: 'info',
+                  variant: 'subtle',
+                  duration: 4000,
+                  isClosable: true,
+                });
+              }
+            }
+
           } else {
             toast({
               title: 'Upload with Errors',
