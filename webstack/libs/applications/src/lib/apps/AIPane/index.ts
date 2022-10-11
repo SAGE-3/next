@@ -30,6 +30,8 @@ export const schema = z.object({
 
   messages: z.record(z.string(), z.any()),
 
+  output: z.any(),
+
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),

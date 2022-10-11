@@ -9,7 +9,7 @@
 import {useAppStore, useAssetStore, useUIStore} from "@sage3/frontend";
 import {
   Box,
-  Button,
+  Button, CloseButton,
   Icon,
   IconButton,
   Menu,
@@ -17,7 +17,7 @@ import {
   MenuItem,
   MenuList,
   Popover,
-  PopoverArrow,
+  PopoverArrow, PopoverBody,
   PopoverCloseButton,
   PopoverContent,
   PopoverHeader,
@@ -92,6 +92,7 @@ function AppComponent(props: App): JSX.Element {
               ...client,
             };
             updateState(props._id, {hostedApps: hosted});
+            updateState(props._id, {messages: hosted})
             console.log("app " + app._id + " added");
           } else {
             console.log("app " + app._id + " already in hostedApps");
@@ -101,6 +102,7 @@ function AppComponent(props: App): JSX.Element {
             const hostedCopy = {...s.hostedApps};
             delete hostedCopy[app._id];
             updateState(props._id, {hostedApps: hostedCopy});
+            updateState(props._id, {messages: hostedCopy});
             console.log("app " + app._id + " removed from hostedApps");
           }
         }
@@ -177,6 +179,10 @@ function AppComponent(props: App): JSX.Element {
     });
   }
 
+  function closePopovers() {
+    console.log("Remove entry")
+  }
+
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
@@ -192,7 +198,8 @@ function AppComponent(props: App): JSX.Element {
                   size="lg"
                   color="cyan"
                 >
-                  Message
+                  {Object.keys(s.hostedApps).length !== 0 ? "Message" : <VisuallyHidden>Empty Board</VisuallyHidden>
+                  }
                 </Button>
               </PopoverTrigger>
 
@@ -200,11 +207,24 @@ function AppComponent(props: App): JSX.Element {
               <PopoverContent>
                 <PopoverArrow/>
                 <PopoverCloseButton/>
-                <PopoverHeader>
+                <PopoverHeader>History</PopoverHeader>
+
+                <PopoverBody>
                   {Object.values(s.hostedApps).every(checkAppType)
                     ? "File type accepted"
                     : "Error. Unsupported file type"}
-                </PopoverHeader>
+                </PopoverBody>
+
+                {Object.values(s.messages)?.map((message: string, index: number) => (
+                  <PopoverBody>
+                    {message} : {index}
+                    <CloseButton
+                      size="sm"
+                      className="popover-close"
+                      onClick={() => closePopovers()}
+                    />
+                  </PopoverBody>
+                ))}
               </PopoverContent>
             </Popover>
           </div>
@@ -227,13 +247,14 @@ function AppComponent(props: App): JSX.Element {
             }
           </Box>
 
-          <Box position="relative">
+          <Box position="absolute">
             selectedApp {selectedAppId}
             <br/>
             length of hostedappsarr: {Object.keys(s.hostedApps).length}
             <br/>
             hostedapps: {Object.values(s.hostedApps)}
             <br/>
+            messages: {Object.values(s.messages)}
           </Box>
 
           <Box className="output-container">
@@ -282,14 +303,6 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      {/* TODO Temporary - Board assets dropdown */}
-      {/* <Box>
-        <Select placeholder="Select File" onChange={handleFileSelected}>
-          {roomAssets.map((el) => (
-            <option value={el._id}>{el.data.originalfilename}</option>
-          ))}
-        </Select>
-      </Box> */}
       <Menu>
         <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
           Models
@@ -316,4 +329,7 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default {AppComponent, ToolbarComponent};
+export default {
+  AppComponent, ToolbarComponent
+}
+;
