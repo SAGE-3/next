@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Image, Progress } from '@chakra-ui/react';
 
 import {
-  EditRoomModal,
+  JoinBoardCheck,
   RoomList,
   serverConfiguration,
   useBoardStore,
@@ -110,6 +110,8 @@ export function HomePage() {
   return (
     // Main Container
     <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
+      {/* Check if the user wanted to join a board through a URL */}
+      <JoinBoardCheck />
       {/* Top Bar */}
       <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100%" px="2">
         <Box flex="1 1 0px"></Box>

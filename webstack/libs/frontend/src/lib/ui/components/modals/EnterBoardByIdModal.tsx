@@ -63,8 +63,6 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
     setBoardId(e.target.value);
   };
 
-  const openEnterBoardModal = () => {};
-
   // Handle the data from the useData hook
   const handleSubmit = async () => {
     // Update local state
