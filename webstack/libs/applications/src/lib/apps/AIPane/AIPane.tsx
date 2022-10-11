@@ -85,7 +85,6 @@ function AppComponent(props: App): JSX.Element {
           props.data.position.y + props.data.size.height &&
           app.data.size.height + app.data.position.y > props.data.position.y
         ) {
-          newAppAdded()
           if (!Object.keys(s.hostedApps).includes(app._id)) {
             const hosted = {
               ...s.hostedApps,
@@ -94,6 +93,7 @@ function AppComponent(props: App): JSX.Element {
             updateState(props._id, {hostedApps: hosted});
             updateState(props._id, {messages: hosted})
             console.log("app " + app._id + " added");
+            newAppAdded()
           } else {
             console.log("app " + app._id + " already in hostedApps");
           }
@@ -175,7 +175,7 @@ function AppComponent(props: App): JSX.Element {
 
   function newAppAdded() {
     updateState(props._id, {
-      executeInfo: {executeFunc: "new_app_added", params: {}},
+      executeInfo: {executeFunc: "new_app_added", params: {"app_type": "ImageViewer"}},
     });
   }
 
@@ -296,11 +296,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // newAppAdded()
   }
 
-  function newAppAdded() {
-    updateState(props._id, {
-      executeInfo: {executeFunc: "new_app_added", params: {"newAppInfo": "ImageViewer"}},
-    });
-  }
+
 
   return (
     <>
