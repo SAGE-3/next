@@ -162,13 +162,20 @@ function ToolbarComponent(props: App): JSX.Element {
           variant={'outline'}
           value={selected ?? undefined}
         >
-          {s.kernels
+          {s.kernels &&
+            s.kernels.map((kernel) => (
+              <option key={kernel.name} value={kernel.name}>
+                {kernel.name}
+              </option>
+            ))}
+
+          {/* {s.kernels
             ? Object.keys(JSON.parse(s.kernels)).map((kernel) => (
                 <option key={kernel} value={kernel}>
                   {kernel}
                 </option>
               ))
-            : null}
+            : null} */}
         </Select>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">

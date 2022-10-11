@@ -14,33 +14,33 @@ import { z } from 'zod';
  */
 
 
-const sample_data = {
-  kernels: [
-    { id: '1', name: 'kernel1', last_activity: '2021-05-01', execution_state: 'idle', connections: true },
-    { id: '2', name: 'kernel2', last_activity: '2021-05-02', execution_state: 'busy', connections: false },
-  ],
-  sessions: [
-    { id: '1', path: 'path1', name: 'session1', type: 'notebook', kernel: { id: '1', name: 'kernel1', last_activity: '2021-05-01', execution_state: 'idle', connections: true }, notebook: { id: '1', name: 'notebook1' } },
-    { id: '2', path: 'path2', name: 'session2', type: 'console', kernel: { id: '2', name: 'kernel2', last_activity: '2021-05-02', execution_state: 'busy', connections: false }, notebook: { id: '2', name: 'notebook2' } },    
-  ],
-  kernelSpecs: {
-    default: 'python3',
-    kernelspecs: {
-      python3: {
-        name: 'python3',
-        spec: {
-          argv: ['python3', '-m', 'ipykernel_launcher', '-f', '{connection_file}'],
-          env: {},
-          display_name: 'Python 3',
-          language: 'python',
-          interrupt_mode: 'signal',
-          metadata: {},
-        },
-        resources: {},
-      },
-    },
-  }
-}
+// const sample_data = {
+//   kernels: [
+//     { id: '1', name: 'kernel1', last_activity: '2021-05-01', execution_state: 'idle', connections: true },
+//     { id: '2', name: 'kernel2', last_activity: '2021-05-02', execution_state: 'busy', connections: false },
+//   ],
+//   sessions: [
+//     { id: '1', path: 'path1', name: 'session1', type: 'notebook', kernel: { id: '1', name: 'kernel1', last_activity: '2021-05-01', execution_state: 'idle', connections: true }, notebook: { id: '1', name: 'notebook1' } },
+//     { id: '2', path: 'path2', name: 'session2', type: 'console', kernel: { id: '2', name: 'kernel2', last_activity: '2021-05-02', execution_state: 'busy', connections: false }, notebook: { id: '2', name: 'notebook2' } },    
+//   ],
+//   kernelSpecs: {
+//     default: 'python3',
+//     kernelspecs: {
+//       python3: {
+//         name: 'python3',
+//         spec: {
+//           argv: ['python3', '-m', 'ipykernel_launcher', '-f', '{connection_file}'],
+//           env: {},
+//           display_name: 'Python 3',
+//           language: 'python',
+//           interrupt_mode: 'signal',
+//           metadata: {},
+//         },
+//         resources: {},
+//       },
+//     },
+//   }
+// }
 
 
 // Types
@@ -66,29 +66,50 @@ export type Session = {
   notebook: Notebook;
 };
 
-export type KernelSpecs = {
-  default: string;
-  kernelspecs: {
-    [key: string]: {
-      name: string;
-      spec: {
-        argv: string[];
-        env: {
-          [key: string]: string;
-        };
-        display_name: string;
-        language: string;
-        interrupt_mode: string;
-        metadata: {
-          [key: string]: string;
-        };
-      };
-      resources: {
-        [key: string]: string;
-      };
+// export type KernelSpecs = {
+//   default: string;
+//   kernelspecs: {
+//     [key: string]: {
+//       name: string;
+//       spec: {
+//         argv: string[];
+//         env: {
+//           [key: string]: string;
+//         };
+//         display_name: string;
+//         language: string;
+//         interrupt_mode: string;
+//         metadata: {
+//           [key: string]: string;
+//         };
+//       };
+//       resources: {
+//         [key: string]: string;
+//       };
+//     };
+//   };
+// };
+
+export type KernelSpec = {
+  name: string;
+  spec: {
+    argv: string[];
+    env: {
+      [key: string]: string;
+    };
+    display_name: string;
+    language: string;
+    interrupt_mode: string;
+    metadata: {
+      [key: string]: string;
     };
   };
+  resources: {
+    [key: string]: string;
+  };
 };
+
+export type KernelSpecs = [KernelSpec];  
 
 export const schema = z.object({
   kernels: z.array(
@@ -119,9 +140,9 @@ export const schema = z.object({
       }),
     })
   ),
-  kernelSpecs: z.object({
-    default: z.string(),
-    kernelspecs: z.record(z.string(), z.object({
+  defaultKernel: z.string(),
+  kernelSpecs: z.array(
+    z.object({
       name: z.string(),
       spec: z.object({
         argv: z.array(z.string()),
@@ -133,7 +154,43 @@ export const schema = z.object({
       }),
       resources: z.record(z.string(), z.string()),
     })),
-  }),
+
+        
+  // kernelSpecs: z.string(),
+// });
+  // kernelSpecs: z.array(
+  //   z.object({
+  //     default: z.string(),
+  //     kernelspecs: z.record(z.string(), z.object({
+  //       name: z.string(),
+  //       spec: z.object({
+  //         argv: z.array(z.string()),
+  //         env: z.record(z.string(), z.string()),
+  //         display_name: z.string(),
+  //         language: z.string(),
+  //         interrupt_mode: z.string(),
+  //         metadata: z.record(z.string(), z.string()),
+  //       }),
+  //       resources: z.record(z.string(), z.string()),
+  //     })),
+  //   })
+  // ),
+
+  // kernelSpecs: z.object({
+  //   default: z.string(),
+  //   kernelspecs: z.record(z.string(), z.object({
+  //     name: z.string(),
+  //     spec: z.object({
+  //       argv: z.array(z.string()),
+  //       env: z.record(z.string(), z.string()),
+  //       display_name: z.string(),
+  //       language: z.string(),
+  //       interrupt_mode: z.string(),
+  //       metadata: z.record(z.string(), z.string()),
+  //     }),
+  //     resources: z.record(z.string(), z.string()),
+  //   })),
+  // }),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -147,7 +204,10 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   kernels: [],
   sessions: [],
-  executeInfo: { executeFunc: '', params: {} },
+  defaultKernel: '',
+  kernelSpecs: [],
+  // kernelSpecs: { default: '', kernelspecs: {} },
+  executeInfo: { executeFunc: 'get_kernel_specs', params: {} },
 };
 
 export const name = 'KernelDashboard';

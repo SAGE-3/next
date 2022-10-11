@@ -23,7 +23,34 @@ export const schema = z.object({
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
-  kernels: z.string(),
+  kernels: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      last_activity: z.string(),
+      execution_state: z.string(),
+      connections: z.boolean(),
+    })
+  ),
+  sessions: z.array(
+    z.object({
+      id: z.string(),
+      path: z.string(),
+      name: z.string(),
+      type: z.string(),
+      kernel: z.object({
+        id: z.string(),
+        name: z.string(),
+        last_activity: z.string(),
+        execution_state: z.string(),
+        connections: z.boolean(),
+      }),
+      notebook: z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
+    })
+  ),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -40,9 +67,10 @@ export const init: Partial<state> = {
   fontSize: 1.5,
   theme: 'xcode',
   kernel: '',
-  kernels: '',
+  kernels: [],
+  sessions: [],
   output: '',
-  executeInfo: { executeFunc: 'get_kernels', params: {} } as executeInfoType,
+  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
 export const name = 'SageCell';

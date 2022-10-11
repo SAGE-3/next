@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
 import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 import { Kernel } from '.';
+import { KernelSpecs, KernelSpec } from './index';
 
 
 // TODO: attach a name to each kernel
@@ -34,27 +35,33 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const location = useLocation();
   const locationState = location.state as { boardId: string; roomId: string };
-  const [headers, setHeaders] = useState({} as { [key: string]: string });
-  const [baseUrl, setBaseUrl] = useState<string>();
+  // const [headers, setHeaders] = useState({} as { [key: string]: string });
+  // const [baseUrl, setBaseUrl] = useState<string>();
   // const [kernels, setKernels] = useState<Kernel[]>([]); // KernelProps[];
   const [kernelOptions, setKernelOptions] = useState<string[]>([]);
   const [selectedKernelToAdd, setSelectedKernelToAdd] = useState<string>('python3');
   const [kernelIdentifier, setKernelIdentifier] = useState({} as { [key: string]: string });
   const [kernelName, setKernelName] = useState<string>('');
 
-  /**
-   * Get the token and production state when the component mounts
-   * 
-   * @returns  void
-   */
+
   useEffect(() => {
-    GetConfiguration().then((conf) => {
-      if (conf.token) {
-        setHeaders({ Authorization: `Token ${conf.token}` });
-      }
-      !conf.production ? setBaseUrl(`http://${window.location.hostname}`) : setBaseUrl(`http://${window.location.hostname}:4443`);
-    });
-  }, []);
+    updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
+  }, [props._id, updateState]);
+
+
+  // /**
+  //  * Get the token and production state when the component mounts
+  //  * 
+  //  * @returns  void
+  //  */
+  // useEffect(() => {
+  //   GetConfiguration().then((conf) => {
+  //     if (conf.token) {
+  //       setHeaders({ Authorization: `Token ${conf.token}` });
+  //     }
+  //     !conf.production ? setBaseUrl(`http://${window.location.hostname}`) : setBaseUrl(`http://${window.location.hostname}:4443`);
+  //   });
+  // }, []);
 
   // legacy code to fetch via API call
 
@@ -84,13 +91,17 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { executeInfo: { executeFunc: 'add_kernel', params: { kernel_name: kernelName, path: '/boards' } } });
   };
 
-  const getKernelSpecs = () => {
-    fetch(`${baseUrl}/api/kernelspecs`, { headers: headers })
-      .then((res) => res.json())
-      .then((data) => {
-        setKernelOptions(Object.keys(data.kernelspecs));
-      });
-  };
+  // const getKernelSpecs = () => {
+  //   fetch(`${baseUrl}/api/kernelspecs`, { headers: headers })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setKernelOptions(Object.keys(data.kernelspecs));
+  //     });
+  // };
+
+  // const getKernelSpecs = () => {
+  //   updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
+  // };
 
   // Triggered on every keystroke
   function changeName(e: React.ChangeEvent<HTMLInputElement>) {
@@ -155,6 +166,8 @@ function AppComponent(props: App): JSX.Element {
    * @returns void
    */
   const startSageCell = (kernelId: string) => {
+    // convert s.kernels to a list of kernel objects with the kernel_id as the key and the kernel name as the value
+    const kernelList = s.kernels ? s.kernels.map((k) => ({ [k.id]: k.name })) : [];
     if (!user) return;
     createApp({
       name: 'SageCell',
@@ -165,7 +178,18 @@ function AppComponent(props: App): JSX.Element {
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'SageCell',
-      state: { kernel: kernelId, kernels: s.kernels },
+      state: { 
+        code: '',
+        language: 'python',
+        fontSize: 1.5,
+        theme: 'xcode',
+        kernel: kernelId, 
+        kernels: s.kernels,
+        sessions: s.sessions,
+        // kernels: JSON.stringify(kernelList),
+        // sessions: s.sessions
+        output: '',
+        executeInfo: { executeFunc: '', params: {} } },
       ownerId: user._id,
       minimized: false,
       raised: true,
@@ -193,16 +217,22 @@ function AppComponent(props: App): JSX.Element {
                 colorScheme="teal"
                 value={selectedKernelToAdd}
                 placeholder="Select kernel"
-                onFocus={getKernelSpecs}
+                // onFocus={getKernelSpecs}
                 onChange={(e) => {
                   setSelectedKernelToAdd(e.target.value);
                 }}
               >
-                {kernelOptions.map((k) => (
+                {s.kernelSpecs.length > 0 &&
+                  Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                {/* {kernelOptions.map((k) => (
                   <option key={k} value={k}>
                     {k}
                   </option>
-                ))}
+                ))} */}
               </Select>
             </Box>
             <Box w="100%">
@@ -231,43 +261,27 @@ function AppComponent(props: App): JSX.Element {
               .sort((a, b) => (a.last_activity < b.last_activity ? 1 : -1))
               .map((kernel) => (
                 <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
-                  {/* // s.kernels.map((kernel, idx) => {
-            // console.log('kernel', kernel);
-            return (
-              <Box key={idx}>
-                <Box bg={useColorModeValue('#EEE', '#333')}> */}
                   <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
-                    <Box w="200px">{kernel.name}</Box>
+                    <Box>{kernel.name}</Box>
+                    <Text
+                      onClick={() => {
+                        startSageCell(kernel.id);
+                      }}
+                      ml={2}
+                      fontWeight="bold"
+                    >
+                      {kernelIdentifier[kernel.id]
+                        ? truncateWithEllipsis(kernelIdentifier[kernel.id], 8)
+                        : truncateWithEllipsis(kernel.id, 8)}
+                    </Text>{' '}
                     <Flex alignItems="right">
-                      {/* <Text color={'white'} fontWeight="bold">
-                        {kernel.id}
+                      {/* <Text size="md" color={'blue'} fontWeight="bold">
+                        {
+                          // show the last activity time in human readable format (e.g. 2 minutes ago)
+                          timeSince(kernel.last_activity)
+                        }
                       </Text> */}
-                      {/* show the kernel identifier associated with the kernel id */}
-                      <Text
-                        onClick={() => {
-                          startSageCell(kernel.id);
-                        }}
-                        mr={10}
-                        fontWeight="bold"
-                      >
-                        {kernelIdentifier[kernel.id]
-                          ? truncateWithEllipsis(kernelIdentifier[kernel.id], 8)
-                          : truncateWithEllipsis(kernel.id, 8)}
-                      </Text>
-                      <Text color={'blue'} fontWeight="bold">
-                        { // show the last activity time in human readable format (e.g. 2 minutes ago)
-                        // moment(kernel.last_activity).fromNow()}
-                        timeSince(kernel.last_activity)}
-                      </Text>
-                      {/* <Text color={'yellow'} fontWeight="bold">
-                        {kernel.execution_state}
-                      </Text> */}
-                      <Badge colorScheme={kernel.execution_state === 'idle' ? 'green' : 'red'}>
-                        {kernel.execution_state}
-                      </Badge>
-                      {/* <Text m={4} color={'red'} fontWeight="bold">
-                        {kernel.connections}
-                      </Text> */}
+                      {/* <Badge colorScheme={kernel.execution_state === 'idle' ? 'green' : 'red'}>{kernel.execution_state}</Badge> */}
                       <IconButton
                         variant="outline"
                         m={0.5}
@@ -307,6 +321,11 @@ function AppComponent(props: App): JSX.Element {
               ))
           }
         </Stack>
+        {/* <Box>
+          {Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
+            <Box key={k}>{k}</Box>
+          ))}
+        </Box> */}
       </Box>
     </AppWindow>
   );
