@@ -143,7 +143,8 @@ export class SBDocumentRef<Type extends SBJSON> {
       const updatePromises = Object.keys(update).map(async (key) => {
         const value = update[key] as Type[string];
         // XX - only set the key if it already exists
-        const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value, { XX: true });
+        // const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value, { XX: true });
+        const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value);
         const res = redisRes === 'OK' ? true : false;
         if (res === true) {
           updated = true;
