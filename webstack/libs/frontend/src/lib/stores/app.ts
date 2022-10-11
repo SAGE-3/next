@@ -149,57 +149,8 @@ const AppStore = createVanilla<Applications>((set, get) => {
   };
 });
 
-/**
- * The AppPlaygroundStore.
- */
-const AppPlaygroundStore = createVanilla<Applications>((set, get) => {
-  return {
-    apps: [],
-    error: null,
-    fetched: false,
-    clearError: () => {
-      set({ error: null });
-    },
-    create: async (newApp: AppSchema) => {
-      const app = {
-        _id: genId(),
-        _createdAt: new Date().getTime(),
-        _updatedAt: new Date().getTime(),
-        _updatedBy: '-',
-        data: newApp,
-      } as App;
-      set({ apps: [...get().apps, app] });
-    },
-    update: async (id: string, updates: Partial<AppSchema>) => {
-      const apps = [...get().apps];
-      set({ apps: apps.map((app) => (app._id === id ? { ...app, data: { ...app.data, ...updates } } : app)) });
-    },
-    updateState: async (id: string, updates: Partial<AppState>) => {
-      const apps = [...get().apps];
-      set({
-        apps: apps.map((app) => (app._id === id ? { ...app, data: { ...app.data, state: { ...app.data.state, ...updates } } } : app)),
-      });
-    },
-    delete: async (id: string) => {
-      set({ apps: get().apps.filter((app) => app._id !== id) });
-    },
-    unsubToBoard: () => {
-      console.log('Unsubscribing to apps is not required in the playground');
-    },
-    subToBoard: async (boardId: AppSchema['boardId']) => {
-      console.log('Subscribing to apps is not required in the playground');
-    },
-    fetchBoardApps(boardId: AppSchema['boardId']) {
-      return new Promise<App[] | undefined>((resolve, reject) => {
-        resolve(undefined);
-      });
-    },
-  };
-});
-
-const playground = process.env.NX_TASK_TARGET_PROJECT === 'playground';
 // Convert the Zustand JS store to Zustand React Store
-export const useAppStore = playground ? createReact(AppPlaygroundStore) : createReact(AppStore);
+export const useAppStore = createReact(AppStore);
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('AppStore', useAppStore);

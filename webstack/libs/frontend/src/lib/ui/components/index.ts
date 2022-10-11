@@ -14,6 +14,7 @@ export * from './modals/UploadModal';
 export * from './modals/EnterBoardByIdModal';
 export * from './modals/EditBoardModal';
 export * from './modals/EditRoomModal';
+export * from './modals/EnterBoardModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';
