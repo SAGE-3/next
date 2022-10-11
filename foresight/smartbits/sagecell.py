@@ -8,6 +8,7 @@
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 import json
+import kerneldashboard as kd
 
 class SageCellState(TrackedBaseModel):
     code: str
@@ -32,13 +33,22 @@ class SageCell(SmartBit):
         self.send_updates()
 
     def get_kernels(self):
-        if self._jupyter_client.available_kernels:
-            self.state.kernels = json.dumps(self._jupyter_client.available_kernels)
+        if kd.state.kernels:
+            self.state.kernels = json.dumps(kd.state.kernels)
         else:
-            print('no kernels available')
+            self.state.kernels = json.dumps([])
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
+
+    # def get_kernels(self):
+    #     if self._jupyter_client.available_kernels:
+    #         self.state.kernels = json.dumps(self._jupyter_client.available_kernels)
+    #     else:
+    #         print('no kernels available')
+    #     self.state.executeInfo.executeFunc = ""
+    #     self.state.executeInfo.params = {}
+    #     self.send_updates()
 
     def execute(self, uuid):
         """

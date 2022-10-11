@@ -132,12 +132,12 @@ class AppTypes(Enum):
     note = "Note"
     data_table = "DataTable"
     code_cell = "CodeCell"
+    kernel_dashboard = "KernelDashboard"
     sage_cell = "SageCell"
     slider = "Slider"
     stickie = "Stickie"
     vegalite = "VegaLite"
     vegaliteviewer = "VegaLiteViewer"
-
     genericsmartbit = "GenericSmartBit"
 
 class Data(TrackedBaseModel):

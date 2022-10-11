@@ -227,7 +227,7 @@ export class SBCollectionRef<Type extends SBJSON> {
    * Query the collection.
    * Works for exact matches right now.
    * @param {string} propertyName The field to query the collection
-   * @param {stirng | number} query  The query. Currently only on a "equals"
+   * @param {string | number} query  The query. Currently only on a "equals"
    * @returns {Promise<SBDocumentRef<Type>[]>} An array of document refs that satisfy the query.
    */
   public async query(propertyName: keyof Type, query: string | number): Promise<SBDocument<Type>[]> {
