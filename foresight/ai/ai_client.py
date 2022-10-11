@@ -72,5 +72,5 @@ class AIClient(Borg):
             time.sleep(self.check_every)  # be nice to the system :)
             if self.stop_thread:
                 if len(self.running_jobs):
-                    print("Exiting the AI Client but queue still contains not communicated jobs")
+                    print("Exiting the ai Client but queue still contains not communicated jobs")
                 break

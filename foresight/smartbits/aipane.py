@@ -8,12 +8,16 @@ import time
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-from typing import Optional
+from typing import Optional, TypeVar
+from pydantic import PrivateAttr
+
 import json
 from config import ai_models, funcx as funcx_config
+import pandas as pd
 
 
-# PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
+
+PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 
 # TODO: movie this to a configuration somewhere and call it something else.
 ai_settings = {
@@ -45,7 +49,8 @@ class AIPaneState(TrackedBaseModel):
 class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
-
+    # Original df to keep track of
+    _output_df: PandasDataFrame = PrivateAttr()
     # Original df to keep track of
     # _original_df: PandasDataFrame = PrivateAttr()
     # _some_private_info: dict = PrivateAttr()
@@ -103,6 +108,8 @@ class AIPane(SmartBit):
     def handle_exec_result(self, msg):
         print("I am handling the execution results")
         self.state.output = json.dumps(msg)
+        self._output_df = pd.read_json(self.state.output)
+        self.state.output = self._output_df.to_dict("split")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

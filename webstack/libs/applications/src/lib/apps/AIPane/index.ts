@@ -21,7 +21,7 @@ export type supported_tasks = typeof supported_tasks;
 export const schema = z.object({
   hostedApps: z.record(z.string(), z.string()),
 
-  supportedApps: z.record(z.string()),
+  // supportedApps: z.record(z.string()),
 
   // Temp variable to demonstrate app run and idle status
   runStatus: z.boolean(),
@@ -42,7 +42,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   executeInfo: {executeFunc: '', params: {}},
   hostedApps: {},
-  supportedApps: {},
+  // supportedApps: {},
   runStatus: false,
   supported_tasks: {},
   messages: {},

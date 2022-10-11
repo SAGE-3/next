@@ -118,7 +118,6 @@ class DataTable(SmartBit):
     # and params to ""
     def load_data(self, url):
         start = time.time()
-        # url = "https://www.dropbox.com/s/57thhzy5e6pebp5/data.csv?dl=1"
         extension = self.get_ext(url)
         response = urlopen(url)
         # Leave magic in for retrieving file extensions of uploaded datasets, not API datasets

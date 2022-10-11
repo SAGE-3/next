@@ -65,7 +65,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [testOutput, setTestOutput] = useState<string>("")
 
-  const supportedApps = ["Counter", "Clock", "Notepad"];
+  const supportedApps = ["Counter", "ImageViewer", "Notepad", "PDFViewer"];
 
   // Checks for apps on or off the pane
   useEffect(() => {
@@ -74,7 +74,6 @@ function AppComponent(props: App): JSX.Element {
         [app._id]: app.data.name,
       };
       // TODO Handle AIPanes overlapping AIPanes
-      // const includedAppTypes: AppName[] = ['AIPane']
       if (app.data.name === "AIPane" && app._id !== props._id) {
         break;
       } else {
@@ -86,6 +85,7 @@ function AppComponent(props: App): JSX.Element {
           props.data.position.y + props.data.size.height &&
           app.data.size.height + app.data.position.y > props.data.position.y
         ) {
+          newAppAdded()
           if (!Object.keys(s.hostedApps).includes(app._id)) {
             const hosted = {
               ...s.hostedApps,
@@ -254,7 +254,8 @@ function AppComponent(props: App): JSX.Element {
             <br/>
             hostedapps: {Object.values(s.hostedApps)}
             <br/>
-            messages: {Object.values(s.messages)}
+            supported_tasks: {Object.values(s.supported_tasks)}
+
           </Box>
 
           <Box className="output-container">
@@ -282,7 +283,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   const models = ["Model 1", "Model 2", "Model 3"];
-  const supportedApps = ["Counter", "Stickie", "Notepad"];
+  const supportedApps = ["Counter", "ImageViewer", "Notepad", "PDFViewer"];
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -297,7 +298,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function newAppAdded() {
     updateState(props._id, {
-      executeInfo: {executeFunc: "new_app_added", params: {}},
+      executeInfo: {executeFunc: "new_app_added", params: {"newAppInfo": "ImageViewer"}},
     });
   }
 
