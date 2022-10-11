@@ -46,7 +46,7 @@ export const init: Partial<state> = {
   runStatus: false,
   supported_tasks: {},
   messages: {},
-
+  output: "",
 };
 
 export const name = 'AIPane';

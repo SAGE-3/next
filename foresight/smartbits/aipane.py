@@ -39,7 +39,7 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supported_tasks: dict
     runStatus: bool
-    output: string
+    output: str
 
 
 class AIPane(SmartBit):
@@ -66,6 +66,9 @@ class AIPane(SmartBit):
         if len(self.state.hostedApps.values()) > 1:
             self.state.messages[time.time()] = """need to return error message saying that we 
             can on operate on one datatype at a time"""
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+            self.send_updates()
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
             if len(self.state.hostedApps) == 1:
@@ -74,27 +77,28 @@ class AIPane(SmartBit):
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
             # ANDY: we need a state variable we can put the supported_tasks in
+        print(f"supported tasks are: {supported_tasks}")
         return supported_tasks
 
-    def run_function(self):
-        self.state.runStatus = True
-        print("Apps are being hosted: ")
+    # def run_function(self):
+    #     self.state.runStatus = True
+    #     print("Apps are being hosted: ")
+    #
+    #     print(self.state.hostedApps.values())
+    #     self.state.executeInfo.executeFunc = ""
+    #     self.send_updates()
 
-        print(self.state.hostedApps.values())
-        self.state.executeInfo.executeFunc = ""
-        self.send_updates()
-
-    def test_function(self):
-        print("++++++++++++++++++++++++++++++")
-        if len(self.state.hostedApps) > 1:
-            # 1 can only handle apps of the same type.
-            print("Apps are being hosted: ")
-            print(len(self.state.hostedApps.values()))
-            print(self.state.hostedApps.values())
-        else:
-            print("Pane is empty")
-        self.state.executeInfo.executeFunc = ""
-        self.send_updates()
+    # def test_function(self):
+    #     print("++++++++++++++++++++++++++++++")
+    #     if len(self.state.hostedApps) > 1:
+    #         # 1 can only handle apps of the same type.
+    #         print("Apps are being hosted: ")
+    #         print(len(self.state.hostedApps.values()))
+    #         print(self.state.hostedApps.values())
+    #     else:
+    #         print("Pane is empty")
+    #     self.state.executeInfo.executeFunc = ""
+    #     self.send_updates()
 
     def handle_exec_result(self, msg):
         print("I am handling the execution results")

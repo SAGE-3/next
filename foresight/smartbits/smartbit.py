@@ -11,7 +11,7 @@ from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
 from jupyterkernelproxy_client import JupyterKernelClient
-from AI.ai_client import AIClient
+from ai.ai_client import AIClient
 from config import config as conf, prod_type
 
 class TrackedBaseModel(BaseModel):

@@ -290,7 +290,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function runFunction() {
     updateState(props._id, {
-      executeInfo: {executeFunc: "run_function", params: {}},
+      executeInfo: {executeFunc: "execute_model", params: {"some_uuid": "12345678", "model_id": "facebook/detr-resnet-50"}},
     });
     // newAppAdded()
   }
