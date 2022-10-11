@@ -121,6 +121,9 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     // Get the current uploader information
     const user = req.user as SBAuthSchema;
 
+    // Send message to clients
+    MessageCollection.add({ type: 'upload', payload: `Upload done` }, user.id);
+
     // Do something with the files
     files.forEach(async (elt) => {
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
@@ -128,11 +131,13 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
       // Put the new file into the collection
       const now = new Date().toISOString();
+
       // Process the file (metadata, image, pdf, etc.)
-
-      MessageCollection.add({ type: 'info', payload: `Processing file ${elt.originalname}...` }, 'sage3');
-
       const newdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype);
+
+      // Send message to clients
+      MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}` }, user.id);
+
       const assetID = await AssetsCollection.addAsset(
         {
           file: elt.filename,
@@ -152,6 +157,9 @@ function uploadHandler(req: express.Request, res: express.Response): void {
 
       // If we need to open the file, do it
       if (openFIles && assetID) {
+        // Send message to clients
+        MessageCollection.add({ type: 'open', payload: `Opening application for ${elt.originalname}` }, user.id);
+
         if (isImage(elt.mimetype)) {
           if (isGIF(elt.mimetype)) {
             // Get metadata information about the image

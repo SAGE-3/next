@@ -33,7 +33,7 @@ export async function loadCollections(): Promise<void> {
   await RoomsCollection.initialize();
   await UsersCollection.initialize();
   await AssetsCollection.initialize();
-  await MessageCollection.initialize(true, 60 * 5); // clear, and TTL 5min
+  await MessageCollection.initialize(true, 20); // clear, and TTL 1min
   await PresenceCollection.initialize(true);
 
   // Setup default room and board
