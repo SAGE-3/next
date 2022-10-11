@@ -19,21 +19,28 @@ import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode } from 'react-icons/md
 import { useLocation } from 'react-router-dom';
 import { Kernel } from '.';
 
+
+// TODO: attach a name to each kernel
+// TODO: fix the link between kernels and python SageCell
+// TODO: add collapsible menu for each kernel to add sessions maybe
+// TODO: store some information in redis -- need to consider how and what to store
+// TODO: fix some UI issues
+
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const [headers, setHeaders] = useState({} as { [key: string]: string });
-  const [baseUrl, setBaseUrl] = useState<string>();
-  const [kernels, setKernels] = useState<Kernel[]>([]); // KernelProps[];
-  const [kernelOptions, setKernelOptions] = useState<string[]>([]);
-  const [selectedKernelToAdd, setSelectedKernelToAdd] = useState<string>('python3');
-  const [kernelIdentifier, setKernelIdentifier] = useState({} as { [key: string]: string });
-  const [kernelName, setKernelName] = useState<string>('');
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const location = useLocation();
   const locationState = location.state as { boardId: string; roomId: string };
+  const [headers, setHeaders] = useState({} as { [key: string]: string });
+  const [baseUrl, setBaseUrl] = useState<string>();
+  // const [kernels, setKernels] = useState<Kernel[]>([]); // KernelProps[];
+  const [kernelOptions, setKernelOptions] = useState<string[]>([]);
+  const [selectedKernelToAdd, setSelectedKernelToAdd] = useState<string>('python3');
+  const [kernelIdentifier, setKernelIdentifier] = useState({} as { [key: string]: string });
+  const [kernelName, setKernelName] = useState<string>('');
 
   /**
    * Get the token and production state when the component mounts
@@ -258,9 +265,9 @@ function AppComponent(props: App): JSX.Element {
                       <Badge colorScheme={kernel.execution_state === 'idle' ? 'green' : 'red'}>
                         {kernel.execution_state}
                       </Badge>
-                      <Text m={4} color={'red'} fontWeight="bold">
+                      {/* <Text m={4} color={'red'} fontWeight="bold">
                         {kernel.connections}
-                      </Text>
+                      </Text> */}
                       <IconButton
                         variant="outline"
                         m={0.5}
