@@ -75,38 +75,33 @@ class KernelDashboard(SmartBit):
     #     sessions = json.loads(response.text)
     #     return sessions
 
-    def add_kernel(self, 
-        kernel_alias, room_uuid, board_uuid, owner_uuid, is_private=False, kernel_name="python3", auth_users=[]):
+    def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
+                   kernel_name="python3", auth_users=(), kernel_alias="YO"):
         j_url = self.get_base_url() + '/kernels'
         body = {"name": kernel_name}
         response = requests.post(j_url, headers=self.get_headers(), json=body)
-        jupyter_store = "SAGE3:DB:JUPYTER:KERNELS"
-        # kernel_list = self._jupyter_client.redis_server.get(jupyter_store)
-        kernel_list = []
         if response.status_code == 201:
             response_data = response.json()
-            if kernel_list is None:
-                kernel_list = []
             kernel_info = {
-                "kerel_alias": kernel_alias,
+                "kernel_alias": kernel_alias,
                 "kernel_name": kernel_name,
-                "kernel_id": response_data['id'],
+                #"kernel_id": response_data['id'],
                 "room": room_uuid,
                 "board": board_uuid,
                 "owner_uuid": owner_uuid,
                 "is_private": is_private,
-                "auth_users": []
+                "auth_users": auth_users
             }
-            kernel_list.append(kernel_info)
-            self._jupyter_client.redis_server.get("")
-            redis_store = "SAGE3:DB:JUPYTER:KERNELS"
-            self._jupyter_client.redis_server.json().set("SAGE3:DB:JUPYTER:KERNELS", ".", kernel_list)
+            jupyter_kernels = "JUPYTER:KERNELS"
+            self._jupyter_client.redis_server.json().set(jupyter_kernels, response_data['id'], kernel_info)
             self.refresh_list()
 
     def delete_kernel(self, kernel_id):
         j_url = f'{self.get_base_url()}/kernels/{kernel_id}'
         response = requests.delete(j_url, headers=self.get_headers())
+        jupyter_kernels = "JUPYTER:KERNELS"
         if response.status_code == 204:
+            self._jupyter_client.redis_server.json().delete(jupyter_kernels, kernel_id)
             self.refresh_list()
         else:
             print(response.text)
