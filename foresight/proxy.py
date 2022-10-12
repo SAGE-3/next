@@ -229,7 +229,6 @@ class SAGEProxy():
             exec_info = getattr(sb.state, "executeInfo", None)
 
             if exec_info is not None:
-                print("\n\nI AM IN EXECUTE INFO\n\n")
                 func_name =  getattr(exec_info, "executeFunc")
                 if func_name != '':
                     _func = getattr(sb, func_name)
