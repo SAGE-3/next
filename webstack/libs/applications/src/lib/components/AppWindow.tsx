@@ -174,11 +174,13 @@ export function AppWindow(props: WindowProps) {
 
   // Close the app and delete from server
   function handleClose(e: any) {
+    e.stopPropagation();
     deleteApp(props.app._id);
   }
 
   // Minimize the app. Currently only local.
-  function handleMinimize() {
+  function handleMinimize(e: any) {
+    e.stopPropagation();
     update(props.app._id, { minimized: !minimized });
   }
 
