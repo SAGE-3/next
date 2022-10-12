@@ -11,11 +11,11 @@ import json
 
 
 class SageCellState(TrackedBaseModel):
-    code: str
-    output: str
-    kernel: str
-    kernels: list
-    availableKernels: list
+    code: str = ""
+    output: str = ""
+    kernel: str = "python3"
+    kernels: list = []
+    availableKernels: list = []
     executeInfo: ExecuteInfo
 
 class SageCell(SmartBit):
@@ -32,7 +32,7 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def get_available_kernels(self, owner_uuid):
+    def get_available_kernels(self, user_uuid):
         """
         This function will get the kernels from the redis server
         if the kernel is public, or if the user is the owner of the kernel
@@ -58,7 +58,7 @@ class SageCell(SmartBit):
         available_kernels = []
 
         for kernel in kernels.keys():
-            if kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != owner_uuid:
+            if kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
                 continue
             if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
                 kernels[kernel]['kernel_alias'] = kernel[:8]

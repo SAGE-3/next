@@ -28,6 +28,7 @@ import ConfirmModal from './components/confirmModel';
 // TODO: store some information in redis -- need to consider how and what to store
 // TODO: fix some UI issues
 
+
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -47,6 +48,13 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
   }, [props._id, updateState]);
+
+
+  useEffect(() => {
+    if (!user) return;
+    updateState(props._id, { executeInfo: { executeFunc: 'get_available_kernels', params: { user_uuid: user._id } } });
+  }, [props._id, updateState, user]);
+
 
   // legacy code to fetch via API call
 
@@ -265,7 +273,8 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       {/* Clear board dialog */}
-      <Box p={4} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+        <Box overflowY={'auto'}>
         {/* <Modal isCentered isOpen={IsOpen} onClose={OnClose}>
           <ConfirmModal action={currentAction} object={currentObject} onClick={onConfirm} onClose={OnClose}></ConfirmModal>
         </Modal> */}
@@ -430,6 +439,7 @@ function AppComponent(props: App): JSX.Element {
             <Box key={k}>{k}</Box>
           ))}
         </Box> */}
+        </Box>
       </Box>
     </AppWindow>
   );

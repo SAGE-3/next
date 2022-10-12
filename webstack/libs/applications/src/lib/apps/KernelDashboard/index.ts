@@ -153,11 +153,16 @@ export const schema = z.object({
         metadata: z.record(z.string(), z.string()),
       }),
       resources: z.record(z.string(), z.string()),
-    })),
-
-        
+    })
+  ),
+  availableKernels: z.array(
+    z.object({
+      label: z.string(),
+      value: z.string(),
+    })
+  ),
   // kernelSpecs: z.string(),
-// });
+  // });
   // kernelSpecs: z.array(
   //   z.object({
   //     default: z.string(),
@@ -206,8 +211,8 @@ export const init: Partial<state> = {
   sessions: [],
   defaultKernel: '',
   kernelSpecs: [],
-  // kernelSpecs: { default: '', kernelspecs: {} },
-  executeInfo: { executeFunc: 'get_kernel_specs', params: {} },
+  availableKernels: [],
+  executeInfo: { executeFunc: '', params: {} },
 };
 
 export const name = 'KernelDashboard';
