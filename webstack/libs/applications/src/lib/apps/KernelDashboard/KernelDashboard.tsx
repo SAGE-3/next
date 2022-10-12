@@ -7,7 +7,7 @@
  */
 import {
   useColorModeValue, Box, Input, InputGroup, Select, Text, Tooltip,
-  Stack, Collapse, Flex, Icon, IconButton, HStack, Badge, useDisclosure, Modal,
+  Stack, Collapse, Flex, Icon, IconButton, HStack, Badge, useDisclosure, Modal, Checkbox, Button, InputRightElement,
 } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -33,6 +33,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  const [isPrivate, setIsPrivate] = useState(false);
   const { user } = useUser();
   const location = useLocation();
   const locationState = location.state as { boardId: string; roomId: string };
@@ -106,9 +107,6 @@ function AppComponent(props: App): JSX.Element {
    * and updating the state. Defaults to python3 kernel. Expects a kernel alias
    * and a kernel name.
    *
-   * @param   {string}  kernelAlias  The kernel alias
-   * @param   {string}  kernelName   The kernel name
-   *
    * @returns  void
    */
   const addKernel = () => {
@@ -122,10 +120,11 @@ function AppComponent(props: App): JSX.Element {
           room_uuid: locationState.roomId,
           board_uuid: locationState.boardId,
           owner_uuid: props._updatedBy,
-          is_private: false,
+          is_private: isPrivate,
         },
       },
     });
+    setKernelAlias('');
   };
 
   // Triggered on every keystroke
@@ -282,6 +281,25 @@ function AppComponent(props: App): JSX.Element {
               icon={<MdAdd />}
             />
             <Box w="100%">
+              <form onSubmit={submitAlias}>
+                <InputGroup>
+                  <Input
+                    placeholder="Enter kernel alias..."
+                    variant="outline"
+                    size="md"
+                    _placeholder={{ opacity: 1, color: 'gray.600' }}
+                    value={kernelAlias}
+                    onChange={changeAlias}
+                    onPaste={(event) => {
+                      event.stopPropagation();
+                    }}
+                    backgroundColor="whiteAlpha.300"
+                    padding={'0 4px 0 4px'}
+                  />
+                </InputGroup>
+              </form>
+            </Box>
+            <Box w="100%">
               <Select
                 variant="outline"
                 size="md"
@@ -306,25 +324,18 @@ function AppComponent(props: App): JSX.Element {
                 }
               </Select>
             </Box>
-            <Box w="100%">
-              <form onSubmit={submitAlias}>
-                <InputGroup>
-                  <Input
-                    placeholder="Kernel Alias"
-                    variant="outline"
-                    size="md"
-                    _placeholder={{ opacity: 1, color: 'gray.600' }}
-                    value={kernelAlias}
-                    onChange={changeAlias}
-                    onPaste={(event) => {
-                      event.stopPropagation();
-                    }}
-                    backgroundColor="whiteAlpha.300"
-                    padding={'0 4px 0 4px'}
-                  />
-                </InputGroup>
-              </form>
-            </Box>
+            <Checkbox size={'md'} isChecked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)}>
+              Private
+            </Checkbox>
+            {/* <IconButton
+              variant="outline"
+              m={0.5}
+              size="md"
+              aria-label="Add Kernel"
+              onClick={() => addKernel()}
+              colorScheme="teal"
+              icon={<MdAdd />}
+            /> */}
           </HStack>
           {
             // sort kernels by last_activity (most recent first)
@@ -356,7 +367,7 @@ function AppComponent(props: App): JSX.Element {
                         }
                       </Text> */}
                       {/* <Badge colorScheme={kernel.execution_state === 'idle' ? 'green' : 'red'}>{kernel.execution_state}</Badge> */}
-                      <Tooltip label={"Open a SageCell"} placement="top">
+                      <Tooltip label={'Open a SageCell'} placement="top">
                         <IconButton
                           variant="outline"
                           m={0.5}
@@ -369,7 +380,7 @@ function AppComponent(props: App): JSX.Element {
                           icon={<MdCode />}
                         />
                       </Tooltip>
-                      <Tooltip label={"Remove Kernel"} placement="top">
+                      <Tooltip label={'Remove Kernel'} placement="top">
                         <IconButton
                           variant="outline"
                           m={0.5}
@@ -388,7 +399,7 @@ function AppComponent(props: App): JSX.Element {
                           icon={<MdRemove />}
                         />
                       </Tooltip>
-                      <Tooltip label={"Restart Kernel"} placement="top">
+                      <Tooltip label={'Restart Kernel'} placement="top">
                         <IconButton
                           variant="outline"
                           m={0.5}
