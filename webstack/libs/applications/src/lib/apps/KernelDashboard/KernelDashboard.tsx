@@ -6,7 +6,7 @@
  *
  */
 import {
-  useColorModeValue, Box, Input, InputGroup, Select, Text, Tooltip, 
+  useColorModeValue, Box, Input, InputGroup, Select, Text, Tooltip,
   Stack, Collapse, Flex, Icon, IconButton, HStack, Badge, useDisclosure, Modal,
 } from '@chakra-ui/react';
 
@@ -101,17 +101,17 @@ function AppComponent(props: App): JSX.Element {
   /**
    * room_uuid, board_uuid, owner_uuid, is_private=False,
    * kernel_name="python3", auth_users=(), kernel_alias="YO"
-   * 
+   *
    * Add a kernel to the list of kernels by sending a request to the backend
    * and updating the state. Defaults to python3 kernel. Expects a kernel alias
    * and a kernel name.
-   * 
+   *
    * @param   {string}  kernelAlias  The kernel alias
    * @param   {string}  kernelName   The kernel name
-   * 
+   *
    * @returns  void
    */
-  const addKernel = (kernelName: string, kernelAlias: string) => {
+  const addKernel = () => {
     // if (!user || !kernelAlias || !kernelName) return;
     updateState(props._id, {
       executeInfo: {
@@ -131,7 +131,10 @@ function AppComponent(props: App): JSX.Element {
   // Triggered on every keystroke
   function changeAlias(e: React.ChangeEvent<HTMLInputElement>) {
     const cleanAlias = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
+
     setKernelAlias(cleanAlias);
+    console.log("the clean alias is")
+    console.log(kernelAlias)
   }
 
   // Triggered on 'enter' key
@@ -274,7 +277,7 @@ function AppComponent(props: App): JSX.Element {
               m={0.5}
               size="md"
               aria-label="Add Kernel"
-              onClick={() => addKernel(kernelAlias, kernelName)}
+              onClick={() => addKernel()}
               colorScheme="teal"
               icon={<MdAdd />}
             />
@@ -439,8 +442,8 @@ function ToolbarComponent(props: App): JSX.Element {
   //     if(conf.token) {
   //       setHeaders({ Authorization: `Token ${conf.token}` });
   //     }
-  //     !conf.production 
-  //     ? setBaseUrl(`http://${window.location.hostname}`) 
+  //     !conf.production
+  //     ? setBaseUrl(`http://${window.location.hostname}`)
   //     : setBaseUrl(`http://${window.location.hostname}:4443`)
   //   });
   // }, []);

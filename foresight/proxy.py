@@ -159,11 +159,14 @@ class SAGEProxy():
             print(f"msg received is {msg}")
 
             if msg['event']['type'] == "UPDATE":
+                print("Is update")
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
                 logging.info(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
+                    print("Is callback")
+
                     # handle callback
                     # print("this app is being tracked for updates")
                     # print(f"tracked field is {self.callbacks[app_id].src_field}")
@@ -182,7 +185,7 @@ class SAGEProxy():
                             dest_app = self.room.boards[board_id].smartbits[dest_id]
                             linked_info.callback(src_val, dest_app, dest_field)
 
-            if len(updated_fields) == 1 and updated_fields[0] == 'raised':
+            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 # print("The received update is discribed a raised app... ignoring it")
                 pass
             else:
@@ -226,6 +229,7 @@ class SAGEProxy():
             exec_info = getattr(sb.state, "executeInfo", None)
 
             if exec_info is not None:
+                print("\n\nI AM IN EXECUTE INFO\n\n")
                 func_name =  getattr(exec_info, "executeFunc")
                 if func_name != '':
                     _func = getattr(sb, func_name)

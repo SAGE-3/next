@@ -61,7 +61,7 @@ const AppComponent = (props: App): JSX.Element => {
     <AppWindow app={props}>
       <Box id="sc-container" w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} overflowY={'scroll'}>
         {InputBox(props)}
-        {!output ? null : 
+        {!output ? null :
         <>
           <Box
             p={4}
@@ -106,11 +106,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const [kernels, setKernels] = useState<string[]>([]);
 
   useEffect(() => {
-    updateState(props._id, { 
-      executeInfo: { 
-        executeFunc: 'get_available_kernels', 
-        params: { owner_uuid: props.data.ownerId } 
-      } 
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'get_available_kernels',
+        params: { owner_uuid: props.data.ownerId }
+      }
     });
   }, []);
 
@@ -170,16 +170,18 @@ function ToolbarComponent(props: App): JSX.Element {
           icon={<MdArrowDropDown />}
           onChange={selectKernel}
           variant={'outline'}
-          value={selected ?? undefined}
+
         >
-          {s.availableKernels && s.availableKernels.map((kernel) => {
-              const [key, value] = Object.entries(kernel)[0];
-              return (
-                <option key={key} value={value}>
-                  {key}
-                </option>
-              );
-          })}
+        {s.availableKernels.map(({ value, label }, index) => <option value={value} >{label}</option>)}
+          {/*{s.availableKernels && s.availableKernels.map((kernel) => {*/}
+          {/*  console.log(s.availableKernels);*/}
+          {/*    const [key, value] = Object.entries(kernel)[0];*/}
+          {/*    return (*/}
+          {/*      <option key={key} value={value}>*/}
+          {/*        {key}*/}
+          {/*      </option>*/}
+          {/*    );*/}
+          {/*})}*/}
           {/* {s.kernels
             ? Object.keys(JSON.parse(s.kernels)).map((kernel) => (
                 <option key={kernel} value={kernel}>
