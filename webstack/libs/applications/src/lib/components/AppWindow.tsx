@@ -81,7 +81,7 @@ export function AppWindow(props: WindowProps) {
     if (storeError) {
       // Display a message'
       if (storeError.id && storeError.id === props.app._id)
-        toast({ description: 'Error - ' + storeError.msg, duration: 3000, isClosable: true });
+        toast({ description: 'Error - ' + storeError.msg, status: 'warning', duration: 3000, isClosable: true });
       // Clear the error
       clearError();
     }

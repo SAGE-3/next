@@ -24,6 +24,7 @@ const IndexTypes = {
 export class SBCollectionRef<Type extends SBJSON> {
   private _name;
   private _path: string;
+  private _ttl: number;
   private _redisClient: RedisClientType;
   private _indexName: string;
 
@@ -33,9 +34,10 @@ export class SBCollectionRef<Type extends SBJSON> {
    * @param path The "collections" path in the database
    * @param redisClient The redis client
    */
-  constructor(name: string, path: string, redisClient: RedisClientType) {
+  constructor(name: string, path: string, redisClient: RedisClientType, ttl: number) {
     this._name = name;
     this._path = path;
+    this._ttl = ttl;
     this._redisClient = redisClient;
     this._indexName = `index:${name}`;
   }
@@ -52,7 +54,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       if (forcedId) doc._id = forcedId;
       const docPath = `${this._path}:${doc._id}`;
       const docRef = new SBDocumentRef<Type>(doc._id, this._name, docPath, this._redisClient);
-      const redisRes = await docRef.set(data, by);
+      const redisRes = await docRef.set(data, by, this._ttl);
       if (redisRes.success) {
         return docRef;
       } else {
@@ -237,8 +239,10 @@ export class SBCollectionRef<Type extends SBJSON> {
       // ** https://redis.io/docs/stack/search/reference/tags/
       if (typeof query === 'string') query = `{${query.replace(/[#-]/g, '\\$&')}}`;
       if (typeof query === 'number') query = `[${query} ${query}]`;
-      const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`, { LIMIT: { from: 0, size: 1000 } });
-      const docRefPromises = response.documents.map((el) => 
+      const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`, {
+        LIMIT: { from: 0, size: 1000 },
+      });
+      const docRefPromises = response.documents.map((el) =>
         new SBDocumentRef<Type>(el.value['_id'] as string, this._name, el.id, this._redisClient).read()
       );
       const docs = await Promise.all([...docRefPromises]);
