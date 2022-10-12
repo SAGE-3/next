@@ -6,7 +6,7 @@
  *
  */
 
-import { Routes, Route, Navigate, RouteProps, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 
 import { ChakraProvider } from '@chakra-ui/react';
 import { PresenceProvider, theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId } from '@sage3/frontend';
@@ -31,9 +31,9 @@ export function App() {
             <Routes>
               <Route path="/" element={<LoginPage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/enter">
-                <Route path=":boardId" element={<CheckUrlForBoardId />} />
-              </Route>
+              <Route path="/enter/:boardId" element={<CheckUrlForBoardId />} />
+              {/* <Route path="/enter"> */}
+              {/* </Route> */}
 
               <Route
                 path="/createuser"
