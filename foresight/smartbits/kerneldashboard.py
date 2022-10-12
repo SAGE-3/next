@@ -85,7 +85,6 @@ class KernelDashboard(SmartBit):
             kernel_info = {
                 "kernel_alias": kernel_alias,
                 "kernel_name": kernel_name,
-                #"kernel_id": response_data['id'],
                 "room": room_uuid,
                 "board": board_uuid,
                 "owner_uuid": owner_uuid,
