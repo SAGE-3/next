@@ -45,6 +45,9 @@ export function BoardPage() {
     // Update the user's presence information
     updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
 
+    // window history API: replaceState(statedata, title, url)
+    window.history.replaceState({ boardId: locationState.boardId, roomId: locationState.roomId }, "Board", `/enter/${locationState.boardId}`);
+
     // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsube from board updates
