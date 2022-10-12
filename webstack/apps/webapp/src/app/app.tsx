@@ -6,13 +6,10 @@
  *
  */
 
-import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
+import { Routes, Route, Navigate, RouteProps, useParams, useNavigate } from 'react-router-dom';
 
 import { ChakraProvider } from '@chakra-ui/react';
-import {
-  PresenceProvider, theme, UserProvider,
-  useUser, AuthProvider, useAuth
-} from '@sage3/frontend';
+import { PresenceProvider, theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId } from '@sage3/frontend';
 
 import { LoginPage } from './pages/Login';
 import { HomePage } from './pages/Home';
@@ -31,10 +28,12 @@ export function App() {
       <AuthProvider>
         <UserProvider>
           <PresenceProvider>
-
             <Routes>
               <Route path="/" element={<LoginPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/enter">
+                <Route path=":boardId" element={<CheckUrlForBoardId />} />
+              </Route>
 
               <Route
                 path="/createuser"
@@ -70,7 +69,6 @@ export function App() {
           </PresenceProvider>
         </UserProvider>
       </AuthProvider>
-
     </ChakraProvider>
   );
 }

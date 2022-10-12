@@ -62,7 +62,8 @@ async function logout(): Promise<void> {
     },
   });
   if (res.status === 200) {
-    window.location.reload();
+    // return to homepage
+    window.location.replace('/');
   }
 }
 

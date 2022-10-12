@@ -5,196 +5,418 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
-  Button, ButtonGroup, Tooltip, Stack, UnorderedList, ListItem, Select,
-  Checkbox, CheckboxGroup, Text, Input, InputGroup
+  useColorModeValue, Box, Input, InputGroup, Select, Text, Tooltip, 
+  Stack, Collapse, Flex, Icon, IconButton, HStack, Badge, useDisclosure, Modal,
 } from '@chakra-ui/react';
-// Zustand store between app and toolbar
-import create from 'zustand';
-import { v1 as uuidv1 } from 'uuid';
-// Icons
-import { MdAdd, MdRemove, MdRefresh } from 'react-icons/md';
-
-import { GetConfiguration, useAppStore, useUser } from '@sage3/frontend';
 
 import { App } from '../../schema';
-import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+import { useAppStore, GetConfiguration, useUser, truncateWithEllipsis } from '@sage3/frontend';
+import { useState, useEffect } from 'react';
+import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
+import ConfirmModal from './components/confirmModel';
+// import { Kernel } from '.';
+// import { KernelSpecs, KernelSpec } from './index';
 
-// Store between app and toolbar
-export const useStore = create((set: any) => ({
-  selected: {} as { [key: string]: string[] },
-  setSelected: (id: string, s: string[]) => set((state: any) => ({ selected: { ...state.selected, ...{ [id]: s } } })),
-}));
+
+// TODO: attach a name to each kernel
+// TODO: fix the link between kernels and python SageCell
+// TODO: add collapsible menu for each kernel to add sessions maybe
+// TODO: store some information in redis -- need to consider how and what to store
+// TODO: fix some UI issues
 
 /* App component for KernelDashboard */
-
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const [token, setToken] = useState<string>();
-  const [prod, setProd] = useState<boolean>();
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [kernels, setKernels] = useState<any[]>([]);
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const location = useLocation();
-  const locationState = location.state as { boardId: string; roomId: string; };
-
-  const setSelected = useStore((state: any) => state.setSelected);
-  const selected = useStore((state: any) => state.selected[props._id]);
-
-  useEffect(() => {
-    GetConfiguration().then((conf) => {
-      if (conf.token) {
-        setToken(conf.token);
-        updateState(props._id, { refresh: true });
-      }
-      setProd(conf.production);
-      setSelected(props._id, []);
-    });
-  }, []);
+  const locationState = location.state as { boardId: string; roomId: string };
+  const [kernelAlias, setKernelAlias] = useState<string>('');
+  const [kernelName, setKernelName] = useState<string>('python3');
+  // const [currentAction, setCurrentAction] = useState<string>('Stop');
+  // const [currentObject, setCurrentObject] = useState<string>('Kernel');
+  // const [selectedKernel, setSelectedKernel] = useState<string>('');
+  // const { isOpen: IsOpen, onOpen: OnOpen, onClose: OnClose } = useDisclosure();
 
   useEffect(() => {
-    if (token && s.refresh) {
-      updateState(props._id, { refresh: false });
-      // Jupyter URL
-      let base: string;
-      if (prod) {
-        base = `https://${window.location.hostname}:4443`;
-      } else {
-        base = `http://${window.location.hostname}`;
-      }
-      const j_url = base + '/api/sessions';
-      // Talk to the jupyter server API
-      fetch(j_url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token ' + token,
+    updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
+  }, [props._id, updateState]);
+
+  // legacy code to fetch via API call
+
+  // /**
+  //  * Get the token and production state when the component mounts
+  //  *
+  //  * @returns  void
+  //  */
+  // useEffect(() => {
+  //   GetConfiguration().then((conf) => {
+  //     if (conf.token) {
+  //       setHeaders({ Authorization: `Token ${conf.token}` });
+  //     }
+  //     !conf.production ? setBaseUrl(`http://${window.location.hostname}`) : setBaseUrl(`http://${window.location.hostname}:4443`);
+  //   });
+  // }, []);
+
+  // useEffect(() => {
+  //   if (kernels) {
+  //     updateState(props._id, { kernels: kernels });
+  //   }
+  // }, [kernels]);
+
+  // const getKernelSpecs = () => {
+  //   fetch(`${baseUrl}/api/kernelspecs`, { headers: headers })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setKernelOptions(Object.keys(data.kernelspecs));
+  //     });
+  // };
+
+  // const getKernels = () => {
+  //   fetch(`${baseUrl}/api/kernels`, { headers: headers })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setKernels(data);
+  //     });
+  // };
+
+  const getKernelSpecs = () => {
+    updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
+  };
+
+  /**
+   * Update the kernels list by fetching the kernels from the backend
+   * and updating the state
+   */
+  const refresh = () => {
+    updateState(props._id, { executeInfo: { executeFunc: 'refresh_list', params: {} } });
+  };
+
+  // kernel_alias, room_uuid, board_uuid, owner_uuid, is_private, (kernel_name = 'python3');
+  /**
+   * room_uuid, board_uuid, owner_uuid, is_private=False,
+   * kernel_name="python3", auth_users=(), kernel_alias="YO"
+   * 
+   * Add a kernel to the list of kernels by sending a request to the backend
+   * and updating the state. Defaults to python3 kernel. Expects a kernel alias
+   * and a kernel name.
+   * 
+   * @param   {string}  kernelAlias  The kernel alias
+   * @param   {string}  kernelName   The kernel name
+   * 
+   * @returns  void
+   */
+  const addKernel = (kernelName: string, kernelAlias: string) => {
+    // if (!user || !kernelAlias || !kernelName) return;
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'add_kernel',
+        params: {
+          kernel_alias: kernelAlias,
+          kernel_name: 'python3',
+          room_uuid: locationState.roomId,
+          board_uuid: locationState.boardId,
+          owner_uuid: props._updatedBy,
+          is_private: false,
         },
-      }).then((response) => response.json())
-        .then((res) => {
-          setSessions(res);
-        })
-        .catch((err) => {
-          console.log('Jupyter> error', err);
-        });
-    }
-  }, [token, s.refresh]);
+      },
+    });
+  };
 
-  // Checkboxes
-  function onKernelSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const k = e.target.value;
-    const value = e.target.checked;
-    if (selected.includes(k) && !value) {
-      setSelected(props._id, selected.filter((v: string) => v !== k));
-    } else if (!selected.includes(k) && value) {
-      setSelected(props._id, [...selected, k]);
-    }
+  // Triggered on every keystroke
+  function changeAlias(e: React.ChangeEvent<HTMLInputElement>) {
+    const cleanAlias = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
+    setKernelAlias(cleanAlias);
   }
 
-  /* Info
-   id: "bdc55112-02ad-49c2-9171-be81e5048e81"
-   kernel: {
-    id: 'c3e84c9d-9bf8-4cd8-8448-283df74de8b0',
-    name: 'python3',
-    last_activity: '2022-09-29T18:31:23.462066Z',
-    execution_state: 'idle',
-    connections: 0}
-   name: "53f01e78-4fb5-4eea-ab64-f8bfbc389547"
-   notebook: {path: 'boards/53f01e78-4fb5-4eea-ab64-f8bfbc389547.ipynb', name: '53f01e78-4fb5-4eea-ab64-f8bfbc389547'}
-   path: "boards/53f01e78-4fb5-4eea-ab64-f8bfbc389547.ipynb"
-   type: "notebook"
-  */
+  // Triggered on 'enter' key
+  function submitAlias(e: React.FormEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
-  // Open a SageCell for this kernel
-  function openCell(kid: string) {
+  // const onConfirm = () => {
+  //   if (currentAction === 'Stop') {
+  //     updateState(props._id, {
+  //       executeInfo: {
+  //         executeFunc: `stop_${currentObject.toLowerCase()}`,
+  //         params: {
+  //           kernel_id: selectedKernel,
+  //         },
+  //       },
+  //     });
+  //   } else if (currentAction === 'Restart') {
+  //     updateState(props._id, {
+  //       executeInfo: {
+  //         executeFunc: `restart_${currentObject.toLowerCase()}`,
+  //         params: {
+  //           kernel_id: selectedKernel,
+  //         },
+  //       },
+  //     });
+  //   } else if (currentAction === 'Delete') {
+  //     updateState(props._id, {
+  //       executeInfo: {
+  //         executeFunc: `delete_${currentObject.toLowerCase()}`,
+  //         params: {
+  //           kernel_id: selectedKernel,
+  //         },
+  //       },
+  //     });
+  //   }
+  //   setCurrentObject('');
+  //   setCurrentAction('');
+  //   OnClose();
+  // };
+
+  /**
+   * Remove the kernel if the user confirms the action
+   * @param kernelId the id of the kernel to remove
+   *
+   * @returns void
+   */
+  const removeKernel = (kernelId: string) => {
+    if (!user || !kernelId) return;
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'delete_kernel',
+        params: {
+          kernel_id: kernelId,
+          // owner_uuid: user._id
+        },
+      },
+    });
+  };
+
+  /**
+   * Start the kernel
+   * @param kernelId the id of the kernel to start
+   *
+   * @returns void
+   */
+  const startKernel = (kernelId: string) => {
+    updateState(props._id, { executeInfo: { executeFunc: 'start_kernel', params: { kernel_id: kernelId } } });
+  };
+
+  /**
+   * Stop the kernel
+   * @param kernelId the id of the kernel to stop
+   *
+   * @returns void
+   */
+  const stopKernel = (kernelId: string) => {
+    updateState(props._id, { executeInfo: { executeFunc: 'stop_kernel', params: { kernel_id: kernelId } } });
+  };
+
+  /**
+   * Restart the kernel
+   * @param kernelId the id of the kernel to restart
+   *
+   * @returns void
+   */
+  const restartKernel = (kernelId: string) => {
+    updateState(props._id, { executeInfo: { executeFunc: 'restart_kernel', params: { kernel_id: kernelId } } });
+  };
+
+  /**
+   * Open SageCell using the kernel
+   * @param kernelId the id of the kernel to restart
+   *
+   * @returns void
+   */
+  const startSageCell = (kernelId: string) => {
+    // convert s.kernels to a list of kernel objects with the kernel_id as the key and the kernel name as the value
+    // const kernelList = s.kernels ? s.kernels.map((k) => ({ [k.id]: k.name })) : [];
     if (!user) return;
     createApp({
       name: 'SageCell',
-      description: 'SageCell',
+      description: `SageCell> ${kernelId}`,
       roomId: locationState.roomId,
       boardId: locationState.boardId,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'SageCell',
-      state: { 
-          code: '',
-          language: 'python',
-          fontSize: 1,
-          theme: 'xcode',
-          kernel: kid,
-          output: '',
-          executeInfo: { executeFunc: '', params: {} } }, 
+      state: {
+        code: '',
+        language: 'python',
+        fontSize: 1.5,
+        theme: 'xcode',
+        kernel: kernelId,
+        kernels: s.kernels,
+        sessions: s.sessions,
+        availableKernels: [],
+        output: '',
+        executeInfo: { executeFunc: '', params: {} },
+      },
       ownerId: user._id,
       minimized: false,
       raised: true,
     });
-  }
-
-  // Open JupyterLab
-  function openJupyter() {
-    if (!user) return;
-    // TODO: open into the right kernel/notebook
-    createApp({
-      name: 'JupyterLab',
-      description: 'JupyterLab',
-      roomId: locationState.roomId,
-      boardId: locationState.boardId,
-      position: { x: props.data.position.x, y: props.data.position.y + props.data.size.height + 50, z: 0 },
-      size: { width: props.data.size.width, height: props.data.size.width, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'JupyterLab',
-      state: {},
-      ownerId: user._id,
-      minimized: false,
-      raised: true,
-    });
-  }
+  };
 
   return (
     <AppWindow app={props}>
-      <Stack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}
-        color="black">
-        <Text>Kernels running: {sessions.length}</Text>
-        <UnorderedList overflowY={"scroll"}
-          css={{
-            '&::-webkit-scrollbar': {
-              width: '6px',
-            },
-            '&::-webkit-scrollbar-track': {
-              width: '6px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: "darkgray",
-              borderRadius: 'sm',
-            },
-          }}
-        >
-          <CheckboxGroup>
-            {sessions.sort((a, b) => a.name.localeCompare(b.name)).map((session, i) => {
-              return (
-                <ListItem key={i}>
-                  <Checkbox colorScheme={"teal"} value={session.kernel.id} checked={selected.includes(session.id)}
-                    backgroundColor={"teal.200"} borderRadius={2} borderColor={"teal.300"}
-                    verticalAlign={"middle"} p={0} ml={1} onChange={onKernelSelected}
-                  /> <b>Kernel: {session.name}</b>
-                  <UnorderedList pl={'8'}>
-                    <ListItem>Kernel: {session.kernel.name}, {session.kernel.execution_state}</ListItem>
-                    <ListItem>Notebook: {session.path}</ListItem>
-                    <ListItem>Links: <span onClick={() => openCell(session.kernel.id)} style={{ textDecoration: "underline", cursor: "pointer" }}>new cell</span>
-                      &nbsp;  <span onClick={() => openJupyter()} style={{ textDecoration: "underline", cursor: "pointer" }}>open jupyter</span></ListItem>
-                  </UnorderedList>
-                </ListItem>
-              );
-            })}
-          </CheckboxGroup>
-        </UnorderedList>
-      </Stack>
+      {/* Clear board dialog */}
+      <Box p={4} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+        {/* <Modal isCentered isOpen={IsOpen} onClose={OnClose}>
+          <ConfirmModal action={currentAction} object={currentObject} onClick={onConfirm} onClose={OnClose}></ConfirmModal>
+        </Modal> */}
+        <Stack spacing={2}>
+          <HStack>
+            <IconButton
+              variant="outline"
+              m={0.5}
+              size="md"
+              aria-label="Add Kernel"
+              onClick={() => addKernel(kernelAlias, kernelName)}
+              colorScheme="teal"
+              icon={<MdAdd />}
+            />
+            <Box w="100%">
+              <Select
+                variant="outline"
+                size="md"
+                colorScheme="teal"
+                value={kernelName}
+                placeholder="Select kernel"
+                onChange={(e) => {
+                  setKernelName(e.target.value);
+                }}
+              >
+                {
+                  /**
+                   * Gets the list of kernel options from the state via API call
+                   * and map them to a list of <option> elements for the <select>
+                   */
+                  s.kernelSpecs.length > 0 &&
+                    Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
+                      <option key={k} value={k}>
+                        {k}
+                      </option>
+                    ))
+                }
+              </Select>
+            </Box>
+            <Box w="100%">
+              <form onSubmit={submitAlias}>
+                <InputGroup>
+                  <Input
+                    placeholder="Kernel Alias"
+                    variant="outline"
+                    size="md"
+                    _placeholder={{ opacity: 1, color: 'gray.600' }}
+                    value={kernelAlias}
+                    onChange={changeAlias}
+                    onPaste={(event) => {
+                      event.stopPropagation();
+                    }}
+                    backgroundColor="whiteAlpha.300"
+                    padding={'0 4px 0 4px'}
+                  />
+                </InputGroup>
+              </form>
+            </Box>
+          </HStack>
+          {
+            // sort kernels by last_activity (most recent first)
+            s.kernels
+              .sort((a, b) => (a.last_activity < b.last_activity ? 1 : -1))
+              .map((kernel) => (
+                <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+                  <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
+                    <Text
+                      onClick={() => {
+                        startSageCell(kernel.id);
+                      }}
+                      ml={2}
+                      fontWeight="bold"
+                    >
+                      {/* {kernelIdentifier[kernel.id]
+                        ? truncateWithEllipsis(kernelIdentifier[kernel.id], 8)
+                        : truncateWithEllipsis(kernel.id, 8)} */}
+                      <Tooltip label={kernel.id} placement="top">
+                        {truncateWithEllipsis(kernel.id, 8)}
+                      </Tooltip>
+                    </Text>{' '}
+                    <Text>{kernel.name}</Text>
+                    <Flex alignItems="right">
+                      {/* <Text size="md" color={'blue'} fontWeight="bold">
+                        {
+                          // show the last activity time in human readable format (e.g. 2 minutes ago)
+                          timeSince(kernel.last_activity)
+                        }
+                      </Text> */}
+                      {/* <Badge colorScheme={kernel.execution_state === 'idle' ? 'green' : 'red'}>{kernel.execution_state}</Badge> */}
+                      <Tooltip label={"Open a SageCell"} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            startSageCell(kernel.id);
+                          }}
+                          colorScheme="teal"
+                          aria-label="Delete Kernel"
+                          icon={<MdCode />}
+                        />
+                      </Tooltip>
+                      <Tooltip label={"Remove Kernel"} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            removeKernel(kernel.id);
+                          }}
+                          // onClick={() => {
+                          //   setSelectedKernel(kernel.id);
+                          //   setCurrentAction('Delete');
+                          //   setCurrentObject('Kernel');
+                          //   OnOpen();
+                          // }}
+                          colorScheme="teal"
+                          aria-label="Delete Kernel"
+                          icon={<MdRemove />}
+                        />
+                      </Tooltip>
+                      <Tooltip label={"Restart Kernel"} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            // <ConfirmModal action={'Restart'} object={'Kernel'} onClick={restartKernel(kernel.id)} onClose={OnClose}></ConfirmModal>
+                            restartKernel(kernel.id);
+                          }}
+                          // onClick={() => {
+                          //   setSelectedKernel(kernel.id);
+                          //   setCurrentAction('Restart');
+                          //   setCurrentObject('Kernel');
+                          //   OnOpen();
+                          // }}
+                          colorScheme="teal"
+                          aria-label="Restart Kernel"
+                          icon={<MdRestartAlt />}
+                        />
+                      </Tooltip>
+                    </Flex>
+                  </Flex>
+                </Box>
+              ))
+          }
+        </Stack>
+        {/* <Box>
+          {Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
+            <Box key={k}>{k}</Box>
+          ))}
+        </Box> */}
+      </Box>
     </AppWindow>
   );
 }
@@ -202,198 +424,37 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app KernelDashboard */
 
 function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const selected: string[] = useStore((state: any) => state.selected[props._id]);
-  const setSelected = useStore((state: any) => state.setSelected);
-  const [token, setToken] = useState<string>();
-  const [prod, setProd] = useState<boolean>();
-  const [name, setName] = useState<string>();
-  const [kernelType, setKernelType] = useState('python3');
 
-  useEffect(() => {
-    let refreshInterval: number;
-    GetConfiguration().then((conf) => {
-      if (conf.token) {
-        setToken(conf.token);
-      }
-      setProd(conf.production);
-      // refresh list every minute
-      refreshInterval = window.setInterval(handleRefresh, 60 * 1000);
-    });
-    return () => {
-      // Cancel interval timer on unmount
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
-    }
-  }, []);
+  // const s = props.data.state as AppState;
+  // const updateState = useAppStore((state) => state.updateState);
+  // const [headers, setHeaders] = useState({} as { [key: string]: string });
+  // const [baseUrl, setBaseUrl] = useState<string>();
+  // const [kernels, setKernels] = useState<Kernel[]>([]); // KernelProps[];
+  // const [kernelOptions, setKernelOptions] = useState<string[]>([]);
+  // const [selectedKernelToRemove, setSelectedKernelToRemove] = useState<string>('');
 
-  // Plus button
-  function handleNewKernel() {
-    if (token) {
-      // Jupyter URL
-      let base: string;
-      if (prod) {
-        base = `https://${window.location.hostname}:4443`;
-      } else {
-        base = `http://${window.location.hostname}`;
-      }
-      // Create a new kernel: notebook + kernel + session
-      const j_url = base + '/api/contents/boards/' + `${name}.ipynb`;
-      const payload = { type: 'notebook', path: '/', format: 'text' };
-      // Create a new notebook
-      fetch(j_url, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token ' + token,
-        },
-        body: JSON.stringify(payload)
-      }).then((response) => response.json())
-        .then((res) => {
-          // Create a new kernel
-          const k_url = base + '/api/kernels';
-          // name (string) – Kernel spec name (defaults to default kernel spec for server)
-          // path (string) – API path from root to the cwd of the kernel
-          const kpayload = { name: kernelType, path: '/boards' };
-          fetch(k_url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token ' + token,
-            },
-            body: JSON.stringify(kpayload)
-          }).then((response) => response.json())
-            .then((res) => {
-              const kernel = res;
-              // Create a new session
-              const s_url = base + '/api/sessions'
-              const sid = uuidv1();
-              const spayload = {
-                id: sid.replace(/-/g, ''),
-                kernel: kernel,
-                name: name,
-                path: `boards/${name}.ipynb`,
-                notebook: {
-                  name: `${name}.ipynb`,
-                  path: `boards/${name}.ipynb`,
-                },
-                type: 'notebook'
-              }
-              fetch(s_url, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Token ' + token,
-                },
-                body: JSON.stringify(spayload)
-              }).then((response) => response.json())
-                .then(() => {
-                  handleRefresh();
-                });
-            });
-        })
-        .catch((err) => {
-          console.log('Jupyter> error', err);
-        });
-    }
-  }
-
-  // Triggered on every keystroke
-  function changeName(e: React.ChangeEvent<HTMLInputElement>) {
-    const cleanName = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
-    setName(cleanName);
-  }
-
-  // Triggered on 'enter' key
-  function submitName(e: React.FormEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  // Delete a kernel
-  function handleDeleteKernel() {
-    if (token) {
-      // Jupyter URL
-      let base: string;
-      if (prod) {
-        base = `https://${window.location.hostname}:4443`;
-      } else {
-        base = `http://${window.location.hostname}`;
-      }
-      // Iterate over selected kernels
-      selected.forEach((k: string) => {
-        const k_url = base + '/api/kernels/' + k;
-        // Talk to the jupyter server API
-        fetch(k_url, {
-          method: 'DELETE',
-          headers: { 'Authorization': 'Token ' + token }
-        }).then((response) => {
-          if (response.ok) {
-            setSelected(props._id, selected.filter((v: string) => v !== k));
-            updateState(props._id, { refresh: true });
-          }
-        }).catch((err) => {
-          console.log('Jupyter> delete error', err);
-        });
-      });
-    }
-  }
-
-  // Select the kernel type: python3, r, julia...
-  function handleKernelType(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (e.target.value) setKernelType(e.target.value);
-  }
-
-  // Reload the list of kernels
-  function handleRefresh() {
-    updateState(props._id, { refresh: true });
-  }
+  // // get the token and production state when the component mounts
+  // useEffect(() => {
+  //   GetConfiguration().then((conf) => {
+  //     if(conf.token) {
+  //       setHeaders({ Authorization: `Token ${conf.token}` });
+  //     }
+  //     !conf.production 
+  //     ? setBaseUrl(`http://${window.location.hostname}`) 
+  //     : setBaseUrl(`http://${window.location.hostname}:4443`)
+  //   });
+  // }, []);
 
   return (
-    <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" >
-        <Tooltip placement="top-start" hasArrow={true} label={'Delete Selected Kernel(s)'} openDelay={400}>
-          <Button isDisabled={!selected || selected.length === 0} onClick={() => handleDeleteKernel()} _hover={{ opacity: 0.7 }}>
-            <MdRemove />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'New Kernel'} openDelay={400}>
-          <Button isDisabled={!name || !kernelType} onClick={() => handleNewKernel()} _hover={{ opacity: 0.7 }}>
-            <MdAdd />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Refresh'} openDelay={400}>
-          <Button onClick={handleRefresh} >
-            <MdRefresh />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-
-      <form onSubmit={submitName}>
-        <InputGroup size="sm" width="150px" px={2}>
-          <Input
-            placeholder="Kernel Name"
-            _placeholder={{ opacity: 1, color: 'gray.600' }}
-            value={name}
-            onChange={changeName}
-            onPaste={(event) => {
-              event.stopPropagation();
-            }}
-            backgroundColor="whiteAlpha.300"
-            padding={"0 4px 0 4px"}
-          />
-        </InputGroup>
-      </form>
-
-      <Select placeholder='Select kernel' width="150px" rounded='lg' size='sm'
-        variant='outline' px={0} colorScheme="teal" defaultValue={kernelType}
-        onChange={handleKernelType}>
-        <option value='python3'>python3</option>
-      </Select>
-    </>
+    <Box>
+    </Box>
   );
 }
+
+export const KernelDashboard = {
+  AppComponent,
+  ToolbarComponent,
+};
+
 
 export default { AppComponent, ToolbarComponent };

@@ -42,7 +42,7 @@ const AppComponent = (props: App): JSX.Element => {
   const [output, setOutput] = useState({} as any);
 
   const s = props.data.state as AppState;
-  
+
   useEffect(() => {
     if (s.output) {
       try {
@@ -103,6 +103,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const [selected, setSelected] = useState<string>();
+  const [kernels, setKernels] = useState<string[]>([]);
+
+  useEffect(() => {
+    updateState(props._id, { 
+      executeInfo: { 
+        executeFunc: 'get_available_kernels', 
+        params: { owner_uuid: props.data.ownerId } 
+      } 
+    });
+  }, []);
 
   // Update from the props
   useEffect(() => {
@@ -162,13 +172,21 @@ function ToolbarComponent(props: App): JSX.Element {
           variant={'outline'}
           value={selected ?? undefined}
         >
-          {s.kernels
+          {s.availableKernels && s.availableKernels.map((kernel) => {
+              const [key, value] = Object.entries(kernel)[0];
+              return (
+                <option key={key} value={value}>
+                  {key}
+                </option>
+              );
+          })}
+          {/* {s.kernels
             ? Object.keys(JSON.parse(s.kernels)).map((kernel) => (
                 <option key={kernel} value={kernel}>
                   {kernel}
                 </option>
               ))
-            : null}
+            : null} */}
         </Select>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">

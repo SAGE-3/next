@@ -60,7 +60,7 @@ class AIPane(SmartBit):
         super(AIPane, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
-    def new_app_added(self):
+    def new_app_added(self, app_type):
         """
         :return: tasks supported based on the apps hosted.
         The tasks returned are exactly as defined in ai_settings above.
@@ -71,19 +71,17 @@ class AIPane(SmartBit):
         if len(self.state.hostedApps.values()) > 1:
             self.state.messages[time.time()] = """need to return error message saying that we 
             can on operate on one datatype at a time"""
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
-            self.send_updates()
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
             if len(self.state.hostedApps) == 1:
-                app_type = self.state.executeInfo.params["newAppInfo"]
                 for type, settings in ai_settings.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
             # ANDY: we need a state variable we can put the supported_tasks in
         print(f"supported tasks are: {supported_tasks}")
-        return supported_tasks
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
 
     # def run_function(self):
     #     self.state.runStatus = True

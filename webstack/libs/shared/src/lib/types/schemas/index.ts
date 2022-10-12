@@ -11,4 +11,5 @@ export * from './board';
 export * from './room';
 export * from './asset';
 export * from './presence';
+export * from './message';
 export * from './SBSchema';

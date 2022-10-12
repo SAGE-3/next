@@ -17,6 +17,7 @@ import {
   SimpleGrid,
   Tooltip,
   useColorModeValue,
+  useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 
@@ -47,7 +48,9 @@ export function BoardList(props: BoardListProps) {
   const clearError = useBoardStore((state) => state.clearError);
   const presences = usePresenceStore((state) => state.presences);
 
-  const [newBoardModal, setNewBoardModal] = useState(false);
+  // Create board dialog
+  const { isOpen, onOpen, onClose } = useDisclosure()
+
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
   const { auth } = useAuth();
@@ -130,15 +133,15 @@ export function BoardList(props: BoardListProps) {
         {props.selectedRoom ? (
           <CreateBoardModal
             roomId={props.selectedRoom._id}
-            isOpen={newBoardModal}
-            onClose={() => setNewBoardModal(false)}
+            isOpen={isOpen}
+            onClose={onClose}
           ></CreateBoardModal>
         ) : null}
         <Box display="flex" justifyContent={'space-between'}>
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={() => setNewBoardModal(true)}>
+                <Button borderRadius="md" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
