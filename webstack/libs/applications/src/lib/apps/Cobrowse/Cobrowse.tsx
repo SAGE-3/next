@@ -7,7 +7,6 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Box, Button, Center, Tooltip, ButtonGroup } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -20,12 +19,12 @@ import create from 'zustand';
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
+import { useParams } from 'react-router';
 
 export const useStore = create((set: any) => ({
   sock: {} as { [key: string]: WebSocket },
   setSock: (id: string, sock: WebSocket) => set((state: any) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
 }));
-
 
 /* App component for CoBrowse */
 
@@ -36,8 +35,7 @@ function AppComponent(props: App): JSX.Element {
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string | null>(s.sharedurl);
 
-  const location = useLocation();
-  const locationState = location.state as { boardId: string; roomId: string; };
+  const { boardId, roomId } = useParams();
   const { user } = useUser();
   const [mine, setMine] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -66,7 +64,7 @@ function AppComponent(props: App): JSX.Element {
 
     // Open websocket connection to the server
     const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socketUrl = `${socketType}//${window.location.host}/rtc/${locationState.roomId}`;
+    const socketUrl = `${socketType}//${window.location.host}/rtc/${roomId}`;
     console.log('RTC> Connecting to', socketUrl);
     rtcSock.current = new WebSocket(socketUrl);
     rtcSock.current.addEventListener('open', () => {
@@ -93,7 +91,7 @@ function AppComponent(props: App): JSX.Element {
       if (mine) {
         handleStop();
       }
-    }
+    };
   }, [user]);
 
   useEffect(() => {
@@ -106,7 +104,7 @@ function AppComponent(props: App): JSX.Element {
       const data = JSON.parse(ev.data);
       console.log('RTC> Message', data.type);
       if (data.type === 'paint') {
-        const imgid = "image" + props._id;
+        const imgid = 'image' + props._id;
         const img = document.getElementById(imgid) as HTMLImageElement;
         if (img) {
           img.src = 'data:image/jpeg;charset=utf-8;base64,' + data.data;
@@ -140,42 +138,44 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [mine]);
 
-
   // Init the webview
-  const setWebviewRef = useCallback((node: WebviewTag) => {
-    // event dom-ready callback
-    const domReadyCallback = (evt: any) => {
-      webviewNode.current.removeEventListener('dom-ready', domReadyCallback)
-      setDomReady(true);
-    }
-    // event did-attach callback
-    const didAttachCallback = (evt: any) => {
-      webviewNode.current.removeEventListener('did-attach', didAttachCallback);
-      setAttached(true);
-    };
-
-    if (node) {
-      webviewNode.current = node;
-      const webview = webviewNode.current;
-
-      // Callback when the webview is ready
-      webview.addEventListener('dom-ready', domReadyCallback)
-      webview.addEventListener('did-attach', didAttachCallback);
-
-      const titleUpdated = (event: any) => {
-        // Update the app title
-        update(props._id, { description: event.title });
-
-        const id = webview.getWebContentsId();
-        console.log('getWebContentsId Webview id', id);
-        updateState(props._id, { frame: id });
+  const setWebviewRef = useCallback(
+    (node: WebviewTag) => {
+      // event dom-ready callback
+      const domReadyCallback = (evt: any) => {
+        webviewNode.current.removeEventListener('dom-ready', domReadyCallback);
+        setDomReady(true);
       };
-      webview.addEventListener('page-title-updated', titleUpdated);
+      // event did-attach callback
+      const didAttachCallback = (evt: any) => {
+        webviewNode.current.removeEventListener('did-attach', didAttachCallback);
+        setAttached(true);
+      };
 
-      // After the partition has been set, you can navigate
-      webview.src = url;
-    }
-  }, [url]);
+      if (node) {
+        webviewNode.current = node;
+        const webview = webviewNode.current;
+
+        // Callback when the webview is ready
+        webview.addEventListener('dom-ready', domReadyCallback);
+        webview.addEventListener('did-attach', didAttachCallback);
+
+        const titleUpdated = (event: any) => {
+          // Update the app title
+          update(props._id, { description: event.title });
+
+          const id = webview.getWebContentsId();
+          console.log('getWebContentsId Webview id', id);
+          updateState(props._id, { frame: id });
+        };
+        webview.addEventListener('page-title-updated', titleUpdated);
+
+        // After the partition has been set, you can navigate
+        webview.src = url;
+      }
+    },
+    [url]
+  );
 
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
@@ -185,33 +185,45 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      {isElectron() ?
-        mine ?
-          <webview nodeintegration={true} webpreferences="nodeintegration" ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any} > </webview>
-          : <img id={"image" + props._id}></img>
-        :
-        mine ?
-          <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-            <Center w="100%" h="100%" bg="gray.700" >
-              <Box p={4} >
-                <Center>
-                  <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                    CoBrowse is only supported with the SAGE3 Desktop Application.
-                  </Box>
-                </Center>
-                <br />
-                <Center>
-                  <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                    Current URL <a style={{ color: "#13a89e" }} href={s.sharedurl} rel="noreferrer" target="_blank">
-                      {s.sharedurl} </a>
-                  </Box>
-                </Center>
-              </Box>
-            </Center>
-          </div>
-          : <img id={"image" + props._id}></img>
-      }
-    </AppWindow >
+      {isElectron() ? (
+        mine ? (
+          <webview
+            nodeintegration={true}
+            webpreferences="nodeintegration"
+            ref={setWebviewRef}
+            style={nodeStyle}
+            allowpopups={'true' as any}
+          >
+            {' '}
+          </webview>
+        ) : (
+          <img id={'image' + props._id}></img>
+        )
+      ) : mine ? (
+        <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
+          <Center w="100%" h="100%" bg="gray.700">
+            <Box p={4}>
+              <Center>
+                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
+                  CoBrowse is only supported with the SAGE3 Desktop Application.
+                </Box>
+              </Center>
+              <br />
+              <Center>
+                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
+                  Current URL{' '}
+                  <a style={{ color: '#13a89e' }} href={s.sharedurl} rel="noreferrer" target="_blank">
+                    {s.sharedurl}{' '}
+                  </a>
+                </Box>
+              </Center>
+            </Box>
+          </Center>
+        </div>
+      ) : (
+        <img id={'image' + props._id}></img>
+      )}
+    </AppWindow>
   );
 }
 

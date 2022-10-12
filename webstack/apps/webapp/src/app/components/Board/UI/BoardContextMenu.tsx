@@ -7,11 +7,10 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUIStore, useUser, usePresenceStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, usePresenceStore, useRouteNav } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 type ContextProps = {
@@ -28,22 +27,19 @@ const savedRadios = [false, true];
 export function BoardContextMenu(props: ContextProps) {
   // User information
   const { user } = useUser();
-  const navigate = useNavigate();
+  const { toHome } = useRouteNav();
 
   const presences = usePresenceStore((state) => state.presences);
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
-  const scale = useUIStore((state) => state.scale);
   const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const flipUI = useUIStore((state) => state.flipUI);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
   // UI Menu position setters
   const setControllerPosition = useUIStore((state) => state.controller.setPosition);
-  const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
 
   // State of the checkboxes in context menu: grid ui
   const [radios, setRadios] = useState(savedRadios);
@@ -133,7 +129,15 @@ export function BoardContextMenu(props: ContextProps) {
   };
 
   return (
-    <VStack whiteSpace={"nowrap"} boxShadow={`4px 4px 10px 0px ${shadowColor}`} p="2" rounded="md" bg={panelBackground} cursor="auto" w={'100%'}>
+    <VStack
+      whiteSpace={'nowrap'}
+      boxShadow={`4px 4px 10px 0px ${shadowColor}`}
+      p="2"
+      rounded="md"
+      bg={panelBackground}
+      cursor="auto"
+      w={'100%'}
+    >
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
         <VStack w={'100%'}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold">
@@ -149,7 +153,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => navigate('/home', { replace: true, state: { roomId: props.roomId } })}
+            onClick={() => toHome()}
           >
             Back to Room
           </Button>

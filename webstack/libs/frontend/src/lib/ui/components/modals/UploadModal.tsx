@@ -7,16 +7,26 @@
  */
 
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  FormControl, Checkbox, Button, Icon,
-  InputGroup, Input, InputLeftElement, FormHelperText,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  FormControl,
+  Checkbox,
+  Button,
+  Icon,
+  InputGroup,
+  Input,
+  InputLeftElement,
+  FormHelperText,
 } from '@chakra-ui/react';
 
-
 import { MdAttachFile } from 'react-icons/md';
+import { useParams } from 'react-router';
 
 // Fix the missing attribute 'webkitdirectory' to upload folders
 declare module 'react' {
@@ -34,10 +44,8 @@ interface UploadModalProps {
 }
 
 export function UploadModal(props: UploadModalProps): JSX.Element {
-
   // Room and board
-  const location = useLocation();
-  const { roomId } = location.state as { boardId: string; roomId: string };
+  const { roomId } = useParams();
 
   // selected files
   const [input, setInput] = useState<File[]>([]);
@@ -48,7 +56,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
     if (e.target.files) {
       const files = Object.values(e.target.files) as File[];
       // Ignore .DS_Store and empty files
-      const filteredList = files.filter((f: File) => (f.name !== '.DS_Store') || f.size === 0);
+      const filteredList = files.filter((f: File) => f.name !== '.DS_Store' || f.size === 0);
       setInput(filteredList);
     }
   };
@@ -69,7 +77,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       }
 
       // Add fields to the upload form
-      fd.append('room', roomId);
+      fd.append('room', roomId!);
 
       // Upload with a POST request
       fetch('/api/assets/upload', {
@@ -84,7 +92,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
           props.onClose();
         });
     }
-  }
+  };
 
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
@@ -92,36 +100,41 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader>Upload Assets</ModalHeader>
         <ModalBody>
-          <Checkbox mb={4} onChange={checkFolder}>Enable folder upload</Checkbox>
+          <Checkbox mb={4} onChange={checkFolder}>
+            Enable folder upload
+          </Checkbox>
           <FormControl isRequired>
             <InputGroup>
               <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
-              {allowFolder ?
+              {allowFolder ? (
                 <Input
                   variant="outline"
-                  padding={"4px 35px"}
+                  padding={'4px 35px'}
                   id="files"
                   type="file"
                   multiple
                   webkitdirectory="true"
                   onChange={handleInputChange}
-                  onClick={() => setInput([])} /> :
+                  onClick={() => setInput([])}
+                />
+              ) : (
                 <Input
                   variant="outline"
-                  padding={"4px 35px"}
+                  padding={'4px 35px'}
                   id="files"
                   type="file"
                   accept={'image/*, video/*, application/pdf, application/json, text/csv, text/plain'}
                   multiple
                   onChange={handleInputChange}
-                  onClick={() => setInput([])} />
-              }
+                  onClick={() => setInput([])}
+                />
+              )}
             </InputGroup>
             <FormHelperText>Select one or more files</FormHelperText>
           </FormControl>
         </ModalBody>
         <ModalFooter>
-          <Button type="submit" colorScheme='green' mr={5} onClick={upload}>
+          <Button type="submit" colorScheme="green" mr={5} onClick={upload}>
             Upload
           </Button>
           <Button mr={3} onClick={props.onClose}>

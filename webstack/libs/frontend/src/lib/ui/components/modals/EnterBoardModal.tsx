@@ -7,7 +7,6 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router';
 import {
   useToast,
   Button,
@@ -24,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
+import { useData, useRouteNav } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { timeout } from '../../../utils';
 import { Board } from '@sage3/shared/types';
@@ -36,7 +35,7 @@ export interface EnterBoardProps {
 }
 
 export const EnterBoardModal = (props: EnterBoardProps) => {
-  const navigate = useNavigate();
+  const { toBoard } = useRouteNav();
   const [privateText, setPrivateText] = useState('');
   const toast = useToast();
   const initialRef = useRef<HTMLInputElement>(null);
@@ -50,12 +49,12 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
       if (props.isOpen && !props.board.data.isPrivate) {
         setLoading(true);
         await timeout(600);
-        navigate('/board', { state: { roomId: props.board.data.roomId, boardId: props.board._id } });
+        toBoard(props.board.data.roomId, props.board._id);
       }
     }
     attemptToEnter();
     // if the room is not protected, go ahead and enter the room
-  }, [props.isOpen, props.board.data.isPrivate, navigate, props.board._id, props.board.data.roomId]);
+  }, [props.isOpen, props.board.data.isPrivate, props.board._id, props.board.data.roomId]);
 
   // Checks if the user entered pin matches the board pin
   const compareKey = async () => {
@@ -66,7 +65,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
     if (key === props.board.data.privatePin) {
       setLoading(true);
       await timeout(600);
-      navigate('/board', { state: { roomId: props.board.data.roomId, boardId: props.board._id } });
+      toBoard(props.board.data.roomId, props.board._id);
     } else {
       toast({
         title: `The password you have entered is incorrect`,
