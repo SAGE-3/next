@@ -40,7 +40,8 @@ function AppComponent(props: App): JSX.Element {
   // const [kernels, setKernels] = useState<Kernel[]>([]); // KernelProps[];
   const [kernelOptions, setKernelOptions] = useState<string[]>([]);
   const [selectedKernelToAdd, setSelectedKernelToAdd] = useState<string>('python3');
-  const [kernelIdentifier, setKernelIdentifier] = useState({} as { [key: string]: string });
+  const [kernelAlias, setKernelAlias] = useState<string>('');
+  // const [kernelIdentifier, setKernelIdentifier] = useState({} as { [key: string]: string });
   const [kernelName, setKernelName] = useState<string>('');
 
 
@@ -87,8 +88,18 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { executeInfo: { executeFunc: 'refresh_list', params: {} } });
   };
 
+  // kernel_alias, room_uuid, board_uuid, owner_uuid, is_private, (kernel_name = 'python3');
   const addKernel = (kernelName: string) => {
-    updateState(props._id, { executeInfo: { executeFunc: 'add_kernel', params: { kernel_name: kernelName, path: '/boards' } } });
+    updateState(props._id, { executeInfo: 
+      { 
+        executeFunc: 'add_kernel', params: {
+          kernel_alias: kernelAlias, 
+          kernel_name: kernelName,
+          room_uuid: locationState.roomId,
+          board_uuid: locationState.boardId,
+          owner_uuid: props._updatedBy,
+          is_private: false
+         } } });
   };
 
   // const getKernelSpecs = () => {
@@ -106,7 +117,7 @@ function AppComponent(props: App): JSX.Element {
   // Triggered on every keystroke
   function changeName(e: React.ChangeEvent<HTMLInputElement>) {
     const cleanName = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
-    setKernelName(cleanName);
+    setKernelAlias(cleanName);
   }
 
   // Triggered on 'enter' key
@@ -243,7 +254,7 @@ function AppComponent(props: App): JSX.Element {
                     variant="outline"
                     size="md"
                     _placeholder={{ opacity: 1, color: 'gray.600' }}
-                    value={kernelName}
+                    value={kernelAlias}
                     onChange={changeName}
                     onPaste={(event) => {
                       event.stopPropagation();
@@ -270,9 +281,10 @@ function AppComponent(props: App): JSX.Element {
                       ml={2}
                       fontWeight="bold"
                     >
-                      {kernelIdentifier[kernel.id]
+                      {/* {kernelIdentifier[kernel.id]
                         ? truncateWithEllipsis(kernelIdentifier[kernel.id], 8)
-                        : truncateWithEllipsis(kernel.id, 8)}
+                        : truncateWithEllipsis(kernel.id, 8)} */}
+                      {truncateWithEllipsis(kernel.id, 8)}
                     </Text>{' '}
                     <Flex alignItems="right">
                       {/* <Text size="md" color={'blue'} fontWeight="bold">
