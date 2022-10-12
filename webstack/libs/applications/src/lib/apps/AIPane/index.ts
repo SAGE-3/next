@@ -36,17 +36,18 @@ export const schema = z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
   }),
+
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   executeInfo: {executeFunc: '', params: {}},
   hostedApps: {},
-  // supportedApps: {},
   runStatus: false,
   supported_tasks: {},
   messages: {},
   output: "",
+
 };
 
 export const name = 'AIPane';

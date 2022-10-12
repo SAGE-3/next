@@ -200,6 +200,7 @@ function AppComponent(props: App): JSX.Element {
                 >
                   {Object.keys(s.hostedApps).length !== 0 ? "Message" : <VisuallyHidden>Empty Board</VisuallyHidden>
                   }
+                  Message
                 </Button>
               </PopoverTrigger>
 
@@ -256,6 +257,7 @@ function AppComponent(props: App): JSX.Element {
             <br/>
             supported_tasks: {Object.values(s.supported_tasks)}
 
+            messages: {Object.values(s.messages)}
           </Box>
 
           <Box className="output-container">
