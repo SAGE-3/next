@@ -13,3 +13,4 @@ export * from './asset';
 export * from './presence';
 export * from './twilio';
 export * from './ui';
+export * from './message';

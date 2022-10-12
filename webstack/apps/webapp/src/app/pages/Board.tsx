@@ -45,9 +45,9 @@ export function BoardPage() {
     // Update the user's presence information
     updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
 
-    // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
+    // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
-      // Unsube from board updates
+      // Unsub from board updates
       unsubBoard();
       // Update the user's presence information
       updatePresence({ boardId: '', roomId: '' });
