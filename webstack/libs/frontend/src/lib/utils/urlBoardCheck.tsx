@@ -9,7 +9,7 @@ import { EnterBoardModal } from '../ui';
  * @returns
  */
 export const CheckUrlForBoardId = () => {
-  let { boardId } = useParams();
+  const { boardId } = useParams();
   if (boardId) {
     localStorage.setItem('boardId', boardId);
   } else {

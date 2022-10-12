@@ -20,7 +20,7 @@ import * as express from 'express';
 import { assetExpressRouter } from './custom/asset';
 
 // Collection Imports
-import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection } from '../collections';
+import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection, MessageCollection } from '../collections';
 import { ConfigRouter, InfoRouter } from './config';
 
 // SAGEBase Imports
@@ -53,6 +53,8 @@ export function expressAPIRouter(): express.Router {
   router.use('/rooms', RoomsCollection.router());
 
   router.use('/presence', PresenceCollection.router());
+
+  router.use('/message', MessageCollection.router());
 
   router.use('/configuration', ConfigRouter());
 

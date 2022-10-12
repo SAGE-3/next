@@ -7,7 +7,7 @@
  */
 import {
   useColorModeValue, Box, Input, InputGroup, Select, Text, Tooltip, 
-  Stack, Collapse, Flex, Icon, IconButton, HStack, Badge
+  Stack, Collapse, Flex, Icon, IconButton, HStack, Badge, useDisclosure, Modal,
 } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -17,8 +17,9 @@ import { useAppStore, GetConfiguration, useUser, truncateWithEllipsis } from '@s
 import { useState, useEffect } from 'react';
 import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
-import { Kernel } from '.';
-import { KernelSpecs, KernelSpec } from './index';
+import ConfirmModal from './components/confirmModel';
+// import { Kernel } from '.';
+// import { KernelSpecs, KernelSpec } from './index';
 
 
 // TODO: attach a name to each kernel
@@ -35,24 +36,22 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const location = useLocation();
   const locationState = location.state as { boardId: string; roomId: string };
-  // const [headers, setHeaders] = useState({} as { [key: string]: string });
-  // const [baseUrl, setBaseUrl] = useState<string>();
-  // const [kernels, setKernels] = useState<Kernel[]>([]); // KernelProps[];
-  const [kernelOptions, setKernelOptions] = useState<string[]>([]);
-  const [selectedKernelToAdd, setSelectedKernelToAdd] = useState<string>('python3');
   const [kernelAlias, setKernelAlias] = useState<string>('');
-  // const [kernelIdentifier, setKernelIdentifier] = useState({} as { [key: string]: string });
-  const [kernelName, setKernelName] = useState<string>('');
-
+  const [kernelName, setKernelName] = useState<string>('python3');
+  // const [currentAction, setCurrentAction] = useState<string>('Stop');
+  // const [currentObject, setCurrentObject] = useState<string>('Kernel');
+  // const [selectedKernel, setSelectedKernel] = useState<string>('');
+  // const { isOpen: IsOpen, onOpen: OnOpen, onClose: OnClose } = useDisclosure();
 
   useEffect(() => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
   }, [props._id, updateState]);
 
+  // legacy code to fetch via API call
 
   // /**
   //  * Get the token and production state when the component mounts
-  //  * 
+  //  *
   //  * @returns  void
   //  */
   // useEffect(() => {
@@ -64,13 +63,19 @@ function AppComponent(props: App): JSX.Element {
   //   });
   // }, []);
 
-  // legacy code to fetch via API call
-
   // useEffect(() => {
   //   if (kernels) {
   //     updateState(props._id, { kernels: kernels });
   //   }
   // }, [kernels]);
+
+  // const getKernelSpecs = () => {
+  //   fetch(`${baseUrl}/api/kernelspecs`, { headers: headers })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setKernelOptions(Object.keys(data.kernelspecs));
+  //     });
+  // };
 
   // const getKernels = () => {
   //   fetch(`${baseUrl}/api/kernels`, { headers: headers })
@@ -79,6 +84,10 @@ function AppComponent(props: App): JSX.Element {
   //       setKernels(data);
   //     });
   // };
+
+  const getKernelSpecs = () => {
+    updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
+  };
 
   /**
    * Update the kernels list by fetching the kernels from the backend
@@ -89,51 +98,99 @@ function AppComponent(props: App): JSX.Element {
   };
 
   // kernel_alias, room_uuid, board_uuid, owner_uuid, is_private, (kernel_name = 'python3');
-  const addKernel = (kernelName: string) => {
-    updateState(props._id, { executeInfo: 
-      { 
-        executeFunc: 'add_kernel', params: {
-          kernel_alias: kernelAlias, 
-          kernel_name: kernelName,
+  /**
+   * room_uuid, board_uuid, owner_uuid, is_private=False,
+   * kernel_name="python3", auth_users=(), kernel_alias="YO"
+   * 
+   * Add a kernel to the list of kernels by sending a request to the backend
+   * and updating the state. Defaults to python3 kernel. Expects a kernel alias
+   * and a kernel name.
+   * 
+   * @param   {string}  kernelAlias  The kernel alias
+   * @param   {string}  kernelName   The kernel name
+   * 
+   * @returns  void
+   */
+  const addKernel = (kernelName: string, kernelAlias: string) => {
+    // if (!user || !kernelAlias || !kernelName) return;
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'add_kernel',
+        params: {
+          kernel_alias: kernelAlias,
+          kernel_name: 'python3',
           room_uuid: locationState.roomId,
           board_uuid: locationState.boardId,
           owner_uuid: props._updatedBy,
-          is_private: false
-         } } });
+          is_private: false,
+        },
+      },
+    });
   };
 
-  // const getKernelSpecs = () => {
-  //   fetch(`${baseUrl}/api/kernelspecs`, { headers: headers })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setKernelOptions(Object.keys(data.kernelspecs));
-  //     });
-  // };
-
-  // const getKernelSpecs = () => {
-  //   updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
-  // };
-
   // Triggered on every keystroke
-  function changeName(e: React.ChangeEvent<HTMLInputElement>) {
-    const cleanName = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
-    setKernelAlias(cleanName);
+  function changeAlias(e: React.ChangeEvent<HTMLInputElement>) {
+    const cleanAlias = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
+    setKernelAlias(cleanAlias);
   }
 
   // Triggered on 'enter' key
-  function submitName(e: React.FormEvent) {
+  function submitAlias(e: React.FormEvent) {
     e.preventDefault();
     e.stopPropagation();
   }
 
+  // const onConfirm = () => {
+  //   if (currentAction === 'Stop') {
+  //     updateState(props._id, {
+  //       executeInfo: {
+  //         executeFunc: `stop_${currentObject.toLowerCase()}`,
+  //         params: {
+  //           kernel_id: selectedKernel,
+  //         },
+  //       },
+  //     });
+  //   } else if (currentAction === 'Restart') {
+  //     updateState(props._id, {
+  //       executeInfo: {
+  //         executeFunc: `restart_${currentObject.toLowerCase()}`,
+  //         params: {
+  //           kernel_id: selectedKernel,
+  //         },
+  //       },
+  //     });
+  //   } else if (currentAction === 'Delete') {
+  //     updateState(props._id, {
+  //       executeInfo: {
+  //         executeFunc: `delete_${currentObject.toLowerCase()}`,
+  //         params: {
+  //           kernel_id: selectedKernel,
+  //         },
+  //       },
+  //     });
+  //   }
+  //   setCurrentObject('');
+  //   setCurrentAction('');
+  //   OnClose();
+  // };
+
   /**
-   * Remove the kernel
+   * Remove the kernel if the user confirms the action
    * @param kernelId the id of the kernel to remove
    *
    * @returns void
    */
   const removeKernel = (kernelId: string) => {
-    updateState(props._id, { executeInfo: { executeFunc: 'delete_kernel', params: { kernel_id: kernelId } } });
+    if (!user || !kernelId) return;
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'delete_kernel',
+        params: {
+          kernel_id: kernelId,
+          // owner_uuid: user._id
+        },
+      },
+    });
   };
 
   /**
@@ -169,16 +226,12 @@ function AppComponent(props: App): JSX.Element {
   /**
    * Open SageCell using the kernel
    * @param kernelId the id of the kernel to restart
-   * @global locationState
-   * @global user
-   * @global createApp
-   * @global props
    *
    * @returns void
    */
   const startSageCell = (kernelId: string) => {
     // convert s.kernels to a list of kernel objects with the kernel_id as the key and the kernel name as the value
-    const kernelList = s.kernels ? s.kernels.map((k) => ({ [k.id]: k.name })) : [];
+    // const kernelList = s.kernels ? s.kernels.map((k) => ({ [k.id]: k.name })) : [];
     if (!user) return;
     createApp({
       name: 'SageCell',
@@ -189,18 +242,18 @@ function AppComponent(props: App): JSX.Element {
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'SageCell',
-      state: { 
+      state: {
         code: '',
         language: 'python',
         fontSize: 1.5,
         theme: 'xcode',
-        kernel: kernelId, 
+        kernel: kernelId,
         kernels: s.kernels,
         sessions: s.sessions,
-        // kernels: JSON.stringify(kernelList),
-        // sessions: s.sessions
+        availableKernels: [],
         output: '',
-        executeInfo: { executeFunc: '', params: {} } },
+        executeInfo: { executeFunc: '', params: {} },
+      },
       ownerId: user._id,
       minimized: false,
       raised: true,
@@ -209,7 +262,11 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
+      {/* Clear board dialog */}
       <Box p={4} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+        {/* <Modal isCentered isOpen={IsOpen} onClose={OnClose}>
+          <ConfirmModal action={currentAction} object={currentObject} onClick={onConfirm} onClose={OnClose}></ConfirmModal>
+        </Modal> */}
         <Stack spacing={2}>
           <HStack>
             <IconButton
@@ -217,7 +274,7 @@ function AppComponent(props: App): JSX.Element {
               m={0.5}
               size="md"
               aria-label="Add Kernel"
-              onClick={() => addKernel(selectedKernelToAdd)}
+              onClick={() => addKernel(kernelAlias, kernelName)}
               colorScheme="teal"
               icon={<MdAdd />}
             />
@@ -226,36 +283,36 @@ function AppComponent(props: App): JSX.Element {
                 variant="outline"
                 size="md"
                 colorScheme="teal"
-                value={selectedKernelToAdd}
+                value={kernelName}
                 placeholder="Select kernel"
-                // onFocus={getKernelSpecs}
                 onChange={(e) => {
-                  setSelectedKernelToAdd(e.target.value);
+                  setKernelName(e.target.value);
                 }}
               >
-                {s.kernelSpecs.length > 0 &&
-                  Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                {/* {kernelOptions.map((k) => (
-                  <option key={k} value={k}>
-                    {k}
-                  </option>
-                ))} */}
+                {
+                  /**
+                   * Gets the list of kernel options from the state via API call
+                   * and map them to a list of <option> elements for the <select>
+                   */
+                  s.kernelSpecs.length > 0 &&
+                    Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
+                      <option key={k} value={k}>
+                        {k}
+                      </option>
+                    ))
+                }
               </Select>
             </Box>
             <Box w="100%">
-              <form onSubmit={submitName}>
+              <form onSubmit={submitAlias}>
                 <InputGroup>
                   <Input
-                    placeholder="Kernel Name"
+                    placeholder="Kernel Alias"
                     variant="outline"
                     size="md"
                     _placeholder={{ opacity: 1, color: 'gray.600' }}
                     value={kernelAlias}
-                    onChange={changeName}
+                    onChange={changeAlias}
                     onPaste={(event) => {
                       event.stopPropagation();
                     }}
@@ -273,7 +330,6 @@ function AppComponent(props: App): JSX.Element {
               .map((kernel) => (
                 <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
                   <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
-                    <Box>{kernel.name}</Box>
                     <Text
                       onClick={() => {
                         startSageCell(kernel.id);
@@ -284,8 +340,11 @@ function AppComponent(props: App): JSX.Element {
                       {/* {kernelIdentifier[kernel.id]
                         ? truncateWithEllipsis(kernelIdentifier[kernel.id], 8)
                         : truncateWithEllipsis(kernel.id, 8)} */}
-                      {truncateWithEllipsis(kernel.id, 8)}
+                      <Tooltip label={kernel.id} placement="top">
+                        {truncateWithEllipsis(kernel.id, 8)}
+                      </Tooltip>
                     </Text>{' '}
+                    <Text>{kernel.name}</Text>
                     <Flex alignItems="right">
                       {/* <Text size="md" color={'blue'} fontWeight="bold">
                         {
@@ -294,39 +353,58 @@ function AppComponent(props: App): JSX.Element {
                         }
                       </Text> */}
                       {/* <Badge colorScheme={kernel.execution_state === 'idle' ? 'green' : 'red'}>{kernel.execution_state}</Badge> */}
-                      <IconButton
-                        variant="outline"
-                        m={0.5}
-                        size="xs"
-                        onClick={() => {
-                          startSageCell(kernel.id);
-                        }}
-                        colorScheme="teal"
-                        aria-label="Delete Kernel"
-                        icon={<MdCode />}
-                      />
-                      <IconButton
-                        variant="outline"
-                        m={0.5}
-                        size="xs"
-                        onClick={() => {
-                          removeKernel(kernel.id);
-                        }}
-                        colorScheme="teal"
-                        aria-label="Delete Kernel"
-                        icon={<MdRemove />}
-                      />
-                      <IconButton
-                        variant="outline"
-                        m={0.5}
-                        size="xs"
-                        onClick={() => {
-                          restartKernel(kernel.id);
-                        }}
-                        colorScheme="teal"
-                        aria-label="Restart Kernel"
-                        icon={<MdRestartAlt />}
-                      />
+                      <Tooltip label={"Open a SageCell"} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            startSageCell(kernel.id);
+                          }}
+                          colorScheme="teal"
+                          aria-label="Delete Kernel"
+                          icon={<MdCode />}
+                        />
+                      </Tooltip>
+                      <Tooltip label={"Remove Kernel"} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            removeKernel(kernel.id);
+                          }}
+                          // onClick={() => {
+                          //   setSelectedKernel(kernel.id);
+                          //   setCurrentAction('Delete');
+                          //   setCurrentObject('Kernel');
+                          //   OnOpen();
+                          // }}
+                          colorScheme="teal"
+                          aria-label="Delete Kernel"
+                          icon={<MdRemove />}
+                        />
+                      </Tooltip>
+                      <Tooltip label={"Restart Kernel"} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            // <ConfirmModal action={'Restart'} object={'Kernel'} onClick={restartKernel(kernel.id)} onClose={OnClose}></ConfirmModal>
+                            restartKernel(kernel.id);
+                          }}
+                          // onClick={() => {
+                          //   setSelectedKernel(kernel.id);
+                          //   setCurrentAction('Restart');
+                          //   setCurrentObject('Kernel');
+                          //   OnOpen();
+                          // }}
+                          colorScheme="teal"
+                          aria-label="Restart Kernel"
+                          icon={<MdRestartAlt />}
+                        />
+                      </Tooltip>
                     </Flex>
                   </Flex>
                 </Box>
@@ -369,17 +447,6 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <Box>
-      <HStack>
-        <IconButton
-          variant="outline"
-          // onClick={() => {
-          //   props.data.startSageCell();
-          // }}
-          colorScheme="teal"
-          aria-label="Start Sage Cell"
-          icon={<MdCode />}
-        />
-      </HStack>
     </Box>
   );
 }
@@ -391,37 +458,3 @@ export const KernelDashboard = {
 
 
 export default { AppComponent, ToolbarComponent };
-
-/* App component for the app KernelDashboard */
-/* Borrowed from https://stackoverflow.com/questions/3177836/ */
-// TODO: use moment.js or a better function
-/**
- * Convert timestamp to human readable format
- * @param last_activity 
- */
-function timeSince(last_activity: string): string {
-  const date = new Date(last_activity);
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  let interval = seconds / 31536000;
-
-  if (interval > 1) {
-    return Math.floor(interval) + ' years';
-  }
-  interval = seconds / 2592000;
-  if (interval > 1) {
-    return Math.floor(interval) + ' months';
-  }
-  interval = seconds / 86400;
-  if (interval > 1) {
-    return Math.floor(interval) + ' days';
-  }
-  interval = seconds / 3600;
-  if (interval > 1) {
-    return Math.floor(interval) + ' hours';
-  }
-  interval = seconds / 60;
-  if (interval > 1) {
-    return Math.floor(interval) + ' minutes';
-  }
-  return Math.floor(seconds) + ' seconds';
-}

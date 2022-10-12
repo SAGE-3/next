@@ -17,7 +17,6 @@ export type { SBDocumentRef, SBDocument, SBJSON, SBPrimitive, SBDocumentUpdate, 
  * The SBDatabase instance.
  */
 export class SBDatabase {
-
   private _redisClient!: RedisClientType;
 
   private prefix!: string;
@@ -31,9 +30,13 @@ export class SBDatabase {
     return this;
   }
 
-  public async collection<Type extends SBJSON>(collectionName: string, queryProps?: Partial<Type>): Promise<SBCollectionRef<Type>> {
+  public async collection<Type extends SBJSON>(
+    collectionName: string,
+    queryProps?: Partial<Type>,
+    ttl = -1
+  ): Promise<SBCollectionRef<Type>> {
     const path = `${this.prefix}:${collectionName}`;
-    const collection = new SBCollectionRef<Type>(collectionName, path, this._redisClient);
+    const collection = new SBCollectionRef<Type>(collectionName, path, this._redisClient, ttl);
     if (queryProps) {
       await collection.createQueryIndex(queryProps);
     }
@@ -41,7 +44,6 @@ export class SBDatabase {
   }
 
   private ERRORLOG(error: unknown) {
-    console.log("SAGEBase SBDatabase ERROR> ", error);
+    console.log('SAGEBase SBDatabase ERROR> ', error);
   }
-
 }

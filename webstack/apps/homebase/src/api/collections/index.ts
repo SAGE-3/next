@@ -6,7 +6,15 @@
  *
  */
 
-import { AppsCollection, BoardsCollection, RoomsCollection, UsersCollection, AssetsCollection, PresenceCollection } from '../collections';
+import {
+  AppsCollection,
+  BoardsCollection,
+  RoomsCollection,
+  UsersCollection,
+  AssetsCollection,
+  PresenceCollection,
+  MessageCollection,
+} from '../collections';
 
 export * from './apps';
 export * from './boards';
@@ -14,6 +22,7 @@ export * from './rooms';
 export * from './users';
 export * from './assets';
 export * from './presence';
+export * from './message';
 
 /**
  * Load the various models at startup.
@@ -24,6 +33,7 @@ export async function loadCollections(): Promise<void> {
   await RoomsCollection.initialize();
   await UsersCollection.initialize();
   await AssetsCollection.initialize();
+  await MessageCollection.initialize(true, 20); // clear, and TTL 1min
   await PresenceCollection.initialize(true);
 
   // Setup default room and board
