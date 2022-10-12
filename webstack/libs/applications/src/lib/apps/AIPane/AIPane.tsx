@@ -256,14 +256,18 @@ function AppComponent(props: App): JSX.Element {
             hostedapps: {Object.values(s.hostedApps)}
             <br/>
             supported_tasks: {Object.values(s.supported_tasks)}
-
+            <br/>
             messages: {Object.values(s.messages)}
           </Box>
 
           <Box className="output-container">
             Output
             <br/>
-            {JSON.stringify(s.output)}
+            Columns:
+            {s.output.columns}
+            <br/>
+            Data:
+            {s.output.data}
           </Box>
         </Box>
       </Box>
@@ -295,7 +299,6 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: "execute_model", params: {"some_uuid": "12345678", "model_id": "facebook/detr-resnet-50"}},
     });
-    // newAppAdded()
   }
 
 
