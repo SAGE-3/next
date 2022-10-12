@@ -34,8 +34,8 @@ export const schema = z.object({
   ),
   availableKernels: z.array(
     z.object({
-      id: z.string(),
-      alias: z.string()
+      label: z.string(),
+      value: z.string()
     })
   ),
   sessions: z.array(
@@ -77,7 +77,7 @@ export const init: Partial<state> = {
   availableKernels: [],
   sessions: [],
   output: '',
-  executeInfo: { executeFunc: 'get_public_kernels', params: {} } as executeInfoType,
+  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
 export const name = 'SageCell';

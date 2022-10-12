@@ -78,7 +78,7 @@ ai_models = {
     },
 
     "urls": {
-        "facebook/detr-resnet-50": "https://1ea9-2607-f278-410e-5-6876-208f-27cf-a6d8.jp.ngrok.io/detection",
+        "facebook/detr-resnet-50": "https://c54d-2607-f278-410e-5-a098-e976-1200-e118.jp.ngrok.io/detection",
         "lai_lab/fertilized_egg_detect": "SOME-OTHER-URL",
         "facebook/bart-large-cnn": "",
         "sshleifer/distilbart-cnn-12-6": ""
