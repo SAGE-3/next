@@ -90,7 +90,8 @@ export function Background(props: BackgroundProps) {
         title: "Upload",
         description: "Starting upload of " + filenames,
         status: 'info',
-        duration: 5000,
+        // no duration, so it doesn't disappear
+        duration: null,
         isClosable: true,
       });
 
@@ -143,6 +144,7 @@ export function Background(props: BackgroundProps) {
         toast.update(toastIdRef.current, {
           title: title,
           description: message.data.payload,
+          duration: 5000
         });
       } else {
         // or create a new one
@@ -151,7 +153,7 @@ export function Background(props: BackgroundProps) {
           description: message.data.payload,
           status: 'info',
           duration: 5000,
-          isClosable: true,
+          isClosable: true
         });
       }
     }
