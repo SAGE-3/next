@@ -6,7 +6,7 @@
  *
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -17,18 +17,14 @@ import {
   InputGroup,
   InputLeftElement,
   Input,
-  useToast,
   Button,
   Text,
-  ButtonGroup,
-  useColorMode,
-  useColorModeValue,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { useAuth } from '@sage3/frontend';
 import { useUser } from '../../../hooks';
-import { SAGEColors } from '@sage3/shared';
+import { randomSAGEColor, SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
 
 interface EditUserModalProps {
@@ -43,13 +39,13 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
   const [email, setEmail] = useState<UserSchema['email']>(user?.data.email || '');
-  const [color, setColor] = useState<UserSchema['color']>('red');
+  const [color, setColor] = useState(user?.data.color as SAGEColors || randomSAGEColor());
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
-  const handleColorChange = (color: string) => setColor(color);
+  const handleColorChange = (color: string) => setColor(color as SAGEColors);
 
-  const modalBackground = useColorModeValue('white', 'gray.700');
+  // const modalBackground = useColorModeValue('white', 'gray.700');
 
   // the input element
   // When the modal panel opens, select the text for quick replacing
@@ -118,7 +114,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
+          <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
           <Text mt={3} fontSize={'md'}>
             Authentication: <em>{auth?.provider}</em>
           </Text>

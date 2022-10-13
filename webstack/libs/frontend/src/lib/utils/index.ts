@@ -9,3 +9,4 @@
 export * from './download';
 export * from './strings';
 export * from './timeout';
+export * from './urlBoardCheck';

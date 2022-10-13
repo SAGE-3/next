@@ -9,3 +9,13 @@
 export const colors = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink'] as const;
 
 export type SAGEColors = typeof colors[number];
+
+/**
+ * Returns a color from the SAGE color palette
+ *
+ * @export
+ * @returns {SAGEColors}
+ */
+export function randomSAGEColor(): SAGEColors {
+  return colors[Math.floor(Math.random() * colors.length)];
+}

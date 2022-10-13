@@ -45,9 +45,12 @@ export function BoardPage() {
     // Update the user's presence information
     updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
 
-    // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
+    // window history API: replaceState(statedata, title, url)
+    window.history.replaceState({ boardId: locationState.boardId, roomId: locationState.roomId }, "Board", `/#/enter/${locationState.boardId}`);
+
+    // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
-      // Unsube from board updates
+      // Unsub from board updates
       unsubBoard();
       // Update the user's presence information
       updatePresence({ boardId: '', roomId: '' });
@@ -64,7 +67,7 @@ export function BoardPage() {
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" />
       </Box>
 
-      <Clock style={{ position: 'absolute', right: 0, top: 0 }} opacity={0.7} />
+      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
 
       {/* TODO White Board Layer for marking onto board */}
       <WhiteboardLayer boardId={locationState.boardId} roomId={locationState.roomId}></WhiteboardLayer>

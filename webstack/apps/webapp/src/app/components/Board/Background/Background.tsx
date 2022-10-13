@@ -6,13 +6,17 @@
  *
  */
 
-import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
+import { useEffect, useRef } from 'react';
+import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
+// To do upload with progress bar
+import axios, { AxiosProgressEvent } from 'axios';
+
+import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { getMime, isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF } from '@sage3/shared';
+import { getMime, isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -24,8 +28,17 @@ type BackgroundProps = {
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
+  // Handle to a toast
+  const toastIdRef = useRef<ToastId>();
+
   // Assets
   const assets = useAssetStore((state) => state.assets);
+  // Messsages
+  const subMessage = useMessageStore((state) => state.subscribe);
+  const unsubMessage = useMessageStore((state) => state.unsubscribe);
+  // const messages = useMessageStore((state) => state.messages);
+  const message = useMessageStore((state) => state.lastone);
+
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // User
@@ -74,10 +87,29 @@ export function Background(props: BackgroundProps) {
       fd.append('targetX', dx.toString());
       fd.append('targetY', dy.toString());
 
+      toastIdRef.current = toast({
+        title: "Upload",
+        description: "Starting upload of " + filenames,
+        status: 'info',
+        // no duration, so it doesn't disappear
+        duration: null,
+        isClosable: true,
+      });
+
       // Upload with a POST request
-      fetch('/api/assets/upload', {
-        method: 'POST',
-        body: fd,
+      axios({
+        method: 'post',
+        url: '/api/assets/upload',
+        data: fd,
+        onUploadProgress: (p: AxiosProgressEvent) => {
+          if (toastIdRef.current && p.progress) {
+            const progress = (p.progress * 100).toFixed(0);
+            toast.update(toastIdRef.current, {
+              title: 'Upload',
+              description: 'Progress: ' + progress + '%',
+            });
+          }
+        }
       })
         .catch((error: Error) => {
           console.log('Upload> Error: ', error);
@@ -86,14 +118,7 @@ export function Background(props: BackgroundProps) {
           // Close the modal UI
           // props.onClose();
 
-          if (filenames) {
-            toast({
-              title: 'Upload Done:' + truncateWithEllipsis(filenames, 50),
-              status: 'info',
-              duration: 3000,
-              isClosable: true,
-            });
-          } else {
+          if (!filenames) {
             toast({
               title: 'Upload with Errors',
               status: 'warning',
@@ -104,6 +129,39 @@ export function Background(props: BackgroundProps) {
         });
     }
   };
+
+  // Subscribe to messages
+  useEffect(() => {
+    subMessage();
+    return () => {
+      unsubMessage();
+    }
+  }, []);
+
+  // Get the last new message
+  useEffect(() => {
+    if (!user) return;
+    if (message && message._createdBy === user._id) {
+      const title = message.data.type.charAt(0).toUpperCase() + message.data.type.slice(1);
+      // Update the toast if we can
+      if (toastIdRef.current) {
+        toast.update(toastIdRef.current, {
+          title: title,
+          description: message.data.payload,
+          duration: 5000
+        });
+      } else {
+        // or create a new one
+        toastIdRef.current = toast({
+          title: title,
+          description: message.data.payload,
+          status: 'info',
+          duration: 5000,
+          isClosable: true
+        });
+      }
+    }
+  }, [message]);
 
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
@@ -230,6 +288,54 @@ export function Background(props: BackgroundProps) {
             .then(async function (text) {
               // Create a note from the text
               createApp(setupApp('CodeCell', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { code: text }));
+            });
+        }
+      });
+    } else if (isPythonNotebook(fileType)) {
+      // Look for the file in the asset store
+      assets.forEach((a) => {
+        if (a._id === fileID) {
+          const localurl = '/api/assets/static/' + a.data.file;
+          // Get the content of the file
+          fetch(localurl, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+          })
+            .then(function (response) {
+              return response.json();
+            })
+            .then(async function (json) {
+              // Create a notebook file in Jupyter with the content of the file
+              GetConfiguration().then((conf) => {
+                if (conf.token) {
+                  // Create a new notebook
+                  let base: string;
+                  if (conf.production) {
+                    base = `https://${window.location.hostname}:4443`;
+                  } else {
+                    base = `http://${window.location.hostname}`;
+                  }
+                  // Talk to the jupyter server API
+                  const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+                  const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
+                  // Create a new notebook
+                  fetch(j_url, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Token ' + conf.token,
+                    },
+                    body: JSON.stringify(payload)
+                  }).then((response) => response.json())
+                    .then((res) => {
+                      console.log('Jupyter> notebook created', res);
+                      // Create a note from the json
+                      createApp(setupApp('JupyterLab', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 700, h: 700 }, { notebook: a.data.originalfilename }));
+                    });
+                }
+              });
             });
         }
       });

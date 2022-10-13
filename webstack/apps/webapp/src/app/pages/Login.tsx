@@ -6,14 +6,18 @@
  *
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Center, Text, VStack } from '@chakra-ui/react';
 
-import { useAuth } from '@sage3/frontend';
-
+import {
+  Button, ButtonGroup, IconButton, Box, useColorMode,
+  Image, Center, Text, VStack, Select, InputGroup
+} from '@chakra-ui/react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
+
+import { useAuth } from '@sage3/frontend';
+import { GetServerInfo } from '@sage3/frontend';
 
 // Logos
 import sage3DarkMode from '../../assets/SAGE3DarkMode.png';
@@ -23,6 +27,37 @@ import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
 export function LoginPage() {
   const { auth, googleLogin, ciLogin, guestLogin } = useAuth();
   const navigate = useNavigate();
+  // Server name and list
+  const [serverName, setServerName] = useState<string>('');
+  const [serverList, setServerList] = useState<{ name: string; url: string }[]>();
+  // state to disable login buttons during server switch: default is enabled
+  const [shouldDisable, setShouldDisable] = useState(false);
+
+  // Retrieve the name of the server to display in the page
+  useEffect(() => {
+    GetServerInfo().then((conf) => {
+      console.log('Info>', conf);
+      if (conf.serverName) setServerName(conf.serverName);
+      const servers = conf.servers;
+      setServerList(servers);
+    });
+  }, []);
+
+  // Callback when selection os done
+  const redirectHost = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    // Disable the login buttons
+    setShouldDisable(true);
+    // value selected
+    const host = e.target.value;
+    if (serverList) {
+      // find the matching name
+      const idx = serverList.findIndex((s) => s.name === host);
+      if (idx !== -1) {
+        // do the navigation
+        window.location.href = serverList[idx].url;
+      }
+    }
+  };
 
   const authNavCheck = useCallback(() => {
     if (auth) {
@@ -56,9 +91,21 @@ export function LoginPage() {
         />
       </Box>
 
-      {/* <Center>
-        <Text mr={'.5rem'}>Host: serverName </Text>
-      </Center> */}
+      <Center>
+        <Text mr={'.5rem'}>Host: {serverName || '-'}</Text>
+      </Center>
+      <Center my="1rem" fontSize="lg">
+        <InputGroup width="17rem">
+          {/* Display the list of servers in a selectable list */}
+          <Select placeholder="Select a server" value={serverName} onChange={redirectHost}>
+            {serverList?.map((s, idx) => (
+              <option key={idx} value={s.name}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+        </InputGroup>
+      </Center>
 
       <Box width="300px">
         <VStack spacing={4}>

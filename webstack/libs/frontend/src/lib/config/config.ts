@@ -68,3 +68,20 @@ export async function GetConfiguration(): Promise<serverConfiguration> {
   const config = (await response.json()) as serverConfiguration;
   return config;
 }
+
+/**
+ * Returns the info public data structure
+ * @returns Partial<serverConfiguration>
+ */
+export async function GetServerInfo(): Promise<Partial<serverConfiguration>> {
+  const response = await fetch('/api/info', {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+  const config = (await response.json()) as Partial<serverConfiguration>;
+  return config;
+}
