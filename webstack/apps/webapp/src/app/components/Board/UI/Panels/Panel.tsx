@@ -6,7 +6,7 @@
  *
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef, createRef } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
@@ -135,7 +135,7 @@ export function Panel(props: PanelProps) {
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = createRef<HTMLDivElement>();
   const bringPanelForward = useUIStore((state) => state.bringPanelForward);
 
   // Update the window size

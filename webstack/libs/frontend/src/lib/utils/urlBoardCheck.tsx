@@ -1,7 +1,16 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
 import { useDisclosure, useToast } from '@chakra-ui/react';
 import { Board } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
+import { useRouteNav } from '../hooks';
 import { EnterBoardModal } from '../ui';
 
 /**
@@ -15,9 +24,9 @@ export const CheckUrlForBoardId = () => {
   } else {
     localStorage.removeItem('boardId');
   }
-  const navigate = useNavigate();
+  const { toHome } = useRouteNav();
   useEffect(() => {
-    navigate('/home', { replace: true });
+    toHome();
   }, []);
 
   return null;

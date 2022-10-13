@@ -8,28 +8,26 @@
 
 // React imports
 import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 // Peerjs module
 import { Peer, DataConnection } from 'peerjs';
 import { useUser } from '@sage3/frontend';
-// import { usePresenceStore } from '@sage3/frontend';
+import { useParams } from 'react-router';
 
 type usePeerProps = {
-  messageCallback: (id: string, data: any) => void
-  eventCallback: (type: string, data: any) => void
-  callCallback: (stream: MediaStream) => void
-}
+  messageCallback: (id: string, data: any) => void;
+  eventCallback: (type: string, data: any) => void;
+  callCallback: (stream: MediaStream) => void;
+};
 
 type usePeerReturn = {
-  me: Peer | undefined,
-  connections: DataConnection[],
+  me: Peer | undefined;
+  connections: DataConnection[];
 };
 
 export function usePeer(props: usePeerProps): usePeerReturn {
   const [connections, setConnections] = useState<Array<DataConnection>>([]);
   const { user } = useUser();
-  const location = useLocation();
-  const locationState = location.state as { boardId: string; roomId: string; };
+  const { boardId, roomId } = useParams();
 
   ////////////////////////////////////////////////////////////////////////////////
   // usePresence
@@ -63,7 +61,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
         const newpeer = data.data;
         console.log('RTC> join', newpeer);
         const conn = peer.connect(newpeer);
-        conn.on("open", () => {
+        conn.on('open', () => {
           setConnections((prev) => {
             const userArrived = data.data.split('-')[0];
             const ids = prev.map((c) => c.peer);
@@ -77,24 +75,24 @@ export function usePeer(props: usePeerProps): usePeerReturn {
             }
           });
         });
-        conn.on("close", () => {
+        conn.on('close', () => {
           setConnections((prev) => {
             if (props.eventCallback) props.eventCallback('leave', conn.peer);
             const idx = prev.findIndex((el) => el === conn);
             if (idx > -1) {
               prev.splice(idx, 1);
             }
-            return [...prev]
+            return [...prev];
           });
         });
-        conn.on("error", (err) => {
+        conn.on('error', (err) => {
           console.log('RTC> Conn Error', err);
           setConnections((prev) => {
             const idx = prev.findIndex((el) => el === conn);
             if (idx > -1) {
               prev.splice(idx, 1);
             }
-            return [...prev]
+            return [...prev];
           });
         });
       } else if (data.type === 'left') {
@@ -116,7 +114,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
         for (const k in existingPeers) {
           if (existingPeers[k] !== user._id) {
             const conn = peer.connect(existingPeers[k]);
-            conn.on("open", () => {
+            conn.on('open', () => {
               setConnections((prev) => {
                 const userArrived = conn.peer;
                 const ids = prev.map((c) => c.peer);
@@ -129,9 +127,8 @@ export function usePeer(props: usePeerProps): usePeerReturn {
                   return [...prev, conn];
                 }
               });
-
             });
-            conn.on("close", () => {
+            conn.on('close', () => {
               console.log('RTC> Conn close');
               setConnections((prev) => {
                 const idx = prev.findIndex((el) => el === conn);
@@ -141,7 +138,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
                 return [...prev];
               });
             });
-            conn.on("error", (err) => {
+            conn.on('error', (err) => {
               console.log('RTC> Conn Error', err);
               setConnections((prev) => {
                 const idx = prev.findIndex((el) => el === conn);
@@ -154,7 +151,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
           }
         }
       }
-    }
+    };
 
     const peer = new Peer(user._id);
     peer.on('open', function (id) {
@@ -172,7 +169,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
 
       peer.on('call', function (call) {
         console.log('RTC> Peer call');
-        call.on("stream", (remoteStream) => {
+        call.on('stream', (remoteStream) => {
           props.callCallback(remoteStream);
         });
         call.answer();
@@ -188,7 +185,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
 
       // Open websocket connection to the server
       const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const socketUrl = `${socketType}//${window.location.host}/rtc/${locationState.roomId}`;
+      const socketUrl = `${socketType}//${window.location.host}/rtc/${roomId}`;
       console.log('RTC> Connecting to', socketUrl);
       rtcSock.current = new WebSocket(socketUrl);
       rtcSock.current.addEventListener('open', () => {
@@ -220,7 +217,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
       peer.disconnect();
       peer.destroy();
     };
-  }, [user, locationState.roomId]);
+  }, [user, roomId]);
 
   return { me: me.current, connections };
 }
