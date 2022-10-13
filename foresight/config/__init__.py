@@ -54,9 +54,9 @@ ai_settings = {
 }
 
 funcx = {
-    "endpoint_uuid": "503aabe7-223e-4679-bb01-0b0da37c0ae6",
+    "endpoint_uuid": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
     "test_hello_world_uuid": '3c53e91f-e812-4ec6-97d0-18ce059b3391',
-    "ai_func_uuid": 'ea0bfcb5-14ea-4b8e-9390-fe24523adbd0'
+    "ai_func_uuid": '06b3398a-d5e0-43aa-94db-ddecd3b0451b'
 }
 
 ai_models = {

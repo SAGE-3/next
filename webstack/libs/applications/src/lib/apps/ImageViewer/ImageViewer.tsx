@@ -105,14 +105,16 @@ function AppComponent(props: App): JSX.Element {
         }}
       >
         <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
-        <Box
-          position="absolute"
-          right={0 + 'px'}
-          bottom={0 + 'px'}
-          width={box.xmax - box.xmin - 10 + 'px'}
-          height={box.ymax - box.ymin + 'px'}
-          border="2px solid red"
-        ></Box>
+        {/*<Box*/}
+        {/*  position="absolute"*/}
+        {/*  right={0 + 'px'}*/}
+        {/*  bottom={0 + 'px'}*/}
+        {/*  width={box.xmax - box.xmin - 10 + 'px'}*/}
+        {/*  height={box.ymax - box.ymin + 'px'}*/}
+        {/*  border="2px solid red"*/}
+        {/*>*/}
+        {/*  */}
+        {/*</Box>*/}
       </div>
     </AppWindow>
   );
