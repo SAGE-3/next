@@ -105,9 +105,10 @@ class AIPane(SmartBit):
 
     def handle_exec_result(self, msg):
         print("I am handling the execution results")
-        self.state.output = json.dumps(msg)
-        self._output_df = pd.read_json(self.state.output)
-        self.state.output = self._output_df.to_dict("split")
+        print(f" type of msg in aipane{type(msg)}")
+        self.state.output = msg
+        # self._output_df = pd.read_json(self.state.output)
+        # self.state.output = self._output_df.to_dict("split")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
