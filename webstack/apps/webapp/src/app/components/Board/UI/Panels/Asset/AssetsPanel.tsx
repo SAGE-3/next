@@ -97,7 +97,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
   return (
     <>
       <Panel
-        title={`Assets available in "${roomName}"`}
+        title={`Assets available in Room "${roomName}"`}
         name="assets"
         opened={opened}
         setOpened={setOpened}
