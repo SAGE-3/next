@@ -131,6 +131,14 @@ function AppComponent(props: App): JSX.Element {
    * @returns  void
    */
   const addKernel = () => {
+    if (!user) return;
+    // console.log('add kernel');
+    // console.log('kernel name', kernelName);
+    // console.log('kernel alias', kernelAlias);
+    // console.log('is private', isPrivate);
+    // console.log('board id', locationState.boardId);
+    // console.log('room id', locationState.roomId);
+    // console.log('user id', user._id);
     // if (!user || !kernelAlias || !kernelName) return;
     updateState(props._id, {
       executeInfo: {
@@ -140,12 +148,13 @@ function AppComponent(props: App): JSX.Element {
           kernel_name: kernelName,
           room_uuid: locationState.roomId,
           board_uuid: locationState.boardId,
-          owner_uuid: props._updatedBy,
+          owner_uuid: user._id,
           is_private: isPrivate,
         },
       },
     });
     setKernelAlias('');
+    setIsPrivate(false);
   };
 
   // Triggered on every keystroke
@@ -162,40 +171,6 @@ function AppComponent(props: App): JSX.Element {
     e.preventDefault();
     e.stopPropagation();
   }
-
-  // const onConfirm = () => {
-  //   if (currentAction === 'Stop') {
-  //     updateState(props._id, {
-  //       executeInfo: {
-  //         executeFunc: `stop_${currentObject.toLowerCase()}`,
-  //         params: {
-  //           kernel_id: selectedKernel,
-  //         },
-  //       },
-  //     });
-  //   } else if (currentAction === 'Restart') {
-  //     updateState(props._id, {
-  //       executeInfo: {
-  //         executeFunc: `restart_${currentObject.toLowerCase()}`,
-  //         params: {
-  //           kernel_id: selectedKernel,
-  //         },
-  //       },
-  //     });
-  //   } else if (currentAction === 'Delete') {
-  //     updateState(props._id, {
-  //       executeInfo: {
-  //         executeFunc: `delete_${currentObject.toLowerCase()}`,
-  //         params: {
-  //           kernel_id: selectedKernel,
-  //         },
-  //       },
-  //     });
-  //   }
-  //   setCurrentObject('');
-  //   setCurrentAction('');
-  //   OnClose();
-  // };
 
   /**
    * Remove the kernel if the user confirms the action
@@ -287,29 +262,32 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} onFocus={updateStates}>
         <VStack w={'100%'} h={'100%'}>
-          {/* <Box id="upper-div"> */}
-          <HStack w={'100%'} p={5} style={{ 
-            backgroundColor: useColorModeValue('#DDD', '#666'),
-            border: '2px solid #111', borderRadius: '2px' }}>
+          {/* FIXED POSITION TOP */}
+          <HStack
+            w={'100%'}
+            p={5}
+            style={{
+              border: '2px solid #111',
+              borderRadius: '2px',
+            }}
+          >
             <Tooltip
               label="Add a new kernel"
               aria-label="Add a new kernel"
               placement="top"
-              bg={useColorModeValue('#DDD', '#666')}
-              color={useColorModeValue('#111', '#DDD')}
               fontSize="md"
               hasArrow
               style={{ border: '2px solid #111', borderRadius: '2px' }}
             >
-            <IconButton
-              variant="outline"
-              m={0.5}
-              size="md"
-              aria-label="Add Kernel"
-              onClick={() => addKernel()}
-              colorScheme="teal"
-              icon={<MdAdd />}
-            />
+              <IconButton
+                variant="outline"
+                m={0.5}
+                size="md"
+                aria-label="Add Kernel"
+                onClick={() => addKernel()}
+                colorScheme="teal"
+                icon={<MdAdd />}
+              />
             </Tooltip>
             <Box w="100%">
               <form onSubmit={submitAlias}>
@@ -355,21 +333,11 @@ function AppComponent(props: App): JSX.Element {
                 }
               </Select>
             </Box>
-            <Checkbox size={'md'} isChecked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)}>
+            <Checkbox size={'md'} isChecked={isPrivate} onChange={() => setIsPrivate(!isPrivate)}>
               Private
             </Checkbox>
-            {/* <IconButton
-              variant="outline"
-              m={0.5}
-              size="md"
-              aria-label="Add Kernel"
-              onClick={() => addKernel()}
-              colorScheme="teal"
-              icon={<MdAdd />}
-            /> */}
           </HStack>
-          {/* </Box> */}
-
+          {/* SCROLL BOX LOWER */}
           <Box
             w={'100%'}
             p={2}
@@ -429,12 +397,6 @@ function AppComponent(props: App): JSX.Element {
                             onClick={() => {
                               removeKernel(kernel.id);
                             }}
-                            // onClick={() => {
-                            //   setSelectedKernel(kernel.id);
-                            //   setCurrentAction('Delete');
-                            //   setCurrentObject('Kernel');
-                            //   OnOpen();
-                            // }}
                             colorScheme="teal"
                             aria-label="Delete Kernel"
                             icon={<MdRemove />}
@@ -446,15 +408,8 @@ function AppComponent(props: App): JSX.Element {
                             m={0.5}
                             size="md"
                             onClick={() => {
-                              // <ConfirmModal action={'Restart'} object={'Kernel'} onClick={restartKernel(kernel.id)} onClose={OnClose}></ConfirmModal>
                               restartKernel(kernel.id);
                             }}
-                            // onClick={() => {
-                            //   setSelectedKernel(kernel.id);
-                            //   setCurrentAction('Restart');
-                            //   setCurrentObject('Kernel');
-                            //   OnOpen();
-                            // }}
                             colorScheme="teal"
                             aria-label="Restart Kernel"
                             icon={<MdRestartAlt />}

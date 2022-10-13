@@ -9,8 +9,11 @@
 import { useEffect, useState } from 'react';
 import {
   Box, Button, HStack, useColorModeValue, Tooltip,
-  ButtonGroup, Select, Badge,
+  ButtonGroup, Select, Badge, Text, Image, Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
+
+import Ansi from 'ansi-to-react';
 
 import './components/styles.css';
 // Date manipulation (for filename)
@@ -29,7 +32,7 @@ import { downloadFile } from '@sage3/frontend';
 // Rendering functions
 // import { ProcessedOutput } from './render';
 import { InputBox } from './components/InputBox';
-import { OutputBox } from './components/OutputBox';
+// import { OutputBox } from './components/OutputBox';
 
 /**
  * SageCell - SAGE3 application
@@ -213,3 +216,106 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 export default { AppComponent, ToolbarComponent };
+
+
+
+/**
+ *
+ * @param output
+ * @returns {JSX.Element}
+ */
+const OutputBox = (output: any): JSX.Element => {
+    
+      return (
+        <>
+          {/**
+           * TODO: Fix the display of the execution count
+           */}
+          {!output.execute_result ? null : (
+            <Text fontSize="xs" color="gray.500" style={{
+              fontFamily: 'monospace',
+            }}>
+            {/* <Badge colorScheme="green" rounded="sm" size="lg"> */}
+              {`Out [${output.execute_result.execution_count}]`}
+              {/* </Badge> */}
+            </Text>
+          )}
+          {output.request_id ? null : null}
+          {!output.error ? null : !Array.isArray(output.error) ? (
+            <Alert status="error">{`${output.error.ename}: ${output.error.evalue}`}</Alert>
+          ) : (
+            <>
+                  <Alert status="error" variant="left-accent">
+                    <AlertIcon />
+                    <Ansi>{output.error[output.error.length - 1]}</Ansi>
+                  </Alert>
+            </>
+          )}
+
+          {!output.stream ? null : output.stream.name === 'stdout' ? (
+            <Text id="sc-stdout">{output.stream.text}</Text>
+          ) : (
+            // <Alert status="error">
+              <Text id="sc-stderr" color="red">
+                {output.stream.text}
+              </Text>
+            // </Alert>
+          )}
+
+          {!output.display_data
+            ? null
+            : Object.keys(output.display_data.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {output.display_data.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: output.display_data.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${output.display_data.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${output.display_data.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: output.display_data.data[key] }} />;
+                  case 'application/javascript':
+                    return <Text>javascript not handled</Text>;
+                  case 'text/latex':
+                    return <Text>latex not handled</Text>;
+                  default:
+                    return <></>;
+                }
+              })}
+
+          {!output.execute_result
+            ? null
+            : Object.keys(output.execute_result.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    if (output.execute_result.data['text/html']) return null ; // don't show plain text if there is html 
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {output.execute_result.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: output.execute_result.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${output.execute_result.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${output.execute_result.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: output.execute_result.data[key] }} />;
+                  case 'application/javascript':
+                    return <Text>javascript not handled</Text>;
+                  case 'text/latex':
+                    return <Text>latex not handled</Text>;
+                  default:
+                    return <></>;
+                }
+              })}
+        </>
+      );
+};

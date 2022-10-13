@@ -28,23 +28,23 @@ export const OutputBox = (output: any): JSX.Element => {
            * TODO: Fix the display of the execution count
            */}
           {!output.execute_result ? null : (
-            <Badge colorScheme="green" rounded="sm" size="lg">{`Out [${output.execute_result.execution_count}]`}</Badge>
+            <Text fontSize="xs" color="gray.500" style={{
+              fontFamily: 'monospace',
+            }}>
+            {/* <Badge colorScheme="green" rounded="sm" size="lg"> */}
+              {`Out [${output.execute_result.execution_count}]`}
+              {/* </Badge> */}
+            </Text>
           )}
           {output.request_id ? null : null}
           {!output.error ? null : !Array.isArray(output.error) ? (
             <Alert status="error">{`${output.error.ename}: ${output.error.evalue}`}</Alert>
           ) : (
             <>
-              {output.error.map((item: any) => {
-                return (
                   <Alert status="error" variant="left-accent">
                     <AlertIcon />
-                    <Ansi key={item.data} linkify={false}>
-                      {item.data}
-                    </Ansi>
+                    <Ansi>{output.error[output.error.length - 1]}</Ansi>
                   </Alert>
-                );
-              })}
             </>
           )}
 
