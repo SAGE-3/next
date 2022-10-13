@@ -9,7 +9,7 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { usePresence, useAppStore, useRouteNav } from '@sage3/frontend';
+import { usePresence, useAppStore, useRouteNav, useBoardStore, useRoomStore } from '@sage3/frontend';
 
 // Board Layers
 import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
@@ -32,6 +32,8 @@ export function BoardPage() {
   // Board and App Store stuff
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
+  const subBoards = useBoardStore((state) => state.subscribeByRoomId);
+  const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
@@ -40,6 +42,10 @@ export function BoardPage() {
 
   // Handle joining and leave a board
   useEffect(() => {
+    // This is if someone is joining a board by a link
+    subRooms();
+    // Sub to boards belonging to this room
+    subBoards(roomId);
     // Subscribe to the board that was selected
     subBoard(boardId);
     // Update the user's presence information

@@ -23,12 +23,14 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface MessageState {
   messages: Message[];
+  interval: number | null;
   lastone: Message | null;
   error: string | null;
   clearError: () => void;
   create: (newMsg: MessageSchema) => Promise<void>;
   delete: (id: string) => Promise<void>;
   subscribe: () => Promise<void>;
+  unsubscribe: () => void;
 }
 
 /**
@@ -38,6 +40,7 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
   let msgSub: (() => void) | null = null;
   return {
     messages: [],
+    interval: null,
     lastone: null,
     error: null,
     clearError: () => {
@@ -55,6 +58,15 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
         set({ error: res.message });
       }
     },
+    unsubscribe: () => {
+      // Unsubscribe old subscription
+      if (msgSub) {
+        msgSub();
+        msgSub = null;
+        const interval = get().interval;
+        if (interval) window.clearInterval(interval);
+      }
+    },
     subscribe: async () => {
       set({ ...get(), messages: [] });
 
@@ -65,10 +77,30 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
         set({ error: msg.message });
         return;
       }
+
+      const interval = window.setInterval(async () => {
+        const now = new Date();
+        const msgs = get().messages;
+        const newMsgs = msgs.filter((m) => {
+          const diff = now.getTime() - m._createdAt;
+          return diff < 30 * 1000;
+        });
+        const last = get().lastone;
+        if (last) {
+          const diff = now.getTime() - last._createdAt;
+          if (diff > 5 * 1000) {
+            set({ lastone: null });
+          }
+        }
+        set({ messages: newMsgs });
+      }, 5 * 1000);
+      set({ interval: interval });
+
       // Unsubscribe old subscription
       if (msgSub) {
         msgSub();
         msgSub = null;
+        if (interval) window.clearInterval(interval);
       }
 
       // Socket Subscribe Message
