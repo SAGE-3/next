@@ -16,7 +16,7 @@ import { GiArrowCursor } from 'react-icons/gi';
 import { DraggableData, Rnd } from 'react-rnd';
 import { throttle } from 'throttle-debounce';
 
-import { useAppStore, useHexColor, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useHotkeys, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { Applications, AppError } from '@sage3/applications/apps';
 
 import { Background } from './Background/Background';
@@ -129,6 +129,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     return () => window.removeEventListener('mousemove', mouseMove);
   }, [boardPosition.x, boardPosition.y, scale, boardDragging]);
 
+  // Deselect all apps
+  useHotkeys('esc', () => {
+    setSelectedApp('');
+  });
+
   return (
     <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
       {/* Board. Uses lib react-rnd for drag events.
@@ -233,7 +238,7 @@ function UserCursor(props: UserCursorProps) {
         ease: 'easeIn',
         // duration in sec.
         duration: 10,
-        delay: 30
+        delay: 30,
       },
     });
   }, [props.position.x, props.position.y, props.position.z]);
