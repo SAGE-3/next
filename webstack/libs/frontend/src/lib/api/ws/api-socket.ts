@@ -126,6 +126,11 @@ class SocketAPISingleton {
     });
   }
 
+  public async getSocket(): Promise<WebSocket> {
+    await this.init();
+    return this._socket;
+  }
+
   private printWarn(message: string): void {
     console.warn('SocketAPI> ', message);
   }

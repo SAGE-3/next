@@ -20,7 +20,10 @@ import * as mime from 'mime';
 import * as fs from 'fs';
 import { v4 as getUUID } from 'uuid';
 import { createClient } from 'redis';
-import fetch from 'node-fetch';
+
+// HTTPS requests
+import axios from 'axios';
+import * as https from 'https';
 
 import { config } from '../../../config';
 
@@ -416,25 +419,28 @@ function uploadHandler(req: express.Request, res: express.Response): void {
             // Create a new notebook
             let base: string;
             if (config.production) {
-              base = 'https://jupyter:4443';
+              base = 'https://jupyter:8888';
             } else {
               base = 'http://localhost';
             }
             // Talk to the jupyter server API
             const j_url = base + '/api/contents/notebooks/' + elt.originalname;
             const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: JSON.parse(text.toString()) };
+            const agent = new https.Agent({ rejectUnauthorized: false });
             // Create a new notebook
-            fetch(j_url, {
+            axios({
+              url: j_url,
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
                 Authorization: 'Token ' + token,
               },
-              body: JSON.stringify(payload),
+              httpsAgent: agent,
+              data: JSON.stringify(payload),
             })
-              .then((response) => response.json())
+              // .then((response) => response.json())
               .then((data) => {
-                console.log('Jupyter> notebook created', data);
+                console.log('Jupyter> notebook created', data.statusText);
                 // Create the app
                 AppsCollection.add(
                   {
@@ -458,6 +464,9 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 );
                 posx += tw || 400;
                 posx += 10;
+              })
+              .catch((e: Error) => {
+                console.log('Jupyter> error', e);
               });
           }
         } else if (isJSON(elt.mimetype)) {
