@@ -16,6 +16,33 @@ import { AppName } from '@sage3/applications/schema';
 
 import { ButtonPanel, Panel } from '../Panel';
 
+// Build list of applications from apps.json
+const appListed = [
+  "AIPane",
+  // "CSVViewer",
+  // "Clock",
+  // "Cobrowse",
+  "CodeCell",
+  // "Counter",
+  // "DataTable",
+  // "DeepZoomImage",
+  // "GLTFViewer",
+  // "ImageViewer",
+  "JupyterLab",
+  "Kernels",
+  "LeafLet",
+  // "Linker",
+  "Notepad",
+  // "PDFViewer",
+  // "RTCChat",
+  "Stickie",
+  "TwilioScreenshare",
+  // "VegaLite",
+  // "VegaLiteViewer",
+  // "VideoViewer",
+  "Webview"
+];
+
 export interface ApplicationProps {
   boardId: string;
   roomId: string;
@@ -123,9 +150,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
         }}
       >
         {/* <Box > */}
-        {Object.keys(Applications)
-          // remove viewer applicaitons
-          .filter((el) => !el.includes('Viewer'))
+        {appListed
           // sort alphabetically by name
           .sort((a, b) => a.localeCompare(b))
           // create a button for each application
