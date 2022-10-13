@@ -6,15 +6,26 @@
  *
  */
 
-import { Routes, Route, RouteProps, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 
-import { ChakraProvider } from '@chakra-ui/react';
-import { PresenceProvider, theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId } from '@sage3/frontend';
+import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
+import {
+  PresenceProvider,
+  theme,
+  UserProvider,
+  useUser,
+  AuthProvider,
+  useAuth,
+  CheckUrlForBoardId,
+  SocketAPI,
+  useHexColor,
+} from '@sage3/frontend';
 
 import { LoginPage } from './pages/Login';
 import { HomePage } from './pages/Home';
 import { BoardPage } from './pages/Board';
 import { AccountPage } from './pages/Account';
+import { useEffect, useState } from 'react';
 
 /**
  * Main application component
@@ -23,56 +34,76 @@ import { AccountPage } from './pages/Account';
  * @returns
  */
 export function App() {
+  const status = useConnectStatus();
+  const color = useHexColor('red');
+
   return (
     <ChakraProvider theme={theme}>
       <AuthProvider>
         <UserProvider>
           <PresenceProvider>
-            <Routes>
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} />
+            {status ? (
+              <Routes>
+                <Route path="/" element={<LoginPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} />
 
-              <Route
-                path="/createuser"
-                element={
-                  <ProtectedAuthRoute>
-                    <AccountPage />
-                  </ProtectedAuthRoute>
-                }
-              />
-              <Route
-                path="/home/:roomId"
-                element={
-                  <ProtectedAuthRoute>
-                    <ProtectedUserRoute>
-                      <HomePage />
-                    </ProtectedUserRoute>
-                  </ProtectedAuthRoute>
-                }
-              />
-              <Route
-                path="/home"
-                element={
-                  <ProtectedAuthRoute>
-                    <ProtectedUserRoute>
-                      <HomePage />
-                    </ProtectedUserRoute>
-                  </ProtectedAuthRoute>
-                }
-              />
+                <Route
+                  path="/createuser"
+                  element={
+                    <ProtectedAuthRoute>
+                      <AccountPage />
+                    </ProtectedAuthRoute>
+                  }
+                />
+                <Route
+                  path="/home/:roomId"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedUserRoute>
+                        <HomePage />
+                      </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
+                <Route
+                  path="/home"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedUserRoute>
+                        <HomePage />
+                      </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
 
-              <Route
-                path="/board/:roomId/:boardId"
-                element={
-                  <ProtectedAuthRoute>
-                    <ProtectedUserRoute>
-                      <BoardPage />
-                    </ProtectedUserRoute>
-                  </ProtectedAuthRoute>
-                }
-              />
-            </Routes>
+                <Route
+                  path="/board/:roomId/:boardId"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedUserRoute>
+                        <BoardPage />
+                      </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
+              </Routes>
+            ) : (
+              <Box display="flex" flexDir="column" alignItems="center" textAlign={'center'} justifyContent="center" height="100%">
+                <Box width="100%" maxWidth="1200px">
+                  <Text fontSize="7xl" pb="0">
+                    SAGE3
+                  </Text>
+
+                  <Text fontSize="3xl" color={color} mb="5">
+                    Lost connection to server.
+                  </Text>
+                  <Button onClick={() => window.location.reload()} colorScheme="green" size="lg">
+                    Try to reconnect
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </PresenceProvider>
         </UserProvider>
       </AuthProvider>
@@ -108,4 +139,33 @@ export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
   } else {
     return user ? <> {props.children}</> : <Navigate to="/createuser" replace />;
   }
+};
+
+// Check the connection status using the API socket.
+const useConnectStatus = () => {
+  const [connected, setConnection] = useState(true);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  useEffect(() => {
+    async function setup() {
+      const socket = await SocketAPI.getSocket();
+      setSocket(socket);
+    }
+    setup();
+  }, []);
+
+  useEffect(() => {
+    function disconnected() {
+      console.log('connection issues');
+      setConnection(false);
+    }
+    if (socket) {
+      socket.addEventListener('close', disconnected);
+    }
+    return () => {
+      if (socket) {
+        socket.removeEventListener('close', disconnected);
+      }
+    };
+  }, [socket]);
+  return connected;
 };
