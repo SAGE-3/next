@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Tag } from '@chakra-ui/react';
+import { Box, Tag } from '@chakra-ui/react';
 import { motion, useAnimation } from 'framer-motion';
 
 import { DraggableEvent } from 'react-draggable';
@@ -79,6 +79,15 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       setBoardDrag(true);
     }
   }
+
+  // Update Viewport Presence
+  const updateViewport = useCallback(() => {
+    const viewPos = { x: -boardPosition.x, y: -boardPosition.y, z: 0 };
+    const viewWidth = window.innerWidth / scale;
+    const viewHeight = window.innerHeight / scale;
+    const viewSize = { width: viewWidth, height: viewHeight };
+    updatePresence({ viewport: { position: viewPos, size: viewSize } });
+  }, [boardPosition, scale, window.innerHeight, window.innerWidth]);
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
     const x = data.x;
@@ -91,7 +100,17 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       setSelectedApp('');
     }
     setBoardDrag(false);
+    updateViewport();
   }
+
+  useEffect(() => {
+    updateViewport();
+  }, [scale]);
+
+  useEffect(() => {
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, [updateViewport]);
 
   // Reset the global zIndex when no apps
   useEffect(() => {
@@ -109,7 +128,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const x = winX / s - bx;
     const y = winY / s - by;
     const z = 0;
-    updatePresence({ cursor: { x, y, z } });
+
+    const viewPos = { x: -boardPosition.x, y: -boardPosition.y, z: 0 };
+    const viewWidth = window.innerWidth / scale;
+    const viewHeight = window.innerHeight / scale;
+    const viewSize = { width: viewWidth, height: viewHeight };
+    updatePresence({ cursor: { x, y, z }, viewport: { position: viewPos, size: viewSize } });
   });
 
   // Keep a copy of the function
@@ -180,20 +204,50 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           }
         })}
 
-        {/* Draw the cursors: filter by board and not myself */}
+        {/* Draw the cursors and viewports: filter by board and not myself */}
         {presences
           .filter((el) => el.data.boardId === props.boardId)
           .filter((el) => el.data.userId !== user?._id)
           .map((presence) => {
-            const color = useHexColor(users.find((el) => el._id === presence.data.userId)?.data.color || 'red');
+            const u = users.find((el) => el._id === presence.data.userId);
+            if (!u) return null;
+            const color = useHexColor(u.data.color || 'red');
             return (
-              <UserCursor
-                key={presence.data.userId}
-                color={color}
-                position={presence.data.cursor}
-                name={users.find((el) => el._id === presence.data.userId)?.data.name || '-'}
-                scale={scale}
-              />
+              <>
+                <Box
+                  borderStyle="dashed"
+                  borderWidth={3 / scale}
+                  borderColor={color}
+                  borderTop={'none'}
+                  position="absolute"
+                  pointerEvents="none"
+                  left={presence.data.viewport.position.x + 'px'}
+                  top={presence.data.viewport.position.y + 'px'}
+                  width={presence.data.viewport.size.width + 'px'}
+                  height={presence.data.viewport.size.height + 'px'}
+                  opacity={0.8}
+                  borderRadius="0 0 8px 8px"
+                  transition="all 0.5s"
+                >
+                  <Box
+                    background={color}
+                    color="white"
+                    width="calc(100% + 6px)"
+                    borderRadius="6px 6px 0 0 "
+                    pl="2"
+                    transform="translate(-3px, calc(-100%))"
+                  >
+                    {u.data.name}
+                  </Box>
+                </Box>
+                <UserCursor
+                  key={presence.data.userId}
+                  color={color}
+                  position={presence.data.cursor}
+                  name={users.find((el) => el._id === presence.data.userId)?.data.name || '-'}
+                  scale={scale}
+                />
+              </>
             );
           })}
 
