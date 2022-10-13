@@ -6,7 +6,7 @@
  *
  */
 import { useEffect, useState } from 'react';
-import { Image, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
 import { MdFileDownload } from 'react-icons/md';
 // Utility functions from SAGE3
@@ -43,6 +43,8 @@ function AppComponent(props: App): JSX.Element {
   const scale = useUIStore((state) => state.scale);
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
+
+  const box = { xmin: 109, ymin: 186, xmax: 260, ymax: 454 };
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -93,18 +95,28 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
-      <div ref={ref} style={{
-        position: 'relative', overflowY: 'hidden',
-        height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
-        maxHeight: '100%'
-      }}>
-        <Image width="100%" userSelect={"auto"} draggable={false}
-          alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
+      <div
+        ref={ref}
+        style={{
+          position: 'relative',
+          overflowY: 'hidden',
+          height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
+          maxHeight: '100%',
+        }}
+      >
+        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
+        <Box
+          position="absolute"
+          right={0 + 'px'}
+          bottom={0 + 'px'}
+          width={box.xmax - box.xmin - 10 + 'px'}
+          height={box.ymax - box.ymin + 'px'}
+          border="2px solid red"
+        ></Box>
       </div>
     </AppWindow>
   );
 }
-
 
 /**
  * UI for the image viewer app
@@ -142,7 +154,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 const appasset = assets.find((a) => a.data.file === filename);
                 downloadFile(url, appasset?.data.originalfilename);
               }
-            }}>
+            }}
+          >
             <MdFileDownload />
           </Button>
         </Tooltip>
