@@ -18,7 +18,7 @@ import dateFormat from 'date-fns/format';
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown } from 'react-icons/md';
 
 // SAGE3 imports
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
@@ -99,25 +99,28 @@ const AppComponent = (props: App): JSX.Element => {
 function ToolbarComponent(props: App): JSX.Element {
   // Access the global app state
   const s = props.data.state as AppState;
+  const { user } = useUser();
+
   // Update functions from the store
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
-  const [selected, setSelected] = useState<string>();
-  const [kernels, setKernels] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string>('');
+  // const [kernels, setKernels] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!user) return;
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
-        params: { owner_uuid: props.data.ownerId }
-      }
+        params: { user_uuid: user._id },
+      },
     });
-  }, []);
+  }, [user]);
 
-  // Update from the props
-  useEffect(() => {
-    s.kernel ? setSelected(s.kernel) : setSelected('Select kernel');
-  }, [s.kernel]);
+  // // Update from the props
+  // useEffect(() => {
+  //   s.kernel ? setSelected(s.kernel) : setSelected('Select kernel');
+  // }, [s.kernel]);
 
   function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
     if (e.target.value) {
@@ -148,7 +151,8 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <HStack>
         {/* check if the object is empty */}
-        {s.kernels && Object.keys(s.kernels).length === 0 && selected ? (
+        {!selected ? 
+        (
           // show a red light if the kernel is not running
           <Badge colorScheme="red" rounded="sm" size="lg">
             Offline
@@ -169,26 +173,11 @@ function ToolbarComponent(props: App): JSX.Element {
           colorScheme="teal"
           icon={<MdArrowDropDown />}
           onChange={selectKernel}
+          value={selected ?? undefined}
           variant={'outline'}
 
         >
-        {s.availableKernels.map(({ value, label }, index) => <option value={value} >{label}</option>)}
-          {/*{s.availableKernels && s.availableKernels.map((kernel) => {*/}
-          {/*  console.log(s.availableKernels);*/}
-          {/*    const [key, value] = Object.entries(kernel)[0];*/}
-          {/*    return (*/}
-          {/*      <option key={key} value={value}>*/}
-          {/*        {key}*/}
-          {/*      </option>*/}
-          {/*    );*/}
-          {/*})}*/}
-          {/* {s.kernels
-            ? Object.keys(JSON.parse(s.kernels)).map((kernel) => (
-                <option key={kernel} value={kernel}>
-                  {kernel}
-                </option>
-              ))
-            : null} */}
+        {s.availableKernels.map(({ value, label }) => <option value={value} >{label}</option>)}
         </Select>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
