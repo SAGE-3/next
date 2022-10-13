@@ -80,6 +80,7 @@ class AIPane(SmartBit):
         print("I am handling the execution results")
         print(f" type of msg in aipane{type(msg)}")
         self.state.output = msg
+        self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

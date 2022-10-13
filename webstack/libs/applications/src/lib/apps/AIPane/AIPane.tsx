@@ -29,7 +29,6 @@ import {
 } from '@chakra-ui/react';
 import {App, AppName} from '../../schema';
 import './styles.css';
-// import outputData from './test.json'
 
 import {state as AppState} from './index';
 import {AppWindow} from '../../components';
@@ -143,16 +142,6 @@ function AppComponent(props: App): JSX.Element {
     prevY.current = props.data.position.y;
   }, [props.data.position.x, props.data.position.y, JSON.stringify(s.hostedApps)]);
 
-  // Mock useEffect to fake run and idle status of app
-  useEffect(() => {
-    if (s.runStatus === true) {
-      setTimeout(function () {
-        updateState(props._id, {runStatus: false});
-      }, 5000);
-      console.log('set runStatus false');
-    }
-  }, [s.runStatus]);
-
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
@@ -174,10 +163,10 @@ function AppComponent(props: App): JSX.Element {
           <Popover>
             <PopoverTrigger>
               <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-              <Button variant="ghost" size="lg" color="cyan">
-                Message
-              </Button>
-                </div>
+                <Button variant="ghost" size="lg" color="cyan">
+                  Message
+                </Button>
+              </div>
             </PopoverTrigger>
 
             {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
@@ -192,7 +181,7 @@ function AppComponent(props: App): JSX.Element {
 
               {Object.values(s.messages)?.map((message: string, index: number) => (
                 <PopoverBody>
-                  {message} : {index}
+                  {message}
                   <CloseButton size="sm" className="popover-close" onClick={() => closePopovers()}/>
                 </PopoverBody>
               ))}
@@ -223,7 +212,7 @@ function AppComponent(props: App): JSX.Element {
           <br/>
           hostedapps: {Object.values(s.hostedApps)}
           <br/>
-          {/*supportedTasks: */}
+          runStatus: {s.runStatus.toString()}
         </Box>
         <Box className="output-container">
           Output
@@ -258,34 +247,38 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: 'execute_model', params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'}},
     });
+    updateState(props._id, {runStatus: true});
   }
 
   return (
     <>
-      <Menu>
-        <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-          Obj Detection Models
-        </MenuButton>
-        <Portal>
-          <MenuList>
-            {objDetModels.map((model) => {
-              return <MenuItem>{model}</MenuItem>;
-            })}
-          </MenuList>
-        </Portal>
-      </Menu>
-      <Menu>
-        <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-          Classification Models
-        </MenuButton>
-        <Portal>
-          <MenuList>
-            {classModels.map((model) => {
-              return <MenuItem>{model}</MenuItem>;
-            })}
-          </MenuList>
-        </Portal>
-      </Menu>
+      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+        <Menu>
+          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+            Obj Detection Models
+          </MenuButton>
+          <Portal>
+            <MenuList>
+              {objDetModels.map((model) => {
+                return <MenuItem>{model}</MenuItem>;
+              })}
+            </MenuList>
+          </Portal>
+        </Menu>
+        <Menu>
+          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+            Classification Models
+          </MenuButton>
+          <Portal>
+            <MenuList>
+              {classModels.map((model) => {
+                return <MenuItem>{model}</MenuItem>;
+              })}
+            </MenuList>
+          </Portal>
+        </Menu>
+      </div>
+
 
       <IconButton
         aria-label="Run AI"
