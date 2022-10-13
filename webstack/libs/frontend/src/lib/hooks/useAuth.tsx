@@ -43,7 +43,7 @@ async function guestLogin(): Promise<void> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ username: 'guest-username', password: 'guest-pass' }),
-  })
+  });
   if (res.status === 200) {
     window.location.reload();
   }
@@ -86,6 +86,7 @@ async function verify(): Promise<{ success: boolean; authentication: boolean; au
 
 type AuthenticatedType = {
   auth: SBAuthSchema | null;
+  loading: boolean;
   verify: () => Promise<{ success: boolean; authentication: boolean; auth: SBAuthSchema | null }>;
   logout: () => Promise<void>;
   googleLogin: () => void;
@@ -94,7 +95,7 @@ type AuthenticatedType = {
 };
 
 const AuthContext = createContext({
-  auth: null
+  auth: null,
 } as AuthenticatedType);
 
 export function useAuth() {
@@ -102,24 +103,20 @@ export function useAuth() {
 }
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const [auth, setAuth] = useState<AuthenticatedType>({ auth: null, verify, logout, googleLogin, ciLogin, guestLogin });
+  const [auth, setAuth] = useState<AuthenticatedType>({ auth: null, loading: true, verify, logout, googleLogin, ciLogin, guestLogin });
 
   useEffect(() => {
     async function fetchAuth() {
       const verifyRes = await verify();
       if (verifyRes.auth) {
-        setAuth({ auth: verifyRes.auth, verify, logout, googleLogin, ciLogin, guestLogin });
+        setAuth({ auth: verifyRes.auth, loading: false, verify, logout, googleLogin, ciLogin, guestLogin });
       } else {
-        setAuth({ auth: null, verify, logout, googleLogin, ciLogin, guestLogin });
+        setAuth({ auth: null, verify, loading: false, logout, googleLogin, ciLogin, guestLogin });
       }
     }
 
-    fetchAuth()
-  }, [])
+    fetchAuth();
+  }, []);
 
-  return (
-    <AuthContext.Provider value={auth}>
-      {props.children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={auth}>{props.children}</AuthContext.Provider>;
 }

@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 // React component for efficiently rendering large lists and tabular data
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
@@ -36,8 +36,9 @@ export function Files(props: FilesProps): JSX.Element {
   // The data list
   const [filesList, setList] = useState(props.files);
   // Room and board
-  const location = useLocation();
-  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+  const { boardId, roomId } = useParams();
+  if (!boardId || !roomId) return <></>;
+
   // The table object
   const virtuoso = useRef<VirtuosoHandle>(null);
 
@@ -358,7 +359,7 @@ export function Files(props: FilesProps): JSX.Element {
           }
           virtuoso.current?.scrollIntoView({
             index: first + 1,
-            behavior: "auto",
+            behavior: 'auto',
           });
         } else if (e.key === 'ArrowUp') {
           // @ts-expect-error
@@ -368,7 +369,7 @@ export function Files(props: FilesProps): JSX.Element {
             prev[last] = { ...prev[last], selected: false };
             virtuoso.current?.scrollIntoView({
               index: last - 1,
-              behavior: "auto",
+              behavior: 'auto',
             });
           }
         }
@@ -377,8 +378,8 @@ export function Files(props: FilesProps): JSX.Element {
     } else if (e.key === 'Enter') {
       if (!user) return;
       // Get around  the center of the board
-      const xDrop = Math.floor(-boardPosition.x + (window.innerWidth / scale) / 2);
-      const yDrop = Math.floor(-boardPosition.y + (window.innerHeight / scale) / 2);
+      const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+      const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
 
       const first = filesList.find((k) => k.selected);
       if (first) {

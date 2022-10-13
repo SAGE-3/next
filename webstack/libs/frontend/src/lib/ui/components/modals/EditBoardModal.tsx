@@ -131,7 +131,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit Board: {props.board.data.name}</ModalHeader>

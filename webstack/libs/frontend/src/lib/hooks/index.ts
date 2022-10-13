@@ -15,3 +15,4 @@ export * from './useMeasure';
 export * from './useHotkeys';
 export * from './useKeyPress';
 export * from './useHexColor';
+export * from './useRouteNav';

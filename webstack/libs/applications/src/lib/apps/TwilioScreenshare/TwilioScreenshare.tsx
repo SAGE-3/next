@@ -237,7 +237,7 @@ function AppComponent(props: App): JSX.Element {
           {expirationTime}
         </Text>
 
-        <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} size="xl" blockScrollOnMount={false}>
           <ModalOverlay />
           <ModalContent>
             <ModalHeader>Select Screenshare Source</ModalHeader>

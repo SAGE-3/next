@@ -46,9 +46,7 @@ export function App() {
               <Routes>
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/enter">
-                  <Route path=":boardId" element={<CheckUrlForBoardId />} />
-                </Route>
+                <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} />
 
                 <Route
                   path="/createuser"
@@ -58,7 +56,16 @@ export function App() {
                     </ProtectedAuthRoute>
                   }
                 />
-
+                <Route
+                  path="/home/:roomId"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedUserRoute>
+                        <HomePage />
+                      </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
                 <Route
                   path="/home"
                   element={
@@ -71,7 +78,7 @@ export function App() {
                 />
 
                 <Route
-                  path="/board"
+                  path="/board/:roomId/:boardId"
                   element={
                     <ProtectedAuthRoute>
                       <ProtectedUserRoute>
@@ -112,8 +119,12 @@ export default App;
  * @returns JSX.React.ReactNode
  */
 export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
-  const { auth } = useAuth();
-  return auth ? <> {props.children}</> : <Navigate to="/" replace />;
+  const { auth, loading } = useAuth();
+  if (loading) {
+    return <div>Loading...</div>;
+  } else {
+    return auth ? <> {props.children}</> : <Navigate to="/" replace />;
+  }
 };
 
 /**
@@ -122,8 +133,12 @@ export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
  * @returns JSX.React.ReactNode
  */
 export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
-  const { user } = useUser();
-  return user ? <> {props.children}</> : <Navigate to="/createuser" replace />;
+  const { user, loading } = useUser();
+  if (loading) {
+    return <div>Loading...</div>;
+  } else {
+    return user ? <> {props.children}</> : <Navigate to="/createuser" replace />;
+  }
 };
 
 // Check the connection status using the API socket.

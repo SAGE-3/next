@@ -20,6 +20,7 @@ import { useAuth } from './useAuth';
 
 const UserContext = createContext({
   user: undefined as User | undefined,
+  loading: true,
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
 });
@@ -30,7 +31,8 @@ export function useUser() {
 
 export function UserProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const { auth } = useAuth();
-  const [user, setUser] = useState<User | undefined>(undefined)
+  const [user, setUser] = useState<User | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let userSub: (() => void) | null = null;
@@ -43,15 +45,15 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         const doc = message.doc as User;
         switch (message.type) {
           case 'CREATE': {
-            setUser(doc)
+            setUser(doc);
             break;
           }
           case 'UPDATE': {
-            setUser(doc)
+            setUser(doc);
             break;
           }
           case 'DELETE': {
-            setUser(undefined)
+            setUser(undefined);
           }
         }
       });
@@ -62,21 +64,23 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       // If account exists, set the user context and subscribe to updates
       if (userResponse.data) {
         setUser(userResponse.data[0]);
+        setLoading(false);
       } else {
-        setUser(undefined)
+        setUser(undefined);
+        setLoading(false);
       }
     }
 
     if (auth) {
-      fetchUser()
+      fetchUser();
     }
 
     return () => {
       if (userSub) {
         userSub();
       }
-    }
-  }, [auth])
+    };
+  }, [auth]);
 
   /**
    * Create a new user account
@@ -94,7 +98,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   /**
    * Update the current user
    * @param updates Updates to apply to the user
-   * @returns 
+   * @returns
    */
   async function update(updates: Partial<UserSchema>): Promise<void> {
     if (user) {
@@ -104,9 +108,5 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     return;
   }
 
-  return (
-    <UserContext.Provider value={{ user, update, create }}>
-      {props.children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={{ user, loading, update, create }}>{props.children}</UserContext.Provider>;
 }
