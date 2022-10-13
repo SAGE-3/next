@@ -6,9 +6,13 @@
  *
  */
 
-import { Box, useColorModeValue, useToast } from '@chakra-ui/react';
+import { useEffect, useRef } from 'react';
+import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor, GetConfiguration } from '@sage3/frontend';
+// To do upload with progress bar
+import axios, { AxiosProgressEvent } from 'axios';
+
+import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
@@ -24,8 +28,17 @@ type BackgroundProps = {
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
+  // Handle to a toast
+  const toastIdRef = useRef<ToastId>();
+
   // Assets
   const assets = useAssetStore((state) => state.assets);
+  // Messsages
+  const subMessage = useMessageStore((state) => state.subscribe);
+  const unsubMessage = useMessageStore((state) => state.unsubscribe);
+  // const messages = useMessageStore((state) => state.messages);
+  const message = useMessageStore((state) => state.lastone);
+
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // User
@@ -74,10 +87,29 @@ export function Background(props: BackgroundProps) {
       fd.append('targetX', dx.toString());
       fd.append('targetY', dy.toString());
 
+      toastIdRef.current = toast({
+        title: "Upload",
+        description: "Starting upload of " + filenames,
+        status: 'info',
+        // no duration, so it doesn't disappear
+        duration: null,
+        isClosable: true,
+      });
+
       // Upload with a POST request
-      fetch('/api/assets/upload', {
-        method: 'POST',
-        body: fd,
+      axios({
+        method: 'post',
+        url: '/api/assets/upload',
+        data: fd,
+        onUploadProgress: (p: AxiosProgressEvent) => {
+          if (toastIdRef.current && p.progress) {
+            const progress = (p.progress * 100).toFixed(0);
+            toast.update(toastIdRef.current, {
+              title: 'Upload',
+              description: 'Progress: ' + progress + '%',
+            });
+          }
+        }
       })
         .catch((error: Error) => {
           console.log('Upload> Error: ', error);
@@ -86,14 +118,7 @@ export function Background(props: BackgroundProps) {
           // Close the modal UI
           // props.onClose();
 
-          if (filenames) {
-            toast({
-              title: 'Upload Done:' + truncateWithEllipsis(filenames, 50),
-              status: 'info',
-              duration: 3000,
-              isClosable: true,
-            });
-          } else {
+          if (!filenames) {
             toast({
               title: 'Upload with Errors',
               status: 'warning',
@@ -104,6 +129,39 @@ export function Background(props: BackgroundProps) {
         });
     }
   };
+
+  // Subscribe to messages
+  useEffect(() => {
+    subMessage();
+    return () => {
+      unsubMessage();
+    }
+  }, []);
+
+  // Get the last new message
+  useEffect(() => {
+    if (!user) return;
+    if (message && message._createdBy === user._id) {
+      const title = message.data.type.charAt(0).toUpperCase() + message.data.type.slice(1);
+      // Update the toast if we can
+      if (toastIdRef.current) {
+        toast.update(toastIdRef.current, {
+          title: title,
+          description: message.data.payload,
+          duration: 5000
+        });
+      } else {
+        // or create a new one
+        toastIdRef.current = toast({
+          title: title,
+          description: message.data.payload,
+          status: 'info',
+          duration: 5000,
+          isClosable: true
+        });
+      }
+    }
+  }, [message]);
 
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
