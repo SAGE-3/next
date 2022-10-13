@@ -179,6 +179,8 @@ function AppComponent(props: App): JSX.Element {
     });
   }
 
+  Object.values(s.output)
+
   function closePopovers() {
     console.log("Remove entry")
   }
