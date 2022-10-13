@@ -9,6 +9,9 @@
 import { useEffect, useRef } from 'react';
 import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 
+// To do upload with progress bar
+import axios, { AxiosProgressEvent } from 'axios';
+
 import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -87,14 +90,25 @@ export function Background(props: BackgroundProps) {
         title: "Upload",
         description: "Starting upload of " + filenames,
         status: 'info',
-        duration: 5000,
+        // no duration, so it doesn't disappear
+        duration: null,
         isClosable: true,
       });
 
       // Upload with a POST request
-      fetch('/api/assets/upload', {
-        method: 'POST',
-        body: fd,
+      axios({
+        method: 'post',
+        url: '/api/assets/upload',
+        data: fd,
+        onUploadProgress: (p: AxiosProgressEvent) => {
+          if (toastIdRef.current && p.progress) {
+            const progress = (p.progress * 100).toFixed(0);
+            toast.update(toastIdRef.current, {
+              title: 'Upload',
+              description: 'Progress: ' + progress + '%',
+            });
+          }
+        }
       })
         .catch((error: Error) => {
           console.log('Upload> Error: ', error);
@@ -130,6 +144,7 @@ export function Background(props: BackgroundProps) {
         toast.update(toastIdRef.current, {
           title: title,
           description: message.data.payload,
+          duration: 5000
         });
       } else {
         // or create a new one
@@ -138,7 +153,7 @@ export function Background(props: BackgroundProps) {
           description: message.data.payload,
           status: 'info',
           duration: 5000,
-          isClosable: true,
+          isClosable: true
         });
       }
     }

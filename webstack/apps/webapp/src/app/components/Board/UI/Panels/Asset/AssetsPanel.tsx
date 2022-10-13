@@ -72,12 +72,10 @@ export function AssetsPanel(props: AssetsPanelProps) {
     const keys = Object.keys(filterbyRoom);
     // Create entries
     setAssetsList(
-      keys.map((k, idx) => {
-        const item = assets[idx];
-        const id = item._id;
+      filterbyRoom.map((item) => {
         // build an FileEntry object
         const entry: FileEntry = {
-          id: id,
+          id: item._id,
           owner: item.data.owner,
           ownerName: users.find((el) => el._id === item.data.owner)?.data.name || '-',
           filename: item.data.file,
@@ -99,7 +97,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
   return (
     <>
       <Panel
-        title={`Assets available in "${roomName}"`}
+        title={`Assets available in Room "${roomName}"`}
         name="assets"
         opened={opened}
         setOpened={setOpened}
