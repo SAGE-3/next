@@ -45,15 +45,17 @@ function AppComponent(props: App): JSX.Element {
   // const [selectedKernel, setSelectedKernel] = useState<string>('');
   // const { isOpen: IsOpen, onOpen: OnOpen, onClose: OnClose } = useDisclosure();
 
+
   useEffect(() => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
   }, [props._id, updateState]);
 
 
-  useEffect(() => {
-    if (!user) return;
-    updateState(props._id, { executeInfo: { executeFunc: 'get_available_kernels', params: { user_uuid: user._id } } });
-  }, [props._id, updateState, user]);
+
+  // useEffect(() => {
+  //   if (!user) return;
+  //   updateState(props._id, { executeInfo: { executeFunc: 'get_available_kernels', params: { user_uuid: user._id } } });
+  // }, [user]);
 
 
   // legacy code to fetch via API call
@@ -94,9 +96,20 @@ function AppComponent(props: App): JSX.Element {
   //     });
   // };
 
+  const updateStates = () => {
+    getKernelSpecs();
+    getAvailableKernels();
+  }
+
   const getKernelSpecs = () => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
   };
+
+  const getAvailableKernels = () => {
+    if (!user) return;
+    updateState(props._id, { executeInfo: { executeFunc: 'get_available_kernels', params: { user_uuid: user._id } } });
+  };
+
 
   /**
    * Update the kernels list by fetching the kernels from the backend
@@ -124,7 +137,7 @@ function AppComponent(props: App): JSX.Element {
         executeFunc: 'add_kernel',
         params: {
           kernel_alias: kernelAlias,
-          kernel_name: 'python3',
+          kernel_name: kernelName,
           room_uuid: locationState.roomId,
           board_uuid: locationState.boardId,
           owner_uuid: props._updatedBy,
@@ -272,7 +285,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} onFocus={updateStates}>
         <VStack w={'100%'} h={'100%'}>
           {/* <Box id="upper-div"> */}
           <HStack w={'100%'} p={5} style={{ 
