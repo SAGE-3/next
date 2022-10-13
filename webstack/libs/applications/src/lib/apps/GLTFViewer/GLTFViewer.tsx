@@ -36,7 +36,7 @@ const CameraController = (props: CameraProps) => {
   // });
 
   useEffect(() => {
-    console.log('Need to update camera state', props.state.p, props.state.a, props.state.d);
+    console.log('Need to update camera state>', props.state.p, props.state.a, props.state.d);
     // const sph = new THREE.Spherical(props.state.d, props.state.p, props.state.a);
   }, [props.state.p, props.state.a, props.state.d]);
 
@@ -54,7 +54,6 @@ const CameraController = (props: CameraProps) => {
       const p = controls.getPolarAngle();
       const a = controls.getAzimuthalAngle();
       const d = controls.getDistance();
-      console.log('Motion> end', p, a, d);
       updateState(props.id, { p, a, d });
     });
     return () => {
