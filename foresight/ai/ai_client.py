@@ -54,6 +54,7 @@ class AIClient(Borg):
             tasks_to_remove = set()
             for task_id in self.running_jobs:
                 resp = self.fxc.get_task(task_id)
+                print(f" type of resp in ai_client{type(resp)}")
                 if not resp['pending']:
                     if resp['status'] != 'success':
                         # TODO: Handle the error
