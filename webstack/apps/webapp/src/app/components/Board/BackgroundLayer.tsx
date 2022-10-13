@@ -224,7 +224,7 @@ function UserCursor(props: UserCursorProps) {
     // Stop previous animation
     controls.stop();
     // Set initial opacity
-    controls.set({ opacity: 0.8 });
+    controls.set({ opacity: 1.0 });
     // Start animation
     controls.start({
       // final opacity
@@ -233,6 +233,7 @@ function UserCursor(props: UserCursorProps) {
         ease: 'easeIn',
         // duration in sec.
         duration: 10,
+        delay: 30
       },
     });
   }, [props.position.x, props.position.y, props.position.z]);
