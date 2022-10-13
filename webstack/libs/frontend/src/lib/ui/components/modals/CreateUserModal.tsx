@@ -83,6 +83,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
       onClose={() => {
         console.log('');
       }}
+      blockScrollOnMount={false}
     >
       <ModalOverlay />
       <ModalContent>

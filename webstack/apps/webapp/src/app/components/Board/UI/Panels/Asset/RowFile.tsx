@@ -272,7 +272,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       ) : null}
 
       {/* Delete a file modal */}
-      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={'2xl'}>
+      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={'2xl'} blockScrollOnMount={false}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Delete an Asset</ModalHeader>

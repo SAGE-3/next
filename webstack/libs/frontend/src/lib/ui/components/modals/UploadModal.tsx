@@ -95,7 +95,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Upload Assets</ModalHeader>

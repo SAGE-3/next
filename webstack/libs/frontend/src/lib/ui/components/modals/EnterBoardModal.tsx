@@ -85,6 +85,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
       size="md"
       isOpen={props.isOpen}
       onClose={props.onClose}
+      blockScrollOnMount={false}
     >
       <ModalOverlay />
       <ModalContent>

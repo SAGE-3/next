@@ -100,7 +100,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} size="xl">
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} size="xl" blockScrollOnMount={false}>
       {board ? <EnterBoardModal isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard} board={board}></EnterBoardModal> : null}
 
       <ModalOverlay />
