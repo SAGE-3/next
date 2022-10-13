@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
 import { MdFileDownload } from 'react-icons/md';
+import { HiPencilAlt } from "react-icons/hi";
 // Utility functions from SAGE3
 import { downloadFile, isUUIDv4 } from '@sage3/frontend';
 
@@ -105,16 +106,17 @@ function AppComponent(props: App): JSX.Element {
         }}
       >
         <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
-        {/*<Box*/}
-        {/*  position="absolute"*/}
-        {/*  right={0 + 'px'}*/}
-        {/*  bottom={0 + 'px'}*/}
-        {/*  width={box.xmax - box.xmin - 10 + 'px'}*/}
-        {/*  height={box.ymax - box.ymin + 'px'}*/}
-        {/*  border="2px solid red"*/}
-        {/*>*/}
-        {/*  */}
-        {/*</Box>*/}
+        <Box
+          position="absolute"
+          right={0 + 'px'}
+          bottom={0 + 'px'}
+          width={box.xmax - box.xmin - 10 + 'px'}
+          height={box.ymax - box.ymin + 'px'}
+          border="2px solid red"
+          style={{display: s.annotations ? "block" : "none"}}
+        >
+
+        </Box>
       </div>
     </AppWindow>
   );
@@ -128,6 +130,7 @@ function AppComponent(props: App): JSX.Element {
  */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
 
@@ -159,6 +162,19 @@ function ToolbarComponent(props: App): JSX.Element {
             }}
           >
             <MdFileDownload />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+          <Button
+            onClick={() => {
+              if (s.annotations == false) {
+                updateState(props._id, {annotations: true});
+              } else {
+                updateState(props._id, {annotations: false});
+              }
+            }}
+          >
+            <HiPencilAlt />
           </Button>
         </Tooltip>
       </ButtonGroup>
