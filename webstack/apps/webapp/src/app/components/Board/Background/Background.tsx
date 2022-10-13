@@ -35,6 +35,7 @@ export function Background(props: BackgroundProps) {
   const assets = useAssetStore((state) => state.assets);
   // Messsages
   const subMessage = useMessageStore((state) => state.subscribe);
+  const unsubMessage = useMessageStore((state) => state.unsubscribe);
   // const messages = useMessageStore((state) => state.messages);
   const message = useMessageStore((state) => state.lastone);
 
@@ -132,6 +133,9 @@ export function Background(props: BackgroundProps) {
   // Subscribe to messages
   useEffect(() => {
     subMessage();
+    return () => {
+      unsubMessage();
+    }
   }, []);
 
   // Get the last new message
