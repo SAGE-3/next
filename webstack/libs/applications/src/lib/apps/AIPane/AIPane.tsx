@@ -261,13 +261,16 @@ function AppComponent(props: App): JSX.Element {
           </Box>
 
           <Box className="output-container">
+
             Output
             <br/>
-            Columns:
-            {s.output.columns}
-            <br/>
-            Data:
-            {s.output.data}
+            {JSON.stringify(s.output)}
+            {/*{Object.values(s.output)}*/}
+            {/*Columns:*/}
+            {/*{s.output.columns}*/}
+            {/*<br/>*/}
+            {/*Data:*/}
+            {/*{s.output.data}*/}
           </Box>
         </Box>
       </Box>
