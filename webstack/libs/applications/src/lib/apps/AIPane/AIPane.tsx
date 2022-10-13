@@ -152,148 +152,161 @@ function AppComponent(props: App): JSX.Element {
     });
   }
 
-  function closePopovers() {
+  function closePopovers(info: string) {
     console.log('Remove entry');
+    const unchecked = s.messages;
+    delete unchecked[info]
+    updateState(props._id, {messages: unchecked})
+
+    if (Object.keys(s.messages).includes(info)) {
+      const messagesCopy = {...s.messages};
+      delete messagesCopy[info];
+      updateState(props._id, {messages: messagesCopy});
+    }
   }
 
-  return (
-    <AppWindow app={props} lockToBackground={true}>
-      <Box>
-        <div>
-          <Popover>
-            <PopoverTrigger>
-              <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-                <Button variant="ghost" size="lg" color="cyan">
-                  Message
-                </Button>
-              </div>
-            </PopoverTrigger>
+    return (
+      <AppWindow app={props} lockToBackground={true}>
+        <Box>
+          <div>
+            <Popover>
+              <PopoverTrigger>
+                <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+                  <Button variant="ghost" size="lg" color="cyan">
+                    Message
+                  </Button>
+                </div>
+              </PopoverTrigger>
 
-            {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
-            <PopoverContent>
-              <PopoverArrow/>
-              <PopoverCloseButton/>
-              <PopoverHeader>History</PopoverHeader>
+              {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
+              <PopoverContent>
+                <PopoverArrow/>
+                <PopoverCloseButton/>
+                <PopoverHeader>History</PopoverHeader>
 
-              <PopoverBody>
-                {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
-              </PopoverBody>
-
-              {Object.values(s.messages)?.map((message: string, index: number) => (
                 <PopoverBody>
-                  {message}
-                  <CloseButton size="sm" className="popover-close" onClick={() => closePopovers()}/>
+                  {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
                 </PopoverBody>
-              ))}
-            </PopoverContent>
-          </Popover>
-        </div>
-        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" position="absolute">
-          <Box className="status-container">
-            {s.runStatus ? (
-              Object.values(s.hostedApps).every(checkAppType) ? (
-                <Icon as={GiEmptyHourglass} w={8} h={8}/>
+
+                {Object.keys(s.messages)?.map((message: string, index: number) => (
+                  <PopoverBody>
+                    {s.messages[message]}
+                    <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
+                  </PopoverBody>
+                ))}
+              </PopoverContent>
+            </Popover>
+          </div>
+          <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center"
+               position="absolute">
+            <Box className="status-container">
+              {s.runStatus ? (
+                Object.values(s.hostedApps).every(checkAppType) ? (
+                  <Icon as={GiEmptyHourglass} w={8} h={8}/>
+                ) : (
+                  <Icon as={BiErrorCircle} w={8} h={8}/>
+                )
               ) : (
-                <Icon as={BiErrorCircle} w={8} h={8}/>
-              )
-            ) : (
-              <VisuallyHidden>Empty Board</VisuallyHidden>
-            )}
+                <VisuallyHidden>Empty Board</VisuallyHidden>
+              )}
+            </Box>
+          </Box>
+          <Box
+            position="absolute"
+            top="30%"
+            left="15%"
+          >
+            selectedApp {selectedAppId}
+            <br/>
+            length of hostedappsarr: {Object.keys(s.hostedApps).length}
+            <br/>
+            hostedapps: {Object.values(s.hostedApps)}
+            <br/>
+            runStatus: {s.runStatus.toString()}
+          </Box>
+          <Box className="output-container">
+            Output
+            <br/>
+            {JSON.stringify(s.output.output)}
           </Box>
         </Box>
-        <Box
-          position="absolute"
-          top="30%"
-          left="15%"
-        >
-          selectedApp {selectedAppId}
-          <br/>
-          length of hostedappsarr: {Object.keys(s.hostedApps).length}
-          <br/>
-          hostedapps: {Object.values(s.hostedApps)}
-          <br/>
-          runStatus: {s.runStatus.toString()}
-        </Box>
-        <Box className="output-container">
-          Output
-          <br/>
-          {JSON.stringify(s.output.output)}
-        </Box>
-      </Box>
-    </AppWindow>
-  );
-}
-
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-
-  const updateState = useAppStore((state) => state.updateState);
-
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore((state) => state.assets);
-  const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
-  const update = useAppStore((state) => state.update);
-
-  const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
-  const classModels = ['image_c_model_1', 'image_c_model_2'];
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
-
-  function checkAppType(app: string) {
-    return supportedApps.includes(app);
+      </AppWindow>
+    );
   }
 
-  function runFunction() {
-    updateState(props._id, {
-      executeInfo: {executeFunc: 'execute_model', params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'}},
-    });
-    updateState(props._id, {runStatus: true});
+  function ToolbarComponent(props: App): JSX.Element {
+    const s = props.data.state as AppState;
+
+    const updateState = useAppStore((state) => state.updateState);
+
+    const location = useLocation();
+    const locationState = location.state as { roomId: string };
+    const assets = useAssetStore((state) => state.assets);
+    const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+    const update = useAppStore((state) => state.update);
+
+    const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
+    const classModels = ['image_c_model_1', 'image_c_model_2'];
+    const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
+
+    function checkAppType(app: string) {
+      return supportedApps.includes(app);
+    }
+
+    function runFunction() {
+      updateState(props._id, {
+        executeInfo: {
+          executeFunc: 'execute_model',
+          params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'}
+        },
+      });
+      updateState(props._id, {runStatus: true});
+    }
+
+    return (
+      <>
+        <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+          <Menu>
+            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+              Obj Detection Models
+            </MenuButton>
+            <Portal>
+              <MenuList>
+                {objDetModels.map((model) => {
+                  return <MenuItem>{model}</MenuItem>;
+                })}
+              </MenuList>
+            </Portal>
+          </Menu>
+          <Menu>
+            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+              Classification Models
+            </MenuButton>
+            <Portal>
+              <MenuList>
+                {classModels.map((model) => {
+                  return <MenuItem>{model}</MenuItem>;
+                })}
+              </MenuList>
+            </Portal>
+          </Menu>
+        </div>
+
+
+        <IconButton
+          aria-label="Run AI"
+          icon={s.runStatus ? <BiRun/> : <FaPlay/>}
+          _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+          isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
+          onClick={() => {
+            runFunction();
+          }}
+        />
+      </>
+    );
   }
 
-  return (
-    <>
-      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-        <Menu>
-          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-            Obj Detection Models
-          </MenuButton>
-          <Portal>
-            <MenuList>
-              {objDetModels.map((model) => {
-                return <MenuItem>{model}</MenuItem>;
-              })}
-            </MenuList>
-          </Portal>
-        </Menu>
-        <Menu>
-          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-            Classification Models
-          </MenuButton>
-          <Portal>
-            <MenuList>
-              {classModels.map((model) => {
-                return <MenuItem>{model}</MenuItem>;
-              })}
-            </MenuList>
-          </Portal>
-        </Menu>
-      </div>
-
-
-      <IconButton
-        aria-label="Run AI"
-        icon={s.runStatus ? <BiRun/> : <FaPlay/>}
-        _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-        isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
-        onClick={() => {
-          runFunction();
-        }}
-      />
-    </>
-  );
-}
-
-export default {
-  AppComponent,
-  ToolbarComponent,
-};
+  export default {
+    AppComponent,
+    ToolbarComponent,
+  };
