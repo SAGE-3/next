@@ -25,7 +25,7 @@ export function ColorPicker(props: ColorPickerProps) {
   };
 
   return (
-    <ButtonGroup isAttached size="xs" colorScheme="teal" py="2" mt="2">
+    <ButtonGroup isAttached size="xs" colorScheme="teal" py="2">
       {colors.map((color) => {
         const c = useHexColor(color);
         return (
