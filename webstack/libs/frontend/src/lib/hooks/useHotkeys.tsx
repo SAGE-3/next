@@ -148,13 +148,16 @@ function Alfred({ onAction }: AlfredProps): JSX.Element {
         </InputGroup>
         <VStack m={1} p={1}>
           <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
-            Webview
+            CodeCell
           </Button>
           <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
             Screenshare
           </Button>
           <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
-            Clock
+            Stickie
+          </Button>
+          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
+            Webview
           </Button>
         </VStack>
       </ModalContent>

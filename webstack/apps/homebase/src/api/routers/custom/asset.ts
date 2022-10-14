@@ -134,13 +134,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
       // Put the new file into the collection
       const now = new Date().toISOString();
-
       // Process the file (metadata, image, pdf, etc.)
       const newdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype);
-
       // Send message to clients
       MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}` }, user.id);
-
+      // Add the new file to the collection
       const assetID = await AssetsCollection.addAsset(
         {
           file: elt.filename,

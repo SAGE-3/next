@@ -6,7 +6,11 @@
  *
  */
 import { useState, useEffect, Suspense, useRef } from 'react';
-import { Box } from '@chakra-ui/react';
+
+import { Box, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+// Icons
+import { MdFileDownload } from 'react-icons/md';
+
 import { Canvas, useLoader, useThree, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -14,6 +18,9 @@ import * as THREE from 'three';
 
 import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
+
+// Utility functions from SAGE3
+import { downloadFile } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
@@ -158,7 +165,31 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  return <></>;
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<Asset>();
+
+  // Convert the ID to an asset
+  useEffect(() => {
+    const appasset = assets.find((a) => a._id === s.assetid);
+    if (appasset) setFile(appasset);
+  }, [s.assetid, assets]);
+
+  return <>
+    <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <Tooltip placement="top-start" hasArrow={true} label={'Download Model'} openDelay={400}>
+        <Button
+          onClick={() => {
+            if (file) {
+              const url = file?.data.file;
+              const filename = file?.data.originalfilename;
+              downloadFile('api/assets/static/' + url, filename);
+            }
+          }}>
+          <MdFileDownload />
+        </Button>
+      </Tooltip>
+    </ButtonGroup>
+  </>;
 }
 
 export default { AppComponent, ToolbarComponent };
