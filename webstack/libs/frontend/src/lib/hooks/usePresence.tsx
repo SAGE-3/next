@@ -77,7 +77,6 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
    */
   async function update(updates: Partial<PresenceSchema>) {
     if (!auth) return;
-    console.log('update presence', updates);
     const res = await SocketAPI.sendRESTMessage(`/presence/${auth.id}`, 'PUT', updates);
     return res;
   }
