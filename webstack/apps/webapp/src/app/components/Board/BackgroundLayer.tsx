@@ -54,6 +54,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
 
+  // Local State
+  const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
+  const [windowDim, setWindowDim] = useState({ width: window.innerWidth, height: window.innerHeight });
+
   // Position board when entering board
   useEffect(() => {
     if (appsFetched) {
@@ -65,10 +69,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }
     }
   }, [appsFetched]);
-  // Local State
-  const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
 
-  // Drag start fo the board
+  // Drag start of the board
   function handleDragBoardStart() {
     setBoardDragging(true);
   }
@@ -80,14 +82,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     }
   }
 
-  // Update Viewport Presence
-  const updateViewport = useCallback(() => {
-    const viewPos = { x: -boardPosition.x, y: -boardPosition.y, z: 0 };
-    const viewWidth = window.innerWidth / scale;
-    const viewHeight = window.innerHeight / scale;
-    const viewSize = { width: viewWidth, height: viewHeight };
-    updatePresence({ viewport: { position: viewPos, size: viewSize } });
-  }, [boardPosition, scale, window.innerHeight, window.innerWidth]);
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
     const x = data.x;
@@ -100,23 +94,24 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       setSelectedApp('');
     }
     setBoardDrag(false);
-    updateViewport();
   }
-
-  useEffect(() => {
-    updateViewport();
-  }, [scale]);
-
-  useEffect(() => {
-    window.addEventListener('resize', updateViewport);
-    return () => window.removeEventListener('resize', updateViewport);
-  }, [updateViewport]);
 
   // Reset the global zIndex when no apps
   useEffect(() => {
     if (apps.length === 0) resetZIndex();
   }, [apps]);
 
+  // Oberver for window resize
+  useEffect(() => {
+    const updateWindowDimensions = () => {
+      setWindowDim({ width: window.innerWidth, height: window.innerHeight });
+    };
+    updateWindowDimensions();
+    window.addEventListener('resize', updateWindowDimensions);
+    return () => window.removeEventListener('resize', updateWindowDimensions);
+  }, []);
+
+  // CURSOR
   // Update the cursor every half second
   const throttleCursor = throttle(500, (e: MouseEvent) => {
     if (boardDragging) return;
@@ -128,12 +123,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const x = winX / s - bx;
     const y = winY / s - by;
     const z = 0;
-
-    const viewPos = { x: -boardPosition.x, y: -boardPosition.y, z: 0 };
-    const viewWidth = window.innerWidth / scale;
-    const viewHeight = window.innerHeight / scale;
-    const viewSize = { width: viewWidth, height: viewHeight };
-    updatePresence({ cursor: { x, y, z }, viewport: { position: viewPos, size: viewSize } });
+    updatePresence({ cursor: { x, y, z } });
   });
 
   // Keep a copy of the function
@@ -152,6 +142,30 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     window.addEventListener('mousemove', mouseMove);
     return () => window.removeEventListener('mousemove', mouseMove);
   }, [boardPosition.x, boardPosition.y, scale, boardDragging]);
+
+  // VIEWPORT
+  const throttleViewport = throttle(5000, () => {
+    const viewPos = { x: -boardPosition.x, y: -boardPosition.y, z: 0 };
+    const viewWidth = windowDim.width / scale;
+    const viewHeight = windowDim.height / scale;
+    const viewSize = { width: viewWidth, height: viewHeight };
+    updatePresence({ viewport: { position: viewPos, size: viewSize } });
+  });
+
+  // Keep a copy of the function
+  const throttleViewportFunc = useCallback(throttleViewport, [boardPosition.x, boardPosition.y, scale, windowDim.width, windowDim.height]);
+  const viewportFunc = () => {
+    // Check if event is on the board
+    if (updatePresence) {
+      // Send the throttled version to the server
+      throttleViewportFunc();
+    }
+  };
+
+  // Update Viewport Presence
+  useEffect(() => {
+    viewportFunc();
+  }, [throttleViewportFunc]);
 
   // Deselect all apps
   useHotkeys('esc', () => {
@@ -212,34 +226,31 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
             const u = users.find((el) => el._id === presence.data.userId);
             if (!u) return null;
             const color = useHexColor(u.data.color || 'red');
+            const isWall = u.data.userType === 'wall';
             return (
               <>
-                <Box
-                  borderStyle="dashed"
-                  borderWidth={3 / scale}
-                  borderColor={color}
-                  borderTop={'none'}
-                  position="absolute"
-                  pointerEvents="none"
-                  left={presence.data.viewport.position.x + 'px'}
-                  top={presence.data.viewport.position.y + 'px'}
-                  width={presence.data.viewport.size.width + 'px'}
-                  height={presence.data.viewport.size.height + 'px'}
-                  opacity={0.8}
-                  borderRadius="0 0 8px 8px"
-                  transition="all 0.5s"
-                >
+                {isWall ? (
                   <Box
-                    background={color}
+                    borderStyle="dashed"
+                    borderWidth={3 / scale}
+                    borderColor={color}
+                    borderTop={'none'}
+                    position="absolute"
+                    pointerEvents="none"
+                    left={presence.data.viewport.position.x + 'px'}
+                    top={presence.data.viewport.position.y + 'px'}
+                    width={presence.data.viewport.size.width + 'px'}
+                    height={presence.data.viewport.size.height + 'px'}
+                    opacity={0.8}
+                    borderRadius="8px 8px 8px 8px"
+                    transition="all 0.5s"
                     color="white"
-                    width="calc(100% + 6px)"
-                    borderRadius="6px 6px 0 0 "
-                    pl="2"
-                    transform="translate(-3px, calc(-100%))"
+                    fontSize="xl"
+                    background={`linear-gradient(180deg, ${color} 30px, transparent 30px)`}
                   >
                     {u.data.name}
                   </Box>
-                </Box>
+                ) : null}
                 <UserCursor
                   key={presence.data.userId}
                   color={color}

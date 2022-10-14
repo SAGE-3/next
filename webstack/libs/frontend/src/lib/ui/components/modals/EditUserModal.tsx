@@ -44,7 +44,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { auth } = useAuth();
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
-  const [color, setColor] = useState((user?.data.color as SAGEColors) || randomSAGEColor());
+  const [color, setColor] = useState(user?.data.color as SAGEColors);
   const [type, setType] = useState<UserSchema['userType']>(user?.data.userType || 'client');
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
@@ -80,6 +80,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
     }
     if (color !== user?.data.color && update) {
       update({ color });
+    }
+    if (type !== user?.data.userType && update) {
+      update({ userType: type });
     }
     props.onClose();
   };
@@ -118,7 +121,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <RadioGroup onChange={handleTypeChange} value={type}>
               <Stack direction="row">
                 {['client', 'wall'].map((value) => (
-                  <Radio value={value}>{value}</Radio>
+                  <Radio value={value}>{value[0].toUpperCase() + value.substring(1)}</Radio>
                 ))}
               </Stack>
             </RadioGroup>{' '}

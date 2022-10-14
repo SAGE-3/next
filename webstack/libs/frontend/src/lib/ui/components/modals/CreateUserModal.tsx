@@ -21,6 +21,9 @@ import {
   FormControl,
   FormLabel,
   Text,
+  RadioGroup,
+  Radio,
+  Stack,
 } from '@chakra-ui/react';
 import { MdPerson, MdEmail } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
@@ -108,6 +111,16 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           <FormControl isRequired mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
             <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
+          </FormControl>
+          <FormControl mt="2">
+            <FormLabel htmlFor="type">Type</FormLabel>
+            <RadioGroup onChange={handleTypeChange} value={type}>
+              <Stack direction="row">
+                {['client', 'wall'].map((value) => (
+                  <Radio value={value}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                ))}
+              </Stack>
+            </RadioGroup>{' '}
           </FormControl>
           <Text mt={3} fontSize={'md'}>
             Authentication: <em>{auth.auth?.provider}</em>
