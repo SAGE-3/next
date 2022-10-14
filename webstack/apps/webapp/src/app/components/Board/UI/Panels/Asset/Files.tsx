@@ -12,14 +12,18 @@ import { useParams } from 'react-router-dom';
 // React component for efficiently rendering large lists and tabular data
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
-import { Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack } from '@chakra-ui/react';
+import {
+  Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack, useDisclosure,
+  Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay
+} from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
 
-import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
+import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/frontend';
 import { FileEntry } from './types';
 import { RowFile } from './RowFile';
 import { setupAppForFile } from './CreateApp';
+import { file } from 'jszip';
 
 export interface FilesProps {
   files: FileEntry[];
@@ -38,6 +42,9 @@ export function Files(props: FilesProps): JSX.Element {
   // Room and board
   const { boardId, roomId } = useParams();
   if (!boardId || !roomId) return <></>;
+
+  // Modal for delete
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
 
   // The table object
   const virtuoso = useRef<VirtuosoHandle>(null);
@@ -375,76 +382,112 @@ export function Files(props: FilesProps): JSX.Element {
         }
         return [...prev];
       });
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+      onDeleteOpen();
     } else if (e.key === 'Enter') {
       if (!user) return;
       // Get around  the center of the board
       const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
       const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
-
-      const first = filesList.find((k) => k.selected);
-      if (first) {
-        // Create the app
-        const setup = await setupAppForFile(first, xDrop, yDrop, roomId, boardId, user._id);
-        if (setup) createApp(setup);
-      }
+      // Get the selected files
+      const selected = filesList.filter((k) => k.selected);
+      selected.forEach((k, i) => {
+        // Create the apps, 400 pixels + 20 padding
+        setupAppForFile(k, xDrop + i * 420, yDrop, roomId, boardId, user._id).then((setup) => {
+          if (setup) {
+            createApp(setup);
+          }
+        });
+      });
     }
   };
 
   return (
-    <VStack w={'100%'} fontSize={'xs'}>
-      {/* Search box */}
-      <InputGroup size={'xs'}>
-        <InputLeftAddon children="Search" />
-        <Input
-          ref={initialRef}
-          size={'xs'}
-          mb={2}
-          focusBorderColor="gray.500"
-          placeholder="name, owner, extension..."
-          _placeholder={{ opacity: 1, color: 'gray.400' }}
-          value={searchTerm}
-          onChange={handleSearch}
+    <>
+      <VStack w={'100%'} fontSize={'xs'}>
+        {/* Search box */}
+        <InputGroup size={'xs'}>
+          <InputLeftAddon children="Search" />
+          <Input
+            ref={initialRef}
+            size={'xs'}
+            mb={2}
+            focusBorderColor="gray.500"
+            placeholder="name, owner, extension..."
+            _placeholder={{ opacity: 1, color: 'gray.400' }}
+            value={searchTerm}
+            onChange={handleSearch}
+          />
+        </InputGroup>
+
+        {/* Headers */}
+        <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'}>
+          <Box flex="1" onClick={() => headerClick('file')} pr={4}>
+            {headerFile}
+          </Box>
+          <Box w="80px" onClick={() => headerClick('owner')}>
+            {headerOwner}
+          </Box>
+          <Box w="90px" onClick={() => headerClick('type')}>
+            {headerType}
+          </Box>
+          <Box w="70px" onClick={() => headerClick('modified')}>
+            {headerModified}
+          </Box>
+          <Box w="140px" onClick={() => headerClick('added')}>
+            {headerAdded}
+          </Box>
+          <Box w="60px" onClick={() => headerClick('size')} pr={4}>
+            {headerSize}
+          </Box>
+        </Flex>
+
+        <Divider mb={1} />
+
+        {/* Listing the files in a 'table' */}
+        <Virtuoso
+          style={{
+            height: '140px',
+            width: '100%',
+            borderCollapse: 'collapse',
+          }}
+          ref={virtuoso}
+          data={filesList}
+          totalCount={filesList.length}
+          onKeyDown={onKeyboard}
+          // Content of the table
+          itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} />}
         />
-      </InputGroup>
+      </VStack>
 
-      {/* Headers */}
-      <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'}>
-        <Box flex="1" onClick={() => headerClick('file')} pr={4}>
-          {headerFile}
-        </Box>
-        <Box w="80px" onClick={() => headerClick('owner')}>
-          {headerOwner}
-        </Box>
-        <Box w="90px" onClick={() => headerClick('type')}>
-          {headerType}
-        </Box>
-        <Box w="70px" onClick={() => headerClick('modified')}>
-          {headerModified}
-        </Box>
-        <Box w="140px" onClick={() => headerClick('added')}>
-          {headerAdded}
-        </Box>
-        <Box w="60px" onClick={() => headerClick('size')} pr={4}>
-          {headerSize}
-        </Box>
-      </Flex>
-
-      <Divider mb={1} />
-
-      {/* Listing the files in a 'table' */}
-      <Virtuoso
-        style={{
-          height: '140px',
-          width: '100%',
-          borderCollapse: 'collapse',
-        }}
-        ref={virtuoso}
-        data={filesList}
-        totalCount={filesList.length}
-        onKeyDown={onKeyboard}
-        // Content of the table
-        itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} />}
-      />
-    </VStack>
+      {/* Delete a file modal */}
+      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={'2xl'} blockScrollOnMount={false}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete an Asset</ModalHeader>
+          <ModalBody>Are you sure you want to delete the selected files ?</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="green" size="sm" mr={3} onClick={onDeleteClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              size="sm"
+              onClick={() => {
+                console.log('Deleting>');
+                const toDelete = filesList.filter((k) => k.selected);
+                toDelete.forEach((k) => {
+                  console.log('Deleting>', k);
+                  AssetHTTPService.del(k.id);
+                });
+                onDeleteClose();
+              }}
+            >
+              Yes, Delete it
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
