@@ -112,6 +112,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               onChange={handleEmailChange}
               onKeyDown={onSubmit}
               isRequired={true}
+              readOnly={auth?.provider === "google" || auth?.provider === "cilogon"}
             />
           </InputGroup>
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
