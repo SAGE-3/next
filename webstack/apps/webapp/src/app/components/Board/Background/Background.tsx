@@ -65,9 +65,20 @@ export function Background(props: BackgroundProps) {
         // check the mime type we got from the browser, and check with mime lib. if needed
         const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
         if (isValid(filetype)) {
-          fd.append('files', input[i]);
-          if (filenames) filenames += ', ' + input[i].name;
-          else filenames = input[i].name;
+          if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
+            // 100MB
+            toast({
+              title: 'File too large',
+              description: 'PDF files must be smaller than 100MB - Flatten or Optimize your PDF',
+              status: 'error',
+              duration: 6000,
+              isClosable: true,
+            });
+          } else {
+            fd.append('files', input[i]);
+            if (filenames) filenames += ', ' + input[i].name;
+            else filenames = input[i].name;
+          }
         } else {
           toast({
             title: 'Invalid file type',
