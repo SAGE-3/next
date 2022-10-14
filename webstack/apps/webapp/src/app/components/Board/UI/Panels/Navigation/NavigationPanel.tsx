@@ -150,16 +150,22 @@ export function NavigationPanel(props: NavProps) {
       let currentCol = 0;
       let currentRow = 0;
       apps.forEach((el) => {
-        const x = bX + currentCol * xSpacing + currentCol * colWidth;
-        const y = bY + currentRow * ySpacing + currentRow * rowHeight;
-        const width = colWidth;
-        const height = rowHeight;
+        const aspect = el.data.size.width / el.data.size.height;
+        let width = Math.floor(Math.min(colWidth, rowHeight * aspect));
+        let height = Math.floor(Math.min(rowHeight, colWidth / aspect));
+        width = Math.max(200, width);
+        height = Math.max(100, height);
+
+        let x = Math.floor(bX + currentCol * xSpacing + currentCol * colWidth + (colWidth - width) / 2);
+        let y = Math.floor(bY + currentRow * ySpacing + currentRow * rowHeight + (rowHeight - height) / 2);
+
         if (currentCol >= numCols - 1) {
           currentCol = 0;
           currentRow++;
         } else {
           currentCol++;
         }
+
         updateApp(el._id, { position: { x, y, z: el.data.position.z }, size: { width, height, depth: el.data.size.depth } });
       });
     }
