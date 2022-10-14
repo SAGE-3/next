@@ -258,7 +258,7 @@ export function AppWindow(props: WindowProps) {
           border={`${4}px solid ${selectColor}`}
           borderRadius="8px"
           pointerEvents="none"
-          zIndex={2}
+          zIndex={3}
         ></Box>
       ) : null}
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
@@ -272,7 +272,7 @@ export function AppWindow(props: WindowProps) {
           height={minimized ? 0 + 'px' : size.height + 'px'}
           cursor="move"
           userSelect={'none'}
-          zIndex={2}
+          zIndex={3}
           onMouseEnter={() => {
             setMouseOver(true);
           }}
@@ -285,14 +285,13 @@ export function AppWindow(props: WindowProps) {
       {boardDragging || appDragging ? (
         <Box
           position="absolute"
-          left="-3px"
-          top="-3px"
-          width={size.width + 6}
-          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
-          borderRadius="8px"
+          left="0px"
+          top={titleBarHeight + 'px'}
+          width={size.width}
+          height={minimized ? 0 + 'px' : size.height + 'px'}
           pointerEvents={'none'}
           userSelect={'none'}
-          zIndex={2}
+          zIndex={3}
         ></Box>
       ) : null}
 
@@ -366,7 +365,7 @@ export function AppWindow(props: WindowProps) {
         overflow="hidden"
         zIndex={2}
         display={minimized ? 'none' : 'inherit'}
-        borderRadius="md"
+        borderRadius={'0 0 6px 6px'}
       >
         {props.children}
       </Box>
