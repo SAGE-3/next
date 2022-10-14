@@ -12,16 +12,7 @@ import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
 
-import {
-  useUIStore,
-  useAppStore,
-  useUser,
-  useAssetStore,
-  truncateWithEllipsis,
-  useHexColor,
-  GetConfiguration,
-  useMessageStore,
-} from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
@@ -494,9 +485,11 @@ export function Background(props: BackgroundProps) {
       onDrop={OnDrop}
       onDragOver={OnDragOver}
       onScroll={(evt) => {
+        console.log('onScroll> event', evt);
         evt.stopPropagation();
       }}
       onWheel={(evt: any) => {
+        console.log('onWheel> event', evt);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {

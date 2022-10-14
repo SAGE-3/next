@@ -61,7 +61,7 @@ export function defineAbilityFor(user: SBAuthSchema) {
     // login and update presence
     can(['POST', 'PUT'], ['USERS', 'PRESENCE']);
     // create and modify apps, not delete
-    can(['POST', 'PUT', 'DELETE'], ['APPS']);
+    // can(['POST', 'PUT', 'DELETE'], ['APPS']);
   } else {
     // everybody else can do anything
     can(['GET', 'POST', 'PUT', 'DELETE', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
