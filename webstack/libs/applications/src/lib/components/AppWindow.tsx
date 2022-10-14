@@ -285,7 +285,6 @@ export function AppWindow(props: WindowProps) {
       {boardDragging || appDragging ? (
         <Box
           position="absolute"
-          backgroundColor="red"
           left="0px"
           top={titleBarHeight + 'px'}
           width={size.width}
