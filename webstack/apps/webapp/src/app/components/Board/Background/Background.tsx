@@ -448,8 +448,10 @@ export function Background(props: BackgroundProps) {
       onDragOver={OnDragOver}
       onScroll={(evt => {
         console.log('onScroll> event', evt);
+        evt.stopPropagation();
       })}
       onWheel={(evt: any) => {
+        console.log('onWheel> event', evt);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {
