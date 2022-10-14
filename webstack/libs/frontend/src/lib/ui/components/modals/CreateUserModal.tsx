@@ -117,6 +117,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
                 _placeholder={{ opacity: 1, color: 'gray.600' }}
                 onChange={handleEmailChange}
                 onKeyDown={onSubmit}
+                readOnly={auth.auth?.provider === "google" || auth.auth?.provider === "cilogon"}
               />
             </InputGroup>
           </FormControl>
