@@ -12,11 +12,26 @@ import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, truncateWithEllipsis, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
+import { useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
-import { getMime, isValid, isImage, isPDF, isCSV, isText, isJSON, isDZI, isGeoJSON, isVideo, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
+import {
+  getMime,
+  isValid,
+  isImage,
+  isPDF,
+  isCSV,
+  isText,
+  isJSON,
+  isDZI,
+  isGeoJSON,
+  isVideo,
+  isPython,
+  isGLTF,
+  isGIF,
+  isPythonNotebook,
+} from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
@@ -99,8 +114,8 @@ export function Background(props: BackgroundProps) {
       fd.append('targetY', dy.toString());
 
       toastIdRef.current = toast({
-        title: "Upload",
-        description: "Starting upload of " + filenames,
+        title: 'Upload',
+        description: 'Starting upload of ' + filenames,
         status: 'info',
         // no duration, so it doesn't disappear
         duration: null,
@@ -120,7 +135,7 @@ export function Background(props: BackgroundProps) {
               description: 'Progress: ' + progress + '%',
             });
           }
-        }
+        },
       })
         .catch((error: Error) => {
           console.log('Upload> Error: ', error);
@@ -146,7 +161,7 @@ export function Background(props: BackgroundProps) {
     subMessage();
     return () => {
       unsubMessage();
-    }
+    };
   }, []);
 
   // Get the last new message
@@ -159,7 +174,7 @@ export function Background(props: BackgroundProps) {
         toast.update(toastIdRef.current, {
           title: title,
           description: message.data.payload,
-          duration: 5000
+          duration: 5000,
         });
       } else {
         // or create a new one
@@ -168,7 +183,7 @@ export function Background(props: BackgroundProps) {
           description: message.data.payload,
           status: 'info',
           duration: 5000,
-          isClosable: true
+          isClosable: true,
         });
       }
     }
@@ -336,14 +351,26 @@ export function Background(props: BackgroundProps) {
                     method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',
-                      'Authorization': 'Token ' + conf.token,
+                      Authorization: 'Token ' + conf.token,
                     },
-                    body: JSON.stringify(payload)
-                  }).then((response) => response.json())
+                    body: JSON.stringify(payload),
+                  })
+                    .then((response) => response.json())
                     .then((res) => {
                       console.log('Jupyter> notebook created', res);
                       // Create a note from the json
-                      createApp(setupApp('JupyterLab', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 700, h: 700 }, { notebook: a.data.originalfilename }));
+                      createApp(
+                        setupApp(
+                          'JupyterLab',
+                          xDrop,
+                          yDrop,
+                          props.roomId,
+                          props.boardId,
+                          user._id,
+                          { w: 700, h: 700 },
+                          { notebook: a.data.originalfilename }
+                        )
+                      );
                     });
                 }
               });
@@ -457,10 +484,10 @@ export function Background(props: BackgroundProps) {
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
-      onScroll={(evt => {
+      onScroll={(evt) => {
         console.log('onScroll> event', evt);
         evt.stopPropagation();
-      })}
+      }}
       onWheel={(evt: any) => {
         console.log('onWheel> event', evt);
         evt.stopPropagation();

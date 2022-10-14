@@ -12,7 +12,7 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys, useHexColor, useAuth } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -24,6 +24,10 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // auth
+  const { auth } = useAuth();
+  const isGuest = auth?.provider === 'guest';
+
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const zindex = useUIStore((state) => state.zIndex);
@@ -235,7 +239,7 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed ? 'none' : 'auto',
+        pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', //Guest Blocker
       }}
       // minimum size of the app: 200 px
       minWidth={200}
@@ -245,7 +249,11 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      enableResizing={!minimized}
+      // TODO: Make this not required in the future with persmissions system
+      // Not ideal but right now we need this to prevent guests from moving apps.
+      // This happens locally before updating the server.
+      enableResizing={!minimized && !isGuest}
+      disableDragging={isGuest}
     >
       {/* Border Box around app to show it is selected */}
       {selected ? (

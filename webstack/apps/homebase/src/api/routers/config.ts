@@ -65,3 +65,16 @@ export function InfoRouter(): express.Router {
 
   return router;
 }
+
+export function TimeRouter(): express.Router {
+  const router = express.Router();
+  router.get('/', async (req, res) => {
+    // Configuration public values
+    const configuration = {
+      epoch: Date.now(),
+    };
+    res.json(configuration);
+  });
+
+  return router;
+}
