@@ -21,8 +21,10 @@
 .output-container {
   position: absolute;
   bottom: 35%;
-  left: 1rem;
+  left: 2rem;
   display: flex;
+  margin: 1rem;
+  padding: 1rem;
 }
 
 .popover-close {
