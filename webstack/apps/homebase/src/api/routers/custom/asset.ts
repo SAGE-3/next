@@ -410,7 +410,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const client = createClient({ url: config.redis.url });
           await client.connect();
           const token = await client.get('config:jupyter:token');
-          console.log('REDIS> token:', token);
 
           // Create a notebook file in Jupyter with the content of the file
           if (token) {
