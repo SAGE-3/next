@@ -32,7 +32,6 @@ export function LoginPage() {
   // Retrieve the name of the server to display in the page
   useEffect(() => {
     GetServerInfo().then((conf) => {
-      console.log('Info>', conf);
       if (conf.serverName) setServerName(conf.serverName);
       const servers = conf.servers;
       setServerList(servers);

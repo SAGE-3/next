@@ -6,6 +6,7 @@
  *
  */
 
+import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 
 import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
@@ -19,13 +20,16 @@ import {
   CheckUrlForBoardId,
   SocketAPI,
   useHexColor,
+  useData,
 } from '@sage3/frontend';
+
+import { serverConfiguration } from '@sage3/frontend';
 
 import { LoginPage } from './pages/Login';
 import { HomePage } from './pages/Home';
 import { BoardPage } from './pages/Board';
 import { AccountPage } from './pages/Account';
-import { useEffect, useState } from 'react';
+import { AdminPage } from './pages/Admin';
 
 /**
  * Main application component
@@ -73,6 +77,17 @@ export function App() {
                       <ProtectedUserRoute>
                         <HomePage />
                       </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
+
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedAdminRoute>
+                        <AdminPage />
+                      </ProtectedAdminRoute>
                     </ProtectedAuthRoute>
                   }
                 />
@@ -140,6 +155,26 @@ export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
     return user ? <> {props.children}</> : <Navigate to="/createuser" replace />;
   }
 };
+
+export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
+  const { user, loading } = useUser();
+  const { auth } = useAuth();
+  const data = useData('/api/configuration');
+
+  if (!user || loading || !data) {
+    return <div>Loading...</div>;
+  } else {
+    const config = data as serverConfiguration;
+    // in dev mode, everybody can access the route
+    if (!config.production) {
+      return <> {props.children}</>;
+    } else {
+      // in production, checking that the user is logged with google and in the list
+      return (auth?.provider === "google" && user?.data.email in config.admins) ? <> {props.children}</> : <Navigate to="/#/home" replace />;
+    }
+  }
+};
+
 
 // Check the connection status using the API socket.
 const useConnectStatus = () => {

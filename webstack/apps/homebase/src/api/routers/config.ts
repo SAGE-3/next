@@ -40,6 +40,7 @@ export function ConfigRouter(): express.Router {
       token: token,
       // Namespace for signing uuid v5 keys
       namespace: config.namespace,
+      admins: config.auth.admins || [],
     };
     res.json(configuration);
   });
