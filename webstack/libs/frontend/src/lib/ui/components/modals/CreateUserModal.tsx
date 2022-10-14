@@ -105,7 +105,6 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
               />
             </InputGroup>
           </FormControl>
-
           <FormControl isRequired mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
             <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
