@@ -13,11 +13,8 @@ from pydantic import PrivateAttr
 
 import json
 from config import ai_models, funcx as funcx_config
-import pandas as pd
 
 
-
-PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 
 # TODO: movie this to a configuration somewhere and call it something else.
 ai_settings = {
@@ -49,10 +46,6 @@ class AIPaneState(TrackedBaseModel):
 class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
-    # Original df to keep track of
-    _output_df: PandasDataFrame = PrivateAttr()
-    # Original df to keep track of
-    # _original_df: PandasDataFrame = PrivateAttr()
     # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -69,7 +62,7 @@ class AIPane(SmartBit):
 
         supported_tasks = {}
         if len(self.state.hostedApps.values()) > 1:
-            self.state.messages[time.time()] = """need to return error message saying that we 
+            self.state.messages[time.time()] = """need to return error message saying that we
             can on operate on one datatype at a time"""
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
@@ -83,32 +76,11 @@ class AIPane(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    # def run_function(self):
-    #     self.state.runStatus = True
-    #     print("Apps are being hosted: ")
-    #
-    #     print(self.state.hostedApps.values())
-    #     self.state.executeInfo.executeFunc = ""
-    #     self.send_updates()
-
-    # def test_function(self):
-    #     print("++++++++++++++++++++++++++++++")
-    #     if len(self.state.hostedApps) > 1:
-    #         # 1 can only handle apps of the same type.
-    #         print("Apps are being hosted: ")
-    #         print(len(self.state.hostedApps.values()))
-    #         print(self.state.hostedApps.values())
-    #     else:
-    #         print("Pane is empty")
-    #     self.state.executeInfo.executeFunc = ""
-    #     self.send_updates()
-
     def handle_exec_result(self, msg):
         print("I am handling the execution results")
         print(f" type of msg in aipane{type(msg)}")
-        self.state.output = json.dumps(msg)
-        # self._output_df = pd.read_json(self.state.output)
-        # self.state.output = self._output_df.to_dict("split")
+        self.state.output = msg
+        self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

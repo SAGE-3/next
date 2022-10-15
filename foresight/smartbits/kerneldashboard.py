@@ -60,9 +60,10 @@ class KernelDashboard(SmartBit):
         kernel_specs = json.loads(response.text)
         self.state.defaultKernel = kernel_specs['default']
         self.state.kernelSpecs = [kernel_specs]
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
+        self.refresh_list()
+        # self.state.executeInfo.executeFunc = ""
+        # self.state.executeInfo.params = {}
+        # self.send_updates()
 
     def get_kernels(self):
         j_url = f"{self.get_base_url()}/kernels"

@@ -6,22 +6,6 @@
  *
  */
 
-.red-circle {
-  height: 30px;
-  width: 30px;
-  background-color: red;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.green-circle {
-  height: 30px;
-  width: 30px;
-  background-color: green;
-  border-radius: 50%;
-  display: inline-block;
-}
-
 .message-container {
   position: absolute;
   left: 2rem;
@@ -36,8 +20,8 @@
 
 .output-container {
   position: absolute;
-  bottom: 10rem;
-  left: 5rem;
+  bottom: 35%;
+  left: 1rem;
   display: flex;
 }
 
