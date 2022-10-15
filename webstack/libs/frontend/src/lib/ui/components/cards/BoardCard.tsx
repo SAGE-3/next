@@ -116,7 +116,7 @@ export function BoardCard(props: BoardCardProps) {
         // borderColor={`${bColor + 'FF'}`}
         _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
       >
-        <Box display="flex" flexDirection={'column'} flexGrow={1} width="60%">
+        <Box display="flex" flexDirection={'column'} flexGrow={1} width="50%">
           <Text fontSize="lg" textOverflow={'ellipsis'} fontWeight="semibold" whiteSpace={'nowrap'} overflow={'hidden'} textAlign="left">
             {props.board.data.name}
           </Text>
