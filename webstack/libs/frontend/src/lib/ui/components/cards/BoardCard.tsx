@@ -97,13 +97,13 @@ export function BoardCard(props: BoardCardProps) {
       <EditBoardModal board={props.board} isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} />
       {/* <Tooltip label={<BoardPreview board={props.board} />} placement="top" backgroundColor={'transparent'} openDelay={1000}> */}
       <Box
-        display="flex"
-        justifyContent="left"
         height="60px"
         my="1"
         width="100%"
         cursor="pointer"
-        alignItems="baseline"
+        alignItems="center"
+        display="flex"
+        justifyContent={'space-between'}
         position="relative"
         onClick={handleEnterBoard}
         transition="all 0.25s "
@@ -111,62 +111,55 @@ export function BoardCard(props: BoardCardProps) {
         borderRadius="md"
         border="2px solid"
         borderColor={boardColor}
+        pl="2"
+        overflow="hidden"
         // borderColor={`${bColor + 'FF'}`}
         _hover={{ boxShadow: 'lg', borderColor: bColor + '00' }}
       >
-        <Box display="flex" height="100%" alignContent={'center'} justifyContent="space-between" width="100%">
-          <Box display="flex" flexDirection={'column'} ml="2" pt="1" flexGrow={1}>
-            <Text fontSize="lg" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="semibold">
-              {props.board.data.name}
+        <Box display="flex" flexDirection={'column'} flexGrow={1} width="60%">
+          <Text fontSize="lg" textOverflow={'ellipsis'} fontWeight="semibold" whiteSpace={'nowrap'} overflow={'hidden'} textAlign="left">
+            {props.board.data.name}
+          </Text>
+          <Text fontSize="sm" textOverflow={'ellipsis'} fontWeight="light" whiteSpace={'nowrap'} overflow={'hidden'} textAlign="left">
+            {props.board.data.description}
+          </Text>
+        </Box>
+
+        <Box display="flex" alignItems="center" justifyContent="right" flexGrow={2}>
+          <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
+            <Text fontSize="22px" mr="2">
+              {props.userCount}
             </Text>
-            <Text fontSize="sm" textOverflow={'ellipsis'} width="100%" textAlign={'left'} fontWeight="light">
-              {props.board.data.description}
-            </Text>
-          </Box>
+          </Tooltip>
 
-          <Box display="flex" alignItems="center" justifyContent="right" mr="2">
-            <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
-              <Text fontSize="22px" mr="2">
-                {props.userCount}
-              </Text>
-            </Tooltip>
+          <Tooltip
+            label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
+            openDelay={400}
+            placement="top-start"
+            hasArrow
+          >
+            <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
+          </Tooltip>
 
-            <Tooltip
-              label={props.board.data.isPrivate ? 'Board is Locked' : 'Board is Unlocked'}
-              openDelay={400}
-              placement="top-start"
-              hasArrow
-            >
-              <Box>{props.board.data.isPrivate ? <MdLock fontSize="20px" /> : <MdLockOpen fontSize="20px" />}</Box>
-            </Tooltip>
+          <Tooltip label={'Copy Board ID'} openDelay={400} placement="top-start" hasArrow>
+            <IconButton onClick={handleCopyId} aria-label="Board id copy" fontSize="2xl" variant="unstlyed" icon={<MdOutlineCopyAll />} />
+          </Tooltip>
 
-            <Tooltip label={'Copy Board ID'} openDelay={400} placement="top-start" hasArrow>
-              <IconButton onClick={handleCopyId} aria-label="Board id copy" fontSize="2xl" variant="unstlyed" icon={<MdOutlineCopyAll />} />
-            </Tooltip>
+          <Tooltip label={'Copy sharable link'} openDelay={400} placement="top-start" hasArrow>
+            <IconButton onClick={handleCopyLink} aria-label="Board link copy" fontSize="2xl" variant="unstlyed" icon={<MdLink />} ml="-3" />
+          </Tooltip>
 
-            <Tooltip label={'Copy sharable link'} openDelay={400} placement="top-start" hasArrow>
-              <IconButton
-                onClick={handleCopyLink}
-                aria-label="Board link copy"
-                fontSize="2xl"
-                variant="unstlyed"
-                icon={<MdLink />}
-                ml="-3"
-              />
-            </Tooltip>
-
-            <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
-              <IconButton
-                onClick={handleOpenSettings}
-                aria-label="Board Edit"
-                fontSize="2xl"
-                variant="unstlyed"
-                disabled={!yours}
-                marginLeft={-3} // Weird margin on the icon
-                icon={<MdSettings />}
-              />
-            </Tooltip>
-          </Box>
+          <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
+            <IconButton
+              onClick={handleOpenSettings}
+              aria-label="Board Edit"
+              fontSize="2xl"
+              variant="unstlyed"
+              disabled={!yours}
+              marginLeft={-3} // Weird margin on the icon
+              icon={<MdSettings />}
+            />
+          </Tooltip>
         </Box>
       </Box>
       {/* </Tooltip> */}
