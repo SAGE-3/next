@@ -19,7 +19,7 @@ import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
 import { state as AppState } from './index';
-import { isGIF } from '@sage3/shared';
+//import { isGIF } from '@sage3/shared';
 
 /**
  * ImageViewer app
@@ -45,7 +45,9 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  const box = { xmin: 109, ymin: 186, xmax: 260, ymax: 454 };
+  const box = {'xmin': 109, 'ymin': 186, 'xmax': 260, 'ymax': 454};
+
+  console.log(displaySize);
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -108,12 +110,14 @@ function AppComponent(props: App): JSX.Element {
         <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
         <Box
           position="absolute"
-          right={0 + 'px'}
-          bottom={0 + 'px'}
-          width={box.xmax - box.xmin - 10 + 'px'}
-          height={box.ymax - box.ymin + 'px'}
+
+          left={(box.xmin / 649) * displaySize.width  + 'px'}
+          top={(box.ymin / 486) * displaySize.height +  'px'}
+          width={(box.xmax / 649) * displaySize.width - (box.xmin / 649) * displaySize.width + 'px'}
+          height={(box.ymax / 486) * displaySize.height - (box.ymin / 486) * displaySize.height + 'px'}
+
           border="2px solid red"
-          style={{display: s.annotations ? "block" : "none"}}
+          style={{display: s.hasAnnotations ? "block" : "none"}}
         >
 
         </Box>
@@ -167,11 +171,12 @@ function ToolbarComponent(props: App): JSX.Element {
         <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
           <Button
             onClick={() => {
-              if (s.annotations == false) {
-                updateState(props._id, {annotations: true});
-              } else {
-                updateState(props._id, {annotations: false});
-              }
+            updateState(props._id, {hasAnnotations: !s.hasAnnotations});
+            //   if (s.hasAnnotations == false) {
+            //     updateState(props._id, {hasAnnotations: true});
+            //   } else {
+            //     updateState(props._id, {hasAnnotations: false});
+            //   }
             }}
           >
             <HiPencilAlt />
