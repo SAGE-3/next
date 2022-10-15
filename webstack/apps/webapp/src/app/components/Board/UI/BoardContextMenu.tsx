@@ -27,7 +27,12 @@ const savedRadios = [false, true];
 export function BoardContextMenu(props: ContextProps) {
   // User information
   const { user } = useUser();
+
   const { toHome } = useRouteNav();
+  // Redirect the user back to the homepage
+  function handleHomeClick() {
+    toHome(props.roomId);
+  }
 
   const presences = usePresenceStore((state) => state.presences);
   const createApp = useAppStore((state) => state.create);
@@ -153,7 +158,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => toHome()}
+            onClick={() => handleHomeClick()}
           >
             Back to Room
           </Button>
