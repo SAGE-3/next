@@ -49,7 +49,7 @@ export function BoardList(props: BoardListProps) {
   const presences = usePresenceStore((state) => state.presences);
 
   // Create board dialog
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
@@ -131,11 +131,7 @@ export function BoardList(props: BoardListProps) {
     <Box m="4" mt="0" pt="1" borderTop="solid 1px" borderColor={borderColor}>
       <Box textAlign="center" display="flex" flexDir="column" justifyContent="space-between" height="100%">
         {props.selectedRoom ? (
-          <CreateBoardModal
-            roomId={props.selectedRoom._id}
-            isOpen={isOpen}
-            onClose={onClose}
-          ></CreateBoardModal>
+          <CreateBoardModal roomId={props.selectedRoom._id} isOpen={isOpen} onClose={onClose}></CreateBoardModal>
         ) : null}
         <Box display="flex" justifyContent={'space-between'}>
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
