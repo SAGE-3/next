@@ -14,7 +14,7 @@ def handle_ai_calls(model_id, model_url, data):
     if model_id != "":
         response = requests.request("POST", model_url, headers=headers, data=payload)
         if response.status_code == 200:
-            return {"output": response.text}
+            return {"output": json.loads(response.text)}
         else:
             return {"output": ""}
     else:
