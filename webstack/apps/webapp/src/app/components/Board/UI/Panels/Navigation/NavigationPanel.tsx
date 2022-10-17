@@ -13,6 +13,7 @@ import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen } from 'react-ico
 import { StuckTypes, useAppStore, useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
+import { Presence, User } from '@sage3/shared/types';
 
 export interface NavProps {
   fitApps: () => void;
@@ -227,25 +228,8 @@ export function NavigationPanel(props: NavProps) {
               .map((presence) => {
                 const u = users.find((el) => el._id === presence.data.userId);
                 if (!u) return null;
-                const self = u._id === user?._id;
-                const color = useHexColor(u.data.color);
                 return (
-                  <Box
-                    key={presence.data.userId}
-                    style={{
-                      position: 'absolute',
-                      left: (presence.data.cursor.x - appsX) * mapScale + 'px',
-                      top: (presence.data.cursor.y - appsY) * mapScale + 'px',
-                      transition: 'all 0.5s ease-in-out',
-                      pointerEvents: 'none',
-                      display: 'flex',
-                      zIndex: 100000,
-                    }}
-                    borderRadius="50%"
-                    backgroundColor={self ? 'white' : color}
-                    width={self ? '6px' : '4px'}
-                    height={self ? '6px' : '4px'}
-                  ></Box>
+                  <NavMapCursor key={presence._id} presence={presence} user={u} mapScale={mapScale} boardShift={{ x: appsX, y: appsY }} />
                 );
               })}
           </Box>
@@ -275,3 +259,36 @@ export function NavigationPanel(props: NavProps) {
     </Panel>
   );
 }
+
+type NavMapCusorProps = {
+  presence: Presence;
+  user: User;
+  boardShift: { x: number; y: number };
+  mapScale: number;
+};
+
+const NavMapCursor = (props: NavMapCusorProps) => {
+  const { user } = useUser();
+  const self = props.user._id === user?._id;
+  const color = useHexColor(props.user.data.color);
+  const left = (props.presence.data.cursor.x - props.boardShift.x) * props.mapScale + 'px';
+  const top = (props.presence.data.cursor.y - props.boardShift.y) * props.mapScale + 'px';
+  return (
+    <Box
+      key={props.presence.data.userId}
+      style={{
+        position: 'absolute',
+        left: left,
+        top: top,
+        transition: 'all 0.5s ease-in-out',
+        pointerEvents: 'none',
+        display: 'flex',
+        zIndex: 100000,
+      }}
+      borderRadius="50%"
+      backgroundColor={self ? 'white' : color}
+      width={self ? '6px' : '4px'}
+      height={self ? '6px' : '4px'}
+    ></Box>
+  );
+};

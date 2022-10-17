@@ -8,7 +8,6 @@
 
 // Import the React library
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
 
 import { useAppStore, useUser, useUsersStore } from '@sage3/frontend';
@@ -27,6 +26,7 @@ import dateFormat from 'date-fns/format';
 // Styling for the placeholder text
 import './styling.css';
 import { MdRemove, MdAdd, MdFileDownload } from 'react-icons/md';
+import { useParams } from 'react-router';
 
 // Stickies colors
 const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed', '#B794F4'];
@@ -46,11 +46,7 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
-  const location = useLocation();
-  const locationState = location.state as {
-    boardId: string;
-    roomId: string;
-  };
+  const { boardId, roomId } = useParams();
 
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
@@ -116,8 +112,8 @@ function AppComponent(props: App): JSX.Element {
       createApp({
         name: 'Stickie',
         description: 'Stickie',
-        roomId: locationState.roomId,
-        boardId: locationState.boardId,
+        roomId: roomId!,
+        boardId: boardId!,
         position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },

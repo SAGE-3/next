@@ -75,7 +75,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     };
     setPassword(makeid(6));
     // Reset the form fields
-    setName('')
+    setName('');
     setDescription('');
     setColor(randomSAGEColor());
     setProtected(false);
@@ -142,7 +142,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>

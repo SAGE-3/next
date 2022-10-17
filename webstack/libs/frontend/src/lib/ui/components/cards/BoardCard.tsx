@@ -7,7 +7,7 @@
  */
 
 import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useToast } from '@chakra-ui/react';
-import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll } from 'react-icons/md';
+import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { BoardSchema } from '@sage3/shared/types';
@@ -63,14 +63,28 @@ export function BoardCard(props: BoardCardProps) {
     onOpenEdit();
   };
 
-  // Copy the board id to the clipboard
   const toast = useToast();
+  // Copy the board id to the clipboard
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(props.board._id);
     toast({
       title: 'Success',
-      description: `BoardID Copied to Clipboard`,
+      description: `BoardID copied to clipboard.`,
+      duration: 3000,
+      isClosable: true,
+      status: 'success',
+    });
+  };
+
+  // Copy a sharable link to the user's os clipboard
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const link = `${window.location.origin}/#/enter/${props.board.data.roomId}/${props.board._id}`;
+    navigator.clipboard.writeText(link);
+    toast({
+      title: 'Success',
+      description: `Sharable Board link copied to clipboard.`,
       duration: 3000,
       isClosable: true,
       status: 'success',
@@ -127,7 +141,18 @@ export function BoardCard(props: BoardCardProps) {
             </Tooltip>
 
             <Tooltip label={'Copy Board ID'} openDelay={400} placement="top-start" hasArrow>
-              <IconButton onClick={handleCopyId} aria-label="Board Edit" fontSize="2xl" variant="unstlyed" icon={<MdOutlineCopyAll />} />
+              <IconButton onClick={handleCopyId} aria-label="Board id copy" fontSize="2xl" variant="unstlyed" icon={<MdOutlineCopyAll />} />
+            </Tooltip>
+
+            <Tooltip label={'Copy sharable link'} openDelay={400} placement="top-start" hasArrow>
+              <IconButton
+                onClick={handleCopyLink}
+                aria-label="Board link copy"
+                fontSize="2xl"
+                variant="unstlyed"
+                icon={<MdLink />}
+                ml="-3"
+              />
             </Tooltip>
 
             <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>

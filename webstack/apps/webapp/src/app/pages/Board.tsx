@@ -7,31 +7,33 @@
  */
 
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
-import { usePresence, useAppStore } from '@sage3/frontend';
+import { usePresence, useAppStore, useRouteNav, useBoardStore, useRoomStore } from '@sage3/frontend';
 
 // Board Layers
 import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
 import { Box, useColorModeValue } from '@chakra-ui/react';
 import { Clock } from '../components/Board/UI/Clock';
 
-type LocationParams = {
-  boardId: string;
-  roomId: string;
-};
-
 /**
  * The board page which displays the board and its apps.
  */
 export function BoardPage() {
   // Navigation and routing
-  const location = useLocation();
-  const locationState = location.state as LocationParams;
+  const { roomId, boardId } = useParams();
+  const { toHome } = useRouteNav();
+
+  if (!roomId || !boardId) {
+    toHome(roomId);
+    return null;
+  }
 
   // Board and App Store stuff
   const subBoard = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
+  const subBoards = useBoardStore((state) => state.subscribeByRoomId);
+  const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
@@ -40,13 +42,14 @@ export function BoardPage() {
 
   // Handle joining and leave a board
   useEffect(() => {
+    // This is if someone is joining a board by a link
+    subRooms();
+    // Sub to boards belonging to this room
+    subBoards(roomId);
     // Subscribe to the board that was selected
-    subBoard(locationState.boardId);
+    subBoard(boardId);
     // Update the user's presence information
-    updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
-
-    // window history API: replaceState(statedata, title, url)
-    window.history.replaceState({ boardId: locationState.boardId, roomId: locationState.roomId }, "Board", `/#/enter/${locationState.boardId}`);
+    updatePresence({ boardId: boardId, roomId: roomId });
 
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
@@ -60,7 +63,7 @@ export function BoardPage() {
   return (
     <>
       {/* The apps live here */}
-      <BackgroundLayer boardId={locationState.boardId} roomId={locationState.roomId}></BackgroundLayer>
+      <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer>
 
       {/* The Corner SAGE3 Image */}
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
@@ -70,10 +73,10 @@ export function BoardPage() {
       <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
 
       {/* TODO White Board Layer for marking onto board */}
-      <WhiteboardLayer boardId={locationState.boardId} roomId={locationState.roomId}></WhiteboardLayer>
+      <WhiteboardLayer boardId={boardId} roomId={roomId}></WhiteboardLayer>
 
       {/* Upper layer for local UI stuff */}
-      <UILayer boardId={locationState.boardId} roomId={locationState.roomId}></UILayer>
+      <UILayer boardId={boardId} roomId={roomId}></UILayer>
     </>
   );
 }

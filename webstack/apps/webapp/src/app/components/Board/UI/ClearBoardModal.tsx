@@ -6,16 +6,17 @@
  *
  */
 
-import { Button, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/react";
+import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/react';
 
 type ClearBoardProps = {
   onClick: () => void;
   onClose: () => void;
-}
+  isOpen: boolean;
+};
 
 export function ClearBoardModal(props: ClearBoardProps) {
   return (
-    <>
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Clear the Board</ModalHeader>
@@ -29,6 +30,6 @@ export function ClearBoardModal(props: ClearBoardProps) {
           </Button>
         </ModalFooter>
       </ModalContent>
-    </>
-  )
+    </Modal>
+  );
 }

@@ -174,11 +174,13 @@ export function AppWindow(props: WindowProps) {
 
   // Close the app and delete from server
   function handleClose(e: any) {
+    e.stopPropagation();
     deleteApp(props.app._id);
   }
 
   // Minimize the app. Currently only local.
-  function handleMinimize() {
+  function handleMinimize(e: any) {
+    e.stopPropagation();
     update(props.app._id, { minimized: !minimized });
   }
 
@@ -264,11 +266,10 @@ export function AppWindow(props: WindowProps) {
         <Box
           position="absolute"
           className="handle" // The CSS name react-rnd latches on to for the drag events
-          left="-3px"
-          top="-3px"
-          width={size.width + 6}
-          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
-          borderRadius="8px"
+          left="0px"
+          top={titleBarHeight + 'px'}
+          width={size.width}
+          height={minimized ? 0 + 'px' : size.height + 'px'}
           cursor="move"
           userSelect={'none'}
           zIndex={2}
@@ -312,7 +313,7 @@ export function AppWindow(props: WindowProps) {
         borderRadius="6px 6px 0 0"
       >
         {/* Left Title Bar Elements */}
-        <Box display="flex" alignItems="center">
+        <Box display="flex" alignItems="center" textOverflow={'ellipsis'} maxWidth="80%">
           <Tooltip label={'Opened by ' + owner?.data.name} aria-label="username" hasArrow={true} placement="top-start">
             <Avatar
               name={owner?.data.name}
@@ -327,10 +328,12 @@ export function AppWindow(props: WindowProps) {
               borderColor="whiteAlpha.600"
             />
           </Tooltip>
-          <Text color="white">{props.app.data.description}</Text>
+          <Text color="white" textOverflow={'ellipsis'} overflow="hidden">
+            {props.app.data.description}
+          </Text>
         </Box>
         {/* Right Title bar Elements */}
-        <Box display="flex" alignItems="center">
+        <Box display="flex" alignItems="center" minWidth="0">
           {/* Minimize Buttons */}
           {minimized ? (
             <Tooltip placement="top-start" hasArrow={true} label={'Open App'} openDelay={400}>

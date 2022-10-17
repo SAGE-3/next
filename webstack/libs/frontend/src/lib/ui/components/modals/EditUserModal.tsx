@@ -39,7 +39,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
   const [email, setEmail] = useState<UserSchema['email']>(user?.data.email || '');
-  const [color, setColor] = useState(user?.data.color as SAGEColors || randomSAGEColor());
+  const [color, setColor] = useState((user?.data.color as SAGEColors) || randomSAGEColor());
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
@@ -82,7 +82,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit User Account</ModalHeader>

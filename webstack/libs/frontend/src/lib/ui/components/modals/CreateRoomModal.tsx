@@ -74,7 +74,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     };
     setPassword(makeid(6));
     // Reset the fields
-    setName('')
+    setName('');
     setDescription('');
     setColor(randomSAGEColor());
   }, [props.isOpen]);
@@ -139,7 +139,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Create Room</ModalHeader>
