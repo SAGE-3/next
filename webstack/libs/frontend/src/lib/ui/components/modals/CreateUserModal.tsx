@@ -37,9 +37,9 @@ type CreateUserProps = {
 
 export function CreateUserModal(props: CreateUserProps): JSX.Element {
   // get the user information
-  const auth = useAuth();
+  const { auth, logout } = useAuth();
 
-  const [name, setName] = useState<UserSchema['name']>(auth.auth?.displayName ?? '');
+  const [name, setName] = useState<UserSchema['name']>(auth?.displayName ?? '');
   const [type, setType] = useState<UserSchema['userType']>('client');
   const [color, setColor] = useState<UserSchema['color']>(randomSAGEColor());
 
@@ -68,7 +68,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
     if (name) {
       const newUser = {
         name,
-        email: auth.auth?.email ? auth.auth.email : '',
+        email: auth?.email ? auth.email : '',
         color: color,
         userRole: 'user',
         userType: type,
@@ -123,12 +123,12 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
             </RadioGroup>{' '}
           </FormControl>
           <Text mt={5} fontSize={'md'}>
-            Authentication: <em>{auth.auth?.provider}  - {auth.auth?.email}</em>
+            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
           </Text>
-          {auth.auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
+          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mx={2} onClick={auth.logout}>
+          <Button colorScheme="red" mx={2} onClick={logout}>
             Cancel
           </Button>
           <Button colorScheme="green" onClick={() => createAccount()} disabled={!name}>
