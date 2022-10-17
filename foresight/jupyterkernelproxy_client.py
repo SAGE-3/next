@@ -35,10 +35,10 @@ class JupyterKernelClient(Borg):
             self.msg_checker = threading.Thread(target=self.process_reponse)
             self.msg_checker.start()
             self.callback_info = {}
-            self.available_kernels = {}
+            # self.available_kernels = {}
 
-    def set_available_kernels(self):
-        pass
+    # def set_available_kernels(self):
+    #     pass
         # jupyter_token = self.redis_server.get("config:jupyter:token")
         # headers = {'Authorization': f"Token  {jupyter_token.decode()}"}
         # j_url = f"{conf[prod_type]['jupyter_server']}/api/kernels"
@@ -76,7 +76,7 @@ class JupyterKernelClient(Borg):
 
 
     def process_reponse(self):
-        check_kernels_every = 10 # check
+        # check_kernels_every = 10 # check
         while True:
 
             msg = self.pubsub.get_message()
@@ -92,13 +92,13 @@ class JupyterKernelClient(Borg):
 
 
             time.sleep(1)  # be nice to the system :)
-            if check_kernels_every == 0:
+            # if check_kernels_every == 0:
                 # TODO: check if kernels changed and update accordingly
-                self.set_available_kernels()
+                # self.set_available_kernels()
 
-                check_kernels_every = 10
-            else:
-                check_kernels_every -= 1
+            #     check_kernels_every = 10
+            # else:
+            #     check_kernels_every -= 1
 
 
 

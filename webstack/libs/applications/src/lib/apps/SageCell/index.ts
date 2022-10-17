@@ -19,45 +19,51 @@ const executeInfoSchema = z.object({
 
 export const schema = z.object({
   code: z.string(),
+  kernel: z.string(),
+  output: z.string(),
   language: z.string(),
   fontSize: z.number(),
   theme: z.string(),
-  kernel: z.string(),
-  kernels: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      last_activity: z.string(),
-      execution_state: z.string(),
-      connections: z.boolean(),
-    })
-  ),
+  // kernels: z.array(
+  //   z.object({
+  //     id: z.string(),
+  //     name: z.string(),
+  //     last_activity: z.string(),
+  //     execution_state: z.string(),
+  //     connections: z.boolean(),
+  //   })
+  // ),
   availableKernels: z.array(
     z.object({
-      label: z.string(),
-      value: z.string()
+      id: z.string(),
+      alias: z.string(),
     })
   ),
-  sessions: z.array(
+  availableSessions: z.array(
     z.object({
       id: z.string(),
-      path: z.string(),
-      name: z.string(),
-      type: z.string(),
-      kernel: z.object({
-        id: z.string(),
-        name: z.string(),
-        last_activity: z.string(),
-        execution_state: z.string(),
-        connections: z.boolean(),
-      }),
-      notebook: z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
+      alias: z.string(),
     })
   ),
-  output: z.string(),
+  // sessions: z.array(
+    // z.object({
+  //     id: z.string(),
+  //     path: z.string(),
+  //     name: z.string(),
+  //     type: z.string(),
+  //     kernel: z.object({
+  //       id: z.string(),
+  //       name: z.string(),
+  //       last_activity: z.string(),
+  //       execution_state: z.string(),
+  //       connections: z.boolean(),
+  //     }),
+  //     notebook: z.object({
+  //       id: z.string(),
+  //       name: z.string(),
+  //     }),
+  //   })
+  // ),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -69,14 +75,13 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
+  kernel: '',
+  output: '',
   language: 'python',
   fontSize: 1.5,
   theme: 'xcode',
-  kernel: '',
-  kernels: [],
   availableKernels: [],
-  sessions: [],
-  output: '',
+  availableSessions: [],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
