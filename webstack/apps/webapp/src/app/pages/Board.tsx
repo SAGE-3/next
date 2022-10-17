@@ -9,7 +9,7 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { usePresence, useAppStore, useRouteNav, useBoardStore, useRoomStore } from '@sage3/frontend';
+import { usePresence, useAppStore, useRouteNav, useBoardStore, useRoomStore, usePresenceStore, useUsersStore } from '@sage3/frontend';
 
 // Board Layers
 import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
@@ -37,6 +37,8 @@ export function BoardPage() {
 
   // Presence Information
   const { update: updatePresence } = usePresence();
+  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
@@ -48,6 +50,9 @@ export function BoardPage() {
     subBoards(roomId);
     // Subscribe to the board that was selected
     subBoard(boardId);
+    // Sub to users and presence
+    subscribeToPresence();
+    subscribeToUsers();
     // Update the user's presence information
     updatePresence({ boardId: boardId, roomId: roomId });
 
