@@ -20,7 +20,7 @@
 
 .output-container {
   position: absolute;
-  bottom: 35%;
+  bottom: 15%;
   left: 2rem;
   display: flex;
   margin: 1rem;
@@ -31,3 +31,4 @@
   position: relative;
   float: right;
 }
+

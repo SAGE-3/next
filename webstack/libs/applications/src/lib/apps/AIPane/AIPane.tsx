@@ -58,8 +58,6 @@ function AppComponent(props: App): JSX.Element {
   const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
-  // const [supportedApps, setSupportedApps] = useState(["Counter", "Leaflet", "Notepad"])
-
   const prevX = useRef(0);
   const prevY = useRef(0);
 
@@ -151,6 +149,8 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
     });
+    console.log(s.supported_tasks)
+    Object.values(s.supported_tasks).forEach(el => console.log(el))
   }
 
   function closePopovers(info: string) {
