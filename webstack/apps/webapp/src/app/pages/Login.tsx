@@ -7,16 +7,12 @@
  */
 
 import { useEffect, useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-import {
-  Button, ButtonGroup, IconButton, Box, useColorMode,
-  Image, Center, Text, VStack, Select, InputGroup
-} from '@chakra-ui/react';
+import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Center, Text, VStack, Select, InputGroup } from '@chakra-ui/react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
 
-import { useAuth } from '@sage3/frontend';
+import { useAuth, useRouteNav } from '@sage3/frontend';
 import { GetServerInfo } from '@sage3/frontend';
 
 // Logos
@@ -26,7 +22,7 @@ import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
 
 export function LoginPage() {
   const { auth, googleLogin, ciLogin, guestLogin } = useAuth();
-  const navigate = useNavigate();
+  const { toHome } = useRouteNav();
   // Server name and list
   const [serverName, setServerName] = useState<string>('');
   const [serverList, setServerList] = useState<{ name: string; url: string }[]>();
@@ -36,7 +32,6 @@ export function LoginPage() {
   // Retrieve the name of the server to display in the page
   useEffect(() => {
     GetServerInfo().then((conf) => {
-      console.log('Info>', conf);
       if (conf.serverName) setServerName(conf.serverName);
       const servers = conf.servers;
       setServerList(servers);
@@ -61,9 +56,9 @@ export function LoginPage() {
 
   const authNavCheck = useCallback(() => {
     if (auth) {
-      navigate('/home');
+      toHome();
     }
-  }, [auth, navigate]);
+  }, [auth]);
 
   useEffect(() => {
     authNavCheck();

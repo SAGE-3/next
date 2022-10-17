@@ -7,18 +7,28 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
 import { AssetHTTPService } from '@sage3/frontend';
 
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader,
-  ModalFooter, ModalBody,
-  Box, Button, Flex,
-  useEventListener, useDisclosure, Portal,
-  useColorModeValue, useToast, Tooltip,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  Box,
+  Button,
+  Flex,
+  useEventListener,
+  useDisclosure,
+  Portal,
+  useColorModeValue,
+  useToast,
+  Tooltip,
 } from '@chakra-ui/react';
 
 // Icons for file types
@@ -28,7 +38,7 @@ import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore 
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
-import "./menu.scss";
+import './menu.scss';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -37,12 +47,12 @@ export type RowFileProps = {
 };
 
 /**
-* Component diplaying one file in a row
-* Can be selected with a click
-* Change background color on hover
-* @param p FileEntry
-* @returns
-*/
+ * Component diplaying one file in a row
+ * Can be selected with a click
+ * Change background color on hover
+ * @param p FileEntry
+ * @returns
+ */
 export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
@@ -62,8 +72,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // Room and board
-  const location = useLocation();
-  const { boardId, roomId } = location.state as { boardId: string; roomId: string };
+  const { boardId, roomId } = useParams();
+  if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
@@ -126,17 +136,17 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
     // Build the drag image for the file
     const img = new Image();
-    img.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2FkZDhlNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSJub25lIiBkPSJNMCAwaDI0djI0SDBWMHoiLz48cGF0aCBkPSJNMTQgMkg2Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDEyYzEuMSAwIDItLjkgMi0yVjhsLTYtNnptNCAxOEg2VjRoOHY0aDR2MTJ6bS02LTNjLTEuMSAwLTItLjktMi0yVjkuNWMwLS4yOC4yMi0uNS41LS41cy41LjIyLjUuNVYxNWgyVjkuNWEyLjUgMi41IDAgMCAwLTUgMFYxNWMwIDIuMjEgMS43OSA0IDQgNHM0LTEuNzkgNC00di00aC0ydjRjMCAxLjEtLjkgMi0yIDJ6Ii8+PC9zdmc+";
+    img.src =
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2FkZDhlNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSJub25lIiBkPSJNMCAwaDI0djI0SDBWMHoiLz48cGF0aCBkPSJNMTQgMkg2Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDEyYzEuMSAwIDItLjkgMi0yVjhsLTYtNnptNCAxOEg2VjRoOHY0aDR2MTJ6bS02LTNjLTEuMSAwLTItLjktMi0yVjkuNWMwLS4yOC4yMi0uNS41LS41cy41LjIyLjUuNVYxNWgyVjkuNWEyLjUgMi41IDAgMCAwLTUgMFYxNWMwIDIuMjEgMS43OSA0IDQgNHM0LTEuNzkgNC00di00aC0ydjRjMCAxLjEtLjkgMi0yIDJ6Ii8+PC9zdmc+';
     setDragImage(img);
 
     return () => {
       button?.removeEventListener('click', onSingleClick);
-    }
+    };
   }, [divRef]);
 
   // Context menu handler (right click)
   useEventListener('contextmenu', (e) => {
-
     // deselect file selection
     setSelected(false);
     // hide context menu
@@ -187,25 +197,33 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     }
     // call drag callback in the parent
     if (selected) dragCB(e);
-    else e.preventDefault()
+    else e.preventDefault();
   };
 
   // Create an app for a file
   const onDoubleClick = async (event: React.MouseEvent<HTMLDivElement>) => {
     if (!user) return;
     // Get around  the center of the board
-    const xDrop = Math.floor(-boardPosition.x + (window.innerWidth / scale) / 2);
-    const yDrop = Math.floor(-boardPosition.y + (window.innerHeight / scale) / 2);
+    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
 
     // Create the app
     const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user._id);
     if (setup) createApp(setup);
-  }
+  };
 
   return (
     <div ref={divRef}>
-      <Flex bg={highlight} _hover={{ background: hover }} ref={buttonRef} fontFamily="mono"
-        alignItems="center" draggable={true} onDragStart={dragStart} onDoubleClick={onDoubleClick}>
+      <Flex
+        bg={highlight}
+        _hover={{ background: hover }}
+        ref={buttonRef}
+        fontFamily="mono"
+        alignItems="center"
+        draggable={true}
+        onDragStart={dragStart}
+        onDoubleClick={onDoubleClick}
+      >
         <Box w="30px">{whichIcon(extension)}</Box>
         <Tooltip hasArrow label={file.originalfilename} placement="top-start" openDelay={500}>
           <Box flex="1" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
@@ -237,8 +255,9 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
               left: anchorPoint.x,
               background: bgColor,
               border: border,
-              fontSize: "0.75rem"
-            }}>
+              fontSize: '0.75rem',
+            }}
+          >
             <li className="s3contextmenuitem" id={'copy'} onClick={actionClick}>
               Copy URL
             </li>
@@ -250,10 +269,10 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             </li>
           </ul>
         </Portal>
-      ) : (null)}
+      ) : null}
 
       {/* Delete a file modal */}
-      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={"2xl"}>
+      <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={'2xl'} blockScrollOnMount={false}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Delete an Asset</ModalHeader>
@@ -262,10 +281,13 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             <Button colorScheme="green" size="sm" mr={3} onClick={onDeleteClose}>
               Cancel
             </Button>
-            <Button colorScheme="red" size="sm" onClick={() => {
-              AssetHTTPService.del(file.id);
-              onDeleteClose();
-            }}
+            <Button
+              colorScheme="red"
+              size="sm"
+              onClick={() => {
+                AssetHTTPService.del(file.id);
+                onDeleteClose();
+              }}
             >
               Yes, Delete it
             </Button>

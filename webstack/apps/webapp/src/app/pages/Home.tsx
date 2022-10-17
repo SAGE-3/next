@@ -18,26 +18,23 @@ import {
   usePresence,
   usePresenceStore,
   useRoomStore,
-  useUser,
   useUsersStore,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
 import { HomeAvatar } from '../components/Home/HomeAvatar';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Clock } from '../components/Board/UI/Clock';
 
 export function HomePage() {
-  // User
-  const { user } = useUser();
+  // URL Params
+  const { roomId } = useParams();
 
   // Room Store
-  const location = useLocation() as any;
-  const [roomId] = useState<string | undefined>(location.state?.roomId);
+  const [selectedRoomId] = useState<string | undefined>(roomId);
   const rooms = useRoomStore((state) => state.rooms);
   const subToRooms = useRoomStore((state) => state.subscribeToAllRooms);
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
-  const roomOwner = selectedRoom?.data.ownerId === user?._id;
   const roomsFetched = useRoomStore((state) => state.fetched);
 
   // Board Store
@@ -97,11 +94,11 @@ export function HomePage() {
       handleRoomClick(room);
     }
     if (roomsFetched) {
-      if (!roomId) {
+      if (!selectedRoomId) {
         goToMainRoom();
       } else {
         // Go to room with id. Does room exist, if not go to main room
-        const room = rooms.find((room) => room._id === roomId);
+        const room = rooms.find((room) => room._id === selectedRoomId);
         room ? handleRoomClick(room) : goToMainRoom();
       }
     }

@@ -47,7 +47,7 @@ export function getExtension(mimeType: string): string {
  * @returns {boolean}
  */
 export function isImage(mimeType: string): boolean {
-  return mimeType.startsWith('image/');
+  return mimeType.startsWith('image/') && mimeType !== 'image/heic';
 }
 
 /**

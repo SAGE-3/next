@@ -8,7 +8,7 @@
 
 // Chakra and React imports
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Text, SimpleGrid, useDisclosure } from '@chakra-ui/react';
+import { Box, Button, Text, SimpleGrid, useDisclosure, Tabs, TabList, Tab, TabPanels, TabPanel, Image } from '@chakra-ui/react';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -21,9 +21,6 @@ import { genId } from '@sage3/shared';
 
 // Twilio Imports
 import { LocalVideoTrack } from 'twilio-video';
-
-// Icons
-import { MdScreenShare } from 'react-icons/md';
 
 type ElectronSource = {
   appIcon: null | string;
@@ -53,12 +50,14 @@ function AppComponent(props: App): JSX.Element {
   // App Store
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
+  const deleteApp = useAppStore((state) => state.delete);
 
   // Video and HTML Ref
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // UI
-  const red = useHexColor('red.500');
+  const red = useHexColor('red');
+  const teal = useHexColor('teal');
 
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
@@ -68,47 +67,72 @@ function AppComponent(props: App): JSX.Element {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // State of the current time
-  const now = Date.now();
-  const [expirationTime, setExpirationTime] = useState<string>(
-    new Date(screenShareTimeLimit - (now - props._createdAt)).getMinutes().toString() + 'm'
-  );
+  const [serverTimeDifference, setServerTimeDifference] = useState(0);
+  const [expirationTime, setExpirationTime] = useState<string>('Checking Time...');
+
+  // Get server time
+  useEffect(() => {
+    async function getServerTime() {
+      const response = await fetch('/api/time');
+      const time = await response.json();
+      setServerTimeDifference(Date.now() - time.epoch);
+    }
+    getServerTime();
+  }, []);
 
   // Update the time on an interval every 30secs
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = Date.now();
-      const duration = screenShareTimeLimit; // 60 minutes
-      setExpirationTime(new Date(duration - (now - props._createdAt)).getMinutes().toString() + 'm');
-    }, 60 * 1000);
+      const now = Date.now() + serverTimeDifference;
+      const createdAt = props._createdAt + serverTimeDifference;
+      const timeLeft = screenShareTimeLimit - (now - createdAt);
+      const minutes = Math.floor(timeLeft / 1000 / 60);
+      setExpirationTime(minutes + 'm');
+    }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [serverTimeDifference]);
+
+  useEffect(() => {
+    if (room && yours) {
+      shareScreen();
+    }
+  }, [room]);
 
   const shareScreen = async () => {
     stopStream();
     if (room && videoRef.current) {
       // Load electron and the IPCRender
       if (isElectron()) {
-        const electron = window.require('electron');
-        const ipcRenderer = electron.ipcRenderer;
-        // Get sources from the main process
-        ipcRenderer.on('set-source', async (evt: any, sources: any) => {
-          // Check all sources and list for screensharing
-          const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
-          for (const source of sources) {
-            allSources.push(source);
-          }
-          setElectronSources(allSources);
-          onOpen();
-        });
-        ipcRenderer.send('request-sources');
+        try {
+          const electron = window.require('electron');
+          const ipcRenderer = electron.ipcRenderer;
+          // Get sources from the main process
+          ipcRenderer.on('set-source', async (evt: any, sources: any) => {
+            // Check all sources and list for screensharing
+            const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
+            for (const source of sources) {
+              allSources.push(source);
+            }
+            setElectronSources(allSources);
+            onOpen();
+          });
+          ipcRenderer.send('request-sources');
+        } catch (err) {
+          deleteApp(props._id);
+        }
       } else {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        const videoId = genId();
-        const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
-        room.localParticipant.publishTrack(screenTrack);
-        await updateState(props._id, { videoId });
+        try {
+          const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
+
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+          const videoId = genId();
+          const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
+          room.localParticipant.publishTrack(screenTrack);
+          await updateState(props._id, { videoId });
+        } catch (err) {
+          deleteApp(props._id);
+        }
       }
     }
   };
@@ -116,9 +140,7 @@ function AppComponent(props: App): JSX.Element {
   const stopStream = () => {
     if (room) {
       const videoId = s.videoId;
-      // console.log(room.localParticipant.tracks);
       const track = Array.from(room.localParticipant.videoTracks.values()).find((el) => el.trackName === videoId);
-      // console.log(track);
       track?.unpublish();
       track?.track.stop();
       updateState(props._id, { videoId: '' });
@@ -126,7 +148,6 @@ function AppComponent(props: App): JSX.Element {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => {
-        // console.log('STOP:', track);
         track.stop();
       });
       videoRef.current.srcObject = null;
@@ -134,7 +155,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
-    if (user?._id === props._createdBy) return;
+    if (yours) return;
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current) {
         track.attach(videoRef.current);
@@ -144,11 +165,17 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     stopStream();
-    if (user?._id === props._createdBy) update(props._id, { description: `Screenshare> ${user.data.name}` });
+    if (yours) update(props._id, { description: `Screenshare> ${user.data.name}` });
     return () => {
       stopStream();
     };
   }, []);
+
+  const handleCancel = () => {
+    stopStream();
+    onClose();
+    deleteApp(props._id);
+  };
 
   const selectElectronSource = (source: ElectronSource) => {
     setSelectedSource(source);
@@ -210,67 +237,90 @@ function AppComponent(props: App): JSX.Element {
           p="5px"
           alignItems={'center'}
           opacity={videoRef.current?.srcObject ? 0 : 1}
-        >
-          {yours ? (
-            <Button
-              colorScheme={videoRef.current?.srcObject ? 'red' : 'green'}
-              onClick={videoRef.current?.srcObject ? stopStream : shareScreen}
-              disabled={!room}
-              mx={1}
-              size="lg"
-              rightIcon={<MdScreenShare />}
-            >
-              {videoRef.current?.srcObject ? 'Stop Sharing' : 'Share Screen'}
-            </Button>
-          ) : (
-            <Box display="flex" justifyContent="center" alignItems={'center'} height="100%" p="5px">
-              <Text>{!videoRef.current?.src ? `Waiting for '${userWhoCreated?.data.name}' to share their screen.` : ''}</Text>
-            </Box>
-          )}
-        </Box>
+        ></Box>
         {yours && videoRef.current?.srcObject ? (
           <Button onClick={stopStream} position="absolute" left={2} bottom={2} colorScheme="red">
             Stop Stream
           </Button>
         ) : null}
+
         <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color={red}>
           {expirationTime}
         </Text>
 
-        <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} size="xl" blockScrollOnMount={false} closeOnOverlayClick={false} closeOnEsc={false}>
           <ModalOverlay />
           <ModalContent>
             <ModalHeader>Select Screenshare Source</ModalHeader>
-            <ModalCloseButton />
             <ModalBody maxHeight="60vh" overflowY="scroll">
-              <SimpleGrid columns={3} spacing={10}>
-                {electronSources.map((source, idx: number) => (
-                  <Box
-                    display="flex"
-                    flexDir="column"
-                    justifyItems="center"
-                    borderRadius="md"
-                    border={selectedSource && selectedSource.id === source.id ? 'solid teal 2px' : ''}
-                    height="120px"
-                    width="100%"
-                    p="1"
-                    key={idx}
-                    onClick={() => selectElectronSource(source)}
-                  >
-                    <Box width="100%">
-                      <Text overflow="hidden" fontSize="sm" width="100%" height="20px">
-                        {source.name}
-                      </Text>
-                    </Box>
-                    <img height="200px" width="200px" src={source.thumbnail} alt="" />
-                  </Box>
-                ))}
-              </SimpleGrid>
-              <Box display="flex"></Box>
+              <Tabs isFitted>
+                <TabList mb="1em">
+                  <Tab>Screens</Tab>
+                  <Tab>Windows</Tab>
+                </TabList>
+                <TabPanels>
+                  <TabPanel>
+                    <SimpleGrid columns={3} spacing={10}>
+                      {electronSources
+                        .filter((el) => el.display_id !== '')
+                        .map((source, idx: number) => (
+                          <Box
+                            display="flex"
+                            flexDir="column"
+                            justifyItems="center"
+                            borderRadius="md"
+                            border={selectedSource && selectedSource.id === source.id ? 'solid teal 2px' : ''}
+                            borderColor={teal}
+                            height="100%"
+                            width="100%"
+                            p="1"
+                            key={idx}
+                            onClick={() => selectElectronSource(source)}
+                          >
+                            <Box width="100%">
+                              <Text overflow="hidden" fontSize="sm" width="100%" height="20px">
+                                Screen: {source.display_id}
+                              </Text>
+                            </Box>
+                            <img height="200px" width="200px" src={source.thumbnail} alt="" />
+                          </Box>
+                        ))}
+                    </SimpleGrid>
+                  </TabPanel>
+                  <TabPanel>
+                    <SimpleGrid columns={3} spacing={10}>
+                      {electronSources
+                        .filter((el) => el.display_id === '')
+                        .map((source, idx: number) => (
+                          <Box
+                            display="flex"
+                            flexDir="column"
+                            justifyItems="center"
+                            borderRadius="md"
+                            border={selectedSource && selectedSource.id === source.id ? 'solid teal 2px' : ''}
+                            borderColor={teal}
+                            height="100%"
+                            width="100%"
+                            p="1"
+                            key={idx}
+                            onClick={() => selectElectronSource(source)}
+                          >
+                            <Box width="100%">
+                              <Text overflow="hidden" fontSize="sm" width="100%" height="20px">
+                                {source.name}
+                              </Text>
+                            </Box>
+                            <Image src={source.thumbnail} alt="" objectFit="contain" />
+                          </Box>
+                        ))}
+                    </SimpleGrid>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
             </ModalBody>
 
             <ModalFooter>
-              <Button variant="ghost" onClick={onClose}>
+              <Button colorScheme="red" mr="2" onClick={handleCancel}>
                 Cancel
               </Button>
               <Button colorScheme="teal" disabled={!selectedSource} onClick={electronShareHandle}>

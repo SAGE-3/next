@@ -6,12 +6,11 @@
  *
  */
 
-import { useNavigate } from 'react-router';
 import { HStack, useToast } from '@chakra-ui/react';
 
 import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack } from 'react-icons/md';
 
-import { PanelNames, StuckTypes, useBoardStore, useRoomStore, useUIStore } from '@sage3/frontend';
+import { PanelNames, StuckTypes, useBoardStore, useRoomStore, useRouteNav, useUIStore } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from './Panel';
 
 export interface ControllerProps {
@@ -41,9 +40,9 @@ export function Controller(props: ControllerProps) {
   const assetsPanel = useUIStore((state) => state.assetsPanel);
 
   // Redirect the user back to the homepage when clicking the arrow button
-  const navigate = useNavigate();
+  const { toHome } = useRouteNav();
   function handleHomeClick() {
-    navigate('/home', { replace: true, state: { roomId: props.roomId } });
+    toHome(props.roomId);
   }
 
   // Copy the board id to the clipboard

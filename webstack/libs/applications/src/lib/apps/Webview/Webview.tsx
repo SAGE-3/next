@@ -7,11 +7,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import {
-  Box, Button, ButtonGroup, Center, Tooltip,
-  Input, InputGroup, HStack,
-} from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Center, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
 
 import {
   MdArrowBack,
@@ -23,7 +19,6 @@ import {
   MdOutlineSubdirectoryArrowLeft,
   MdVolumeUp,
 } from 'react-icons/md';
-
 
 import { App } from '../../schema';
 
@@ -37,6 +32,7 @@ import { isElectron } from './util';
 import { WebviewTag } from 'electron';
 
 import create from 'zustand';
+import { useParams } from 'react-router';
 
 export const useStore = create((set: any) => ({
   title: {} as { [key: string]: string },
@@ -48,7 +44,6 @@ export const useStore = create((set: any) => ({
   view: {} as { [key: string]: WebviewTag },
   setView: (id: string, view: WebviewTag) => set((state: any) => ({ view: { ...state.view, ...{ [id]: view } } })),
 }));
-
 
 /* App component for Webview */
 
@@ -63,11 +58,7 @@ function AppComponent(props: App): JSX.Element {
   const mute = useStore((state: any) => state.mute[props._id]);
   const setMute = useStore((state: any) => state.setMute);
   const createApp = useAppStore((state) => state.create);
-  const location = useLocation();
-  const locationState = location.state as {
-    boardId: string;
-    roomId: string;
-  };
+  const { boardId, roomId } = useParams();
   const { user } = useUser();
 
   // Tracking the dom-ready and did-load events
@@ -80,73 +71,69 @@ function AppComponent(props: App): JSX.Element {
   }, [s.webviewurl]);
 
   // Init the webview
-  const setWebviewRef = useCallback(
-    (node: WebviewTag) => {
-      // event did-attach callback
-      const didAttachCallback = (evt: any) => {
-        webviewNode.current.removeEventListener('did-attach', didAttachCallback);
-        setAttached(true);
-      };
+  const setWebviewRef = useCallback((node: WebviewTag) => {
+    // event did-attach callback
+    const didAttachCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('did-attach', didAttachCallback);
+      setAttached(true);
+    };
 
-      // event dom-ready callback
-      const domReadyCallback = (evt: any) => {
-        webviewNode.current.removeEventListener('dom-ready', domReadyCallback);
-        setDomReady(true);
-      };
+    // event dom-ready callback
+    const domReadyCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('dom-ready', domReadyCallback);
+      setDomReady(true);
+    };
 
-      if (node) {
-        webviewNode.current = node;
-        const webview = webviewNode.current;
+    if (node) {
+      webviewNode.current = node;
+      const webview = webviewNode.current;
 
-        // save the webview for the toolbar
-        setView(props._id, webview);
+      // save the webview for the toolbar
+      setView(props._id, webview);
 
-        // Special partitions to keep login info and settings separate
-        if (url.indexOf("sharepoint.com") >= 0 ||
-          url.indexOf("live.com") >= 0 ||
-          url.indexOf("office.com") >= 0) {
-          webview.partition = 'persist:office';
-        } else if (url.indexOf("appear.in") >= 0 ||
-          url.indexOf("whereby.com") >= 0) {
-          // VTC
-          webview.partition = 'persist:whereby';
-        } else if (url.indexOf("youtube.com") >= 0) {
-          // VTC
-          webview.partition = 'persist:youtube';
-        } else if (url.indexOf("github.com") >= 0) {
-          // GITHUB
-          webview.partition = 'persist:github';
-        } else if (url.indexOf("google.com") >= 0) {
-          // GOOGLE
-          webview.partition = 'persist:google';
-        } else if (url.includes(".pdf")) {
-          // PDF documents
-          webview.partition = 'persist:pdf';
-        } else if (url.includes(window.location.hostname)) {
-          // Jupyter
-          webview.partition = 'persist:jupyter';
-        } else if (url.includes("colab.research.google.com")) {
-          // Colab
-          webview.partition = 'persist:colab';
-        } else {
-          // Isolation for other content
-          webview.partition = "partition_" + props._id;
-        }
-
-        // Callback when the webview is ready
-        webview.addEventListener('dom-ready', domReadyCallback);
-        webview.addEventListener('did-attach', didAttachCallback);
-
-        const titleUpdated = (event: any) => {
-          // Update the app title
-          update(props._id, { description: event.title });
-        };
-        webview.addEventListener('page-title-updated', titleUpdated);
-
-        // After the partition has been set, you can navigate
-        webview.src = url;
+      // Special partitions to keep login info and settings separate
+      if (url.indexOf('sharepoint.com') >= 0 || url.indexOf('live.com') >= 0 || url.indexOf('office.com') >= 0) {
+        webview.partition = 'persist:office';
+      } else if (url.indexOf('appear.in') >= 0 || url.indexOf('whereby.com') >= 0) {
+        // VTC
+        webview.partition = 'persist:whereby';
+      } else if (url.indexOf('youtube.com') >= 0) {
+        // VTC
+        webview.partition = 'persist:youtube';
+      } else if (url.indexOf('github.com') >= 0) {
+        // GITHUB
+        webview.partition = 'persist:github';
+      } else if (url.indexOf('google.com') >= 0) {
+        // GOOGLE
+        webview.partition = 'persist:google';
+      } else if (url.includes('.pdf')) {
+        // PDF documents
+        webview.partition = 'persist:pdf';
+      } else if (url.includes(window.location.hostname)) {
+        // Jupyter
+        webview.partition = 'persist:jupyter';
+      } else if (url.includes('colab.research.google.com')) {
+        // Colab
+        webview.partition = 'persist:colab';
+      } else {
+        // Isolation for other content
+        webview.partition = 'partition_' + props._id;
       }
-    }, []);
+
+      // Callback when the webview is ready
+      webview.addEventListener('dom-ready', domReadyCallback);
+      webview.addEventListener('did-attach', didAttachCallback);
+
+      const titleUpdated = (event: any) => {
+        // Update the app title
+        update(props._id, { description: event.title });
+      };
+      webview.addEventListener('page-title-updated', titleUpdated);
+
+      // After the partition has been set, you can navigate
+      webview.src = url;
+    }
+  }, []);
 
   useEffect(() => {
     if (domReady === false || attached === false) return;
@@ -160,7 +147,7 @@ function AppComponent(props: App): JSX.Element {
     if (webviewNode.current) {
       webviewNode.current.stop();
       webviewNode.current.loadURL(url).catch((err: any) => {
-        console.log("Webview> Error loading URL:", url, err);
+        console.log('Webview> Error loading URL:', url, err);
         if (err.code === 'ERR_ABORTED') return;
       });
     }
@@ -185,13 +172,16 @@ function AppComponent(props: App): JSX.Element {
     if (webview) {
       if (webview.getURL() !== url) {
         try {
-          webviewNode.current.loadURL(url).then(() => {
-            console.log("Loaded URL:", url);
-          }).catch((err: any) => {
-            console.log("Webview> Error loading URL:", url, err);
-          });
+          webviewNode.current
+            .loadURL(url)
+            .then(() => {
+              console.log('Loaded URL:', url);
+            })
+            .catch((err: any) => {
+              console.log('Webview> Error loading URL:', url, err);
+            });
         } catch (e) {
-          console.log(e)
+          console.log(e);
         }
       }
     }
@@ -209,8 +199,8 @@ function AppComponent(props: App): JSX.Element {
       if (webview) {
         webview.removeEventListener('did-navigate-in-page', didNavigateInPage);
       }
-    }
-  }, [url, attached, domReady])
+    };
+  }, [url, attached, domReady]);
 
   /**
    * Observes for Mute Changes
@@ -222,7 +212,7 @@ function AppComponent(props: App): JSX.Element {
     if (webview) {
       webview.setAudioMuted(mute);
     }
-  }, [mute, domReady, attached])
+  }, [mute, domReady, attached]);
 
   // Open a url in a new webview, should result from event new-window within webview component
   // Added here since there is access to more relevant information
@@ -235,8 +225,8 @@ function AppComponent(props: App): JSX.Element {
       createApp({
         name: 'Webview',
         description: 'Webview',
-        roomId: locationState.roomId,
-        boardId: locationState.boardId,
+        roomId: roomId!,
+        boardId: boardId!,
         position: { x: props.data.position.x + props.data.size.width + 15, y: props.data.position.y, z: 0 },
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -256,7 +246,7 @@ function AppComponent(props: App): JSX.Element {
         setUrl(event.url);
       }
       // Open a new window
-      else if (event.url !== "about:blank") {
+      else if (event.url !== 'about:blank') {
         openUrlInNewWebviewApp(event.url);
       }
     };
@@ -290,12 +280,12 @@ function AppComponent(props: App): JSX.Element {
 
     return () => {
       if (webview) {
-        webview.removeEventListener("new-window", newWindow);
-        webview.removeEventListener("will-navigate", willNavigate);
+        webview.removeEventListener('new-window', newWindow);
+        webview.removeEventListener('will-navigate', willNavigate);
         webview.removeEventListener('did-start-navigation', didNavigate);
       }
-    }
-  }, [props.data.position, domReady])
+    };
+  }, [props.data.position, domReady]);
 
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
@@ -379,82 +369,84 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const goBack = () => {
     view.goBack();
-  }
+  };
   const goForward = () => {
     view.goForward();
-  }
+  };
 
   const handleZoom = (dir: string) => {
     const v = view as WebviewTag;
     if (dir === 'zoom-in') {
       v.zoomFactor = Math.min(v.zoomFactor + 0.1, 3);
     } else if (dir === 'zoom-out') {
-      v.zoomFactor = Math.max(v.zoomFactor - 0.1, 0.1)
+      v.zoomFactor = Math.max(v.zoomFactor - 0.1, 0.1);
     } else if (dir === 'zoom-reset') {
       v.zoomFactor = 1;
     }
     updateState(props._id, { zoom: v.zoomFactor });
   };
 
-  return <HStack>
-    <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
-        <Button onClick={goBack} >
-          <MdArrowBack />
+  return (
+    <HStack>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
+          <Button onClick={goBack}>
+            <MdArrowBack />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
+          <Button onClick={goForward}>
+            <MdArrowForward />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
+          <Button onClick={() => view.reload()}>
+            <MdRefresh />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <form onSubmit={changeUrl}>
+        <InputGroup size="xs" minWidth="200px">
+          <Input
+            placeholder="Web Address"
+            value={urlValue}
+            onChange={handleUrlChange}
+            onPaste={(event) => {
+              event.stopPropagation();
+            }}
+            backgroundColor="whiteAlpha.300"
+          />
+        </InputGroup>
+      </form>
+
+      <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+        <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
+          <MdOutlineSubdirectoryArrowLeft />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
-        <Button onClick={goForward} >
-          <MdArrowForward />
-        </Button>
-      </Tooltip>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+          <Button onClick={() => handleZoom('zoom-in')}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
-        <Button onClick={() => view.reload()} >
-          <MdRefresh />
-        </Button>
-      </Tooltip>
-    </ButtonGroup>
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+          <Button onClick={() => handleZoom('zoom-out')}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
 
-    <form onSubmit={changeUrl}>
-      <InputGroup size="xs" minWidth="200px">
-        <Input
-          placeholder="Web Address"
-          value={urlValue}
-          onChange={handleUrlChange}
-          onPaste={(event) => {
-            event.stopPropagation();
-          }}
-          backgroundColor="whiteAlpha.300"
-        />
-      </InputGroup>
-    </form>
-
-    <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-      <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
-        <MdOutlineSubdirectoryArrowLeft />
-      </Button>
-    </Tooltip>
-
-    <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-        <Button onClick={() => handleZoom('zoom-in')} >
-          <MdAdd />
-        </Button>
-      </Tooltip>
-
-      <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-        <Button onClick={() => handleZoom('zoom-out')} >
-          <MdRemove />
-        </Button>
-      </Tooltip>
-
-      <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
-        <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
-      </Tooltip>
-    </ButtonGroup>
-  </HStack>;
+        <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
+          <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
+        </Tooltip>
+      </ButtonGroup>
+    </HStack>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };

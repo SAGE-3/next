@@ -17,6 +17,8 @@ export type serverConfiguration = {
   token: string;
   // Namespace for signing uuid v5 keys
   namespace: string;
+  // Admin names
+  admins: string[];
 };
 
 /**

@@ -40,7 +40,7 @@ export function UILayer(props: UILayerProps) {
   // Toast
   const toast = useToast();
 
-  // Clear boar modal
+  // Clear board modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
@@ -140,7 +140,7 @@ export function UILayer(props: UILayerProps) {
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
-        <ClearBoardModal onClick={onClearConfirm} onClose={clearOnClose}></ClearBoardModal>
+        <ClearBoardModal onClick={onClearConfirm} onClose={clearOnClose} isOpen={clearIsOpen}></ClearBoardModal>
       </Modal>
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />

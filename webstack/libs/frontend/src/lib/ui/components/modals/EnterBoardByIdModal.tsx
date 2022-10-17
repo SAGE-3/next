@@ -13,9 +13,7 @@ import {
   Input,
   InputGroup,
   InputLeftAddon,
-  InputRightAddon,
   Progress,
-  Tooltip,
   useToast,
   Modal,
   ModalOverlay,
@@ -25,7 +23,6 @@ import {
   useDisclosure,
   ModalFooter,
 } from '@chakra-ui/react';
-import { useNavigate } from 'react-router';
 
 import { Board } from '@sage3/shared/types';
 import { isUUIDv4, useData, timeout } from '@sage3/frontend';
@@ -103,7 +100,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} size="xl">
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} size="xl" blockScrollOnMount={false}>
       {board ? <EnterBoardModal isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard} board={board}></EnterBoardModal> : null}
 
       <ModalOverlay />

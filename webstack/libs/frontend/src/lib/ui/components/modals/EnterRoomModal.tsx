@@ -8,8 +8,16 @@
 
 import { useState, useRef, useEffect } from 'react';
 import {
-  useToast, Button, Input, InputGroup, InputLeftAddon,
-  Modal, ModalFooter, ModalContent, ModalHeader, ModalBody,
+  useToast,
+  Button,
+  Input,
+  InputGroup,
+  InputLeftAddon,
+  Modal,
+  ModalFooter,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -62,8 +70,16 @@ export const EnterRoomModal = (props: EnterRoomProps) => {
   };
 
   return (
-    <Modal isCentered initialFocusRef={initialRef} closeOnEsc={true} closeOnOverlayClick={true}
-      size="md" isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal
+      isCentered
+      initialFocusRef={initialRef}
+      closeOnEsc={true}
+      closeOnOverlayClick={true}
+      size="md"
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      blockScrollOnMount={false}
+    >
       <ModalContent>
         <ModalHeader>Enter the Room Password</ModalHeader>
         <ModalBody>

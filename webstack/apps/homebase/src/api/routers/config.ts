@@ -40,6 +40,7 @@ export function ConfigRouter(): express.Router {
       token: token,
       // Namespace for signing uuid v5 keys
       namespace: config.namespace,
+      admins: config.auth.admins || [],
     };
     res.json(configuration);
   });
@@ -59,6 +60,19 @@ export function InfoRouter(): express.Router {
       production: config.production,
       servers: config.servers,
       version: config.version,
+    };
+    res.json(configuration);
+  });
+
+  return router;
+}
+
+export function TimeRouter(): express.Router {
+  const router = express.Router();
+  router.get('/', async (req, res) => {
+    // Configuration public values
+    const configuration = {
+      epoch: Date.now(),
     };
     res.json(configuration);
   });
