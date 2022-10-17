@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { ButtonGroup, Button, Tooltip } from '@chakra-ui/react';
+import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 
 // Yjs Imports
 import * as Y from 'yjs';
@@ -73,6 +73,7 @@ function AppComponent(props: App): JSX.Element {
             userOnly: true,
           },
         },
+        scrollingContainer: '#scrolling-container',
         placeholder: 'Start collaborating...',
         theme: 'snow', // 'bubble' is also great
       });
@@ -109,7 +110,9 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5' }}></div>
+      <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
+        <div ref={quillRef}></div>
+      </Box>
     </AppWindow>
   );
 }

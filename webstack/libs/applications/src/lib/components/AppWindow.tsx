@@ -12,7 +12,7 @@ import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys, useHexColor, useAuth } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -24,6 +24,10 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // auth
+  const { auth } = useAuth();
+  const isGuest = auth?.provider === 'guest';
+
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const zindex = useUIStore((state) => state.zIndex);
@@ -235,7 +239,7 @@ export function AppWindow(props: WindowProps) {
         backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
         borderRadius: '6px',
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed ? 'none' : 'auto',
+        pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', //Guest Blocker
       }}
       // minimum size of the app: 200 px
       minWidth={200}
@@ -245,7 +249,11 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      enableResizing={!minimized}
+      // TODO: Make this not required in the future with persmissions system
+      // Not ideal but right now we need this to prevent guests from moving apps.
+      // This happens locally before updating the server.
+      enableResizing={!minimized && !isGuest}
+      disableDragging={isGuest}
     >
       {/* Border Box around app to show it is selected */}
       {selected ? (
@@ -258,7 +266,7 @@ export function AppWindow(props: WindowProps) {
           border={`${4}px solid ${selectColor}`}
           borderRadius="8px"
           pointerEvents="none"
-          zIndex={2}
+          zIndex={3}
         ></Box>
       ) : null}
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
@@ -272,7 +280,7 @@ export function AppWindow(props: WindowProps) {
           height={minimized ? 0 + 'px' : size.height + 'px'}
           cursor="move"
           userSelect={'none'}
-          zIndex={2}
+          zIndex={3}
           onMouseEnter={() => {
             setMouseOver(true);
           }}
@@ -285,14 +293,13 @@ export function AppWindow(props: WindowProps) {
       {boardDragging || appDragging ? (
         <Box
           position="absolute"
-          left="-3px"
-          top="-3px"
-          width={size.width + 6}
-          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
-          borderRadius="8px"
+          left="0px"
+          top={titleBarHeight + 'px'}
+          width={size.width}
+          height={minimized ? 0 + 'px' : size.height + 'px'}
           pointerEvents={'none'}
           userSelect={'none'}
-          zIndex={2}
+          zIndex={3}
         ></Box>
       ) : null}
 
@@ -366,7 +373,7 @@ export function AppWindow(props: WindowProps) {
         overflow="hidden"
         zIndex={2}
         display={minimized ? 'none' : 'inherit'}
-        borderRadius="md"
+        borderRadius={'0 0 6px 6px'}
       >
         {props.children}
       </Box>

@@ -61,7 +61,10 @@ export interface AuthConfiguration {
   sessionSecret: string;
 
   // List of login strategies: guest, google, jwt, cilogon, ...
-  strategies: [string];
+  strategies: string[];
+
+  // Admin users
+  admins: string[];
 
   // Guest
   guestConfig?: {

@@ -27,12 +27,19 @@ const savedRadios = [false, true];
 export function BoardContextMenu(props: ContextProps) {
   // User information
   const { user } = useUser();
+
   const { toHome } = useRouteNav();
+  // Redirect the user back to the homepage
+  function handleHomeClick() {
+    toHome(props.roomId);
+  }
 
   const presences = usePresenceStore((state) => state.presences);
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
+  const setScale = useUIStore((state) => state.setScale);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const flipUI = useUIStore((state) => state.flipUI);
@@ -153,7 +160,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => toHome()}
+            onClick={() => handleHomeClick()}
           >
             Back to Room
           </Button>
@@ -301,6 +308,21 @@ export function BoardContextMenu(props: ContextProps) {
           <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
             Options
           </Text>
+
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            onClick={() => { setScale(1); setBoardPosition({ x: 0, y: 0 }) }}
+          >
+            Reset View
+          </Button>
+
           <Checkbox
             w={'100%'}
             size={'sm'}
@@ -323,6 +345,7 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Show Interface
           </Checkbox>
+
         </VStack>
       </HStack>
     </VStack>

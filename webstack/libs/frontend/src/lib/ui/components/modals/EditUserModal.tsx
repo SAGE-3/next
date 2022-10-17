@@ -19,6 +19,12 @@ import {
   Input,
   Button,
   Text,
+  RadioGroup,
+  Stack,
+  Radio,
+  Box,
+  FormLabel,
+  FormControl,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
@@ -38,12 +44,12 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { auth } = useAuth();
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
-  const [email, setEmail] = useState<UserSchema['email']>(user?.data.email || '');
-  const [color, setColor] = useState((user?.data.color as SAGEColors) || randomSAGEColor());
+  const [color, setColor] = useState(user?.data.color as SAGEColors);
+  const [type, setType] = useState<UserSchema['userType']>(user?.data.userType || 'client');
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (color: string) => setColor(color as SAGEColors);
+  const handleTypeChange = (type: UserSchema['userType']) => setType(type);
 
   // const modalBackground = useColorModeValue('white', 'gray.700');
 
@@ -72,11 +78,11 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
     if (name !== user?.data.name && update) {
       update({ name });
     }
-    if (email !== user?.data.email && update) {
-      update({ email });
-    }
     if (color !== user?.data.color && update) {
       update({ color });
+    }
+    if (type !== user?.data.userType && update) {
+      update({ userType: type });
     }
     props.onClose();
   };
@@ -87,40 +93,49 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit User Account</ModalHeader>
         <ModalBody>
-          <InputGroup>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
-            <Input
-              ref={initialRef}
-              type="string"
-              placeholder={user?.data.name}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
-              value={name}
-              onChange={handleNameChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
-          <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
-            <Input
-              type="email"
-              placeholder={user?.data.email}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
-              value={email}
-              onChange={handleEmailChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
-          <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
-          <Text mt={3} fontSize={'md'}>
-            Authentication: <em>{auth?.provider}</em>
+          <FormControl mt="2">
+            <FormLabel htmlFor="color">Name</FormLabel>
+
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+              <Input
+                ref={initialRef}
+                type="string"
+                placeholder={user?.data.name}
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
+                mr={4}
+                value={name}
+                onChange={handleNameChange}
+                onKeyDown={onSubmit}
+                isRequired={true}
+              />
+            </InputGroup>
+          </FormControl>
+
+          <FormControl mt="2">
+            <FormLabel htmlFor="color">Color</FormLabel>
+            <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
+          </FormControl>
+          <FormControl mt="2">
+            <FormLabel htmlFor="type">Type</FormLabel>
+            <RadioGroup onChange={handleTypeChange} value={type}>
+              <Stack direction="row">
+                {['client', 'wall'].map((value, i) => (
+                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                ))}
+              </Stack>
+            </RadioGroup>{' '}
+          </FormControl>
+
+          <Text mt={5} fontSize={'md'}>
+            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
           </Text>
+          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
+
+
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name || !email}>
+          <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name}>
             Update
           </Button>
         </ModalFooter>

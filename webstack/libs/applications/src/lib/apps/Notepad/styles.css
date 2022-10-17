@@ -1,8 +1,17 @@
-.ql-toolbar  {
-  background-color: white;
-  overflow: visible;
-}
-
 .ql-editor {
   color: black;
+  height: calc(100% - 65px);
+  width: 100%;
+  position: absolute;
+  top: 65px;
+}
+.ql-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 65px;
+  background-color: white;
+  overflow: auto;
 }
