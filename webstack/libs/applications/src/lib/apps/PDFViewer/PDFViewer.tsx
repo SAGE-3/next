@@ -47,8 +47,6 @@ function AppComponent(props: App): JSX.Element {
     const asset = assets.find((a) => a._id === s.assetid);
     if (asset) {
       setFile(asset);
-      // Update the app title
-      update(props._id, { description: asset?.data.originalfilename });
       // Update the state of the app
       if (asset.data.derived) {
         const pages = asset.data.derived as ExtraPDFType;
@@ -56,6 +54,9 @@ function AppComponent(props: App): JSX.Element {
         // Update the app title
         const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
         update(props._id, { description: asset?.data.originalfilename + pageInfo });
+      } else {
+        // Update the app title
+        update(props._id, { description: asset?.data.originalfilename });
       }
     }
   }, [s.assetid, assets]);
