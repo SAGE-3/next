@@ -28,4 +28,5 @@ export const init: Partial<state> = {
   displayPages: 1,
 };
 
+
 export const name = 'PDFViewer';

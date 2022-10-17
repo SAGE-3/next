@@ -16,3 +16,5 @@ redis~=3.5.3
 # fluent-logger
 
 funcx~=1.0.3
+# from funcx.sdk.client import FuncXClient
+# fxc = FuncXClient()
