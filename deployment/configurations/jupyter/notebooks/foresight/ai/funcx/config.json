@@ -1,0 +1,13 @@
+{
+	"model_exec_uuid": "SOME_UUID",
+	"taks": {
+		"object_detection": {
+			"default": "detr_resnet_50"
+		}
+	},
+	"endpoint_id": "503aabe7-223e-4679-bb01-0b0da37c0ae6",
+	"ai_func_uuid": "ABCD",
+	"urls": {
+		"detr_resnet_50": "SOME-URL"
+	}
+}
