@@ -170,7 +170,7 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
       return <> {props.children}</>;
     } else {
       // in production, checking that the user is logged with google and in the list
-      return (auth?.provider === "google" && user?.data.email in config.admins) ? <> {props.children}</> : <Navigate to="/#/home" replace />;
+      return (auth?.provider === "google" && config.admins.includes(user?.data.email)) ? <> {props.children}</> : <Navigate to="/#/home" replace />;
     }
   }
 };
