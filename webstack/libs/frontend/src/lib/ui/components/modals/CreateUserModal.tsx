@@ -25,7 +25,7 @@ import {
   Radio,
   Stack,
 } from '@chakra-ui/react';
-import { MdPerson, MdEmail } from 'react-icons/md';
+import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
@@ -113,18 +113,19 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
             <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
           </FormControl>
           <FormControl mt="2">
-            <FormLabel htmlFor="type">Type</FormLabel>
+            <FormLabel htmlFor="type">User Type</FormLabel>
             <RadioGroup onChange={handleTypeChange} value={type}>
               <Stack direction="row">
-                {['client', 'wall'].map((value) => (
-                  <Radio value={value}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                {['client', 'wall'].map((value, i) => (
+                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
                 ))}
               </Stack>
             </RadioGroup>{' '}
           </FormControl>
-          <Text mt={3} fontSize={'md'}>
+          <Text mt={5} fontSize={'md'}>
             Authentication: <em>{auth.auth?.provider}</em>
           </Text>
+          {auth.auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mx={2} onClick={auth.logout}>
