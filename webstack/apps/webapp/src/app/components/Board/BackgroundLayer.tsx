@@ -230,6 +230,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
               <>
                 {isWall ? (
                   <Box
+                    key={'wall' + presence.data.userId}
                     borderStyle="dashed"
                     borderWidth={3 / scale}
                     borderColor={color}
