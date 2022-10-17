@@ -120,18 +120,19 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <FormLabel htmlFor="type">Type</FormLabel>
             <RadioGroup onChange={handleTypeChange} value={type}>
               <Stack direction="row">
-                {['client', 'wall'].map((value) => (
-                  <Radio value={value}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                {['client', 'wall'].map((value, i) => (
+                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
                 ))}
               </Stack>
             </RadioGroup>{' '}
           </FormControl>
 
-          <Box mt="8">
-            <Text mt={3} fontSize={'md'}>
-              Authentication: <em>{auth?.provider}</em>
-            </Text>
-          </Box>
+          <Text mt={5} fontSize={'md'}>
+            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
+          </Text>
+          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
+
+
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name}>
