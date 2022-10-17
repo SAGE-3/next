@@ -16,7 +16,17 @@ import { GiArrowCursor } from 'react-icons/gi';
 import { DraggableData, Rnd } from 'react-rnd';
 import { throttle } from 'throttle-debounce';
 
-import { useAppStore, useHexColor, useHotkeys, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import {
+  useAppStore,
+  useHexColor,
+  useHotkeys,
+  usePresence,
+  usePresenceStore,
+  useUIStore,
+  useUser,
+  useUsersStore,
+  useWindowResize,
+} from '@sage3/frontend';
 import { Applications, AppError } from '@sage3/applications/apps';
 
 import { Background } from './Background/Background';
@@ -56,7 +66,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
-  const [windowDim, setWindowDim] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const { width: winWidth, height: winHeight } = useWindowResize();
 
   // Position board when entering board
   useEffect(() => {
@@ -101,16 +111,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     if (apps.length === 0) resetZIndex();
   }, [apps]);
 
-  // Oberver for window resize
-  useEffect(() => {
-    const updateWindowDimensions = () => {
-      setWindowDim({ width: window.innerWidth, height: window.innerHeight });
-    };
-    updateWindowDimensions();
-    window.addEventListener('resize', updateWindowDimensions);
-    return () => window.removeEventListener('resize', updateWindowDimensions);
-  }, []);
-
   // CURSOR
   // Update the cursor every half second
   const throttleCursor = throttle(500, (e: MouseEvent) => {
@@ -144,28 +144,28 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }, [boardPosition.x, boardPosition.y, scale, boardDragging]);
 
   // VIEWPORT
-  const throttleViewport = throttle(5000, () => {
-    const viewPos = { x: -boardPosition.x, y: -boardPosition.y, z: 0 };
-    const viewWidth = windowDim.width / scale;
-    const viewHeight = windowDim.height / scale;
+  const throttleViewport = throttle(500, (x: number, y: number, width: number, height: number) => {
+    const viewPos = { x, y, z: 0 };
+    const viewWidth = width;
+    const viewHeight = height;
     const viewSize = { width: viewWidth, height: viewHeight };
     updatePresence({ viewport: { position: viewPos, size: viewSize } });
   });
 
   // Keep a copy of the function
-  const throttleViewportFunc = useCallback(throttleViewport, [boardPosition.x, boardPosition.y, scale, windowDim.width, windowDim.height]);
-  const viewportFunc = () => {
+  const throttleViewportFunc = useCallback(throttleViewport, []);
+  const viewportFunc = (x: number, y: number, w: number, h: number) => {
     // Check if event is on the board
     if (updatePresence) {
       // Send the throttled version to the server
-      throttleViewportFunc();
+      throttleViewportFunc(x, y, w, h);
     }
   };
 
   // Update Viewport Presence
   useEffect(() => {
-    viewportFunc();
-  }, [throttleViewportFunc]);
+    viewportFunc(-boardPosition.x, -boardPosition.y, winWidth / scale, winHeight / scale);
+  }, [boardPosition.x, boardPosition.y, winWidth, winHeight, scale]);
 
   // Deselect all apps
   useHotkeys('esc', () => {
