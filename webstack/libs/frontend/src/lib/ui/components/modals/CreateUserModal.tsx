@@ -123,7 +123,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
             </RadioGroup>{' '}
           </FormControl>
           <Text mt={5} fontSize={'md'}>
-            Authentication: <em>{auth.auth?.provider}</em>
+            Authentication: <em>{auth.auth?.provider}  - {auth.auth?.email}</em>
           </Text>
           {auth.auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
         </ModalBody>
