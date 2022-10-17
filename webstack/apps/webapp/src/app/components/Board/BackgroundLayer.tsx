@@ -111,8 +111,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     if (apps.length === 0) resetZIndex();
   }, [apps]);
 
-  // CURSOR
-  // Update the cursor every half second
+  // Update the user's cursor every half second
   const throttleCursor = throttle(500, (e: MouseEvent) => {
     if (boardDragging) return;
     const winX = e.clientX;
@@ -143,7 +142,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     return () => window.removeEventListener('mousemove', mouseMove);
   }, [boardPosition.x, boardPosition.y, scale, boardDragging]);
 
-  // VIEWPORT
+  // Update the user's viewport every half second
   const throttleViewport = throttle(500, (x: number, y: number, width: number, height: number) => {
     const viewPos = { x, y, z: 0 };
     const viewWidth = width;
@@ -248,7 +247,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
                     fontSize="xl"
                     background={`linear-gradient(180deg, ${color} 30px, transparent 30px)`}
                   >
-                    {u.data.name}
+                    Viewport for {u.data.name}
                   </Box>
                 ) : null}
                 <UserCursor
