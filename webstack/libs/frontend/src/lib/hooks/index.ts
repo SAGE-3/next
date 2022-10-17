@@ -16,3 +16,4 @@ export * from './useHotkeys';
 export * from './useKeyPress';
 export * from './useHexColor';
 export * from './useRouteNav';
+export * from './useWindowResize';

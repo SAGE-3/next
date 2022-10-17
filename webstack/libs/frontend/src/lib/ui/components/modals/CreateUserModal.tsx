@@ -21,10 +21,13 @@ import {
   FormControl,
   FormLabel,
   Text,
+  RadioGroup,
+  Radio,
+  Stack,
 } from '@chakra-ui/react';
-import { MdPerson, MdEmail } from 'react-icons/md';
+import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
-import { randomSAGEColor } from '@sage3/shared';
+import { randomSAGEColor, SAGEColors } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
 import { ColorPicker } from '../general';
 
@@ -37,12 +40,12 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
   const auth = useAuth();
 
   const [name, setName] = useState<UserSchema['name']>(auth.auth?.displayName ?? '');
-  const [email, setEmail] = useState<UserSchema['email']>(auth.auth?.email ?? '');
-  const [color, setColor] = useState<UserSchema['color']>('red');
+  const [type, setType] = useState<UserSchema['userType']>('client');
+  const [color, setColor] = useState<UserSchema['color']>(randomSAGEColor());
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
-  const handleColorChange = (color: string) => setColor(color);
+  const handleColorChange = (color: string) => setColor(color as SAGEColors);
+  const handleTypeChange = (type: UserSchema['userType']) => setType(type);
 
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
@@ -62,13 +65,13 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
   };
 
   function createAccount() {
-    if (name && email) {
+    if (name) {
       const newUser = {
         name,
-        email,
+        email: auth.auth?.email ? auth.auth.email : '',
         color: color,
         userRole: 'user',
-        userType: 'client',
+        userType: type,
         profilePicture: '',
       } as UserSchema;
       props.createUser(newUser);
@@ -105,35 +108,30 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
               />
             </InputGroup>
           </FormControl>
-          <FormControl isRequired>
-            <FormLabel htmlFor="email">Email</FormLabel>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<MdEmail size={'1.5rem'} />} />
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                placeholder="name@email.com"
-                _placeholder={{ opacity: 1, color: 'gray.600' }}
-                onChange={handleEmailChange}
-                onKeyDown={onSubmit}
-                readOnly={auth.auth?.provider === "google" || auth.auth?.provider === "cilogon"}
-              />
-            </InputGroup>
-          </FormControl>
           <FormControl isRequired mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
             <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
           </FormControl>
-          <Text mt={3} fontSize={'md'}>
-            Authentication: <em>{auth.auth?.provider}</em>
+          <FormControl mt="2">
+            <FormLabel htmlFor="type">User Type</FormLabel>
+            <RadioGroup onChange={handleTypeChange} value={type}>
+              <Stack direction="row">
+                {['client', 'wall'].map((value, i) => (
+                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                ))}
+              </Stack>
+            </RadioGroup>{' '}
+          </FormControl>
+          <Text mt={5} fontSize={'md'}>
+            Authentication: <em>{auth.auth?.provider}  - {auth.auth?.email}</em>
           </Text>
+          {auth.auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mx={2} onClick={auth.logout}>
             Cancel
           </Button>
-          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
+          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name}>
             Create Account
           </Button>
         </ModalFooter>
