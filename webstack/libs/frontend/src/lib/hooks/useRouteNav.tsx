@@ -19,7 +19,11 @@ export function useRouteNav() {
   const navigate = useNavigate();
 
   function toHome(roomId?: string) {
-    navigate(`/home/${roomId}`);
+    if (roomId) {
+      navigate(`/home/${roomId}`);
+    } else {
+      navigate('/home');
+    }
   }
 
   function toBoard(roomId: string, boardId: string) {
