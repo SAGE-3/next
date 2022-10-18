@@ -52,7 +52,7 @@ export function Files(props: FilesProps): JSX.Element {
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
-  const [searchTerm, setSearchTerm] = useState<string>();
+  const [searchTerm, setSearchTerm] = useState<string>("");
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);

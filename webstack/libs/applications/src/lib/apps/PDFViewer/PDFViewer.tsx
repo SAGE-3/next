@@ -47,8 +47,6 @@ function AppComponent(props: App): JSX.Element {
     const asset = assets.find((a) => a._id === s.assetid);
     if (asset) {
       setFile(asset);
-      // Update the app title
-      update(props._id, { description: asset?.data.originalfilename });
       // Update the state of the app
       if (asset.data.derived) {
         const pages = asset.data.derived as ExtraPDFType;
@@ -56,6 +54,9 @@ function AppComponent(props: App): JSX.Element {
         // Update the app title
         const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
         update(props._id, { description: asset?.data.originalfilename + pageInfo });
+      } else {
+        // Update the app title
+        update(props._id, { description: asset?.data.originalfilename });
       }
     }
   }, [s.assetid, assets]);
@@ -189,7 +190,7 @@ function AppComponent(props: App): JSX.Element {
         {urls
           .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
           .map((url, idx) => (
-            <Box id={'pane~' + props._id + idx} p={1} m={1} bg="white" color="gray.800" shadow="base" rounded="lg" width={'100%'}>
+            <Box id={'pane~' + props._id + idx} key={idx} p={1} m={1} bg="white" color="gray.800" shadow="base" rounded="lg" width={'100%'}>
               <img src={url} width={'100%'} draggable={false} alt={file?.data.originalfilename} />
             </Box>
           ))}

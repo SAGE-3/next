@@ -7,7 +7,7 @@
  */
 
 /**
- * 
+ *
  * @file Presence Provider
  * @author <a href="mailto:rtheriot@hawaii.edu">Ryan Theriot</a>
  * @version 1.0.0
@@ -32,7 +32,6 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
   const [presence, setPresence] = useState<Presence>({} as Presence);
 
   useEffect(() => {
-
     // Subscription to presence updates
     let presenceSub: (() => void) | null = null;
     async function subscribeToPresence(id: string) {
@@ -42,15 +41,15 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
         const doc = message.doc as Presence;
         switch (message.type) {
           case 'CREATE': {
-            setPresence(doc)
+            setPresence(doc);
             break;
           }
           case 'UPDATE': {
-            setPresence(doc)
+            setPresence(doc);
             break;
           }
           case 'DELETE': {
-            setPresence({} as Presence)
+            setPresence({} as Presence);
           }
         }
       });
@@ -61,20 +60,20 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
       subscribeToPresence(auth.id);
     }
 
-    // Clean up. 
+    // Clean up.
     return () => {
       // Unsub from presence updates.
       if (presenceSub) {
         presenceSub();
       }
-    }
-  }, [auth])
+    };
+  }, [auth]);
 
   /**
    * Update presence state
    * @param id The id of the presence doc to update
    * @param updates The updates to apply to the presence doc
-   * @returns 
+   * @returns
    */
   async function update(updates: Partial<PresenceSchema>) {
     if (!auth) return;
@@ -82,9 +81,5 @@ export function PresenceProvider(props: React.PropsWithChildren<Record<string, u
     return res;
   }
 
-  return (
-    <PresenceContext.Provider value={{ presence, update }}>
-      {props.children}
-    </PresenceContext.Provider>
-  );
+  return <PresenceContext.Provider value={{ presence, update }}>{props.children}</PresenceContext.Provider>;
 }
