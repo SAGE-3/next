@@ -47,7 +47,7 @@ function AppComponent(props: App): JSX.Element {
 
   const box = {'xmin': 109, 'ymin': 186, 'xmax': 260, 'ymax': 454};
 
-  // console.log(displaySize);
+  console.log(displaySize);
 
   // Convert the ID to an asset
   useEffect(() => {

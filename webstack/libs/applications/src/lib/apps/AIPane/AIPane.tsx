@@ -55,7 +55,7 @@ function AppComponent(props: App): JSX.Element {
   const location = useLocation();
   const locationState = location.state as { roomId: string };
   const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+  const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
   const prevX = useRef(0);
@@ -149,8 +149,8 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
     });
-    console.log('s.supported_tasks ' + s.supported_tasks)
-    Object.values(s.supported_tasks).forEach(el => console.log('Each s.supported_tasks ' + el))
+    console.log(s.supported_tasks)
+    Object.values(s.supported_tasks).forEach(el => console.log(el))
   }
 
   function closePopovers(info: string) {
@@ -227,7 +227,7 @@ function AppComponent(props: App): JSX.Element {
         <Box className="output-container">
           <Text>
             Output <br/>
-            {s.output}
+            {JSON.stringify(s.output.output)}
           </Text>
         </Box>
       </Box>
@@ -243,7 +243,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const location = useLocation();
   const locationState = location.state as { roomId: string };
   const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+  const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
   const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];

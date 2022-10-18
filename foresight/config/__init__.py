@@ -56,7 +56,7 @@ ai_settings = {
 funcx = {
     "endpoint_uuid": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
     "test_hello_world_uuid": '3c53e91f-e812-4ec6-97d0-18ce059b3391',
-    "ai_func_uuid": '94b0ccda-dbd5-49d9-90d4-3957f90a3637'
+    "ai_func_uuid": '3f81b23d-d160-4082-b78f-fe591671f37f'
 }
 
 ai_models = {
@@ -78,7 +78,7 @@ ai_models = {
     },
 
     "urls": {
-        "facebook/detr-resnet-50": "https://d81f-2607-f278-410e-5-8d71-a36e-8480-7f63.jp.ngrok.io/detection",
+        "facebook/detr-resnet-50": "https://c54d-2607-f278-410e-5-a098-e976-1200-e118.jp.ngrok.io/detection",
         "lai_lab/fertilized_egg_detect": "SOME-OTHER-URL",
         "facebook/bart-large-cnn": "",
         "sshleifer/distilbart-cnn-12-6": ""
