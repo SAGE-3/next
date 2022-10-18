@@ -13,7 +13,7 @@ import {
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
-import { useAppStore, GetConfiguration, useUser, truncateWithEllipsis } from '@sage3/frontend';
+import { truncateWithEllipsis, useAppStore, useUser } from '@sage3/frontend';
 import { useState, useEffect } from 'react';
 import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
@@ -33,8 +33,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
   }, [props._id, updateState]);
-
-
 
 
   const updateStates = () => {
@@ -259,12 +257,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0.5}
                 size="md"
                 aria-label="Add Kernel"
-                onClick={() => addKernel()}
+                onClick={() => addKernel}
                 colorScheme="teal"
                 icon={<MdAdd />}
               />
             </Tooltip>{' '}
           </HStack>
+
           {/* SCROLL BOX LOWER */}
           <Box
             w={'100%'}
@@ -274,69 +273,89 @@ function AppComponent(props: App): JSX.Element {
             overflowY={'auto'}
             style={{ border: '2px solid #111', borderRadius: '2px' }}
           >
+            {/* <VStack w={'100%'} spacing={0}> */}
             {
-              // sort kernels by last_activity (most recent first)
+              // If there are kernels, display them
               s.kernels
+                // sort kernels by last_activity (most recent first)
                 .sort((a, b) => (a.last_activity < b.last_activity ? 1 : -1))
-                .map((kernel) => (
-                  <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
-                    <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
-                      <Text
-                        onClick={() => {
-                          startSageCell(kernel.id);
-                        }}
-                        ml={2}
-                        fontWeight="bold"
-                      >
-                        <Tooltip label={kernel.id} placement="top">
-                          {truncateWithEllipsis(kernel.id, 8)}
-                        </Tooltip>
-                      </Text>{' '}
-                      <Text>{kernel.name}</Text>
-                      <Flex alignItems="right">
-                        <Tooltip label={'Open a SageCell'} placement="top">
-                          <IconButton
-                            variant="outline"
-                            m={0.5}
-                            size="md"
-                            onClick={() => {
-                              startSageCell(kernel.id);
-                            }}
-                            colorScheme="teal"
-                            aria-label="Delete Kernel"
-                            icon={<MdCode />}
-                          />
-                        </Tooltip>
-                        <Tooltip label={'Remove Kernel'} placement="top">
-                          <IconButton
-                            variant="outline"
-                            m={0.5}
-                            size="md"
-                            onClick={() => {
-                              removeKernel(kernel.id);
-                            }}
-                            colorScheme="teal"
-                            aria-label="Delete Kernel"
-                            icon={<MdRemove />}
-                          />
-                        </Tooltip>
-                        <Tooltip label={'Restart Kernel'} placement="top">
-                          <IconButton
-                            variant="outline"
-                            m={0.5}
-                            size="md"
-                            onClick={() => {
-                              restartKernel(kernel.id);
-                            }}
-                            colorScheme="teal"
-                            aria-label="Restart Kernel"
-                            icon={<MdRestartAlt />}
-                          />
-                        </Tooltip>
-                      </Flex>
-                    </Flex>
-                  </Box>
-                ))
+                .map((kernel) =>
+                  // find only the kernels that are in the list of available kernels
+                  s.availableKernels.map(
+                    ({ value, label }) =>
+                      value === kernel.id && (
+                        // {
+                        //   // sort kernels by last_activity (most recent first)
+                        //   s.kernels
+                        //     .sort((a, b) => (a.last_activity < b.last_activity ? 1 : -1))
+                        //     .map((kernel) => (
+                        <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+                          <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
+                            <Box w="100%">
+                              <Tooltip label={kernel.id} placement="top">
+                                <Text fontSize="md" fontWeight="bold">
+                                  {label}
+                                </Text>
+                              </Tooltip>
+                            </Box>
+                            <Text
+                              onClick={() => {
+                                startSageCell(kernel.id);
+                              }}
+                              ml={2}
+                              fontWeight="bold"
+                            >
+                              <Tooltip label={kernel.id} placement="top">
+                                {truncateWithEllipsis(kernel.id, 8)}
+                              </Tooltip>
+                            </Text>
+                            <Text>{kernel.name}</Text>
+                            <Flex alignItems="right">
+                              <Tooltip label={'Open a SageCell'} placement="top">
+                                <IconButton
+                                  variant="outline"
+                                  m={0.5}
+                                  size="md"
+                                  onClick={() => {
+                                    startSageCell(kernel.id);
+                                  }}
+                                  colorScheme="teal"
+                                  aria-label="Delete Kernel"
+                                  icon={<MdCode />}
+                                />
+                              </Tooltip>
+                              <Tooltip label={'Remove Kernel'} placement="top">
+                                <IconButton
+                                  variant="outline"
+                                  m={0.5}
+                                  size="md"
+                                  onClick={() => {
+                                    removeKernel(kernel.id);
+                                  }}
+                                  colorScheme="teal"
+                                  aria-label="Delete Kernel"
+                                  icon={<MdRemove />}
+                                />
+                              </Tooltip>
+                              <Tooltip label={'Restart Kernel'} placement="top">
+                                <IconButton
+                                  variant="outline"
+                                  m={0.5}
+                                  size="md"
+                                  onClick={() => {
+                                    restartKernel(kernel.id);
+                                  }}
+                                  colorScheme="teal"
+                                  aria-label="Restart Kernel"
+                                  icon={<MdRestartAlt />}
+                                />
+                              </Tooltip>
+                            </Flex>
+                          </Flex>
+                        </Box>
+                      )
+                  )
+                )
             }
           </Box>
         </VStack>
