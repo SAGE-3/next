@@ -7,7 +7,6 @@ on:
       - '.github/workflows/**'
     branches:
       - dev
-      - dev-touch
 
 env:
   SERVER: production
@@ -22,10 +21,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: '16'
       - name: Install
@@ -40,11 +39,11 @@ jobs:
       - name: Build3
         run: node build_win.js
         working-directory: webstack/clients/electron
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: SAGE3-installer-win64.exe
           path: webstack/clients/electron/windows-installer/SAGE3-Installer.exe
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: SAGE3-win64.zip
           path: webstack/clients/electron/SAGE3-win64.zip
