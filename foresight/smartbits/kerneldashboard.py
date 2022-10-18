@@ -5,14 +5,14 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from smartbits.smartbit import SmartBit, ExecuteInfo
-from smartbits.smartbit import TrackedBaseModel
+from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from foresight.smartbits.smartbit import TrackedBaseModel
 import json
 import websocket
 import threading
 from pydantic import PrivateAttr
 import time
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 import requests
 import redis
 
@@ -88,7 +88,6 @@ class KernelDashboard(SmartBit):
     def delete_kernel(self, kernel_id):
         j_url = f'{self._base_url}/kernels/{kernel_id}'
         response = requests.delete(j_url, headers=self._headers)
-        jupyter_kernels = "JUPYTER:KERNELS"
         r_json = self._redis_server.json()
         if response.status_code == 204:
             r_json.delete(self._redis_store, kernel_id)
@@ -110,26 +109,10 @@ class KernelDashboard(SmartBit):
     def get_available_kernels(self, user_uuid):
         """
         This function will get the kernels from the redis server
-        if the kernel is public, or if the user is the owner of the kernel
-        it will be added to the list of available kernels
-        :param user_uuid:
-        :return: list of kernels in the form of kernal_alias:kernel_id
-        {
-            '746dcafb-f578-4e1c-b515-8a7a185f26c0': {
-                'kernel_alias': 'test1',
-                'kernel_name': 'python3',
-                'room': '570bd4af-db4d-4ed3-919d-ec53832a3259',
-                'board': '6c68f094-4dc6-40a2-af8a-3f96612d2031',
-                'owner_uuid': '9b93ab8b-20b2-4016-9bfb-ca8b76acc160',
-                'is_private': False,
-                'auth_users': []
-            }
-        }
         """
         # print('i am here 3')
-        jupyter_kernels = "JUPYTER:KERNELS"
         r_json = self._redis_server.json()
-        kernels = r_json.get(jupyter_kernels)
+        kernels = r_json.get(self._redis_store)
         available_kernels = []
 
         for kernel in kernels.keys():
@@ -140,14 +123,6 @@ class KernelDashboard(SmartBit):
             available_kernels.append({"label": kernels[kernel]['kernel_alias'], "value": kernel})
         if len(available_kernels) > 0:
             self.state.availableKernels = available_kernels
-            print(f"I am sending back available Kernels {available_kernels}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
-
-    # def process_every(self, seconds=10):
-    #     # TODO: check if kernels changed and only refresh if they did
-    #     while True:
-    #         if self.state.kernels != self.get_kernels():
-    #             self.refresh_list()
-    #         time.sleep(seconds)

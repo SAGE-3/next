@@ -5,9 +5,9 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from smartbits.smartbit import SmartBit, ExecuteInfo
-from smartbits.smartbit import TrackedBaseModel
-from pydantic import PrivateAttr
+from foresight.smartbits.smartbit import SmartBit
+from foresight.smartbits.smartbit import TrackedBaseModel
+# from pydantic import PrivateAttr
 
 
 class GenericSmartBitState(TrackedBaseModel):
@@ -16,7 +16,7 @@ class GenericSmartBitState(TrackedBaseModel):
 class GenericSmartBit(SmartBit):
     # the key that is assigned to this in state is
     state: GenericSmartBitState
-    _some_private_info: dict = PrivateAttr()
+    # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
