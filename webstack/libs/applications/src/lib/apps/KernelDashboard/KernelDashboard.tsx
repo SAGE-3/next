@@ -16,18 +16,7 @@ import { state as AppState } from './index';
 import { useAppStore, GetConfiguration, useUser, truncateWithEllipsis } from '@sage3/frontend';
 import { useState, useEffect } from 'react';
 import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode } from 'react-icons/md';
-import { useLocation } from 'react-router-dom';
-import ConfirmModal from './components/confirmModel';
-// import { Kernel } from '.';
-// import { KernelSpecs, KernelSpec } from './index';
-
-
-// TODO: attach a name to each kernel
-// TODO: fix the link between kernels and python SageCell
-// TODO: add collapsible menu for each kernel to add sessions maybe
-// TODO: store some information in redis -- need to consider how and what to store
-// TODO: fix some UI issues
-
+import { useParams } from 'react-router-dom';
 
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {
@@ -36,14 +25,9 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const [isPrivate, setIsPrivate] = useState(false);
   const { user } = useUser();
-  const location = useLocation();
-  const locationState = location.state as { boardId: string; roomId: string };
+  const { boardId, roomId } = useParams<{ boardId: string; roomId: string }>();
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
-  // const [currentAction, setCurrentAction] = useState<string>('Stop');
-  // const [currentObject, setCurrentObject] = useState<string>('Kernel');
-  // const [selectedKernel, setSelectedKernel] = useState<string>('');
-  // const { isOpen: IsOpen, onOpen: OnOpen, onClose: OnClose } = useDisclosure();
 
 
   useEffect(() => {
@@ -52,49 +36,6 @@ function AppComponent(props: App): JSX.Element {
 
 
 
-  // useEffect(() => {
-  //   if (!user) return;
-  //   updateState(props._id, { executeInfo: { executeFunc: 'get_available_kernels', params: { user_uuid: user._id } } });
-  // }, [user]);
-
-
-  // legacy code to fetch via API call
-
-  // /**
-  //  * Get the token and production state when the component mounts
-  //  *
-  //  * @returns  void
-  //  */
-  // useEffect(() => {
-  //   GetConfiguration().then((conf) => {
-  //     if (conf.token) {
-  //       setHeaders({ Authorization: `Token ${conf.token}` });
-  //     }
-  //     !conf.production ? setBaseUrl(`http://${window.location.hostname}`) : setBaseUrl(`http://${window.location.hostname}:4443`);
-  //   });
-  // }, []);
-
-  // useEffect(() => {
-  //   if (kernels) {
-  //     updateState(props._id, { kernels: kernels });
-  //   }
-  // }, [kernels]);
-
-  // const getKernelSpecs = () => {
-  //   fetch(`${baseUrl}/api/kernelspecs`, { headers: headers })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setKernelOptions(Object.keys(data.kernelspecs));
-  //     });
-  // };
-
-  // const getKernels = () => {
-  //   fetch(`${baseUrl}/api/kernels`, { headers: headers })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setKernels(data);
-  //     });
-  // };
 
   const updateStates = () => {
     getKernelSpecs();
@@ -119,10 +60,7 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { executeInfo: { executeFunc: 'refresh_list', params: {} } });
   };
 
-  // kernel_alias, room_uuid, board_uuid, owner_uuid, is_private, (kernel_name = 'python3');
   /**
-   * room_uuid, board_uuid, owner_uuid, is_private=False,
-   * kernel_name="python3", auth_users=(), kernel_alias="YO"
    *
    * Add a kernel to the list of kernels by sending a request to the backend
    * and updating the state. Defaults to python3 kernel. Expects a kernel alias
@@ -132,22 +70,14 @@ function AppComponent(props: App): JSX.Element {
    */
   const addKernel = () => {
     if (!user) return;
-    // console.log('add kernel');
-    // console.log('kernel name', kernelName);
-    // console.log('kernel alias', kernelAlias);
-    // console.log('is private', isPrivate);
-    // console.log('board id', locationState.boardId);
-    // console.log('room id', locationState.roomId);
-    // console.log('user id', user._id);
-    // if (!user || !kernelAlias || !kernelName) return;
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'add_kernel',
         params: {
           kernel_alias: kernelAlias,
           kernel_name: kernelName,
-          room_uuid: locationState.roomId,
-          board_uuid: locationState.boardId,
+          room_uuid: roomId,
+          board_uuid: boardId,
           owner_uuid: user._id,
           is_private: isPrivate,
         },
@@ -234,8 +164,8 @@ function AppComponent(props: App): JSX.Element {
     createApp({
       name: 'SageCell',
       description: `SageCell> ${kernelId}`,
-      roomId: locationState.roomId,
-      boardId: locationState.boardId,
+      roomId: roomId!,
+      boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -360,22 +290,12 @@ function AppComponent(props: App): JSX.Element {
                         ml={2}
                         fontWeight="bold"
                       >
-                        {/* {kernelIdentifier[kernel.id]
-                        ? truncateWithEllipsis(kernelIdentifier[kernel.id], 8)
-                        : truncateWithEllipsis(kernel.id, 8)} */}
                         <Tooltip label={kernel.id} placement="top">
                           {truncateWithEllipsis(kernel.id, 8)}
                         </Tooltip>
                       </Text>{' '}
                       <Text>{kernel.name}</Text>
                       <Flex alignItems="right">
-                        {/* <Text size="md" color={'blue'} fontWeight="bold">
-                        {
-                          // show the last activity time in human readable format (e.g. 2 minutes ago)
-                          timeSince(kernel.last_activity)
-                        }
-                      </Text> */}
-                        {/* <Badge colorScheme={kernel.execution_state === 'idle' ? 'green' : 'red'}>{kernel.execution_state}</Badge> */}
                         <Tooltip label={'Open a SageCell'} placement="top">
                           <IconButton
                             variant="outline"
@@ -431,25 +351,6 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
 
-  // const s = props.data.state as AppState;
-  // const updateState = useAppStore((state) => state.updateState);
-  // const [headers, setHeaders] = useState({} as { [key: string]: string });
-  // const [baseUrl, setBaseUrl] = useState<string>();
-  // const [kernels, setKernels] = useState<Kernel[]>([]); // KernelProps[];
-  // const [kernelOptions, setKernelOptions] = useState<string[]>([]);
-  // const [selectedKernelToRemove, setSelectedKernelToRemove] = useState<string>('');
-
-  // // get the token and production state when the component mounts
-  // useEffect(() => {
-  //   GetConfiguration().then((conf) => {
-  //     if(conf.token) {
-  //       setHeaders({ Authorization: `Token ${conf.token}` });
-  //     }
-  //     !conf.production
-  //     ? setBaseUrl(`http://${window.location.hostname}`)
-  //     : setBaseUrl(`http://${window.location.hostname}:4443`)
-  //   });
-  // }, []);
 
   return (
     <Box>
