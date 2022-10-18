@@ -6,8 +6,26 @@
  *
  */
 import {
-  useColorModeValue, Box, Input, InputGroup, Select, Text, Tooltip,
-  Stack, Collapse, Flex, Icon, IconButton, HStack, Badge, useDisclosure, Modal, Checkbox, Button, InputRightElement, VStack,
+  useColorModeValue,
+  Box,
+  Input,
+  InputGroup,
+  Select,
+  Text,
+  Tooltip,
+  Stack,
+  Collapse,
+  Flex,
+  Icon,
+  IconButton,
+  HStack,
+  Badge,
+  useDisclosure,
+  Modal,
+  Checkbox,
+  Button,
+  InputRightElement,
+  VStack,
 } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -29,16 +47,14 @@ function AppComponent(props: App): JSX.Element {
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
 
-
   useEffect(() => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
   }, [props._id, updateState]);
 
-
   const updateStates = () => {
     getKernelSpecs();
     getAvailableKernels();
-  }
+  };
 
   const getKernelSpecs = () => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
@@ -48,7 +64,6 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     updateState(props._id, { executeInfo: { executeFunc: 'get_available_kernels', params: { user_uuid: user._id } } });
   };
-
 
   /**
    * Update the kernels list by fetching the kernels from the backend
@@ -90,8 +105,8 @@ function AppComponent(props: App): JSX.Element {
     const cleanAlias = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
 
     setKernelAlias(cleanAlias);
-    console.log("the clean alias is")
-    console.log(kernelAlias)
+    console.log('the clean alias is');
+    console.log(kernelAlias);
   }
 
   // Triggered on 'enter' key
@@ -257,7 +272,7 @@ function AppComponent(props: App): JSX.Element {
                 m={0.5}
                 size="md"
                 aria-label="Add Kernel"
-                onClick={() => addKernel}
+                onClick={addKernel}
                 colorScheme="teal"
                 icon={<MdAdd />}
               />
@@ -284,11 +299,6 @@ function AppComponent(props: App): JSX.Element {
                   s.availableKernels.map(
                     ({ value, label }) =>
                       value === kernel.id && (
-                        // {
-                        //   // sort kernels by last_activity (most recent first)
-                        //   s.kernels
-                        //     .sort((a, b) => (a.last_activity < b.last_activity ? 1 : -1))
-                        //     .map((kernel) => (
                         <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
                           <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
                             <Box w="100%">
@@ -367,18 +377,12 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app KernelDashboard */
 
 function ToolbarComponent(props: App): JSX.Element {
-
-
-  return (
-    <Box>
-    </Box>
-  );
+  return <Box></Box>;
 }
 
 export const KernelDashboard = {
   AppComponent,
   ToolbarComponent,
 };
-
 
 export default { AppComponent, ToolbarComponent };
