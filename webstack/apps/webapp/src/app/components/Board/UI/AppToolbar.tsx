@@ -8,7 +8,7 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 import { ErrorBoundary } from 'react-error-boundary';
@@ -33,7 +33,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
 
   // Theme
-  const panelBackground = useColorModeValue('gray.50', '#4A5568');
+  const background = useColorModeValue('gray.50', 'gray.700');
+  const panelBackground = useHexColor(background);
 
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
