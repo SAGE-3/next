@@ -80,7 +80,8 @@ export function BoardCard(props: BoardCardProps) {
   // Copy a sharable link to the user's os clipboard
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const link = `${window.location.origin}/#/enter/${props.board.data.roomId}/${props.board._id}`;
+    // make it a sage3:// protocol link
+    const link = `sage3://${window.location.host}/#/enter/${props.board.data.roomId}/${props.board._id}`;
     navigator.clipboard.writeText(link);
     toast({
       title: 'Success',
