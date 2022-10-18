@@ -166,11 +166,19 @@ program
   .option('--height <n>', 'Window height (int)', myParseInt, defaults.height)
   .option('--disable-hardware', 'Disable hardware acceleration', false)
   .option('--show-fps', 'Display the Chrome FPS counter', false)
+  .option('--profile <s>', 'Create a profile (string)')
   .option('--width <n>', 'Window width (int)', myParseInt, defaults.width);
 // Parse the arguments
 program.parse(args);
 // Get the results
 const commander = program.opts();
+
+if (commander.profile) {
+  console.log('Profile>', commander.profile);
+  const profilePath = path.resolve(commander.profile);
+  app.setPath('userData', profilePath);
+  console.log('Profile> userData', profilePath);
+}
 
 // Disable hardware rendering (useful for some large display systems)
 if (commander.disableHardware) {
@@ -182,10 +190,10 @@ if (commander.clear) {
   store.clear();
 }
 
-// Force using integrated GPU when there are multiple GPUs available
 if (process.platform === 'win32') {
-  console.log('Preferences> force integrated GPU (windows)');
-  app.commandLine.appendSwitch('force_low_power_gpu');
+  // Force using integrated GPU when there are multiple GPUs available
+  // console.log('Preferences> force integrated GPU (windows)');
+  // app.commandLine.appendSwitch('force_low_power_gpu');
 }
 
 // Reset the desktop scaling on Windows
@@ -432,6 +440,8 @@ function createWindow() {
       webviewTag: true,
       // Disable alert and confirm dialogs
       disableDialogs: true,
+      // nodeIntegration: true,
+      // contextIsolation: false,
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: true,
@@ -441,7 +451,7 @@ function createWindow() {
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
       // Hack to preload jquery for broken sites
-      // preload: path.resolve(path.join(__dirname, 'preload.js')),
+      preload: path.resolve(path.join(__dirname, 'preload.js')),
     },
   };
 
@@ -693,6 +703,40 @@ function createWindow() {
     // Disable alert and confirm dialogs
     webPreferences.disableDialogs = true;
 
+    // webPreferences.contextIsolation = true;
+    // webPreferences.nodeIntegration = true;
+    // params.nodeIntegration = true;
+
+    const sender = event.sender;
+    sender.on('ipc-message', function (evt, channel, args) {
+      console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
+      console.log('Webview>    message', channel, args);
+      // Message for the webview pixel streaming
+      if (channel === 'streamview') {
+        const viewContent = electron.webContents.fromId(args.id);
+        viewContent.beginFrameSubscription(true, (image, dirty) => {
+          let dataenc;
+          let neww, newh;
+          const devicePixelRatio = 2;
+          const quality = 50;
+          if (devicePixelRatio > 1) {
+            neww = dirty.width / devicePixelRatio;
+            newh = dirty.height / devicePixelRatio;
+            const resizedimage = image.resize({ width: neww, height: newh });
+            dataenc = resizedimage.toJPEG(quality);
+          } else {
+            dataenc = image.toJPEG(quality);
+            neww = dirty.width;
+            newh = dirty.height;
+          }
+          evt.reply('paint', {
+            buf: dataenc.toString('base64'),
+            dirty: { ...dirty, width: neww, height: newh },
+          });
+        });
+      }
+    });
+
     // Override the UserAgent variable: make websites behave better
     // Not permanent solution: here pretending to be Google Chrome
     // params.useragent =
@@ -748,15 +792,16 @@ function createWindow() {
 
   // Retrieve media sources for desktop sharing
   ipcMain.on('request-sources', () => {
-    // Get only the monitors and thumbnails.
-    // The types param can also take "window" or "apps"
+    // Get list of the monitors and windows, requesting thumbnails for each.
+    // available types are screen and window
     const mediaInfo = {
-      types: ['screen'],
+      types: ['screen', 'window'],
+      // types: ['screen'],
       thumbnailSize: { width: 200, height: 200 },
     };
 
     // Get the sources and return the result to the renderer
-    desktopCapturer.getSources(mediaInfo).then(async (sources) => {
+    desktopCapturer.getSources(mediaInfo).then((sources) => {
       const values = [];
       for (let s in sources) {
         const source = sources[s];
@@ -777,6 +822,15 @@ function createWindow() {
       mainWindow.webContents.send('set-source', values);
     });
   });
+
+  // Request from the renderer process
+  // ipcMain.on('streamview', (event, arg) => {
+  //   console.log('streamview>', arg.url, arg.id);
+  //   // const allweb = electron.webContents.getAllWebContents();
+  //   // allweb.forEach((web) => {
+  //   //   console.log('web>', web.id, web);
+  //   // });
+  // });
 }
 
 /**

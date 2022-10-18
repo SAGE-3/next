@@ -1,8 +1,0 @@
-{
-  "name": "SAGE3 Homebase",
-  "entryPoints": ["apps/homebase/"],
-  "exclude": ["**/*+(e2e|spec|index).tsx", "**/environments/", "**/*.js"],
-  "out": "./docs/homebase",
-  "tsconfig": "apps/homebase/tsconfig.json",
-  "readme": "docs/homebase.md"
-}

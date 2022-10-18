@@ -6,20 +6,23 @@
  *
  */
 
-
 namespace Express {
   interface Request {
-    user: import('@sage3/sagebase').SBAuthSchema
+    user: import('@sage3/sagebase').SBAuthSchema;
     files?: Array<{ originalname: string; mimetype: string; filename: string; size: number }>;
   }
 }
 
-
 // type extension for http request
 declare module 'http' {
   interface IncomingMessage {
-    user: import('@sage3/sagebase').SBAuthSchema
-    session?: any;
+    user: import('@sage3/sagebase').SBAuthSchema;
+    session: any;
     res?: any;
   }
+}
+
+declare module '*.svg' {
+  const content: any;
+  export default content;
 }

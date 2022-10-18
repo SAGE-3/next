@@ -13,8 +13,8 @@ import { Strategy } from 'passport-local';
 import { v4 } from 'uuid';
 
 export type SBAuthGuestConfig = {
-  routeEndpoint: string,
-}
+  routeEndpoint: string;
+};
 
 /**
  * Setup function of the Local Passport Strategy.
@@ -27,7 +27,8 @@ export function passportGuestSetup(): boolean {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       new Strategy(async (username: string, password: string, done: any) => {
         const providerId = v4();
-        const authRecord = await SBAuthDB.findOrAddAuth('guest', providerId);
+        const extras = { displayName: '', email: '', picture: '' };
+        const authRecord = await SBAuthDB.findOrAddAuth('guest', providerId, extras);
         if (authRecord) {
           done(null, authRecord);
         } else {

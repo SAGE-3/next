@@ -15,27 +15,35 @@ const session = require('express-session');
 // eslint-disable-next-line
 const connectRedis = require('connect-redis');
 
-import { SBAuthDatabase, SBAuthDB } from './SBAuthDatabase';
+import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
-import { passportGoogleSetup, SBAuthGoogleConfig, passportJWTSetup, SBAuthJWTConfig, passportGuestSetup, SBAuthGuestConfig, passportCILogonSetup, SBAuthCILogonConfig } from './adapters/';
-
+export type { JWTPayload } from './adapters';
+import {
+  passportGoogleSetup,
+  SBAuthGoogleConfig,
+  passportJWTSetup,
+  SBAuthJWTConfig,
+  passportGuestSetup,
+  SBAuthGuestConfig,
+  passportCILogonSetup,
+  SBAuthCILogonConfig,
+} from './adapters/';
 
 export type SBAuthConfig = {
-  sessionMaxAge: number,
-  sessionSecret: string,
+  sessionMaxAge: number;
+  sessionSecret: string;
   strategies: {
-    googleConfig?: SBAuthGoogleConfig,
-    jwtConfig?: SBAuthJWTConfig,
-    guestConfig?: SBAuthGuestConfig,
-    cilogonConfig?: SBAuthCILogonConfig,
-  }
-}
+    googleConfig?: SBAuthGoogleConfig;
+    jwtConfig?: SBAuthJWTConfig;
+    guestConfig?: SBAuthGuestConfig;
+    cilogonConfig?: SBAuthCILogonConfig;
+  };
+};
 
 /**
  * The SBAuth instance.
  */
 export class SBAuth {
-
   private _redisClient!: RedisClientType;
 
   private _prefix!: string;
@@ -45,12 +53,11 @@ export class SBAuth {
   private _sessionParser!: any;
 
   public async init(redisclient: RedisClientType, prefix: string, config: SBAuthConfig, express: Express): Promise<SBAuth> {
-
     this._redisClient = redisclient.duplicate({ legacyMode: true });
     await this._redisClient.connect();
 
     this._database = SBAuthDB;
-    this._prefix = `${prefix}:AUTH`
+    this._prefix = `${prefix}:AUTH`;
     await this._database.init(this._redisClient, this._prefix);
 
     // Passport session stuff
@@ -63,10 +70,10 @@ export class SBAuth {
       saveUninitialized: false,
       cookie: {
         secure: false, // if true only transmit cookie over https
-        httpOnly: false, // if true prevent client side JS from reading the cookie 
-        maxAge: config.sessionMaxAge // session max age in miliseconds
-      }
-    })
+        httpOnly: false, // if true prevent client side JS from reading the cookie
+        maxAge: config.sessionMaxAge, // session max age in miliseconds
+      },
+    });
     express.use(this._sessionParser);
 
     express.use(passport.initialize());
@@ -79,21 +86,25 @@ export class SBAuth {
     passport.deserializeUser(this.deserializeUser);
 
     if (config.strategies) {
-
-
       // Google Setup
       if (config.strategies.googleConfig) {
         if (passportGoogleSetup(config.strategies.googleConfig)) {
-          express.get(config.strategies.googleConfig.routeEndpoint, passport.authenticate('google', { prompt: 'select_account', scope: ['profile'] }));
-          express.get(config.strategies.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
+          express.get(
+            config.strategies.googleConfig.routeEndpoint,
+            passport.authenticate('google', { prompt: 'select_account', scope: ['profile', 'email'] })
+          );
+          express.get(
+            config.strategies.googleConfig.callbackURL,
+            passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' })
+          );
         }
       }
 
       // JWT Setup
       if (config.strategies.jwtConfig) {
         if (passportJWTSetup(config.strategies.jwtConfig)) {
-          express.post(config.strategies.jwtConfig.routeEndpoint, passport.authenticate("jwt", { session: false }), (req, res) => {
-            res.status(200).send({ success: true, message: "logged in", user: req.user });
+          express.post(config.strategies.jwtConfig.routeEndpoint, passport.authenticate('jwt', { session: false }), (req, res) => {
+            res.status(200).send({ success: true, message: 'logged in', user: req.user });
           });
         }
       }
@@ -101,15 +112,24 @@ export class SBAuth {
       // Guest Setup
       if (config.strategies.guestConfig) {
         if (passportGuestSetup()) {
-          express.post(config.strategies.guestConfig.routeEndpoint, passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' }));
+          express.post(
+            config.strategies.guestConfig.routeEndpoint,
+            passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' })
+          );
         }
       }
 
       // CILogon Setup
       if (config.strategies.cilogonConfig) {
         if (passportCILogonSetup(config.strategies.cilogonConfig)) {
-          express.get(config.strategies.cilogonConfig.routeEndpoint, passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid'] }));
-          express.get(config.strategies.cilogonConfig.callbackURL, passport.authenticate('openidconnect', { successRedirect: '/', failureRedirect: '/' }));
+          express.get(
+            config.strategies.cilogonConfig.routeEndpoint,
+            passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid', 'email', 'profile'] })
+          );
+          express.get(
+            config.strategies.cilogonConfig.callbackURL,
+            passport.authenticate('openidconnect', { successRedirect: '/', failureRedirect: '/' })
+          );
         }
       }
     }
@@ -119,8 +139,9 @@ export class SBAuth {
 
     // Route to quickly verify authentication
     express.get('/auth/verify', this.authenticate, (req, res) => {
-      res.status(200).send({ success: true, authentication: true });
-    })
+      const user = req.user as SBAuthSchema;
+      res.status(200).send({ success: true, authentication: true, auth: user });
+    });
 
     return this;
   }
@@ -128,29 +149,37 @@ export class SBAuth {
    * Express Middleware to Authenticate users
    */
   public async authenticate(req: Request, res: Response, next: NextFunction) {
-    const user = req.user;
+    const user = req.user as SBAuthSchema;
+    const headerToken = req.headers['authorization'];
     if (user) {
       next();
+    } else if (headerToken) {
+      // if there's a header token, try JWT strategy
+      passport.authenticate('jwt', { session: false })(req, res, next);
     } else {
       res.status(403);
-      res.send({ success: false, authentication: false });
+      res.send({ success: false, authentication: false, auth: null });
     }
   }
 
   /**
    * The SessionParser to enable Websocket routes to obtain the session information.
    * Example usage:
-   * 
+   *
    */
   public get sessionParser() {
     return this._sessionParser;
   }
 
-
   /**
- * Log the current user out of the session.
- */
+   * Log the current user out of the session.
+   */
   public logout(req: any, res: Response): void {
+    const user = req.user;
+    if (!user) {
+      res.send({ success: true });
+      return;
+    }
     if (req.user.provider == 'guest') {
       this._database.deleteAuth(req.user.provider, req.user.providerId);
     }
@@ -174,5 +203,4 @@ export class SBAuth {
       done(null, false);
     }
   }
-
 }

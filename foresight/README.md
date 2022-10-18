@@ -8,4 +8,6 @@ python3 -m pip install -r requirements.txt
 
 # Run
 
-ipython3 proxy.py -- -c config.json
+python proxy.py --config_file config.json --room_id <ROOM ID TO LIST TO>
+
+

@@ -16,19 +16,19 @@ const VerifyCallback = require('passport-openidconnect').VerifyCallback;
 import { SBAuthDB } from '../SBAuthDatabase';
 
 export type SBAuthCILogonConfig = {
-  clientID: string,
-  clientSecret?: string,
-  routeEndpoint: string,
-  callbackURL: string
-}
+  clientID: string;
+  clientSecret?: string;
+  routeEndpoint: string;
+  callbackURL: string;
+};
 
 // URL to query for information
 const CILogonURL = 'https://cilogon.org/.well-known/openid-configuration';
 
 /**
-  * Setup function of the CILogon Passport Strategy.
-  * @param router The express router
-  */
+ * Setup function of the CILogon Passport Strategy.
+ * @param router The express router
+ */
 export function passportCILogonSetup(config: SBAuthCILogonConfig): boolean {
   try {
     // Get information from CILogon
@@ -48,10 +48,20 @@ export function passportCILogonSetup(config: SBAuthCILogonConfig): boolean {
       // add the secret if specified
       if (config.clientSecret) cilongconfig.clientSecret = config.clientSecret;
 
-      passport.use('openidconnect',
-        new Strategy(cilongconfig,
+      passport.use(
+        'openidconnect',
+        new Strategy(
+          cilongconfig,
           async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: typeof VerifyCallback) => {
-            const authRecord = await SBAuthDB.findOrAddAuth('cilogon', profile.id);
+            const displayName = profile.displayName;
+            const email = profile.emails ? profile.emails[0].value : '';
+            const picture = profile.photos ? profile.photos[0].value : '';
+            const extras = {
+              displayName: displayName ?? '',
+              email: email ?? '',
+              picture: picture ?? '',
+            };
+            const authRecord = await SBAuthDB.findOrAddAuth('cilogon', profile.id, extras);
             if (authRecord != undefined) {
               done(null, authRecord);
             } else {

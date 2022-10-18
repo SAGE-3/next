@@ -6,6 +6,10 @@
  *
  */
 
-export * from './user-schema';
-export * from './board-schema';
-export * from './room-schema';
+export * from './user';
+export * from './board';
+export * from './room';
+export * from './asset';
+export * from './presence';
+export * from './message';
+export * from './SBSchema';

@@ -6,38 +6,48 @@
  *
  */
 
+import { WebSocket } from 'ws';
+
 /**
  * A Subscription cache to keep track of client subscriptions on the server.
  */
 export class SubscriptionCache {
-  private cache: { [id: string]: () => Promise<void> }
+  private cache: { [id: string]: (() => Promise<void>)[] };
+  private _socket: WebSocket;
 
-  constructor() {
+  constructor(socket: WebSocket) {
     this.cache = {};
+    this._socket = socket;
+
+    this._socket.on('close', () => {
+      this.deleteAll();
+    });
+
+    this._socket.on('error', () => {
+      this.deleteAll();
+    });
   }
 
-  public add(subId: string, sub: () => Promise<void>) {
-    this.cache[subId] = sub;
+  public add(subId: string, subs: (() => Promise<void>)[]) {
+    this.cache[subId] = subs;
   }
 
-  public delete(subId: string) {
+  public async delete(subId: string) {
     if (this.cache[subId]) {
       try {
-        this.cache[subId]();
+        await Promise.all(this.cache[subId].map((sub) => sub()));
       } catch (e) {
-        console.log(e);
+        console.log('Error>', e);
       }
     }
     delete this.cache[subId];
+    return;
   }
 
   public deleteAll() {
-    Object.keys(this.cache).forEach(id => {
+    Object.keys(this.cache).forEach((id) => {
       this.delete(id);
-    })
+    });
     this.cache = {};
   }
 }
-
-
-

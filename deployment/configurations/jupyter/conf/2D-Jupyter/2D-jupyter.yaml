@@ -1,0 +1,6 @@
+Type: Jupyter Notebook Extension
+Compatibility: 4.x, 5.x
+Name: 2D-Jupyter 
+Main: 2D-Jupyter.js
+Link: README.md
+Description: 2D Jupyter Notebook

@@ -6,57 +6,44 @@
  *
  */
 
-/**
- * SAGE3 application: <%= name %>
- * created by: <%= username %>
- */
+import { useAppStore } from '@sage3/frontend';
+import { Button } from '@chakra-ui/react';
+import { App } from "../../schema";
 
-// Import the React library
-import React from 'react';
+import { state as AppState } from "./index";
+import { AppWindow } from '../../components';
 
-// Window layout component provided by SAGE3
-import { Collection, DataPane } from '@sage3/frontend/smart-data/layout';
-
-// State management functions from SAGE3
-import { useSageSmartData, SWRReturnType } from '@sage3/frontend/smart-data/hooks';
-
-// Import the props definition for this application
-import { <%= name %>Props } from './metadata';
-
-// Import the CSS definitions for this application
+// Styling
 import './styling.css';
 
-export const Apps<%= name %> = (props: <%= name %>Props): JSX.Element => {
-  // Getting basic info about the app
-  console.log('App <%= name %> information>', props.id, props.position);
+/* App component for <%= name %> */
 
-  // Get a state value and a matching setter function
-  const { data: val, setData: setValue } = useSageSmartData(props.data.<%= type %>);
-  // Cast as a JSON object to access fields
-  const v = val as Sage3<%= type %>;
+function AppComponent(props: App): JSX.Element {
 
-  // Set default values
-  if (!v) setValue(() => props.__meta__.defaultValues.<%= type %>);
+  const s = props.data.state as AppState;
+
+  const updateState = useAppStore(state => state.updateState);
 
   return (
-    // Main application layout
-    <Collection>
-      <DataPane>
-        Application <%= name %>
-      </DataPane>
-      <DataPane>
-        <% if (type == "json") { %>
-          Value <%= type %>: {v}
-        <% } %>
-        <% if (type == "text") { %>
-          Value <%= type %>: {v}
-        <% } %>
-        <% if (type == "code") { %>
-          Value <%= type %>: {v}
-        <% } %>
-      </DataPane>
-    </Collection>
-  );
-};
+    <AppWindow app={props}>
+      <>
+        <h1> <%= statename  %> : {s.<%= statename  %>}</h1>
+      </>
+    </AppWindow>
+  )
+}
 
-export default Apps<%= name %>;
+/* App toolbar component for the app <%= name %> */
+
+function ToolbarComponent(props: App): JSX.Element {
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
+  return (
+    <>
+      <Button colorScheme="green">Action</Button>
+    </>
+  )
+}
+
+export default { AppComponent, ToolbarComponent };

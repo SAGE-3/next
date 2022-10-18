@@ -17,45 +17,39 @@
 /**
  * Node Modules
  */
-import * as fsModule from 'fs';
-import * as https from 'https';
 import * as path from 'path';
-import { AddressInfo } from 'net';
+import * as fs from 'fs';
 import { IncomingMessage, Server } from 'http';
-// Declare fs with Promises
-const fs = fsModule.promises;
-
-/**
- * NPM modules
- */
-// Express web server framework
-import * as express from 'express';
-
-// Express middlewares
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as helmet from 'helmet';
-import * as morgan from 'morgan';
-import * as favicon from 'serve-favicon';
-import * as cookieParser from 'cookie-parser';
 
 // Websocket
 import { WebSocket } from 'ws';
-import { SubscriptionCache } from '@sage3/backend';
+import { SAGEPresence, SubscriptionCache } from '@sage3/backend';
+
+// YJS
+import * as Y from 'yjs';
+const YUtils = require('y-websocket/bin/utils');
+
+// Create the web server with Express
+import { createApp, listenApp, serveApp } from './web';
+import { loadCredentials, listenSecureApp } from './web';
+
+// Check the token on websocket connection
+import * as jwt from 'jsonwebtoken';
 
 /**
  * SAGE3 Libs
  */
 import { loadConfig } from './config';
 // import { AssetService } from './services';
-import { expressAPIRouter, wsAPIRouter } from './controllers';
-import { loadModels } from './models';
-// import { connectFluent, multerMiddleware } from './connectors';
-import { SAGEBase, SAGEBaseConfig } from "@sage3/sagebase";
+import { expressAPIRouter, wsAPIRouter } from './api/routers';
+import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
+import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
+import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
+import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
-import { APIWSMessage, serverConfiguration } from '@sage3/shared/types';
-import { parse } from 'url';
+// SAGE Twilio Helper Import
+import { SAGETwilio } from '@sage3/backend';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -71,141 +65,55 @@ async function startServer() {
   const config: serverConfiguration = await loadConfig();
 
   // Create the Express object
-  const app = express();
-
-  // Set express attributes
-  app.use(favicon(path.join(config.root, config.assets, 'favicon.ico')));
-
-  // Enable reverse proxy support in Express. This causes the
-  // the "X-Forwarded-Proto" header field to be trusted so its
-  // value can be used to determine the protocol. See
-  // http://expressjs.com/en/api.html#app.settings.table for more details.
-  app.enable('trust proxy');
-
-  // using express to parse JSON bodies into JS objects
-  app.use(express.json({ limit: '5mb' }));
-
-  // Cookies
-  app.use(cookieParser());
-
-  // adding Helmet to enhance your API's security
-  // All options
-  // app.use(helmet());
-  // Disabling a few for now, easier during development
-  app.use(
-    helmet({
-      // Content-Security-Policy
-      contentSecurityPolicy: false,
-      // Strict-Transport-Security
-      hsts: false,
-    })
-  );
-
-  // Enabling CORS for all requests
-  app.use(cors());
-  // Compress the traffic
-  app.use(compression());
-
-  // Adding a logger to HTTP requests
-  // combined: Standard Apache combined log output
-  // values: combined tiny ...
-  // Send tiny format to stdout
-  // app.use(morgan('combined'));
-  app.use(
-    morgan('tiny', {
-      // Ignore the HTTP 200 good messages
-      skip: function (req: express.Request, res: express.Response) {
-        return res.statusCode === 200 || res.statusCode === 304;
-      },
-    })
-  );
-
-  // // Multi-file upload
-  // app.use(multerMiddleware('files'));
-
-  // // Setup the connection for logging
-  // connectFluent(app);
+  const assetPath = path.join(config.root, config.assets);
+  const app = createApp(assetPath);
 
   // HTTP/HTTPS server
   let server: Server;
 
-  // Read certificates in production
+  // Create the server
   if (config.production) {
-    // SSL certificate imports for HTTPS
-    const privateKeyFile = path.join(config.root, 'keys', config.keys.ssl.certificateKeyFile);
-    const certificateFile = path.join(config.root, 'keys', config.keys.ssl.certificateFile);
-    const caFile = path.join(config.root, 'keys', config.keys.ssl.certificateChainFile);
-    try {
-      fsModule.accessSync(privateKeyFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Private key file ${privateKeyFile} not found or unreadable.`);
-    }
-    try {
-      fsModule.accessSync(certificateFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Certificate file ${certificateFile} not found or unreadable.`);
-    }
-    try {
-      fsModule.accessSync(caFile, fsModule.constants.R_OK);
-    } catch (err) {
-      throw new Error(`Certificate file ${caFile} not found or unreadable.`);
-    }
-    const privateKey = await fs.readFile(privateKeyFile, 'utf8');
-    const certificate = await fs.readFile(certificateFile, 'utf8');
-    const ca = await fs.readFile(caFile).toString();
-    const credentials = {
-      // Keys
-      key: privateKey,
-      cert: certificate,
-      ca: ca,
-      // Control the supported version of TLS
-      minVersion: config.tlsVersion,
-      maxVersion: config.tlsVersion,
-      // Settings
-      requestCert: false,
-      rejectUnauthorized: true,
-      honorCipherOrder: true,
-    } as https.ServerOptions;
-
-    // Create the HTTPS server
-    server = https.createServer(credentials, app);
-    // 0.0.0.0 forces to listen on IPv4 on every interfaces
-    server.listen(config.port, '0.0.0.0', () => {
-      const { port } = server.address() as AddressInfo;
-      console.log('HTTPS> listening on port', port);
-    });
+    // load the HTTPS certificates in production mode
+    const credentials = loadCredentials(config);
+    // Create the server
+    server = listenSecureApp(app, credentials, config.port);
   } else {
-    // Start the HTTP web server
-    server = app.listen(config.port, () => {
-      const { port } = server.address() as AddressInfo;
-      console.log('HTTP> listening on port', port);
-    });
+    // Create and start the HTTP web server
+    server = listenApp(app, config.port);
   }
 
-  // Init SAGEBase
-  // SAGEBase
-  const sbConfig = {
-    projectName: "SAGE3",
+  // Initialization of SAGEBase
+  const sbConfig: SAGEBaseConfig = {
+    projectName: 'SAGE3',
+    redisUrl: config.redis.url || 'redis://localhost:6379',
     authConfig: {
-      sessionMaxAge: 1000 * 60 * 60 * 24 * 7,
-      sessionSecret: 'SUPERSECRET!!$$',
+      sessionMaxAge: config.auth.sessionMaxAge,
+      sessionSecret: config.auth.sessionSecret,
       strategies: {
-        guestConfig: {
-          routeEndpoint: '/auth/guest'
-        },
-        googleConfig: {
-          clientSecret: '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',
-          clientID: '416190066680-brpp3rgo9m271euoihnruhc3in3ipsi7.apps.googleusercontent.com',
-          routeEndpoint: '/auth/google',
-          callbackURL: '/auth/google/redirect'
-        }
-      }
-    }
-  } as SAGEBaseConfig;
+        guestConfig: config.auth.guestConfig,
+        googleConfig: config.auth.googleConfig,
+        cilogonConfig: config.auth.cilogonConfig,
+        jwtConfig: config.auth.jwtConfig,
+      },
+    },
+  };
   await SAGEBase.init(sbConfig, app);
 
   // Load all the models: user, board, ...
-  await loadModels();
+  await loadCollections();
+
+  // Twilio Setup
+  const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
+  const twilio = new SAGETwilio(config.twilio, AppsCollection, 10000, screenShareTimeLimit);
+  app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
+    const authId = req.user.id;
+    if (authId === undefined) {
+      res.status(403).send();
+    }
+    const room = req.query.room as string;
+    const token = twilio.generateVideoToken(authId, room);
+    res.send({ token });
+  });
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
@@ -213,63 +121,199 @@ async function startServer() {
   // Websocket setup
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
+  const rtcWebSocketServer = new WebSocket.Server({ noServer: true });
 
-  apiWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+  // Websocket API for sagebase
+  apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
+    // The authSchema of the current user
+    const user = req.user;
 
-    // A Subscription Cache to track what subscriptions the user currently has.
-    const subCache = new SubscriptionCache();
+    // Create a subscription cache for this connection.
+    // A Subscription Cache to track the subscriptions the user has.
+    const subCache = new SubscriptionCache(socket);
+
+    // A helper class to track the presence of users.
+    const presence = new SAGEPresence(user.id, socket, PresenceCollection);
+    presence.init();
 
     socket.on('message', (msg) => {
-      const message = JSON.parse(msg.toString()) as APIWSMessage;
-      wsAPIRouter(socket, request, message, subCache);
-    })
+      try {
+        const message = JSON.parse(msg.toString()) as APIClientWSMessage;
+        wsAPIRouter(socket, message, user, subCache);
+      } catch (err) {
+        console.error('Server> Error parsing message:', msg.toString());
+        console.error('       ', err.message);
+      }
+    });
 
     socket.on('close', () => {
-      subCache.deleteAll();
+      console.log('apiWebSocketServer> connection closed');
     });
 
+    socket.on('error', () => {
+      console.log('apiWebSocketServer> error');
+    });
   });
 
-  yjsWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
-    console.log('NEW YJS SOCKET')
-    socket.on('message', (msg) => {
-      console.log(msg);
-    })
+  // Websocket API for YJS
+  yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
+    YUtils.setupWSConnection(socket, _request, args);
   });
 
+  // Websocket API for WebRTC
+  const clients: Record<string, WebSocket> = {};
 
+  function emitRTC(name: string, socket: WebSocket, data: any) {
+    for (const k in clients) {
+      const sock = clients[k];
+      if (sock !== socket) {
+        sock.send(JSON.stringify({ type: name, data: data }));
+      }
+    }
+  }
+  async function sendRTC(name: string, socket: WebSocket, data: any) {
+    socket.send(JSON.stringify({ type: name, data: data }));
+  }
+
+  rtcWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+    console.log('WebRTC> connection', request.url);
+
+    if (request.url) {
+      const parts = request.url.split('/');
+      const roomID = parts[parts.length - 1];
+      console.log('WebRTC> roomID', roomID);
+    }
+
+    socket.on('message', (data) => {
+      const datastr = data.toString();
+      const msg = JSON.parse(datastr);
+      if (msg.type === 'join') {
+        clients[msg.user] = socket;
+        emitRTC('join', socket, msg);
+        console.log('WebRTC> connection #', Object.keys(clients).length);
+        sendRTC('clients', socket, Object.keys(clients));
+      } else if (msg.type === 'create') {
+        clients[msg.user] = socket;
+        console.log('WebRTC> new group for', msg.app);
+      } else if (msg.type === 'paint') {
+        emitRTC('paint', socket, msg.data);
+      }
+    });
+    socket.on('close', (_msg) => {
+      console.log('WebRTC> close');
+      // Delete the socket from the clients array
+      for (const [key, value] of Object.entries(clients)) {
+        if (value === socket) {
+          delete clients[key];
+          emitRTC('left', socket, key);
+        }
+      }
+      console.log('WebRTC> connection #', Object.keys(clients).length);
+    });
+    socket.on('error', (msg) => {
+      console.log('WebRTC> error', msg);
+      // Delete the socket from the clients array
+      for (const [key, value] of Object.entries(clients)) {
+        if (value === socket) {
+          delete clients[key];
+        }
+      }
+      console.log('WebRTC> connection #', Object.keys(clients).length);
+    });
+  });
+
+  // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
-    const { pathname } = parse(request.url);
-    if (pathname === null) return;
+    // TODO: Declarations file was being funny again
+    const req = request as any;
+    // get url path
+    const pathname = request.url;
+    if (!pathname) return;
+    // get the first word of the url
     const wsPath = pathname.split('/')[1];
 
+    // WebRTC socket - noauth for now
+    if (wsPath === 'rtc') {
+      rtcWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+        rtcWebSocketServer.emit('connection', ws, req);
+      });
+      return;
+    }
+
     SAGEBase.Auth.sessionParser(request, {}, () => {
-      if (!request.session.passport?.user) {
-        console.log("not authorized");
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-        socket.destroy();
-        return;
-      }
-      if (wsPath === 'api') {
-        apiWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
-          apiWebSocketServer.emit('connection', ws, request);
+      let token = request.headers.authorization;
+      if (config.auth.jwtConfig && token) {
+        // extract the token from the header
+        token = token.split(' ')[1];
+        // Read the public key
+        const keyFile = config.auth.jwtConfig?.publicKey || 'jwt_public.pem';
+        const pubkey = fs.readFileSync(keyFile);
+        // Check is token valid
+        jwt.verify(token, pubkey, { algorithms: ['RS256'] }, async (err, decoded) => {
+          if (err) {
+            console.log('not authorized');
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.destroy();
+            return;
+          } else {
+            console.log('Authorization> ws ok', decoded?.sub);
+            const payload = decoded as JWTPayload;
+            if (decoded?.sub) {
+              const displayName = payload.name;
+              const email = payload.sub;
+              const extras = {
+                displayName: displayName ?? '',
+                email: email ?? '',
+                picture: '',
+              };
+              // Find the actual user based on the token information
+              const authRecord = await SBAuthDB.findOrAddAuth('jwt', payload.sub, extras);
+              // Add the info to the request
+              req.user = authRecord;
+              if (wsPath === 'api') {
+                apiWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+                  apiWebSocketServer.emit('connection', ws, req);
+                });
+              } else if (wsPath === 'yjs') {
+                yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+                  yjsWebSocketServer.emit('connection', ws, req);
+                });
+              }
+            }
+          }
         });
-      } else if (wsPath === 'yjs') {
-        yjsWebSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
-          yjsWebSocketServer.emit('connection', ws, request);
-        });
+      } else {
+        if (!req.session.passport?.user) {
+          // Auth coming from a logged user
+          console.log('Authorization> ws failed');
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+        if (wsPath === 'api') {
+          apiWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+            // Add the user info from passport to the ws request
+            req.user = req.session.passport?.user;
+            apiWebSocketServer.emit('connection', ws, req);
+          });
+        } else if (wsPath === 'yjs') {
+          yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+            yjsWebSocketServer.emit('connection', ws, req);
+          });
+        }
       }
     });
-  })
+  });
 
   // Serves the static react files from webapp folder
-  app.use('/', express.static(path.join(__dirname, 'webapp')));
+  serveApp(app, path.join(__dirname, 'webapp'));
 
   // Handle termination
   function exitHandler() {
     console.log('in exit handler, disconnect sockets');
     apiWebSocketServer.close();
     yjsWebSocketServer.close();
+    rtcWebSocketServer.close();
     process.exit(2);
   }
 

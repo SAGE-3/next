@@ -1,0 +1,33 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+ .contextmenu {
+  font-size: 14px;
+  border-radius: 4px;
+  padding: 1px 1px 1px 1px;
+  width: auto;
+  height: auto;
+  margin: 0;
+  position: absolute;
+  list-style: none;
+  opacity: 1;
+  transition: opacity 0.5s linear;
+  z-index: 10000;
+}
+
+
+.contextmenuitem {
+  display: block;
+  padding: 1px 3px 1px 3px;
+  margin: 0;
+}
+
+.contextmenuitem:hover,
+.contextmenuitem:focus {
+  background-color: teal;
+}

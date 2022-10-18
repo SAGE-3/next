@@ -1,6 +1,6 @@
 # SAGEBase
 
-SAGEBase is a Node/Express backend service that provides a realtime database utilizing REDIS.
+SAGEBase is a Node/Express backend service that provides authentication, no-sql collection/document database, pub/sub, and authorization utilizing REDIS.
 
 - Database (v0.2.0)
 - PubSub (v0.3.0)
@@ -11,11 +11,9 @@ v0.6.0 -> v1.0.0 Will be testing, bug fixes, and documentation.
 
 Timeline
 
-- v0.2.0 (March 29th 2022)
-- v0.3.0 (March 31st 2022)
-- v0.4.0 (May 1st 2022)
-- v0.5.0 (June 1st 2022)
-- v1.0.0 (August 31st 2022)
+- v0.4.0 (June 1st 2022)
+- v0.5.0 (August 1st 2022)
+- v1.0.0 (September 1st 2022)
 
 ## Requirements
 
@@ -37,13 +35,18 @@ Timeline
 
 ## Redis
 
-We recommend using the offical RedisLabs Docker Images. There are multiple images but we recommend the `redismod` image due to it already having RedisJSON and RediSearch installed. You still need to configure the image to utilize the modules, explained below.
+We recommend using the offical RedisLabs Docker Images. There are multiple images but we recommend the `redis-stack` image due to it already having RedisJSON and RediSearch installed. You still need to configure the image to utilize the modules, explained below.
 
-- [RedisMod Docker Image](https://hub.docker.com/r/redislabs/redismod)
+- [RedisStack Docker Image](https://hub.docker.com/r/redis/redis-stack)
 
 ### Confguring Redis
 
-TODO
+Add to your redis.conf file:
+
+```
+loadmodule /opt/redis-stack/lib/redisearch.so
+loadmodule /opt/redis-stack/lib/rejson.so
+```
 
 ---
 
