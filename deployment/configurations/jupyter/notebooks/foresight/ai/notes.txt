@@ -1,0 +1,6 @@
+
+export FLASK_APP=ai_server
+# Since the Jupyter server uses 5000, run this on a different port
+flask run -p 5001
+
+curl --request POST 'http://127.0.0.1:5001/ai'
