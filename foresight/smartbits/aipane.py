@@ -79,7 +79,7 @@ class AIPane(SmartBit):
     def handle_exec_result(self, msg):
         print("I am handling the execution results")
         print(f" type of msg in aipane{type(msg)}")
-        self.state.output = msg
+        self.state.output = json.dumps(msg)
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
