@@ -201,24 +201,29 @@ function AppComponent(props: App): JSX.Element {
               borderRadius: '2px',
             }}
           >
-            <Tooltip
-              label="Add a new kernel"
-              aria-label="Add a new kernel"
-              placement="top"
-              fontSize="md"
-              hasArrow
-              style={{ border: '2px solid #111', borderRadius: '2px' }}
-            >
-              <IconButton
-                variant="outline"
-                m={0.5}
+            <Box w="100%">
+              <Select
+                // variant="outline"
                 size="md"
-                aria-label="Add Kernel"
-                onClick={() => addKernel()}
                 colorScheme="teal"
-                icon={<MdAdd />}
-              />
-            </Tooltip>
+                value={kernelName}
+                placeholder="Select kernel"
+                backgroundColor="whiteAlpha.300"
+                onChange={(e) => {
+                  setKernelName(e.target.value);
+                }}
+              >
+                {s.kernelSpecs.length > 0 &&
+                  Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
+                    <option key={k} value={k}>
+                      {
+                        // show R for ir, Python for python3, etc.}
+                        k === 'ir' ? 'R' : k === 'python3' ? 'Python' : k === 'julia-1.8' ? 'Julia' : k
+                      }
+                    </option>
+                  ))}
+              </Select>
+            </Box>
             <Box w="100%">
               <form onSubmit={submitAlias}>
                 <InputGroup>
@@ -238,34 +243,27 @@ function AppComponent(props: App): JSX.Element {
                 </InputGroup>
               </form>
             </Box>
-            <Box w="100%">
-              <Select
-                variant="outline"
-                size="md"
-                colorScheme="teal"
-                value={kernelName}
-                placeholder="Select kernel"
-                onChange={(e) => {
-                  setKernelName(e.target.value);
-                }}
-              >
-                {
-                  /**
-                   * Gets the list of kernel options from the state via API call
-                   * and map them to a list of <option> elements for the <select>
-                   */
-                  s.kernelSpecs.length > 0 &&
-                    Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
-                      <option key={k} value={k}>
-                        {k}
-                      </option>
-                    ))
-                }
-              </Select>
-            </Box>
             <Checkbox size={'md'} isChecked={isPrivate} onChange={() => setIsPrivate(!isPrivate)}>
               Private
             </Checkbox>
+            <Tooltip
+              label="Add a new kernel"
+              aria-label="Add a new kernel"
+              placement="top"
+              fontSize="md"
+              hasArrow
+              style={{ border: '2px solid #111', borderRadius: '2px' }}
+            >
+              <IconButton
+                variant="outline"
+                m={0.5}
+                size="md"
+                aria-label="Add Kernel"
+                onClick={() => addKernel()}
+                colorScheme="teal"
+                icon={<MdAdd />}
+              />
+            </Tooltip>{' '}
           </HStack>
           {/* SCROLL BOX LOWER */}
           <Box
