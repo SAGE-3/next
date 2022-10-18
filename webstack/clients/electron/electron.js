@@ -882,6 +882,24 @@ if (process.platform === 'win32') {
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
       }
+
+      // Create mainWindow
+      // app.whenReady().then(() => {
+      //   createWindow();
+      // });
+
+      // Handle the protocol for Windows
+      app.on('open-url', (event, url) => {
+        event.preventDefault();
+        // make it a valid URL
+        const newurl = url.replace('sage3://', 'https://');
+        if (mainWindow) {
+          mainWindow.loadURL(newurl);
+        } else {
+          // save the URL for later
+          gotoURL = newurl;
+        }
+      });
     });
   }
 }
