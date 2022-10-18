@@ -25,6 +25,7 @@ import {
   PopoverHeader,
   PopoverTrigger,
   Portal,
+  Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
 import {App, AppName} from '../../schema';
@@ -54,10 +55,8 @@ function AppComponent(props: App): JSX.Element {
   const location = useLocation();
   const locationState = location.state as { roomId: string };
   const assets = useAssetStore((state) => state.assets);
-  const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
-
-  // const [supportedApps, setSupportedApps] = useState(["Counter", "Leaflet", "Notepad"])
 
   const prevX = useRef(0);
   const prevY = useRef(0);
@@ -150,16 +149,26 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
     });
+    console.log(s.supported_tasks)
+    Object.values(s.supported_tasks).forEach(el => console.log(el))
   }
 
-  function closePopovers() {
+  function closePopovers(info: string) {
     console.log('Remove entry');
+    const unchecked = s.messages;
+    delete unchecked[info]
+    updateState(props._id, {messages: unchecked})
+
+    if (Object.keys(s.messages).includes(info)) {
+      const messagesCopy = {...s.messages};
+      delete messagesCopy[info];
+      updateState(props._id, {messages: messagesCopy});
+    }
   }
 
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <div>
           <Popover>
             <PopoverTrigger>
               <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
@@ -179,16 +188,16 @@ function AppComponent(props: App): JSX.Element {
                 {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
               </PopoverBody>
 
-              {Object.values(s.messages)?.map((message: string, index: number) => (
+              {Object.keys(s.messages)?.map((message: string, index: number) => (
                 <PopoverBody>
-                  {message}
-                  <CloseButton size="sm" className="popover-close" onClick={() => closePopovers()}/>
+                  {s.messages[message]}
+                  <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
                 </PopoverBody>
               ))}
             </PopoverContent>
           </Popover>
-        </div>
-        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" position="absolute">
+        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center"
+             position="absolute">
           <Box className="status-container">
             {s.runStatus ? (
               Object.values(s.hostedApps).every(checkAppType) ? (
@@ -204,7 +213,7 @@ function AppComponent(props: App): JSX.Element {
         <Box
           position="absolute"
           top="30%"
-          left="15%"
+          left="20%"
         >
           selectedApp {selectedAppId}
           <br/>
@@ -212,12 +221,14 @@ function AppComponent(props: App): JSX.Element {
           <br/>
           hostedapps: {Object.values(s.hostedApps)}
           <br/>
-          runStatus: {s.runStatus.toString()}
+          supported_tasks: {Object.keys(s.supported_tasks)}
         </Box>
+
         <Box className="output-container">
-          Output
-          <br/>
-          {JSON.stringify(s.output.output)}
+          <Text>
+            Output <br/>
+            {s.output}
+          </Text>
         </Box>
       </Box>
     </AppWindow>
@@ -232,7 +243,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const location = useLocation();
   const locationState = location.state as { roomId: string };
   const assets = useAssetStore((state) => state.assets);
-  const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
   const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
@@ -245,7 +256,10 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function runFunction() {
     updateState(props._id, {
-      executeInfo: {executeFunc: 'execute_model', params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'}},
+      executeInfo: {
+        executeFunc: 'execute_model',
+        params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'}
+      },
     });
     updateState(props._id, {runStatus: true});
   }
