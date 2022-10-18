@@ -30,7 +30,7 @@ export function BoardPage() {
   }
 
   // Board and App Store stuff
-  const subBoard = useAppStore((state) => state.subToBoard);
+  const subApps = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
@@ -48,8 +48,8 @@ export function BoardPage() {
     subRooms();
     // Sub to boards belonging to this room
     subBoards(roomId);
-    // Subscribe to the board that was selected
-    subBoard(boardId);
+    // Subscribe to the app on the board that was selected
+    subApps(boardId);
     // Sub to users and presence
     subscribeToPresence();
     subscribeToUsers();
