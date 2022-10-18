@@ -836,7 +836,7 @@ function createWindow() {
  * @param {Object} favorites_obj the object containing the list of favorites
  */
 function writeFavoritesOnFile(favorites_obj) {
-  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => {});
+  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => { });
 }
 
 /**
@@ -876,30 +876,33 @@ if (process.platform === 'win32') {
   if (!gotTheLock) {
     app.quit();
   } else {
-    app.on('second-instance', (event, commandLine, workingDirectory) => {
-      // Someone tried to run a second instance, we should focus our window.
+
+    // For first instance
+    const count = process.argv.length;
+    if (count > 2) {
+      const lastarg = process.argv[count - 1];
+      const newurl = lastarg.replace('sage3://', 'https://');
       if (mainWindow) {
+        mainWindow.loadURL(newurl);
+      } else {
+        // save the URL for later
+        gotoURL = newurl;
+      }
+    }
+
+    // Happens when a window is already opened
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+      const lastarg = commandLine[commandLine.length - 1];
+      // Focus on the main window.
+      if (mainWindow && lastarg) {
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
+        const newurl = lastarg.replace('sage3://', 'https://');
+        mainWindow.loadURL(newurl);
+      } else {
+        // save the URL for later
+        gotoURL = newurl;
       }
-
-      // Create mainWindow
-      // app.whenReady().then(() => {
-      //   createWindow();
-      // });
-
-      // Handle the protocol for Windows
-      app.on('open-url', (event, url) => {
-        event.preventDefault();
-        // make it a valid URL
-        const newurl = url.replace('sage3://', 'https://');
-        if (mainWindow) {
-          mainWindow.loadURL(newurl);
-        } else {
-          // save the URL for later
-          gotoURL = newurl;
-        }
-      });
     });
   }
 }
