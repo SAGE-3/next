@@ -59,6 +59,7 @@ class DataTable(SmartBit):
         # self._some_private_info = {1: 2}
 
     def paginate(self):
+        p_start = time.time()
         i = 1
         pageNumbers = []
         self.state.totalRows = self._modified_df.shape[0]
@@ -78,6 +79,8 @@ class DataTable(SmartBit):
         print("paginate")
         print("I am sending this information")
         print("=======================")
+        p_end = time.time()
+        print(f"time to paginate: {p_end - p_start}")
         self.send_updates()
 
     def handle_left_arrow(self):
@@ -115,7 +118,6 @@ class DataTable(SmartBit):
     # and params to ""
     def load_data(self, url):
         start = time.time()
-        # url = "https://www.dropbox.com/s/57thhzy5e6pebp5/data.csv?dl=1"
         extension = self.get_ext(url)
         response = urlopen(url)
         # Leave magic in for retrieving file extensions of uploaded datasets, not API datasets
@@ -143,6 +145,8 @@ class DataTable(SmartBit):
         else:
             self._modified_df.reset_index()
         self._original_df = self._modified_df
+        end = time.time()
+        print(f"time to load_data into dataframe: {end - start}")
         self.paginate()
         self.state.selectedCols = []
         print("--------------")
@@ -151,8 +155,6 @@ class DataTable(SmartBit):
         print("load_data")
         print("I am sending this information")
         print("=======================")
-        end = time.time()
-        print(f"time to load_data: {end - start}")
         self.send_updates()
 
     def table_sort(self, selected_cols):

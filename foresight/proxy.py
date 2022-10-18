@@ -1,3 +1,4 @@
+
 # -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
@@ -159,11 +160,14 @@ class SAGEProxy():
             print(f"msg received is {msg}")
 
             if msg['event']['type'] == "UPDATE":
+                print("Is update")
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
                 logging.info(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
+                    print("Is callback")
+
                     # handle callback
                     # print("this app is being tracked for updates")
                     # print(f"tracked field is {self.callbacks[app_id].src_field}")
@@ -182,7 +186,7 @@ class SAGEProxy():
                             dest_app = self.room.boards[board_id].smartbits[dest_id]
                             linked_info.callback(src_val, dest_app, dest_field)
 
-            if len(updated_fields) == 1 and updated_fields[0] == 'raised':
+            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 # print("The received update is discribed a raised app... ignoring it")
                 pass
             else:
@@ -279,7 +283,7 @@ token = conf['token']
 room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
 sage_proxy = SAGEProxy(room_id, conf, prod_type)
 
-# sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
+# sage_proxy = SAGEProxy("config/funcx.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
 # b34cf54e-2f9e-4b9a-a458-27f4b6c658a7
 
 listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
@@ -295,7 +299,7 @@ worker_process.start()
 #     # multiprocessing.set_start_method("fork")
 #     # parser = get_cmdline_parser()
 #     # args = parser.parse_args()
-#     sage_proxy = SAGEProxy("config.json", "05828804-d87f-4498-857e-02f288effd3d")
+#     sage_proxy = SAGEProxy("funcx.json", "05828804-d87f-4498-857e-02f288effd3d")
 #
 #     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
 #     # sage_proxy = SAGEProxy(args.config_file, args.room_id)

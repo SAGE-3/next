@@ -6,30 +6,26 @@
  *
  */
 
-.red-circle {
-  height: 30px;
-  width: 30px;
-  background-color: red;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.green-circle {
-  height: 30px;
-  width: 30px;
-  background-color: green;
-  border-radius: 50%;
-  display: inline-block;
-}
-
 .message-container {
-  position : absolute;
-  left : 2rem;
-  top : 3rem;
+  position: absolute;
+  left: 2rem;
+  top: 3rem;
 }
 
 .status-container {
-  position : absolute;
-  right : 3rem;
-  top : 3rem;
+  position: absolute;
+  right: 3rem;
+  top: 1rem;
+}
+
+.output-container {
+  position: absolute;
+  bottom: 35%;
+  left: 1rem;
+  display: flex;
+}
+
+.popover-close {
+  position: relative;
+  float: right;
 }
