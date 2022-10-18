@@ -11,13 +11,15 @@ from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
 from jupyterkernelproxy_client import JupyterKernelClient
+from ai.ai_client import AIClient
 from config import config as conf, prod_type
 
 class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
-    _jupyter_client: JupyterKernelClient =  JupyterKernelClient(conf[prod_type]["flask_server"])
+    _jupyter_client: JupyterKernelClient = JupyterKernelClient(conf[prod_type]["flask_server"])
+    _ai_client: AIClient = AIClient()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -130,11 +132,12 @@ class AppTypes(Enum):
     note = "Note"
     data_table = "DataTable"
     code_cell = "CodeCell"
+    kernel_dashboard = "KernelDashboard"
+    sage_cell = "SageCell"
     slider = "Slider"
     stickie = "Stickie"
     vegalite = "VegaLite"
     vegaliteviewer = "VegaLiteViewer"
-
     genericsmartbit = "GenericSmartBit"
 
 class Data(TrackedBaseModel):

@@ -11,7 +11,6 @@ elif prod_type == 'production' and not os.getenv('SAGE3_SERVER'):
 else:
     server = os.getenv('SAGE3_SERVER')
 
-
 config = {
     "production": {
         "jupyter_server": f"https://{server}:4443",
@@ -34,7 +33,7 @@ config = {
         "web_server": f"http://{server}:3333",
         "ws_server": f"ws://{server}:3333",
     },
-    
+
     "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0MUBnbWFpbC5jb20iLCJuYW1lIjoidGVzdDEiLCJhZG1pbiI6dHJ1ZSwiaWF0IjoxNjU0NTc2MTM5LCJleHAiOjE2ODYxMzM3MzksImF1ZCI6InNhZ2UzLmFwcCIsImlzcyI6InNhZ2UzYXBwQGdtYWlsLmNvbSJ9.kwQM\
 DtdKXqGG9DZU8e4Mq_pC_GKCH-sMEalRcbIth3BeTsQ7apdZUPvZ4kTmgipJSoIUvyr72Z-2qDi3tKNdJB2OCnm8FMSRFWCt9KK6kxT2X8EiFh5f3T6q1cd1tRy-Nla9cF1zvRn1ALAetJRpVLIsH-XV-l4deWhrGfHNexwFLEJbvHb4E4UQtiB1bQZ5HwutztQvJtVOZ80HJxJccn7bjpVo-OdAjNjQjMLbJEGR\
 gpJRAhyZaEVDojsiaJOrFtCUC65qvkC0gym-0HDd89Lmc2i54yf6h0Feb96OadeKT2TFjH3Jvi7_r7sTdE7N88oIaN_mQZhKKTUrI7EYTQ"
@@ -55,9 +54,33 @@ ai_settings = {
 }
 
 funcx = {
-    "endpoint_id": "503aabe7-223e-4679-bb01-0b0da37c0ae6",
-    "test_ai_func_uuid": "0e7c5056-74cd-402c-80fd-375d2bfe48b0",
-    "ai_func_uuid": "ABCD"
-
+    "endpoint_uuid": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
+    "test_hello_world_uuid": '3c53e91f-e812-4ec6-97d0-18ce059b3391',
+    "ai_func_uuid": 'e6b268e8-81a6-496b-9995-7692afc35ca9'
 }
 
+ai_models = {
+    "tasks": {
+        "object_detection": {
+            "default": "facebook/detr-resnet-50",
+            "available_models": [
+                "facebook/detr-resnet-50",
+                "lai_lab/fertilized_egg_detect"
+            ]
+        },
+        "text_summarization": {
+            "default": "facebook/bart-large-cnn",
+            "available_models": [
+                "facebook/bart-large-cnn",
+                "sshleifer/distilbart-cnn-12-6"
+            ]
+        }
+    },
+
+    "urls": {
+        "facebook/detr-resnet-50": "https://c54d-2607-f278-410e-5-a098-e976-1200-e118.jp.ngrok.io/detection",
+        "lai_lab/fertilized_egg_detect": "SOME-OTHER-URL",
+        "facebook/bart-large-cnn": "",
+        "sshleifer/distilbart-cnn-12-6": ""
+    }
+}

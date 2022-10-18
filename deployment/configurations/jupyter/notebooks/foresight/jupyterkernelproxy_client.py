@@ -25,6 +25,7 @@ class JupyterKernelClient(Borg):
         Borg.__init__(self)
         if not hasattr(self, "redis_serve"):
             self.url = url
+            # TODO: change port so it's read from configuration
             self.redis_server = redis.StrictRedis(host=conf[prod_type]["redis_server"], port=6379, db=0)
             self.pubsub = self.redis_server.pubsub()
             self.pubsub.subscribe('jupyter_outputs')
@@ -36,13 +37,14 @@ class JupyterKernelClient(Borg):
             self.callback_info = {}
             self.available_kernels = {}
 
-    def get_kernels(self):
-        jupyter_token = self.redis_server.get("config:jupyter:token")
-        headers = {'Authorization': f"Token  {jupyter_token.decode()}"}
-        j_url = f"{conf[prod_type]['jupyter_server']}/api/kernels"
-        response = requests.get(j_url, headers=headers)
-        kernels = json.loads(response.text)
-        self.available_kernels = {(x["id"],x["id"]) for x in kernels}
+    def set_available_kernels(self):
+        pass
+        # jupyter_token = self.redis_server.get("config:jupyter:token")
+        # headers = {'Authorization': f"Token  {jupyter_token.decode()}"}
+        # j_url = f"{conf[prod_type]['jupyter_server']}/api/kernels"
+        # response = requests.get(j_url, headers=headers)
+        # kernels = json.loads(response.text)
+        # self.available_kernels = {x["id"]: x["id"] for x in kernels}
 
     # execut a command
     def execute(self, command_info):
@@ -76,18 +78,23 @@ class JupyterKernelClient(Borg):
     def process_reponse(self):
         check_kernels_every = 10 # check
         while True:
+
             msg = self.pubsub.get_message()
             if msg:
                 # ignore first message
                 if msg["data"] == 1:
                     continue
                 msg = msg['data'].decode("utf-8")
-                msg=eval(msg)
+                msg = eval(msg)
                 request_id = msg['request_id']
-                self.callback_info[request_id][1](msg)
+                if request_id in self.callback_info:
+                    self.callback_info[request_id][1](msg)
+
 
             time.sleep(1)  # be nice to the system :)
             if check_kernels_every == 0:
+                # TODO: check if kernels changed and update accordingly
+                self.set_available_kernels()
 
                 check_kernels_every = 10
             else:
