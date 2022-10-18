@@ -24,7 +24,7 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
-  Portal,
+  Portal, Stack,
   Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
@@ -169,39 +169,38 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-          <Popover>
-            <PopoverTrigger>
-              <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-                <Button variant="ghost" size="lg" color="cyan">
-                  Message
-                </Button>
-              </div>
-            </PopoverTrigger>
+        <Popover>
+          <PopoverTrigger>
+            <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+              <Button variant="ghost" size="lg" color="cyan">
+                Message
+              </Button>
+            </div>
+          </PopoverTrigger>
 
-            {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
-            <PopoverContent>
-              <PopoverArrow/>
-              <PopoverCloseButton/>
-              <PopoverHeader>History</PopoverHeader>
+          {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
+          <PopoverContent>
+            <PopoverArrow/>
+            <PopoverCloseButton/>
+            <PopoverHeader>History</PopoverHeader>
 
+            <PopoverBody>
+              {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
+            </PopoverBody>
+
+            {Object.keys(s.messages)?.map((message: string, index: number) => (
               <PopoverBody>
-                {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
+                {s.messages[message]}
+                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
               </PopoverBody>
+            ))}
+          </PopoverContent>
+        </Popover>
 
-              {Object.keys(s.messages)?.map((message: string, index: number) => (
-                <PopoverBody>
-                  {s.messages[message]}
-                  <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
-                </PopoverBody>
-              ))}
-            </PopoverContent>
-          </Popover>
-        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center"
-             position="absolute">
-          <Box className="status-container">
+        <Box className="status-container">
             {s.runStatus ? (
               Object.values(s.hostedApps).every(checkAppType) ? (
-                <Icon as={GiEmptyHourglass} w={8} h={8}/>
+                <Icon as={BiRun} w={8} h={8}/>
               ) : (
                 <Icon as={BiErrorCircle} w={8} h={8}/>
               )
@@ -209,7 +208,7 @@ function AppComponent(props: App): JSX.Element {
               <VisuallyHidden>Empty Board</VisuallyHidden>
             )}
           </Box>
-        </Box>
+
         <Box
           position="absolute"
           top="30%"
@@ -267,42 +266,43 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-        <Menu>
-          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-            Obj Detection Models
-          </MenuButton>
-          <Portal>
-            <MenuList>
-              {objDetModels.map((model) => {
-                return <MenuItem>{model}</MenuItem>;
-              })}
-            </MenuList>
-          </Portal>
-        </Menu>
-        <Menu>
-          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-            Classification Models
-          </MenuButton>
-          <Portal>
-            <MenuList>
-              {classModels.map((model) => {
-                return <MenuItem>{model}</MenuItem>;
-              })}
-            </MenuList>
-          </Portal>
-        </Menu>
+        <Stack spacing={2} direction='row'>
+          <Menu>
+            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+              Obj Detection Models
+            </MenuButton>
+            <Portal>
+              <MenuList>
+                {objDetModels.map((model) => {
+                  return <MenuItem>{model}</MenuItem>;
+                })}
+              </MenuList>
+            </Portal>
+          </Menu>
+          <Menu>
+            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+              Classification Models
+            </MenuButton>
+            <Portal>
+              <MenuList>
+                {classModels.map((model) => {
+                  return <MenuItem>{model}</MenuItem>;
+                })}
+              </MenuList>
+            </Portal>
+          </Menu>
+          <IconButton
+            aria-label="Run AI"
+            icon={s.runStatus ? <BiRun/> : <FaPlay/>}
+            _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+            isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
+            onClick={() => {
+              runFunction();
+            }}
+          />
+        </Stack>
       </div>
 
-
-      <IconButton
-        aria-label="Run AI"
-        icon={s.runStatus ? <BiRun/> : <FaPlay/>}
-        _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-        isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
-        onClick={() => {
-          runFunction();
-        }}
-      />
     </>
   );
 }
