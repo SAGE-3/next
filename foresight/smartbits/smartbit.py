@@ -7,12 +7,12 @@
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field, validate_model
-from utils.generic_utils import create_dict
-from utils.sage_communication import SageCommunication
+# from utils.generic_utils import create_dict
+from foresight.utils.sage_communication import SageCommunication
 from operator import attrgetter
-from jupyterkernelproxy_client import JupyterKernelClient
-from ai.ai_client import AIClient
-from config import config as conf, prod_type
+from foresight.jupyterkernelproxy_client import JupyterKernelClient
+from foresight.ai.ai_client import AIClient
+from foresight.config import config as conf, prod_type
 
 class TrackedBaseModel(BaseModel):
     path: Optional[int]
