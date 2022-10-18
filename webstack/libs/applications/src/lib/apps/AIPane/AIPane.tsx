@@ -141,6 +141,12 @@ function AppComponent(props: App): JSX.Element {
     prevY.current = props.data.position.y;
   }, [props.data.position.x, props.data.position.y, JSON.stringify(s.hostedApps)]);
 
+  useEffect(() => {
+    if (Object.keys(s.hostedApps).length === 0) {
+    updateState(props._id, {supported_tasks: {}});
+  }
+}, [JSON.stringify(s.hostedApps)])
+
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
@@ -149,8 +155,7 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
     });
-    console.log(s.supported_tasks)
-    Object.values(s.supported_tasks).forEach(el => console.log(el))
+    // Object.values(s.supportedTasks).forEach(el => console.log(el))
   }
 
   function closePopovers(info: string) {
@@ -198,16 +203,16 @@ function AppComponent(props: App): JSX.Element {
         </Popover>
 
         <Box className="status-container">
-            {s.runStatus ? (
-              Object.values(s.hostedApps).every(checkAppType) ? (
-                <Icon as={BiRun} w={8} h={8}/>
-              ) : (
-                <Icon as={BiErrorCircle} w={8} h={8}/>
-              )
+          {s.runStatus ? (
+            Object.values(s.hostedApps).every(checkAppType) ? (
+              <Icon as={BiRun} w={8} h={8}/>
             ) : (
-              <VisuallyHidden>Empty Board</VisuallyHidden>
-            )}
-          </Box>
+              <Icon as={BiErrorCircle} w={8} h={8}/>
+            )
+          ) : (
+            <VisuallyHidden>Empty Board</VisuallyHidden>
+          )}
+        </Box>
 
         <Box
           position="absolute"
@@ -220,7 +225,7 @@ function AppComponent(props: App): JSX.Element {
           <br/>
           hostedapps: {Object.values(s.hostedApps)}
           <br/>
-          supported_tasks: {Object.keys(s.supported_tasks)}
+          supportedTasks: {s.supportedTasks}
         </Box>
 
         <Box className="output-container">

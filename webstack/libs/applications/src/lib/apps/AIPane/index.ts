@@ -24,11 +24,11 @@ export const schema = z.object({
   // Temp variable to demonstrate app run and idle status
   runStatus: z.boolean(),
 
-  supported_tasks: z.any(),
+  supportedTasks: z.string(),
 
   messages: z.record(z.string(), z.any()),
 
-  output: z.any(),
+  output: z.string(),
 
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -42,7 +42,7 @@ export const init: Partial<state> = {
   executeInfo: {executeFunc: '', params: {}},
   hostedApps: {},
   runStatus: false,
-  supported_tasks: {},
+  supportedTasks: "",
   messages: {},
   output: "",
 
