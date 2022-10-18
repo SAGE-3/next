@@ -21,12 +21,10 @@ import {z} from 'zod';
 export const schema = z.object({
   hostedApps: z.record(z.string(), z.string()),
 
-  // supportedApps: z.record(z.string()),
-
   // Temp variable to demonstrate app run and idle status
   runStatus: z.boolean(),
 
-  supported_tasks: z.record(z.string(), z.any()),
+  supported_tasks: z.any(),
 
   messages: z.record(z.string(), z.any()),
 
