@@ -1,0 +1,153 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
+import { Tag } from '@chakra-ui/react';
+import { useHexColor, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
+import { PresenceSchema } from '@sage3/shared/types';
+import { motion, useAnimation } from 'framer-motion';
+import { useCallback, useEffect } from 'react';
+import { GiArrowCursor } from 'react-icons/gi';
+import { throttle } from 'throttle-debounce';
+
+type CursorProps = {
+  boardId: string;
+};
+
+// Render the User Cursors that belong to the board
+export function Cursors(props: CursorProps) {
+  // Users
+  const { user } = useUser();
+  const users = useUsersStore((state) => state.users);
+
+  // Presences
+  const { update: updatePresence } = usePresence();
+  const presences = usePresenceStore((state) => state.presences);
+
+  // UI Scale
+  const scale = useUIStore((state) => state.scale);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const boardDragging = useUIStore((state) => state.boardDragging);
+
+  // Widow resize hook
+  const { width: winWidth, height: winHeight } = useWindowResize();
+
+  // Update the user's cursor every half second
+  const throttleCursor = throttle(500, (e: MouseEvent) => {
+    // If the user is dragging the board, we get some odd effects. So don't update the curosr if the user is currently dragging
+    if (boardDragging) return;
+    const winX = e.clientX;
+    const winY = e.clientY;
+    const bx = boardPosition.x;
+    const by = boardPosition.y;
+    const s = scale;
+    const x = winX / s - bx;
+    const y = winY / s - by;
+    const z = 0;
+    updatePresence({ cursor: { x, y, z } });
+  });
+
+  // Keep a copy of the function
+  const throttleCursorFunc = useCallback(throttleCursor, [boardPosition.x, boardPosition.y, scale, boardDragging]);
+  const cursorFunc = (e: MouseEvent) => {
+    // Check if event is on the board
+    if (updatePresence) {
+      // Send the throttled version to the server
+      throttleCursorFunc(e);
+    }
+  };
+
+  // Attach the mouse move event to the window
+  useEffect(() => {
+    const mouseMove = (e: MouseEvent) => {
+      cursorFunc(e);
+    };
+    window.addEventListener('mousemove', mouseMove);
+    return () => window.removeEventListener('mousemove', mouseMove);
+  }, [boardPosition.x, boardPosition.y, scale, boardDragging, winWidth, winHeight]);
+
+  // Render the cursors
+  return (
+    <>
+      {/* Draw the cursors and viewports: filter by board and not myself */}
+      {presences
+        .filter((el) => el.data.boardId === props.boardId)
+        .filter((el) => el.data.userId !== user?._id)
+        .map((presence) => {
+          const u = users.find((el) => el._id === presence.data.userId);
+          if (!u) return null;
+          const name = u.data.name;
+          const color = u.data.color;
+          const cursor = presence.data.cursor;
+          return <UserCursor key={'cursor-' + u._id} color={color} position={cursor} name={name} scale={scale} />;
+        })}
+    </>
+  );
+}
+
+/**
+ * User Curor Props
+ */
+type UserCursorProps = {
+  name: string;
+  color: string;
+  position: PresenceSchema['cursor'];
+  scale: number;
+};
+
+/**
+ * Show a user pointer
+ * @param props UserCursorProps
+ * @returns
+ */
+function UserCursor(props: UserCursorProps) {
+  // Create an animation object to control the opacity of pointer
+  // Pointer fades after inactivity
+  const controls = useAnimation();
+  const color = useHexColor(props.color);
+
+  // Reset animation if pointer moves
+  useEffect(() => {
+    // Stop previous animation
+    controls.stop();
+    // Set initial opacity
+    controls.set({ opacity: 1.0 });
+    // Start animation
+    controls.start({
+      // final opacity
+      opacity: 0.0,
+      transition: {
+        ease: 'easeIn',
+        // duration in sec.
+        duration: 10,
+        delay: 30,
+      },
+    });
+  }, [props.position.x, props.position.y, props.position.z]);
+
+  return (
+    <motion.div
+      // pass the animation controller
+      animate={controls}
+      style={{
+        position: 'absolute',
+        left: props.position.x - 4 + 'px',
+        top: props.position.y - 3 + 'px',
+        transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
+        pointerEvents: 'none',
+        display: 'flex',
+        zIndex: 100000,
+        transform: `scale(${1 / props.scale})`,
+      }}
+    >
+      <GiArrowCursor color={color}></GiArrowCursor>
+      <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
+        {props.name}
+      </Tag>
+    </motion.div>
+  );
+}
