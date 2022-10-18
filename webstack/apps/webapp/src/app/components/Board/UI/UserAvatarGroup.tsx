@@ -32,7 +32,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
             {presences.map((presence) => {
               const user = users.find((el) => el._id === presence._id);
               if (!user) return null;
-              return <li>{user.data.name}</li>;
+              return <li key={user._id}>{user.data.name}</li>;
             })}
           </ul>
         }

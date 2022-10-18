@@ -13,10 +13,13 @@
 
 import { z } from 'zod';
 
+const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
+export type Baselayer = z.infer<typeof Baselayer>;
+
 export const schema = z.object({
   location: z.array(z.number(), z.number()),
   zoom: z.number(),
-  baseLayer: z.string(),
+  baseLayer: Baselayer,
   overlay: z.boolean(),
   assetid: z.string().optional(),
 });
