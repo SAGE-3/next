@@ -6,7 +6,7 @@
  *
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Fragment } from 'react';
 import { Box, Tag } from '@chakra-ui/react';
 import { motion, useAnimation } from 'framer-motion';
 
@@ -226,40 +226,46 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
             if (!u) return null;
             const color = useHexColor(u.data.color || 'red');
             const isWall = u.data.userType === 'wall';
-            return (
-              <>
-                {isWall ? (
-                  <Box
-                    key={'wall' + presence.data.userId}
-                    borderStyle="dashed"
-                    borderWidth={3 / scale}
-                    borderColor={color}
-                    borderTop={'none'}
-                    position="absolute"
-                    pointerEvents="none"
-                    left={presence.data.viewport.position.x + 'px'}
-                    top={presence.data.viewport.position.y + 'px'}
-                    width={presence.data.viewport.size.width + 'px'}
-                    height={presence.data.viewport.size.height + 'px'}
-                    opacity={0.8}
-                    borderRadius="8px 8px 8px 8px"
-                    transition="all 0.5s"
-                    color="white"
-                    fontSize="xl"
-                    background={`linear-gradient(180deg, ${color} 30px, transparent 30px)`}
-                  >
-                    Viewport for {u.data.name}
-                  </Box>
-                ) : null}
+            if (isWall) {
+              return <Fragment key={u._id}>
+                <Box
+                  borderStyle="dashed"
+                  borderWidth={3 / scale}
+                  borderColor={color}
+                  borderTop={'none'}
+                  position="absolute"
+                  pointerEvents="none"
+                  left={presence.data.viewport.position.x + 'px'}
+                  top={presence.data.viewport.position.y + 'px'}
+                  width={presence.data.viewport.size.width + 'px'}
+                  height={presence.data.viewport.size.height + 'px'}
+                  opacity={0.8}
+                  borderRadius="8px 8px 8px 8px"
+                  transition="all 0.5s"
+                  color="white"
+                  fontSize="xl"
+                  background={`linear-gradient(180deg, ${color} 30px, transparent 30px)`}
+                >
+                  Viewport for {u.data.name}
+                </Box>
                 <UserCursor
-                  key={presence.data.userId}
                   color={color}
                   position={presence.data.cursor}
                   name={users.find((el) => el._id === presence.data.userId)?.data.name || '-'}
                   scale={scale}
                 />
-              </>
-            );
+              </Fragment>
+            } else {
+              return (
+                <UserCursor
+                  key={'user' + u._id}
+                  color={color}
+                  position={presence.data.cursor}
+                  name={users.find((el) => el._id === presence.data.userId)?.data.name || '-'}
+                  scale={scale}
+                />
+              );
+            }
           })}
 
         {/* Draggable Background */}
