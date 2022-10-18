@@ -33,7 +33,7 @@ import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { truncateWithEllipsis, useAppStore, useUser } from '@sage3/frontend';
 import { useState, useEffect } from 'react';
-import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode } from 'react-icons/md';
+import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode, MdContentCopy } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
 
 /* App component for KernelDashboard */
@@ -47,14 +47,18 @@ function AppComponent(props: App): JSX.Element {
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
 
-  useEffect(() => {
-    updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
-  }, [props._id, updateState]);
+  // useEffect(() => {
+  //   updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
+  // }, [props._id, updateState]);
 
-  const updateStates = () => {
-    getKernelSpecs();
+  useEffect(() => {
     getAvailableKernels();
-  };
+  }, []);
+
+  // const updateStates = () => {
+  //   getKernelSpecs();
+  //   getAvailableKernels();
+  // };
 
   const getKernelSpecs = () => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
@@ -203,7 +207,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} onFocus={updateStates}>
+      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} onFocus={getAvailableKernels}>
         <VStack w={'100%'} h={'100%'}>
           {/* FIXED POSITION TOP */}
           <HStack
@@ -301,21 +305,47 @@ function AppComponent(props: App): JSX.Element {
                       value === kernel.id && (
                         <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
                           <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
-                            <Box w="100%">
-                              <Tooltip label={kernel.id} placement="top">
-                                <Text fontSize="md" fontWeight="bold">
-                                  {label}
-                                </Text>
-                              </Tooltip>
-                            </Box>
+                            <Tooltip
+                              label={
+                                <Stack>
+                                  <Text>Kernel Alias: {label}</Text>
+                                  <HStack>
+                                    <MdContentCopy aria-label={label} />
+                                    <Text>Click to Copy</Text>
+                                  </HStack>
+                                </Stack>
+                              }
+                              placement="top"
+                            >
+                              <Text
+                                onClick={() => {
+                                  navigator.clipboard.writeText(label);
+                                }}
+                                fontSize="md"
+                                fontWeight="bold"
+                              >
+                                {label}
+                              </Text>
+                            </Tooltip>
                             <Text
                               onClick={() => {
-                                startSageCell(kernel.id);
+                                navigator.clipboard.writeText(kernel.id);
                               }}
                               ml={2}
                               fontWeight="bold"
                             >
-                              <Tooltip label={kernel.id} placement="top">
+                              <Tooltip
+                                label={
+                                  <Stack>
+                                    <Text>Kernel Id: {kernel.id}</Text>
+                                    <HStack>
+                                      <MdContentCopy aria-label={value} />
+                                      <Text>Click to Copy</Text>
+                                    </HStack>
+                                  </Stack>
+                                }
+                                placement="top"
+                              >
                                 {truncateWithEllipsis(kernel.id, 8)}
                               </Tooltip>
                             </Text>
