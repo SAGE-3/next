@@ -1,5 +1,5 @@
 import pytest
-from foresight.smartbits.kerneldashboard import KernelDashboard
+from smartbits.kerneldashboard import KernelDashboard
 
 def test_create_kerneldashboard_smartbit():
     doc = {

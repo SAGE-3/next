@@ -1,5 +1,5 @@
 import pytest
-from foresight.smartbits.genericsmartbit import GenericSmartBit
+from smartbits.genericsmartbit import GenericSmartBit
 
 def test_create_generic_smartbit():
     doc = {
@@ -27,4 +27,3 @@ def test_create_generic_smartbit():
     }
     generic_smartbit = GenericSmartBit(**doc)
     assert isinstance(generic_smartbit, GenericSmartBit)
-

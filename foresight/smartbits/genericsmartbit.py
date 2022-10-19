@@ -5,8 +5,8 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from foresight.smartbits.smartbit import SmartBit
-from foresight.smartbits.smartbit import TrackedBaseModel
+from smartbits.smartbit import SmartBit
+from smartbits.smartbit import TrackedBaseModel
 # from pydantic import PrivateAttr
 
 

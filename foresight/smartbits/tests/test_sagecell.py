@@ -1,7 +1,7 @@
 import pytest
 
-from foresight.smartbits.sagecell import SageCell
-from foresight.smartbits.sagecell import SageCellState
+from smartbits.sagecell import SageCell
+from smartbits.sagecell import SageCellState
 
 def test_create_sagecell_smartbit():
     sb = {

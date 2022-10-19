@@ -6,7 +6,7 @@ import asyncio
 import threading
 import redis
 import requests
-from foresight.config import config as conf, prod_type
+from config import config as conf, prod_type
 import json
 
 class Borg:

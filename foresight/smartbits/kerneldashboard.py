@@ -5,14 +5,14 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
-from foresight.smartbits.smartbit import TrackedBaseModel
+from smartbits.smartbit import SmartBit, ExecuteInfo
+from smartbits.smartbit import TrackedBaseModel
 import json
 import websocket
 import threading
 from pydantic import PrivateAttr
 import time
-from foresight.config import config as conf, prod_type
+from config import config as conf, prod_type
 import requests
 import redis
 
