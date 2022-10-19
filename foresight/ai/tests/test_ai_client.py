@@ -1,19 +1,19 @@
 # import time
-#
+
 # from foresight.ai.ai_client import AIClient
 # import uuid
 # from foresight.config import funcx as fcx_cfg
 # import pytest
-#
-#
+
+
 # @pytest.fixture
 # def ai_client():
 #     return AIClient(check_every=4)
-#
-#
+
+
 # def test_execute(ai_client):
 #     """
-#     tests that we can
+#     test that we can
 #     1. submit a hello world job (response is of type UUID)
 #     2. the job has  a pending field
 #     """
@@ -53,7 +53,7 @@
 #     ai_client.callback_info[resp] = (app_uuid, msg_uuid, callback_fn)
 #     # adding this should trigger the process_response
 #     ai_client.running_jobs.add(resp)
-#
+
 #     nb_iteration = 5
 #     while nb_iteration > 0:
 #         print("inside the loop")
@@ -68,8 +68,8 @@
 #         assert False
 #     else:
 #         assert True
-#
-#
+
+
 # def test_ai_client_terminates(ai_client):
 #     """
 #     Check that the ai_client terminates properly at the end of the session
@@ -78,5 +78,3 @@
 #     # in case the thread is sleeping. We need to wait until it done
 #     time.sleep(ai_client.check_every + 1)
 #     assert ai_client.msg_checker.is_alive() is False
-#
-#

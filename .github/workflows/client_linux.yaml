@@ -7,7 +7,6 @@ on:
       - '.github/workflows/**'
     branches:
       - dev
-      - dev-server
 
 env:
   SERVER: production
@@ -22,12 +21,12 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
       - name: Install
         run: yarn install --frozen-lockfile --silent
         working-directory: webstack/clients/electron
@@ -40,7 +39,7 @@ jobs:
       - name: Readme
         run: cp README.lnx SAGE3-linux-x64/README.txt
         working-directory: webstack/clients/electron
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: SAGE3-linux-client-ubuntu-20.04
           path: webstack/clients/electron/SAGE3-linux-x64
