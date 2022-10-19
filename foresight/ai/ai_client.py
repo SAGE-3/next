@@ -2,7 +2,7 @@ from funcx.sdk.client import FuncXClient
 # from config import funcx
 import time
 import threading
-from foresight.utils.borg import Borg
+from utils.borg import Borg
 import json
 
 # TODO: move the borg class to its own file

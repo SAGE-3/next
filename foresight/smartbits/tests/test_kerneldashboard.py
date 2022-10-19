@@ -33,4 +33,3 @@ def kernel_dashboard_fixture():
     }
     kd = KernelDashboard(doc)
 
-def

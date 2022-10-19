@@ -1,7 +1,7 @@
-from foresight.smartbits.counter import Counter
+from smartbits.counter import Counter
 import pytest
 
-@pytest.fixture
+@pytest.fixture()
 def counter_instance():
     doc = {'_id': '524c2a78-392c-43cd-936b-2aba6385822f',
      '_createdAt': 1666059326093,
@@ -21,7 +21,10 @@ def counter_instance():
               'raised': True},
      'state': {'count': 42, 'executeInfo': {'executeFunc': '', 'params': {}}}}
     c = Counter(**doc)
-    return c
+    yield c
+    print("cleaning up")
+    c._ai_client.stop_thread = True
+    c._jupyter_client.stop_thread = True
 
 
 def test_create_counter(counter_instance):
