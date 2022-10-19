@@ -12,7 +12,7 @@ import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { MdAdd, MdRemove } from 'react-icons/md';
+import { MdAdd, MdRefresh, MdRemove } from 'react-icons/md';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -26,7 +26,6 @@ function sub(update: UpdateFunc, s: AppState, id: string) {
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
 
   return (
     <AppWindow app={props}>
@@ -50,18 +49,31 @@ function ToolbarComponent(props: App): JSX.Element {
     sub(updateState, s, props._id);
   }
 
+  function handleReset() {
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'reset_to_zero',
+        params: {},
+      },
+    });
+  }
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Count'} openDelay={400}>
+          <Button onClick={handleSubClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="red">
+            <MdRemove />
+          </Button>
+        </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Increase Count'} openDelay={400}>
           <Button onClick={handleAddClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />
           </Button>
         </Tooltip>
-
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Count'} openDelay={400}>
-          <Button onClick={handleSubClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="red">
-            <MdRemove />
+        <Tooltip placement="top-start" hasArrow={true} label={'Reset to Zero'} openDelay={400}>
+          <Button onClick={handleReset} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="blue">
+            <MdRefresh />
           </Button>
         </Tooltip>
       </ButtonGroup>
