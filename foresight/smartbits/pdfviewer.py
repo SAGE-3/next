@@ -15,6 +15,7 @@ class PDFViewerState(TrackedBaseModel):
     currentPage: int
     numPages: int
     displayPages: int
+    executeInfo: ExecuteInfo
 
 
 class PDFViewer(SmartBit):
@@ -28,5 +29,10 @@ class PDFViewer(SmartBit):
         # self._some_private_info = {1: 2}
         print("new pdf got created")
 
-    def button_clicked(self):
+    def button_clicked(self, anyparam):
         print("The button was clicked")
+        # do whateever is needed
+        self.state.currentPage = 0
+        self.state.executeInfo.executeFunc= ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
