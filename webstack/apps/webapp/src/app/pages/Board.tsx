@@ -8,12 +8,15 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
-import { usePresence, useAppStore, useRouteNav, useBoardStore, useRoomStore, usePresenceStore, useUsersStore } from '@sage3/frontend';
+import {
+  usePresence, useAppStore, useRouteNav, useBoardStore,
+  useRoomStore, usePresenceStore, useUsersStore
+} from '@sage3/frontend';
 
 // Board Layers
 import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
-import { Box, useColorModeValue } from '@chakra-ui/react';
 import { Clock } from '../components/Board/UI/Clock';
 
 /**

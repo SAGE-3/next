@@ -9,13 +9,14 @@
 import { useEffect } from 'react';
 import { Box, Button, Tooltip } from '@chakra-ui/react';
 
-import { useUIStore, useUser, StuckTypes, useHexColor, useHotkeys } from '@sage3/frontend';
-import { Panel } from '../Panel';
 import { BsPencilFill } from 'react-icons/bs';
-import { GiArrowCursor } from 'react-icons/gi';
 import { FaEraser } from 'react-icons/fa';
-import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
+
+import { useUIStore, StuckTypes, useHotkeys } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
+
+import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
+import { Panel } from '../Panel';
 
 export interface WhiteboardPanelProps {
   boardId: string;
@@ -32,8 +33,8 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
   const stuck = useUIStore((state) => state.whiteboardPanel.stuck);
   const setStuck = useUIStore((state) => state.whiteboardPanel.setStuck);
   const zIndex = useUIStore((state) => state.panelZ).indexOf('whiteboard');
-
   const controllerPosition = useUIStore((state) => state.controller.position);
+
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
@@ -41,6 +42,7 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
       setStuck(StuckTypes.Controller);
     }
   }, [show]);
+
   useEffect(() => {
     if (stuck == StuckTypes.Controller) {
       setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });

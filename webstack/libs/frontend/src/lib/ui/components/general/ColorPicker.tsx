@@ -6,9 +6,10 @@
  *
  */
 
-import { Button, ButtonGroup } from '@chakra-ui/react';
-import { SAGEColors, colors } from '@sage3/shared';
 import { useState } from 'react';
+import { Button, ButtonGroup } from '@chakra-ui/react';
+
+import { SAGEColors, colors } from '@sage3/shared';
 import { useHexColor } from '../../../hooks';
 
 type ColorPickerProps = {

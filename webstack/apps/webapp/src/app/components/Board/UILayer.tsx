@@ -6,18 +6,21 @@
  *
  */
 
-import { Box, useDisclosure, Modal, useToast, Button } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast } from '@chakra-ui/react';
 import { format as formatDate } from 'date-fns';
-
-import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, WhiteboardPanel } from './UI/Panels';
-import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
-import { AppToolbar } from './UI/AppToolbar';
-import { BoardContextMenu } from './UI/BoardContextMenu';
-import { Twilio } from './UI/Twilio';
-import { ClearBoardModal } from './UI/ClearBoardModal';
-import { Alfred } from './UI/Alfred';
-
 import JSZip from 'jszip';
+
+import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
+
+import {
+  Controller, AssetsPanel, ApplicationsPanel, NavigationPanel,
+  UsersPanel, WhiteboardPanel
+} from './UI/Panels';
+import { BoardContextMenu } from './UI/BoardContextMenu';
+import { ClearBoardModal } from './UI/ClearBoardModal';
+import { AppToolbar } from './UI/AppToolbar';
+import { Twilio } from './UI/Twilio';
+import { Alfred } from './UI/Alfred';
 
 type UILayerProps = {
   boardId: string;

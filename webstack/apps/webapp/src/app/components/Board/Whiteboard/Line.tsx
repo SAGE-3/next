@@ -7,11 +7,11 @@
  */
 
 import * as React from 'react';
-import * as Y from 'yjs';
+
 import { getStroke } from 'perfect-freehand';
-import { useHexColor, useUser } from '@sage3/frontend';
-import { WebsocketProvider } from 'y-websocket';
-import { propNames } from '@chakra-ui/react';
+import * as Y from 'yjs';
+
+import { useHexColor } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;

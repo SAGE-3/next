@@ -8,11 +8,11 @@
 
 import { HStack, useToast } from '@chakra-ui/react';
 
-import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack, MdSquareFoot } from 'react-icons/md';
+import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack } from 'react-icons/md';
+import { BiPencil } from 'react-icons/bi';
 
 import { PanelNames, StuckTypes, useBoardStore, useRoomStore, useRouteNav, useUIStore } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from './Panel';
-import { BiPencil } from 'react-icons/bi';
 
 export interface ControllerProps {
   roomId: string;
@@ -122,7 +122,7 @@ export function Controller(props: ControllerProps) {
           onClick={() => handleShowPanel(navigationPanel.name)}
         />
         <IconButtonPanel
-          icon={<BiPencil fontSize="32px" />}
+          icon={<BiPencil size="32px" />}
           description="Whiteboard"
           isActive={whiteboardPanel.show}
           onClick={() => handleShowPanel(whiteboardPanel.name)}
