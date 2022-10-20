@@ -10,15 +10,10 @@ import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useTo
 import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
-import { BoardSchema } from '@sage3/shared/types';
+import { BoardSchema, Board } from '@sage3/shared/types';
 import { EnterBoardModal } from '../modals/EnterBoardModal';
-import { useHexColor, useUser } from '../../../hooks';
 import { EditBoardModal } from '../modals/EditBoardModal';
-
-import { App } from '@sage3/applications/schema';
-import { useAppStore, useUIStore } from '@sage3/frontend';
-import { Board } from '@sage3/shared/types';
-import { useEffect, useState } from 'react';
+import { useHexColor, useUser, useAuth } from '../../../hooks';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
@@ -36,6 +31,7 @@ export type BoardCardProps = {
  */
 export function BoardCard(props: BoardCardProps) {
   const { user } = useUser();
+  const { auth } = useAuth();
 
   // Is it my board?
   const yours = user?._id === props.board.data.ownerId;
@@ -146,8 +142,14 @@ export function BoardCard(props: BoardCardProps) {
             <IconButton onClick={handleCopyId} aria-label="Board id copy" fontSize="2xl" variant="unstlyed" icon={<MdOutlineCopyAll />} />
           </Tooltip>
 
-          <Tooltip label={'Copy sharable link'} openDelay={400} placement="top-start" hasArrow>
-            <IconButton onClick={handleCopyLink} aria-label="Board link copy" fontSize="2xl" variant="unstlyed" icon={<MdLink />} ml="-3" />
+          <Tooltip openDelay={400} placement="top-start" hasArrow
+            label={auth?.provider === 'guest' ? 'Guests cannot copy sharable link' : 'Copy sharable link'}>
+            <IconButton
+              aria-label="Board link copy" fontSize="2xl" variant="unstlyed" ml="-3"
+              onClick={handleCopyLink}
+              disabled={auth?.provider === 'guest'}
+              icon={<MdLink />}
+            />
           </Tooltip>
 
           <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
