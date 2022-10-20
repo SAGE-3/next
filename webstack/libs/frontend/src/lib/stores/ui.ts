@@ -87,6 +87,7 @@ interface UIState {
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
+  resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
   setAppDragging: (dragging: boolean) => void;
   setGridSize: (gridSize: number) => void;
@@ -276,6 +277,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
     if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));
+  },
+  resetBoardPosition: () => {
+    if (!get().boardLocked)
+      set((state) => ({ ...state, scale: 1, boardPosition: { x: -get().boardWidth / 2, y: -get().boardHeight / 2 } }));
   },
   setScale: (z: number) => {
     if (!get().boardLocked) set((state) => ({ ...state, scale: z }));
