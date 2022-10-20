@@ -11,3 +11,4 @@ export * from './Applications/ApplicationsPanel';
 export * from './Asset/AssetsPanel';
 export * from './Navigation/NavigationPanel';
 export * from './Users/UsersPanel';
+export * from './Whiteboard/WhiteboardPanel';

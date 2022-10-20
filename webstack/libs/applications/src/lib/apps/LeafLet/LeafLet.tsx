@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore, useHexColor, useHotkeys } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../schema';
 
@@ -45,6 +45,9 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
+
+  const selectedId = useUIStore((state) => state.selectedAppId);
+  const selected = props._id === selectedId;
 
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
@@ -235,6 +238,28 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [map, s.zoom]);
 
+  // Zoom in on the map
+  const incZoom = () => {
+    if (selected) {
+      const zoom = s.zoom + 1;
+      const limitZoom = Math.min(zoom, maxZoom);
+      updateState(props._id, { zoom: limitZoom });
+    }
+  };
+
+  // Zoom out on the map
+  const decZoom = () => {
+    if (selected) {
+      const zoom = s.zoom - 1;
+      const limitZoom = Math.max(zoom, minZoom);
+      updateState(props._id, { zoom: limitZoom });
+    }
+  };
+
+  // + and - keyboard keys for zooming
+  useHotkeys('=', incZoom, { dependencies: [selected, s.zoom] });
+  useHotkeys('-', decZoom, { dependencies: [selected, s.zoom] });
+
   return (
     <AppWindow app={props}>
       <MapContainer
@@ -242,6 +267,7 @@ function AppComponent(props: App): JSX.Element {
         zoom={s.zoom}
         scrollWheelZoom={false}
         doubleClickZoom={false}
+        keyboard={false}
         preferCanvas={true}
         style={{ height: `100%`, width: `100%` }}
         ref={setMap}
