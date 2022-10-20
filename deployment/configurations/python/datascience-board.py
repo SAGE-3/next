@@ -21,6 +21,9 @@ if prod == 'backend' or prod == 'production':
           server = host
         else:
           server = 'host.docker.internal'
+        jupyterServer = 'https://' + server + ':4443'
+        webServer = 'https://' + server
+        wsServer = 'wss://' + server + '/api'
     else:
         jupyterServer = 'http://jupyter:8888'
         # host of the docker container in backend mode
@@ -135,7 +138,12 @@ async def main():
               if r['data']['name'] == 'Data Science':
                 found = True
                 ###############################
+                ###############################
+                ###############################
                 DATASCIENCE_ROOM = r['_id']
+                ###############################
+                ###############################
+                ###############################
                 ###############################
                 print('\n\nDATASCIENCE_ROOM', DATASCIENCE_ROOM, '\n')
             if not found:
@@ -145,7 +153,13 @@ async def main():
         elif msg_room_id == event['id'] and event['success'] == True:
             new_room = event['data']
             ###############################
+            ###############################
+            ###############################
+            ###############################
             DATASCIENCE_ROOM = new_room['_id']
+            ###############################
+            ###############################
+            ###############################
             ###############################
             print('\n\nDATASCIENCE_ROOM', DATASCIENCE_ROOM, '\n')
 

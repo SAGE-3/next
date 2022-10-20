@@ -15,7 +15,9 @@ services:
       - ./configurations/python:/code
     environment:
       - ENVIRONMENT=backend
-    command: sleep infinity
+    restart: always
+    working_dir: /code
+    command: ./GO.sh
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:
