@@ -17,6 +17,7 @@ import { Background } from './Background/Background';
 import { Apps } from './Background/Apps';
 import { Cursors } from './Background/Cursors';
 import { Viewports } from './Background/Viewports';
+import { Whiteboard } from './Whiteboard/Whiteboard';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -103,17 +104,17 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         dragHandleClassName={'board-handle'}
         disableDragging={boardLocked}
       >
+        {/*Whiteboard */}
+        <Whiteboard boardId={props.boardId} />
         {/* The board's apps */}
         <Apps />
-
         {/* User Cursors */}
         <Cursors boardId={props.boardId} />
-
         {/* User Viewports */}
         <Viewports boardId={props.boardId} />
 
         {/* Draggable Background */}
-        <Background boardId={props.boardId} roomId={props.roomId}></Background>
+        <Background boardId={props.boardId} roomId={props.roomId} />
       </Rnd>
     </div>
   );
