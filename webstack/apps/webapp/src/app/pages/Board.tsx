@@ -77,7 +77,7 @@ export function BoardPage() {
 
       <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
 
-      {/* TODO White Board Layer for marking onto board */}
+      {/* White Board Layer for marking onto board */}
       <WhiteboardLayer boardId={boardId} roomId={roomId}></WhiteboardLayer>
 
       {/* Upper layer for local UI stuff */}
