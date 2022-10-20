@@ -16,6 +16,7 @@ class SageCellState(TrackedBaseModel):
     kernel: str = "python3"
     kernels: list = []
     availableKernels: list = []
+    privateMessage: str = ""
     executeInfo: ExecuteInfo
 
 class SageCell(SmartBit):
@@ -28,6 +29,12 @@ class SageCell(SmartBit):
 
     def handle_exec_result(self, msg):
         self.state.output = json.dumps(msg)
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
+
+    def generate_error_message(self, user_uuid):
+        self.state.privateMessage = "You do not have access to this kernel"
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
