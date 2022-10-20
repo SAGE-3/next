@@ -5,9 +5,6 @@ import websockets
 import os
 import redis
 import requests
-import pprint
-
-printer = pprint.PrettyPrinter(indent=1, depth=5, width=120, compact=True)
 
 #########################################################
 ###### Get configuration from environment variable ######
@@ -64,16 +61,6 @@ def print_kernels(jupyter_server, j_headers):
     else:
         print(f"Jupyter> Error{response.text}")
 
-async def list_boards(sock):
-    """
-    Get the list of boards
-    """
-    messageId = str(uuid.uuid4())
-    msg_sub = { 'route': '/api/boards', 'method': 'GET', 'id': messageId}
-    # send the message
-    await sock.send(json.dumps(msg_sub))
-    return  messageId
-
 async def list_rooms(sock):
     """
     Get the list of rooms
@@ -84,6 +71,24 @@ async def list_rooms(sock):
     await sock.send(json.dumps(msg_sub))
     return  messageId
 
+async def create_room(sock, name, description):
+    """
+    Create a new room
+    """
+    messageId = str(uuid.uuid4())
+    payload = {
+      'name': name,
+      'description': description,
+      'color': 'red',
+      'ownerId': '-',
+      'isPrivate': False,
+      'privatePin': '',
+      'isListed': True,
+    }
+    msg_sub = { 'route': '/api/rooms', 'method': 'POST', 'id': messageId, 'body':payload}
+    # send the message
+    await sock.send(json.dumps(msg_sub))
+    return  messageId
 
 # Jupyter token for authentication
 j_token = get_j_token(redisServer)
@@ -105,22 +110,44 @@ print('SAGE3> Token:', token != '')
 async def main():
   print('SAGE3> server url', wsServer)
   async with websockets.connect(wsServer, extra_headers={"Authorization": f"Bearer {token}"}) as ws:
-      # async with websockets.connect(socket_server + socket_path) as ws:
-      print('SAGE3> connected')
+    # async with websockets.connect(socket_server + socket_path) as ws:
+    print('SAGE3> connected')
 
-      # list_rooms: get the existing list of rooms
-      msg_id = await list_boards(ws)
+    # list_rooms: get the existing list of rooms
+    msg_id = await list_rooms(ws)
+    msg_room_id = None
+    DATASCIENCE_ROOM = ''
 
-      # loop to receive messages
-      async for msg in ws:
-          event = json.loads(msg)
-          if 'success' in event:
-            # return message from a previous request
-            if msg_id == event['id'] and event['success'] == True:
-              if 'data' in event:
-                rooms = event['data']
-                print('SAGE3> listRooms')
-                printer.pprint(rooms)
+    # loop to receive messages
+    async for msg in ws:
+      event = json.loads(msg)
+      print(event)
+      if 'success' in event:
+        # return message from a previous request
+        if msg_id == event['id'] and event['success'] == True:
+          msg_id = None
+          if 'data' in event:
+            rooms = event['data']
+            print('SAGE3> listRooms')
+            found = False
+            for r in rooms:
+              # print(r['_id'], r['data']['name'])
+              if r['data']['name'] == 'Data Science':
+                found = True
+                ###############################
+                DATASCIENCE_ROOM = r['_id']
+                ###############################
+                print('\n\nDATASCIENCE_ROOM', DATASCIENCE_ROOM, '\n')
+            if not found:
+              print('SAGE3> need to create Data Science room')
+              # create a new room
+              msg_room_id = await create_room(ws, 'Data Science', 'Room for practicing Data Science')
+        elif msg_room_id == event['id'] and event['success'] == True:
+            new_room = event['data']
+            ###############################
+            DATASCIENCE_ROOM = new_room['_id']
+            ###############################
+            print('\n\nDATASCIENCE_ROOM', DATASCIENCE_ROOM, '\n')
 
 if __name__ == '__main__':
     asyncio.run(main())
