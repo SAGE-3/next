@@ -33,14 +33,14 @@ class JupyterKernelProxy:
 
         def __init__(self, address, headers, parent_proxy_instnace):
             self.pending_reponses = {}
-            self.parent_proxy_instnace = parent_proxy_instnace
+            self.parent_proxy_instance = parent_proxy_instnace
             super().__init__(address, headers=headers)
             print(f"In init, working on URL")
 
 
         def handshake_ok(self):
             print("Opening %s" % format_addresses(self))
-            self.parent_proxy_instnace.conn_manager.add(self)
+            self.parent_proxy_instance.conn_manager.add(self)
 
         def received_message(self, msg):
             # check if the message
@@ -60,10 +60,9 @@ class JupyterKernelProxy:
                     # ready to send the result back
                     if self.pending_reponses[msg_id_uuid] is None:
                         result = {'request_id': msg_id_uuid, 'execute_result': {}}
-                        print(f"returning {result}")
                     else:
-                        print(f"returning {self.pending_reponses[msg_id_uuid]}")
-
+                        result = self.pending_reponses[msg_id_uuid]
+                    self.parent_proxy_instance.callback_info[msg_id_uuid](result)
                 if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
                     result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content'],
                               msg['msg_type']: msg['content']}

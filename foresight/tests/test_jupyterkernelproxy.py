@@ -27,3 +27,21 @@ def test_get_room_kernel_id(jupyter_proxy):
         assert True
     except:
         pass
+
+
+def make_test_with():
+    """
+    create test with the following
+    """
+    import jupyterkernelproxy
+    import uuid
+
+    j = jupyterkernelproxy.JupyterKernelProxy()
+    j.add_client("7697aa88-cfc1-4517-a1e8-bc7607c40eea")
+
+    exec_uuid = str(uuid.uuid4())
+    print(f"exec_uuid is {exec_uuid}")
+    j.execute({"uuid": exec_uuid, "kernel": "7697aa88-cfc1-4517-a1e8-bc7607c40eea", "code": "b=10",
+               "call_fn": lambda x: print(f"got the results {x}")})
+
+
