@@ -1,180 +1,137 @@
-# # TODO: should this have it's own SageComm info or should it use the proxy instead?
-# import time
-#
-#
-# import asyncio
-# import threading
-# import json
-# from jupyter_client import AsyncKernelClient
-#
-# class AsyncioEventLoopThread(threading.Thread):
-#     def __init__(self, *args, loop=None, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.running = False
-#         self.loop = asyncio.new_event_loop()
-#
-#
-#     def run(self):
-#         # print("I a running the thread......")
-#         self.running = True
-#         asyncio.set_event_loop(self.loop)
-#         self.loop.run_forever()
-#
-#     def run_coro(self, coro):
-#         return asyncio.run_coroutine_threadsafe(coro, loop=self.loop).result()
-#
-#     def stop(self):
-#         self.running = False
-#         # self.kc.shutdown()
-#         self.loop.call_soon_threadsafe(self.loop.stop)
-#         # print("waiting for the asyncio loop to stop")
-#         time.sleep(1)
-#
-# class Borg:
-#     """
-#     The Borg pattern to store execution state across instances
-#     """
-#     _shared_state = {}
-#     def __init__(self):
-#         self.__dict__ = self._shared_state
-#
-# class JupyterKernelProxy(Borg):
-#     """
-#     Jupyter kernel is responsible for
-#     """
-#     def __init__(self, kernel_config="config/kernel-s3-next.json", startup_timeout=60):
-#         Borg.__init__(self)
-#         if not hasattr(self, "kernel_config"):
-#             self.kernel_config = json.load(open(kernel_config))
-#             self.startup_timeout = startup_timeout
-#             # self.kernel_name = kernel_name
-#             self.thr = AsyncioEventLoopThread()
-#             self.thr.start()
-#             self.callback_info = {}
-#             self.kc = None
-#
-#             self.start_new_async_kernel()
-#             if self.kc is None:
-#                 raise Exception("Cannot log onto the server")
-#
-#             # start an independent listening process.
-#             self.stop_thread = False # keep on checking until this changes to false
-#             self.msg_checker = threading.Thread(target=self.process_iopub)
-#             self.msg_checker.start()
-#
-#     # decorator for async functions that need to run
-#     # as coroutine in a separate thread
-#     def _run_coro(_func):
-#         def wrapper(self, command_info=None):
-#             if command_info is not None:
-#                 res = self.thr.run_coro(_func(self, command_info))
-#             else:
-#                 res = self.thr.run_coro(_func(self))
-#             # clearing the func and the and params
-#             return res
-#         return wrapper
-#
-#     @_run_coro
-#     async def start_new_async_kernel(self):
-#         """Start a new async kernel client"""
-#         # self.km = AsyncKernelManager(kernel_name=self.kernel_name)
-#         # await self.km.start_kernel()
-#         self.kc = AsyncKernelClient()
-#         self.kc.load_connection_info(self.kernel_config)
-#         # self.kc.start_channels()
-#         # try:
-#         #     await self.kc.wait_for_ready(timeout=self.startup_timeout)
-#         # except RuntimeError as e:
-#         #     self.kc.stop_channels()
-#         #     await self.km.shutdown_kernel()
-#         #     raise e
-#
-#     # execut a command
-#     @_run_coro
-#     async def execute(self, command_info):
-#         """
-#         :param command_info: a dict with three keys, 1- uuid, 2-call_fn, a callback function and 3 code to run
-#         :return:
-#         """
-#         user_passed_uuid = command_info["uuid"]
-#         callback_fn = command_info["call_fn"]
-#         command = command_info["code"]
-#         execute_uuid = self.kc.execute(command)
-#         self.callback_info[execute_uuid] = (user_passed_uuid, callback_fn)
-#         return execute_uuid
-#
-#     # TODO make sure to top threads only if it's not running (leads to block)
-#     @_run_coro
-#     async def cleanup(self):
-#         self.stop_thread = True
-#         # print("Stopping processes")
-#         # self.kc.shutdown()
-#         await asyncio.sleep(.05)
-#         # print("Done Stopping processes")
-#         self.thr.stop()
-#         # print("Done Stopping processes")
-#
-#
-#     @_run_coro
-#     async def process_iopub(self, log_every = 10 ):
-#         time_since_logged = 0
-#         while True:
-#             if self.stop_thread:
-#                 # print("Stopping thread that checks for messages")
-#                 break
-#             try:
-#                 msg = await self.kc.get_iopub_msg(timeout=1)
-#                 # ignore messages that report execution_state (busy or idle messages)
-#                 # also ignore messages that report the code
-#
-#                 msg_exec_state = msg["content"].get("execution_state", None)
-#                 # if msg_exec_state is valid, it means the info contained is not necessary
-#                 if msg_exec_state is None and msg["content"].get("code", None) is None:
-#                     # print(f"Handling message {msg}")
-#                     parent_msg_id = msg['parent_header']['msg_id']
-#                     # print(f"Calling fuction responsible and parent message id is {parent_msg_id}")
-#
-#                     #todo: inspect function and make sure it has a first parameter that is ...
-#                     self.callback_info[parent_msg_id][1](msg)
-#
-#                     # self.iopub_responses.put(msg)
-#             except:
-#                 time_since_logged += 1
-#                 if time_since_logged == log_every:
-#                     # print("Still checking")
-#                     time_since_logged = 0
-#         # print("Done with the While True loop that check for messages")
-#         # self.msg_checker.join()
-#         # print("Successfully joined the loop that check for messages")
-#
-#
-#
-# # def start_new_kernel(startup_timeout=60, kernel_name='python', **kwargs):
-# #     """Start a new kernel, and return its Manager and Client"""
-# #     km = KernelManager()
-# #     km.start_kernel()
-# #     kc = km.client()
-# #     kc.start_channels()
-# #     try:
-# #         kc.wait_for_ready(timeout=startup_timeout)
-# #     except RuntimeError:
-# #         kc.stop_channels()
-# #         km.shutdown_kernel()
-# #         raise
-# #
-# #     return km, kc
-#
-# # async def start_new_async_kernel(startup_timeout=60, kernel_name='python', **kwargs):
-# #     """Start a new kernel, and return its Manager and Client"""
-# #     km = AsyncKernelManager(kernel_name=kernel_name)
-# #     await km.start_kernel(**kwargs)
-# #     kc = km.client()
-# #     kc.start_channels()
-# #     try:
-# #         await kc.wait_for_ready(timeout=startup_timeout)
-# #     except RuntimeError:
-# #         kc.stop_channels()
-# #         await km.shutdown_kernel()
-# #         raise
-# #     return (km, kc)
-#
+import redis
+import uuid
+import datetime
+import requests
+import json
+from ws4py.client import WebSocketBaseClient
+from ws4py.manager import WebSocketManager
+from ws4py import format_addresses, configure_logger
+from config import config as conf, prod_type
+import random
+logger = configure_logger()
+
+
+def format_execute_request_msg(exec_uuid, code):
+    content = {'code': code, 'silent': False}
+    hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
+           'username': 'tests',
+           'data': datetime.datetime.now().isoformat(),
+           'msg_type': 'execute_request',
+           'version': '5.0'}
+    msg = {'header': hdr,
+           'parent_header': hdr,
+           'metadata': {},
+           'channel': 'shell',
+           'content': content}
+    return msg
+
+
+
+
+class JupyterKernelProxy:
+    class JupyterClient(WebSocketBaseClient):
+
+        def __init__(self, address, headers, parent_proxy_instnace):
+            self.pending_reponses = {}
+            self.parent_proxy_instance = parent_proxy_instnace
+            super().__init__(address, headers=headers)
+            print(f"In init, working on URL")
+
+
+        def handshake_ok(self):
+            print("Opening %s" % format_addresses(self))
+            self.parent_proxy_instance.conn_manager.add(self)
+
+        def received_message(self, msg):
+            # check if the message
+            msg = json.loads(msg.data.decode("utf-8"))
+            msg_id_uuid = str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0]))
+            result = {}
+
+
+            # print(msg["channel"]+ "\t\t" + str(msg))
+
+            if msg["channel"] != "iopub":
+                return
+
+            if msg_id_uuid in self.pending_reponses:
+                # I am done
+                if msg['header']['msg_type'] == 'status' and msg['content']['execution_state'] == 'idle':
+                    # ready to send the result back
+                    if self.pending_reponses[msg_id_uuid] is None:
+                        result = {'request_id': msg_id_uuid, 'execute_result': {}}
+                    else:
+                        result = self.pending_reponses[msg_id_uuid]
+                    self.parent_proxy_instance.callback_info[msg_id_uuid](result)
+                if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
+                    result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content'],
+                              msg['msg_type']: msg['content']}
+                elif msg['msg_type'] in ["execute_reply"]:
+                    if msg['content']["status"] == "error":
+                        result = {"request_id": msg["parent_header"]["msg_id"], "error": msg['content']['traceback']}
+                    else:
+                        result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
+
+            if result:
+                # print("Returning results --------- ")
+                self.pending_reponses[msg_id_uuid] = result
+                # print(str(result))
+
+
+    def __init__(self):
+        self.connections = {}
+        self.redis_server = redis.StrictRedis(host=conf[prod_type]["redis_server"], port=6379, db=0)
+
+        self.base_ws = conf[prod_type]['jupyter_ws']
+        self.token = self.redis_server.get('config:jupyter:token').decode()
+        self.headers = [('Authorization', f"Token {self.token}")]
+        self.conn_manager = WebSocketManager()
+        self.conn_manager.start()
+        self.callback_info = {}
+        self.results = {}
+
+    def add_client(self, kernel_id):
+        if kernel_id not in self.connections:
+            socket_url = f"{self.base_ws}/api/kernels/{kernel_id}/channels"
+            session_id = uuid.uuid4().hex
+            socket_url = f"{socket_url}?session_id={session_id}"
+
+            self.connections[kernel_id] = self.JupyterClient(socket_url,
+                                                             headers=self.headers,
+                                                             parent_proxy_instnace=self)
+            self.connections[kernel_id].connect()
+
+    def execute(self, command_info):
+        user_passed_uuid = command_info["uuid"]
+        msg = format_execute_request_msg(user_passed_uuid, command_info["code"])
+        kernel_id = command_info['kernel']
+        if kernel_id not in self.connections:
+            self.add_client(kernel_id)
+        try:
+            self.connections[kernel_id].pending_reponses[user_passed_uuid] = None
+            self.connections[kernel_id].send(json.dumps(msg), binary=False)
+        except:
+            # something happen, do no track this results
+            del(self.results[user_passed_uuid])
+
+        callback_fn = command_info["call_fn"]
+        self.callback_info[user_passed_uuid] = callback_fn
+
+    def get_room_kernel_id(self):
+        """
+        gets the default kernel associated with a room
+        :return:
+        """
+        headers_dict = dict(self.headers)
+        response = requests.get(conf[prod_type]["jupyter_server"] + "/api/kernels", headers=headers_dict)
+        try:
+            board_kernel = json.loads(response.text)[0]["id"]
+            return board_kernel
+        except:
+            raise Exception("couldn't communicate with the Jupyter Kernel Gateway.")
+
+    def cleanup(self):
+        self.conn_manager.close_all()
+        self.conn_manager.stop()
+        self.conn_manager.join()
+

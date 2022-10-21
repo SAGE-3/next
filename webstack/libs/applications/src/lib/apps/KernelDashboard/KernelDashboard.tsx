@@ -85,8 +85,7 @@ function AppComponent(props: App): JSX.Element {
    *
    * @returns  void
    */
-  const addKernel = () => {
-    if (!user) return;
+  const addKernel = (userId: string) => {
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'add_kernel',
@@ -95,7 +94,7 @@ function AppComponent(props: App): JSX.Element {
           kernel_name: kernelName,
           room_uuid: roomId,
           board_uuid: boardId,
-          owner_uuid: user._id,
+          owner_uuid: userId,
           is_private: isPrivate,
         },
       },
@@ -109,8 +108,8 @@ function AppComponent(props: App): JSX.Element {
     const cleanAlias = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
 
     setKernelAlias(cleanAlias);
-    console.log('the clean alias is');
-    console.log(kernelAlias);
+    // console.log('the clean alias is');
+    // console.log(kernelAlias);
   }
 
   // Triggered on 'enter' key
@@ -174,13 +173,13 @@ function AppComponent(props: App): JSX.Element {
    *
    * @returns void
    */
-  const startSageCell = (kernelId: string) => {
+  const startSageCell = (kernelId: string, kernelAlias: string) => {
     // convert s.kernels to a list of kernel objects with the kernel_id as the key and the kernel name as the value
     // const kernelList = s.kernels ? s.kernels.map((k) => ({ [k.id]: k.name })) : [];
     if (!user) return;
     createApp({
       name: 'SageCell',
-      description: `SageCell> ${kernelId}`,
+      description: `SageCell> ${kernelAlias}`,
       roomId: roomId!,
       boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
@@ -190,12 +189,13 @@ function AppComponent(props: App): JSX.Element {
       state: {
         code: '',
         language: 'python',
-        fontSize: 1.5,
+        fontSize: 24,
         theme: 'xcode',
         kernel: kernelId,
         kernels: s.kernels,
         sessions: s.sessions,
         availableKernels: [],
+        privateMessage: [],
         output: '',
         executeInfo: { executeFunc: '', params: {} },
       },
@@ -276,7 +276,7 @@ function AppComponent(props: App): JSX.Element {
                 m={0.5}
                 size="md"
                 aria-label="Add Kernel"
-                onClick={addKernel}
+                onClick={() => addKernel(user!._id)}
                 colorScheme="teal"
                 icon={<MdAdd />}
               />
@@ -349,7 +349,18 @@ function AppComponent(props: App): JSX.Element {
                                 {truncateWithEllipsis(kernel.id, 8)}
                               </Tooltip>
                             </Text>
-                            <Text>{kernel.name}</Text>
+                            <Text>
+                              {
+                                // show R for ir, Python for python3, etc.}
+                                kernel.name === 'ir'
+                                  ? 'R'
+                                  : kernel.name === 'python3'
+                                  ? 'Python'
+                                  : kernel.name === 'julia-1.8'
+                                  ? 'Julia'
+                                  : kernel.name
+                              }
+                            </Text>
                             <Flex alignItems="right">
                               <Tooltip label={'Open a SageCell'} placement="top">
                                 <IconButton
@@ -357,7 +368,7 @@ function AppComponent(props: App): JSX.Element {
                                   m={0.5}
                                   size="md"
                                   onClick={() => {
-                                    startSageCell(kernel.id);
+                                    startSageCell(kernel.id, label);
                                   }}
                                   colorScheme="teal"
                                   aria-label="Delete Kernel"
