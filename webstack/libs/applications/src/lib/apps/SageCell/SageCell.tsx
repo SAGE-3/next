@@ -6,7 +6,7 @@
  *
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -22,14 +22,23 @@ import {
   AlertIcon,
   Toast,
   useToast,
+  IconButton,
+  VStack,
 } from '@chakra-ui/react';
+
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-python';
+import 'ace-builds/src-noconflict/mode-json';
+import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
+import 'ace-builds/src-noconflict/theme-xcode';
+import 'ace-builds/src-noconflict/keybinding-vscode';
 
 import Ansi from 'ansi-to-react';
 
 import './components/styles.css';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdError } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdError, MdDelete, MdPlayArrow } from 'react-icons/md';
 
 // SAGE3 imports
 import { useAppStore, useUser } from '@sage3/frontend';
@@ -40,9 +49,12 @@ import { App } from '../../schema';
 // Utility functions from SAGE3
 import { downloadFile } from '@sage3/frontend';
 
+// UUID generation
+import { v4 as getUUID } from 'uuid';
+
 // Rendering functions
 // import { ProcessedOutput } from './render';
-import { InputBox } from './components/InputBox';
+// import { InputBox } from './components/InputBox';
 // import { OutputBox } from './components/OutputBox';
 
 /**
@@ -88,14 +100,17 @@ const AppComponent = (props: App): JSX.Element => {
                 boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
                 borderRadius: '4px',
                 fontFamily: 'monospace',
-                fontSize: `${s.fontSize}rem`,
+                // fontSize: `${s.fontSize}rem`,
+                fontSize: s.fontSize + 'px',
                 color: useColorModeValue('#000000', '#FFFFFF'),
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word',
                 overflowWrap: 'break-word',
               }}
             >
-              {OutputBox(output)}
+              {/* {OutputBox(output)} */}
+              {!s.output ? null : !output ? `No output to display` : OutputBox(output)}
+
               {!s.privateMessage
                 ? null
                 : s.privateMessage.map(({ userId, message }) => {
@@ -160,7 +175,7 @@ function ToolbarComponent(props: App): JSX.Element {
       // updae the app
       updateState(props._id, { kernel: e.target.value });
       // update the app description
-      update(props._id, { description: `SageCell> ${e.target.value.slice(0, 8)}` });
+      update(props._id, { description: `SageCell> ${e.currentTarget.selectedOptions[0].text}` });
     }
   }
 
@@ -177,13 +192,11 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  // const generateError = (localUserId: string) => {
-  //   updateState(props._id, {
-  //     executeInfo: {
-  //       executeFunc: 'generate_error_message',
-  //       params: { user_uuid: localUserId },
-  //     },
-  //   });
+  const [fontSize, setFontSize] = useState(s.fontSize);
+
+  useEffect(() => {
+    updateState(props._id, { fontSize: fontSize });
+  }, [fontSize]);
 
   return (
     <>
@@ -221,8 +234,8 @@ function ToolbarComponent(props: App): JSX.Element {
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
             <Button
-              isDisabled={s.fontSize < 1}
-              onClick={() => updateState(props._id, { fontSize: Math.max(1, s.fontSize / 1.2) })}
+              isDisabled={s.fontSize <= 8}
+              onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
               _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
             >
               <MdRemove />
@@ -230,8 +243,8 @@ function ToolbarComponent(props: App): JSX.Element {
           </Tooltip>
           <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
             <Button
-              isDisabled={s.fontSize >= 3}
-              onClick={() => updateState(props._id, { fontSize: Math.min(s.fontSize * 1.2, 3) })}
+              isDisabled={s.fontSize > 42}
+              onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
               _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
             >
               <MdAdd />
@@ -269,6 +282,136 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 export default { AppComponent, ToolbarComponent };
+
+/**
+ *
+ * @param props
+ * @returns
+ */
+export const InputBox = (props: App): JSX.Element => {
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+  const ace = useRef<AceEditor>(null);
+  const [code, setCode] = useState<string>(s.code);
+  const { user } = useUser();
+  const [fontSize, setFontSize] = useState(s.fontSize);
+
+  const handleExecute = () => {
+    const code = ace.current?.editor?.getValue();
+    if (code) {
+      updateState(props._id, {
+        code: code,
+        output: '',
+        executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
+      });
+    }
+  };
+
+  const handleClear = () => {
+    updateState(props._id, {
+      code: '',
+      output: '',
+      executeInfo: { executeFunc: '', params: {} },
+    });
+    ace.current?.editor?.setValue('');
+  };
+
+  useEffect(() => {
+    if (s.code !== code) {
+      setCode(s.code);
+    }
+  }, [s.code]);
+
+  // Update from Ace Editor
+  const updateCode = (c: string) => {
+    setCode(c);
+  };
+
+  useEffect(() => {
+    // update local state from global state
+    setFontSize(s.fontSize);
+  }, [s.fontSize]);
+
+  return (
+    <>
+      <HStack>
+        <AceEditor
+          ref={ace}
+          name="ace"
+          value={code}
+          onChange={updateCode}
+          readOnly={user?._id !== props._createdBy}
+          fontSize={`${fontSize}px`}
+          minLines={4}
+          maxLines={20}
+          placeholder="Enter code here"
+          mode={s.language}
+          theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
+          editorProps={{ $blockScrolling: true }}
+          setOptions={{
+            hasCssTransforms: true,
+            showGutter: true,
+            showPrintMargin: false,
+            highlightActiveLine: true,
+            showLineNumbers: true,
+          }}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            marginTop: 15,
+            marginLeft: 15,
+            marginRight: 0,
+            marginBottom: 10,
+            padding: 0,
+            overflow: 'hidden',
+            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
+            boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
+            borderRadius: '4px',
+          }}
+          commands={[
+            { name: 'Execute', bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' }, exec: handleExecute },
+            { name: 'Clear', bindKey: { win: 'Ctrl-Alt-Backspace', mac: 'Ctrl-Alt-Backspace' }, exec: handleClear },
+          ]}
+        />
+        <VStack pr={2}>
+          <Tooltip hasArrow label="Execute" placement="right-start">
+            <IconButton
+              _hover={{ bg: 'invisible', transform: 'scale(1.2)', transition: 'transform 0.2s' }}
+              boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
+              size={'xs'}
+              rounded={'full'}
+              onClick={handleExecute}
+              aria-label={''}
+              disabled={user?._id !== props._createdBy}
+              bg={useColorModeValue('#FFFFFF', '#000000')}
+              variant="outline"
+              icon={<MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+            />
+          </Tooltip>
+          <Tooltip hasArrow label="Clear All" placement="right-start">
+            <IconButton
+              _hover={{ bg: 'invisible', transform: 'scale(1.2)', transition: 'transform 0.2s' }}
+              boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
+              size={'xs'}
+              rounded={'full'}
+              onClick={handleClear}
+              aria-label={''}
+              disabled={user?._id !== props._createdBy}
+              bg={useColorModeValue('#FFFFFF', '#000000')}
+              variant="outline"
+              icon={<MdDelete size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+            />
+          </Tooltip>
+        </VStack>
+      </HStack>
+      {/* <Flex pr={10} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
+        Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
+        {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
+      </Flex> */}
+    </>
+  );
+};
 
 /**
  *
