@@ -32,7 +32,7 @@ class JupyterKernelProxy:
     class JupyterClient(WebSocketBaseClient):
 
         def __init__(self, address, headers, parent_proxy_instnace):
-            self.pending_reponses = set()
+            self.pending_reponses = {}
             self.parent_proxy_instnace = parent_proxy_instnace
             super().__init__(address, headers=headers)
             print(f"In init, working on URL")
@@ -45,13 +45,25 @@ class JupyterKernelProxy:
         def received_message(self, msg):
             # check if the message
             msg = json.loads(msg.data.decode("utf-8"))
-            print(msg["channel"]+ "\t\t" + str(msg))
+            msg_id_uuid = str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0]))
+            result = {}
+
+
+            # print(msg["channel"]+ "\t\t" + str(msg))
+
             if msg["channel"] != "iopub":
                 return
 
-            # print(str(msg))
-            result = {}
-            if str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0])) in self.pending_reponses:
+            if msg_id_uuid in self.pending_reponses:
+                # I am done
+                if msg['header']['msg_type'] == 'status' and msg['content']['execution_state'] == 'idle':
+                    # ready to send the result back
+                    if self.pending_reponses[msg_id_uuid] is None:
+                        result = {'request_id': msg_id_uuid, 'execute_result': {}}
+                        print(f"returning {result}")
+                    else:
+                        print(f"returning {self.pending_reponses[msg_id_uuid]}")
+
                 if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
                     result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content'],
                               msg['msg_type']: msg['content']}
@@ -62,8 +74,9 @@ class JupyterKernelProxy:
                         result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
 
             if result:
-                print("Returning results --------- ")
-                print(str(result))
+                # print("Returning results --------- ")
+                self.pending_reponses[msg_id_uuid] = result
+                # print(str(result))
 
 
     def __init__(self):
@@ -96,7 +109,7 @@ class JupyterKernelProxy:
         if kernel_id not in self.connections:
             self.add_client(kernel_id)
         try:
-            self.connections[kernel_id].pending_reponses.add(user_passed_uuid)
+            self.connections[kernel_id].pending_reponses[user_passed_uuid] = None
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
         except:
             # something happen, do no track this results
