@@ -8,17 +8,19 @@
 
 import { Box, useDisclosure, Modal, useToast } from '@chakra-ui/react';
 import { format as formatDate } from 'date-fns';
-
-import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel } from './UI/Panels';
-import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
-import { AppToolbar } from './UI/AppToolbar';
-import { BoardContextMenu } from './UI/BoardContextMenu';
-import { Twilio } from './UI/Twilio';
-import { ClearBoardModal } from './UI/ClearBoardModal';
-import { Alfred } from './UI/Alfred';
-
 import JSZip from 'jszip';
-import { useState } from 'react';
+
+import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
+
+import {
+  Controller, AssetsPanel, ApplicationsPanel, NavigationPanel,
+  UsersPanel, WhiteboardPanel
+} from './UI/Panels';
+import { BoardContextMenu } from './UI/BoardContextMenu';
+import { ClearBoardModal } from './UI/ClearBoardModal';
+import { AppToolbar } from './UI/AppToolbar';
+import { Twilio } from './UI/Twilio';
+import { Alfred } from './UI/Alfred';
 
 type UILayerProps = {
   boardId: string;
@@ -28,7 +30,6 @@ type UILayerProps = {
 export function UILayer(props: UILayerProps) {
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
-
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
@@ -137,6 +138,8 @@ export function UILayer(props: UILayerProps) {
       <NavigationPanel clearBoard={clearOnOpen} fitApps={showAllApps} boardId={props.boardId} />
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
+
+      <WhiteboardPanel boardId={props.boardId} roomId={props.roomId} />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>

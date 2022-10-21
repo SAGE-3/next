@@ -8,12 +8,15 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
-import { usePresence, useAppStore, useRouteNav, useBoardStore, useRoomStore, usePresenceStore, useUsersStore } from '@sage3/frontend';
+import {
+  usePresence, useAppStore, useRouteNav, useBoardStore,
+  useRoomStore, usePresenceStore, useUsersStore
+} from '@sage3/frontend';
 
 // Board Layers
 import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
-import { Box, useColorModeValue } from '@chakra-ui/react';
 import { Clock } from '../components/Board/UI/Clock';
 
 /**
@@ -30,7 +33,7 @@ export function BoardPage() {
   }
 
   // Board and App Store stuff
-  const subBoard = useAppStore((state) => state.subToBoard);
+  const subApps = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
@@ -48,8 +51,8 @@ export function BoardPage() {
     subRooms();
     // Sub to boards belonging to this room
     subBoards(roomId);
-    // Subscribe to the board that was selected
-    subBoard(boardId);
+    // Subscribe to the app on the board that was selected
+    subApps(boardId);
     // Sub to users and presence
     subscribeToPresence();
     subscribeToUsers();
@@ -77,7 +80,7 @@ export function BoardPage() {
 
       <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
 
-      {/* TODO White Board Layer for marking onto board */}
+      {/* White Board Layer for marking onto board */}
       <WhiteboardLayer boardId={boardId} roomId={roomId}></WhiteboardLayer>
 
       {/* Upper layer for local UI stuff */}

@@ -41,6 +41,21 @@ export function App() {
   const status = useConnectStatus();
   const color = useHexColor('red');
 
+  // Try to reconnect to the server
+  useEffect(() => {
+    let interval;
+    if (status) {
+      if (interval) {
+        clearInterval(interval);
+      }
+    } else {
+      interval = setInterval(() => {
+        window.location.reload()
+      }, 4000);
+    }
+  }, [status]);
+
+
   return (
     <ChakraProvider theme={theme}>
       <AuthProvider>

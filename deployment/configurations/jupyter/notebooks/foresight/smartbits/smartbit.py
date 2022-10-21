@@ -7,7 +7,7 @@
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field, validate_model
-from utils.generic_utils import create_dict
+# from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
 from jupyterkernelproxy_client import JupyterKernelClient
@@ -107,7 +107,8 @@ class TrackedBaseModel(BaseModel):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
         return wrapper
-
+    def cleanup(self):
+        pass
 
 class Position(TrackedBaseModel):
     x: int

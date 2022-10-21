@@ -22,7 +22,7 @@ def format_execute_request_msg(code):
     msg_type = 'execute_request'
     content = {'code': code, 'silent': False}
     hdr = {'msg_id': uuid.uuid1().hex,
-           'username': 'test',
+           'username': 'tests',
            'data': datetime.datetime.now().isoformat(),
            'msg_type': msg_type,
            'version': '5.0'}

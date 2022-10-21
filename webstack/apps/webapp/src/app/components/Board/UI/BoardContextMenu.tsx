@@ -38,8 +38,7 @@ export function BoardContextMenu(props: ContextProps) {
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
-  const setScale = useUIStore((state) => state.setScale);
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
   const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const flipUI = useUIStore((state) => state.flipUI);
@@ -231,6 +230,7 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Download Opened Assets
           </Button> */}
+
         </VStack>
 
         <VStack w={'100%'}>
@@ -318,7 +318,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => { setScale(1); setBoardPosition({ x: 0, y: 0 }) }}
+            onClick={() => { resetBoardPosition(); }}
           >
             Reset View
           </Button>

@@ -6,13 +6,13 @@
  *
  */
 
+import { Whiteboard } from './Whiteboard/Whiteboard';
+
 type WhiteboardLayerProps = {
   boardId: string;
   roomId: string;
 };
 
 export function WhiteboardLayer(props: WhiteboardLayerProps) {
-  return (
-    null
-  )
+  return null;
 }

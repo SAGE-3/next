@@ -133,7 +133,7 @@ class SAGEProxy():
             self.populate_exisitng()
             async for msg in ws:
                 msg = json.loads(msg)
-
+                print(f"msg: {msg}")
                 if msg['id'] not in self.received_msg_log or \
                         msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
                     self.__message_queue.put(msg)

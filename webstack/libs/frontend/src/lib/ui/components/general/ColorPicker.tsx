@@ -6,9 +6,10 @@
  *
  */
 
-import { Button, ButtonGroup } from '@chakra-ui/react';
-import { SAGEColors, colors } from '@sage3/shared';
 import { useState } from 'react';
+import { Button, ButtonGroup } from '@chakra-ui/react';
+
+import { SAGEColors, colors } from '@sage3/shared';
 import { useHexColor } from '../../../hooks';
 
 type ColorPickerProps = {
@@ -33,11 +34,11 @@ export function ColorPicker(props: ColorPickerProps) {
             key={c}
             value={c}
             bgColor={c}
-            _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.3)' }}
+            _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
             _active={{ background: c, opacity: 0.9 }}
             size="md"
             onClick={() => handleChange(color)}
-            border={selectedColor === color ? '3px solid white' : 'none'}
+            transform={selectedColor === color ? 'scaleY(1.2)' : 'scaleY(1)'}
             width="43px"
           />
         );

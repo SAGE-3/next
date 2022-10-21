@@ -38,7 +38,7 @@ class AIPaneState(TrackedBaseModel):
     executeInfo: ExecuteInfo
     messages: dict
     hostedApps: Optional[dict]
-    supported_tasks: dict
+    supportedTasks: dict
     runStatus: bool
     output: str
 
@@ -70,8 +70,12 @@ class AIPane(SmartBit):
                 for type, settings in ai_settings.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
+            self.state.supportedTasks = json.dumps(supported_tasks)
             # ANDY: we need a state variable we can put the supported_tasks in
-        print(f"supported tasks are: {supported_tasks}")
+
+        print(f"supported tasks are: {self.state.supportedTasks}")
+        # print(f"supported_tasks {type(supported_tasks)}")
+        # print(f"self.state.supported_tasks {type(self.state.supportedTasks)}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
@@ -79,7 +83,7 @@ class AIPane(SmartBit):
     def handle_exec_result(self, msg):
         print("I am handling the execution results")
         print(f" type of msg in aipane{type(msg)}")
-        self.state.output = msg
+        self.state.output = json.dumps(msg)
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
