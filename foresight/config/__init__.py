@@ -81,7 +81,7 @@ ai_models = {
     },
 
     "urls": {
-        "facebook/detr-resnet-50": "https://d81f-2607-f278-410e-5-8d71-a36e-8480-7f63.jp.ngrok.io/detection",
+        "facebook/detr-resnet-50": "http://compaasportal.evl.uic.edu/object_detector/detection",
         "lai_lab/fertilized_egg_detect": "SOME-OTHER-URL",
         "facebook/bart-large-cnn": "",
         "sshleifer/distilbart-cnn-12-6": ""
