@@ -143,9 +143,9 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-    updateState(props._id, {supported_tasks: {}});
-  }
-}, [JSON.stringify(s.hostedApps)])
+      updateState(props._id, {supportedTasks: ""});
+    }
+  }, [Object.keys(s.hostedApps).length])
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -224,6 +224,8 @@ function AppComponent(props: App): JSX.Element {
           length of hostedappsarr: {Object.keys(s.hostedApps).length}
           <br/>
           hostedapps: {Object.values(s.hostedApps)}
+          <br/>
+          supportedTasks: {typeof s.supportedTasks}
           <br/>
           supportedTasks: {s.supportedTasks}
         </Box>
