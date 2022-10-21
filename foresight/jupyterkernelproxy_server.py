@@ -14,12 +14,13 @@ prod_type = os.getenv('ENVIRONMENT')
 if not prod_type:
     raise Exception("Cannot find ENVIRONMENT value. Should be either production or development")
 base_ws = conf[prod_type]['jupyter_ws']
-print(f"base ws is {base_ws}")
 
 red = redis.StrictRedis(conf[prod_type]["redis_server"], 6379, charset="utf-8", decode_responses=True)
 
 def format_execute_request_msg(code):
+
     msg_type = 'execute_request'
+
     content = {'code': code, 'silent': False}
     hdr = {'msg_id': uuid.uuid1().hex,
            'username': 'tests',
@@ -54,7 +55,7 @@ def get_jupyter_token():
 
 @app.route('/exec', methods=['POST'])
 async def run_code():
-    global open_sockets
+    #global open_sockets
     req = request.get_json()
     print("The request is: ")
     print(req)

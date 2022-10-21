@@ -1,4 +1,4 @@
-import pytest
+# import pytest
 from smartbits.kerneldashboard import KernelDashboard
 
 def test_create_kerneldashboard_smartbit():

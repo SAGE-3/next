@@ -22,7 +22,7 @@ def counter_instance():
      'state': {'count': 42, 'executeInfo': {'executeFunc': '', 'params': {}}}}
     c = Counter(**doc)
     yield c
-    print("cleaning up")
+    print("cleaning up happend after all the tests completed.")
     c._ai_client.stop_thread = True
     c._jupyter_client.stop_thread = True
 
