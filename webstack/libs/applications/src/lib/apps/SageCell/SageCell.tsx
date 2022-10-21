@@ -20,6 +20,8 @@ import {
   Image,
   Alert,
   AlertIcon,
+  Toast,
+  useToast,
 } from '@chakra-ui/react';
 
 import Ansi from 'ansi-to-react';
@@ -41,7 +43,6 @@ import { downloadFile } from '@sage3/frontend';
 // Rendering functions
 // import { ProcessedOutput } from './render';
 import { InputBox } from './components/InputBox';
-import { generateKey } from 'crypto';
 // import { OutputBox } from './components/OutputBox';
 
 /**
@@ -55,23 +56,6 @@ const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-
-  // useEffect(() => {
-  //   if (!user) return;
-  //   console.log('SageCell: useEffect');
-  //   console.log('username: ', user.data.name);
-  //   console.log('user id: ', user._id);
-  //   console.log('SageCell: user role', user.data.userRole);
-  // }, [user]);
-
-  const generateError = (localUserId: string) => {
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'generateError',
-        params: { user_uuid: localUserId },
-      },
-    });
-  };
 
   useEffect(() => {
     if (s.output) {
@@ -112,6 +96,24 @@ const AppComponent = (props: App): JSX.Element => {
               }}
             >
               {OutputBox(output)}
+              {!s.privateMessage
+                ? null
+                : s.privateMessage.map(({ userId, message }) => {
+                    // find the user name that matches the userId
+                    if (userId !== user!._id) {
+                      return null;
+                    }
+                    return (
+                      <Toast
+                        status="error"
+                        description={message + ', ' + user!.data.name}
+                        duration={5000}
+                        isClosable
+                        onClose={() => updateState(props._id, { privateMessage: [] })}
+                        hidden={userId !== user!._id}
+                      />
+                    );
+                  })}
             </Box>
           </>
         )}
@@ -135,7 +137,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const [selected, setSelected] = useState<string>('');
-  // const [kernels, setKernels] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -147,10 +148,10 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }, [user]);
 
-  // // Update from the props
-  // useEffect(() => {
-  //   s.kernel ? setSelected(s.kernel) : setSelected('Select kernel');
-  // }, [s.kernel]);
+  // Update from the props
+  useEffect(() => {
+    s.kernel ? setSelected(s.kernel) : setSelected('Select kernel');
+  }, [s.kernel]);
 
   function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
     if (e.target.value) {
@@ -176,15 +177,13 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  const generateError = (localUserId: string) => {
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'generate_error_message',
-        params: { user_uuid: localUserId },
-      },
-    });
-    console.log(s.privateMessage);
-  };
+  // const generateError = (localUserId: string) => {
+  //   updateState(props._id, {
+  //     executeInfo: {
+  //       executeFunc: 'generate_error_message',
+  //       params: { user_uuid: localUserId },
+  //     },
+  //   });
 
   return (
     <>
@@ -249,7 +248,17 @@ function ToolbarComponent(props: App): JSX.Element {
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
-            <Button onClick={() => generateError(user!._id)} _hover={{ opacity: 0.7 }}>
+            <Button
+              onClick={() =>
+                updateState(props._id, {
+                  executeInfo: {
+                    executeFunc: 'generate_error_message',
+                    params: { user_uuid: user!._id },
+                  },
+                })
+              }
+              _hover={{ opacity: 0.7 }}
+            >
               <MdError />
             </Button>
           </Tooltip>
@@ -280,31 +289,25 @@ const OutputBox = (output: any): JSX.Element => {
             fontFamily: 'monospace',
           }}
         >
-          {/* <Badge colorScheme="green" rounded="sm" size="lg"> */}
           {`Out [${output.execute_result.execution_count}]`}
-          {/* </Badge> */}
         </Text>
       )}
       {output.request_id ? null : null}
       {!output.error ? null : !Array.isArray(output.error) ? (
         <Alert status="error">{`${output.error.ename}: ${output.error.evalue}`}</Alert>
       ) : (
-        <>
-          <Alert status="error" variant="left-accent">
-            <AlertIcon />
-            <Ansi>{output.error[output.error.length - 1]}</Ansi>
-          </Alert>
-        </>
+        <Alert status="error" variant="left-accent">
+          <AlertIcon />
+          <Ansi>{output.error[output.error.length - 1]}</Ansi>
+        </Alert>
       )}
 
       {!output.stream ? null : output.stream.name === 'stdout' ? (
         <Text id="sc-stdout">{output.stream.text}</Text>
       ) : (
-        // <Alert status="error">
         <Text id="sc-stderr" color="red">
           {output.stream.text}
         </Text>
-        // </Alert>
       )}
 
       {!output.display_data
@@ -330,7 +333,7 @@ const OutputBox = (output: any): JSX.Element => {
               case 'text/latex':
                 return <Text>latex not handled</Text>;
               default:
-                return <></>;
+                return null;
             }
           })}
 
@@ -358,7 +361,7 @@ const OutputBox = (output: any): JSX.Element => {
               case 'text/latex':
                 return <Text>latex not handled</Text>;
               default:
-                return <></>;
+                return null;
             }
           })}
     </>

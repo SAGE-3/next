@@ -32,7 +32,13 @@ export const schema = z.object({
       connections: z.boolean(),
     })
   ),
-  privateMessage: z.string(),
+  // privateMessage: z.string(),
+  privateMessage: z.array(
+    z.object({
+      userId: z.string(),
+      message: z.string(),
+    })
+  ),
   availableKernels: z.array(
     z.object({
       label: z.string(),
@@ -78,7 +84,7 @@ export const init: Partial<state> = {
   availableKernels: [],
   sessions: [],
   output: '',
-  privateMessage: '',
+  privateMessage: [],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
