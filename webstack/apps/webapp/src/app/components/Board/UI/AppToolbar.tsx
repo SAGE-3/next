@@ -37,8 +37,9 @@ export function AppToolbar(props: AppToolbarProps) {
   const panelBackground = useHexColor(background);
 
   const textColor = useColorModeValue('gray.800', 'gray.100');
-  const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
-  const selectColor = '#f39e4a';
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.300');
+  const buttonTextColor = useColorModeValue('white', 'black');
+  const selectColor = useHexColor('teal');
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
@@ -147,18 +148,11 @@ export function AppToolbar(props: AppToolbarProps) {
         <ErrorBoundary fallbackRender={({ error, resetErrorBoundary }) => <Text>An error has occured.</Text>}>
           <>
             <Component key={app._id} {...app}></Component>
-            <ButtonGroup isAttached size="xs" ml="2">
-              <Tooltip placement="top" hasArrow={true} label={'Minimize App'} openDelay={400}>
-                <Button onClick={() => updateApp(app._id, { minimized: !app.data.minimized })} backgroundColor={commonButtonColors}>
-                  {app.data.minimized ? <MdOpenInFull fontSize="18" /> : <MdOutlineCloseFullscreen fontSize="18" />}
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
-                <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors}>
-                  <MdClose fontSize="18" />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+            <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
+              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1">
+                <MdClose color={buttonTextColor} />
+              </Button>
+            </Tooltip>
           </>
         </ErrorBoundary>
       );

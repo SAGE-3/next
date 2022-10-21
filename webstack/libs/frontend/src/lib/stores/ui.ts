@@ -57,6 +57,7 @@ interface UIState {
   gridSize: number;
   zIndex: number;
   showUI: boolean;
+  showAppTitle: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
@@ -93,6 +94,7 @@ interface UIState {
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
+  toggleTitle: () => void;
   displayUI: () => void;
   hideUI: () => void;
   incZ: () => void;
@@ -118,6 +120,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   gridSize: 1,
   zIndex: 1,
   showUI: true,
+  showAppTitle: true,
   boardDragging: false,
   appDragging: false,
   marker: false,
@@ -267,6 +270,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
+  toggleTitle: () => set((state) => ({ ...state, showAppTitle: !state.showAppTitle })),
   displayUI: () => set((state) => ({ ...state, showUI: true })),
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),

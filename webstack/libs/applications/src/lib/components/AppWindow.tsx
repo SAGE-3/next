@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, useToast, Text, Avatar, Tooltip } from '@chakra-ui/react';
+import { Box, useToast, Text, Avatar, Tooltip, useColorModeValue } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
@@ -31,6 +31,7 @@ export function AppWindow(props: WindowProps) {
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const zindex = useUIStore((state) => state.zIndex);
+  const appTitles = useUIStore((state) => state.showAppTitle);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
   const setAppDragging = useUIStore((state) => state.setAppDragging);
@@ -39,17 +40,18 @@ export function AppWindow(props: WindowProps) {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
-  const selectColor = '#f39e4a';
+  const selectColor = useHexColor('teal');
+  const bc = useColorModeValue('gray.200', 'gray.600');
+  const borderColor = useHexColor(bc);
+  const borderWidth = 4;
+  const titleColor = useColorModeValue('gray.800', 'white');
 
   // Display messages
   const toast = useToast();
-  // Height of the title bar
-  const titleBarHeight = 24;
 
   // Users
   const users = useUsersStore((state) => state.users);
   const owner = users.find((el) => el._id === props.app._createdBy);
-  const ownercolor = useHexColor(owner ? owner?.data.color : 'orange');
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -141,7 +143,7 @@ export function AppWindow(props: WindowProps) {
     // Get the width and height of the app after the resize
     const width = parseInt(ref.offsetWidth);
     // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
-    const height = parseInt(ref.offsetHeight) - titleBarHeight;
+    const height = parseInt(ref.offsetHeight);
 
     // Set local state
     setSize({ width, height });
@@ -154,7 +156,7 @@ export function AppWindow(props: WindowProps) {
     // Get the width and height of the app after the resize
     const width = parseInt(ref.offsetWidth);
     // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
-    const height = parseInt(ref.offsetHeight) - titleBarHeight;
+    const height = parseInt(ref.offsetHeight);
 
     // Set local state
     setPos({ x: position.x, y: position.y });
@@ -174,18 +176,6 @@ export function AppWindow(props: WindowProps) {
         height,
       },
     });
-  }
-
-  // Close the app and delete from server
-  function handleClose(e: any) {
-    e.stopPropagation();
-    deleteApp(props.app._id);
-  }
-
-  // Minimize the app. Currently only local.
-  function handleMinimize(e: any) {
-    e.stopPropagation();
-    update(props.app._id, { minimized: !minimized });
   }
 
   // Track raised state
@@ -224,7 +214,7 @@ export function AppWindow(props: WindowProps) {
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
-      size={{ width: size.width, height: `${minimized ? titleBarHeight : size.height + titleBarHeight}px` }} // Add the height of the titlebar to give the app the full size.
+      size={{ width: size.width, height: size.height }} // Add the height of the titlebar to give the app the full size.
       position={pos}
       onDragStart={handleDragStart}
       onDrag={handleDrag}
@@ -255,27 +245,47 @@ export function AppWindow(props: WindowProps) {
       enableResizing={!minimized && !isGuest}
       disableDragging={isGuest}
     >
-      {/* Border Box around app to show it is selected */}
-      {selected ? (
-        <Box
-          position="absolute"
-          left="-3px"
-          top="-3px"
-          width={size.width + 6}
-          height={minimized ? titleBarHeight + 6 + 'px' : size.height + titleBarHeight + 6 + 'px'}
-          border={`${4}px solid ${selectColor}`}
-          borderRadius="8px"
-          pointerEvents="none"
-          zIndex={3}
-        ></Box>
+      {appTitles ? (
+        <Box position="absolute" top="0px" left="0px" transform={'translateY(calc(-100% - 6px))'}>
+          <Text color={titleColor} fontSize={14 / scale}>
+            {props.app.data.description}
+          </Text>
+        </Box>
       ) : null}
+
+      {/* Border Box around app to show it is selected */}
+      <Box
+        position="absolute"
+        left={`-${borderWidth / scale}px`}
+        top={`-${borderWidth / scale}px`}
+        width={size.width + (borderWidth / scale) * 2}
+        height={size.height + (borderWidth / scale) * 2}
+        border={`${borderWidth / scale}px solid ${selected ? selectColor : borderColor}`}
+        borderRadius={8 / scale}
+        pointerEvents="none"
+        zIndex={3}
+      ></Box>
+
+      {/* The Application */}
+      <Box
+        id={'app_' + props.app._id}
+        width={size.width}
+        height={size.height}
+        overflow="hidden"
+        zIndex={2}
+        display={minimized ? 'none' : 'inherit'}
+        borderRadius={8 / scale}
+        background={borderColor}
+      >
+        {props.children}
+      </Box>
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
       {!selected ? (
         <Box
           position="absolute"
           className="handle" // The CSS name react-rnd latches on to for the drag events
           left="0px"
-          top={titleBarHeight + 'px'}
+          top="0px"
           width={size.width}
           height={minimized ? 0 + 'px' : size.height + 'px'}
           cursor="move"
@@ -289,94 +299,20 @@ export function AppWindow(props: WindowProps) {
           }}
         ></Box>
       ) : null}
-      {/* This div is to block the app from being interacted with */}
+
+      {/* This div is to block the app from being interacted with when the user is dragging the board or an app */}
       {boardDragging || appDragging ? (
         <Box
           position="absolute"
           left="0px"
-          top={titleBarHeight + 'px'}
+          top="0px"
           width={size.width}
           height={minimized ? 0 + 'px' : size.height + 'px'}
           pointerEvents={'none'}
           userSelect={'none'}
-          zIndex={3}
+          zIndex={999999999} // Really big number to just force it to be on top
         ></Box>
       ) : null}
-
-      {/* Title Bar */}
-      <Box
-        className="handle" // The CSS name react-rnd latches on to for the drag events
-        display="flex"
-        flexDirection="row"
-        flexWrap="nowrap"
-        justifyContent="space-between"
-        alignItems="center"
-        backgroundColor={selected ? selectColor : 'teal'}
-        px="1"
-        cursor={'move'}
-        overflow="hidden"
-        whiteSpace="nowrap"
-        height={titleBarHeight + 'px'} // The height of the title bar
-        borderRadius="6px 6px 0 0"
-      >
-        {/* Left Title Bar Elements */}
-        <Box display="flex" alignItems="center" textOverflow={'ellipsis'} maxWidth="80%">
-          <Tooltip label={'Opened by ' + owner?.data.name} aria-label="username" hasArrow={true} placement="top-start">
-            <Avatar
-              name={owner?.data.name}
-              getInitials={initials}
-              mr={1}
-              bg={ownercolor}
-              borderRadius={'100%'}
-              color="white"
-              size={'2xs'}
-              showBorder={true}
-              borderWidth={'0.5px'}
-              borderColor="whiteAlpha.600"
-            />
-          </Tooltip>
-          <Text color="white" textOverflow={'ellipsis'} overflow="hidden">
-            {props.app.data.description}
-          </Text>
-        </Box>
-        {/* Right Title bar Elements */}
-        <Box display="flex" alignItems="center" minWidth="0">
-          {/* Minimize Buttons */}
-          {minimized ? (
-            <Tooltip placement="top-start" hasArrow={true} label={'Open App'} openDelay={400}>
-              <span>
-                <MdOpenInFull cursor="pointer" color="white" onClick={handleMinimize} />
-              </span>
-            </Tooltip>
-          ) : (
-            <Tooltip placement="top-start" hasArrow={true} label={'Minimize App'} openDelay={400}>
-              <span>
-                <MdOutlineCloseFullscreen cursor="pointer" color="white" onClick={handleMinimize} />
-              </span>
-            </Tooltip>
-          )}
-          {/* Close Button Name */}
-          <Tooltip placement="top-start" hasArrow={true} label={'Delete App'} openDelay={400}>
-            <span>
-              <MdOutlineClose cursor="pointer" color="white" fontSize="1.25rem" onClick={handleClose} />
-            </span>
-          </Tooltip>
-        </Box>
-      </Box>
-      {/* End Title Bar */}
-
-      {/* The Application */}
-      <Box
-        id={'app_' + props.app._id}
-        width={size.width}
-        height={size.height}
-        overflow="hidden"
-        zIndex={2}
-        display={minimized ? 'none' : 'inherit'}
-        borderRadius={'0 0 6px 6px'}
-      >
-        {props.children}
-      </Box>
     </Rnd>
   );
 }

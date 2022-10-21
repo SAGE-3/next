@@ -43,6 +43,8 @@ export function BoardContextMenu(props: ContextProps) {
   const setGridSize = useUIStore((state) => state.setGridSize);
   const flipUI = useUIStore((state) => state.flipUI);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
+  const showAppTitle = useUIStore((state) => state.showAppTitle);
+  const toggleTitle = useUIStore((state) => state.toggleTitle);
 
   // UI Menu position setters
   const setControllerPosition = useUIStore((state) => state.controller.setPosition);
@@ -230,7 +232,6 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Download Opened Assets
           </Button> */}
-
         </VStack>
 
         <VStack w={'100%'}>
@@ -318,7 +319,9 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => { resetBoardPosition(); }}
+            onClick={() => {
+              resetBoardPosition();
+            }}
           >
             Reset View
           </Button>
@@ -345,7 +348,17 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Show Interface
           </Checkbox>
-
+          <Checkbox
+            w={'100%'}
+            size={'sm'}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            isChecked={showAppTitle}
+            onChange={toggleTitle}
+          >
+            Show App Titles
+          </Checkbox>
         </VStack>
       </HStack>
     </VStack>
