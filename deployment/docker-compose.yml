@@ -35,13 +35,17 @@ services:
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-    command: sleep infinity
+    working_dir: /code
+    command: ./GO.sh
+    restart: always
     deploy:
       restart_policy:
         condition: on-failure
         delay: 5s
-        max_attempts: 3
         window: 20s
+    depends_on:
+      - "redis-server"
+      - "node-server"
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:
