@@ -1,7 +1,9 @@
 version: "3.8"
 services:
   sage-proxy: 
-    image: "jupyter/datascience-notebook"
+    image: "python"
+    
     volumes:
       - .:/foresight
-    tty: true
+    command: /foresight/docker_info/start.sh ${ROOM_ID}     
+
