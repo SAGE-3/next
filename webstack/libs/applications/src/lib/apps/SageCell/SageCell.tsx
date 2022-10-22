@@ -21,7 +21,6 @@ import {
   Alert,
   AlertIcon,
   Toast,
-  useToast,
   IconButton,
   VStack,
 } from '@chakra-ui/react';
@@ -52,8 +51,6 @@ import { downloadFile } from '@sage3/frontend';
 // UUID generation
 import { v4 as getUUID } from 'uuid';
 
-// Rendering functions
-// import { ProcessedOutput } from './render';
 // import { InputBox } from './components/InputBox';
 // import { OutputBox } from './components/OutputBox';
 
@@ -100,7 +97,6 @@ const AppComponent = (props: App): JSX.Element => {
                 boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
                 borderRadius: '4px',
                 fontFamily: 'monospace',
-                // fontSize: `${s.fontSize}rem`,
                 fontSize: s.fontSize + 'px',
                 color: useColorModeValue('#000000', '#FFFFFF'),
                 whiteSpace: 'pre-wrap',
@@ -192,11 +188,11 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  const [fontSize, setFontSize] = useState(s.fontSize);
+  // const [fontSize, setFontSize] = useState(s.fontSize);
 
-  useEffect(() => {
-    updateState(props._id, { fontSize: fontSize });
-  }, [fontSize]);
+  // useEffect(() => {
+  //   updateState(props._id, { fontSize: fontSize });
+  // }, [fontSize]);
 
   return (
     <>

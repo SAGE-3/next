@@ -14,17 +14,10 @@ import {
   Text,
   Tooltip,
   Stack,
-  Collapse,
   Flex,
-  Icon,
   IconButton,
   HStack,
-  Badge,
-  useDisclosure,
-  Modal,
   Checkbox,
-  Button,
-  InputRightElement,
   VStack,
 } from '@chakra-ui/react';
 
@@ -47,18 +40,9 @@ function AppComponent(props: App): JSX.Element {
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
 
-  // useEffect(() => {
-  //   updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
-  // }, [props._id, updateState]);
-
   useEffect(() => {
     getAvailableKernels();
   }, []);
-
-  // const updateStates = () => {
-  //   getKernelSpecs();
-  //   getAvailableKernels();
-  // };
 
   const getKernelSpecs = () => {
     updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
@@ -106,10 +90,7 @@ function AppComponent(props: App): JSX.Element {
   // Triggered on every keystroke
   function changeAlias(e: React.ChangeEvent<HTMLInputElement>) {
     const cleanAlias = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, '');
-
     setKernelAlias(cleanAlias);
-    // console.log('the clean alias is');
-    // console.log(kernelAlias);
   }
 
   // Triggered on 'enter' key
@@ -192,8 +173,6 @@ function AppComponent(props: App): JSX.Element {
         fontSize: 24,
         theme: 'xcode',
         kernel: kernelId,
-        kernels: s.kernels,
-        sessions: s.sessions,
         availableKernels: [],
         privateMessage: [],
         output: '',
@@ -292,7 +271,6 @@ function AppComponent(props: App): JSX.Element {
             overflowY={'auto'}
             style={{ border: '2px solid #111', borderRadius: '2px' }}
           >
-            {/* <VStack w={'100%'} spacing={0}> */}
             {
               // If there are kernels, display them
               s.kernels
