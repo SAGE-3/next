@@ -1,8 +1,7 @@
 #!/bin/bash
 
 #
-# Run the backend services, without the SAGE3 webserver
-# For testing and development
+# Run the SAGE3 environment
 #
 
 SERVER_VERSION=$(docker version -f "{{.Server.Version}}")
@@ -44,3 +43,4 @@ else
 		$CMD $modules rm -f
 	fi
 fi
+
