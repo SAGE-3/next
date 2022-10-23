@@ -1,9 +1,8 @@
 version: "3.8"
 services:
   sage-proxy: 
-    image: "python"
-    
+    image: "python:3.9-bullseye"    
     volumes:
-      - .:/foresight
-    command: /foresight/docker_info/start.sh ${ROOM_ID}     
+      - /Users/mahdi/Documents/GitHub/next/foresight:/foresight
+    command: /foresight/_docker_scripts/start-proxy.sh ${ROOM_ID}     
 
