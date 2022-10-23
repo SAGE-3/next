@@ -40,7 +40,6 @@ gpJRAhyZaEVDojsiaJOrFtCUC65qvkC0gym-0HDd89Lmc2i54yf6h0Feb96OadeKT2TFjH3Jvi7_r7sT
 }
 
 ai_settings = {
-    "funcx_endpoint": "503aabe7-223e-4679-bb01-0b0da37c0ae6",
     "tasks": {
         "vision": {
             "supported_apps": ['ImageViewer'],
@@ -54,12 +53,12 @@ ai_settings = {
 }
 
 funcx = {
-    "endpoint_uuid": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
-    "test_hello_world_uuid": '3c53e91f-e812-4ec6-97d0-18ce059b3391',
+    # "endpoint_uuid": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
+    "funcx_endpoint": "503aabe7-223e-4679-bb01-0b0da37c0ae6",
+    "test_hello_world_uuid": '1dd3b15e-5922-4a03-96cc-ed1c1d71a2ca',
     "ai_func_uuid": '4f78e565-05b3-4a59-89f0-1f6dd7e20216',
     "ai_func_uuid_mahdi": 'ab0edbf9-de03-49ac-bd2d-44f314761d3d',
     "ai_func_uuid_andy ": '4f78e565-05b3-4a59-89f0-1f6dd7e20216'
-
 }
 
 ai_models = {

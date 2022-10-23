@@ -3,6 +3,9 @@ import uuid
 import pytest
 import time
 
+# TODO: add a test to check if a kernel exist and report an appropriate error otherwise
+# perhaps maybe not even run the remaining tests
+
 
 @pytest.fixture()
 def jupyter_proxy():

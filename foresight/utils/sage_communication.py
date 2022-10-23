@@ -1,10 +1,10 @@
-import json
 import httpx
 
 class Borg:
     _shared_state = {}
     def __init__(self):
         self.__dict__ = self._shared_state
+
 
 class SageCommunication(Borg):
     # The borg pattern allows us to init the config in the proxy and not have to worry about
@@ -23,6 +23,7 @@ class SageCommunication(Borg):
 
         # TODO: laod this from config file
         self.routes = {
+            "get_rooms": "/api/rooms",
             "get_apps": "/api/apps",
             "get_boards": "/api/boards",
             "send_update": "/api/apps/{}",
@@ -74,6 +75,19 @@ class SageCommunication(Borg):
         return data
 
 
+    def get_rooms(self):
+        r = self.httpx_client.get(
+            self.conf[self.prod_type]['web_server'] + self.routes["get_rooms"],
+            headers=self.__headers
+        )
+        json_data = r.json()
+        # print(json_data)
+        data = {}
+        if r.is_success:
+            data = json_data['data']
+        return data
+
+
     def get_boards(self, room_id=None):
         """
         list all the rerouces belonging to room_id
@@ -82,7 +96,7 @@ class SageCommunication(Borg):
         :param board_id:
         :return: dict representing the
         """
-        r = self.httpx_client.get(self.conf[self.prod_type]['web_server']+ self.routes["get_boards"], headers=self.__headers)
+        r = self.httpx_client.get(self.conf[self.prod_type]['web_server'] + self.routes["get_boards"], headers=self.__headers)
         json_data = r.json()
         data = json_data['data']
         if r.is_success:
