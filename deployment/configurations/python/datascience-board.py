@@ -21,7 +21,8 @@ if prod == 'backend' or prod == 'production':
           server = host
         else:
           server = 'host.docker.internal'
-        jupyterServer = 'https://' + server + ':4443'
+        # jupyterServer = 'https://' + server + ':4443'
+        jupyterServer = 'https://jupyter:8888'
         webServer = 'https://' + server
         wsServer = 'wss://' + server + '/api'
     else:
@@ -53,7 +54,7 @@ def print_kernels(jupyter_server, j_headers):
     # Get list of kernels
     j_url = jupyter_server + '/api/kernels'
     print("Jupyter> URL", j_url)
-    response = requests.get(j_url, headers=j_headers)
+    response = requests.get(j_url, headers=j_headers, verify=False)
     if response.status_code == 200:
         kernels = json.loads(response.text)
         print('Jupyter> kernels:')
