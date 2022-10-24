@@ -42,7 +42,7 @@ export const init: Partial<state> = {
   executeInfo: {executeFunc: '', params: {}},
   hostedApps: {},
   runStatus: false,
-  // supportedTasks: "",
+  supportedTasks: {},
   messages: {},
   output: "",
 

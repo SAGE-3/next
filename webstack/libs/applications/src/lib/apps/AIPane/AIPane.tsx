@@ -155,7 +155,6 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
     });
-    // Object.values(s.supportedTasks).forEach(el => console.log(el))
   }
 
   function closePopovers(info: string) {
@@ -225,9 +224,6 @@ function AppComponent(props: App): JSX.Element {
           <br/>
           hostedapps: {Object.values(s.hostedApps)}
           <br/>
-          supportedTasks: {typeof s.supportedTasks}
-          <br/>
-          supportedTasks: {s.supportedTasks}
         </Box>
 
         <Box className="output-container">
@@ -252,9 +248,23 @@ function ToolbarComponent(props: App): JSX.Element {
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
-  const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
-  const classModels = ['image_c_model_1', 'image_c_model_2'];
+  // const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
+  // const classModels = ['image_c_model_1', 'image_c_model_2'];
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
+
+  const [supportedTasks, setSupportedTasks] = useState([''])
+  const [tasks, setTasks] = useState([''])
+
+  useEffect(() => {
+    if (s.supportedTasks != undefined && s.supportedTasks != '') {
+      // const supportedTasks = []
+
+      setSupportedTasks(JSON.parse(s.supportedTasks))
+      setTasks(Object.keys(supportedTasks))
+      console.log("loading useEffect")
+      console.log(tasks)
+    }
+  }, [JSON.stringify(s.supportedTasks)])
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -280,7 +290,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuButton>
             <Portal>
               <MenuList>
-                {objDetModels.map((model) => {
+                {supportedTasks?.map((model) => {
                   return <MenuItem>{model}</MenuItem>;
                 })}
               </MenuList>
@@ -290,13 +300,13 @@ function ToolbarComponent(props: App): JSX.Element {
             <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
               Classification Models
             </MenuButton>
-            <Portal>
-              <MenuList>
-                {classModels.map((model) => {
-                  return <MenuItem>{model}</MenuItem>;
-                })}
-              </MenuList>
-            </Portal>
+            {/*<Portal>*/}
+            {/*  <MenuList>*/}
+            {/*    {Object.values(models)?.map((model) => {*/}
+            {/*      return <MenuItem>{model}</MenuItem>;*/}
+            {/*    })}*/}
+            {/*  </MenuList>*/}
+            {/*</Portal>*/}
           </Menu>
           <IconButton
             aria-label="Run AI"

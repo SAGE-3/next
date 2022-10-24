@@ -70,7 +70,7 @@ class AIPane(SmartBit):
                 for type, settings in ai_settings.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
-            self.state.supportedTasks = supported_tasks
+            self.state.supportedTasks = json.dumps(supported_tasks)
             # ANDY: we need a state variable we can put the supported_tasks in
 
         print(f"supported tasks are: {self.state.supportedTasks}")
