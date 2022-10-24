@@ -63,6 +63,9 @@ class JupyterKernelProxy:
                     else:
                         result = self.pending_reponses[msg_id_uuid]
                     self.parent_proxy_instance.callback_info[msg_id_uuid](result)
+
+                    del(self.pending_reponses[msg_id_uuid])
+                    result = {}
                 if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
                     result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content'],
                               msg['msg_type']: msg['content']}
@@ -74,7 +77,6 @@ class JupyterKernelProxy:
 
             if result:
                 self.pending_reponses[msg_id_uuid] = result
-
 
 
     def __init__(self):

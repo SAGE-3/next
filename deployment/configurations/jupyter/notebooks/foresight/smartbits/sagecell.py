@@ -14,8 +14,8 @@ class SageCellState(TrackedBaseModel):
     code: str = ""
     output: str = ""
     kernel: str = "python3"
-    kernels: list = []
     availableKernels: list = []
+    privateMessage: list = []
     executeInfo: ExecuteInfo
 
 class SageCell(SmartBit):
@@ -32,28 +32,23 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
+    def generate_error_message(self, user_uuid):
+        error_message = 'You do not have access to this kernel'
+        pm = []
+        pm.append({'userId': user_uuid, 'message': error_message})
+        self.state.privateMessage = pm
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
+
     def get_available_kernels(self, user_uuid):
         """
         This function will get the kernels from the redis server
-        if the kernel is public, or if the user is the owner of the kernel
-        it will be added to the list of available kernels
-        :param user_uuid:
-        :return: list of kernels in the form of kernal_alias:kernel_id
-        {
-            '746dcafb-f578-4e1c-b515-8a7a185f26c0': {
-                'kernel_alias': 'test1',
-                'kernel_name': 'python3',
-                'room': '570bd4af-db4d-4ed3-919d-ec53832a3259',
-                'board': '6c68f094-4dc6-40a2-af8a-3f96612d2031',
-                'owner_uuid': '9b93ab8b-20b2-4016-9bfb-ca8b76acc160',
-                'is_private': False,
-                'auth_users': []
-            }
-        }
         """
-        print('i am here 3')
         jupyter_kernels = "JUPYTER:KERNELS"
         r_json = self._jupyter_client.redis_server.json()
+        if r_json.get(jupyter_kernels) is None:
+            r_json.set(jupyter_kernels, '.', {})
         kernels = r_json.get(jupyter_kernels)
         available_kernels = []
 
@@ -86,6 +81,4 @@ class SageCell(SmartBit):
             "token": ""
         }
 
-        # print(f"Command info is {command_info}")
-        # print(f"My proxy is: {self._jupyter_proxy}")
         self._jupyter_client.execute(command_info)

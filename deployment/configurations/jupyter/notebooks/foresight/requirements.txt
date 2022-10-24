@@ -8,12 +8,10 @@ httpx~=0.23.0
 pydantic~=1.10.2
 pandas
 Flask[async]~=2.2.2
-# redis~=3.5.3 # no redis json support (10/18/2022)
-redis=4.3.4 # added 10/18/2022 -- upgrade to this version to get json support
-# matplotlib
-pytest=7.1.3 # added 10/18/2022
+redis
+pytest
 # pillow
 # pyexiftool
 # fluent-logger
-
 funcx~=1.0.3
+ws4py # we're only using this for the convenience of WebSocketBaseClient
