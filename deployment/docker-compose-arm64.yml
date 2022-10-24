@@ -25,9 +25,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 20s
   python:
     image: "python:3.9-bullseye"
     volumes:
@@ -41,8 +38,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 5s
-        window: 20s
     depends_on:
       - "redis-server"
       - "node-server"

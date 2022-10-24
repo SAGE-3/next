@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # for docker login
-#security -v unlock-keychain ~/Library/Keychains/login.keychain-db
+security -v unlock-keychain ~/Library/Keychains/login.keychain-db
 
 # build and push webstack image
-#docker buildx build --push -f node_server/Dockerfile --platform linux/arm64 --tag sage3/next:arm64 ..
+docker buildx build --push -f node_server/Dockerfile --platform linux/arm64 --tag sage3/next:arm64 ..
 
 # cleanup
 rm -fr configurations/jupyter/notebooks/notebooks/.ipynb_checkpoints/
