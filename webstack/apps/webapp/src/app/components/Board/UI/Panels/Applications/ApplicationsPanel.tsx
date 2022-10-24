@@ -79,22 +79,23 @@ export function ApplicationsPanel(props: ApplicationProps) {
       const features = data.features;
       setAppsList((prev) => {
         let newlist = prev;
-        if (!features['twillio']) {
-          newlist = newlist.filter((app) => app !== 'Screenshare');
+        if (!features['twilio']) {
+          newlist = newlist.filter((a) => a !== 'Screenshare');
         }
         if (!features['ai']) {
-          newlist = newlist.filter((app) => app !== 'AIPane');
+          newlist = newlist.filter((a) => a !== 'AIPane');
         }
         if (!features['cell']) {
-          newlist = newlist.filter((app) => app !== 'CodeCell');
+          newlist = newlist.filter((a) => a !== 'CodeCell');
         }
         if (!features['jupyter']) {
-          newlist = newlist.filter((app) => app !== 'JupyterLab');
+          newlist = newlist.filter((a) => a !== 'JupyterLab');
+          newlist = newlist.filter((a) => a !== 'Kernels');
         }
         return newlist;
       });
     }
-  }, [data, appsList]);
+  }, [data]);
 
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -173,7 +174,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
         }}
       >
         {/* <Box > */}
-        {appListed
+        {appsList
           // sort alphabetically by name
           .sort((a, b) => a.localeCompare(b))
           // create a button for each application
