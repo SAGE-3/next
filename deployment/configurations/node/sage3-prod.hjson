@@ -35,6 +35,14 @@
     }
   ],
 
+  // How to enable/disable some features for safety
+  "features": {
+    "twilio": true,
+    "ai": true,
+    "cell": true,
+    "jupyter": true
+  },
+
   // ID Management
   "auth": {
     "sessionSecret": "SUPERSECRET!!$$",
