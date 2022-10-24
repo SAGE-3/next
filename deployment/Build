@@ -1,8 +1,0 @@
-#!/bin/sh
-
-
-security -v unlock-keychain ~/Library/Keychains/login.keychain-db
-
-docker buildx build --push -f node_server/Dockerfile --platform linux/arm64,linux/amd64 --tag sage3/next:prod ..
-
-
