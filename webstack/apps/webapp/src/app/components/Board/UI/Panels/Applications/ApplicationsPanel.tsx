@@ -6,10 +6,10 @@
  *
  */
 
-import { useEffect } from 'react';
-import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import { useColorModeValue, VStack } from '@chakra-ui/react';
 
-import { StuckTypes, useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { StuckTypes, useAppStore, useUIStore, useUser, useData } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName } from '@sage3/applications/schema';
@@ -54,10 +54,11 @@ export interface ApplicationProps {
 }
 
 export function ApplicationsPanel(props: ApplicationProps) {
+  const data = useData('/api/info');
+  const [appsList, setAppsList] = useState(appListed);
+
   // App Store
-  const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
-  const deleteApp = useAppStore((state) => state.delete);
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
@@ -70,10 +71,31 @@ export function ApplicationsPanel(props: ApplicationProps) {
   const setShow = useUIStore((state) => state.applicationsPanel.setShow);
   const stuck = useUIStore((state) => state.applicationsPanel.stuck);
   const setStuck = useUIStore((state) => state.applicationsPanel.setStuck);
-
   const zIndex = useUIStore((state) => state.panelZ).indexOf('applications');
-
   const controllerPosition = useUIStore((state) => state.controller.position);
+
+  useEffect(() => {
+    if (data) {
+      const features = data.features;
+      setAppsList((prev) => {
+        let newlist = prev;
+        if (!features['twillio']) {
+          newlist = newlist.filter((app) => app !== 'Screenshare');
+        }
+        if (!features['ai']) {
+          newlist = newlist.filter((app) => app !== 'AIPane');
+        }
+        if (!features['cell']) {
+          newlist = newlist.filter((app) => app !== 'CodeCell');
+        }
+        if (!features['jupyter']) {
+          newlist = newlist.filter((app) => app !== 'JupyterLab');
+        }
+        return newlist;
+      });
+    }
+  }, [data, appsList]);
+
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
@@ -88,13 +110,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
   }, [controllerPosition]);
 
   // Theme
-  // const textColor = useColorModeValue('gray.800', 'gray.100');
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   // User
   const { user } = useUser();
-
-  // const setAppPanelPosition = props.setPosition;
-  // const appPanelPosition = props.position;
 
   const newApplication = (appName: AppName) => {
     if (!user) return;
