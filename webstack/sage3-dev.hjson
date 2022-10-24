@@ -39,7 +39,7 @@
     }
   ],
 
-  // How to disable some features for safety
+  // How to enable/disable some features for safety
   "features": {
     "twilio": true,
     "ai": true,
