@@ -14,7 +14,7 @@ class SmartBitFactory:
     cls_root = "smartbits"
 
     # TODO: read these names from some conf file; not hardcoded here
-    class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note",  
+    class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note",
                    "DataTable": "data_table", "CodeCell": "codecell", 
                    "KernelDashboard": "kerneldashboard", "SageCell": "sagecell", 
                    "Slider": "slider", "Stickie": "stickie", "VegaLite": "vegalite", 
