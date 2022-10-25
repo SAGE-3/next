@@ -34,6 +34,13 @@ export interface serverConfiguration {
   servers: { name: string; url: string }[];
   // Services
   redis: { url: string };
+  // Feature flags
+  features: {
+    twilio: boolean;
+    ai: boolean;
+    jupyter: boolean;
+    cell: boolean;
+  };
   // ID management API keys
   auth: AuthConfiguration;
   // SSL/HTTPS certificates
