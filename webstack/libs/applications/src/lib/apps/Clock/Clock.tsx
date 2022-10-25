@@ -138,7 +138,7 @@ function AppComponent(props: App): JSX.Element {
   }, [svgRef, s.file, offset]);
 
   return (
-    <AppWindow app={props} processing>
+    <AppWindow app={props}>
       <VStack p={0} m={2}>
         <Clock ref={svgRef} />
         {/* <Text fontSize={"2xl"}>{city}</Text> */}
