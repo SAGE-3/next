@@ -19,6 +19,8 @@
 
 
 # TODO prevent apps updates on fields that were touched?
+import sys
+import os
 from typing import Callable
 from pydantic import BaseModel
 import asyncio
@@ -259,18 +261,22 @@ def get_cmdline_parser():
     return parser
 
 
-# For development purposes only.
-token = conf['token']
-room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
-sage_proxy = SAGEProxy(room_id, conf, prod_type)
+if __name__ == "__main__":
+    # For development purposes only.
+    token = conf['token']
+    if prod_type == "production":
+        room_id = os.environ.get("ROOM_ID")
+        if not room_id:
+            print("ROOM_ID not defined")
+            sys.exit(1)
+    else:
+        room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
 
-# sage_proxy = SAGEProxy("config/funcx.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
-# b34cf54e-2f9e-4b9a-a458-27f4b6c658a7
-
-listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
-listening_process.start()
-worker_process = threading.Thread(target=sage_proxy.process_messages)
-worker_process.start()
+    sage_proxy = SAGEProxy(room_id, conf, prod_type)
+    listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
+    listening_process.start()
+    worker_process = threading.Thread(target=sage_proxy.process_messages)
+    worker_process.start()
 
 
 # asyncio.gather(sage_proxy.produce(), sage_proxy.consume())

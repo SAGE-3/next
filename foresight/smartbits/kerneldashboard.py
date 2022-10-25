@@ -28,12 +28,9 @@ class KernelDashboardState(TrackedBaseModel):
     availableKernels: list = []
     executeInfo: ExecuteInfo
 
+
 class KernelDashboard(SmartBit):
     state: KernelDashboardState
-    _headers = PrivateAttr()
-    _base_url = PrivateAttr()
-    _redis_server = PrivateAttr()
-    _redis_store = 'JUPYTER:KERNELS'
 
     def __init__(self, **kwargs):
         print("I am here 1")
@@ -51,17 +48,12 @@ class KernelDashboard(SmartBit):
     def get_kernel_specs(self):
         j_url = f"{self._base_url}/kernelspecs"
         response = requests.get(j_url, headers=self._headers)
-        kernel_specs = json.loads(response.text)
+        kernel_specs = response.json()
+
         self.state.defaultKernel = kernel_specs['default']
         self.state.kernelSpecs = [kernel_specs]
         self.refresh_list()
 
-
-    def get_kernels(self):
-        j_url = f"{self._base_url}/kernels"
-        response = requests.get(j_url, headers=self._headers)
-        kernels = json.loads(response.text)
-        return kernels
 
 
     def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
@@ -110,7 +102,9 @@ class KernelDashboard(SmartBit):
         """
         This function will get the kernels from the redis server
         """
-        # print('i am here 3')
+
+        # get kernels from server
+
         r_json = self._redis_server.json()
         kernels = r_json.get(self._redis_store)
         available_kernels = []
