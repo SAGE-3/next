@@ -240,7 +240,6 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Download Opened Assets
           </Button> */}
-
         </VStack>
 
         <VStack w={'100%'}>
@@ -328,7 +327,9 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => { resetBoardPosition(); }}
+            onClick={() => {
+              resetBoardPosition();
+            }}
           >
             Reset View
           </Button>
@@ -355,7 +356,6 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Show Interface
           </Checkbox>
-
         </VStack>
       </HStack>
     </VStack>
