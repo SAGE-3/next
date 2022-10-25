@@ -397,7 +397,7 @@ export function AppWindow(props: WindowProps) {
           backgroundColor={backgroundColor}
         >
           <Box transform={`scale(${4 * Math.min(size.width / 300, size.height / 300)})`}>
-            <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color="blue.500" size="xl" />
+            <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color={selected ? selectColor : 'teal'} size="xl" />
           </Box>
         </Box>
       ) : null}
