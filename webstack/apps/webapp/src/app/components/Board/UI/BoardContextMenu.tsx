@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUIStore, useUser, usePresenceStore, useRouteNav } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, usePresenceStore, useRouteNav, useData } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 type ContextProps = {
@@ -25,6 +25,8 @@ type ContextProps = {
 const savedRadios = [false, true];
 
 export function BoardContextMenu(props: ContextProps) {
+  const data = useData('/api/info');
+
   // User information
   const { user } = useUser();
 
@@ -84,6 +86,10 @@ export function BoardContextMenu(props: ContextProps) {
    */
   const newApplication = (appName: AppName) => {
     if (!user) return;
+    // features disabled
+    if (appName === "JupyterLab" && data.features && !data.features['jupyter']) return;
+    if (appName === "CodeCell" && data.features && !data.features['cell']) return;
+    if (appName === "Screenshare" && data.features && !data.features['twilio']) return;
     // Get the position of the cursor
     const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
     if (me) {
@@ -109,7 +115,11 @@ export function BoardContextMenu(props: ContextProps) {
   };
 
   const openJupyter = () => {
+    // Not logged in
     if (!user) return;
+    // jupyter disabled
+    if (data.features && !data.features['jupyter']) return;
+
     // Get the position of the cursor
     const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
     if (me) {

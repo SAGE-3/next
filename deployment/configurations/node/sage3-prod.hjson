@@ -3,7 +3,7 @@
   "production": true,
 
   // Name of the server
-  "serverName": "SERVERNAME",
+  "serverName": "My Local Server",
 
     // HTTP
   "port": 443,
@@ -35,6 +35,14 @@
     }
   ],
 
+  // How to enable/disable some features for safety
+  "features": {
+    "twilio": true,
+    "ai": true,
+    "cell": true,
+    "jupyter": true
+  },
+
   // ID Management
   "auth": {
     "sessionSecret": "SUPERSECRET!!$$",
@@ -49,8 +57,8 @@
       "routeEndpoint": "/auth/guest"
     },
     "googleConfig": {
-      "clientID": "",
-      "clientSecret": "",
+      "clientID": "XXX",
+      "clientSecret": "XXX",
       "routeEndpoint": "/auth/google",
       "callbackURL": "/auth/google/redirect"
     },
@@ -61,23 +69,23 @@
       "routeEndpoint": "/auth/jwt"
     },
     "cilogonConfig": {
-      "clientID": "",
-      "clientSecret": "",
+      "clientID": "XXX",
+      "clientSecret": "XXX",
       "routeEndpoint": "/auth/cilogon",
       "callbackURL": "/auth/cilogon/redirect"
     }
   },
   "ssl": {
     // found in the 'keys' folder
-    "certificateFile": "",
-    "certificateKeyFile": "",
-    "certificateChainFile": ""
+    "certificateFile": "localhost-server.crt",
+    "certificateChainFile": "localhost-ca.crt",
+    "certificateKeyFile": "localhost-server.key"
   },
   "twilio": {
-    "accountSid": "",
-    "apiKey": "",
-    "apiSecret": ""
+    "accountSid": "XXX",
+    "apiKey": "XXX",
+    "apiSecret": "XXX"
   },
   // Namespace for signing uuid v5 keys
-  "namespace": ""
+  "namespace": "XXX"
 }

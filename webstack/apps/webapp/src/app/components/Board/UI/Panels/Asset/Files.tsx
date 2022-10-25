@@ -23,7 +23,6 @@ import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/front
 import { FileEntry } from './types';
 import { RowFile } from './RowFile';
 import { setupAppForFile } from './CreateApp';
-import { file } from 'jszip';
 
 export interface FilesProps {
   files: FileEntry[];
