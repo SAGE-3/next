@@ -2,6 +2,8 @@ import jupyterkernelproxy
 import uuid
 import pytest
 import time
+import requests
+from config import config as conf, prod_type
 
 # TODO: add a test to check if a kernel exist and report an appropriate error otherwise
 # perhaps maybe not even run the remaining tests
@@ -49,3 +51,20 @@ def test_execute(jupyter_proxy, kernel_id):
                "call_fn": lambda x: print(f"got the results {x}")})
     time.sleep(2)
     assert exec_uuid not in jupyter_proxy.connections[kernel_id].pending_reponses
+
+def test_get_kernels(jupyter_proxy):
+    # create test kernel
+
+    headers_dict = dict(jupyter_proxy.headers)
+    response = requests.post(conf[prod_type]["jupyter_server"] + "/api/kernels", headers=headers_dict)
+    assert response.status_code == 201
+    new_kernel_id = response.json()["id"]
+    response = requests.get(conf[prod_type]["jupyter_server"] + "/api/kernels", headers=headers_dict)
+
+    assert response.status_code == 200
+    assert len(response.json()) >= 1
+    assert new_kernel_id in [y["id"] for y in response.json()]
+
+def test_remove_stale_tokens():
+    pass
+
