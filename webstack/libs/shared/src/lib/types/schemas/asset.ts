@@ -25,6 +25,8 @@ export type ImageInfoType = z.infer<typeof ImageInfoSchema>;
 // information for derived images
 export const ExtraImageSchema = z.object({
   fullSize: z.string(),
+  width: z.number(),
+  height: z.number(),
   aspectRatio: z.number(),
   filename: z.string(),
   url: z.string(),
