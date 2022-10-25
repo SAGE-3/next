@@ -14,25 +14,22 @@ from pydantic import PrivateAttr
 import json
 from config import ai_models, funcx as funcx_config
 
-
-
 # TODO: movie this to a configuration somewhere and call it something else.
 ai_settings = {
     "vision": {
         "supported_apps": ['ImageViewer'],
         "tasks": {
-            "Object Detection": ["image_od_model_1", "image_od_model_2"],
+            "Object Detection": ["facebook/detr-resnet-50", "lai_lab/fertilized_egg_detect"],
             "Classification": ["image_c_model_1", "image_c_model_2"]
         }
     },
     "nlp": {
         "supported_apps": ['PDFViewer', 'Notepad'],
         "tasks": {
-            "Summarization": ["text_s_model_1", "text_s_model_2", ],
+            "Summarization": ["facebook/bart-large-cnn", "sshleifer/distilbart-cnn-12-6"],
         }
     }
 }
-
 
 class AIPaneState(TrackedBaseModel):
     executeInfo: ExecuteInfo
@@ -40,12 +37,13 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: bool
-    output: str
+    output: Optional[dict]
 
 
 class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
+
     # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -77,9 +75,12 @@ class AIPane(SmartBit):
         self.send_updates()
 
     def handle_exec_result(self, msg):
+        print("--------------------------")
         print("I am handling the execution results")
         print(f" type of msg in aipane{type(msg)}")
+        print(msg)
         self.state.output = json.dumps(msg)
+        print(f"type of outout {type(self.state.output)}")
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}

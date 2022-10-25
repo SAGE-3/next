@@ -61,6 +61,8 @@ function AppComponent(props: App): JSX.Element {
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
+  const [outputLocal, setOutputLocal] = useState<{ score: number, label: string, box: object }[]>([])
+
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
   // Checks for apps on or off the pane
@@ -146,6 +148,17 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [Object.keys(s.hostedApps).length])
 
+  useEffect(() => {
+    if (s.output != undefined && s.output != '') {
+      const parsedOT = JSON.parse(s.output)
+      const arrayOT = parsedOT.output.split("'")
+      // const localOutput: { score: number, label: string, box: object }[] = [];
+      console.log(parsedOT.output)
+      console.log("-------------------")
+      console.log(typeof parsedOT.output.split("'"))
+    }
+  }, [JSON.stringify(s.output)])
+
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
@@ -211,11 +224,12 @@ function AppComponent(props: App): JSX.Element {
           )}
         </Box>
 
-        <Box className="output-container">
-          <Text>
-            {s.output}
-          </Text>
-        </Box>
+        {/*<Box className="output-container">*/}
+        {/*  <Text>*/}
+        {/*    {s.output}*/}
+        {/*  </Text>*/}
+        {/*</Box>*/}
+
       </Box>
     </AppWindow>
   );

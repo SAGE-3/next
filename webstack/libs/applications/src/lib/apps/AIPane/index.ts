@@ -32,7 +32,7 @@ export const schema = z.object({
 
   messages: z.record(z.string(), z.any()),
 
-  output: z.string(),
+  output: z.any(),
 
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -48,7 +48,7 @@ export const init: Partial<state> = {
   runStatus: false,
   supportedTasks: {},
   messages: {},
-  output: "",
+  output: {},
 
 };
 

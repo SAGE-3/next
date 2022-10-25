@@ -19,6 +19,7 @@ import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
 import {isGIF} from '@sage3/shared';
+import {HiPencilAlt} from "react-icons/all";
 
 /**
  * ImageViewer app
@@ -43,6 +44,13 @@ function AppComponent(props: App): JSX.Element {
   const scale = useUIStore((state) => state.scale);
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
+
+  const boxes = {
+    'box1': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
+    'box2': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
+    'box3': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
+
+  }
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -81,6 +89,7 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [file]);
 
+
   // Track the size size and pick the 'best' URL
   useEffect(() => {
     const isUUID = isUUIDv4(s.assetid);
@@ -104,6 +113,29 @@ function AppComponent(props: App): JSX.Element {
       >
         <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url}
                borderRadius="0 0 6px 6px"/>
+        {
+          Object.values(boxes).map((box: any) => {
+            return(
+              <Box
+              position="absolute"
+              left={box.xmin * (displaySize.width/649) + 'px'}
+              top={box.ymin * (displaySize.height/486) + 'px'}
+              width={(box.xmax - box.xmin) * (displaySize.width/649) + 'px'}
+              height={(box.ymax - box.ymin) * (displaySize.height/486)+ 'px'}
+              border="2px solid red"
+              style={{display: s.annotations === false ? "block" : "none"}}
+            >
+              <>
+                {displaySize.width}
+                <br/>
+                {displaySize.height}
+                <br/>
+                Asset ID: {s.assetid}
+              </>
+            </Box>
+            )
+          })
+        }
       </div>
     </AppWindow>
   );
@@ -149,6 +181,15 @@ function ToolbarComponent(props: App): JSX.Element {
             }}
           >
             <MdFileDownload/>
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+          <Button
+            onClick={() => {
+              updateState(props._id, {annotations: !s.annotations})
+            }}
+          >
+            <HiPencilAlt/>
           </Button>
         </Tooltip>
       </ButtonGroup>
