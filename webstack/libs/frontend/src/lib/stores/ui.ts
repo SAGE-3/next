@@ -67,10 +67,12 @@ interface UIState {
   // whiteboard
   marker: boolean; // marker mode enabled
   clearMarkers: boolean;
+  clearAllMarkers: boolean;
   markerColor: SAGEColors;
   setMarkerColor: (color: SAGEColors) => void;
   toggleMarker: () => void;
   setClearMarkers: (clear: boolean) => void;
+  setClearAllMarkers: (clear: boolean) => void;
 
   // Panels & Context Menu
   applicationsPanel: PanelUI;
@@ -126,6 +128,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   marker: false,
   markerColor: 'red',
   clearMarkers: false,
+  clearAllMarkers: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
@@ -277,6 +280,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
   toggleMarker: () => set((state) => ({ ...state, marker: !state.marker })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
+  setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
