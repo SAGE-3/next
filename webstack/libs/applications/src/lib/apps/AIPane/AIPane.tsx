@@ -69,7 +69,6 @@ function AppComponent(props: App): JSX.Element {
       const client = {
         [app._id]: app.data.name,
       };
-      // TODO Handle AIPanes overlapping AIPanes
       if (app.data.name === 'AIPane' && app._id !== props._id) {
         break;
       } else {
@@ -87,7 +86,7 @@ function AppComponent(props: App): JSX.Element {
             updateState(props._id, {hostedApps: hosted});
             updateState(props._id, {messages: hosted});
             console.log('app ' + app._id + ' added');
-            newAppAdded();
+            newAppAdded(app.data.name);
           } else {
             console.log('app ' + app._id + ' already in hostedApps');
           }
@@ -151,9 +150,9 @@ function AppComponent(props: App): JSX.Element {
     return supportedApps.includes(app);
   }
 
-  function newAppAdded() {
+  function newAppAdded(appType: string) {
     updateState(props._id, {
-      executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
+      executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
   }
 
@@ -212,22 +211,8 @@ function AppComponent(props: App): JSX.Element {
           )}
         </Box>
 
-        <Box
-          position="absolute"
-          top="30%"
-          left="20%"
-        >
-          selectedApp {selectedAppId}
-          <br/>
-          length of hostedappsarr: {Object.keys(s.hostedApps).length}
-          <br/>
-          hostedapps: {Object.values(s.hostedApps)}
-          <br/>
-        </Box>
-
         <Box className="output-container">
           <Text>
-            Output <br/>
             {s.output}
           </Text>
         </Box>
