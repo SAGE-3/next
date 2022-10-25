@@ -30,7 +30,6 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-
 function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
@@ -44,7 +43,6 @@ function getStaticAssetUrl(filename: string): string {
 function getDurationString(n: number): string {
   return formatTime(n * 1000, 'mm:ss');
 }
-
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -214,7 +212,8 @@ function ToolbarComponent(props: App): JSX.Element {
   // User
   const { user } = useUser();
   // Stores
-  const update = useAppStore((state) => state.updateState);
+  const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
 
   // React State
@@ -254,7 +253,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a play action
   const handlePlay = () => {
     if (user) {
-      update(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
+      updateState(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -264,7 +263,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a rewind action
   const handleRewind = () => {
     if (user) {
-      update(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
+      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -274,7 +273,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a forward action
   const handleForward = () => {
     if (user) {
-      update(props._id, {
+      updateState(props._id, {
         play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime + 5) },
       });
       const time = getDurationString(videoRef.currentTime);
@@ -286,7 +285,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a forward action
   const handleLoop = () => {
     if (user) {
-      update(props._id, {
+      updateState(props._id, {
         play: { ...s.play, uid: user._id, loop: !s.play.loop },
       });
       const time = getDurationString(videoRef.currentTime);
@@ -322,7 +321,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const seekEndHandle = () => {
     setSeeking(false);
     if (user) {
-      update(props._id, {
+      updateState(props._id, {
         play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },
       });
       const time = getDurationString(videoRef.currentTime);
@@ -373,7 +372,10 @@ function ToolbarComponent(props: App): JSX.Element {
         <SliderTrack bg="green.100">
           <SliderFilledTrack bg="green.400" />
         </SliderTrack>
-        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">  {getDurationString(0)} </SliderMark>
+        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
+          {' '}
+          {getDurationString(0)}{' '}
+        </SliderMark>
         <SliderMark value={duration} fontSize="xs" mt="1.5" ml="-5">
           {getDurationString(duration)}
         </SliderMark>

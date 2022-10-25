@@ -5,12 +5,15 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-
 import { z } from 'zod';
 
-export const schema = z.object({});
+export const schema = z.object({
+  text: z.string(),
+});
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {};
+export const init: state = {
+  text: 'hello world',
+};
 
 export const name = 'Notepad';
