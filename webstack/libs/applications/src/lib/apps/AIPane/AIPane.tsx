@@ -58,8 +58,8 @@ function AppComponent(props: App): JSX.Element {
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
-  const prevX = useRef(0);
-  const prevY = useRef(0);
+  const prevX = useRef(props.data.position.x);
+  const prevY = useRef(props.data.position.y);
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
@@ -182,7 +182,6 @@ function AppComponent(props: App): JSX.Element {
             </div>
           </PopoverTrigger>
 
-          {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
           <PopoverContent>
             <PopoverArrow/>
             <PopoverCloseButton/>
@@ -248,21 +247,24 @@ function ToolbarComponent(props: App): JSX.Element {
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
-  // const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
-  // const classModels = ['image_c_model_1', 'image_c_model_2'];
+
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
-  const [supportedTasks, setSupportedTasks] = useState([''])
-  const [tasks, setTasks] = useState([''])
+  const [supportedTasks, setSupportedTasks] = useState<{ name: string, models: string[] }[]>([])
 
   useEffect(() => {
     if (s.supportedTasks != undefined && s.supportedTasks != '') {
-      // const supportedTasks = []
-
-      setSupportedTasks(JSON.parse(s.supportedTasks))
-      setTasks(Object.keys(supportedTasks))
-      console.log("loading useEffect")
-      console.log(tasks)
+      const parsedST = JSON.parse(s.supportedTasks)
+      const newTasks: { name: string, models: string[] }[] = [];
+      Object.keys(parsedST).forEach(aiType => {
+        Object.keys(parsedST[aiType]).forEach(modelName => {
+          newTasks.push({
+            name: modelName,
+            models: parsedST[aiType][modelName]
+          })
+        })
+      })
+      setSupportedTasks(newTasks)
     }
   }, [JSON.stringify(s.supportedTasks)])
 
@@ -280,34 +282,33 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {runStatus: true});
   }
 
+  const handleModelClick = (model: string) => {
+    console.log('run model: ', model)
+  }
+
   return (
     <>
       <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
         <Stack spacing={2} direction='row'>
-          <Menu>
-            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-              Obj Detection Models
-            </MenuButton>
-            <Portal>
-              <MenuList>
-                {supportedTasks?.map((model) => {
-                  return <MenuItem>{model}</MenuItem>;
-                })}
-              </MenuList>
-            </Portal>
-          </Menu>
-          <Menu>
-            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-              Classification Models
-            </MenuButton>
-            {/*<Portal>*/}
-            {/*  <MenuList>*/}
-            {/*    {Object.values(models)?.map((model) => {*/}
-            {/*      return <MenuItem>{model}</MenuItem>;*/}
-            {/*    })}*/}
-            {/*  </MenuList>*/}
-            {/*</Portal>*/}
-          </Menu>
+
+          {supportedTasks.map(task => {
+            return (
+              <Menu>
+                <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+                  {task.name}
+                </MenuButton>
+                <Portal>
+                  <MenuList>
+                    {task.models.map((name) => {
+                      return <MenuItem onClick={() => handleModelClick(name)}>{name}</MenuItem>;
+                    })}
+                  </MenuList>
+                </Portal>
+              </Menu>
+            )
+          })
+          }
+
           <IconButton
             aria-label="Run AI"
             icon={s.runStatus ? <BiRun/> : <FaPlay/>}
