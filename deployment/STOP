@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#
+# STOP the backend services
+#
+
+SERVER_VERSION=$(docker version -f "{{.Server.Version}}")
+SERVER_VERSION_MAJOR=$(echo "$SERVER_VERSION"| cut -d'.' -f 1)
+
+echo "Docker Version:" $SERVER_VERSION
+
+if [ "${SERVER_VERSION_MAJOR}" -ge 20 ] && [ "$OSTYPE" = "darwin" ] ; then
+	# Now compose part of docker
+    CMD="docker compose"
+else
+	# Need docker-compose script
+    CMD="docker-compose"
+fi
+
+modules="-f docker-compose.yml"
+
+echo "Docker Stop"
+# Stop running the containers
+$CMD $modules stop
+
+# Remove stopped containers
+$CMD $modules rm -f
+
