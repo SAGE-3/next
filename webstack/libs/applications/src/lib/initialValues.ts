@@ -49,4 +49,3 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
 };
-

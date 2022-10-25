@@ -27,6 +27,8 @@ const schema = z.object({
   // Is the board password protected?
   isPrivate: z.boolean(),
   privatePin: z.string(),
+  // The lines on the board
+  whiteboardLines: z.any(),
 });
 
 export type BoardSchema = z.infer<typeof schema>;

@@ -13,7 +13,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useKeyPress, useUIStore, useUser } from '@sage3/frontend';
+import { useBoardStore, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 
 type WhiteboardProps = {
@@ -30,7 +30,13 @@ export function Whiteboard(props: WhiteboardProps) {
   const marker = useUIStore((state) => state.marker);
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
+  const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
+  const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
+
+  const updateBoard = useBoardStore((state) => state.update);
+  const boards = useBoardStore((state) => state.boards);
+  const board = boards.find((el) => el._id === props.boardId);
 
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
@@ -39,6 +45,14 @@ export function Whiteboard(props: WhiteboardProps) {
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
 
   const rCurrentLine = useRef<Y.Map<any>>();
+
+  // Save the whiteboard lines to SAGE database
+  function updateBoardLines() {
+    if (yLines) {
+      const lines = yLines.toJSON();
+      updateBoard(props.boardId, { whiteboardLines: lines });
+    }
+  }
 
   useEffect(() => {
     // A Yjs document holds the shared data
@@ -54,6 +68,36 @@ export function Whiteboard(props: WhiteboardProps) {
     setProvider(provider);
     setYdoc(ydoc);
     setYlines(yLines);
+
+    // Sync state with sage when a user connects and is the only one present
+    provider.on('sync', () => {
+      if (provider) {
+        const users = provider.awareness.getStates();
+        const count = users.size;
+        // I'm the only one here, so need to sync current ydoc with that is saved in the database
+        if (count === 1) {
+          // Does the board have lines?
+          if (board?.data.whiteboardLines && ydoc) {
+            // Clear any existing lines
+            yLines.delete(0, yLines.length);
+            // Add each line to the board from the database
+            board.data.whiteboardLines.forEach((line: any) => {
+              const yPoints = new Y.Array<number>();
+              yPoints.push(line.points);
+              const yLine = new Y.Map<any>();
+              ydoc.transact(() => {
+                yLine.set('id', line.id);
+                yLine.set('points', yPoints);
+                yLine.set('userColor', line.color);
+                yLine.set('isComplete', true);
+                yLine.set('userId', line.userId);
+              });
+              yLines.push([yLine]);
+            });
+          }
+        }
+      }
+    });
 
     return () => {
       // Remove the bindings and disconnect the provider
@@ -86,10 +130,10 @@ export function Whiteboard(props: WhiteboardProps) {
           yLine.set('points', yPoints);
           yLine.set('userColor', color);
           yLine.set('isComplete', false);
+          yLine.set('userId', user?._id);
         });
 
         rCurrentLine.current = yLine;
-
         yLines.push([yLine]);
       }
     },
@@ -146,14 +190,30 @@ export function Whiteboard(props: WhiteboardProps) {
       currentLine.set('isComplete', true);
 
       rCurrentLine.current = undefined;
+
+      updateBoardLines();
     },
     [rCurrentLine.current]
   );
 
   useEffect(() => {
-    if (yLines && clearMarkers) {
+    if (yLines && clearAllMarkers) {
       yLines.delete(0, yLines.length);
+      setClearAllMarkers(false);
+      updateBoardLines();
+    }
+  }, [clearAllMarkers]);
+
+  // Clear only your markers
+  useEffect(() => {
+    if (yLines && clearMarkers) {
+      const indices: number[] = [];
+      yLines.forEach((line, idx) => {
+        if (line.get('userId') === user?._id) indices.push(idx);
+      });
+      indices.reverse().forEach((idx) => yLines.delete(idx, 1));
       setClearMarkers(false);
+      updateBoardLines();
     }
   }, [clearMarkers]);
 

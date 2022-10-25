@@ -17,7 +17,7 @@ import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
 
 // Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
+import { downloadFile, useAppStore } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
@@ -41,13 +41,15 @@ import create from 'zustand';
 
 export const useStore = create((set: any) => ({
   editor: {} as { [key: string]: Quill },
-  setEditor: (id: string, ed: Quill) => set((state: any) => ({ editor: { ...state.editor, ...{ [id]: ed } } })),
+  setEditor: (id: string, ed: Quill) => set((s: any) => ({ editor: { ...s.editor, ...{ [id]: ed } } })),
 }));
 
 function AppComponent(props: App): JSX.Element {
+  const s = props.data.state as AppState;
   const quillRef = useRef(null);
   const { user } = useUser();
-  const setEditor = useStore((state: any) => state.setEditor);
+  const setEditor = useStore((s: any) => s.setEditor);
+  const updateState = useAppStore((state) => state.updateState);
 
   useEffect(() => {
     // Setup Yjs stuff
@@ -90,6 +92,14 @@ function AppComponent(props: App): JSX.Element {
       // Define a shared text type on the document
       const ytext = ydoc.getText('quill');
 
+      // Observe changes on the text, if user is source of the change, update sage
+      quill.on('text-change', (delta, oldDelta, source) => {
+        if (source == 'user') {
+          const text = ytext.toString();
+          updateState(props._id, { text });
+        }
+      });
+
       // "Bind" the quill editor to a Yjs text type.
       // Uses SAGE3 information to set the color of the cursor
       binding = new QuillBinding(ytext, quill, provider.awareness);
@@ -99,6 +109,21 @@ function AppComponent(props: App): JSX.Element {
           color: user.data.color, // should be a hex color
         });
       }
+
+      // Sync state with sage when a user connects and is the only one present
+      provider.on('sync', () => {
+        if (provider) {
+          const users = provider.awareness.getStates();
+          const count = users.size;
+          if (count === 1) {
+            const text = ytext.toString();
+            if (text !== s.text) {
+              ytext.delete(0, ytext.length);
+              ytext.insert(0, s.text);
+            }
+          }
+        }
+      });
     }
     return () => {
       // Remove the bindings and disconnect the provider
