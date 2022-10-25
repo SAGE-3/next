@@ -39,24 +39,7 @@ import logging
 logging.getLogger().setLevel(logging.INFO)
 
 
-import builtins
 
-# TODO: (should we) replace this by logging instead.
- # Does logging still show up in the code cell?
-
-# def print(*args, **kwargs):
-#     builtins.print("<console-print>", end="")
-#     builtins.print(*args, **kwargs, end="")
-#     builtins.print("</console-print>")
-
-
-# import logging
-# from jupyterkernelproxy_client import JupyterKernelClient
-
-# from threading import Thread
-
-
-# urllib3.disable_warnings()
 
 
 
@@ -76,6 +59,7 @@ async def subscribe(sock, room_id):
         'id': subscription_id, 'method': 'SUB'
     }
     await sock.send(json.dumps(msg_sub))
+
 
 class LinkedInfo(BaseModel):
     board_id: str
@@ -112,7 +96,7 @@ class SAGEProxy():
         r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + '/auth/jwt', headers=self.__headers)
         response = r.json()
 
-    def populate_exisitng(self):
+    def populate_existing(self):
         boards_info = self.s3_comm.get_boards(self.room.room_id)
         for board_info in boards_info:
             self.__handle_create("BOARDS", board_info)
@@ -129,7 +113,7 @@ class SAGEProxy():
                                       extra_headers={"Authorization": f"Bearer {self.conf['token']}"}) as ws:
             await subscribe(ws, self.room.room_id)
             # print("completed subscription, checking if boards and apps already there")
-            self.populate_exisitng()
+            self.populate_existing()
             async for msg in ws:
                 msg = json.loads(msg)
                 print(f"msg: {msg}")
@@ -152,7 +136,7 @@ class SAGEProxy():
             msg = self.__message_queue.get()
             # I am watching this message for change?
 
-            #print(f"Getting ready to process: {msg}")
+            # print(f"Getting ready to process: {msg}")
             logging.info(f"Getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             updated_fields = []
