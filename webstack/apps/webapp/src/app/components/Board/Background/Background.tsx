@@ -12,7 +12,10 @@ import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
+import {
+  useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration,
+  useMessageStore, processContentURL
+} from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
@@ -440,6 +443,7 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (!user) return;
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -453,20 +457,41 @@ export function Background(props: BackgroundProps) {
         uploadFunction(Array.from(files), xdrop, ydrop);
       });
     } else {
-      // if no files were dropped, create an application
-      const appName = event.dataTransfer.getData('app') as AppName;
-      if (appName) {
-        newApp(appName, xdrop, ydrop);
+      // Drag/Drop a URL
+      if (event.dataTransfer.types.includes('text/uri-list')) {
+        const pastedText = event.dataTransfer.getData('Url');
+        if (pastedText) {
+          const final_url = processContentURL(pastedText);
+          let w, h;
+          if (final_url !== pastedText) {
+            // it must be a video
+            w = 1280;
+            h = 720;
+          } else {
+            w = 800;
+            h = 800;
+          }
+          createApp(
+            setupApp('Webview', xdrop, ydrop, props.roomId, props.boardId, user._id,
+              { w, h }, { webviewurl: final_url })
+          );
+        }
       } else {
-        // Get information from the drop
-        const ids = event.dataTransfer.getData('file');
-        const types = event.dataTransfer.getData('type');
-        const fileIDs = JSON.parse(ids);
-        const fileTypes = JSON.parse(types);
-        // Open the file at the drop location
-        const num = fileIDs.length;
-        for (let i = 0; i < num; i++) {
-          OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+        // if no files were dropped, create an application
+        const appName = event.dataTransfer.getData('app') as AppName;
+        if (appName) {
+          newApp(appName, xdrop, ydrop);
+        } else {
+          // Get information from the drop
+          const ids = event.dataTransfer.getData('file');
+          const types = event.dataTransfer.getData('type');
+          const fileIDs = JSON.parse(ids);
+          const fileTypes = JSON.parse(types);
+          // Open the file at the drop location
+          const num = fileIDs.length;
+          for (let i = 0; i < num; i++) {
+            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+          }
         }
       }
     }

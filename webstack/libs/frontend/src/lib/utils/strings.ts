@@ -98,7 +98,7 @@ export function humanFileSize(size: number): string {
  */
 export function processContentURL(view_url: string): string {
   // A youtube URL with a 'watch' video
-  if (view_url.startsWith('https://www.youtube.com') && !view_url.includes('/channel/')) {
+  if (view_url.startsWith('https://www.youtube.com') && !view_url.includes('/channel/') && view_url !== 'https://www.youtube.com/') {
     if (view_url.indexOf('embed') === -1 || view_url.indexOf('watch?v=') >= 0) {
       // Search for the Youtube ID
       let video_id = view_url.split('v=')[1];
