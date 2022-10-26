@@ -77,6 +77,8 @@ function AppComponent(props: App): JSX.Element {
         setSizes(extra.sizes);
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
+        //TODO Extract image size
+
         if (extra) {
           // find the smallest image for this page (multi-resolution)
           const res = extra.sizes.reduce(function (p, v) {
@@ -114,25 +116,27 @@ function AppComponent(props: App): JSX.Element {
                borderRadius="0 0 6px 6px"/>
         {
           Object.values(boxes).map((box: any) => {
-            return(
+            return (
               <Box
-              position="absolute"
-              left={box.xmin * (displaySize.width/649) + 'px'}
-              top={box.ymin * (displaySize.height/486) + 'px'}
-              width={(box.xmax - box.xmin) * (displaySize.width/649) + 'px'}
-              height={(box.ymax - box.ymin) * (displaySize.height/486)+ 'px'}
-              border="2px solid red"
-              style={{display: s.annotations === false ? "block" : "none"}}
-            >
+                position="absolute"
+                left={box.xmin * (displaySize.width / 649) + 'px'}
+                top={box.ymin * (displaySize.height / 486) + 'px'}
+                width={(box.xmax - box.xmin) * (displaySize.width / 649) + 'px'}
+                height={(box.ymax - box.ymin) * (displaySize.height / 486) + 'px'}
+                border="2px solid red"
+                style={{display: s.annotations === true ? "block" : "none"}}
+              >
 
-              {/*<>*/}
-              {/*  {displaySize.width}*/}
-              {/*  <br/>*/}
-              {/*  {displaySize.height}*/}
-              {/*  <br/>*/}
-              {/*  Asset ID: {s.assetid}*/}
-              {/*</>*/}
-            </Box>
+                <>
+                  {/*{Object.values(originalSize).map((size) => {*/}
+                  {/*  return (*/}
+                  {/*    size*/}
+                  {/*  )*/}
+                  {/*})}*/}
+                  <br/>
+                  Asset ID: {s.assetid}
+                </>
+              </Box>
             )
           })
         }

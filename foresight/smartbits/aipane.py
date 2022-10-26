@@ -75,12 +75,9 @@ class AIPane(SmartBit):
         self.send_updates()
 
     def handle_exec_result(self, msg):
-        print("--------------------------")
         print("I am handling the execution results")
-        print(f" type of msg in aipane{type(msg)}")
         print(msg)
         self.state.output = json.dumps(msg)
-        print(f"type of outout {type(self.state.output)}")
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}

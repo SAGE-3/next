@@ -148,16 +148,31 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [Object.keys(s.hostedApps).length])
 
+  //TODO parse output
   useEffect(() => {
-    if (s.output != undefined && s.output != '') {
+    if (s.output != undefined && Object.keys(s.output).length > 0) {
       const parsedOT = JSON.parse(s.output)
       const arrayOT = parsedOT.output.split("'")
-      // const localOutput: { score: number, label: string, box: object }[] = [];
-      console.log(parsedOT.output)
-      console.log("-------------------")
-      console.log(typeof parsedOT.output.split("'"))
+      const parsedArrayOT = JSON.parse(arrayOT[0])
+      const modelOutput: {score: number, label: string, box: object}[] = []
+      Object.keys(parsedArrayOT).forEach((array) => {
+        Object.keys(parsedArrayOT[array]).forEach((entity) => {
+          modelOutput.push({
+            score: parsedArrayOT[array][entity].score,
+            label: parsedArrayOT[array][entity].label,
+            box: parsedArrayOT[array][entity].box
+          })
+        })
+      })
+      setOutputLocal(modelOutput)
+      console.log(modelOutput)
+      for (const score in modelOutput) {
+        console.log(modelOutput[score].score)
+      }
     }
   }, [JSON.stringify(s.output)])
+
+
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -170,7 +185,6 @@ function AppComponent(props: App): JSX.Element {
   }
 
   function closePopovers(info: string) {
-    console.log('Remove entry');
     const unchecked = s.messages;
     delete unchecked[info]
     updateState(props._id, {messages: unchecked})
