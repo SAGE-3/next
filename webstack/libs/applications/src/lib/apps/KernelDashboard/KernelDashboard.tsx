@@ -19,6 +19,8 @@ import {
   HStack,
   Checkbox,
   VStack,
+  Button,
+  ButtonGroup,
 } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -26,7 +28,7 @@ import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { truncateWithEllipsis, useAppStore, useUser } from '@sage3/frontend';
 import { useState, useEffect } from 'react';
-import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode, MdContentCopy } from 'react-icons/md';
+import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode, MdContentCopy, MdError } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
 
 /* App component for KernelDashboard */
@@ -39,27 +41,27 @@ function AppComponent(props: App): JSX.Element {
   const { boardId, roomId } = useParams<{ boardId: string; roomId: string }>();
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
+  const [myKernels, setMyKernels] = useState(s.availableKernels);
 
   useEffect(() => {
-    getAvailableKernels();
-  }, []);
+    // Get all kernels that I'm available to see
+    const kernels: any[] = [];
+    s.availableKernels.forEach((kernel) => {
+      if (kernel.value.is_private) {
+        if (kernel.value.owner_uuid == user?._id) {
+          kernels.push(kernel);
+        }
+      } else {
+        kernels.push(kernel);
+      }
+    });
 
-  const getKernelSpecs = () => {
-    updateState(props._id, { executeInfo: { executeFunc: 'get_kernel_specs', params: {} } });
-  };
+    setMyKernels(kernels);
+  }, [JSON.stringify(s.availableKernels)]);
 
-  const getAvailableKernels = () => {
-    if (!user) return;
-    updateState(props._id, { executeInfo: { executeFunc: 'get_available_kernels', params: { user_uuid: user._id } } });
-  };
-
-  /**
-   * Update the kernels list by fetching the kernels from the backend
-   * and updating the state
-   */
-  const refresh = () => {
-    updateState(props._id, { executeInfo: { executeFunc: 'refresh_list', params: {} } });
-  };
+  // useEffect(() => {
+  //   setMyKernels(s.availableKernels);
+  // }, [s.availableKernels]);
 
   /**
    *
@@ -69,7 +71,8 @@ function AppComponent(props: App): JSX.Element {
    *
    * @returns  void
    */
-  const addKernel = (userId: string) => {
+  const addKernel = () => {
+    if (!user) return;
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'add_kernel',
@@ -78,7 +81,7 @@ function AppComponent(props: App): JSX.Element {
           kernel_name: kernelName,
           room_uuid: roomId,
           board_uuid: boardId,
-          owner_uuid: userId,
+          owner_uuid: user._id,
           is_private: isPrivate,
         },
       },
@@ -112,30 +115,10 @@ function AppComponent(props: App): JSX.Element {
         executeFunc: 'delete_kernel',
         params: {
           kernel_id: kernelId,
-          // owner_uuid: user._id
+          user_uuid: user._id,
         },
       },
     });
-  };
-
-  /**
-   * Start the kernel
-   * @param kernelId the id of the kernel to start
-   *
-   * @returns void
-   */
-  const startKernel = (kernelId: string) => {
-    updateState(props._id, { executeInfo: { executeFunc: 'start_kernel', params: { kernel_id: kernelId } } });
-  };
-
-  /**
-   * Stop the kernel
-   * @param kernelId the id of the kernel to stop
-   *
-   * @returns void
-   */
-  const stopKernel = (kernelId: string) => {
-    updateState(props._id, { executeInfo: { executeFunc: 'stop_kernel', params: { kernel_id: kernelId } } });
   };
 
   /**
@@ -145,7 +128,8 @@ function AppComponent(props: App): JSX.Element {
    * @returns void
    */
   const restartKernel = (kernelId: string) => {
-    updateState(props._id, { executeInfo: { executeFunc: 'restart_kernel', params: { kernel_id: kernelId } } });
+    if (!user || !kernelId) return;
+    updateState(props._id, { executeInfo: { executeFunc: 'restart_kernel', params: { kernel_id: kernelId, user_uuid: user._id } } });
   };
 
   /**
@@ -155,14 +139,12 @@ function AppComponent(props: App): JSX.Element {
    * @returns void
    */
   const startSageCell = (kernelId: string, kernelAlias: string) => {
-    // convert s.kernels to a list of kernel objects with the kernel_id as the key and the kernel name as the value
-    // const kernelList = s.kernels ? s.kernels.map((k) => ({ [k.id]: k.name })) : [];
-    if (!user) return;
+    if (!user || !roomId || !boardId) return;
     createApp({
       name: 'SageCell',
       description: `SageCell> ${kernelAlias}`,
-      roomId: roomId!,
-      boardId: boardId!,
+      roomId: roomId,
+      boardId: boardId,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -186,7 +168,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} onFocus={getAvailableKernels}>
+      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
         <VStack w={'100%'} h={'100%'}>
           {/* FIXED POSITION TOP */}
           <HStack
@@ -199,7 +181,6 @@ function AppComponent(props: App): JSX.Element {
           >
             <Box w="100%">
               <Select
-                // variant="outline"
                 size="md"
                 colorScheme="teal"
                 value={kernelName}
@@ -255,7 +236,7 @@ function AppComponent(props: App): JSX.Element {
                 m={0.5}
                 size="md"
                 aria-label="Add Kernel"
-                onClick={() => addKernel(user!._id)}
+                onClick={addKernel}
                 colorScheme="teal"
                 icon={<MdAdd />}
               />
@@ -273,118 +254,109 @@ function AppComponent(props: App): JSX.Element {
           >
             {
               // If there are kernels, display them
-              s.kernels
-                // sort kernels by last_activity (most recent first)
-                .sort((a, b) => (a.last_activity < b.last_activity ? 1 : -1))
-                .map((kernel) =>
-                  // find only the kernels that are in the list of available kernels
-                  s.availableKernels.map(
-                    ({ value, label }) =>
-                      value === kernel.id && (
-                        <Box key={kernel.id} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
-                          <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
-                            <Tooltip
-                              label={
-                                <Stack>
-                                  <Text>Kernel Alias: {label}</Text>
-                                  <HStack>
-                                    <MdContentCopy aria-label={label} />
-                                    <Text>Click to Copy</Text>
-                                  </HStack>
-                                </Stack>
-                              }
-                              placement="top"
-                            >
-                              <Text
-                                onClick={() => {
-                                  navigator.clipboard.writeText(label);
-                                }}
-                                fontSize="md"
-                                fontWeight="bold"
-                              >
-                                {label}
-                              </Text>
-                            </Tooltip>
-                            <Text
-                              onClick={() => {
-                                navigator.clipboard.writeText(kernel.id);
-                              }}
-                              ml={2}
-                              fontWeight="bold"
-                            >
-                              <Tooltip
-                                label={
-                                  <Stack>
-                                    <Text>Kernel Id: {kernel.id}</Text>
-                                    <HStack>
-                                      <MdContentCopy aria-label={value} />
-                                      <Text>Click to Copy</Text>
-                                    </HStack>
-                                  </Stack>
-                                }
-                                placement="top"
-                              >
-                                {truncateWithEllipsis(kernel.id, 8)}
-                              </Tooltip>
-                            </Text>
-                            <Text>
-                              {
-                                // show R for ir, Python for python3, etc.}
-                                kernel.name === 'ir'
-                                  ? 'R'
-                                  : kernel.name === 'python3'
-                                  ? 'Python'
-                                  : kernel.name === 'julia-1.8'
-                                  ? 'Julia'
-                                  : kernel.name
-                              }
-                            </Text>
-                            <Flex alignItems="right">
-                              <Tooltip label={'Open a SageCell'} placement="top">
-                                <IconButton
-                                  variant="outline"
-                                  m={0.5}
-                                  size="md"
-                                  onClick={() => {
-                                    startSageCell(kernel.id, label);
-                                  }}
-                                  colorScheme="teal"
-                                  aria-label="Delete Kernel"
-                                  icon={<MdCode />}
-                                />
-                              </Tooltip>
-                              <Tooltip label={'Remove Kernel'} placement="top">
-                                <IconButton
-                                  variant="outline"
-                                  m={0.5}
-                                  size="md"
-                                  onClick={() => {
-                                    removeKernel(kernel.id);
-                                  }}
-                                  colorScheme="teal"
-                                  aria-label="Delete Kernel"
-                                  icon={<MdRemove />}
-                                />
-                              </Tooltip>
-                              <Tooltip label={'Restart Kernel'} placement="top">
-                                <IconButton
-                                  variant="outline"
-                                  m={0.5}
-                                  size="md"
-                                  onClick={() => {
-                                    restartKernel(kernel.id);
-                                  }}
-                                  colorScheme="teal"
-                                  aria-label="Restart Kernel"
-                                  icon={<MdRestartAlt />}
-                                />
-                              </Tooltip>
-                            </Flex>
-                          </Flex>
-                        </Box>
-                      )
-                  )
-                )
+              myKernels.map((kernel) => (
+                <Box key={kernel.key} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
+                  <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
+                    <Tooltip
+                      label={
+                        <Stack>
+                          <Text>Kernel Alias: {kernel.value.kernel_alias}</Text>
+                          <HStack>
+                            <MdContentCopy aria-label={kernel.value.kernel_alias} />
+                            <Text>Click to Copy</Text>
+                          </HStack>
+                        </Stack>
+                      }
+                      placement="top"
+                    >
+                      <Text
+                        onClick={() => {
+                          navigator.clipboard.writeText(kernel.value.kernel_alias);
+                        }}
+                        fontSize="md"
+                        fontWeight="bold"
+                      >
+                        {kernel.value.kernel_alias}
+                      </Text>
+                    </Tooltip>
+                    <Text
+                      onClick={() => {
+                        navigator.clipboard.writeText(kernel.key);
+                      }}
+                      ml={2}
+                      fontWeight="bold"
+                    >
+                      <Tooltip
+                        label={
+                          <Stack>
+                            <Text>Kernel Id: {kernel.key}</Text>
+                            <HStack>
+                              <MdContentCopy aria-label={kernel.key} />
+                              <Text>Click to Copy</Text>
+                            </HStack>
+                          </Stack>
+                        }
+                        placement="top"
+                      >
+                        {truncateWithEllipsis(kernel.key, 8)}
+                      </Tooltip>
+                    </Text>
+                    <Text>
+                      {
+                        // show R for ir, Python for python3, etc.}
+                        kernel.value.kernel_name === 'ir'
+                          ? 'R'
+                          : kernel.value.kernel_name === 'python3'
+                          ? 'Python'
+                          : kernel.value.kernel_name === 'julia-1.8'
+                          ? 'Julia'
+                          : kernel.value.kernel_name
+                      }
+                    </Text>
+                    <Flex alignItems="right">
+                      <Tooltip label={'Open a SageCell'} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            startSageCell(kernel.key, kernel.value.kernel_alias);
+                          }}
+                          colorScheme="teal"
+                          aria-label="Delete Kernel"
+                          icon={<MdCode />}
+                        />
+                      </Tooltip>
+                      <Tooltip label={'Remove Kernel'} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            removeKernel(kernel.key);
+                          }}
+                          colorScheme="teal"
+                          aria-label="Delete Kernel"
+                          icon={<MdRemove />}
+                        />
+                      </Tooltip>
+                      <Tooltip label={'Restart Kernel'} placement="top">
+                        <IconButton
+                          variant="outline"
+                          m={0.5}
+                          size="md"
+                          onClick={() => {
+                            restartKernel(kernel.key);
+                          }}
+                          colorScheme="teal"
+                          aria-label="Restart Kernel"
+                          icon={<MdRestartAlt />}
+                        />
+                      </Tooltip>
+                    </Flex>
+                  </Flex>
+                </Box>
+              ))
             }
           </Box>
         </VStack>
@@ -396,7 +368,31 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app KernelDashboard */
 
 function ToolbarComponent(props: App): JSX.Element {
-  return <Box></Box>;
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+  const { user } = useUser();
+
+  return (
+    <HStack>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Refresh List of Kernels'} openDelay={400}>
+          <Button
+            onClick={() =>
+              updateState(props._id, {
+                executeInfo: {
+                  executeFunc: 'get_available_kernels',
+                  params: { user_uuid: user?._id },
+                },
+              })
+            }
+            _hover={{ opacity: 0.7 }}
+          >
+            <MdRefresh />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </HStack>
+  );
 }
 
 export const KernelDashboard = {
