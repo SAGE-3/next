@@ -14,38 +14,36 @@ from pydantic import PrivateAttr
 import json
 from config import ai_models, funcx as funcx_config
 
-
-
 # TODO: movie this to a configuration somewhere and call it something else.
 ai_settings = {
     "vision": {
         "supported_apps": ['ImageViewer'],
         "tasks": {
-            "Object Detection": ["image_od_model_1", "image_od_model_2"],
+            "Object Detection": ["facebook/detr-resnet-50", "lai_lab/fertilized_egg_detect"],
             "Classification": ["image_c_model_1", "image_c_model_2"]
         }
     },
     "nlp": {
         "supported_apps": ['PDFViewer', 'Notepad'],
         "tasks": {
-            "Summarization": ["text_s_model_1", "text_s_model_2", ],
+            "Summarization": ["facebook/bart-large-cnn", "sshleifer/distilbart-cnn-12-6"],
         }
     }
 }
-
 
 class AIPaneState(TrackedBaseModel):
     executeInfo: ExecuteInfo
     messages: dict
     hostedApps: Optional[dict]
-    supported_tasks: dict
+    supportedTasks: Optional[dict]
     runStatus: bool
-    output: str
+    output: Optional[dict]
 
 
 class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
+
     # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -62,7 +60,7 @@ class AIPane(SmartBit):
 
         supported_tasks = {}
         if len(self.state.hostedApps.values()) > 1:
-            self.state.messages[time.time()] = """need to return error message saying that we 
+            self.state.messages[time.time()] = """need to return error message saying that we
             can on operate on one datatype at a time"""
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
@@ -70,8 +68,8 @@ class AIPane(SmartBit):
                 for type, settings in ai_settings.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
-            # ANDY: we need a state variable we can put the supported_tasks in
-        print(f"supported tasks are: {supported_tasks}")
+            self.state.supportedTasks = json.dumps(supported_tasks)
+        print(f"supported tasks are: {self.state.supportedTasks}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

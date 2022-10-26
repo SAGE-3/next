@@ -24,7 +24,7 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
-  Portal,
+  Portal, Stack,
   Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
@@ -58,8 +58,10 @@ function AppComponent(props: App): JSX.Element {
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
-  const prevX = useRef(0);
-  const prevY = useRef(0);
+  const prevX = useRef(props.data.position.x);
+  const prevY = useRef(props.data.position.y);
+
+  const [outputLocal, setOutputLocal] = useState<{ score: number, label: string, box: object }[]>([])
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
@@ -69,7 +71,6 @@ function AppComponent(props: App): JSX.Element {
       const client = {
         [app._id]: app.data.name,
       };
-      // TODO Handle AIPanes overlapping AIPanes
       if (app.data.name === 'AIPane' && app._id !== props._id) {
         break;
       } else {
@@ -87,7 +88,7 @@ function AppComponent(props: App): JSX.Element {
             updateState(props._id, {hostedApps: hosted});
             updateState(props._id, {messages: hosted});
             console.log('app ' + app._id + ' added');
-            newAppAdded();
+            newAppAdded(app.data.name);
           } else {
             console.log('app ' + app._id + ' already in hostedApps');
           }
@@ -141,20 +142,51 @@ function AppComponent(props: App): JSX.Element {
     prevY.current = props.data.position.y;
   }, [props.data.position.x, props.data.position.y, JSON.stringify(s.hostedApps)]);
 
+  useEffect(() => {
+    if (Object.keys(s.hostedApps).length === 0) {
+      updateState(props._id, {supportedTasks: ""});
+    }
+  }, [Object.keys(s.hostedApps).length])
+
+  //TODO parse output
+  useEffect(() => {
+    if (s.output != undefined && Object.keys(s.output).length > 0) {
+      const parsedOT = JSON.parse(s.output)
+      const arrayOT = parsedOT.output.split("'")
+      const parsedArrayOT = JSON.parse(arrayOT[0])
+      const modelOutput: {score: number, label: string, box: object}[] = []
+      Object.keys(parsedArrayOT).forEach((array) => {
+        Object.keys(parsedArrayOT[array]).forEach((entity) => {
+          modelOutput.push({
+            score: parsedArrayOT[array][entity].score,
+            label: parsedArrayOT[array][entity].label,
+            box: parsedArrayOT[array][entity].box
+          })
+        })
+      })
+      setOutputLocal(modelOutput)
+      console.log(modelOutput)
+      for (const score in modelOutput) {
+        console.log(modelOutput[score].score)
+      }
+    }
+  }, [JSON.stringify(s.output)])
+
+
+
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
 
-  function newAppAdded() {
+  function newAppAdded(appType: string) {
     updateState(props._id, {
-      executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
+      executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
     console.log(s.supported_tasks)
     Object.values(s.supported_tasks).forEach(el => console.log(el))
   }
 
   function closePopovers(info: string) {
-    console.log('Remove entry');
     const unchecked = s.messages;
     delete unchecked[info]
     updateState(props._id, {messages: unchecked})
@@ -169,67 +201,51 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-          <Popover>
-            <PopoverTrigger>
-              <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-                <Button variant="ghost" size="lg" color="cyan">
-                  Message
-                </Button>
-              </div>
-            </PopoverTrigger>
+        <Popover>
+          <PopoverTrigger>
+            <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+              <Button variant="ghost" size="lg" color="cyan">
+                Message
+              </Button>
+            </div>
+          </PopoverTrigger>
 
-            {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
-            <PopoverContent>
-              <PopoverArrow/>
-              <PopoverCloseButton/>
-              <PopoverHeader>History</PopoverHeader>
+          <PopoverContent>
+            <PopoverArrow/>
+            <PopoverCloseButton/>
+            <PopoverHeader>History</PopoverHeader>
 
+            <PopoverBody>
+              {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
+            </PopoverBody>
+
+            {Object.keys(s.messages)?.map((message: string, index: number) => (
               <PopoverBody>
-                {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
+                {s.messages[message]}
+                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
               </PopoverBody>
+            ))}
+          </PopoverContent>
+        </Popover>
 
-              {Object.keys(s.messages)?.map((message: string, index: number) => (
-                <PopoverBody>
-                  {s.messages[message]}
-                  <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
-                </PopoverBody>
-              ))}
-            </PopoverContent>
-          </Popover>
-        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center"
-             position="absolute">
-          <Box className="status-container">
-            {s.runStatus ? (
-              Object.values(s.hostedApps).every(checkAppType) ? (
-                <Icon as={GiEmptyHourglass} w={8} h={8}/>
-              ) : (
-                <Icon as={BiErrorCircle} w={8} h={8}/>
-              )
+        <Box className="status-container">
+          {s.runStatus ? (
+            Object.values(s.hostedApps).every(checkAppType) ? (
+              <Icon as={BiRun} w={8} h={8}/>
             ) : (
-              <VisuallyHidden>Empty Board</VisuallyHidden>
-            )}
-          </Box>
-        </Box>
-        <Box
-          position="absolute"
-          top="30%"
-          left="20%"
-        >
-          selectedApp {selectedAppId}
-          <br/>
-          length of hostedappsarr: {Object.keys(s.hostedApps).length}
-          <br/>
-          hostedapps: {Object.values(s.hostedApps)}
-          <br/>
-          supported_tasks: {Object.keys(s.supported_tasks)}
+              <Icon as={BiErrorCircle} w={8} h={8}/>
+            )
+          ) : (
+            <VisuallyHidden>Empty Board</VisuallyHidden>
+          )}
         </Box>
 
-        <Box className="output-container">
-          <Text>
-            Output <br/>
-            {s.output}
-          </Text>
-        </Box>
+        {/*<Box className="output-container">*/}
+        {/*  <Text>*/}
+        {/*    {s.output}*/}
+        {/*  </Text>*/}
+        {/*</Box>*/}
+
       </Box>
     </AppWindow>
   );
@@ -246,9 +262,26 @@ function ToolbarComponent(props: App): JSX.Element {
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
-  const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
-  const classModels = ['image_c_model_1', 'image_c_model_2'];
+
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
+
+  const [supportedTasks, setSupportedTasks] = useState<{ name: string, models: string[] }[]>([])
+
+  useEffect(() => {
+    if (s.supportedTasks != undefined && s.supportedTasks != '') {
+      const parsedST = JSON.parse(s.supportedTasks)
+      const newTasks: { name: string, models: string[] }[] = [];
+      Object.keys(parsedST).forEach(aiType => {
+        Object.keys(parsedST[aiType]).forEach(modelName => {
+          newTasks.push({
+            name: modelName,
+            models: parsedST[aiType][modelName]
+          })
+        })
+      })
+      setSupportedTasks(newTasks)
+    }
+  }, [JSON.stringify(s.supportedTasks)])
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -264,45 +297,45 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {runStatus: true});
   }
 
+  const handleModelClick = (model: string) => {
+    console.log('run model: ', model)
+  }
+
   return (
     <>
       <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-        <Menu>
-          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-            Obj Detection Models
-          </MenuButton>
-          <Portal>
-            <MenuList>
-              {objDetModels.map((model) => {
-                return <MenuItem>{model}</MenuItem>;
-              })}
-            </MenuList>
-          </Portal>
-        </Menu>
-        <Menu>
-          <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-            Classification Models
-          </MenuButton>
-          <Portal>
-            <MenuList>
-              {classModels.map((model) => {
-                return <MenuItem>{model}</MenuItem>;
-              })}
-            </MenuList>
-          </Portal>
-        </Menu>
+        <Stack spacing={2} direction='row'>
+
+          {supportedTasks.map(task => {
+            return (
+              <Menu>
+                <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+                  {task.name}
+                </MenuButton>
+                <Portal>
+                  <MenuList>
+                    {task.models.map((name) => {
+                      return <MenuItem onClick={() => handleModelClick(name)}>{name}</MenuItem>;
+                    })}
+                  </MenuList>
+                </Portal>
+              </Menu>
+            )
+          })
+          }
+
+          <IconButton
+            aria-label="Run AI"
+            icon={s.runStatus ? <BiRun/> : <FaPlay/>}
+            _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+            isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
+            onClick={() => {
+              runFunction();
+            }}
+          />
+        </Stack>
       </div>
 
-
-      <IconButton
-        aria-label="Run AI"
-        icon={s.runStatus ? <BiRun/> : <FaPlay/>}
-        _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-        isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
-        onClick={() => {
-          runFunction();
-        }}
-      />
     </>
   );
 }

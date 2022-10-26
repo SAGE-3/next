@@ -6,9 +6,9 @@
  *
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, InputGroup, Input, ButtonGroup } from '@chakra-ui/react';
+import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../schema';
 
@@ -17,13 +17,14 @@ import { AppWindow } from '../../components';
 
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
-import * as esriLeafletGeocoder from "esri-leaflet-geocoder";
+import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { MapContainer, TileLayer, LayersControl } from 'react-leaflet';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
 import create from 'zustand';
+import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
 
 // Zustand store to communicate with toolbar
 export const useStore = create((set: any) => ({
@@ -36,11 +37,17 @@ export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
 
+const maxZoom = 18;
+const minZoom = 1;
+
 // Leaflet App
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
+
+  const selectedId = useUIStore((state) => state.selectedAppId);
+  const selected = props._id === selectedId;
 
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
@@ -73,31 +80,37 @@ function AppComponent(props: App): JSX.Element {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-        }).then(function (response) {
-          return response.json();
-        }).then(function (gson) {
-          // Create special marker
-          const markerOptions = {
-            radius: 5, fillColor: "#ff7800", color: "#000",
-            weight: 1, opacity: 1, fillOpacity: 0.4
-          };
-          // Add the data into a layer
-          overlayLayer.current = Leaflet.geoJSON(gson, {
-            // draw circles on the map instead  of markers
-            pointToLayer: function (feature, latlng) {
-              return Leaflet.circleMarker(latlng, markerOptions);
-            }
-          }).addTo(map);
-          // Fit view to new data
-          const bounds = overlayLayer.current.getBounds();
-          const center = bounds.getCenter();
-          map.setView(center);
-          const value: [number, number] = [center.lat, center.lng];
-          updateState(props._id, { location: value });
-          map.fitBounds(bounds);
-          // Add a new control (don't know how to add it to main control, need the list of layers)
-          Leaflet.control.layers({}, { "Data layer": overlayLayer.current }).addTo(map);
         })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (gson) {
+            // Create special marker
+            const markerOptions = {
+              radius: 5,
+              fillColor: '#ff7800',
+              color: '#000',
+              weight: 1,
+              opacity: 1,
+              fillOpacity: 0.4,
+            };
+            // Add the data into a layer
+            overlayLayer.current = Leaflet.geoJSON(gson, {
+              // draw circles on the map instead  of markers
+              pointToLayer: function (feature, latlng) {
+                return Leaflet.circleMarker(latlng, markerOptions);
+              },
+            }).addTo(map);
+            // Fit view to new data
+            const bounds = overlayLayer.current.getBounds();
+            const center = bounds.getCenter();
+            map.setView(center);
+            const value: [number, number] = [center.lat, center.lng];
+            updateState(props._id, { location: value });
+            map.fitBounds(bounds);
+            // Add a new control (don't know how to add it to main control, need the list of layers)
+            Leaflet.control.layers({}, { 'Data layer': overlayLayer.current }).addTo(map);
+          });
       }
     }
   }, [file]);
@@ -112,7 +125,7 @@ function AppComponent(props: App): JSX.Element {
       iconUrl: 'assets/marker-icon.png',
       shadowUrl: 'assets/marker-shadow.png',
       shadowSize: [0, 0],
-      iconSize: [24, 40]
+      iconSize: [24, 40],
     });
   }, [map, s.overlay]);
 
@@ -121,10 +134,9 @@ function AppComponent(props: App): JSX.Element {
     if (s.overlay && map) {
       overlayLayer.current?.addTo(map);
     } else {
-      if (map)
-        overlayLayer.current?.removeFrom(map)
+      if (map) overlayLayer.current?.removeFrom(map);
     }
-  }, [map, s.overlay])
+  }, [map, s.overlay]);
 
   // Window resize
   useEffect(() => {
@@ -140,7 +152,7 @@ function AppComponent(props: App): JSX.Element {
             map.setView(loc);
           }
         }
-      }, 250)
+      }, 250);
     }
   }, [props.data.size.width, props.data.size.height, map]);
 
@@ -173,10 +185,13 @@ function AppComponent(props: App): JSX.Element {
   }, [s.location, map]);
 
   // BaseLayer sync
-  const onBaseLayerChange = useCallback((e: any) => {
-    const value = e.name;
-    updateState(props._id, { baseLayer: value });
-  }, [s.baseLayer]);
+  const onBaseLayerChange = useCallback(
+    (e: any) => {
+      const value = e.name;
+      updateState(props._id, { baseLayer: value });
+    },
+    [s.baseLayer]
+  );
 
   useEffect(() => {
     if (map) {
@@ -202,13 +217,11 @@ function AppComponent(props: App): JSX.Element {
     if (map) {
       map.on('overlayadd', onOverlayAdd);
       map.on('overlayremove', onOverlayRemove);
-      map.on('zoomend', onZoom)
     }
     return () => {
       if (map) {
         map.off('overlayadd', onOverlayAdd);
         map.off('overlayremove', onOverlayRemove);
-        map.off('zoomend', onZoom)
       }
     };
   }, [map]);
@@ -219,18 +232,33 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [map, s.baseLayer]);
 
-  // Zoom sync
-  const onZoom = useCallback((ev: Leaflet.LeafletEvent) => {
-    if (map) {
-      updateState(props._id, { zoom: map.getZoom() });
-    }
-  }, [map, s.zoom]);
-
   useEffect(() => {
     if (map) {
       map.setZoom(s.zoom);
     }
   }, [map, s.zoom]);
+
+  // Zoom in on the map
+  const incZoom = () => {
+    if (selected) {
+      const zoom = s.zoom + 1;
+      const limitZoom = Math.min(zoom, maxZoom);
+      updateState(props._id, { zoom: limitZoom });
+    }
+  };
+
+  // Zoom out on the map
+  const decZoom = () => {
+    if (selected) {
+      const zoom = s.zoom - 1;
+      const limitZoom = Math.max(zoom, minZoom);
+      updateState(props._id, { zoom: limitZoom });
+    }
+  };
+
+  // + and - keyboard keys for zooming
+  useHotkeys('=', incZoom, { dependencies: [selected, s.zoom] });
+  useHotkeys('-', decZoom, { dependencies: [selected, s.zoom] });
 
   return (
     <AppWindow app={props}>
@@ -238,7 +266,8 @@ function AppComponent(props: App): JSX.Element {
         center={[s.location[0], s.location[1]]}
         zoom={s.zoom}
         scrollWheelZoom={false}
-        doubleClickZoom={true}
+        doubleClickZoom={false}
+        keyboard={false}
         preferCanvas={true}
         style={{ height: `100%`, width: `100%` }}
         ref={setMap}
@@ -258,7 +287,6 @@ function AppComponent(props: App): JSX.Element {
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
           </LayersControl.BaseLayer>
-
         </LayersControl>
       </MapContainer>
     </AppWindow>
@@ -268,14 +296,17 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const [addrValue, setAddrValue] = useState("");
+  const [addrValue, setAddrValue] = useState('');
   const map = useStore((state: any) => state.map[props._id]);
   const update = useAppStore((state) => state.update);
 
-  const apiKey = "AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B";
+  const background = useColorModeValue('gray.50', 'gray.700');
+  const panelBackground = useHexColor(background);
+
+  const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
   // @ts-expect-error
   const geocoder = new esriLeafletGeocoder.geocode({
-    apikey: apiKey
+    apikey: apiKey,
   });
 
   // from the UI to the react state
@@ -299,24 +330,73 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   };
 
-  return <HStack>
-    <ButtonGroup >
-      <form onSubmit={changeAddr} >
-        <InputGroup size="xs" minWidth="200px" >
-          <Input
-            defaultValue={addrValue}
-            onChange={handleAddrChange}
-            onPaste={(event) => {
-              event.stopPropagation();
-            }}
-            backgroundColor="whiteAlpha.300"
-            placeholder="Type a place or address"
-            _placeholder={{ opacity: 1, color: 'gray.400' }}
-          />
-        </InputGroup>
-      </form>
-    </ButtonGroup>
-  </HStack>;
+  // Zoom in on the map
+  const incZoom = () => {
+    const zoom = s.zoom + 1;
+    const limitZoom = Math.min(zoom, maxZoom);
+    updateState(props._id, { zoom: limitZoom });
+  };
+
+  // Zoom out on the map
+  const decZoom = () => {
+    const zoom = s.zoom - 1;
+    const limitZoom = Math.max(zoom, minZoom);
+    updateState(props._id, { zoom: limitZoom });
+  };
+
+  return (
+    <HStack>
+      <ButtonGroup>
+        <form onSubmit={changeAddr}>
+          <InputGroup size="xs" minWidth="200px">
+            <Input
+              defaultValue={addrValue}
+              onChange={handleAddrChange}
+              onPaste={(event) => {
+                event.stopPropagation();
+              }}
+              backgroundColor="whiteAlpha.300"
+              placeholder="Type a place or address"
+              _placeholder={{ opacity: 1, color: 'gray.400' }}
+            />
+          </InputGroup>
+        </form>
+      </ButtonGroup>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+          <Button isDisabled={s.zoom >= 18} onClick={incZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdAdd fontSize="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+          <Button isDisabled={s.zoom <= 1} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdRemove fontSize="16px" />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Street Map'} openDelay={400}>
+          <Button
+            border={s.baseLayer !== 'OpenStreetMap' ? `solid ${panelBackground} 2px` : 'teal'}
+            onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}
+            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+          >
+            <MdMap fontSize="20px" />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Satellite Map'} openDelay={400}>
+          <Button
+            border={s.baseLayer !== 'World Imagery' ? `solid ${panelBackground} 2px` : ''}
+            onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}
+            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+          >
+            <MdTerrain fontSize="20px" />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </HStack>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };

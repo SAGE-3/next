@@ -12,6 +12,7 @@ import create from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
+import { SAGEColors } from '@sage3/shared';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -34,7 +35,7 @@ export enum StuckTypes {
   BottomLeft, // 9
 }
 
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller';
+export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'whiteboard';
 
 // Typescript interface defining the store
 interface PanelUI {
@@ -62,12 +63,21 @@ interface UIState {
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
 
+  // whiteboard
+  marker: boolean; // marker mode enabled
+  clearMarkers: boolean;
+  markerColor: SAGEColors;
+  setMarkerColor: (color: SAGEColors) => void;
+  toggleMarker: () => void;
+  setClearMarkers: (clear: boolean) => void;
+
   // Panels & Context Menu
   applicationsPanel: PanelUI;
   navigationPanel: PanelUI;
   usersPanel: PanelUI;
   controller: PanelUI;
   assetsPanel: PanelUI;
+  whiteboardPanel: PanelUI;
   panelZ: string[];
   bringPanelForward: (panel: PanelNames) => void;
 
@@ -77,6 +87,7 @@ interface UIState {
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
+  resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
   setAppDragging: (dragging: boolean) => void;
   setGridSize: (gridSize: number) => void;
@@ -109,12 +120,15 @@ export const useUIStore = create<UIState>((set, get) => ({
   showUI: true,
   boardDragging: false,
   appDragging: false,
+  marker: false,
+  markerColor: 'red',
+  clearMarkers: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   boardLocked: false,
-  panelZ: ['assets', 'applications', 'navigation', 'users'], // List of panels that have zordering
+  panelZ: ['assets', 'applications', 'navigation', 'users', 'whiteboard'], // List of panels that have zordering
   bringPanelForward: (panel: string) => {
     const z = get().panelZ;
     const i = z.indexOf(panel);
@@ -181,6 +195,18 @@ export const useUIStore = create<UIState>((set, get) => ({
     setShow: (show: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, show: show } })),
     show: false,
   },
+  whiteboardPanel: {
+    position: { x: 20, y: 400 },
+    stuck: StuckTypes.Controller,
+    name: 'whiteboard',
+    setPosition: (pos: { x: number; y: number }) =>
+      set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, position: pos } })),
+    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, stuck: stuck } })),
+    setOpened: (opened: boolean) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, opened: opened } })),
+    opened: true,
+    setShow: (show: boolean) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, show: show } })),
+    show: false,
+  },
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
       return;
@@ -245,10 +271,16 @@ export const useUIStore = create<UIState>((set, get) => ({
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
-
+  toggleMarker: () => set((state) => ({ ...state, marker: !state.marker })),
+  setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
+  setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
     if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));
+  },
+  resetBoardPosition: () => {
+    if (!get().boardLocked)
+      set((state) => ({ ...state, scale: 1, boardPosition: { x: -get().boardWidth / 2, y: -get().boardHeight / 2 } }));
   },
   setScale: (z: number) => {
     if (!get().boardLocked) set((state) => ({ ...state, scale: z }));

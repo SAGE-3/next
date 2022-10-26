@@ -23,40 +23,47 @@ export const schema = z.object({
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
-  kernels: z.array(
+  // kernels: z.array(
+  //   z.object({
+  //     id: z.string(),
+  //     name: z.string(),
+  //     last_activity: z.string(),
+  //     execution_state: z.string(),
+  //     connections: z.boolean(),
+  //   })
+  // ),
+  // privateMessage: z.string(),
+  privateMessage: z.array(
     z.object({
-      id: z.string(),
-      name: z.string(),
-      last_activity: z.string(),
-      execution_state: z.string(),
-      connections: z.boolean(),
+      userId: z.string(),
+      message: z.string(),
     })
   ),
   availableKernels: z.array(
     z.object({
       label: z.string(),
-      value: z.string()
+      value: z.string(),
     })
   ),
-  sessions: z.array(
-    z.object({
-      id: z.string(),
-      path: z.string(),
-      name: z.string(),
-      type: z.string(),
-      kernel: z.object({
-        id: z.string(),
-        name: z.string(),
-        last_activity: z.string(),
-        execution_state: z.string(),
-        connections: z.boolean(),
-      }),
-      notebook: z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    })
-  ),
+  // sessions: z.array(
+  //   z.object({
+  //     id: z.string(),
+  //     path: z.string(),
+  //     name: z.string(),
+  //     type: z.string(),
+  //     kernel: z.object({
+  //       id: z.string(),
+  //       name: z.string(),
+  //       last_activity: z.string(),
+  //       execution_state: z.string(),
+  //       connections: z.boolean(),
+  //     }),
+  //     notebook: z.object({
+  //       id: z.string(),
+  //       name: z.string(),
+  //     }),
+  //   })
+  // ),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -70,13 +77,14 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   code: '',
   language: 'python',
-  fontSize: 1.5,
+  fontSize: 24,
   theme: 'xcode',
   kernel: '',
-  kernels: [],
-  availableKernels: [],
-  sessions: [],
   output: '',
+  privateMessage: [],
+  availableKernels: [],
+  // kernels: [],
+  // sessions: [],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 

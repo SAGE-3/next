@@ -7,14 +7,7 @@
  */
 import { useRef, useEffect, useState } from 'react';
 
-import {
-  HStack,
-  useColorModeValue,
-  Tooltip,
-  IconButton,
-  VStack,
-  Flex,
-} from '@chakra-ui/react';
+import { HStack, useColorModeValue, Tooltip, IconButton, VStack, Flex } from '@chakra-ui/react';
 
 // import './components/styles.css';
 // // Date manipulation (for filename)
@@ -98,7 +91,7 @@ export const InputBox = (props: App): JSX.Element => {
           value={code}
           onChange={updateCode}
           readOnly={user?._id !== props._createdBy}
-          fontSize={`${fontSize}rem`}
+          fontSize={`${fontSize}px`}
           minLines={4}
           maxLines={20}
           placeholder="Enter code here"
@@ -162,10 +155,10 @@ export const InputBox = (props: App): JSX.Element => {
           </Tooltip>
         </VStack>
       </HStack>
-      <Flex pr={10} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
+      {/* <Flex pr={10} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
         Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
         {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
-      </Flex>
+      </Flex> */}
     </>
   );
 };

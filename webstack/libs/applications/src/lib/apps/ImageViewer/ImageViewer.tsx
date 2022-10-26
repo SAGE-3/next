@@ -15,11 +15,12 @@ import { downloadFile, isUUIDv4 } from '@sage3/frontend';
 
 import { AppWindow } from '../../components';
 
-import { App } from '../../schema';
-import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
-import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
-import { state as AppState } from './index';
-//import { isGIF } from '@sage3/shared';
+import {App} from '../../schema';
+import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
+import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
+import {state as AppState} from './index';
+import {isGIF} from '@sage3/shared';
+import {HiPencilAlt} from "react-icons/all";
 
 /**
  * ImageViewer app
@@ -45,9 +46,11 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  const box = {'xmin': 109, 'ymin': 186, 'xmax': 260, 'ymax': 454};
-
-  // console.log(displaySize);
+  const boxes = {
+    'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
+    'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
+    'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
+  }
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -75,6 +78,8 @@ function AppComponent(props: App): JSX.Element {
         setSizes(extra.sizes);
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
+        //TODO Extract image size
+
         if (extra) {
           // find the smallest image for this page (multi-resolution)
           const res = extra.sizes.reduce(function (p, v) {
@@ -85,6 +90,7 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   }, [file]);
+
 
   // Track the size size and pick the 'best' URL
   useEffect(() => {
@@ -107,20 +113,34 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
         }}
       >
-        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
-        <Box
-          position="absolute"
+        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url}
+               borderRadius="0 0 6px 6px"/>
+        {
+          Object.values(boxes).map((box: any) => {
+            return (
+              <Box
+                position="absolute"
+                left={box.xmin * (displaySize.width / 649) + 'px'}
+                top={box.ymin * (displaySize.height / 486) + 'px'}
+                width={(box.xmax - box.xmin) * (displaySize.width / 649) + 'px'}
+                height={(box.ymax - box.ymin) * (displaySize.height / 486) + 'px'}
+                border="2px solid red"
+                style={{display: s.annotations === true ? "block" : "none"}}
+              >
 
-          left={(box.xmin / 649) * displaySize.width  + 'px'}
-          top={(box.ymin / 486) * displaySize.height +  'px'}
-          width={(box.xmax / 649) * displaySize.width - (box.xmin / 649) * displaySize.width + 'px'}
-          height={(box.ymax / 486) * displaySize.height - (box.ymin / 486) * displaySize.height + 'px'}
-
-          border="2px solid red"
-          style={{display: s.hasAnnotations ? "block" : "none"}}
-        >
-
-        </Box>
+                <>
+                  {/*{Object.values(originalSize).map((size) => {*/}
+                  {/*  return (*/}
+                  {/*    size*/}
+                  {/*  )*/}
+                  {/*})}*/}
+                  <br/>
+                  Asset ID: {s.assetid}
+                </>
+              </Box>
+            )
+          })
+        }
       </div>
     </AppWindow>
   );
@@ -180,6 +200,15 @@ function ToolbarComponent(props: App): JSX.Element {
             }}
           >
             <HiPencilAlt />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+          <Button
+            onClick={() => {
+              updateState(props._id, {annotations: !s.annotations})
+            }}
+          >
+            <HiPencilAlt/>
           </Button>
         </Tooltip>
       </ButtonGroup>

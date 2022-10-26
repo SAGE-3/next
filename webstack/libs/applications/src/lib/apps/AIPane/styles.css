@@ -14,14 +14,14 @@
 
 .status-container {
   position: absolute;
-  right: 3rem;
-  top: 1rem;
+  right: 2rem;
+  top: 2.5rem;
 }
 
 .output-container {
   position: absolute;
   bottom: 15%;
-  left: 2rem;
+  left: 1rem;
   display: flex;
   margin: 1rem;
   padding: 1rem;
@@ -31,4 +31,3 @@
   position: relative;
   float: right;
 }
-

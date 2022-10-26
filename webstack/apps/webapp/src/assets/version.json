@@ -1,8 +1,8 @@
 {
-  "currentRelease": "1.0.0-alpha.42",
+  "currentRelease": "1.0.0-alpha.43",
   "releases": [
     {
-      "version": "1.0.0-alpha.42",
+      "version": "1.0.0-alpha.43",
       "notes": "Bug fixes and performances issues",
       "name": "Alpha release 1.0.0",
       "darwinintel": {

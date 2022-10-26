@@ -32,6 +32,9 @@ const Store = require('electron-store');
 // parsing command-line arguments
 var program = require('commander');
 
+// URL received from protocol sage3://
+var gotoURL = '';
+
 // Application modules in 'src'
 // Hashing function
 var md5 = require('./src/md5');
@@ -295,12 +298,8 @@ function openWindow() {
     var location = commander.server;
     currentServer = location;
 
-    // location = location + '/#/home';
-    mainWindow.loadURL(location, {
-      // userAgent: 'Chrome Electron SAGE3'
-      // userAgent:
-      //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36 Electron/13.2.0',
-    });
+    if (gotoURL) mainWindow.loadURL(gotoURL);
+    else mainWindow.loadURL(location);
 
     if (commander.monitor !== null) {
       mainWindow.on('show', function () {
@@ -313,9 +312,6 @@ function openWindow() {
       // Once all done, prevent changing the fullscreen state
       mainWindow.fullScreenable = false;
     }
-    // } else {
-    // otherwise open the popup
-    // createRemoteSiteInputWindow();
   }
 }
 
@@ -840,7 +836,7 @@ function createWindow() {
  * @param {Object} favorites_obj the object containing the list of favorites
  */
 function writeFavoritesOnFile(favorites_obj) {
-  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => {});
+  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => { });
 }
 
 /**
@@ -874,39 +870,57 @@ app.on('certificate-error', function (event, webContent, url, error, certificate
   }
 });
 
-//
-// Protocol handler sage3://
-// Handle the custom protocol on Windows and other platforms
-//
 if (process.platform === 'win32') {
   const gotTheLock = app.requestSingleInstanceLock();
 
   if (!gotTheLock) {
     app.quit();
   } else {
-    app.on('second-instance', (event, commandLine, workingDirectory) => {
-      // Someone tried to run a second instance, we should focus our window.
+
+    // For first instance
+    const count = process.argv.length;
+    if (count > 2) {
+      const lastarg = process.argv[count - 1];
+      const newurl = lastarg.replace('sage3://', 'https://');
       if (mainWindow) {
+        mainWindow.loadURL(newurl);
+      } else {
+        // save the URL for later
+        gotoURL = newurl;
+      }
+    }
+
+    // Happens when a window is already opened
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+      const lastarg = commandLine[commandLine.length - 1];
+      // Focus on the main window.
+      if (mainWindow && lastarg) {
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
+        const newurl = lastarg.replace('sage3://', 'https://');
+        mainWindow.loadURL(newurl);
+      } else {
+        // save the URL for later
+        gotoURL = newurl;
       }
     });
   }
 }
 
-/**
- * This method will be called when Electron has finished
- * initialization and is ready to create a browser window.
- */
-app.on('ready', createWindow);
-
+//
+// Protocol handler sage3://
 // Handle the custom protocol
+//
+// Protocol handler for osx while application is not running in the background.
 app.on('open-url', (event, url) => {
+  event.preventDefault();
   // make it a valid URL
   const newurl = url.replace('sage3://', 'https://');
-  console.log(`We are going to: ${newurl}`);
   if (mainWindow) {
     mainWindow.loadURL(newurl);
+  } else {
+    // save the URL for later
+    gotoURL = newurl;
   }
 });
 
@@ -931,6 +945,12 @@ app.on('activate', function () {
     createWindow();
   }
 });
+
+/**
+ * This method will be called when Electron has finished
+ * initialization and is ready to create a browser window.
+ */
+app.on('ready', createWindow);
 
 /**
  * Utiltiy function to parse command line arguments as number
@@ -979,50 +999,6 @@ function openInterfaceInBrowser() {
       electron.shell.openExternal(uiURL);
     }
   });
-}
-
-/**
- * Creates a remote site input window.
- *
- * @method     createRemoteSiteInputWindow
- */
-function createRemoteSiteInputWindow() {
-  // creating a new window
-  if (remoteSiteInputWindow != undefined) {
-    return;
-  }
-  remoteSiteInputWindow = new BrowserWindow({
-    width: 900,
-    height: 660,
-    frame: true,
-    title: 'Connect to SAGE2 server',
-    webPreferences: {
-      nativeWindowOpen: true,
-      contextIsolation: false,
-      nodeIntegration: true,
-      webSecurity: true,
-    },
-  });
-  // Load html into window
-  remoteSiteInputWindow.loadURL(
-    url.format({
-      // Load the UI for the panel
-      pathname: path.join(__dirname, 'remoteSiteWindow.html'),
-      protocol: 'file',
-      slashes: true,
-    })
-  );
-  setTimeout(() => {
-    remoteSiteInputWindow.webContents.send('current-location', currentDomain);
-  }, 1000);
-
-  // Garbage collection for window (when add window is closed the space should be deallocated)
-  remoteSiteInputWindow.on('closed', () => {
-    remoteSiteInputWindow = null;
-  });
-
-  // No menu needed in this window
-  remoteSiteInputWindow.setMenu(null);
 }
 
 function buildMenu() {

@@ -15,13 +15,13 @@ import { z } from 'zod';
 
 export const schema = z.object({
   assetid: z.string(),
-  hasAnnotations: z.boolean(),
+  annotations: z.boolean(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   assetid: '',
-  hasAnnotations: false,
+  annotations: false,
 };
 
 export const name = 'ImageViewer';

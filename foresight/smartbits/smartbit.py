@@ -7,10 +7,10 @@
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field, validate_model
-from utils.generic_utils import create_dict
+# from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
-from jupyterkernelproxy_client import JupyterKernelClient
+from jupyterkernelproxy import JupyterKernelProxy
 from ai.ai_client import AIClient
 from config import config as conf, prod_type
 
@@ -18,7 +18,9 @@ class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
-    _jupyter_client: JupyterKernelClient = JupyterKernelClient(conf[prod_type]["flask_server"])
+
+    # make the following params of the constructor. Not all apps need them!
+    _jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
     _ai_client: AIClient = AIClient()
 
     def __init__(self, **kwargs):
@@ -107,7 +109,8 @@ class TrackedBaseModel(BaseModel):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
         return wrapper
-
+    def cleanup(self):
+        pass
 
 class Position(TrackedBaseModel):
     x: int

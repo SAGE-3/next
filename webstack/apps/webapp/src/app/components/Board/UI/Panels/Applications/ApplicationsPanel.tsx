@@ -16,26 +16,32 @@ import { AppName } from '@sage3/applications/schema';
 
 import { ButtonPanel, Panel } from '../Panel';
 
+// Development or production
+const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+
 // Build list of applications from apps.json
-const appListed = [
+// or all apps if in development mode
+const appListed = development ? Object.keys(Applications) : [
   "AIPane",
   // "CSVViewer",
   // "Clock",
   // "Cobrowse",
   "CodeCell",
-  // "Counter",
+  "Counter",
   // "DataTable",
   // "DeepZoomImage",
   // "GLTFViewer",
   // "ImageViewer",
   "JupyterLab",
   "Kernels",
+  "KernelDashboard",
   "LeafLet",
   // "Linker",
   "Notepad",
   // "PDFViewer",
   // "RTCChat",
   "Screenshare",
+  "SageCell",
   "Stickie",
   // "TwilioScreenshare",
   // "VegaLite",
