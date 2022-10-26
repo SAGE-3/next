@@ -99,6 +99,8 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
         url: getStaticAssetUrl(filename),
         fullSize: getStaticAssetUrl(filename),
         aspectRatio: 1, // TODO: get real aspect ratio
+        width: 100, // TODO: get real width
+        height: 100, // TODO: get real height
         sizes: [],
       });
     } else {
@@ -124,13 +126,16 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
           .toFile(path.join(directory, `${filenameWithoutExt}-full.jpg`)),
       ])
         .then((res) => {
-          const { width: imgWidth, height: imgHeight } = res[0];
+          // Get last image size (the full size jpeg)
+          const { width: imgWidth, height: imgHeight } = res[res.length - 1];
           const imageData: ExtraImageType = {
             filename: pathname,
             // the default source
             url: getStaticAssetUrl(`${filenameWithoutExt}-${options[0].width}.webp`),
             // full size image
             fullSize: getStaticAssetUrl(`${filenameWithoutExt}-full.jpg`),
+            width: imgWidth,
+            height: imgHeight,
             // save the image aspect ratio
             aspectRatio: imgWidth / imgHeight,
             // create the size map for the images

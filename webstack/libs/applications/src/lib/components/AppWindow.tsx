@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, useToast, Text, Avatar, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import { Box, useToast, Text, Avatar, Tooltip, Spinner, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import { MdOpenInFull, MdOutlineClose, MdOutlineCloseFullscreen } from 'react-icons/md';
 
 import { App } from '../schema';
@@ -21,6 +21,7 @@ type WindowProps = {
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
   lockToBackground?: boolean;
+  processing?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -40,11 +41,15 @@ export function AppWindow(props: WindowProps) {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
-  const selectColor = useHexColor('teal');
+
+  // Colors
   const bc = useColorModeValue('gray.200', 'gray.600');
   const borderColor = useHexColor(bc);
   const borderWidth = 4;
   const titleColor = useColorModeValue('gray.800', 'white');
+  const selectColor = '#f39e4a';
+  const bg = useColorModeValue('gray.100', 'gray.700');
+  const backgroundColor = useHexColor(bg);
 
   // Display messages
   const toast = useToast();
@@ -225,8 +230,8 @@ export function AppWindow(props: WindowProps) {
       onClick={handleAppClick}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
-        boxShadow: `${minimized ? '' : '2px 2px 12px rgba(0,0,0,0.4)'}`,
-        backgroundColor: `${minimized ? 'transparent' : 'gray'}`,
+        boxShadow: `${minimized ? '' : '3px 3px 16px rgba(0,0,0,0.5)'}`,
+        backgroundColor: `${minimized ? 'transparent' : backgroundColor}`,
         borderRadius: '6px',
         zIndex: props.lockToBackground ? 0 : myZ,
         pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', //Guest Blocker
@@ -312,6 +317,27 @@ export function AppWindow(props: WindowProps) {
           userSelect={'none'}
           zIndex={999999999} // Really big number to just force it to be on top
         ></Box>
+      ) : null}
+      {/* Processing Box */}
+      {props.processing ? (
+        <Box
+          position="absolute"
+          left="0px"
+          top="0px"
+          width={size.width}
+          height={minimized ? 0 + 'px' : size.height + 'px'}
+          pointerEvents={'none'}
+          userSelect={'none'}
+          zIndex={999999}
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          backgroundColor={backgroundColor}
+        >
+          <Box transform={`scale(${4 * Math.min(size.width / 300, size.height / 300)})`}>
+            <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color={selected ? selectColor : 'teal'} size="xl" />
+          </Box>
+        </Box>
       ) : null}
     </Rnd>
   );
