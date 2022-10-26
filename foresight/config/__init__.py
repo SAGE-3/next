@@ -86,3 +86,19 @@ ai_models = {
         "sshleifer/distilbart-cnn-12-6": ""
     }
 }
+
+# ai_settings = {
+#     "vision": {
+#         "supported_apps": ['ImageViewer'],
+#         "tasks": {
+#             "Object Detection": ["image_od_model_1", "image_od_model_2"],
+#             "Classification": ["image_c_model_1", "image_c_model_2"]
+#         }
+#     },
+#     "nlp": {
+#         "supported_apps": ['PDFViewer', 'Notepad'],
+#         "tasks": {
+#             "Summarization": ["text_s_model_1", "text_s_model_2", ],
+#         }
+#     }
+# }
