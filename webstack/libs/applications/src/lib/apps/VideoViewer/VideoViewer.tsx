@@ -23,16 +23,12 @@ import {
 // Time functions
 import { format as formatTime } from 'date-fns';
 
-import { Asset } from '@sage3/shared/types';
+import { Asset, ExtraImageType } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-
-function getStaticAssetUrl(filename: string): string {
-  return `api/assets/static/${filename}`;
-}
 
 /**
  * Return a string for a duration
@@ -70,6 +66,8 @@ function AppComponent(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
+      const extras = myasset.data.derived as ExtraImageType;
+      setAspecRatio(extras.aspectRatio || 1);
       // Update the app title
       update(props._id, { description: myasset?.data.originalfilename });
     }
@@ -78,8 +76,10 @@ function AppComponent(props: App): JSX.Element {
   // If the file is updated, update the url
   useEffect(() => {
     if (file) {
+      const extras = file.data.derived as ExtraImageType;
+      const video_url = extras.url;
       // save the url of the video
-      setUrl(getStaticAssetUrl(file.data.file));
+      setUrl(video_url);
     }
   }, [file]);
 
@@ -87,17 +87,11 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.addEventListener('loadedmetadata', (e: Event) => {
-        if (e) {
-          const w = videoRef.current?.videoWidth ?? 16;
-          const h = videoRef.current?.videoHeight ?? 9;
-          const ar = w / h;
-          setAspecRatio(ar);
-          if (videoRef.current) {
-            // Diplay the video current time and duration
-            const length = getDurationString(videoRef.current.duration);
-            const time = getDurationString(videoRef.current.currentTime);
-            update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
-          }
+        if (e && videoRef.current) {
+          // Diplay the video current time and duration
+          const length = getDurationString(videoRef.current.duration);
+          const time = getDurationString(videoRef.current.currentTime);
+          update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
         }
       });
     }
@@ -302,9 +296,11 @@ function ToolbarComponent(props: App): JSX.Element {
   // Download the file
   const handleDownload = () => {
     if (file) {
-      const url = file?.data.file;
-      const filename = file?.data.originalfilename;
-      downloadFile(getStaticAssetUrl(url), filename);
+      // const url = file?.data.file;
+      const filename = file.data.originalfilename;
+      const extras = file.data.derived as ExtraImageType;
+      const video_url = extras.url;
+      downloadFile(video_url, filename);
     }
   };
 

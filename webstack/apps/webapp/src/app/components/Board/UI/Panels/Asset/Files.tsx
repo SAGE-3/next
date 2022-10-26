@@ -473,10 +473,8 @@ export function Files(props: FilesProps): JSX.Element {
               colorScheme="red"
               size="sm"
               onClick={() => {
-                console.log('Deleting>');
                 const toDelete = filesList.filter((k) => k.selected);
                 toDelete.forEach((k) => {
-                  console.log('Deleting>', k);
                   AssetHTTPService.del(k.id);
                 });
                 onDeleteClose();

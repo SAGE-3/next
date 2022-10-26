@@ -18,7 +18,6 @@ import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
 import { state as AppState } from './index';
-import { isGIF } from '@sage3/shared';
 
 /**
  * ImageViewer app
