@@ -19,7 +19,6 @@ import {App} from '../../schema';
 import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
-import {isGIF} from '@sage3/shared';
 import {HiPencilAlt} from "react-icons/all";
 
 /**
@@ -46,14 +45,22 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  const boxes = {
-    'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
-    'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
-    'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
-  }
+  // s.boxes = {
+  //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
+  //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
+  //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
+  // }
+  const updateState = useAppStore((state) => state.updateState);
+
+  useEffect(() => {
+    const bboxes =  JSON.parse(s.boxes)
+  },[JSON.stringify(s.boxes)])
+
 
   // Convert the ID to an asset
   useEffect(() => {
+    console.log(s.boxes)
+
     const isUUID = isUUIDv4(s.assetid);
     if (isUUID) {
       const myasset = assets.find((a) => a._id === s.assetid);
@@ -113,17 +120,23 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
         }}
       >
+         <>
         <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url}
                borderRadius="0 0 6px 6px"/>
+
         {
-          Object.values(boxes).map((box: any) => {
+
+          Object.keys(s.boxes).map((label: string) => {
+
+            console.log("-- ",typeof(bboxes))
+
             return (
               <Box
                 position="absolute"
-                left={box.xmin * (displaySize.width / 649) + 'px'}
-                top={box.ymin * (displaySize.height / 486) + 'px'}
-                width={(box.xmax - box.xmin) * (displaySize.width / 649) + 'px'}
-                height={(box.ymax - box.ymin) * (displaySize.height / 486) + 'px'}
+                left={s.boxes[label].xmin * (displaySize.width / 649) + 'px'}
+                top={s.boxes[label].ymin * (displaySize.height / 486) + 'px'}
+                width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / 649) + 'px'}
+                height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / 486) + 'px'}
                 border="2px solid red"
                 style={{display: s.annotations === true ? "block" : "none"}}
               >
@@ -135,12 +148,13 @@ function AppComponent(props: App): JSX.Element {
                   {/*  )*/}
                   {/*})}*/}
                   <br/>
-                  Asset ID: {s.assetid}
+                  Asset ID: {label}
                 </>
               </Box>
             )
           })
         }
+        </>
       </div>
     </AppWindow>
   );

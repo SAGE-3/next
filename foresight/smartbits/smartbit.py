@@ -178,3 +178,6 @@ class ExecuteInfo(TrackedBaseModel):
     # execute_func: str = Field(alias='executeFunc')
     executeFunc: str
     params: dict
+
+# class Boxe(TrackedBaseModel):
+#
