@@ -23,17 +23,12 @@ import {
 // Time functions
 import { format as formatTime } from 'date-fns';
 
-import { Asset } from '@sage3/shared/types';
+import { Asset, ExtraImageType } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-
-
-function getStaticAssetUrl(filename: string): string {
-  return `api/assets/static/${filename}`;
-}
 
 /**
  * Return a string for a duration
@@ -44,7 +39,6 @@ function getStaticAssetUrl(filename: string): string {
 function getDurationString(n: number): string {
   return formatTime(n * 1000, 'mm:ss');
 }
-
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -72,6 +66,8 @@ function AppComponent(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
+      const extras = myasset.data.derived as ExtraImageType;
+      setAspecRatio(extras.aspectRatio || 1);
       // Update the app title
       update(props._id, { description: myasset?.data.originalfilename });
     }
@@ -80,8 +76,10 @@ function AppComponent(props: App): JSX.Element {
   // If the file is updated, update the url
   useEffect(() => {
     if (file) {
+      const extras = file.data.derived as ExtraImageType;
+      const video_url = extras.url;
       // save the url of the video
-      setUrl(getStaticAssetUrl(file.data.file));
+      setUrl(video_url);
     }
   }, [file]);
 
@@ -89,17 +87,11 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.addEventListener('loadedmetadata', (e: Event) => {
-        if (e) {
-          const w = videoRef.current?.videoWidth ?? 16;
-          const h = videoRef.current?.videoHeight ?? 9;
-          const ar = w / h;
-          setAspecRatio(ar);
-          if (videoRef.current) {
-            // Diplay the video current time and duration
-            const length = getDurationString(videoRef.current.duration);
-            const time = getDurationString(videoRef.current.currentTime);
-            update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
-          }
+        if (e && videoRef.current) {
+          // Diplay the video current time and duration
+          const length = getDurationString(videoRef.current.duration);
+          const time = getDurationString(videoRef.current.currentTime);
+          update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
         }
       });
     }
@@ -214,7 +206,8 @@ function ToolbarComponent(props: App): JSX.Element {
   // User
   const { user } = useUser();
   // Stores
-  const update = useAppStore((state) => state.updateState);
+  const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
 
   // React State
@@ -254,7 +247,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a play action
   const handlePlay = () => {
     if (user) {
-      update(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
+      updateState(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -264,7 +257,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a rewind action
   const handleRewind = () => {
     if (user) {
-      update(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
+      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -274,7 +267,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a forward action
   const handleForward = () => {
     if (user) {
-      update(props._id, {
+      updateState(props._id, {
         play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime + 5) },
       });
       const time = getDurationString(videoRef.currentTime);
@@ -286,7 +279,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a forward action
   const handleLoop = () => {
     if (user) {
-      update(props._id, {
+      updateState(props._id, {
         play: { ...s.play, uid: user._id, loop: !s.play.loop },
       });
       const time = getDurationString(videoRef.currentTime);
@@ -303,9 +296,11 @@ function ToolbarComponent(props: App): JSX.Element {
   // Download the file
   const handleDownload = () => {
     if (file) {
-      const url = file?.data.file;
-      const filename = file?.data.originalfilename;
-      downloadFile(getStaticAssetUrl(url), filename);
+      // const url = file?.data.file;
+      const filename = file.data.originalfilename;
+      const extras = file.data.derived as ExtraImageType;
+      const video_url = extras.url;
+      downloadFile(video_url, filename);
     }
   };
 
@@ -322,7 +317,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const seekEndHandle = () => {
     setSeeking(false);
     if (user) {
-      update(props._id, {
+      updateState(props._id, {
         play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },
       });
       const time = getDurationString(videoRef.currentTime);
@@ -373,7 +368,10 @@ function ToolbarComponent(props: App): JSX.Element {
         <SliderTrack bg="green.100">
           <SliderFilledTrack bg="green.400" />
         </SliderTrack>
-        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">  {getDurationString(0)} </SliderMark>
+        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
+          {' '}
+          {getDurationString(0)}{' '}
+        </SliderMark>
         <SliderMark value={duration} fontSize="xs" mt="1.5" ml="-5">
           {getDurationString(duration)}
         </SliderMark>
