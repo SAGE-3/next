@@ -43,8 +43,7 @@ function AppComponent(props: App): JSX.Element {
 
   const localizeCity = (city: string) => {
     const key = 'AIzaSyBQ335g9XtAX56ZCqqF6jsHz4mP-qIX5vo';
-    const url = "https://maps.googleapis.com/maps/api/geocode/json?address=" +
-      city + "&key=" + key;
+    const url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + city + '&key=' + key;
     d3.json(url).then((json: any) => {
       const geometry = json.results[0].geometry;
       const name = json.results[0].address_components[0].long_name;
@@ -57,7 +56,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const clockSelected = (lat: number, lon: number, cityName: string) => {
-    const apikey = "4R3QHZXPDCOL";
+    const apikey = '4R3QHZXPDCOL';
     const url = `https://api.timezonedb.com/v2.1/get-time-zone?key=${apikey}&format=json&by=position&lat=${lat}&lng=${lon}`;
     fetch(url, {
       redirect: 'follow',
@@ -69,7 +68,7 @@ function AppComponent(props: App): JSX.Element {
       .then((json: any) => {
         const timeOffset = parseInt(json.gmtOffset) + offset;
         let id = cityName.toLowerCase() + lat + lon;
-        id = id.replace(/ /g, "");
+        id = id.replace(/ /g, '');
         id = id.replace(/\./g, '');
         const clock = {
           name: cityName.charAt(0).toUpperCase() + cityName.slice(1),
@@ -86,17 +85,17 @@ function AppComponent(props: App): JSX.Element {
   const rotateElement = (id: string, angle: number) => {
     const svgDoc = d3.select(svgRef.current);
     if (svgDoc) {
-      svgDoc.select("#" + id).attr('transform', 'rotate(' + angle + ', 100, 100)');
+      svgDoc.select('#' + id).attr('transform', 'rotate(' + angle + ', 100, 100)');
     }
   };
 
   const toggleNightMode = (background: string, dial: string) => {
     const svgDoc = d3.select(svgRef.current);
     if (svgDoc) {
-      svgDoc.select("#" + "background").style("fill", background);
-      svgDoc.select("#" + "dial").style("fill", dial);
-      svgDoc.select("#" + "hourHand").style("fill", dial);
-      svgDoc.select("#" + "minuteHand").style("fill", dial);
+      svgDoc.select('#' + 'background').style('fill', background);
+      svgDoc.select('#' + 'dial').style('fill', dial);
+      svgDoc.select('#' + 'hourHand').style('fill', dial);
+      svgDoc.select('#' + 'minuteHand').style('fill', dial);
     } else {
       setNightMode((prev) => !prev);
     }
@@ -121,10 +120,10 @@ function AppComponent(props: App): JSX.Element {
     // Night time mode
     if ((hours >= 19 || hours < 7) && !nightMode) {
       setNightMode(true);
-      toggleNightMode("rgba(0,0,0,255)", "rgb(235,235,235)");
-    } else if ((hours < 19 && hours >= 7) && nightMode) {
+      toggleNightMode('rgba(0,0,0,255)', 'rgb(235,235,235)');
+    } else if (hours < 19 && hours >= 7 && nightMode) {
       setNightMode(false);
-      toggleNightMode("rgba(255,255,255,255)", "rgb(40,40,40)");
+      toggleNightMode('rgba(255,255,255,255)', 'rgb(40,40,40)');
     }
   };
 
@@ -135,12 +134,12 @@ function AppComponent(props: App): JSX.Element {
     }
     return () => {
       clearInterval(timing);
-    }
+    };
   }, [svgRef, s.file, offset]);
 
   return (
     <AppWindow app={props}>
-      <VStack p={0} m={2} >
+      <VStack p={0} m={2}>
         <Clock ref={svgRef} />
         {/* <Text fontSize={"2xl"}>{city}</Text> */}
       </VStack>
@@ -156,23 +155,25 @@ function ToolbarComponent(props: App): JSX.Element {
   const [city, setCity] = useState(s.city);
   const changeCity = () => {
     updateState(props._id, { city: city });
-  }
+  };
   const handleCityChange = (event: any) => setCity(event.target.value);
-  return <>
-    <form onSubmit={changeCity}>
-      <InputGroup size="xs" minWidth="200px">
-        <Input
-          placeholder="City"
-          value={city}
-          onChange={handleCityChange}
-          onPaste={(event) => {
-            event.stopPropagation();
-          }}
-          backgroundColor="whiteAlpha.300"
-        />
-      </InputGroup>
-    </form>
-  </>;
+  return (
+    <>
+      <form onSubmit={changeCity}>
+        <InputGroup size="xs" minWidth="200px">
+          <Input
+            placeholder="City"
+            value={city}
+            onChange={handleCityChange}
+            onPaste={(event) => {
+              event.stopPropagation();
+            }}
+            backgroundColor="whiteAlpha.300"
+          />
+        </InputGroup>
+      </form>
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };
