@@ -245,26 +245,12 @@ export function Background(props: BackgroundProps) {
       // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {
-          //  Get the metadata file
-          const localurl = '/api/assets/static/' + a.data.metadata;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (j) {
-              const vw = j['ImageWidth'] || 800;
-              const vh = j['ImageHeight'] || 450;
-              const ar = vw / vh;
-              createApp(
-                setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 500, h: 400 / ar }, { assetid: fileID })
-              );
-            });
+          const extras = a.data.derived as ExtraImageType;
+          const vw = 800;
+          const vh = vw / (extras.aspectRatio || 1);
+          createApp(
+            setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: vw, h: vh }, { assetid: fileID })
+          );
         }
       });
     } else if (isCSV(fileType)) {
