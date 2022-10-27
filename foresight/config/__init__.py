@@ -17,7 +17,7 @@ if prod_type == 'backend':
 config = {
     "production": {
         "jupyter_server": f"https://{server}:4443",
-        "jupyter_ws": f"ws://{server}:4443",
+        "jupyter_ws": f"wss://{server}:4443",
         "redis_server": "redis-server",
         "web_server": f"https://{server}",
         "ws_server": f"wss://{server}",
