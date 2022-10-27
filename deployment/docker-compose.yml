@@ -22,12 +22,7 @@ services:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 20s
+    restart: always
   python:
     image: "sage3/foresight:latest"
     environment:
@@ -39,6 +34,7 @@ services:
     command: python proxy.py
     depends_on:
       - "redis-server"
+      - "jupyter"
       - "node-server"
   jupyter:
     image: "jupyter/datascience-notebook"
@@ -53,6 +49,4 @@ services:
     depends_on:
       - "redis-server"
     command: /conf/start.sh
-    deploy:
-      restart_policy:
-        condition: on-failure
+    restart: always

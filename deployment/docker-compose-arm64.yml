@@ -20,26 +20,23 @@ services:
       - "redis-server"
     volumes:
       - ./configurations/node/keys:/app/keys
-      - ./configurations/node/assets:/app/dist/apps/homebase/assets
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+      - ./configurations/node/assets:/app/dist/apps/homebase/assets
     deploy:
       restart_policy:
         condition: on-failure
   python:
-    image: "python:3.9-bullseye"
-    volumes:
-      - ./configurations/python:/code
+    image: "sage3/foresight:arm64"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-    working_dir: /code
-    command: ./GO.sh
+      - ROOM_ID=521f75cc-0a02-4ae2-8f3f-0b190bc2b1a0
     restart: always
-    deploy:
-      restart_policy:
-        condition: on-failure
+    working_dir: /app
+    command: python proxy.py
     depends_on:
       - "redis-server"
+      - "jupyter"
       - "node-server"
   jupyter:
     image: "jupyter/datascience-notebook"
