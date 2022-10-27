@@ -23,7 +23,6 @@ import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/front
 import { FileEntry } from './types';
 import { RowFile } from './RowFile';
 import { setupAppForFile } from './CreateApp';
-import { file } from 'jszip';
 
 export interface FilesProps {
   files: FileEntry[];
@@ -474,10 +473,8 @@ export function Files(props: FilesProps): JSX.Element {
               colorScheme="red"
               size="sm"
               onClick={() => {
-                console.log('Deleting>');
                 const toDelete = filesList.filter((k) => k.selected);
                 toDelete.forEach((k) => {
-                  console.log('Deleting>', k);
                   AssetHTTPService.del(k.id);
                 });
                 onDeleteClose();

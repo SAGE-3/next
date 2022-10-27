@@ -6,7 +6,7 @@
  *
  */
 
-import {z} from 'zod';
+import { z } from 'zod';
 
 // const VisionTasks = z.enum(["Object Detection", "Classification"]);
 // export type VisionTasks = z.infer<typeof VisionTasks>;
@@ -34,18 +34,16 @@ export const schema = z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
   }),
-
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  executeInfo: {executeFunc: '', params: {}},
+  executeInfo: { executeFunc: '', params: {} },
   hostedApps: {},
   runStatus: false,
-  supportedTasks: "",
+  supportedTasks: '',
   messages: {},
-  output: "",
-
+  output: '',
 };
 
 export const name = 'AIPane';

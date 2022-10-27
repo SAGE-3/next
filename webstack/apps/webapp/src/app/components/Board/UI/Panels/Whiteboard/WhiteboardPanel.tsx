@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { Box, Button, Tooltip } from '@chakra-ui/react';
 
 import { BsPencilFill } from 'react-icons/bs';
-import { FaEraser } from 'react-icons/fa';
+import { FaEraser, FaTrash } from 'react-icons/fa';
 
 import { useUIStore, StuckTypes, useHotkeys } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
@@ -49,10 +49,11 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
     }
   }, [controllerPosition]);
 
-  // User information
+  // Whiteboard information
   const marker = useUIStore((state) => state.marker);
   const toggleMarker = useUIStore((state) => state.toggleMarker);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
+  const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const markerColor = useUIStore((state) => state.markerColor);
   const setMarkerColor = useUIStore((state) => state.setMarkerColor);
 
@@ -95,9 +96,14 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
 
         <ColorPicker selectedColor={markerColor} onChange={handleColorChange}></ColorPicker>
 
-        <Tooltip placement="top" hasArrow label="Erase All">
+        <Tooltip placement="top" hasArrow label="Erase Your Lines">
           <Button onClick={() => setClearMarkers(true)} ml="2">
             <FaEraser />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow label="Erase All">
+          <Button onClick={() => setClearAllMarkers(true)} ml="2">
+            <FaTrash />
           </Button>
         </Tooltip>
       </Box>

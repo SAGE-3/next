@@ -6,7 +6,7 @@
  *
  */
 
-import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import {
   Box,
   Button,
@@ -24,22 +24,23 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
-  Portal, Stack,
+  Portal,
+  Stack,
   Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
-import {App, AppName} from '../../schema';
+import { App, AppName } from '../../schema';
 import './styles.css';
 
-import {state as AppState} from './index';
-import {AppWindow} from '../../components';
-import React, {useEffect, useState, useRef} from 'react';
-import {FaPlay} from 'react-icons/fa';
-import {BiErrorCircle, BiRun} from 'react-icons/bi';
-import {GiEmptyHourglass} from 'react-icons/gi';
-import {CgSmileMouthOpen} from 'react-icons/cg';
-import {FiChevronDown} from 'react-icons/fi';
-import {useLocation} from 'react-router-dom';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import React, { useEffect, useState, useRef } from 'react';
+import { FaPlay } from 'react-icons/fa';
+import { BiErrorCircle, BiRun } from 'react-icons/bi';
+import { GiEmptyHourglass } from 'react-icons/gi';
+import { CgSmileMouthOpen } from 'react-icons/cg';
+import { FiChevronDown } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -84,8 +85,8 @@ function AppComponent(props: App): JSX.Element {
               ...s.hostedApps,
               ...client,
             };
-            updateState(props._id, {hostedApps: hosted});
-            updateState(props._id, {messages: hosted});
+            updateState(props._id, { hostedApps: hosted });
+            updateState(props._id, { messages: hosted });
             console.log('app ' + app._id + ' added');
             newAppAdded();
           } else {
@@ -93,10 +94,10 @@ function AppComponent(props: App): JSX.Element {
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
-            const hostedCopy = {...s.hostedApps};
+            const hostedCopy = { ...s.hostedApps };
             delete hostedCopy[app._id];
-            updateState(props._id, {hostedApps: hostedCopy});
-            updateState(props._id, {messages: hostedCopy});
+            updateState(props._id, { hostedApps: hostedCopy });
+            updateState(props._id, { messages: hostedCopy });
             console.log('app ' + app._id + ' removed from hostedApps');
           }
         }
@@ -114,12 +115,12 @@ function AppComponent(props: App): JSX.Element {
     Object.keys(s.hostedApps).forEach((key: string) => {
       if (appIds.includes(key)) copyofhostapps[key] = key;
     });
-    updateState(props._id, {hostedApps: copyofhostapps});
+    updateState(props._id, { hostedApps: copyofhostapps });
   }, [boardApps.length]);
 
   // Move all apps together with the AIPane
   useEffect(() => {
-    const hostedCopy = {...s.hostedApps};
+    const hostedCopy = { ...s.hostedApps };
     const xDiff = props.data.position.x - prevX.current;
     const yDiff = props.data.position.y - prevY.current;
 
@@ -143,9 +144,9 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-    updateState(props._id, {supported_tasks: {}});
-  }
-}, [JSON.stringify(s.hostedApps)])
+      updateState(props._id, { supportedTasks: '' });
+    }
+  }, [JSON.stringify(s.hostedApps)]);
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -153,7 +154,7 @@ function AppComponent(props: App): JSX.Element {
 
   function newAppAdded() {
     updateState(props._id, {
-      executeInfo: {executeFunc: 'new_app_added', params: {app_type: 'ImageViewer'}},
+      executeInfo: { executeFunc: 'new_app_added', params: { app_type: 'ImageViewer' } },
     });
     // Object.values(s.supportedTasks).forEach(el => console.log(el))
   }
@@ -161,13 +162,13 @@ function AppComponent(props: App): JSX.Element {
   function closePopovers(info: string) {
     console.log('Remove entry');
     const unchecked = s.messages;
-    delete unchecked[info]
-    updateState(props._id, {messages: unchecked})
+    delete unchecked[info];
+    updateState(props._id, { messages: unchecked });
 
     if (Object.keys(s.messages).includes(info)) {
-      const messagesCopy = {...s.messages};
+      const messagesCopy = { ...s.messages };
       delete messagesCopy[info];
-      updateState(props._id, {messages: messagesCopy});
+      updateState(props._id, { messages: messagesCopy });
     }
   }
 
@@ -176,7 +177,7 @@ function AppComponent(props: App): JSX.Element {
       <Box>
         <Popover>
           <PopoverTrigger>
-            <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+            <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
               <Button variant="ghost" size="lg" color="cyan">
                 Message
               </Button>
@@ -185,8 +186,8 @@ function AppComponent(props: App): JSX.Element {
 
           {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
           <PopoverContent>
-            <PopoverArrow/>
-            <PopoverCloseButton/>
+            <PopoverArrow />
+            <PopoverCloseButton />
             <PopoverHeader>History</PopoverHeader>
 
             <PopoverBody>
@@ -196,7 +197,7 @@ function AppComponent(props: App): JSX.Element {
             {Object.keys(s.messages)?.map((message: string, index: number) => (
               <PopoverBody>
                 {s.messages[message]}
-                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
+                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)} />
               </PopoverBody>
             ))}
           </PopoverContent>
@@ -205,32 +206,28 @@ function AppComponent(props: App): JSX.Element {
         <Box className="status-container">
           {s.runStatus ? (
             Object.values(s.hostedApps).every(checkAppType) ? (
-              <Icon as={BiRun} w={8} h={8}/>
+              <Icon as={BiRun} w={8} h={8} />
             ) : (
-              <Icon as={BiErrorCircle} w={8} h={8}/>
+              <Icon as={BiErrorCircle} w={8} h={8} />
             )
           ) : (
             <VisuallyHidden>Empty Board</VisuallyHidden>
           )}
         </Box>
 
-        <Box
-          position="absolute"
-          top="30%"
-          left="20%"
-        >
+        <Box position="absolute" top="30%" left="20%">
           selectedApp {selectedAppId}
-          <br/>
+          <br />
           length of hostedappsarr: {Object.keys(s.hostedApps).length}
-          <br/>
+          <br />
           hostedapps: {Object.values(s.hostedApps)}
-          <br/>
+          <br />
           supportedTasks: {s.supportedTasks}
         </Box>
 
         <Box className="output-container">
           <Text>
-            Output <br/>
+            Output <br />
             {s.output}
           </Text>
         </Box>
@@ -262,18 +259,18 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'execute_model',
-        params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'}
+        params: { some_uuid: '12345678', model_id: 'facebook/detr-resnet-50' },
       },
     });
-    updateState(props._id, {runStatus: true});
+    updateState(props._id, { runStatus: true });
   }
 
   return (
     <>
-      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-        <Stack spacing={2} direction='row'>
+      <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
+        <Stack spacing={2} direction="row">
           <Menu>
-            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+            <MenuButton as={Button} rightIcon={<FiChevronDown />}>
               Obj Detection Models
             </MenuButton>
             <Portal>
@@ -285,7 +282,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </Portal>
           </Menu>
           <Menu>
-            <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+            <MenuButton as={Button} rightIcon={<FiChevronDown />}>
               Classification Models
             </MenuButton>
             <Portal>
@@ -298,8 +295,8 @@ function ToolbarComponent(props: App): JSX.Element {
           </Menu>
           <IconButton
             aria-label="Run AI"
-            icon={s.runStatus ? <BiRun/> : <FaPlay/>}
-            _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+            icon={s.runStatus ? <BiRun /> : <FaPlay />}
+            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
             isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
             onClick={() => {
               runFunction();
@@ -307,7 +304,6 @@ function ToolbarComponent(props: App): JSX.Element {
           />
         </Stack>
       </div>
-
     </>
   );
 }
