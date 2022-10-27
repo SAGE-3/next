@@ -40,7 +40,21 @@ import { WebSocket } from 'ws';
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { isCSV, isImage, isPDF, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
+import {
+  isCSV,
+  isImage,
+  isPDF,
+  isMD,
+  isJSON,
+  isVideo,
+  isDZI,
+  isGeoJSON,
+  isPython,
+  isGLTF,
+  isGIF,
+  isPythonNotebook,
+  isText,
+} from '@sage3/shared';
 import { initialValues } from '@sage3/applications/initialValues';
 
 // Google storage and AWS S3 storage
@@ -159,7 +173,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       // If we need to open the file, do it
       if (openFIles && assetID) {
         // Send message to clients
-        MessageCollection.add({ type: 'open', payload: `Opening application for ${elt.originalname}` }, user.id);
+        if (isText(elt.mimetype)) {
+          MessageCollection.add({ type: 'warning', payload: `No application to open ${elt.originalname}` }, user.id);
+        } else {
+          MessageCollection.add({ type: 'open', payload: `Opening application for ${elt.originalname}` }, user.id);
+        }
 
         if (isImage(elt.mimetype)) {
           if (isGIF(elt.mimetype)) {
@@ -345,7 +363,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           );
           posx += tw || 800;
           posx += 10;
-        } else if (isText(elt.mimetype)) {
+        } else if (isMD(elt.mimetype)) {
           const text = fs.readFileSync(elt.path);
           const w = tw || 400;
           const h = th || 400;
