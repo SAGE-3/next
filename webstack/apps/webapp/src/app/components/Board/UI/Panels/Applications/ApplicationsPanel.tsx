@@ -141,7 +141,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },
-      size: { width: w, height: w, depth: 0 },
+      size: { width: w, height: h, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as any) },
