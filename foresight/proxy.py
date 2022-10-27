@@ -105,7 +105,7 @@ class SAGEProxy():
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            logging.info(f"Creating {app_info}")
+            logging.info(f"Creating {app_info['data']['state']}")
             # print(f"Creating {app_info}")
             self.__handle_create("APPS", app_info)
 
@@ -118,7 +118,7 @@ class SAGEProxy():
             self.populate_existing()
             async for msg in ws:
                 msg = json.loads(msg)
-                print(f"msg: {msg}")
+                print(f"----- msg: {json.dumps(msg)}")
                 if msg['id'] not in self.received_msg_log or \
                         msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
                     self.__message_queue.put(msg)

@@ -20,6 +20,7 @@ import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
 import {dimensions} from "./data_types"
+
 /**
  * ImageViewer app
  *
@@ -46,8 +47,8 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  const [bboxes, setBboxes] = useState<{[key: string]: dimensions}>({});
-
+  const [bboxes, setBboxes] = useState<{ [key: string]: dimensions }>({});
+  //
   // s.boxes = {
   //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
   //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
@@ -55,33 +56,33 @@ function AppComponent(props: App): JSX.Element {
   // }
 
 
-  useEffect(() => {
-    if (s.boxes != undefined && Object.keys(s.boxes).length > 0) {
-      const parsedBoxes: {[key: string]: dimensions}  = s.boxes
-      //const bBoxArr: bbox[] = []
-      Object.keys(parsedBoxes).map((key) =>
-        {
-         console.log(key)
-         console.log(parsedBoxes[key].xmin)
-
-        }
-      )
-
-      // Object.keys(parsedBoxes).forEach((label) => {
-      //   bBoxArr.push({
-      //     label: label,
-      //     dimensions: parsedBoxes[label]
-      //   })
-      // })
-      setBboxes(parsedBoxes)
-      // console.log('here')
-      // Object.values(bBoxArr).map((el) => {
-      //    console.log(el.dimensions.xmin)
-      //    console.log(bBoxArr)
-      //
-      // })
-    }
-  }, [JSON.stringify(s.boxes)])
+  // useEffect(() => {
+  //   if (s.boxes != undefined && Object.keys(s.boxes).length > 0) {
+  //     const parsedBoxes: {[key: string]: dimensions}  = s.boxes
+  //     //const bBoxArr: bbox[] = []
+  //     Object.keys(parsedBoxes).map((key) =>
+  //       {
+  //        console.log(key)
+  //        console.log(parsedBoxes[key].xmin)
+  //
+  //       }
+  //     )
+  //
+  //     // Object.keys(parsedBoxes).forEach((label) => {
+  //     //   bBoxArr.push({
+  //     //     label: label,
+  //     //     dimensions: parsedBoxes[label]
+  //     //   })
+  //     // })
+  //     setBboxes(parsedBoxes)
+  //     // console.log('here')
+  //     // Object.values(bBoxArr).map((el) => {
+  //     //    console.log(el.dimensions.xmin)
+  //     //    console.log(bBoxArr)
+  //     //
+  //     // })
+  //   }
+  // }, [JSON.stringify(s.boxes)])
 
   // useEffect(() => {
   //   bboxes.forEach((el) => {
@@ -161,7 +162,7 @@ function AppComponent(props: App): JSX.Element {
 
           {
             Object.keys(bboxes).map((label) => {
-              return(
+              return (
                 <Box
                   position="absolute"
                   left={bboxes[label].xmin * (displaySize.width / 649) + 'px'}
@@ -282,17 +283,27 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'RUN'} openDelay={400}>
-          <Button
-            onClick={() => {
+        {/*<Tooltip placement="top-start" hasArrow={true} label={'RUN'} openDelay={400}>*/}
+        {/*  <Button*/}
+        {/*    onClick={() => {*/}
 
-              updateState(props._id,
-                {executeInfo: {"executeFunc": "set_bboxes", "params": {}}})
-            }}
-          >
-            <HiPencilAlt/>
-          </Button>
-        </Tooltip>
+        {/*      updateState(props._id,*/}
+        {/*        {*/}
+        {/*          executeInfo: {*/}
+        {/*            "executeFunc": "set_bboxes", "params": {*/}
+        {/*              // "bboxes": {*/}
+        {/*              //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},*/}
+        {/*              //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},*/}
+        {/*              //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},*/}
+        {/*              // }*/}
+        {/*            }*/}
+        {/*          }*/}
+        {/*        })*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    <HiPencilAlt/>*/}
+        {/*  </Button>*/}
+        {/*</Tooltip>*/}
       </ButtonGroup>
     </>
   );
