@@ -190,16 +190,16 @@ export async function setupAppForFile(
         .then(function (text) {
           // Create a note from the text
           resolve({
-            name: 'CodeCell',
-            description: 'CodeCell',
+            name: 'SageCell',
+            description: 'SageCell',
             roomId: roomId,
             boardId: boardId,
             ownerId: userId,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            type: 'CodeCell',
-            state: { ...(initialValues['CodeCell'] as AppState), code: text },
+            type: 'SageCell',
+            state: { ...(initialValues['SageCell'] as AppState), code: text },
             minimized: false,
             raised: true,
           });

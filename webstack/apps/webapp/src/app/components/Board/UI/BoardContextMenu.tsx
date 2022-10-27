@@ -86,7 +86,7 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
     // features disabled
     if (appName === "JupyterLab" && data.features && !data.features['jupyter']) return;
-    if (appName === "CodeCell" && data.features && !data.features['cell']) return;
+    if (appName === "SageCell" && data.features && !data.features['cell']) return;
     if (appName === "Screenshare" && data.features && !data.features['twilio']) return;
     // Get the position of the cursor
     const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
@@ -255,9 +255,9 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => newApplication('CodeCell')}
+            onClick={() => newApplication('SageCell')}
           >
-            CodeCell
+            SageCell
           </Button>
           <Button
             w="100%"

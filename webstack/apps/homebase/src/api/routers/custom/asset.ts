@@ -380,17 +380,17 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 400;
           AppsCollection.add(
             {
-              name: 'CodeCell',
-              description: 'CodeCell',
+              name: 'SageCell',
+              description: 'SageCell',
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
-              type: 'CodeCell',
+              type: 'SageCell',
               state: {
-                ...initialValues['CodeCell'],
+                ...initialValues['SageCell'],
                 code: text.toString(),
               },
               minimized: false,

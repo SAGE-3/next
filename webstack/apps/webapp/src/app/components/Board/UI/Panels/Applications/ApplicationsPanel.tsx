@@ -26,7 +26,7 @@ const appListed = development ? Object.keys(Applications) : [
   // "CSVViewer",
   // "Clock",
   // "Cobrowse",
-  "CodeCell",
+  // "CodeCell",
   // "Counter",
   // "DataTable",
   // "DeepZoomImage",
@@ -40,6 +40,7 @@ const appListed = development ? Object.keys(Applications) : [
   "Notepad",
   // "PDFViewer",
   // "RTCChat",
+  "SageCell",
   "Screenshare",
   // "SageCell",
   "Stickie",
@@ -88,7 +89,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
           newlist = newlist.filter((a) => a !== 'AIPane');
         }
         if (!features['cell']) {
-          newlist = newlist.filter((a) => a !== 'CodeCell');
+          newlist = newlist.filter((a) => a !== 'SageCell');
         }
         if (!features['jupyter']) {
           newlist = newlist.filter((a) => a !== 'JupyterLab');
