@@ -19,7 +19,7 @@ import {App} from '../../schema';
 import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
-
+import {dimensions} from "./data_types"
 /**
  * ImageViewer app
  *
@@ -46,7 +46,7 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  const [bboxes, setBboxes] = useState<{ label: string, dimensions: object }[]>([]);
+  const [bboxes, setBboxes] = useState<{[key: string]: dimensions}>({});
 
   // s.boxes = {
   //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
@@ -54,24 +54,32 @@ function AppComponent(props: App): JSX.Element {
   //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
   // }
 
+
   useEffect(() => {
     if (s.boxes != undefined && Object.keys(s.boxes).length > 0) {
-      const parsedBoxes = JSON.parse(s.boxes)
-      const bBoxArr: { label: string, dimensions: object }[] = []
+      const parsedBoxes: {[key: string]: dimensions}  = s.boxes
+      //const bBoxArr: bbox[] = []
+      Object.keys(parsedBoxes).map((key) =>
+        {
+         console.log(key)
+         console.log(parsedBoxes[key].xmin)
 
-      // console.log("boxes useEffect")
-      // console.log(parsedBoxes)
-      Object.keys(parsedBoxes).forEach((label) => {
-        bBoxArr.push({
-          label: label,
-          dimensions: parsedBoxes[label]
-        })
-      })
-      setBboxes(bBoxArr)
-      console.log('here')
-      Object.values(bBoxArr).map((el) => {
-         console.log(el.dimensions)
-      })
+        }
+      )
+
+      // Object.keys(parsedBoxes).forEach((label) => {
+      //   bBoxArr.push({
+      //     label: label,
+      //     dimensions: parsedBoxes[label]
+      //   })
+      // })
+      setBboxes(parsedBoxes)
+      // console.log('here')
+      // Object.values(bBoxArr).map((el) => {
+      //    console.log(el.dimensions.xmin)
+      //    console.log(bBoxArr)
+      //
+      // })
     }
   }, [JSON.stringify(s.boxes)])
 
@@ -152,20 +160,26 @@ function AppComponent(props: App): JSX.Element {
                  borderRadius="0 0 6px 6px"/>
 
           {
-            // Object.keys(bboxes).map((label) => {
-            //   return (
-            //     <Box
-            //       position="absolute"
-            //       left={s.boxes[label].xmin * (displaySize.width / 649) + 'px'}
-            //       top={s.boxes[label].ymin * (displaySize.height / 486) + 'px'}
-            //       width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / 649) + 'px'}
-            //       height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / 486) + 'px'}
-            //       border="2px solid red"
-            //       style={{display: s.annotations === true ? "block" : "none"}}
-            //     >
-            //       {label}
-            //     </Box>
-            //   )
+            Object.keys(bboxes).map((label) => {
+              return(
+                <Box
+                  position="absolute"
+                  left={bboxes[label].xmin * (displaySize.width / 649) + 'px'}
+                  top={bboxes[label].ymin * (displaySize.height / 486) + 'px'}
+                  width={(bboxes[label].xmax - bboxes[label].xmin) * (displaySize.width / 649) + 'px'}
+                  height={(bboxes[label].ymax - bboxes[label].ymin) * (displaySize.height / 486) + 'px'}
+                  border="2px solid red"
+                  style={{display: s.annotations === true ? "block" : "none"}}
+                >
+                  {label}
+                </Box>
+              )
+            })
+
+            //  Object.values(bboxes).map((el) => {
+            //    console.log(el.dimensions.xmin)
+            //   // return (
+            //   // )
             // })
             // bboxes.forEach((el) => {
             //   return (

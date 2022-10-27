@@ -49,6 +49,7 @@ class AIPane(SmartBit):
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(AIPane, self).__init__(**kwargs)
+        #self.pending_executions = {}
         # self._some_private_info = {1: 2}
 
     def new_app_added(self, app_type):
@@ -77,6 +78,11 @@ class AIPane(SmartBit):
     def handle_exec_result(self, msg):
         print("I am handling the execution results")
         print(f" type of msg in aipane{type(msg)}")
+
+        # first, get the ids of the apps
+
+
+
         self.state.output = json.dumps(msg)
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
@@ -90,6 +96,8 @@ class AIPane(SmartBit):
             'data': {'urls': ['http://aishelf.org/wp-content/uploads/2021/05/yolo_2.jpg',
                               'http://farm9.staticflickr.com/8245/8622384284_d5535dfc3d_z.jpg']}
         }
+        # self.pending_executions
+
         payload = {
             "app_uuid": "SOMETHING",
             "msg_uuid": some_uuid,

@@ -12,11 +12,27 @@
  */
 
 import {z} from 'zod';
+import {bboxType2} from "./data_types";
+
+
+
 
 export const schema = z.object({
   assetid: z.string(),
   annotations: z.boolean(),
-  boxes: z.any(),
+
+
+
+  boxes:  z.any(bboxType2),
+  //   // [{key: string}: object]
+  //   label: z.string().optional(),
+  //   dimensions: z.record(
+  //     z.object({xmin: z.number(), ymin: z.number(), xmax: z.number(), ymax: z.number()})
+  //
+  //   ).optional(),
+  // }),
+  //
+
   // boxes: z.record(z.string(), z.record(z.string(), z.number()))
 
   executeInfo: z.object({
