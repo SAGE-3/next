@@ -29,20 +29,14 @@ services:
         max_attempts: 3
         window: 20s
   python:
-    image: "python:3.9-bullseye"
-    volumes:
-      - ./configurations/python:/code
+    image: "sage3/foresight:latest"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-    working_dir: /code
-    command: ./GO.sh
+      - ROOM_ID=a50f5a4d-59ed-4026-8d3c-786a9b7b61e7
     restart: always
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        window: 20s
+    working_dir: /app
+    command: python proxy.py
     depends_on:
       - "redis-server"
       - "node-server"
