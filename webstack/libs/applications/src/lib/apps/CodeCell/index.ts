@@ -33,7 +33,7 @@ export const schema = z.object({
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   code: '',
   language: 'python',
   fontSize: 1,

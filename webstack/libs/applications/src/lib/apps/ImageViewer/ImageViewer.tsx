@@ -5,20 +5,19 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import {useEffect, useState} from 'react';
-import {Image, Button, ButtonGroup, Tooltip, Box} from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
-import {MdFileDownload} from 'react-icons/md';
+import { MdFileDownload } from 'react-icons/md';
 // Utility functions from SAGE3
-import {downloadFile, isUUIDv4} from '@sage3/frontend';
+import { downloadFile, isUUIDv4 } from '@sage3/frontend';
 
-import {AppWindow} from '../../components';
+import { AppWindow } from '../../components';
 
-import {App} from '../../schema';
-import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
-import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
-import {state as AppState} from './index';
-import {isGIF} from '@sage3/shared';
+import { App } from '../../schema';
+import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
+import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
+import { state as AppState } from './index';
 
 /**
  * ImageViewer app
@@ -52,7 +51,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, {description: myasset?.data.originalfilename});
+        update(props._id, { description: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL
@@ -102,8 +101,7 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
         }}
       >
-        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url}
-               borderRadius="0 0 6px 6px"/>
+        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
       </div>
     </AppWindow>
   );
@@ -148,11 +146,10 @@ function ToolbarComponent(props: App): JSX.Element {
               }
             }}
           >
-            <MdFileDownload/>
+            <MdFileDownload />
           </Button>
         </Tooltip>
       </ButtonGroup>
-
     </>
   );
 }
@@ -180,4 +177,4 @@ function getImageUrl(src: string, sizes: ImageInfoType[], width: number): string
   return src;
 }
 
-export default {AppComponent, ToolbarComponent};
+export default { AppComponent, ToolbarComponent };

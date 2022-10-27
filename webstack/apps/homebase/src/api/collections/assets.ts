@@ -16,13 +16,14 @@
 import { niceCollection } from './nice-collection';
 import { AssetSchema } from '@sage3/shared/types';
 import { SBDocument, SBDocumentMessage } from '@sage3/sagebase';
+import { getStaticAssetUrl } from '@sage3/backend';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
 
 import { config } from '../../config';
 
-import { isPDF, isImage, isGIF } from '@sage3/shared';
+import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
 /**
  * The database model for SAGE3 rooms.
@@ -101,6 +102,26 @@ class SAGE3AssetsCollection {
             dateCreated: realDate.toISOString(),
             metadata: r1.result,
             derived: r2.result,
+          });
+        } else if (isVideo(fileType)) {
+          // get the dimensions of the video from the medata
+          const imgWidth = exif['ImageWidth'] || 1280;
+          const imgHeight = exif['ImageHeight'] || 720;
+          // video file: store width and height in the derived field
+          resolve({
+            dateCreated: realDate.toISOString(),
+            metadata: r1.result,
+            derived: {
+              filename: file,
+              url: '/' + getStaticAssetUrl(file),
+              fullSize: '/' + getStaticAssetUrl(file),
+              // video size
+              width: imgWidth,
+              height: imgHeight,
+              // save the image aspect ratio
+              aspectRatio: imgWidth / imgHeight,
+              sizes: [],
+            },
           });
         } else {
           // everything else

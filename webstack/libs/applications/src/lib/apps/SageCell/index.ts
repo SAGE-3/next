@@ -23,16 +23,6 @@ export const schema = z.object({
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
-  // kernels: z.array(
-  //   z.object({
-  //     id: z.string(),
-  //     name: z.string(),
-  //     last_activity: z.string(),
-  //     execution_state: z.string(),
-  //     connections: z.boolean(),
-  //   })
-  // ),
-  // privateMessage: z.string(),
   privateMessage: z.array(
     z.object({
       userId: z.string(),
@@ -41,29 +31,10 @@ export const schema = z.object({
   ),
   availableKernels: z.array(
     z.object({
-      label: z.string(),
-      value: z.string(),
+      key: z.string(),
+      value: z.record(z.string(), z.any()),
     })
   ),
-  // sessions: z.array(
-  //   z.object({
-  //     id: z.string(),
-  //     path: z.string(),
-  //     name: z.string(),
-  //     type: z.string(),
-  //     kernel: z.object({
-  //       id: z.string(),
-  //       name: z.string(),
-  //       last_activity: z.string(),
-  //       execution_state: z.string(),
-  //       connections: z.boolean(),
-  //     }),
-  //     notebook: z.object({
-  //       id: z.string(),
-  //       name: z.string(),
-  //     }),
-  //   })
-  // ),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -83,8 +54,6 @@ export const init: Partial<state> = {
   output: '',
   privateMessage: [],
   availableKernels: [],
-  // kernels: [],
-  // sessions: [],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 

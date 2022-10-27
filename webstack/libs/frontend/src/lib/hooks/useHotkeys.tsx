@@ -147,12 +147,12 @@ function Alfred({ onAction }: AlfredProps): JSX.Element {
           />
         </InputGroup>
         <VStack m={1} p={1}>
-          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
-            CodeCell
+          {/* <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
+            SageCell
           </Button>
           <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
             Screenshare
-          </Button>
+          </Button> */}
           <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
             Stickie
           </Button>

@@ -23,7 +23,15 @@ import {
   Toast,
   IconButton,
   VStack,
+  Flex,
+  Stack,
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
 } from '@chakra-ui/react';
+
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdError, MdPlayArrow, MdClearAll } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -32,27 +40,24 @@ import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 
+// UUID generation
+import { v4 as getUUID } from 'uuid';
+
+// Needed to help render the trace
 import Ansi from 'ansi-to-react';
 
-import './components/styles.css';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdError, MdDelete, MdPlayArrow } from 'react-icons/md';
 
 // SAGE3 imports
-import { useAppStore, useUser } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
+import { User } from '@sage3/shared/types';
+
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 
-// Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
-
-// UUID generation
-import { v4 as getUUID } from 'uuid';
-
-// import { InputBox } from './components/InputBox';
-// import { OutputBox } from './components/OutputBox';
+const MARGIN = 2;
 
 /**
  * SageCell - SAGE3 application
@@ -61,73 +66,73 @@ import { v4 as getUUID } from 'uuid';
  * @returns {JSX.Element}
  */
 const AppComponent = (props: App): JSX.Element => {
-  const [output, setOutput] = useState({} as any);
   const { user } = useUser();
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const [myKernels, setMyKernels] = useState(s.availableKernels);
+  const [access, setAccess] = useState(true);
+
+  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
+  const accessDeniedColor = useColorModeValue('#EFDEDD', '#DDD1D1');
 
   useEffect(() => {
-    if (s.output) {
-      try {
-        const parsed = JSON.parse(s.output);
-        if (parsed) {
-          // console.log(parsed);
-          setOutput(parsed);
+    if (!user) return;
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'get_available_kernels',
+        params: { user_uuid: user._id },
+      },
+    });
+  }, [user]);
+
+  useEffect(() => {
+    // Get all kernels that I'm available to see
+    const kernels: any[] = [];
+    s.availableKernels.forEach((kernel) => {
+      if (kernel.value.is_private) {
+        if (kernel.value.owner_uuid == user?._id) {
+          kernels.push(kernel);
         }
-      } catch (e) {
-        console.log(e);
+      } else {
+        kernels.push(kernel);
       }
+    });
+    setMyKernels(kernels);
+  }, [JSON.stringify(s.availableKernels)]);
+
+  useEffect(() => {
+    if (s.kernel == '') {
+      setAccess(true);
+    } else {
+      const access = myKernels.find((kernel) => kernel.key == s.kernel);
+      setAccess(access ? true : false);
     }
-  }, [s.output]);
+  }, [s.kernel, myKernels]);
 
   return (
     <AppWindow app={props}>
-      <Box id="sc-container" w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')} overflowY={'scroll'}>
-        {InputBox(props)}
-        {!output ? null : (
-          <>
-            <Box
-              p={4}
-              m={4}
-              className="sc-output"
-              style={{
-                height: '100%',
-                overflowX: 'auto',
-                backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-                boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-                borderRadius: '4px',
-                fontFamily: 'monospace',
-                fontSize: s.fontSize + 'px',
-                color: useColorModeValue('#000000', '#FFFFFF'),
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-              }}
-            >
-              {/* {OutputBox(output)} */}
-              {!s.output ? null : !output ? `No output to display` : OutputBox(output)}
-
-              {!s.privateMessage
-                ? null
-                : s.privateMessage.map(({ userId, message }) => {
-                    // find the user name that matches the userId
-                    if (userId !== user!._id) {
-                      return null;
-                    }
-                    return (
-                      <Toast
-                        status="error"
-                        description={message + ', ' + user!.data.name}
-                        duration={5000}
-                        isClosable
-                        onClose={() => updateState(props._id, { privateMessage: [] })}
-                        hidden={userId !== user!._id}
-                      />
-                    );
-                  })}
-            </Box>
-          </>
-        )}
+      <Box
+        id="sc-container"
+        w={'100%'}
+        h={'100%'}
+        bg={access ? bgColor : accessDeniedColor}
+        overflowY={'scroll'}
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '.1em',
+          },
+          '&::-webkit-scrollbar-track': {
+            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'teal',
+            outline: '2px solid teal',
+          },
+        }}
+        pointerEvents={access ? 'auto' : 'none'}
+      >
+        <InputBox app={props} access={access} />
+        {!s.output ? null : <OutputBox output={s.output} app={props} user={user!} />}
       </Box>
     </AppWindow>
   );
@@ -143,11 +148,12 @@ function ToolbarComponent(props: App): JSX.Element {
   // Access the global app state
   const s = props.data.state as AppState;
   const { user } = useUser();
-
   // Update functions from the store
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const [selected, setSelected] = useState<string>('');
+  const [myKernels, setMyKernels] = useState(s.availableKernels);
+  const [access, setAccess] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -158,6 +164,30 @@ function ToolbarComponent(props: App): JSX.Element {
       },
     });
   }, [user]);
+
+  useEffect(() => {
+    // Get all kernels that I'm available to see
+    const kernels: any[] = [];
+    s.availableKernels.forEach((kernel) => {
+      if (kernel.value.is_private) {
+        if (kernel.value.owner_uuid == user?._id) {
+          kernels.push(kernel);
+        }
+      } else {
+        kernels.push(kernel);
+      }
+    });
+    setMyKernels(kernels);
+  }, [JSON.stringify(s.availableKernels)]);
+
+  useEffect(() => {
+    if (s.kernel == '') {
+      setAccess(true);
+    } else {
+      const access = myKernels.find((kernel) => kernel.key == s.kernel);
+      setAccess(access ? true : false);
+    }
+  }, [s.kernel, myKernels]);
 
   // Update from the props
   useEffect(() => {
@@ -188,90 +218,97 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  // const [fontSize, setFontSize] = useState(s.fontSize);
-
-  // useEffect(() => {
-  //   updateState(props._id, { fontSize: fontSize });
-  // }, [fontSize]);
-
   return (
     <>
       <HStack>
-        {/* check if the object is empty */}
-        {!selected ? (
-          // show a red light if the kernel is not running
-          <Badge colorScheme="red" rounded="sm" size="lg">
-            Offline
-          </Badge>
+        {access ? (
+          <>
+            {/* check if there are any available kernels and if one is selected */}
+            {!myKernels || !s.kernel ? (
+              // show a red light if the kernel is not running
+              <Badge colorScheme="red" rounded="sm" size="lg">
+                Offline
+              </Badge>
+            ) : (
+              // show a green light if the kernel is running
+              <Badge colorScheme="green" rounded="sm" size="lg">
+                Online
+              </Badge>
+            )}
+            <Select
+              placeholder="Select Kernel"
+              rounded="lg"
+              size="sm"
+              width="150px"
+              ml={2}
+              px={0}
+              colorScheme="teal"
+              icon={<MdArrowDropDown />}
+              onChange={selectKernel}
+              value={selected ?? undefined}
+              variant={'outline'}
+            >
+              {myKernels.map((kernel) => (
+                <option value={kernel.key} key={kernel.key}>
+                  {kernel.value.kernel_alias} (
+                  {
+                    // show kernel name as Python, R, or Julia
+                    kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
+                  }
+                  )
+                </option>
+              ))}
+            </Select>
+
+            <ButtonGroup isAttached size="xs" colorScheme="teal">
+              <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+                <Button
+                  isDisabled={s.fontSize <= 8}
+                  onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
+                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+                >
+                  <MdRemove />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+                <Button
+                  isDisabled={s.fontSize > 42}
+                  onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
+                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+                >
+                  <MdAdd />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+            <ButtonGroup isAttached size="xs" colorScheme="teal">
+              <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+                <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+                  <MdFileDownload />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+
+            <ButtonGroup isAttached size="xs" colorScheme="teal">
+              <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
+                <Button
+                  onClick={() =>
+                    updateState(props._id, {
+                      executeInfo: {
+                        executeFunc: 'generate_error_message',
+                        params: { user_uuid: user!._id },
+                      },
+                    })
+                  }
+                  _hover={{ opacity: 0.7 }}
+                >
+                  <MdError />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+          </>
         ) : (
-          // show a green light if the kernel is running
-          <Badge colorScheme="green" rounded="sm" size="lg">
-            Online
-          </Badge>
+          <>This CodeCell is Private</>
         )}
-        <Select
-          placeholder="Select Kernel"
-          rounded="lg"
-          size="sm"
-          width="150px"
-          ml={2}
-          px={0}
-          colorScheme="teal"
-          icon={<MdArrowDropDown />}
-          onChange={selectKernel}
-          value={selected ?? undefined}
-          variant={'outline'}
-        >
-          {s.availableKernels.map(({ value, label }) => (
-            <option value={value}>{label}</option>
-          ))}
-        </Select>
-
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button
-              isDisabled={s.fontSize <= 8}
-              onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
-              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-            >
-              <MdRemove />
-            </Button>
-          </Tooltip>
-          <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button
-              isDisabled={s.fontSize > 42}
-              onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-            >
-              <MdAdd />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-            <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-              <MdFileDownload />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
-
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
-            <Button
-              onClick={() =>
-                updateState(props._id, {
-                  executeInfo: {
-                    executeFunc: 'generate_error_message',
-                    params: { user_uuid: user!._id },
-                  },
-                })
-              }
-              _hover={{ opacity: 0.7 }}
-            >
-              <MdError />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
       </HStack>
     </>
   );
@@ -279,13 +316,18 @@ function ToolbarComponent(props: App): JSX.Element {
 
 export default { AppComponent, ToolbarComponent };
 
+type InputBoxProps = {
+  app: App;
+  access: boolean; //Does this user have access to the sagecell's selected kernel
+};
+
 /**
  *
  * @param props
  * @returns
  */
-export const InputBox = (props: App): JSX.Element => {
-  const s = props.data.state as AppState;
+const InputBox = (props: InputBoxProps): JSX.Element => {
+  const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const ace = useRef<AceEditor>(null);
   const [code, setCode] = useState<string>(s.code);
@@ -295,7 +337,7 @@ export const InputBox = (props: App): JSX.Element => {
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
     if (code) {
-      updateState(props._id, {
+      updateState(props.app._id, {
         code: code,
         output: '',
         executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
@@ -304,7 +346,7 @@ export const InputBox = (props: App): JSX.Element => {
   };
 
   const handleClear = () => {
-    updateState(props._id, {
+    updateState(props.app._id, {
       code: '',
       output: '',
       executeInfo: { executeFunc: '', params: {} },
@@ -329,14 +371,13 @@ export const InputBox = (props: App): JSX.Element => {
   }, [s.fontSize]);
 
   return (
-    <>
+    <Box>
       <HStack>
         <AceEditor
           ref={ace}
           name="ace"
           value={code}
           onChange={updateCode}
-          readOnly={user?._id !== props._createdBy}
           fontSize={`${fontSize}px`}
           minLines={4}
           maxLines={20}
@@ -355,9 +396,9 @@ export const InputBox = (props: App): JSX.Element => {
             width: '100%',
             height: '100%',
             border: 'none',
-            marginTop: 15,
-            marginLeft: 15,
-            marginRight: 0,
+            marginTop: '0.5rem',
+            marginLeft: '0.5rem',
+            marginRight: '0rem',
             marginBottom: 10,
             padding: 0,
             overflow: 'hidden',
@@ -371,56 +412,111 @@ export const InputBox = (props: App): JSX.Element => {
           ]}
         />
         <VStack pr={2}>
-          <Tooltip hasArrow label="Execute" placement="right-start">
-            <IconButton
-              _hover={{ bg: 'invisible', transform: 'scale(1.2)', transition: 'transform 0.2s' }}
-              boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-              size={'xs'}
-              rounded={'full'}
-              onClick={handleExecute}
-              aria-label={''}
-              disabled={user?._id !== props._createdBy}
-              bg={useColorModeValue('#FFFFFF', '#000000')}
-              variant="outline"
-              icon={<MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-            />
-          </Tooltip>
-          <Tooltip hasArrow label="Clear All" placement="right-start">
-            <IconButton
-              _hover={{ bg: 'invisible', transform: 'scale(1.2)', transition: 'transform 0.2s' }}
-              boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.4)'}
-              size={'xs'}
-              rounded={'full'}
-              onClick={handleClear}
-              aria-label={''}
-              disabled={user?._id !== props._createdBy}
-              bg={useColorModeValue('#FFFFFF', '#000000')}
-              variant="outline"
-              icon={<MdDelete size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-            />
-          </Tooltip>
+          {props.access ? (
+            <Tooltip hasArrow label="Execute" placement="right-start">
+              <IconButton
+                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
+                onClick={handleExecute}
+                aria-label={''}
+                bg={useColorModeValue('#FFFFFF', '#000000')}
+                variant="ghost"
+                icon={<MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+              />
+            </Tooltip>
+          ) : null}
+
+          {props.access ? (
+            <Tooltip hasArrow label="Clear All" placement="right-start">
+              <IconButton
+                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
+                onClick={handleClear}
+                aria-label={''}
+                disabled={user?._id !== s.kernel ? false : true}
+                bg={useColorModeValue('#FFFFFF', '#000000')}
+                variant="ghost"
+                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+              />
+            </Tooltip>
+          ) : null}
         </VStack>
       </HStack>
-      {/* <Flex pr={10} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
-        {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
-      </Flex> */}
-    </>
+      <Stack px={4}>
+        <HStack>
+          <Text fontSize="sm" color={useColorModeValue('#000000', '#FFFFFF')}></Text>
+          <Slider
+            aria-label="slider-ex-4"
+            defaultValue={fontSize}
+            min={24}
+            max={48}
+            step={1}
+            onChange={(value) => {
+              setFontSize(value);
+            }}
+          >
+            <SliderTrack>
+              <SliderFilledTrack />
+            </SliderTrack>
+            <SliderThumb />
+          </Slider>
+        </HStack>
+        <Text fontSize="xs" color={useColorModeValue('#000000', '#FFFFFF')}>
+          {s.executeInfo?.executeFunc === 'execute' ? (
+            'Executing...'
+          ) : (
+            <Flex pr={MARGIN} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
+              Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
+              {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
+            </Flex>
+          )}
+        </Text>
+      </Stack>
+    </Box>
   );
 };
 
+type OutputBoxProps = {
+  output: string;
+  app: App;
+  user: User;
+};
 /**
+ * This function is used to render the output box
+ * The output is a string from a python script that
+ * is executed in the kernel, serialized using JSON.dumps(),
+ * and then sent back to the client.
+ * The output is then parsed using JSON.parse() and displayed
+ * in the output box.
  *
- * @param output
+ * @param props OutputBoxProps
  * @returns {JSX.Element}
  */
-const OutputBox = (output: any): JSX.Element => {
+const OutputBox = (props: OutputBoxProps): JSX.Element => {
+  const parsedJSON = JSON.parse(props.output);
+  const s = props.app.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
+  if (!props.output) return <></>;
+  if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
   return (
-    <>
-      {/**
-       * TODO: Fix the display of the execution count
-       */}
-      {!output.execute_result ? null : (
+    <Box
+      p={MARGIN}
+      m={MARGIN}
+      hidden={!parsedJSON ? true : false}
+      className="sc-output"
+      style={{
+        overflow: 'auto',
+        backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
+        boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
+        borderRadius: '4px',
+        fontFamily: 'monospace',
+        fontSize: s.fontSize + 'px',
+        color: useColorModeValue('#000000', '#FFFFFF'),
+        whiteSpace: 'pre-wrap',
+        wordWrap: 'break-word',
+        overflowWrap: 'break-word',
+      }}
+    >
+      {!parsedJSON.execute_result || !parsedJSON.execute_result.execution_count ? null : (
         <Text
           fontSize="xs"
           color="gray.500"
@@ -428,81 +524,151 @@ const OutputBox = (output: any): JSX.Element => {
             fontFamily: 'monospace',
           }}
         >
-          {`Out [${output.execute_result.execution_count}]`}
+          {`Out [${parsedJSON.execute_result.execution_count}]`}
         </Text>
       )}
-      {output.request_id ? null : null}
-      {!output.error ? null : !Array.isArray(output.error) ? (
-        <Alert status="error">{`${output.error.ename}: ${output.error.evalue}`}</Alert>
+      {parsedJSON.request_id ? null : null}
+      {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
+        <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
       ) : (
         <Alert status="error" variant="left-accent">
           <AlertIcon />
-          <Ansi>{output.error[output.error.length - 1]}</Ansi>
+          <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
         </Alert>
       )}
 
-      {!output.stream ? null : output.stream.name === 'stdout' ? (
-        <Text id="sc-stdout">{output.stream.text}</Text>
+      {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
+        <Text id="sc-stdout">{parsedJSON.stream.text}</Text>
       ) : (
         <Text id="sc-stderr" color="red">
-          {output.stream.text}
+          {parsedJSON.stream.text}
         </Text>
       )}
 
-      {!output.display_data
+      {!parsedJSON.display_data
         ? null
-        : Object.keys(output.display_data.data).map((key, i) => {
-            switch (key) {
-              case 'text/plain':
-                return (
-                  <Text key={i} id="sc-stdout">
-                    {output.display_data.data[key]}
-                  </Text>
-                );
-              case 'text/html':
-                return <div key={i} dangerouslySetInnerHTML={{ __html: output.display_data.data[key] }} />;
-              case 'image/png':
-                return <Image key={i} src={`data:image/png;base64,${output.display_data.data[key]}`} />;
-              case 'image/jpeg':
-                return <Image key={i} src={`data:image/jpeg;base64,${output.display_data.data[key]}`} />;
-              case 'image/svg+xml':
-                return <div key={i} dangerouslySetInnerHTML={{ __html: output.display_data.data[key] }} />;
-              case 'application/javascript':
-                return <Text>javascript not handled</Text>;
-              case 'text/latex':
-                return <Text>latex not handled</Text>;
-              default:
-                return null;
+        : Object.keys(parsedJSON.display_data).map((key) => {
+            if (key === 'data') {
+              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.display_data.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  default:
+                    return MapJSONObject(parsedJSON.display_data[key]);
+                }
+              });
             }
+            return null;
           })}
 
-      {!output.execute_result
+      {!parsedJSON.execute_result
         ? null
-        : Object.keys(output.execute_result.data).map((key, i) => {
-            switch (key) {
-              case 'text/plain':
-                if (output.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                return (
-                  <Text key={i} id="sc-stdout">
-                    {output.execute_result.data[key]}
-                  </Text>
-                );
-              case 'text/html':
-                return <div key={i} dangerouslySetInnerHTML={{ __html: output.execute_result.data[key] }} />;
-              case 'image/png':
-                return <Image key={i} src={`data:image/png;base64,${output.execute_result.data[key]}`} />;
-              case 'image/jpeg':
-                return <Image key={i} src={`data:image/jpeg;base64,${output.execute_result.data[key]}`} />;
-              case 'image/svg+xml':
-                return <div key={i} dangerouslySetInnerHTML={{ __html: output.execute_result.data[key] }} />;
-              case 'application/javascript':
-                return <Text>javascript not handled</Text>;
-              case 'text/latex':
-                return <Text>latex not handled</Text>;
-              default:
-                return null;
+        : Object.keys(parsedJSON.execute_result).map((key) => {
+            if (key === 'data') {
+              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.execute_result.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  default:
+                    return null;
+                }
+              });
             }
+            return null;
           })}
-    </>
+      {!s.privateMessage
+        ? null
+        : s.privateMessage.map(({ userId, message }) => {
+            // find the user name that matches the userId
+            if (userId !== props.user._id) {
+              return null;
+            }
+            return (
+              <Toast
+                status="error"
+                description={message + ', ' + props.user.data.name}
+                duration={5000}
+                isClosable
+                onClose={() => updateState(props.app._id, { privateMessage: [] })}
+                hidden={userId !== props.user._id}
+              />
+            );
+          })}
+    </Box>
+  );
+};
+
+/**
+ * Recursively map the object and display the output
+ * This is used to display the output similar to JSON
+ * when the output is an unhandled type
+ * @param {Object} obj
+ */
+const MapJSONObject = (obj: any): JSX.Element => {
+  if (!obj) return <></>;
+  if (typeof obj === 'object' && Object.keys(obj).length === 0) return <></>;
+  return (
+    <Box
+      pl={2}
+      ml={2}
+      bg={useColorModeValue('#FFFFFF', '#000000')}
+      boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
+      rounded={'md'}
+      fontSize={'16px'}
+      color={useColorModeValue('#000000', '#FFFFFF')}
+    >
+      {typeof obj === 'object'
+        ? Object.keys(obj).map((key) => {
+            if (typeof obj[key] === 'object') {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {MapJSONObject(obj[key])}
+                  </Box>
+                </Box>
+              );
+            } else {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {obj[key]}
+                  </Box>
+                </Box>
+              );
+            }
+          })
+        : null}
+    </Box>
   );
 };

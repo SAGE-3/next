@@ -7,8 +7,10 @@
  */
 import { useCallback } from 'react';
 
-import { AlfredComponent, processContentURL, useAppStore, useBoardStore, usePresenceStore, useUIStore, useUser } from '@sage3/frontend';
-
+import {
+  AlfredComponent, processContentURL, useAppStore, useBoardStore,
+  usePresenceStore, useUIStore, useUser, useData
+} from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState, } from '@sage3/applications/schema';
@@ -20,12 +22,10 @@ type props = {
 };
 
 export function Alfred(props: props) {
-  // Boards
-  const boards = useBoardStore((state) => state.boards);
-  // const board = boards.find((el) => el._id === props.boardId);
-  const scale = useUIStore((state) => state.scale);
-
+  // get features
+  const data = useData('/api/info');
   // UI
+  const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const displayUI = useUIStore((state) => state.displayUI);
   const hideUI = useUIStore((state) => state.hideUI);
@@ -42,6 +42,10 @@ export function Alfred(props: props) {
   // Function to create a new app
   const newApplication = (appName: AppName) => {
     if (!user) return;
+
+    if (appName === "JupyterLab" && data.features && !data.features['jupyter']) return;
+    if (appName === "SageCell" && data.features && !data.features['cell']) return;
+    if (appName === "Screenshare" && data.features && !data.features['twilio']) return;
 
     // Get around  the center of the board
     const x = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
@@ -140,7 +144,7 @@ export function Alfred(props: props) {
           raised: true,
         });
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
-        newApplication('CodeCell');
+        newApplication('SageCell');
       } else if (terms[0] === 'showui') {
         // Show all the UI elements
         displayUI();

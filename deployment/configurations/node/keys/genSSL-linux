@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# SAGE2 is available for use under the SAGE2 Software License
+# 
+# University of Illinois at Chicago's Electronic Visualization Laboratory (EVL)
+# and University of Hawai'i at Manoa's Laboratory for Advanced Visualization and
+# Applications (LAVA)
+# 
+# See full text, terms and conditions in the LICENSE.txt included file
+#
+# Copyright (c) 2014
+
+
+# Reset the key database
+rm -fr ~/.pki/nssdb
+mkdir -p  ~/.pki/nssdb
+echo "" > /tmp/pass
+echo "" >> /tmp/pass
+certutil -f /tmp/pass -d sql:$HOME/.pki/nssdb -N
+/bin/rm -f /tmp/pass
+
+# Generate new keys
+servers="$HOSTNAME localhost 127.0.0.1"
+
+for f in `echo $servers`
+do
+	./init_webserver.sh $f
+done
+

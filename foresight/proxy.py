@@ -264,7 +264,7 @@ def get_cmdline_parser():
 if __name__ == "__main__":
     # For development purposes only.
     token = conf['token']
-    if prod_type == "production":
+    if prod_type == "production" or prod_type == "backend":
         room_id = os.environ.get("ROOM_ID")
         if not room_id:
             print("ROOM_ID not defined")

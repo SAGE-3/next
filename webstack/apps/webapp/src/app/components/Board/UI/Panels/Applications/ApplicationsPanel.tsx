@@ -6,10 +6,10 @@
  *
  */
 
-import { useEffect } from 'react';
-import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import { useColorModeValue, VStack } from '@chakra-ui/react';
 
-import { StuckTypes, useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { StuckTypes, useAppStore, useUIStore, useUser, useData } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName } from '@sage3/applications/schema';
@@ -26,22 +26,23 @@ const appListed = development ? Object.keys(Applications) : [
   // "CSVViewer",
   // "Clock",
   // "Cobrowse",
-  "CodeCell",
-  "Counter",
+  // "CodeCell",
+  // "Counter",
   // "DataTable",
   // "DeepZoomImage",
   // "GLTFViewer",
   // "ImageViewer",
   "JupyterLab",
-  "Kernels",
+  // "Kernels",
   "KernelDashboard",
   "LeafLet",
   // "Linker",
   "Notepad",
   // "PDFViewer",
   // "RTCChat",
-  "Screenshare",
   "SageCell",
+  "Screenshare",
+  // "SageCell",
   "Stickie",
   // "TwilioScreenshare",
   // "VegaLite",
@@ -56,10 +57,11 @@ export interface ApplicationProps {
 }
 
 export function ApplicationsPanel(props: ApplicationProps) {
+  const data = useData('/api/info');
+  const [appsList, setAppsList] = useState(appListed);
+
   // App Store
-  const apps = useAppStore((state) => state.apps);
   const createApp = useAppStore((state) => state.create);
-  const deleteApp = useAppStore((state) => state.delete);
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
@@ -72,10 +74,32 @@ export function ApplicationsPanel(props: ApplicationProps) {
   const setShow = useUIStore((state) => state.applicationsPanel.setShow);
   const stuck = useUIStore((state) => state.applicationsPanel.stuck);
   const setStuck = useUIStore((state) => state.applicationsPanel.setStuck);
-
   const zIndex = useUIStore((state) => state.panelZ).indexOf('applications');
-
   const controllerPosition = useUIStore((state) => state.controller.position);
+
+  useEffect(() => {
+    if (data) {
+      const features = data.features;
+      setAppsList((prev) => {
+        let newlist = prev;
+        if (!features['twilio']) {
+          newlist = newlist.filter((a) => a !== 'Screenshare');
+        }
+        if (!features['ai']) {
+          newlist = newlist.filter((a) => a !== 'AIPane');
+        }
+        if (!features['cell']) {
+          newlist = newlist.filter((a) => a !== 'SageCell');
+        }
+        if (!features['jupyter']) {
+          newlist = newlist.filter((a) => a !== 'JupyterLab');
+          newlist = newlist.filter((a) => a !== 'KernelDashboard');
+        }
+        return newlist;
+      });
+    }
+  }, [data]);
+
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
@@ -90,13 +114,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
   }, [controllerPosition]);
 
   // Theme
-  // const textColor = useColorModeValue('gray.800', 'gray.100');
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   // User
   const { user } = useUser();
-
-  // const setAppPanelPosition = props.setPosition;
-  // const appPanelPosition = props.position;
 
   const newApplication = (appName: AppName) => {
     if (!user) return;
@@ -104,13 +124,24 @@ export function ApplicationsPanel(props: ApplicationProps) {
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
 
+    // Setup initial size
+    let w = 400;
+    let h = 400;
+    if (appName === 'SageCell') {
+      w = 800;
+      h = 300;
+    } else if (appName === 'KernelDashboard') {
+      w = 800;
+      h = 300;
+    }
+
     createApp({
       name: appName,
       description: appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },
-      size: { width: 400, height: 400, depth: 0 },
+      size: { width: w, height: h, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as any) },
@@ -157,7 +188,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
         }}
       >
         {/* <Box > */}
-        {appListed
+        {appsList
           // sort alphabetically by name
           .sort((a, b) => a.localeCompare(b))
           // create a button for each application

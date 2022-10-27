@@ -8,10 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import {
-  isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF,
-  isGIF, isPythonNotebook
-} from '@sage3/shared';
+import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
 
 import { GetConfiguration } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
@@ -128,9 +125,9 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'DeepZoomImage',
-        state: { ...initialValues['DeepZoomImage'] as AppState, assetid: file.id },
+        state: { ...(initialValues['DeepZoomImage'] as AppState), assetid: file.id },
         minimized: false,
-        raised: true
+        raised: true,
       });
     } else if (isGeoJSON(file.type)) {
       resolve({
@@ -143,9 +140,9 @@ export async function setupAppForFile(
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'LeafLet',
-        state: { ...initialValues['LeafLet'] as AppState, assetid: file.id },
+        state: { ...(initialValues['LeafLet'] as AppState), assetid: file.id },
         minimized: false,
-        raised: true
+        raised: true,
       });
     } else if (isText(file.type)) {
       // Look for the file in the asset store
@@ -193,16 +190,16 @@ export async function setupAppForFile(
         .then(function (text) {
           // Create a note from the text
           resolve({
-            name: 'CodeCell',
-            description: 'CodeCell',
+            name: 'SageCell',
+            description: 'SageCell',
             roomId: roomId,
             boardId: boardId,
             ownerId: userId,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            type: 'CodeCell',
-            state: { ...(initialValues['CodeCell'] as AppState), code: text },
+            type: 'SageCell',
+            state: { ...(initialValues['SageCell'] as AppState), code: text },
             minimized: false,
             raised: true,
           });
@@ -269,10 +266,11 @@ export async function setupAppForFile(
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': 'Token ' + conf.token,
+                  Authorization: 'Token ' + conf.token,
                 },
-                body: JSON.stringify(payload)
-              }).then((response) => response.json())
+                body: JSON.stringify(payload),
+              })
+                .then((response) => response.json())
                 .then((res) => {
                   console.log('Jupyter> notebook created', res);
 
@@ -286,11 +284,10 @@ export async function setupAppForFile(
                     size: { width: 700, height: 700, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'JupyterLab',
-                    state: { ...initialValues['JupyterLab'], notebook: file.originalfilename },
+                    state: { ...(initialValues['JupyterLab'] as any), notebook: file.originalfilename },
                     minimized: false,
                     raised: true,
                   });
-
                 });
             }
           });

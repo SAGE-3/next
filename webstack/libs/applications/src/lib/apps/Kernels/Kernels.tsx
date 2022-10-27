@@ -32,6 +32,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useParams } from 'react-router';
+import { initialValues } from '@sage3/applications/initialValues';
 
 // Store between app and toolbar
 export const useStore = create((set: any) => ({
@@ -134,7 +135,7 @@ function AppComponent(props: App): JSX.Element {
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'CodeCell',
-      state: { kernel: kid },
+      state: { ...initialValues['CodeCell'], kernel: kid },
       ownerId: user._id,
       minimized: false,
       raised: true,
@@ -154,7 +155,7 @@ function AppComponent(props: App): JSX.Element {
       size: { width: props.data.size.width, height: props.data.size.width, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'JupyterLab',
-      state: {},
+      state: { ...initialValues['JupyterLab'] },
       ownerId: user._id,
       minimized: false,
       raised: true,

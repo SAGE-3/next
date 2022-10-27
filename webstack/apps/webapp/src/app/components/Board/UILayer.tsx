@@ -100,7 +100,7 @@ export function UILayer(props: UILayerProps) {
           const filename = `stickie-${a._id}.txt`;
           if (filename && session) {
             // add to zip
-            session.file(filename, a.data.state.text);
+            session.file(filename, a.data.state.text || '');
           }
         }
       }

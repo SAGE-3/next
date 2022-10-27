@@ -12,7 +12,7 @@ import { Box, useColorModeValue } from '@chakra-ui/react';
 
 import {
   usePresence, useAppStore, useRouteNav, useBoardStore,
-  useRoomStore, usePresenceStore, useUsersStore
+  useRoomStore, usePresenceStore, useUsersStore, PasteHandler
 } from '@sage3/frontend';
 
 // Board Layers
@@ -85,6 +85,9 @@ export function BoardPage() {
 
       {/* Upper layer for local UI stuff */}
       <UILayer boardId={boardId} roomId={roomId}></UILayer>
+
+      {/* Paste data on the board */}
+      <PasteHandler boardId={boardId} roomId={roomId} />
     </>
   );
 }

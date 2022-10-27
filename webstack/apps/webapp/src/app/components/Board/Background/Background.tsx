@@ -12,7 +12,10 @@ import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
+import {
+  useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration,
+  useMessageStore, processContentURL
+} from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
@@ -245,26 +248,12 @@ export function Background(props: BackgroundProps) {
       // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {
-          //  Get the metadata file
-          const localurl = '/api/assets/static/' + a.data.metadata;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (j) {
-              const vw = j['ImageWidth'] || 800;
-              const vh = j['ImageHeight'] || 450;
-              const ar = vw / vh;
-              createApp(
-                setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 500, h: 400 / ar }, { assetid: fileID })
-              );
-            });
+          const extras = a.data.derived as ExtraImageType;
+          const vw = 800;
+          const vh = vw / (extras.aspectRatio || 1);
+          createApp(
+            setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: vw, h: vh }, { assetid: fileID })
+          );
         }
       });
     } else if (isCSV(fileType)) {
@@ -313,7 +302,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('CodeCell', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('SageCell', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
@@ -440,6 +429,7 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (!user) return;
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -453,20 +443,51 @@ export function Background(props: BackgroundProps) {
         uploadFunction(Array.from(files), xdrop, ydrop);
       });
     } else {
-      // if no files were dropped, create an application
-      const appName = event.dataTransfer.getData('app') as AppName;
-      if (appName) {
-        newApp(appName, xdrop, ydrop);
+      // Drag/Drop a URL
+      if (event.dataTransfer.types.includes('text/uri-list')) {
+        event.preventDefault();
+        event.stopPropagation();
+        const pastedText = event.dataTransfer.getData('Url');
+        if (pastedText) {
+          if (pastedText.startsWith('data:image/png;base64')) {
+            // it's a base64 image
+            createApp(
+              setupApp('ImageViewer', xdrop, ydrop, props.roomId, props.boardId, user._id,
+                { w: 800, h: 600 }, { assetid: pastedText })
+            );
+          } else {
+            const final_url = processContentURL(pastedText);
+            let w, h;
+            if (final_url !== pastedText) {
+              // it must be a video
+              w = 1280;
+              h = 720;
+            } else {
+              w = 800;
+              h = 800;
+            }
+            createApp(
+              setupApp('Webview', xdrop, ydrop, props.roomId, props.boardId, user._id,
+                { w, h }, { webviewurl: final_url })
+            );
+          }
+        }
       } else {
-        // Get information from the drop
-        const ids = event.dataTransfer.getData('file');
-        const types = event.dataTransfer.getData('type');
-        const fileIDs = JSON.parse(ids);
-        const fileTypes = JSON.parse(types);
-        // Open the file at the drop location
-        const num = fileIDs.length;
-        for (let i = 0; i < num; i++) {
-          OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+        // if no files were dropped, create an application
+        const appName = event.dataTransfer.getData('app') as AppName;
+        if (appName) {
+          newApp(appName, xdrop, ydrop);
+        } else {
+          // Get information from the drop
+          const ids = event.dataTransfer.getData('file');
+          const types = event.dataTransfer.getData('type');
+          const fileIDs = JSON.parse(ids);
+          const fileTypes = JSON.parse(types);
+          // Open the file at the drop location
+          const num = fileIDs.length;
+          for (let i = 0; i < num; i++) {
+            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+          }
         }
       }
     }
