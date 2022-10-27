@@ -23,6 +23,8 @@
   bottom: 15%;
   left: 1rem;
   display: flex;
+  margin: 1rem;
+  padding: 1rem;
 }
 
 .popover-close {

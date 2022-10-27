@@ -55,8 +55,10 @@ function AppComponent(props: App): JSX.Element {
   const location = useLocation();
   const update = useAppStore((state) => state.update);
 
-  const prevX = useRef(0);
-  const prevY = useRef(0);
+  const prevX = useRef(props.data.position.x);
+  const prevY = useRef(props.data.position.y);
+
+  const [outputLocal, setOutputLocal] = useState<{ score: number, label: string, box: object }[]>([])
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
@@ -66,7 +68,6 @@ function AppComponent(props: App): JSX.Element {
       const client = {
         [app._id]: app.data.name,
       };
-      // TODO Handle AIPanes overlapping AIPanes
       if (app.data.name === 'AIPane' && app._id !== props._id) {
         break;
       } else {
@@ -81,8 +82,17 @@ function AppComponent(props: App): JSX.Element {
               ...s.hostedApps,
               ...client,
             };
+<<<<<<< HEAD
             updateState(props._id, { messages: hosted, hostedApps: hosted });
             newAppAdded();
+=======
+            updateState(props._id, {hostedApps: hosted});
+            updateState(props._id, {messages: hosted});
+            console.log('app ' + app._id + ' added');
+            newAppAdded(app.data.name);
+          } else {
+            console.log('app ' + app._id + ' already in hostedApps');
+>>>>>>> ai-pane
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
@@ -132,17 +142,52 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
+<<<<<<< HEAD
       updateState(props._id, { supportedTasks: '' });
     }
   }, [JSON.stringify(s.hostedApps)]);
+=======
+      updateState(props._id, {supportedTasks: ""});
+    }
+  }, [Object.keys(s.hostedApps).length])
+
+  //TODO parse output
+  useEffect(() => {
+    if (s.output != undefined && Object.keys(s.output).length > 0) {
+      const parsedOT = JSON.parse(s.output)
+      const arrayOT = parsedOT.output.split("'")
+      const parsedArrayOT = JSON.parse(arrayOT[0])
+      const modelOutput: { score: number, label: string, box: object }[] = []
+      Object.keys(parsedArrayOT).forEach((array) => {
+        Object.keys(parsedArrayOT[array]).forEach((entity) => {
+          modelOutput.push({
+            score: parsedArrayOT[array][entity].score,
+            label: parsedArrayOT[array][entity].label,
+            box: parsedArrayOT[array][entity].box
+          })
+        })
+      })
+      setOutputLocal(modelOutput)
+      console.log(modelOutput)
+      for (const score in modelOutput) {
+        console.log(modelOutput[score].score)
+      }
+    }
+  }, [JSON.stringify(s.output)])
+
+>>>>>>> ai-pane
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
 
-  function newAppAdded() {
+  function newAppAdded(appType: string) {
     updateState(props._id, {
+<<<<<<< HEAD
       executeInfo: { executeFunc: 'new_app_added', params: { app_type: 'ImageViewer' } },
+=======
+      executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
+>>>>>>> ai-pane
     });
   }
 
@@ -172,7 +217,6 @@ function AppComponent(props: App): JSX.Element {
             </div>
           </PopoverTrigger>
 
-          {/*TODO Check app type, if hosted app is correct type then accept, else error*/}
           <PopoverContent>
             <PopoverArrow />
             <PopoverCloseButton />
@@ -203,6 +247,7 @@ function AppComponent(props: App): JSX.Element {
           )}
         </Box>
 
+<<<<<<< HEAD
         <Box position="absolute" top="30%" left="20%">
           selected application {selectedAppId}
           <br />
@@ -219,6 +264,8 @@ function AppComponent(props: App): JSX.Element {
             {s.output}
           </Text>
         </Box>
+=======
+>>>>>>> ai-pane
       </Box>
     </AppWindow>
   );
@@ -228,9 +275,37 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
+<<<<<<< HEAD
   const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
   const classModels = ['image_c_model_1', 'image_c_model_2'];
+=======
+  const location = useLocation();
+  const locationState = location.state as { roomId: string };
+  const assets = useAssetStore((state) => state.assets);
+  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+  const update = useAppStore((state) => state.update);
+
+
+>>>>>>> ai-pane
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
+
+  const [supportedTasks, setSupportedTasks] = useState<{ name: string, models: string[] }[]>([])
+
+  useEffect(() => {
+    if (s.supportedTasks != undefined && s.supportedTasks != '') {
+      const parsedST = JSON.parse(s.supportedTasks)
+      const newTasks: { name: string, models: string[] }[] = [];
+      Object.keys(parsedST).forEach(aiType => {
+        Object.keys(parsedST[aiType]).forEach(modelName => {
+          newTasks.push({
+            name: modelName,
+            models: parsedST[aiType][modelName]
+          })
+        })
+      })
+      setSupportedTasks(newTasks)
+    }
+  }, [JSON.stringify(s.supportedTasks)])
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -246,8 +321,13 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }
 
+  const handleModelClick = (model: string) => {
+    console.log('run model: ', model)
+  }
+
   return (
     <>
+<<<<<<< HEAD
       <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
         <Stack spacing={2} direction="row">
           <Menu>
@@ -274,6 +354,29 @@ function ToolbarComponent(props: App): JSX.Element {
               </MenuList>
             </Portal>
           </Menu>
+=======
+      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
+        <Stack spacing={2} direction='row'>
+
+          {supportedTasks.map(task => {
+            return (
+              <Menu>
+                <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+                  {task.name}
+                </MenuButton>
+                <Portal>
+                  <MenuList>
+                    {task.models.map((name) => {
+                      return <MenuItem onClick={() => handleModelClick(name)}>{name}</MenuItem>;
+                    })}
+                  </MenuList>
+                </Portal>
+              </Menu>
+            )
+          })
+          }
+
+>>>>>>> ai-pane
           <IconButton
             aria-label="Run AI"
             icon={s.runStatus ? <BiRun /> : <FaPlay />}

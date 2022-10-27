@@ -14,43 +14,42 @@ from pydantic import PrivateAttr
 import json
 from config import ai_models, funcx as funcx_config
 
-
-
 # TODO: movie this to a configuration somewhere and call it something else.
 ai_settings = {
     "vision": {
         "supported_apps": ['ImageViewer'],
         "tasks": {
-            "Object Detection": ["image_od_model_1", "image_od_model_2"],
+            "Object Detection": ["facebook/detr-resnet-50", "lai_lab/fertilized_egg_detect"],
             "Classification": ["image_c_model_1", "image_c_model_2"]
         }
     },
     "nlp": {
         "supported_apps": ['PDFViewer', 'Notepad'],
         "tasks": {
-            "Summarization": ["text_s_model_1", "text_s_model_2", ],
+            "Summarization": ["facebook/bart-large-cnn", "sshleifer/distilbart-cnn-12-6"],
         }
     }
 }
-
 
 class AIPaneState(TrackedBaseModel):
     executeInfo: ExecuteInfo
     messages: dict
     hostedApps: Optional[dict]
-    supportedTasks: dict
+    supportedTasks: Optional[dict]
     runStatus: bool
-    output: str
+    output: Optional[dict]
 
 
 class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
+
     # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(AIPane, self).__init__(**kwargs)
+        #self.pending_executions = {}
         # self._some_private_info = {1: 2}
 
     def new_app_added(self, app_type):
@@ -71,11 +70,7 @@ class AIPane(SmartBit):
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
             self.state.supportedTasks = json.dumps(supported_tasks)
-            # ANDY: we need a state variable we can put the supported_tasks in
-
         print(f"supported tasks are: {self.state.supportedTasks}")
-        # print(f"supported_tasks {type(supported_tasks)}")
-        # print(f"self.state.supported_tasks {type(self.state.supportedTasks)}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
@@ -83,6 +78,11 @@ class AIPane(SmartBit):
     def handle_exec_result(self, msg):
         print("I am handling the execution results")
         print(f" type of msg in aipane{type(msg)}")
+
+        # first, get the ids of the apps
+
+
+
         self.state.output = json.dumps(msg)
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
@@ -96,6 +96,8 @@ class AIPane(SmartBit):
             'data': {'urls': ['http://aishelf.org/wp-content/uploads/2021/05/yolo_2.jpg',
                               'http://farm9.staticflickr.com/8245/8622384284_d5535dfc3d_z.jpg']}
         }
+        # self.pending_executions
+
         payload = {
             "app_uuid": "SOMETHING",
             "msg_uuid": some_uuid,

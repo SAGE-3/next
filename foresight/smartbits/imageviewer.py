@@ -7,16 +7,28 @@
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
+<<<<<<< HEAD
 
 
 class ImageViewerState(TrackedBaseModel):
 
+=======
+import json
+
+class ImageViewerState(TrackedBaseModel):
+    # class Config:
+    #     arbitrary_types_allowed = True
+    boxes: dict
+    assetid: str
+    annotations: bool
+>>>>>>> ai-pane
     executeInfo: ExecuteInfo
 
 
 class ImageViewer(SmartBit):
     # the key that is assigned to this in state is
     state: ImageViewerState
+<<<<<<< HEAD
     # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -30,3 +42,18 @@ class ImageViewer(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
+=======
+
+    # _some_private_info: dict = PrivateAttr()
+    def __init__(self, **kwargs):
+        # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
+        super(ImageViewer, self).__init__(**kwargs)
+
+    def set_bboxes(self, bboxes):
+        print('+++++++++++++++++')
+        print('running set_boxes')
+        self.state.boxes = bboxes
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
+>>>>>>> ai-pane

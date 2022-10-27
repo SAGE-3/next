@@ -21,3 +21,4 @@ Thumbs.db
 *.pem
 foresight/config.json
 webstack/package-lock.json
+*.deb

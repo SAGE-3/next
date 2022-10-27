@@ -8,15 +8,19 @@
 
 import { z } from 'zod';
 
-// const VisionTasks = z.enum(["Object Detection", "Classification"]);
-// export type VisionTasks = z.infer<typeof VisionTasks>;
-//
-// const NLPTasks = z.enum(["Summarization"]);
-// export type NLPTasks = z.infer<typeof NLPTasks>;
-//
-// // export type supported_tasks = z.infer<(typeof VisionTasks) & (typeof NLPTasks)>;
-// export const supported_tasks = {...VisionTasks, ...NLPTasks};
-// export type supported_tasks = typeof supported_tasks;
+const TaskTypes = z.enum(['vision', 'nlp'])
+export type TaskTypes = z.infer<typeof TaskTypes>;
+
+const VisionTasks = z.enum(["Object Detection", "Classification"]);
+export type VisionTasks = z.infer<typeof VisionTasks>;
+
+const NLPTasks = z.enum(["Summarization"]);
+export type NLPTasks = z.infer<typeof NLPTasks>;
+
+// export type supported_tasks = z.infer<(typeof VisionTasks) & (typeof NLPTasks)>;
+export const supported_tasks = {...VisionTasks, ...NLPTasks};
+export type supported_tasks = typeof supported_tasks;
+
 
 export const schema = z.object({
   hostedApps: z.record(z.string(), z.string()),
@@ -24,11 +28,11 @@ export const schema = z.object({
   // Temp variable to demonstrate app run and idle status
   runStatus: z.boolean(),
 
-  supportedTasks: z.string(),
+  supportedTasks: z.any(),
 
   messages: z.record(z.string(), z.any()),
 
-  output: z.string(),
+  output: z.any(),
 
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -41,9 +45,16 @@ export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
   hostedApps: {},
   runStatus: false,
+<<<<<<< HEAD
   supportedTasks: '',
   messages: {},
   output: '',
+=======
+  supportedTasks: {},
+  messages: {},
+  output: {},
+
+>>>>>>> ai-pane
 };
 
 export const name = 'AIPane';
