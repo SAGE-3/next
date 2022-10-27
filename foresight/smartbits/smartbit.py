@@ -36,25 +36,40 @@ class TrackedBaseModel(BaseModel):
         except:
             self.touched.remove(f"{self.path}.{name}"[1:])
 
+    # def refresh_data_form_update_v2(self, msg):
+    #     for label, value in msg['event']["updates"].items():
+    #         if isinstance(value, dict):
+    #             self.
+
     def refresh_data_form_update(self, update_data):
         # TODO replace this temp solution, which updates everything with a
         # solution that updates only necessary fields
         update_data['state'] = update_data['data']['state']
         del (update_data['data']['state'])
         # we don't need to update the following keys:
-        do_not_modify = ["_id", "_createdAt", '_updatedAt']
+        do_not_modify = ["_id", "_createdAt", '_updatedAt', '_createdBy', '_updatedBy']
         _ = [update_data.pop(key) for key in do_not_modify]
 
         def attrsetter(name):
             def setter(obj, val):
                 fields = name.split(".")
                 for field in fields[0:-1]:
-                    obj = getattr(obj, field)
+                    try:
+                        obj = getattr(obj, field)
+                    except:
+                        obj = obj[field]
+
                 # using object setattr to avoid adding field to touched
+                error = True
                 try:
                     object.__setattr__(obj, fields[-1], val)
+                    error = False
                 except:
                     obj[fields[-1]] = val
+                    error = False
+                finally:
+                    if error:
+                        raise Exception("Error Happened")
             return setter
 
         def recursive_iter(u_data, path=[]):

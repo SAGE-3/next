@@ -49,7 +49,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [bboxes, setBboxes] = useState<{ [key: string]: dimensions }>({});
   //
-  // s.boxes = {
+  // s.bboxes = {
   //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
   //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
   //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
@@ -162,6 +162,7 @@ function AppComponent(props: App): JSX.Element {
 
           {
             Object.keys(bboxes).map((label) => {
+
               return (
                 <Box
                   position="absolute"
