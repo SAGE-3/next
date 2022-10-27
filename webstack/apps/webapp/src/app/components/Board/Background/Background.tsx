@@ -445,22 +445,32 @@ export function Background(props: BackgroundProps) {
     } else {
       // Drag/Drop a URL
       if (event.dataTransfer.types.includes('text/uri-list')) {
+        event.preventDefault();
+        event.stopPropagation();
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
-          const final_url = processContentURL(pastedText);
-          let w, h;
-          if (final_url !== pastedText) {
-            // it must be a video
-            w = 1280;
-            h = 720;
+          if (pastedText.startsWith('data:image/png;base64')) {
+            // it's a base64 image
+            createApp(
+              setupApp('ImageViewer', xdrop, ydrop, props.roomId, props.boardId, user._id,
+                { w: 800, h: 600 }, { assetid: pastedText })
+            );
           } else {
-            w = 800;
-            h = 800;
+            const final_url = processContentURL(pastedText);
+            let w, h;
+            if (final_url !== pastedText) {
+              // it must be a video
+              w = 1280;
+              h = 720;
+            } else {
+              w = 800;
+              h = 800;
+            }
+            createApp(
+              setupApp('Webview', xdrop, ydrop, props.roomId, props.boardId, user._id,
+                { w, h }, { webviewurl: final_url })
+            );
           }
-          createApp(
-            setupApp('Webview', xdrop, ydrop, props.roomId, props.boardId, user._id,
-              { w, h }, { webviewurl: final_url })
-          );
         }
       } else {
         // if no files were dropped, create an application
