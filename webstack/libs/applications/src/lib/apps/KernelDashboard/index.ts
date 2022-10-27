@@ -13,14 +13,6 @@ import { z } from 'zod';
  * created by: SAGE3 Team
  */
 
-// Types
-// export type Kernel = {
-//   id: string;
-//   name?: string;
-//   last_activity?: string;
-//   execution_state?: string;
-//   connections?: boolean;
-// };
 export type KernelSpec = {
   name: string;
   spec: {
@@ -52,7 +44,6 @@ export const schema = z.object({
       connections: z.boolean(),
     })
   ),
-  // defaultKernel: z.string(),
   kernelSpecs: z.array(
     z.object({
       name: z.string(),
@@ -83,7 +74,6 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   kernels: [],
-  // defaultKernel: '',
   kernelSpecs: [],
   availableKernels: [],
   executeInfo: { executeFunc: '', params: {} },

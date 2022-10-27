@@ -26,22 +26,23 @@ const appListed = development ? Object.keys(Applications) : [
   // "CSVViewer",
   // "Clock",
   // "Cobrowse",
-  "CodeCell",
-  "Counter",
+  // "CodeCell",
+  // "Counter",
   // "DataTable",
   // "DeepZoomImage",
   // "GLTFViewer",
   // "ImageViewer",
   "JupyterLab",
-  "Kernels",
+  // "Kernels",
   "KernelDashboard",
   "LeafLet",
   // "Linker",
   "Notepad",
   // "PDFViewer",
   // "RTCChat",
-  "Screenshare",
   "SageCell",
+  "Screenshare",
+  // "SageCell",
   "Stickie",
   // "TwilioScreenshare",
   // "VegaLite",
@@ -88,7 +89,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
           newlist = newlist.filter((a) => a !== 'AIPane');
         }
         if (!features['cell']) {
-          newlist = newlist.filter((a) => a !== 'CodeCell');
+          newlist = newlist.filter((a) => a !== 'SageCell');
         }
         if (!features['jupyter']) {
           newlist = newlist.filter((a) => a !== 'JupyterLab');

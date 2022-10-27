@@ -9,15 +9,15 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
-  # python:
-  #   image: "python:3.9-bullseye"
-  #   volumes:
-  #     - ./configurations/python:/code
-  #   environment:
-  #     - ENVIRONMENT=backend
-  #   restart: always
-  #   working_dir: /code
-  #   command: ./GO.sh
+  python:
+    image: "python:3.9-bullseye"
+    volumes:
+      - ./configurations/python:/code
+    environment:
+      - ENVIRONMENT=backend
+    restart: always
+    working_dir: /code
+    command: ./GO.sh
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:

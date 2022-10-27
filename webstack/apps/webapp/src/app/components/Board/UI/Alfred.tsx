@@ -44,7 +44,7 @@ export function Alfred(props: props) {
     if (!user) return;
 
     if (appName === "JupyterLab" && data.features && !data.features['jupyter']) return;
-    if (appName === "CodeCell" && data.features && !data.features['cell']) return;
+    if (appName === "SageCell" && data.features && !data.features['cell']) return;
     if (appName === "Screenshare" && data.features && !data.features['twilio']) return;
 
     // Get around  the center of the board
@@ -144,7 +144,7 @@ export function Alfred(props: props) {
           raised: true,
         });
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
-        newApplication('CodeCell');
+        newApplication('SageCell');
       } else if (terms[0] === 'showui') {
         // Show all the UI elements
         displayUI();

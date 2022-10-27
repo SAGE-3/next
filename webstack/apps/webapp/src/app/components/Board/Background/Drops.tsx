@@ -11,21 +11,25 @@ import { initialValues } from '@sage3/applications/initialValues';
 
 /**
  * Setup data structure to open an application
- * 
+ *
  * @export
- * @param {AppName} appName 
- * @param {number} x 
- * @param {number} y 
- * @param {string} roomId 
- * @param {string} boardId 
- * @param {string} userId 
+ * @param {AppName} appName
+ * @param {number} x
+ * @param {number} y
+ * @param {string} roomId
+ * @param {string} boardId
+ * @param {string} userId
  */
-export function setupApp(appName: AppName, x: number, y: number,
-  roomId: string, boardId: string, userId: string,
-  { w, h }: { w: number, h: number } = { w: 400, h: 400 },
-  init: Partial<AppState> = {}
+export function setupApp(
+  appName: AppName,
+  x: number,
+  y: number,
+  roomId: string,
+  boardId: string,
+  userId: string,
+  { w, h }: { w: number; h: number } = { w: 400, h: 400 },
+  init: AppState = {}
 ): AppSchema {
-
   return {
     name: appName,
     description: appName,
@@ -35,9 +39,9 @@ export function setupApp(appName: AppName, x: number, y: number,
     size: { width: w, height: h, depth: 0 },
     rotation: { x: 0, y: 0, z: 0 },
     type: appName,
-    state: { ...initialValues[appName] as AppState, ...init },
+    state: { ...initialValues[appName], ...init },
     ownerId: userId || '',
     minimized: false,
     raised: true,
   };
-};
+}

@@ -13,7 +13,7 @@ import json
 class SageCellState(TrackedBaseModel):
     code: str = ""
     output: str = ""
-    kernel: str = "python3"
+    kernel: str = ""
     availableKernels: list = []
     privateMessage: list = []
     executeInfo: ExecuteInfo
@@ -51,16 +51,14 @@ class SageCell(SmartBit):
             r_json.set(jupyter_kernels, '.', {})
         kernels = r_json.get(jupyter_kernels)
         available_kernels = []
-
-        for kernel in kernels.keys():
-            if kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
-                continue
-            if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
-                kernels[kernel]['kernel_alias'] = kernel[:8]
-            available_kernels.append({"label": kernels[kernel]['kernel_alias'], "value": kernel})
+        for kernel_id, kernel in kernels.items():
+            # if kernel.is_private and kernel.owner_uuid != user_uuid:
+            #     continue
+            if not kernel['kernel_alias'] or kernel['kernel_alias'] == kernel['kernel_name']:
+                kernel['kernel_alias'] = kernel_id[:8]
+            available_kernels.append({"key": kernel_id, "value": kernel})
         if len(available_kernels) > 0:
             self.state.availableKernels = available_kernels
-            print(f"I am sending back available Kernels {available_kernels}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

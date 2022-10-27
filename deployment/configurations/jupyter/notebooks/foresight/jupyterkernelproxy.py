@@ -35,11 +35,11 @@ class JupyterKernelProxy:
             self.pending_reponses = {}
             self.parent_proxy_instance = parent_proxy_instnace
             super().__init__(address, headers=headers)
-            print(f"In init, working on URL")
 
 
         def handshake_ok(self):
             print("Opening %s" % format_addresses(self))
+            print("Done opening the connection")
             self.parent_proxy_instance.conn_manager.add(self)
 
         def received_message(self, msg):
@@ -117,6 +117,21 @@ class JupyterKernelProxy:
 
         callback_fn = command_info["call_fn"]
         self.callback_info[user_passed_uuid] = callback_fn
+
+    def remove_stale_tokens(self, gateway_kernels):
+        kernels_ids = [k["id"] for k in gateway_kernels]
+        redis_kernels = set(self.redis_server.json().get('JUPYTER:KERNELS').keys())
+        redis_kernels_to_remove = redis_kernels - set(kernels_ids)
+        for k in redis_kernels_to_remove:
+            self.redis_server.json().delete('JUPYTER:KERNELS', k)
+
+    def get_kernels(self):
+        headers_dict = dict(self.headers)
+        response = requests.get(conf[prod_type]["jupyter_server"] + "/api/kernels", headers=headers_dict)
+        kernels = response.json()
+        self.remove_stale_tokens(kernels)
+        return kernels
+
 
     def get_room_kernel_id(self):
         """
