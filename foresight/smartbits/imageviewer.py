@@ -9,16 +9,18 @@ from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 import json
 
+
 class ImageViewerState(TrackedBaseModel):
     boxes: dict
     assetid: str
     annotations: bool
-    # executeInfo: ExecuteInfo
+    executeInfo: ExecuteInfo
 
 
 class ImageViewer(SmartBit):
     # the key that is assigned to this in state is
     state: ImageViewerState
+
     # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -26,8 +28,15 @@ class ImageViewer(SmartBit):
         super(ImageViewer, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
-    def set_bboxes(self, bbox_dict):
-        self.state.boxes = json.dumps(bbox_dict)
-        # self.state.executeInfo.executeFunc = ""
-        # self.state.executeInfo.params = {}
+    def set_bboxes(self):
+        print('+++++++++++++++++')
+        print('running set_boxes')
+        output = {
+            'dog': {'xmin': 109, 'ymin': 186, 'xmax': 260, 'ymax': 454},
+            'bicycle': {'xmin': 104, 'ymin': 107, 'xmax': 477, 'ymax': 356},
+            'truck': {'xmin': 398, 'ymin': 62, 'xmax': 574, 'ymax': 140},
+        }
+        self.state.boxes = json.dumps(output)
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
         self.send_updates()

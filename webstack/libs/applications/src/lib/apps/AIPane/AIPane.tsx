@@ -154,7 +154,7 @@ function AppComponent(props: App): JSX.Element {
       const parsedOT = JSON.parse(s.output)
       const arrayOT = parsedOT.output.split("'")
       const parsedArrayOT = JSON.parse(arrayOT[0])
-      const modelOutput: {score: number, label: string, box: object}[] = []
+      const modelOutput: { score: number, label: string, box: object }[] = []
       Object.keys(parsedArrayOT).forEach((array) => {
         Object.keys(parsedArrayOT[array]).forEach((entity) => {
           modelOutput.push({
@@ -173,7 +173,6 @@ function AppComponent(props: App): JSX.Element {
   }, [JSON.stringify(s.output)])
 
 
-
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
@@ -182,8 +181,6 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
-    console.log(s.supported_tasks)
-    Object.values(s.supported_tasks).forEach(el => console.log(el))
   }
 
   function closePopovers(info: string) {
@@ -239,12 +236,6 @@ function AppComponent(props: App): JSX.Element {
             <VisuallyHidden>Empty Board</VisuallyHidden>
           )}
         </Box>
-
-        {/*<Box className="output-container">*/}
-        {/*  <Text>*/}
-        {/*    {s.output}*/}
-        {/*  </Text>*/}
-        {/*</Box>*/}
 
       </Box>
     </AppWindow>
