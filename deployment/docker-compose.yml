@@ -13,7 +13,7 @@ services:
       restart_policy:
         condition: on-failure
   node-server:
-    image: "sage3/next:amd64"
+    image: "sage3/next:arm64"
     ports:
       - "443:443"
     depends_on:
@@ -22,20 +22,27 @@ services:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
-    restart: always
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://${HOST}"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
   python:
-    image: "sage3/foresight:latest"
+    image: "sage3/foresight:arm64"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-      - ROOM_ID=a50f5a4d-59ed-4026-8d3c-786a9b7b61e7
+      - ROOM_ID=521f75cc-0a02-4ae2-8f3f-0b190bc2b1a0
     restart: always
     working_dir: /app
     command: python proxy.py
     depends_on:
-      - "redis-server"
-      - "jupyter"
-      - "node-server"
+      node-server:
+        condition: service_healthy
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:
@@ -49,4 +56,6 @@ services:
     depends_on:
       - "redis-server"
     command: /conf/start.sh
-    restart: always
+    deploy:
+      restart_policy:
+        condition: on-failure

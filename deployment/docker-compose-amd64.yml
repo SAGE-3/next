@@ -25,6 +25,12 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://${HOST}"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
   python:
     image: "sage3/foresight:amd64"
     environment:
@@ -35,9 +41,8 @@ services:
     working_dir: /app
     command: python proxy.py
     depends_on:
-      - "redis-server"
-      - "jupyter"
-      - "node-server"
+      node-server:
+        condition: service_healthy
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:
