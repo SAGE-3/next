@@ -21,5 +21,6 @@
     "VegaLite",
     "VegaLiteViewer",
     "VideoViewer",
-    "Webview"
+    "Webview",
+    "chartMaker"
 ]
