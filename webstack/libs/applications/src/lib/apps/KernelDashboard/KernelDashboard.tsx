@@ -254,7 +254,6 @@ function AppComponent(props: App): JSX.Element {
             '&::-webkit-scrollbar-thumb': {
               background: gripColor,
               borderRadius: '24px',
-              height: '4px',
             },
           }}
         >
@@ -365,7 +364,7 @@ function AppComponent(props: App): JSX.Element {
                             removeKernel(kernel.key);
                           }}
                           colorScheme="red"
-                          icon={<MdDelete size="24px" color={useHexColor('red.400')} />}
+                          icon={<MdDelete size="24px" />}
                         />
                       </Tooltip>
                     </Flex>
