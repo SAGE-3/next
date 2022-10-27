@@ -10,14 +10,12 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 import {
-  useColorModeValue,
   Box,
   Input,
   InputGroup,
   Select,
   Text,
   Tooltip,
-  Stack,
   Flex,
   IconButton,
   HStack,
@@ -25,11 +23,17 @@ import {
   VStack,
   Button,
   ButtonGroup,
+  Spacer,
+  Divider,
+  Icon,
+  useColorModeValue,
 } from '@chakra-ui/react';
 
-import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode, MdContentCopy } from 'react-icons/md';
+import { MdAdd, MdRefresh, MdRestartAlt, MdCode, MdDelete, MdVisibility, MdVisibilityOff } from 'react-icons/md';
 
-import { truncateWithEllipsis, useAppStore, useUser } from '@sage3/frontend';
+// import { GiSpy, GiPublicSpeaker } from 'react-icons/gi';
+
+import { truncateWithEllipsis, useHexColor, useAppStore, useUser } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
@@ -41,11 +45,15 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
   const [isPrivate, setIsPrivate] = useState(false);
+  // User
   const { user } = useUser();
+  // Room and Board info used to create kernels
   const { boardId, roomId } = useParams<{ boardId: string; roomId: string }>();
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
   const [myKernels, setMyKernels] = useState(s.availableKernels);
+  // Theme
+  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -96,11 +104,11 @@ function AppComponent(props: App): JSX.Element {
     setKernelAlias(cleanAlias);
   }
 
-  // Triggered on 'enter' key
-  function submitAlias(e: React.FormEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
+  // // Triggered on 'enter' key
+  // function submitAlias(e: React.FormEvent) {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  // }
 
   /**
    * Remove the kernel if the user confirms the action
@@ -168,24 +176,16 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box p={4} w={'100%'} h={'100%'} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
-        <VStack w={'100%'} h={'100%'}>
-          {/* FIXED POSITION TOP */}
-          <HStack
-            w={'100%'}
-            p={5}
-            style={{
-              border: '2px solid #111',
-              borderRadius: '2px',
-            }}
-          >
-            <Box w="100%">
+      <VStack w={'100%'} h={'100%'}>
+        {/* FIXED POSITION TOP FORM */}
+        <HStack w={'100%'} px={5} py={2} borderBottom={'2px'} borderColor={'gray.200'} bg={useColorModeValue('#F1F1F1', '#111')} zIndex={1}>
+          <InputGroup>
+            <Box w={'100%'} pr={2}>
               <Select
                 size="md"
                 colorScheme="teal"
                 value={kernelName}
                 placeholder="Select kernel"
-                backgroundColor="whiteAlpha.300"
                 onChange={(e) => {
                   setKernelName(e.target.value);
                 }}
@@ -201,84 +201,108 @@ function AppComponent(props: App): JSX.Element {
                   ))}
               </Select>
             </Box>
-            <Box w="100%">
-              <form onSubmit={submitAlias}>
-                <InputGroup>
-                  <Input
-                    placeholder="Enter kernel alias..."
-                    variant="outline"
-                    size="md"
-                    _placeholder={{ opacity: 1, color: 'gray.600' }}
-                    value={kernelAlias}
-                    onChange={changeAlias}
-                    onPaste={(event) => {
-                      event.stopPropagation();
-                    }}
-                    backgroundColor="whiteAlpha.300"
-                    padding={'0 4px 0 4px'}
-                  />
-                </InputGroup>
-              </form>
+            <Spacer />
+            <Box w={'100%'} px={2}>
+              <Input
+                placeholder="Enter kernel alias..."
+                variant="outline"
+                size="md"
+                px={4}
+                _placeholder={{ opacity: 1, color: 'gray.400' }}
+                value={kernelAlias}
+                onChange={changeAlias}
+                onPaste={(event) => {
+                  event.stopPropagation();
+                }}
+              />
             </Box>
-            <Checkbox size={'md'} isChecked={isPrivate} onChange={() => setIsPrivate(!isPrivate)}>
-              Private
-            </Checkbox>
-            <Tooltip
-              label="Add a new kernel"
-              aria-label="Add a new kernel"
-              placement="top"
-              fontSize="md"
-              hasArrow
-              style={{ border: '2px solid #111', borderRadius: '2px' }}
-            >
+            <Box px={2} display="flex" alignItems="center">
+              <Checkbox size={'lg'} isChecked={isPrivate} onChange={() => setIsPrivate(!isPrivate)}>
+                Private
+              </Checkbox>
+            </Box>
+
+            <Tooltip label="Add a new kernel" aria-label="Add a new kernel" placement="top" fontSize="md" hasArrow>
               <IconButton
                 variant="outline"
-                m={0.5}
                 size="md"
                 aria-label="Add Kernel"
                 onClick={addKernel}
                 colorScheme="teal"
-                icon={<MdAdd />}
+                icon={<MdAdd size="24px" />}
               />
-            </Tooltip>{' '}
-          </HStack>
+            </Tooltip>
+          </InputGroup>
+        </HStack>
 
-          {/* SCROLL BOX LOWER */}
-          <Box
-            w={'100%'}
-            p={2}
-            id="lower-div"
-            bg={useColorModeValue('#E8E8E8', '#1A1A1A')}
-            overflowY={'auto'}
-            style={{ border: '2px solid #111', borderRadius: '2px' }}
-          >
-            {
-              // If there are kernels, display them
-              myKernels.map((kernel) => (
-                <Box key={kernel.key} p={2} bg={useColorModeValue('#E8E8E8', '#1A1A1A')}>
-                  <Flex p={1} bg="cardHeaderBg" align="left" justify="space-between" shadow="sm" cursor="pointer">
-                    <Tooltip
-                      label={
-                        <Stack>
-                          <Text>Kernel Alias: {kernel.value.kernel_alias}</Text>
-                          <HStack>
-                            <MdContentCopy aria-label={kernel.value.kernel_alias} />
-                            <Text>Click to Copy</Text>
-                          </HStack>
-                        </Stack>
-                      }
-                      placement="top"
+        {/* SCROLL BOX LOWER */}
+        <Box
+          w={'100%'}
+          p={2}
+          pt={0}
+          id="lower-div"
+          overflowY={'auto'}
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              width: '12px',
+              background: useColorModeValue('#FFF', '#000'),
+              borderRadius: '5px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: gripColor,
+              borderRadius: '24px',
+              height: '4px',
+            },
+          }}
+        >
+          <VStack w={'100%'} p={2} spacing={2}>
+            <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'}>
+              <Box flex=".2" pr={1}>
+                {/* Kernel */}
+              </Box>
+              <Box flex="1" pr={4}>
+                Kernel
+              </Box>
+              <Box flex="1" pr={4}>
+                Alias
+              </Box>
+              <Box flex="1" pr={4}>
+                Type
+              </Box>
+              <Box flex="1" pr={4}>
+                Actions
+              </Box>
+            </Flex>
+            <Divider mb={1} />
+          </VStack>
+
+          {
+            // If there are kernels, display them
+            myKernels.map((kernel) => (
+              <VStack w={'100%'} p={2} spacing={2}>
+                <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'}>
+                  <Box flex=".2" pr={1}>
+                    {kernel.value.is_private ? (
+                      <Icon as={MdVisibilityOff} color={'red.500'} />
+                    ) : (
+                      <Icon as={MdVisibility} color="green.500" />
+                    )}
+                  </Box>
+                  <Box flex="1" pr={4}>
+                    <Text
+                      onClick={() => {
+                        navigator.clipboard.writeText(kernel.value.kernel_alias);
+                      }}
+                      fontSize="md"
+                      fontWeight="bold"
                     >
-                      <Text
-                        onClick={() => {
-                          navigator.clipboard.writeText(kernel.value.kernel_alias);
-                        }}
-                        fontSize="md"
-                        fontWeight="bold"
-                      >
-                        {kernel.value.kernel_alias}
-                      </Text>
-                    </Tooltip>
+                      {kernel.value.kernel_alias}
+                    </Text>
+                  </Box>
+                  <Box flex="1" pr={4}>
                     <Text
                       onClick={() => {
                         navigator.clipboard.writeText(kernel.key);
@@ -286,81 +310,72 @@ function AppComponent(props: App): JSX.Element {
                       ml={2}
                       fontWeight="bold"
                     >
-                      <Tooltip
-                        label={
-                          <Stack>
-                            <Text>Kernel Id: {kernel.key}</Text>
-                            <HStack>
-                              <MdContentCopy aria-label={kernel.key} />
-                              <Text>Click to Copy</Text>
-                            </HStack>
-                          </Stack>
-                        }
-                        placement="top"
-                      >
+                      <Tooltip label={kernel.key} placement="top" fontSize="xs" hasArrow>
                         {truncateWithEllipsis(kernel.key, 8)}
                       </Tooltip>
                     </Text>
+                  </Box>
+                  <Box flex="1" pr={4}>
                     <Text>
                       {
                         // show R for ir, Python for python3, etc.}
                         kernel.value.kernel_name === 'ir'
                           ? 'R'
                           : kernel.value.kernel_name === 'python3'
-                            ? 'Python'
-                            : kernel.value.kernel_name === 'julia-1.8'
-                              ? 'Julia'
-                              : kernel.value.kernel_name
+                          ? 'Python'
+                          : kernel.value.kernel_name === 'julia-1.8'
+                          ? 'Julia'
+                          : kernel.value.kernel_name
                       }
                     </Text>
+                  </Box>
+                  <Box flex="1" pr={4}>
                     <Flex alignItems="right">
-                      <Tooltip label={'Open a SageCell'} placement="top">
+                      <Tooltip label={'Open a SageCell'} placement="top" fontSize="md" hasArrow>
                         <IconButton
                           variant="outline"
-                          m={0.5}
                           size="md"
                           onClick={() => {
                             startSageCell(kernel.key, kernel.value.kernel_alias);
                           }}
                           colorScheme="teal"
                           aria-label="Delete Kernel"
-                          icon={<MdCode />}
+                          icon={<MdCode size="24px" />}
                         />
                       </Tooltip>
-                      <Tooltip label={'Remove Kernel'} placement="top">
+                      <Tooltip label={'Restart Kernel'} placement="top" fontSize="md" hasArrow>
                         <IconButton
+                          mx={2} // this provides spacing between the buttons
                           variant="outline"
-                          m={0.5}
-                          size="md"
-                          onClick={() => {
-                            removeKernel(kernel.key);
-                          }}
-                          colorScheme="teal"
-                          aria-label="Delete Kernel"
-                          icon={<MdRemove />}
-                        />
-                      </Tooltip>
-                      <Tooltip label={'Restart Kernel'} placement="top">
-                        <IconButton
-                          variant="outline"
-                          m={0.5}
                           size="md"
                           onClick={() => {
                             restartKernel(kernel.key);
                           }}
                           colorScheme="teal"
                           aria-label="Restart Kernel"
-                          icon={<MdRestartAlt />}
+                          icon={<MdRestartAlt size="24px" />}
+                        />
+                      </Tooltip>
+                      <Tooltip label="Delete kernel" aria-label="Delete kernel" placement="top" fontSize="md" hasArrow>
+                        <IconButton
+                          variant="outline"
+                          size="md"
+                          aria-label="Delete Kernel"
+                          onClick={() => {
+                            removeKernel(kernel.key);
+                          }}
+                          colorScheme="red"
+                          icon={<MdDelete size="24px" color={useHexColor('red.400')} />}
                         />
                       </Tooltip>
                     </Flex>
-                  </Flex>
-                </Box>
-              ))
-            }
-          </Box>
-        </VStack>
-      </Box>
+                  </Box>
+                </Flex>
+              </VStack>
+            ))
+          }
+        </Box>
+      </VStack>
     </AppWindow>
   );
 }
