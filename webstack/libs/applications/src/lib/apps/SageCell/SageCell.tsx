@@ -56,7 +56,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 
-import './components/styles.css';
+import './styles.css';
 
 const MARGIN = 2;
 
