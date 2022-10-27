@@ -5,6 +5,10 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+
 import {
   useColorModeValue,
   Box,
@@ -23,13 +27,13 @@ import {
   ButtonGroup,
 } from '@chakra-ui/react';
 
+import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode, MdContentCopy } from 'react-icons/md';
+
+import { truncateWithEllipsis, useAppStore, useUser } from '@sage3/frontend';
+
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
-import { truncateWithEllipsis, useAppStore, useUser } from '@sage3/frontend';
-import { useState, useEffect } from 'react';
-import { MdRemove, MdAdd, MdRefresh, MdRestartAlt, MdCode, MdContentCopy, MdError } from 'react-icons/md';
-import { useParams } from 'react-router-dom';
 
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {
@@ -58,10 +62,6 @@ function AppComponent(props: App): JSX.Element {
 
     setMyKernels(kernels);
   }, [JSON.stringify(s.availableKernels)]);
-
-  // useEffect(() => {
-  //   setMyKernels(s.availableKernels);
-  // }, [s.availableKernels]);
 
   /**
    *
@@ -307,10 +307,10 @@ function AppComponent(props: App): JSX.Element {
                         kernel.value.kernel_name === 'ir'
                           ? 'R'
                           : kernel.value.kernel_name === 'python3'
-                          ? 'Python'
-                          : kernel.value.kernel_name === 'julia-1.8'
-                          ? 'Julia'
-                          : kernel.value.kernel_name
+                            ? 'Python'
+                            : kernel.value.kernel_name === 'julia-1.8'
+                              ? 'Julia'
+                              : kernel.value.kernel_name
                       }
                     </Text>
                     <Flex alignItems="right">
@@ -394,10 +394,5 @@ function ToolbarComponent(props: App): JSX.Element {
     </HStack>
   );
 }
-
-export const KernelDashboard = {
-  AppComponent,
-  ToolbarComponent,
-};
 
 export default { AppComponent, ToolbarComponent };

@@ -6,7 +6,8 @@
  *
  */
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -29,34 +30,29 @@ import {
   Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
-import { App, AppName } from '../../schema';
-import './styles.css';
 
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import React, { useEffect, useState, useRef } from 'react';
 import { FaPlay } from 'react-icons/fa';
 import { BiErrorCircle, BiRun } from 'react-icons/bi';
-import { GiEmptyHourglass } from 'react-icons/gi';
-import { CgSmileMouthOpen } from 'react-icons/cg';
 import { FiChevronDown } from 'react-icons/fi';
-import { useLocation } from 'react-router-dom';
 
-type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+
+import './styles.css';
+
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const zindex = useUIStore((state) => state.zIndex);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const boardApps = useAppStore((state) => state.apps);
   const selApp = boardApps.find((el) => el._id === selectedAppId);
 
   const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
   const prevX = useRef(0);
@@ -85,25 +81,20 @@ function AppComponent(props: App): JSX.Element {
               ...s.hostedApps,
               ...client,
             };
-            updateState(props._id, { hostedApps: hosted });
-            updateState(props._id, { messages: hosted });
-            console.log('app ' + app._id + ' added');
+            updateState(props._id, { messages: hosted, hostedApps: hosted });
             newAppAdded();
-          } else {
-            console.log('app ' + app._id + ' already in hostedApps');
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
             const hostedCopy = { ...s.hostedApps };
             delete hostedCopy[app._id];
-            updateState(props._id, { hostedApps: hostedCopy });
-            updateState(props._id, { messages: hostedCopy });
-            console.log('app ' + app._id + ' removed from hostedApps');
+            updateState(props._id, { messages: hostedCopy, hostedApps: hostedCopy });
           }
         }
       }
     }
-  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
+  }, [selApp?.data.position.x, selApp?.data.position.y,
+  selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
 
   //TODO Be mindful of client updates
   // Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
@@ -125,9 +116,6 @@ function AppComponent(props: App): JSX.Element {
     const yDiff = props.data.position.y - prevY.current;
 
     for (const app of boardApps) {
-      const client = {
-        [app._id]: app.data.name,
-      };
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
@@ -156,13 +144,13 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: { executeFunc: 'new_app_added', params: { app_type: 'ImageViewer' } },
     });
-    // Object.values(s.supportedTasks).forEach(el => console.log(el))
   }
 
   function closePopovers(info: string) {
-    console.log('Remove entry');
     const unchecked = s.messages;
     delete unchecked[info];
+
+    // these updateState calls should be combined
     updateState(props._id, { messages: unchecked });
 
     if (Object.keys(s.messages).includes(info)) {
@@ -194,7 +182,7 @@ function AppComponent(props: App): JSX.Element {
               {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
             </PopoverBody>
 
-            {Object.keys(s.messages)?.map((message: string, index: number) => (
+            {Object.keys(s.messages)?.map((message: string) => (
               <PopoverBody>
                 {s.messages[message]}
                 <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)} />
@@ -216,13 +204,13 @@ function AppComponent(props: App): JSX.Element {
         </Box>
 
         <Box position="absolute" top="30%" left="20%">
-          selectedApp {selectedAppId}
+          selected application {selectedAppId}
           <br />
-          length of hostedappsarr: {Object.keys(s.hostedApps).length}
+          length of hosted apps array: {Object.keys(s.hostedApps).length}
           <br />
-          hostedapps: {Object.values(s.hostedApps)}
+          hosted apps: {Object.values(s.hostedApps)}
           <br />
-          supportedTasks: {s.supportedTasks}
+          supported tasks: {s.supportedTasks}
         </Box>
 
         <Box className="output-container">
@@ -238,14 +226,7 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
   const updateState = useAppStore((state) => state.updateState);
-
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
-  const update = useAppStore((state) => state.update);
 
   const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
   const classModels = ['image_c_model_1', 'image_c_model_2'];
@@ -257,12 +238,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function runFunction() {
     updateState(props._id, {
+      runStatus: true,
       executeInfo: {
         executeFunc: 'execute_model',
         params: { some_uuid: '12345678', model_id: 'facebook/detr-resnet-50' },
       },
     });
-    updateState(props._id, { runStatus: true });
   }
 
   return (
@@ -271,7 +252,7 @@ function ToolbarComponent(props: App): JSX.Element {
         <Stack spacing={2} direction="row">
           <Menu>
             <MenuButton as={Button} rightIcon={<FiChevronDown />}>
-              Obj Detection Models
+              Object Detection Models
             </MenuButton>
             <Portal>
               <MenuList>
@@ -308,7 +289,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default {
-  AppComponent,
-  ToolbarComponent,
-};
+export default { AppComponent, ToolbarComponent };
