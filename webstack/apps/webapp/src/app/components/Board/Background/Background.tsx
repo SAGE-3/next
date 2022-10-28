@@ -25,7 +25,7 @@ import {
   isImage,
   isPDF,
   isCSV,
-  isText,
+  isMD,
   isJSON,
   isDZI,
   isGeoJSON,
@@ -54,7 +54,6 @@ export function Background(props: BackgroundProps) {
   // Messsages
   const subMessage = useMessageStore((state) => state.subscribe);
   const unsubMessage = useMessageStore((state) => state.unsubscribe);
-  // const messages = useMessageStore((state) => state.messages);
   const message = useMessageStore((state) => state.lastone);
 
   // How to create some applications
@@ -82,6 +81,7 @@ export function Background(props: BackgroundProps) {
       for (let i = 0; i < fileListLength; i++) {
         // check the mime type we got from the browser, and check with mime lib. if needed
         const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
+
         if (isValid(filetype)) {
           if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
             // 100MB
@@ -264,7 +264,7 @@ export function Background(props: BackgroundProps) {
       createApp(setupApp('GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 600, h: 600 }, { assetid: fileID }));
     } else if (isGeoJSON(fileType)) {
       createApp(setupApp('LeafLet', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isText(fileType)) {
+    } else if (isMD(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {
