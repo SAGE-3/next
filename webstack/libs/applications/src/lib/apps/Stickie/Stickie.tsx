@@ -110,8 +110,7 @@ function AppComponent(props: App): JSX.Element {
     if (e.shiftKey && e.code === 'Tab') {
       // Create a new stickie
       createApp({
-        name: 'Stickie',
-        description: 'Stickie',
+        title: user.data.name,
         roomId: roomId!,
         boardId: boardId!,
         position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },

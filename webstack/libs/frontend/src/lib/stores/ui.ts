@@ -16,7 +16,7 @@ import { SAGEColors } from '@sage3/shared';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
-const MaxZoom = 4;
+const MaxZoom = 3;
 // Zoom step of 10%
 const StepZoom = 0.1;
 // When using mouse wheel, repeated events

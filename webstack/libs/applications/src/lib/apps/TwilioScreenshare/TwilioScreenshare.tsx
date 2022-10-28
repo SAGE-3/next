@@ -165,7 +165,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     stopStream();
-    if (yours) update(props._id, { description: `Screenshare> ${user.data.name}` });
+    if (yours) update(props._id, { title: `${user.data.name}` });
     return () => {
       stopStream();
     };

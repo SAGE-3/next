@@ -21,32 +21,34 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 
 // Build list of applications from apps.json
 // or all apps if in development mode
-const appListed = development ? Object.keys(Applications) : [
-  "AIPane",
-  // "CSVViewer",
-  // "Clock",
-  // "Cobrowse",
-  "CodeCell",
-  // "Counter",
-  // "DataTable",
-  // "DeepZoomImage",
-  // "GLTFViewer",
-  // "ImageViewer",
-  "JupyterLab",
-  "Kernels",
-  "LeafLet",
-  // "Linker",
-  "Notepad",
-  // "PDFViewer",
-  // "RTCChat",
-  "Screenshare",
-  "Stickie",
-  // "TwilioScreenshare",
-  // "VegaLite",
-  // "VegaLiteViewer",
-  // "VideoViewer",
-  "Webview"
-];
+const appListed = development
+  ? Object.keys(Applications)
+  : [
+      'AIPane',
+      // "CSVViewer",
+      // "Clock",
+      // "Cobrowse",
+      'CodeCell',
+      // "Counter",
+      // "DataTable",
+      // "DeepZoomImage",
+      // "GLTFViewer",
+      // "ImageViewer",
+      'JupyterLab',
+      'Kernels',
+      'LeafLet',
+      // "Linker",
+      'Notepad',
+      // "PDFViewer",
+      // "RTCChat",
+      'Screenshare',
+      'Stickie',
+      // "TwilioScreenshare",
+      // "VegaLite",
+      // "VegaLiteViewer",
+      // "VideoViewer",
+      'Webview',
+    ];
 
 export interface ApplicationProps {
   boardId: string;
@@ -122,8 +124,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
 
     createApp({
-      name: appName,
-      description: appName,
+      title: '',
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },

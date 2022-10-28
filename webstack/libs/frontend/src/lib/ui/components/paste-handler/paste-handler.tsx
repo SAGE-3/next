@@ -28,7 +28,7 @@ type PasteProps = {
  */
 export const PasteHandler = (props: PasteProps): JSX.Element => {
   // show some notifications
-  const toast = useToast()
+  const toast = useToast();
   const { user } = useUser();
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -53,13 +53,13 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             status: 'error',
             duration: 2 * 1000,
             isClosable: true,
-          })
+          });
           return;
         }
       }
 
       // Get content of clipboard
-      const pastedText = event.clipboardData?.getData("Text");
+      const pastedText = event.clipboardData?.getData('Text');
 
       // Get around the center of the board
       const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
@@ -73,7 +73,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         if (isValid) {
           let w = 800;
           let h = 800;
-          const final_url = processContentURL(isValid)
+          const final_url = processContentURL(isValid);
           if (isValid !== final_url) {
             // it has been changed, it must be a video
             w = 1280;
@@ -81,8 +81,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           }
           // Create a webview
           createApp({
-            name: 'Webview',
-            description: 'Webview',
+            title: final_url,
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop - w / 2, y: yDrop - h / 2, z: 0 },
@@ -97,15 +96,14 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         } else {
           // Create a new stickie
           createApp({
-            name: 'Stickie',
-            description: 'Stickie',
+            title: user.data.name,
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
-            state: { text: pastedText, fontSize: 42, color: '#F6E05E', },
+            state: { text: pastedText, fontSize: 42, color: '#F6E05E' },
             ownerId: user._id,
             minimized: false,
             raised: true,
@@ -115,23 +113,23 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     };
 
     // Add the handler to the whole page
-    document.addEventListener("paste", pasteHandlerReachingDocumentBody);
+    document.addEventListener('paste', pasteHandlerReachingDocumentBody);
 
-    return (() => {
+    return () => {
       // Remove function during cleanup to prevent multiple additions
-      document.removeEventListener("paste", pasteHandlerReachingDocumentBody);
-    });
+      document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
+    };
   }, [boardPosition.x, boardPosition.y, props.boardId, props.roomId]);
 
-  return (<></>);
-}
+  return <></>;
+};
 
 /**
-* Validate a URL string
-* From github.com/ogt/valid-url but not maintained
-* @param {string} value
-* @returns {(string | undefined)}
-*/
+ * Validate a URL string
+ * From github.com/ogt/valid-url but not maintained
+ * @param {string} value
+ * @returns {(string | undefined)}
+ */
 function isValidURL(value: string): string | undefined {
   if (!value) {
     return;
@@ -193,13 +191,12 @@ function isValidURL(value: string): string | undefined {
   return out;
 }
 
-
 /**
-* URI spitter method - direct from RFC 3986
-* @param {string} uri
-* @returns RegExpMatchArray
-*/
+ * URI spitter method - direct from RFC 3986
+ * @param {string} uri
+ * @returns RegExpMatchArray
+ */
 function splitUri(uri: string) {
   const splitted = uri.match(/(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/);
   return splitted;
-};
+}

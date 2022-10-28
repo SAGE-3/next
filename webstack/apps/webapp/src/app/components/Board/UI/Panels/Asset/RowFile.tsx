@@ -208,7 +208,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
 
     // Create the app
-    const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user._id);
+    const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user);
     if (setup) createApp(setup);
   };
 

@@ -91,7 +91,7 @@ export function UILayer(props: UILayerProps) {
             session.file(filename, buffer);
           }
         }
-      } else if (a.data.name === 'Stickie') {
+      } else if (a.data.type === 'Stickie') {
         // Stickies are saved as text files
         if ('text' in a.data.state) {
           const filename = `stickie-${a._id}.txt`;

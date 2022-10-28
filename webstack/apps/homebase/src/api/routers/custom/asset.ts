@@ -31,7 +31,7 @@ import { config } from '../../../config';
 import { uploadMiddleware } from '../../../connectors/upload-connector';
 
 // Asset model
-import { AssetsCollection, AppsCollection, MessageCollection } from '../../collections';
+import { AssetsCollection, AppsCollection, MessageCollection, UsersCollection } from '../../collections';
 
 // External Imports
 import { WebSocket } from 'ws';
@@ -187,8 +187,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
             // Just open it by URL
             AppsCollection.add(
               {
-                name: 'ImageViewer',
-                description: 'Image',
+                title: elt.originalname,
                 roomId: req.body.room,
                 boardId: req.body.board,
                 ownerId: user.id,
@@ -211,8 +210,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
             const height = th || width / ar;
             AppsCollection.add(
               {
-                name: 'ImageViewer',
-                description: 'Image',
+                title: elt.originalname,
                 roomId: req.body.room,
                 boardId: req.body.board,
                 ownerId: user.id,
@@ -237,8 +235,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const height = th || width / ar;
           AppsCollection.add(
             {
-              name: 'PDFViewer',
-              description: 'PDF',
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -258,8 +255,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 400;
           AppsCollection.add(
             {
-              name: 'CSVViewer',
-              description: 'CSV',
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -280,8 +276,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 450;
           AppsCollection.add(
             {
-              name: 'VideoViewer',
-              description: elt.originalname,
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -302,8 +297,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 400;
           AppsCollection.add(
             {
-              name: 'DeepZoomImage',
-              description: 'DeepZoomImage',
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -324,8 +318,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 600;
           AppsCollection.add(
             {
-              name: 'GLTFViewer',
-              description: 'GLTF',
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -346,8 +339,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 500;
           AppsCollection.add(
             {
-              name: 'LeafLet',
-              description: 'LeafLet',
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -367,13 +359,13 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const text = fs.readFileSync(elt.path);
           const w = tw || 400;
           const h = th || 400;
+          const user = await UsersCollection.get(req.user.id);
           AppsCollection.add(
             {
-              name: 'Stickie',
-              description: 'Stickie',
+              title: user ? user.data.name : 'Unknown',
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
+              ownerId: user ? user._id : 'Unknown',
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
@@ -388,7 +380,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               minimized: false,
               raised: false,
             },
-            user.id
+            user ? user._id : 'Unknown'
           );
           posx += tw || 400;
           posx += 10;
@@ -398,8 +390,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 400;
           AppsCollection.add(
             {
-              name: 'CodeCell',
-              description: 'CodeCell',
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,
@@ -459,8 +450,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 // Create the app
                 AppsCollection.add(
                   {
-                    name: 'JupyterLab',
-                    description: 'JupyterLab',
+                    title: elt.originalname,
                     roomId: req.body.room,
                     boardId: req.body.board,
                     ownerId: user.id,
@@ -490,8 +480,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const h = th || 600;
           AppsCollection.add(
             {
-              name: 'VegaLite',
-              description: elt.originalname,
+              title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
               ownerId: user.id,

@@ -126,7 +126,7 @@ function AppComponent(props: App): JSX.Element {
 
       const titleUpdated = (event: any) => {
         // Update the app title
-        update(props._id, { description: event.title });
+        update(props._id, { title: event.title });
       };
       webview.addEventListener('page-title-updated', titleUpdated);
 
@@ -223,8 +223,7 @@ function AppComponent(props: App): JSX.Element {
     const openUrlInNewWebviewApp = (url: string): void => {
       if (!user) return;
       createApp({
-        name: 'Webview',
-        description: 'Webview',
+        title: url,
         roomId: roomId!,
         boardId: boardId!,
         position: { x: props.data.position.x + props.data.size.width + 15, y: props.data.position.y, z: 0 },

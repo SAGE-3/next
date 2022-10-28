@@ -98,8 +98,7 @@ export function BoardContextMenu(props: ContextProps) {
       const y = Math.round(pos.y / gridSize) * gridSize;
       // Create the app
       createApp({
-        name: appName,
-        description: appName,
+        title: '',
         roomId: props.roomId,
         boardId: props.boardId,
         position: { x, y, z: 0 },
@@ -130,8 +129,7 @@ export function BoardContextMenu(props: ContextProps) {
       const y = Math.round(pos.y / gridSize) * gridSize;
       // Open a webview into the SAGE3 builtin Jupyter instance
       createApp({
-        name: 'JupyterLab',
-        description: 'JupyterLab',
+        title: '',
         roomId: props.roomId,
         boardId: props.boardId,
         position: { x, y, z: 0 },

@@ -208,7 +208,7 @@ export function NavigationPanel(props: NavProps) {
               .sort((a, b) => a._updatedAt - b._updatedAt)
               .map((app) => {
                 return (
-                  <Tooltip key={app._id} placement="top-start" label={`${app.data.name}: ${app.data.description}`} openDelay={500} hasArrow>
+                  <Tooltip key={app._id} placement="top-start" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
                     <Box
                       backgroundColor={borderColor}
                       position="absolute"

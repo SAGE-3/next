@@ -73,7 +73,7 @@ function AppComponent(props: App): JSX.Element {
     for (const c in connections) {
       console.log('RTC> Update connection', connections[c].peer);
     }
-    update(props._id, { description: newInfo });
+    update(props._id, { title: newInfo });
   }, [connections]);
 
   //  Broadcast message to all RTC clients

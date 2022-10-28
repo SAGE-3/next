@@ -162,7 +162,7 @@ function AppComponent(props: App): JSX.Element {
 
         const titleUpdated = (event: any) => {
           // Update the app title
-          update(props._id, { description: event.title });
+          update(props._id, { title: event.title });
 
           const id = webview.getWebContentsId();
           console.log('getWebContentsId Webview id', id);

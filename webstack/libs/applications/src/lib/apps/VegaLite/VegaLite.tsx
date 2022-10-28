@@ -129,8 +129,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const createChart = () => {
     if (!user) return;
     createApp({
-      name: 'VegaLiteViewer',
-      description: 'Visualization',
+      title: '',
       roomId: roomId!,
       boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },

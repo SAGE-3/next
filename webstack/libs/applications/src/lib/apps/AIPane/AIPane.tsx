@@ -98,7 +98,7 @@ function AppComponent(props: App): JSX.Element {
   // Checks for apps on or off the pane
   useEffect(() => {
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.name };
+      const client = { [app._id]: app.data.title };
 
       // TODO Handle AIPanes overlapping AIPanes
       // const includedAppTypes: AppName[] = ['AIPane']
@@ -162,7 +162,7 @@ function AppComponent(props: App): JSX.Element {
     // console.log("yDiff " + yDiff);
 
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.name };
+      const client = { [app._id]: app.data.title };
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {

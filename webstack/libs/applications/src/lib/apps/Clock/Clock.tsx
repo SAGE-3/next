@@ -38,7 +38,7 @@ function AppComponent(props: App): JSX.Element {
     setCity(s.city);
     localizeCity(s.city);
     // Update the app title
-    update(props._id, { description: s.city });
+    update(props._id, { title: s.city });
   }, [s.city]);
 
   const localizeCity = (city: string) => {

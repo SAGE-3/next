@@ -11,7 +11,7 @@ import { FileEntry } from './types';
 import { isImage, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
 
 import { GetConfiguration } from '@sage3/frontend';
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
 
@@ -33,17 +33,16 @@ export async function setupAppForFile(
   yDrop: number,
   roomId: string,
   boardId: string,
-  userId: string
+  user: User
 ): Promise<AppSchema> {
   return new Promise((resolve) => {
     const w = 400;
     if (isGIF(file.type)) {
       resolve({
-        name: 'ImageViewer',
-        description: 'Image',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: w, height: w, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -56,11 +55,10 @@ export async function setupAppForFile(
       // Look for the file in the asset store
       const extras = file.derived as ExtraImageType;
       resolve({
-        name: 'ImageViewer',
-        description: 'Image',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -71,11 +69,10 @@ export async function setupAppForFile(
       });
     } else if (isVideo(file.type)) {
       resolve({
-        name: 'VideoViewer',
-        description: 'Video',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 450, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -86,11 +83,10 @@ export async function setupAppForFile(
       });
     } else if (isCSV(file.type)) {
       resolve({
-        name: 'CVSViewer',
-        description: 'CSV',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -101,11 +97,10 @@ export async function setupAppForFile(
       });
     } else if (isGLTF(file.type)) {
       resolve({
-        name: 'GLTFViewer',
-        description: 'GLTF',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 600, height: 600, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -116,11 +111,10 @@ export async function setupAppForFile(
       });
     } else if (isDZI(file.type)) {
       resolve({
-        name: 'DeepZoomImage',
-        description: 'DeepZoomImage',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -131,11 +125,10 @@ export async function setupAppForFile(
       });
     } else if (isGeoJSON(file.type)) {
       resolve({
-        name: 'LeafLet',
-        description: 'LeafLet',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -160,11 +153,10 @@ export async function setupAppForFile(
         .then(function (text) {
           // Create a note from the text
           resolve({
-            name: 'Stickie',
-            description: 'Stickie',
+            title: user.data.name,
             roomId: roomId,
             boardId: boardId,
-            ownerId: userId,
+            ownerId: user._id,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
@@ -190,11 +182,10 @@ export async function setupAppForFile(
         .then(function (text) {
           // Create a note from the text
           resolve({
-            name: 'CodeCell',
-            description: 'CodeCell',
+            title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            ownerId: userId,
+            ownerId: user._id,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
@@ -220,11 +211,10 @@ export async function setupAppForFile(
         .then(function (spec) {
           // Create a note from the text
           resolve({
-            name: 'VegaLite',
-            description: file.originalfilename,
+            title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            ownerId: userId,
+            ownerId: user._id,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 500, height: 600, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
@@ -275,11 +265,10 @@ export async function setupAppForFile(
                   console.log('Jupyter> notebook created', res);
 
                   resolve({
-                    name: 'JupyterLab',
-                    description: 'JupyterLab',
+                    title: file.originalfilename,
                     roomId: roomId,
                     boardId: boardId,
-                    ownerId: userId,
+                    ownerId: user._id,
                     position: { x: xDrop, y: yDrop, z: 0 },
                     size: { width: 700, height: 700, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
@@ -303,11 +292,10 @@ export async function setupAppForFile(
         aspectRatio = page[0].width / page[0].height;
       }
       resolve({
-        name: 'PDFViewer',
-        description: 'PDF',
+        title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: userId,
+        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 400, height: 400 / aspectRatio, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },

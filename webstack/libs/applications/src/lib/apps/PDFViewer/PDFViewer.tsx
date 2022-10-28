@@ -53,10 +53,10 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, { numPages: pages.length });
         // Update the app title
         const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-        update(props._id, { description: asset?.data.originalfilename + pageInfo });
+        update(props._id, { title: asset?.data.originalfilename + pageInfo });
       } else {
         // Update the app title
-        update(props._id, { description: asset?.data.originalfilename });
+        update(props._id, { title: asset?.data.originalfilename });
       }
     }
   }, [s.assetid, assets]);
@@ -87,7 +87,7 @@ function AppComponent(props: App): JSX.Element {
       if (pages) {
         if (pages.length > 1) {
           const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-          update(props._id, { description: file.data.originalfilename + pageInfo });
+          update(props._id, { title: file.data.originalfilename + pageInfo });
         }
       }
     }

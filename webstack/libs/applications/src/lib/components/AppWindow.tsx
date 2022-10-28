@@ -274,7 +274,7 @@ export function AppWindow(props: WindowProps) {
           pl={-4}
         >
           <Text color={titleColor} fontSize={18 / scale} whiteSpace="nowrap" textOverflow="ellipsis" width={size.width} overflow="hidden">
-            {props.app.data.description}
+            {props.app.data.title}
           </Text>
         </Box>
       ) : null}

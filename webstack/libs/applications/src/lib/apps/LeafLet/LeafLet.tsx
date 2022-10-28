@@ -64,7 +64,7 @@ function AppComponent(props: App): JSX.Element {
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: myasset?.data.originalfilename });
+      update(props._id, { title: myasset?.data.originalfilename });
     }
   }, [s.assetid, assets]);
 
@@ -325,7 +325,7 @@ function ToolbarComponent(props: App): JSX.Element {
         updateState(props._id, { location: value });
         map.fitBounds([res.bounds._southWest, res.bounds._northEast]);
         // Update the app title
-        update(props._id, { description: res.text });
+        update(props._id, { title: res.text });
       }
     });
   };

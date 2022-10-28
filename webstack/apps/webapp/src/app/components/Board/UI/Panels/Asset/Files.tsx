@@ -13,8 +13,22 @@ import { useParams } from 'react-router-dom';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
 import {
-  Box, Input, InputLeftAddon, InputGroup, Flex, Divider, Spacer, VStack, useDisclosure,
-  Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay
+  Box,
+  Input,
+  InputLeftAddon,
+  InputGroup,
+  Flex,
+  Divider,
+  Spacer,
+  VStack,
+  useDisclosure,
+  Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
 } from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
@@ -51,7 +65,7 @@ export function Files(props: FilesProps): JSX.Element {
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>('');
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
@@ -392,7 +406,7 @@ export function Files(props: FilesProps): JSX.Element {
       const selected = filesList.filter((k) => k.selected);
       selected.forEach((k, i) => {
         // Create the apps, 400 pixels + 20 padding
-        setupAppForFile(k, xDrop + i * 420, yDrop, roomId, boardId, user._id).then((setup) => {
+        setupAppForFile(k, xDrop + i * 420, yDrop, roomId, boardId, user).then((setup) => {
           if (setup) {
             createApp(setup);
           }
