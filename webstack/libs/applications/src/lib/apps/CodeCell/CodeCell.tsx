@@ -7,10 +7,7 @@
  */
 
 import { useRef, useEffect, useState, useCallback } from 'react';
-import {
-  Box, Button, HStack, useColorModeValue, Tooltip,
-  IconButton, VStack, Flex, ButtonGroup, Select, Badge
-} from '@chakra-ui/react';
+import { Box, Button, HStack, useColorModeValue, Tooltip, IconButton, VStack, Flex, ButtonGroup, Select, Badge } from '@chakra-ui/react';
 
 import './components/styles.css';
 // Date manipulation (for filename)
@@ -46,7 +43,6 @@ import { ProcessedOutput } from './render';
  * @returns {JSX.Element}
  */
 const AppComponent = (props: App): JSX.Element => {
-
   const s = props.data.state as AppState;
 
   return (
@@ -63,7 +59,7 @@ const AppComponent = (props: App): JSX.Element => {
       </>
     </AppWindow>
   );
-}
+};
 
 /**
  *
@@ -189,7 +185,7 @@ const InputBox = (props: App): JSX.Element => {
       </Flex>
     </>
   );
-}
+};
 
 /**
  * UI toolbar for the cell
@@ -203,7 +199,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   // List of kernel names
-  const [kernels, setKernels] = useState<{ id: string, name: string }[]>([]);
+  const [kernels, setKernels] = useState<{ id: string; name: string }[]>([]);
   const [selected, setSelected] = useState<string>();
 
   // Update from the props
@@ -211,7 +207,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (s.kernel) {
       setSelected(s.kernel);
       const name = kernels.find((k) => k.id === s.kernel)?.name || '-';
-      update(props._id, { description: 'CodeCell> kernel ' + name });
+      update(props._id, { title: 'CodeCell> kernel ' + name });
     }
   }, [s.kernel, kernels]);
 
@@ -238,7 +234,7 @@ function ToolbarComponent(props: App): JSX.Element {
       if (refreshInterval) {
         clearInterval(refreshInterval);
       }
-    }
+    };
   }, []);
 
   const updateKernelList = (base: string, token: string) => {
@@ -257,7 +253,7 @@ function ToolbarComponent(props: App): JSX.Element {
           setKernels(sessions.map((s: any) => ({ name: s.name, id: s.kernel.id })));
         });
     }
-  }
+  };
 
   function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
     if (e.target.value) {
@@ -299,20 +295,34 @@ function ToolbarComponent(props: App): JSX.Element {
       <HStack>
         {selected && kernels.length > 0 ? (
           // show a green light if the kernel is running
-          <Badge colorScheme="green" rounded="sm" size="lg">Online</Badge>
+          <Badge colorScheme="green" rounded="sm" size="lg">
+            Online
+          </Badge>
         ) : (
           // show a red light if the kernel is not running
-          <Badge colorScheme="red" rounded="sm" size="lg">Offline</Badge>
+          <Badge colorScheme="red" rounded="sm" size="lg">
+            Offline
+          </Badge>
         )}
         <Select
           placeholder="Select Kernel"
-          rounded="lg" size="sm" width="150px"
-          ml={2} px={0} colorScheme="teal"
+          rounded="lg"
+          size="sm"
+          width="150px"
+          ml={2}
+          px={0}
+          colorScheme="teal"
           icon={<MdArrowDropDown />}
           onChange={selectKernel}
           variant={'outline'}
-          value={selected ?? undefined}>
-          {kernels.map((k) => (<option key={k.id} value={k.id}> {k.name} </option>))}
+          value={selected ?? undefined}
+        >
+          {kernels.map((k) => (
+            <option key={k.id} value={k.id}>
+              {' '}
+              {k.name}{' '}
+            </option>
+          ))}
         </Select>
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -334,7 +344,6 @@ function ToolbarComponent(props: App): JSX.Element {
             </Button>
           </Tooltip>
         </ButtonGroup>
-
       </HStack>
     </>
   );

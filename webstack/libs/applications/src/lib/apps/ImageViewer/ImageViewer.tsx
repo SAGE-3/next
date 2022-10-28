@@ -30,7 +30,6 @@ import { state as AppState } from './index';
  */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  console.log(s.boxes);
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
@@ -102,7 +101,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, { description: myasset?.data.originalfilename });
+        update(props._id, { title: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL

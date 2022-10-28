@@ -21,35 +21,37 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 
 // Build list of applications from apps.json
 // or all apps if in development mode
-const appListed = development ? Object.keys(Applications) : [
-  "AIPane",
-  // "CSVViewer",
-  // "Clock",
-  // "Cobrowse",
-  // "CodeCell",
-  // "Counter",
-  // "DataTable",
-  // "DeepZoomImage",
-  // "GLTFViewer",
-  // "ImageViewer",
-  "JupyterLab",
-  // "Kernels",
-  "KernelDashboard",
-  "LeafLet",
-  // "Linker",
-  "Notepad",
-  // "PDFViewer",
-  // "RTCChat",
-  "SageCell",
-  "Screenshare",
-  // "SageCell",
-  "Stickie",
-  // "TwilioScreenshare",
-  // "VegaLite",
-  // "VegaLiteViewer",
-  // "VideoViewer",
-  "Webview"
-];
+const appListed = development
+  ? Object.keys(Applications)
+  : [
+      'AIPane',
+      // "CSVViewer",
+      // "Clock",
+      // "Cobrowse",
+      // "CodeCell",
+      // "Counter",
+      // "DataTable",
+      // "DeepZoomImage",
+      // "GLTFViewer",
+      // "ImageViewer",
+      'JupyterLab',
+      // "Kernels",
+      'KernelDashboard',
+      'LeafLet',
+      // "Linker",
+      'Notepad',
+      // "PDFViewer",
+      // "RTCChat",
+      'SageCell',
+      'Screenshare',
+      // "SageCell",
+      'Stickie',
+      // "TwilioScreenshare",
+      // "VegaLite",
+      // "VegaLiteViewer",
+      // "VideoViewer",
+      'Webview',
+    ];
 
 export interface ApplicationProps {
   boardId: string;
@@ -135,9 +137,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
       h = 300;
     }
 
+    const title = appName == 'Stickie' ? user.data.name : ''; // Gross
     createApp({
-      name: appName,
-      description: appName,
+      title: title,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },
@@ -145,8 +147,6 @@ export function ApplicationsPanel(props: ApplicationProps) {
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as any) },
-      ownerId: user._id || '',
-      minimized: false,
       raised: true,
     });
   };

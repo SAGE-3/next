@@ -109,7 +109,7 @@ export function isPythonNotebook(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isText(mimeType: string): boolean {
-  return mimeType.startsWith('text/');
+  return mimeType === 'text/plain';
 }
 /**
  * Test if a given mime type is a ZIP file
@@ -220,7 +220,6 @@ export function isValid(mimeType: string): boolean {
   // isZip(mimeType) ||
   // isAudio(mimeType) ||
   // isHTML(mimeType) ||
-  // isMD(mimeType) ||
 
   return (
     isImage(mimeType) ||
@@ -228,6 +227,7 @@ export function isValid(mimeType: string): boolean {
     isVideo(mimeType) ||
     isPythonNotebook(mimeType) ||
     isText(mimeType) ||
+    isMD(mimeType) ||
     isJSON(mimeType) ||
     isGeoJSON(mimeType) ||
     isCSV(mimeType) ||

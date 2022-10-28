@@ -12,10 +12,7 @@ import JSZip from 'jszip';
 
 import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
 
-import {
-  Controller, AssetsPanel, ApplicationsPanel, NavigationPanel,
-  UsersPanel, WhiteboardPanel
-} from './UI/Panels';
+import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, WhiteboardPanel } from './UI/Panels';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 import { ClearBoardModal } from './UI/ClearBoardModal';
 import { AppToolbar } from './UI/AppToolbar';
@@ -94,7 +91,7 @@ export function UILayer(props: UILayerProps) {
             session.file(filename, buffer);
           }
         }
-      } else if (a.data.name === 'Stickie') {
+      } else if (a.data.type === 'Stickie') {
         // Stickies are saved as text files
         if ('text' in a.data.state) {
           const filename = `stickie-${a._id}.txt`;

@@ -127,8 +127,7 @@ function AppComponent(props: App): JSX.Element {
   function openCell(kid: string) {
     if (!user) return;
     createApp({
-      name: 'CodeCell',
-      description: 'CodeCell',
+      title: 'CodeCell',
       roomId: roomId!,
       boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
@@ -136,8 +135,6 @@ function AppComponent(props: App): JSX.Element {
       rotation: { x: 0, y: 0, z: 0 },
       type: 'CodeCell',
       state: { ...initialValues['CodeCell'], kernel: kid },
-      ownerId: user._id,
-      minimized: false,
       raised: true,
     });
   }
@@ -147,8 +144,7 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // TODO: open into the right kerne/notebook
     createApp({
-      name: 'JupyterLab',
-      description: 'JupyterLab',
+      title: 'JupyterLab',
       roomId: roomId!,
       boardId: boardId!,
       position: { x: props.data.position.x, y: props.data.position.y + props.data.size.height + 50, z: 0 },
@@ -156,8 +152,6 @@ function AppComponent(props: App): JSX.Element {
       rotation: { x: 0, y: 0, z: 0 },
       type: 'JupyterLab',
       state: { ...initialValues['JupyterLab'] },
-      ownerId: user._id,
-      minimized: false,
       raised: true,
     });
   }

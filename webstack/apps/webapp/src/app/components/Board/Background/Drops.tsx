@@ -21,27 +21,24 @@ import { initialValues } from '@sage3/applications/initialValues';
  * @param {string} userId
  */
 export function setupApp(
-  appName: AppName,
+  title: string,
+  type: AppName,
   x: number,
   y: number,
   roomId: string,
   boardId: string,
-  userId: string,
   { w, h }: { w: number; h: number } = { w: 400, h: 400 },
-  init: AppState = {}
+  init: Partial<AppState> = {}
 ): AppSchema {
   return {
-    name: appName,
-    description: appName,
+    title: title,
     roomId: roomId,
     boardId: boardId,
     position: { x: x, y: y, z: 0 },
     size: { width: w, height: h, depth: 0 },
     rotation: { x: 0, y: 0, z: 0 },
-    type: appName,
-    state: { ...initialValues[appName], ...init },
-    ownerId: userId || '',
-    minimized: false,
+    type: type,
+    state: { ...(initialValues[type] as AppState), ...init },
     raised: true,
   };
 }
