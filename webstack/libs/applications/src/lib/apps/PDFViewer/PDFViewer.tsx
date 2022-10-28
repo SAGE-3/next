@@ -53,10 +53,10 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, { numPages: pages.length });
         // Update the app title
         const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-        update(props._id, { description: asset?.data.originalfilename + pageInfo });
+        update(props._id, { title: asset?.data.originalfilename + pageInfo });
       } else {
         // Update the app title
-        update(props._id, { description: asset?.data.originalfilename });
+        update(props._id, { title: asset?.data.originalfilename });
       }
     }
   }, [s.assetid, assets]);
@@ -87,81 +87,83 @@ function AppComponent(props: App): JSX.Element {
       if (pages) {
         if (pages.length > 1) {
           const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-          update(props._id, { description: file.data.originalfilename + pageInfo });
+          update(props._id, { title: file.data.originalfilename + pageInfo });
         }
       }
     }
   }, [s.currentPage]);
 
   // Event handler
-  const handleUserKeyPress = useCallback((evt: KeyboardEvent) => {
-    switch (evt.key) {
-      case "ArrowRight": {
-        // Next page
-        if (s.currentPage === s.numPages - s.displayPages) return;
-        const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
-        updateState(props._id, { currentPage: newpage });
-        break;
-      }
-      case "ArrowLeft": {
-        // Previous page
-        if (s.currentPage === 0) return;
-        const newpage = s.currentPage - 1 >= 0 ? s.currentPage - 1 : 0;
-        updateState(props._id, { currentPage: newpage });
-        break;
-      }
-      case "1": {
-        // Go to first page
-        updateState(props._id, { currentPage: 0 });
-        break;
-      }
-      case "0": {
-        // Go to last page
-        updateState(props._id, { currentPage: s.numPages - s.displayPages });
-        break;
-      }
-      case "-": {
-        // Remove one page
-        if (s.displayPages > 1) {
-          const pageCount = s.displayPages - 1;
-          updateState(props._id, { displayPages: pageCount });
-          update(props._id, {
-            size: {
-              width: pageCount * props.data.size.height * aspectRatio,
-              height: props.data.size.height,
-              depth: props.data.size.depth,
-            },
-          });
+  const handleUserKeyPress = useCallback(
+    (evt: KeyboardEvent) => {
+      switch (evt.key) {
+        case 'ArrowRight': {
+          // Next page
+          if (s.currentPage === s.numPages - s.displayPages) return;
+          const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
+          updateState(props._id, { currentPage: newpage });
+          break;
         }
-        break;
-      }
-      case "+": {
-        // Add one page
-        if (s.displayPages < s.numPages) {
-          const pageCount = s.displayPages + 1;
-          updateState(props._id, { displayPages: pageCount });
-          update(props._id, {
-            size: {
-              width: pageCount * props.data.size.height * aspectRatio,
-              height: props.data.size.height,
-              depth: props.data.size.depth,
-            },
-          });
+        case 'ArrowLeft': {
+          // Previous page
+          if (s.currentPage === 0) return;
+          const newpage = s.currentPage - 1 >= 0 ? s.currentPage - 1 : 0;
+          updateState(props._id, { currentPage: newpage });
+          break;
         }
-        break;
-      }
-      case "D": {
-        // Trigger a download
-        if (file) {
-          const url = file?.data.file;
-          const filename = file?.data.originalfilename;
-          downloadFile('api/assets/static/' + url, filename);
+        case '1': {
+          // Go to first page
+          updateState(props._id, { currentPage: 0 });
+          break;
         }
-        break;
+        case '0': {
+          // Go to last page
+          updateState(props._id, { currentPage: s.numPages - s.displayPages });
+          break;
+        }
+        case '-': {
+          // Remove one page
+          if (s.displayPages > 1) {
+            const pageCount = s.displayPages - 1;
+            updateState(props._id, { displayPages: pageCount });
+            update(props._id, {
+              size: {
+                width: pageCount * props.data.size.height * aspectRatio,
+                height: props.data.size.height,
+                depth: props.data.size.depth,
+              },
+            });
+          }
+          break;
+        }
+        case '+': {
+          // Add one page
+          if (s.displayPages < s.numPages) {
+            const pageCount = s.displayPages + 1;
+            updateState(props._id, { displayPages: pageCount });
+            update(props._id, {
+              size: {
+                width: pageCount * props.data.size.height * aspectRatio,
+                height: props.data.size.height,
+                depth: props.data.size.depth,
+              },
+            });
+          }
+          break;
+        }
+        case 'D': {
+          // Trigger a download
+          if (file) {
+            const url = file?.data.file;
+            const filename = file?.data.originalfilename;
+            downloadFile('api/assets/static/' + url, filename);
+          }
+          break;
+        }
       }
-    }
-  }, [s, file, props.data.position]);
-
+    },
+    [s, file, props.data.position]
+  );
 
   // Attach/detach event handler from the div
   useEffect(() => {
@@ -184,9 +186,15 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <HStack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}
+      <HStack
+        roundedBottom="md"
+        bg="whiteAlpha.700"
+        width="100%"
+        height="100%"
         // setting for keyboard handler
-        ref={divRef} tabIndex={1} >
+        ref={divRef}
+        tabIndex={1}
+      >
         {urls
           .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
           .map((url, idx) => (
@@ -282,7 +290,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" >
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Remove Page'} openDelay={400}>
           <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove />
@@ -290,7 +298,11 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button
+            isDisabled={s.displayPages >= s.numPages}
+            onClick={() => handleAddPage()}
+            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+          >
             <MdAdd />
           </Button>
         </Tooltip>
@@ -309,18 +321,26 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button
+            isDisabled={s.currentPage === length - 1}
+            onClick={() => handleNext()}
+            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+          >
             <MdNavigateNext />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button
+            isDisabled={s.currentPage === length - 1}
+            onClick={() => handleLast()}
+            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+          >
             <MdSkipNext />
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" >
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="teal" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>

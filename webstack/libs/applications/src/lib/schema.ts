@@ -13,17 +13,14 @@ export { AppName, AppState } from './types';
 
 // build the main schema
 export type AppSchema = {
-  name: string;
-  description: string;
+  title: string;
   roomId: string;
   boardId: string;
-  ownerId: string;
   position: Position;
   size: Size;
   rotation: Rotation;
   type: AppName;
   state: AppState;
-  minimized: boolean;
   raised: boolean;
 };
 

@@ -53,11 +53,11 @@ const CameraController = (props: CameraProps) => {
     controls.maxDistance = 200;
     controls.zoomO = 4;
 
-    controls.addEventListener("change", (e: any) => {
+    controls.addEventListener('change', (e: any) => {
       // redraw
       invalidate();
     });
-    controls.addEventListener("end", (e: any) => {
+    controls.addEventListener('end', (e: any) => {
       const p = controls.getPolarAngle();
       const a = controls.getAzimuthalAngle();
       const d = controls.getDistance();
@@ -69,7 +69,6 @@ const CameraController = (props: CameraProps) => {
   }, [camera, gl]);
   return null;
 };
-
 
 function FrameLimiter({ limit = 2 }) {
   const { invalidate, clock } = useThree();
@@ -83,9 +82,9 @@ function FrameLimiter({ limit = 2 }) {
         invalidate();
         delta = delta % interval;
       }
-    }
+    };
     update();
-  }, [])
+  }, []);
   return null;
 }
 
@@ -132,7 +131,7 @@ function AppComponent(props: App): JSX.Element {
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: myasset?.data.originalfilename });
+      update(props._id, { title: myasset?.data.originalfilename });
     }
   }, [s.assetid, assets]);
 
@@ -146,9 +145,14 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box bgColor='rgb{156,162,146}' w={'100%'} h={'100%'} p={0} borderRadius='0 0 6px 6px'>
-        <Canvas style={{ height: (props.data.size.height / scale) + 'px', width: (props.data.size.width / scale) + 'px' }}
-          shadows={false} dpr={1} frameloop={'demand'} gl={{ powerPreference: "low-power", antialias: false }}>
+      <Box bgColor="rgb{156,162,146}" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px">
+        <Canvas
+          style={{ height: props.data.size.height / scale + 'px', width: props.data.size.width / scale + 'px' }}
+          shadows={false}
+          dpr={1}
+          frameloop={'demand'}
+          gl={{ powerPreference: 'low-power', antialias: false }}
+        >
           {/* <FrameLimiter limit={20} /> */}
           <CameraController id={props._id} state={orientation} />
           <ambientLight intensity={0.1} />
@@ -159,7 +163,7 @@ function AppComponent(props: App): JSX.Element {
           </Suspense>
         </Canvas>
       </Box>
-    </AppWindow >
+    </AppWindow>
   );
 }
 
@@ -174,22 +178,25 @@ function ToolbarComponent(props: App): JSX.Element {
     if (appasset) setFile(appasset);
   }, [s.assetid, assets]);
 
-  return <>
-    <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="top-start" hasArrow={true} label={'Download Model'} openDelay={400}>
-        <Button
-          onClick={() => {
-            if (file) {
-              const url = file?.data.file;
-              const filename = file?.data.originalfilename;
-              downloadFile('api/assets/static/' + url, filename);
-            }
-          }}>
-          <MdFileDownload />
-        </Button>
-      </Tooltip>
-    </ButtonGroup>
-  </>;
+  return (
+    <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Model'} openDelay={400}>
+          <Button
+            onClick={() => {
+              if (file) {
+                const url = file?.data.file;
+                const filename = file?.data.originalfilename;
+                downloadFile('api/assets/static/' + url, filename);
+              }
+            }}
+          >
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };

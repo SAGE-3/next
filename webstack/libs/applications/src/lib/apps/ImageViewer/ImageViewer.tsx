@@ -51,7 +51,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, { description: myasset?.data.originalfilename });
+        update(props._id, { title: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL
@@ -92,18 +92,20 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
-      <div ref={ref} style={{
-        position: 'relative', overflowY: 'hidden',
-        height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
-        maxHeight: '100%'
-      }}>
-        <Image width="100%" userSelect={"auto"} draggable={false}
-          alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
+      <div
+        ref={ref}
+        style={{
+          position: 'relative',
+          overflowY: 'hidden',
+          height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
+          maxHeight: '100%',
+        }}
+      >
+        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
       </div>
     </AppWindow>
   );
 }
-
 
 /**
  * UI for the image viewer app
@@ -141,7 +143,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 const appasset = assets.find((a) => a.data.file === filename);
                 downloadFile(url, appasset?.data.originalfilename);
               }
-            }}>
+            }}
+          >
             <MdFileDownload />
           </Button>
         </Tooltip>
