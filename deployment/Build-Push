@@ -1,23 +1,19 @@
 #!/bin/bash
 
-# stage foresight inside the notebook folder
-rm -fr configurations/jupyter/notebooks/foresight
-cp -r ../foresight configurations/jupyter/notebooks/
-
-
 # macOS
 if [[ $OSTYPE == 'darwin'* ]]; then
 
+  security -v unlock-keychain ~/Library/Keychains/login.keychain-db
+
   if [[ `uname -m` == 'arm64' ]]; then
-    security -v unlock-keychain ~/Library/Keychains/login.keychain-db
     docker buildx build --push -f node_server/Dockerfile --platform linux/arm64 --tag sage3/next:arm64 ..
-    #docker buildx build -f foresight/Dockerfile   --platform linux/arm64 --tag sage3/foresight ..
+    docker buildx build --push -f foresight/Dockerfile   --platform linux/arm64 --tag sage3/foresight:arm64 ..
   fi
 
   # Intel
   if [[ `uname -m` == 'x86_64' ]]; then
     docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag sage3/next:amd64 ..
-    #docker buildx build -f foresight/Dockerfile   --tag sage3/foresight ..
+    docker buildx build --push -f foresight/Dockerfile   --platform linux/amd64 --tag sage3/foresight:amd64 ..
   fi
 
 fi
@@ -25,7 +21,7 @@ fi
 # linux
 if [[ $OSTYPE == 'linux'* ]]; then
   docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag sage3/next:amd64 ..
-  #docker buildx build --push -f foresight/Dockerfile        --platform linux/amd64 --tag sage3/foresight ..
+  docker buildx build --push -f foresight/Dockerfile   --platform linux/amd64 --tag sage3/foresight:amd64 ..
 fi
 
 
