@@ -13,8 +13,14 @@ import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 import axios, { AxiosProgressEvent } from 'axios';
 
 import {
-  useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration,
-  useMessageStore, processContentURL
+  useUIStore,
+  useAppStore,
+  useUser,
+  useAssetStore,
+  useHexColor,
+  GetConfiguration,
+  useMessageStore,
+  processContentURL,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -251,9 +257,7 @@ export function Background(props: BackgroundProps) {
           const extras = a.data.derived as ExtraImageType;
           const vw = 800;
           const vh = vw / (extras.aspectRatio || 1);
-          createApp(
-            setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: vw, h: vh }, { assetid: fileID })
-          );
+          createApp(setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: vw, h: vh }, { assetid: fileID }));
         }
       });
     } else if (isCSV(fileType)) {
@@ -457,10 +461,7 @@ export function Background(props: BackgroundProps) {
             w = 800;
             h = 800;
           }
-          createApp(
-            setupApp('Webview', xdrop, ydrop, props.roomId, props.boardId, user._id,
-              { w, h }, { webviewurl: final_url })
-          );
+          createApp(setupApp('Webview', xdrop, ydrop, props.roomId, props.boardId, user._id, { w, h }, { webviewurl: final_url }));
         }
       } else {
         // if no files were dropped, create an application
@@ -505,7 +506,7 @@ export function Background(props: BackgroundProps) {
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {
           zoomInDelta(evt.deltaY, cursor);
-        } else if (evt.deltaY > 0) {
+        } else if (evt.deltaY >= 0) {
           zoomOutDelta(evt.deltaY, cursor);
         }
       }}
