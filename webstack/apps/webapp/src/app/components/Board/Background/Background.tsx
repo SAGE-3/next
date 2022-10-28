@@ -14,7 +14,7 @@ import axios, { AxiosProgressEvent } from 'axios';
 
 import {
   useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration,
-  useMessageStore, processContentURL
+  useMessageStore, processContentURL, useHotkeys, usePresenceStore
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -48,6 +48,8 @@ export function Background(props: BackgroundProps) {
   const toast = useToast();
   // Handle to a toast
   const toastIdRef = useRef<ToastId>();
+  // Cursor positions
+  const presences = usePresenceStore((state) => state.presences);
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -70,6 +72,10 @@ export function Background(props: BackgroundProps) {
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
   const gridColor = useHexColor(gc);
+
+  // Get the position of the cursor
+  const me = presences.find((el) => el.data.userId === user!._id && el.data.boardId === props.boardId);
+
 
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {
@@ -482,6 +488,22 @@ export function Background(props: BackgroundProps) {
       }
     }
   }
+
+  // Stickies Shortcut
+  useHotkeys(
+    'shift+s',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      if (me) {
+        const pos = me.data.cursor;
+        createApp(setupApp('Stickie', pos.x, pos.y, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, {}));
+      }
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
+    // Depends on the cursor to get the correct position
+    { dependencies: [me?.data.cursor] }
+  );
 
   return (
     <Box
