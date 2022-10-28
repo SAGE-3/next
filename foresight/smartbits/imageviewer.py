@@ -30,7 +30,7 @@ class ImageViewer(SmartBit):
     def set_bboxes(self, bboxes):
         print('+++++++++++++++++')
         print('running set_boxes')
-        self.state.boxes = json.dumps(bboxes)
+        self.state.boxes = bboxes
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

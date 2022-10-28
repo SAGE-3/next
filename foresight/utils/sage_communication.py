@@ -6,6 +6,7 @@ class Borg:
         self.__dict__ = self._shared_state
 
 
+
 class SageCommunication(Borg):
     # The borg pattern allows us to init the config in the proxy and not have to worry about
     # passing it in the smartbits, i.e. no need to pass it in the smartbis!
@@ -36,10 +37,12 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
+        print("app update data is")
+        print(data)
+        print("------------")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
-                                   json=data
-                                   )
+                                   json=data)
         return r
 
     def create_app(self, data):

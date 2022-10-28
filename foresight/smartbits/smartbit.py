@@ -69,7 +69,7 @@ class TrackedBaseModel(BaseModel):
                     error = False
                 finally:
                     if error:
-                        raise Exception("Error Happened")
+                        raise Exception(f"Error Happened updating {obj[fields[-1]]} ")
             return setter
 
         def recursive_iter(u_data, path=[]):

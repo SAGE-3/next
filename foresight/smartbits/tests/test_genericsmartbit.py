@@ -1,6 +1,7 @@
 import pytest
 from smartbits.genericsmartbit import GenericSmartBit
 
+
 def test_create_generic_smartbit():
     doc = {
         '_id': '9d36d86d-077f-48d6-aab9-cd145b87620d',
