@@ -149,8 +149,7 @@ function AppComponent(props: App): JSX.Element {
   const startSageCell = (kernelId: string, kernelAlias: string) => {
     if (!user || !roomId || !boardId) return;
     createApp({
-      name: 'SageCell',
-      description: `SageCell> ${kernelAlias}`,
+      title: `${kernelAlias}`,
       roomId: roomId,
       boardId: boardId,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
@@ -168,8 +167,6 @@ function AppComponent(props: App): JSX.Element {
         output: '',
         executeInfo: { executeFunc: '', params: {} },
       },
-      ownerId: user._id,
-      minimized: false,
       raised: true,
     });
   };

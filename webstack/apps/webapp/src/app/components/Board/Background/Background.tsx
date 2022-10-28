@@ -493,7 +493,7 @@ export function Background(props: BackgroundProps) {
       if (!user) return;
       const x = cursorPosition.x;
       const y = cursorPosition.y;
-      createApp(setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
+      createApp(setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
 
       // Returning false stops the event and prevents default browser events
       return false;

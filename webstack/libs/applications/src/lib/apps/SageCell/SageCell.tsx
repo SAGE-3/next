@@ -201,7 +201,7 @@ function ToolbarComponent(props: App): JSX.Element {
       // updae the app
       updateState(props._id, { kernel: e.target.value });
       // update the app description
-      update(props._id, { description: `SageCell> ${e.currentTarget.selectedOptions[0].text}` });
+      update(props._id, { title: `SageCell> ${e.currentTarget.selectedOptions[0].text}` });
     }
   }
 
