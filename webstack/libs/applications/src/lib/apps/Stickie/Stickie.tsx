@@ -129,12 +129,12 @@ function AppComponent(props: App): JSX.Element {
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px">
+      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0}>
         <Textarea
           ref={textbox}
           resize={'none'}
           w="100%"
-          h={props.data.size.height - 24}
+          h="100%"
           variant="outline"
           borderWidth="0px"
           p={4}
