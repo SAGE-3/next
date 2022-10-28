@@ -45,16 +45,11 @@ export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
   hostedApps: {},
   runStatus: false,
-<<<<<<< HEAD
-  supportedTasks: '',
-  messages: {},
-  output: '',
-=======
+
   supportedTasks: {},
   messages: {},
   output: {},
 
->>>>>>> ai-pane
 };
 
 export const name = 'AIPane';

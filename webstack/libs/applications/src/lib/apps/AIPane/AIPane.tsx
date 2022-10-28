@@ -6,8 +6,8 @@
  *
  */
 
-import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import {useEffect, useRef, useState} from 'react';
+import {useLocation} from 'react-router-dom';
 import {
   Box,
   Button,
@@ -31,15 +31,15 @@ import {
   VisuallyHidden,
 } from '@chakra-ui/react';
 
-import { FaPlay } from 'react-icons/fa';
-import { BiErrorCircle, BiRun } from 'react-icons/bi';
-import { FiChevronDown } from 'react-icons/fi';
+import {FaPlay} from 'react-icons/fa';
+import {BiErrorCircle, BiRun} from 'react-icons/bi';
+import {FiChevronDown} from 'react-icons/fi';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import {useAppStore, useAssetStore, useUIStore} from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import {App} from '../../schema';
+import {state as AppState} from './index';
+import {AppWindow} from '../../components';
 
 import './styles.css';
 
@@ -60,7 +60,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [outputLocal, setOutputLocal] = useState<{ score: number, label: string, box: object }[]>([])
 
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
+  const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
 
   // Checks for apps on or off the pane
   useEffect(() => {
@@ -82,29 +82,24 @@ function AppComponent(props: App): JSX.Element {
               ...s.hostedApps,
               ...client,
             };
-<<<<<<< HEAD
-            updateState(props._id, { messages: hosted, hostedApps: hosted });
-            newAppAdded();
-=======
             updateState(props._id, {hostedApps: hosted});
             updateState(props._id, {messages: hosted});
             console.log('app ' + app._id + ' added');
             newAppAdded(app.data.name);
           } else {
             console.log('app ' + app._id + ' already in hostedApps');
->>>>>>> ai-pane
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
-            const hostedCopy = { ...s.hostedApps };
+            const hostedCopy = {...s.hostedApps};
             delete hostedCopy[app._id];
-            updateState(props._id, { messages: hostedCopy, hostedApps: hostedCopy });
+            updateState(props._id, {messages: hostedCopy, hostedApps: hostedCopy});
           }
         }
       }
     }
   }, [selApp?.data.position.x, selApp?.data.position.y,
-  selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
+    selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
 
   //TODO Be mindful of client updates
   // Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
@@ -116,12 +111,12 @@ function AppComponent(props: App): JSX.Element {
     Object.keys(s.hostedApps).forEach((key: string) => {
       if (appIds.includes(key)) copyofhostapps[key] = key;
     });
-    updateState(props._id, { hostedApps: copyofhostapps });
+    updateState(props._id, {hostedApps: copyofhostapps});
   }, [boardApps.length]);
 
   // Move all apps together with the AIPane
   useEffect(() => {
-    const hostedCopy = { ...s.hostedApps };
+    const hostedCopy = {...s.hostedApps};
     const xDiff = props.data.position.x - prevX.current;
     const yDiff = props.data.position.y - prevY.current;
 
@@ -142,11 +137,6 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-<<<<<<< HEAD
-      updateState(props._id, { supportedTasks: '' });
-    }
-  }, [JSON.stringify(s.hostedApps)]);
-=======
       updateState(props._id, {supportedTasks: ""});
     }
   }, [Object.keys(s.hostedApps).length])
@@ -175,19 +165,13 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [JSON.stringify(s.output)])
 
->>>>>>> ai-pane
-
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
 
   function newAppAdded(appType: string) {
     updateState(props._id, {
-<<<<<<< HEAD
-      executeInfo: { executeFunc: 'new_app_added', params: { app_type: 'ImageViewer' } },
-=======
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
->>>>>>> ai-pane
     });
   }
 
@@ -196,12 +180,12 @@ function AppComponent(props: App): JSX.Element {
     delete unchecked[info];
 
     // these updateState calls should be combined
-    updateState(props._id, { messages: unchecked });
+    updateState(props._id, {messages: unchecked});
 
     if (Object.keys(s.messages).includes(info)) {
-      const messagesCopy = { ...s.messages };
+      const messagesCopy = {...s.messages};
       delete messagesCopy[info];
-      updateState(props._id, { messages: messagesCopy });
+      updateState(props._id, {messages: messagesCopy});
     }
   }
 
@@ -210,7 +194,7 @@ function AppComponent(props: App): JSX.Element {
       <Box>
         <Popover>
           <PopoverTrigger>
-            <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
+            <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
               <Button variant="ghost" size="lg" color="cyan">
                 Message
               </Button>
@@ -218,8 +202,8 @@ function AppComponent(props: App): JSX.Element {
           </PopoverTrigger>
 
           <PopoverContent>
-            <PopoverArrow />
-            <PopoverCloseButton />
+            <PopoverArrow/>
+            <PopoverCloseButton/>
             <PopoverHeader>History</PopoverHeader>
 
             <PopoverBody>
@@ -229,7 +213,7 @@ function AppComponent(props: App): JSX.Element {
             {Object.keys(s.messages)?.map((message: string) => (
               <PopoverBody>
                 {s.messages[message]}
-                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)} />
+                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
               </PopoverBody>
             ))}
           </PopoverContent>
@@ -238,34 +222,14 @@ function AppComponent(props: App): JSX.Element {
         <Box className="status-container">
           {s.runStatus ? (
             Object.values(s.hostedApps).every(checkAppType) ? (
-              <Icon as={BiRun} w={8} h={8} />
+              <Icon as={BiRun} w={8} h={8}/>
             ) : (
-              <Icon as={BiErrorCircle} w={8} h={8} />
+              <Icon as={BiErrorCircle} w={8} h={8}/>
             )
           ) : (
             <VisuallyHidden>Empty Board</VisuallyHidden>
           )}
         </Box>
-
-<<<<<<< HEAD
-        <Box position="absolute" top="30%" left="20%">
-          selected application {selectedAppId}
-          <br />
-          length of hosted apps array: {Object.keys(s.hostedApps).length}
-          <br />
-          hosted apps: {Object.values(s.hostedApps)}
-          <br />
-          supported tasks: {s.supportedTasks}
-        </Box>
-
-        <Box className="output-container">
-          <Text>
-            Output <br />
-            {s.output}
-          </Text>
-        </Box>
-=======
->>>>>>> ai-pane
       </Box>
     </AppWindow>
   );
@@ -274,11 +238,6 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-
-<<<<<<< HEAD
-  const objDetModels = ['facebook/detr-resnet-50', 'lai_lab/fertilized_egg_detect'];
-  const classModels = ['image_c_model_1', 'image_c_model_2'];
-=======
   const location = useLocation();
   const locationState = location.state as { roomId: string };
   const assets = useAssetStore((state) => state.assets);
@@ -286,10 +245,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
 
->>>>>>> ai-pane
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
+  const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
 
   const [supportedTasks, setSupportedTasks] = useState<{ name: string, models: string[] }[]>([])
+  const [aiModel, setAIModel] = useState('')
+
 
   useEffect(() => {
     if (s.supportedTasks != undefined && s.supportedTasks != '') {
@@ -316,45 +276,18 @@ function ToolbarComponent(props: App): JSX.Element {
       runStatus: true,
       executeInfo: {
         executeFunc: 'execute_model',
-        params: { some_uuid: '12345678', model_id: 'facebook/detr-resnet-50' },
+        params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'},
       },
     });
   }
 
   const handleModelClick = (model: string) => {
     console.log('run model: ', model)
+    setAIModel(model)
   }
 
   return (
     <>
-<<<<<<< HEAD
-      <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
-        <Stack spacing={2} direction="row">
-          <Menu>
-            <MenuButton as={Button} rightIcon={<FiChevronDown />}>
-              Object Detection Models
-            </MenuButton>
-            <Portal>
-              <MenuList>
-                {objDetModels.map((model) => {
-                  return <MenuItem>{model}</MenuItem>;
-                })}
-              </MenuList>
-            </Portal>
-          </Menu>
-          <Menu>
-            <MenuButton as={Button} rightIcon={<FiChevronDown />}>
-              Classification Models
-            </MenuButton>
-            <Portal>
-              <MenuList>
-                {classModels.map((model) => {
-                  return <MenuItem>{model}</MenuItem>;
-                })}
-              </MenuList>
-            </Portal>
-          </Menu>
-=======
       <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
         <Stack spacing={2} direction='row'>
 
@@ -375,12 +308,10 @@ function ToolbarComponent(props: App): JSX.Element {
             )
           })
           }
-
->>>>>>> ai-pane
           <IconButton
             aria-label="Run AI"
-            icon={s.runStatus ? <BiRun /> : <FaPlay />}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+            icon={s.runStatus ? <BiRun/> : <FaPlay/>}
+            _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
             isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
             onClick={() => {
               runFunction();
@@ -392,4 +323,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+export default {AppComponent, ToolbarComponent};

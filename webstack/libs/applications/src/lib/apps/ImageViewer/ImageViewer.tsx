@@ -9,10 +9,7 @@ import { useEffect, useState } from 'react';
 import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
 import { MdFileDownload } from 'react-icons/md';
-<<<<<<< HEAD
-=======
 import { HiPencilAlt } from 'react-icons/hi';
->>>>>>> ai-pane
 // Utility functions from SAGE3
 import { downloadFile, isUUIDv4 } from '@sage3/frontend';
 
@@ -22,10 +19,8 @@ import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
 import { state as AppState } from './index';
-<<<<<<< HEAD
-=======
-import { dimensions } from './data_types';
->>>>>>> ai-pane
+
+// import { dimensions } from './data_types';
 
 /**
  * ImageViewer app
@@ -53,7 +48,7 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  const [bboxes, setBboxes] = useState<{ [key: string]: dimensions }>({});
+  // const [bboxes, setBboxes] = useState<{ [key: string]: dimensions }>({});
   //
   // s.boxes = {
   //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
@@ -159,9 +154,6 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
         }}
       >
-<<<<<<< HEAD
-        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
-=======
         <>
           <Image
             width="100%"
@@ -237,7 +229,6 @@ function AppComponent(props: App): JSX.Element {
             // })
           }
         </>
->>>>>>> ai-pane
       </div>
     </AppWindow>
   );
@@ -284,10 +275,6 @@ function ToolbarComponent(props: App): JSX.Element {
             }}
           >
             <MdFileDownload />
-<<<<<<< HEAD
-          </Button>
-        </Tooltip>
-=======
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
@@ -321,7 +308,6 @@ function ToolbarComponent(props: App): JSX.Element {
         {/*    <HiPencilAlt/>*/}
         {/*  </Button>*/}
         {/*</Tooltip>*/}
->>>>>>> ai-pane
       </ButtonGroup>
     </>
   );

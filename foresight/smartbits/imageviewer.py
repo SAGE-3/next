@@ -7,13 +7,7 @@
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-<<<<<<< HEAD
 
-
-class ImageViewerState(TrackedBaseModel):
-
-=======
-import json
 
 class ImageViewerState(TrackedBaseModel):
     # class Config:
@@ -21,28 +15,12 @@ class ImageViewerState(TrackedBaseModel):
     boxes: dict
     assetid: str
     annotations: bool
->>>>>>> ai-pane
     executeInfo: ExecuteInfo
 
 
 class ImageViewer(SmartBit):
     # the key that is assigned to this in state is
     state: ImageViewerState
-<<<<<<< HEAD
-    # _some_private_info: dict = PrivateAttr()
-
-    def __init__(self, **kwargs):
-        # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(ImageViewer, self).__init__(**kwargs)
-        # self._some_private_info = {1: 2}
-
-    def reset_to_zero(self):
-        print("Zeroing requested by te user")
-        self.state.count = 0
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
-=======
 
     # _some_private_info: dict = PrivateAttr()
     def __init__(self, **kwargs):
@@ -56,4 +34,3 @@ class ImageViewer(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
->>>>>>> ai-pane
