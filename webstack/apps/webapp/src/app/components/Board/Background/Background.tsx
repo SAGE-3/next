@@ -22,7 +22,6 @@ import {
   useMessageStore,
   processContentURL,
   useHotkeys,
-  usePresenceStore,
   useCursorBoardPosition,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
@@ -57,8 +56,6 @@ export function Background(props: BackgroundProps) {
   const toast = useToast();
   // Handle to a toast
   const toastIdRef = useRef<ToastId>();
-  // Cursor positions
-  const presences = usePresenceStore((state) => state.presences);
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -78,7 +75,6 @@ export function Background(props: BackgroundProps) {
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
   const scale = useUIStore((state) => state.scale);
-  const boardPosition = useUIStore((state) => state.boardPosition);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
