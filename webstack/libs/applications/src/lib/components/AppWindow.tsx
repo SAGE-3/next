@@ -41,15 +41,21 @@ export function AppWindow(props: WindowProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
 
+  // Local state
+  const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
+  const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
+  const [myZ, setMyZ] = useState(zindex);
+  const [appWasDragged, setAppWasDragged] = useState(false);
+
   // Colors
   const bg = useColorModeValue('gray.100', 'gray.700');
   const backgroundColor = useHexColor(bg);
 
-  const bc = useColorModeValue('gray.300', 'gray.500');
+  const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
-  const borderWidth = Math.max(2, 4 / scale);
+  const borderWidth = Math.min(Math.max(4 / scale, 2), 20);
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
-  const outerBorderRadius = 12 / scale;
+  const outerBorderRadius = 12;
   const innerBorderRadius = outerBorderRadius - borderWidth;
 
   const titleColor = useColorModeValue('gray.800', 'white');
@@ -66,6 +72,7 @@ export function AppWindow(props: WindowProps) {
   const owner = users.find((el) => el._id === props.app._createdBy);
   const ocolor = owner ? owner.data.color : 'gray.500';
   const ownerColor = useHexColor(ocolor);
+
   // App Store
   const apps = useAppStore((state) => state.apps);
   const update = useAppStore((state) => state.update);
@@ -73,17 +80,12 @@ export function AppWindow(props: WindowProps) {
   const storeError = useAppStore((state) => state.error);
   const clearError = useAppStore((state) => state.clearError);
 
-  // Local state
-  const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
-  const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
-  const [myZ, setMyZ] = useState(zindex);
-  const [appWasDragged, setAppWasDragged] = useState(false);
-
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
 
   // Delete an app while mouseover and delete pressed
   const [mouseOver, setMouseOver] = useState(false);
+
   useHotkeys(
     'ctrl+d',
     () => {
@@ -149,7 +151,6 @@ export function AppWindow(props: WindowProps) {
   function handleResize(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
     // Get the width and height of the app after the resize
     const width = parseInt(ref.offsetWidth);
-    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
     const height = parseInt(ref.offsetHeight);
 
     // Set local state
@@ -221,7 +222,7 @@ export function AppWindow(props: WindowProps) {
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
-      size={{ width: size.width, height: size.height }} // Add the height of the titlebar to give the app the full size.
+      size={{ width: size.width, height: size.height }}
       position={pos}
       onDragStart={handleDragStart}
       onDrag={handleDrag}
@@ -232,8 +233,6 @@ export function AppWindow(props: WindowProps) {
       onClick={handleAppClick}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
-        boxShadow: '3px 3px 16px rgba(0,0,0,0.5)',
-        backgroundColor: backgroundColor,
         zIndex: props.lockToBackground ? 0 : myZ,
         pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', //Guest Blocker
       }}
@@ -261,19 +260,6 @@ export function AppWindow(props: WindowProps) {
       enableResizing={!isGuest}
       disableDragging={isGuest}
     >
-      {/* Border Box around app to show it is selected */}
-      <Box
-        position="absolute"
-        left={`-${borderWidth}px`}
-        top={`-${borderWidth}px`}
-        width={size.width + borderWidth * 2}
-        height={size.height + borderWidth * 2}
-        borderRadius={outerBorderRadius}
-        pointerEvents="none"
-        zIndex={-1} // Behind everything
-        background={selected ? selectColor : borderColor}
-      ></Box>
-
       {/* Title Above app */}
       {appTitles ? (
         <Box
@@ -285,50 +271,35 @@ export function AppWindow(props: WindowProps) {
           display="flex"
           justifyContent="left"
           alignItems="center"
-          pl="4"
+          pl={-4}
         >
-          {' '}
-          <Tooltip
-            label={'Opened by ' + (owner ? owner?.data.name : 'Unknown')}
-            aria-label="username"
-            hasArrow={true}
-            placement="top-start"
-          >
-            <Avatar
-              name={owner ? owner.data.name : 'Unknown'}
-              getInitials={initials}
-              bg={ownerColor}
-              borderRadius={'100%'}
-              color="white"
-              size={'xs'}
-              showBorder={true}
-              borderWidth={'0.5px'}
-              borderColor="whiteAlpha.600"
-              transform={`scale(${Math.max(1, 1 / scale)})`}
-            />
-          </Tooltip>
-          <Text
-            color={titleColor}
-            fontSize={18 / scale}
-            whiteSpace="nowrap"
-            textOverflow="ellipsis"
-            width={size.width}
-            overflow="hidden"
-            ml={10 / scale}
-          >
+          <Text color={titleColor} fontSize={18 / scale} whiteSpace="nowrap" textOverflow="ellipsis" width={size.width} overflow="hidden">
             {props.app.data.description}
           </Text>
         </Box>
       ) : null}
 
+      {/* Border Box around app to show it is selected */}
+      <Box
+        position="absolute"
+        left={`${-borderWidth}px`}
+        top={`${-borderWidth}px`}
+        width={size.width + borderWidth * 2}
+        height={size.height + borderWidth * 2}
+        borderRadius={outerBorderRadius}
+        zIndex={-1} // Behind everything
+        background={selected ? selectColor : borderColor}
+        boxShadow={'4px 4px 12px 0px rgb(0 0 0 / 25%)'}
+      ></Box>
+
       {/* The Application */}
       <Box
         id={'app_' + props.app._id}
-        width={size.width}
-        height={size.height}
+        width="100%"
+        height="100%"
         overflow="hidden"
-        zIndex={100}
-        background={borderColor}
+        zIndex={2}
+        background={backgroundColor}
         borderRadius={innerBorderRadius}
       >
         {props.children}
@@ -337,12 +308,12 @@ export function AppWindow(props: WindowProps) {
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
       {!selected ? (
         <Box
-          position="absolute"
           className="handle" // The CSS name react-rnd latches on to for the drag events
+          position="absolute"
           left="0px"
           top="0px"
-          width={size.width}
-          height={size.height}
+          width="100%"
+          height="100%"
           cursor="move"
           userSelect={'none'}
           zIndex={3}
@@ -362,8 +333,8 @@ export function AppWindow(props: WindowProps) {
           position="absolute"
           left="0px"
           top="0px"
-          width={size.width}
-          height={size.height}
+          width="100%"
+          height="100%"
           pointerEvents={'none'}
           userSelect={'none'}
           borderRadius={innerBorderRadius}

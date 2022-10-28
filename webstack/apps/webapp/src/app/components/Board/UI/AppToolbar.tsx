@@ -63,9 +63,8 @@ export function AppToolbar(props: AppToolbarProps) {
       const ay = app.data.position.y * scale;
       const ah = app.data.size.height * scale;
       const aw = app.data.size.width * scale;
-      const titleBarHeight = 35 * scale; // Titlebar height including borders
-      let aby = ay + ah + titleBarHeight; // App Bottom Y
-      if (app.data.minimized) aby = ay + titleBarHeight; // If the app is minimized, the bottom of the app is the top of the titlebar
+      const spacing = 12 * scale; // spacing between app and toolbar
+      let aby = ay + ah + spacing; // App Bottom Y
 
       // Board Pos and Size
       const bx = boardPosition.x * scale;

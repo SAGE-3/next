@@ -12,10 +12,7 @@ import JSZip from 'jszip';
 
 import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
 
-import {
-  Controller, AssetsPanel, ApplicationsPanel, NavigationPanel,
-  UsersPanel, WhiteboardPanel
-} from './UI/Panels';
+import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, WhiteboardPanel } from './UI/Panels';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 import { ClearBoardModal } from './UI/ClearBoardModal';
 import { AppToolbar } from './UI/AppToolbar';

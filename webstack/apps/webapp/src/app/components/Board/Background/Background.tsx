@@ -497,16 +497,17 @@ export function Background(props: BackgroundProps) {
       onDrop={OnDrop}
       onDragOver={OnDragOver}
       onScroll={(evt) => {
-        console.log('onScroll> event', evt);
+        // console.log('onScroll> event', evt);
         evt.stopPropagation();
       }}
       onWheel={(evt: any) => {
-        console.log('onWheel> event', evt);
+        // console.log('onWheel> event', evt);
+        console.log('WheelEvent', evt.deltaY);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {
           zoomInDelta(evt.deltaY, cursor);
-        } else if (evt.deltaY >= 0) {
+        } else if (evt.deltaY > 0) {
           zoomOutDelta(evt.deltaY, cursor);
         }
       }}

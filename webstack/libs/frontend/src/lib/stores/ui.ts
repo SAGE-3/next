@@ -16,7 +16,7 @@ import { SAGEColors } from '@sage3/shared';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
-const MaxZoom = 4.0;
+const MaxZoom = 4;
 // Zoom step of 10%
 const StepZoom = 0.1;
 // When using mouse wheel, repeated events
@@ -116,8 +116,8 @@ interface UIState {
  */
 export const useUIStore = create<UIState>((set, get) => ({
   scale: 1.0,
-  boardWidth: 5000000,
-  boardHeight: 5000000,
+  boardWidth: 3000000, // Having it set to 5,000,000 caused a bug where you couldn't zoom back out.
+  boardHeight: 3000000, // It was like the div scaleing became to large
   selectedBoardId: '',
   gridSize: 1,
   zIndex: 1,
@@ -326,7 +326,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       set((state) => {
         const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
         const zoomOutVal = Math.max(get().scale - step * get().scale, MinZoom);
-        console.log(zoomOutVal, MinZoom);
+        console.log('zoomout', d, zoomOutVal);
         if (cursor) {
           const b = get().boardPosition;
           const s = get().scale;
