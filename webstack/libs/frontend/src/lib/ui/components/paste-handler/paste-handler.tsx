@@ -40,6 +40,10 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     if (!user) return;
 
     const pasteHandlerReachingDocumentBody = (event: ClipboardEvent) => {
+      // get the target element and make sure it is the background board
+      const elt = event.target as HTMLElement;
+      if (elt.id !== 'board') return;
+
       // Open webview if url, otherwise, open a sticky
       if (event.clipboardData?.files) {
         if (event.clipboardData.files.length > 0) {
