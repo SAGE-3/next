@@ -21,6 +21,8 @@ import {
   GetConfiguration,
   useMessageStore,
   processContentURL,
+  useHotkeys,
+  useCursorBoardPosition,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -66,6 +68,7 @@ export function Background(props: BackgroundProps) {
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
+  const cursorPosition = useCursorBoardPosition();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -257,18 +260,7 @@ export function Background(props: BackgroundProps) {
           const extras = a.data.derived as ExtraImageType;
           const vw = 800;
           const vh = vw / (extras.aspectRatio || 1);
-          createApp(
-            setupApp(
-              a.data.originalfilename,
-              'VideoViewer',
-              xDrop,
-              yDrop,
-              props.roomId,
-              props.boardId,
-              { w: vw, h: vh },
-              { assetid: fileID }
-            )
-          );
+          createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, { w: vw, h: vh }, { assetid: fileID }));
         }
       });
     } else if (isCSV(fileType)) {
@@ -486,6 +478,22 @@ export function Background(props: BackgroundProps) {
       }
     }
   }
+
+  // Stickies Shortcut
+  useHotkeys(
+    'shift+s',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
+      createApp(setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
+
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
+    // Depends on the cursor to get the correct position
+    { dependencies: [cursorPosition.x, cursorPosition.y] }
+  );
 
   return (
     <Box
