@@ -8,7 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isText, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
+import { isImage, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
 
 import { GetConfiguration } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
@@ -144,7 +144,7 @@ export async function setupAppForFile(
         minimized: false,
         raised: true,
       });
-    } else if (isText(file.type)) {
+    } else if (isMD(file.type)) {
       // Look for the file in the asset store
       const localurl = '/api/assets/static/' + file.filename;
       // Get the content of the file
