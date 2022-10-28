@@ -63,7 +63,7 @@ export function AppToolbar(props: AppToolbarProps) {
       const ay = app.data.position.y * scale;
       const ah = app.data.size.height * scale;
       const aw = app.data.size.width * scale;
-      const spacing = 12 * scale; // spacing between app and toolbar
+      const spacing = 32 * scale; // spacing between app and toolbar
       let aby = ay + ah + spacing; // App Bottom Y
 
       // Board Pos and Size

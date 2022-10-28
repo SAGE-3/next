@@ -53,6 +53,9 @@ export function AppWindow(props: WindowProps) {
 
   const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
+
+  const titleBackground = useColorModeValue('#00000015', '#ffffff26');
+
   const borderWidth = Math.min(Math.max(4 / scale, 2), 20);
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const outerBorderRadius = 12;
@@ -267,13 +270,21 @@ export function AppWindow(props: WindowProps) {
           top="0px"
           left="0px"
           width={size.width}
-          transform={'translateY(calc(-100% - 6px))'}
+          transform={`translate(-${2 / scale}px, calc(-100% - 8px))`}
           display="flex"
           justifyContent="left"
           alignItems="center"
-          pl={-4}
         >
-          <Text color={titleColor} fontSize={18 / scale} whiteSpace="nowrap" textOverflow="ellipsis" width={size.width} overflow="hidden">
+          <Text
+            color={titleColor}
+            fontSize={16 / scale}
+            whiteSpace="nowrap"
+            textOverflow="ellipsis"
+            overflow="hidden"
+            background={titleBackground}
+            borderRadius={8 / scale}
+            px={2}
+          >
             {props.app.data.title}
           </Text>
         </Box>

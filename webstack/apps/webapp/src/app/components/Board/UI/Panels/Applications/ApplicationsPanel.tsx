@@ -122,9 +122,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
 
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
-
+    const title = appName == 'Stickie' ? user.data.name : ''; // Gross
     createApp({
-      title: '',
+      title: title,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },

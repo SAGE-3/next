@@ -84,7 +84,7 @@ export function BoardContextMenu(props: ContextProps) {
    * Create a new application
    * @param appName
    */
-  const newApplication = (appName: AppName) => {
+  const newApplication = (appName: AppName, title?: string) => {
     if (!user) return;
     // features disabled
     if (appName === 'JupyterLab' && data.features && !data.features['jupyter']) return;
@@ -98,7 +98,7 @@ export function BoardContextMenu(props: ContextProps) {
       const y = Math.round(pos.y / gridSize) * gridSize;
       // Create the app
       createApp({
-        title: '',
+        title: title ? title : '',
         roomId: props.roomId,
         boardId: props.boardId,
         position: { x, y, z: 0 },
@@ -290,7 +290,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => newApplication('Stickie')}
+            onClick={() => newApplication('Stickie', user?.data.name)}
           >
             Stickie
           </Button>
