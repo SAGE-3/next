@@ -12,7 +12,7 @@ import { useUIStore } from '../stores';
 /**
  * Hook to oberve the user's cursor position on the board
  * Usable only on the board page
- * @returns (width, height) of the window
+ * @returns (x, y) position of the cursor
  */
 export function useCursorBoardPosition(): { x: number; y: number } {
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
