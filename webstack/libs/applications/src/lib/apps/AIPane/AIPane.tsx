@@ -61,7 +61,6 @@ function AppComponent(props: App): JSX.Element {
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
-  const [outputLocal, setOutputLocal] = useState<{ score: number, label: string, box: object }[]>([])
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
@@ -144,34 +143,9 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-      updateState(props._id, {supportedTasks: ""});
+      updateState(props._id, {supportedTasks: {}});
     }
   }, [Object.keys(s.hostedApps).length])
-
-  //TODO parse output
-  useEffect(() => {
-    if (s.output != undefined && Object.keys(s.output).length > 0) {
-      const parsedOT = JSON.parse(s.output)
-      const arrayOT = parsedOT.output.split("'")
-      const parsedArrayOT = JSON.parse(arrayOT[0])
-      const modelOutput: { score: number, label: string, box: object }[] = []
-      Object.keys(parsedArrayOT).forEach((array) => {
-        Object.keys(parsedArrayOT[array]).forEach((entity) => {
-          modelOutput.push({
-            score: parsedArrayOT[array][entity].score,
-            label: parsedArrayOT[array][entity].label,
-            box: parsedArrayOT[array][entity].box
-          })
-        })
-      })
-      setOutputLocal(modelOutput)
-      console.log(modelOutput)
-      for (const score in modelOutput) {
-        console.log(modelOutput[score].score)
-      }
-    }
-  }, [JSON.stringify(s.output)])
-
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -256,72 +230,65 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
-  const [supportedTasks, setSupportedTasks] = useState<{ name: string, models: string[] }[]>([])
-
-  useEffect(() => {
-    if (s.supportedTasks != undefined && s.supportedTasks != '') {
-      const parsedST = JSON.parse(s.supportedTasks)
-      const newTasks: { name: string, models: string[] }[] = [];
-      Object.keys(parsedST).forEach(aiType => {
-        Object.keys(parsedST[aiType]).forEach(modelName => {
-          newTasks.push({
-            name: modelName,
-            models: parsedST[aiType][modelName]
-          })
-        })
-      })
-      setSupportedTasks(newTasks)
-    }
-  }, [JSON.stringify(s.supportedTasks)])
+  const [aiModel, setAIModel] = useState('')
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
 
-  function runFunction() {
+  function runFunction(model: string) {
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'execute_model',
-        params: {some_uuid: '12345678', model_id: 'facebook/detr-resnet-50'}
+        params: {some_uuid: '12345678', model_id: model},
       },
     });
     updateState(props._id, {runStatus: true});
   }
 
   const handleModelClick = (model: string) => {
-    console.log('run model: ', model)
+    setAIModel(model)
   }
 
   return (
     <>
       <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
         <Stack spacing={2} direction='row'>
-
-          {supportedTasks.map(task => {
-            return (
-              <Menu>
-                <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-                  {task.name}
-                </MenuButton>
-                <Portal>
-                  <MenuList>
-                    {task.models.map((name) => {
-                      return <MenuItem onClick={() => handleModelClick(name)}>{name}</MenuItem>;
-                    })}
-                  </MenuList>
-                </Portal>
-              </Menu>
-            )
-          })
-          }
-
+          <>
+            {
+              Object.keys(s.supportedTasks).map((type) => {
+                return (
+                  Object.keys(s.supportedTasks[type]).map((tasks) => {
+                    return (
+                      <Menu>
+                        <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+                          {tasks}
+                        </MenuButton>
+                        <Portal>
+                          <MenuList>
+                            {
+                              s.supportedTasks[type][tasks].map((model: string) => {
+                                return (
+                                  <MenuItem onClick={() => handleModelClick(model)}>{model}</MenuItem>
+                                )
+                              })
+                            }
+                          </MenuList>
+                        </Portal>
+                      </Menu>
+                    )
+                  })
+                )
+              })
+            }
+          </>
           <IconButton
             aria-label="Run AI"
             icon={s.runStatus ? <BiRun/> : <FaPlay/>}
             _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
             isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
             onClick={() => {
-              runFunction();
+              runFunction(aiModel);
             }}
           />
         </Stack>

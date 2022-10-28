@@ -37,7 +37,9 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: bool
-    output: Optional[dict]
+    # output: Optional[dict]
+
+    supportedTasks: Optional[dict]
 
 
 class AIPane(SmartBit):
@@ -69,7 +71,7 @@ class AIPane(SmartBit):
                 for type, settings in ai_settings.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
-            self.state.supportedTasks = json.dumps(supported_tasks)
+            self.state.supportedTasks = supported_tasks
         print(f"supported tasks are: {self.state.supportedTasks}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -83,7 +85,7 @@ class AIPane(SmartBit):
 
 
 
-        self.state.output = json.dumps(msg)
+        # self.state.output = json.dumps(msg)
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}

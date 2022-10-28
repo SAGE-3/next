@@ -20,16 +20,7 @@ export const schema = z.object({
   annotations: z.boolean(),
 
   boxes:  bboxType,
-  //   // [{key: string}: object]
-  //   label: z.string().optional(),
-  //   dimensions: z.record(
-  //     z.object({xmin: z.number(), ymin: z.number(), xmax: z.number(), ymax: z.number()})
-  //
-  //   ).optional(),
-  // }),
-  //
 
-  // boxes: z.record(z.string(), z.record(z.string(), z.number()))
 
   executeInfo: z.object({
     executeFunc: z.string(),
