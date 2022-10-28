@@ -230,9 +230,7 @@ function AppComponent(props: App): JSX.Element {
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Webview',
-        ownerId: user._id,
         state: { webviewurl: processContentURL(url) },
-        minimized: false,
         raised: true,
       });
     };

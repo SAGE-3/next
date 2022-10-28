@@ -42,13 +42,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: w, height: w, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'ImageViewer',
         state: { ...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename },
-        minimized: false,
         raised: true,
       });
     } else if (isImage(file.type)) {
@@ -58,13 +56,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'ImageViewer',
         state: { ...initialValues['ImageViewer'], assetid: file.id },
-        minimized: false,
         raised: true,
       });
     } else if (isVideo(file.type)) {
@@ -72,13 +68,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 450, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'VideoViewer',
         state: { ...(initialValues['VideoViewer'] as AppState), assetid: file.id },
-        minimized: false,
         raised: true,
       });
     } else if (isCSV(file.type)) {
@@ -86,13 +80,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'CSVViewer',
         state: { ...initialValues['CSVViewer'], assetid: file.id },
-        minimized: false,
         raised: true,
       });
     } else if (isGLTF(file.type)) {
@@ -100,13 +92,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 600, height: 600, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'GLTFViewer',
         state: { ...initialValues['GLTFViewer'], assetid: file.id },
-        minimized: false,
         raised: true,
       });
     } else if (isDZI(file.type)) {
@@ -114,13 +104,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'DeepZoomImage',
         state: { ...(initialValues['DeepZoomImage'] as AppState), assetid: file.id },
-        minimized: false,
         raised: true,
       });
     } else if (isGeoJSON(file.type)) {
@@ -128,13 +116,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 800, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'LeafLet',
         state: { ...(initialValues['LeafLet'] as AppState), assetid: file.id },
-        minimized: false,
         raised: true,
       });
     } else if (isMD(file.type)) {
@@ -156,13 +142,11 @@ export async function setupAppForFile(
             title: user.data.name,
             roomId: roomId,
             boardId: boardId,
-            ownerId: user._id,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
             state: { ...(initialValues['Stickie'] as AppState), text: text },
-            minimized: false,
             raised: true,
           });
         });
@@ -185,13 +169,11 @@ export async function setupAppForFile(
             title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            ownerId: user._id,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'CodeCell',
             state: { ...(initialValues['CodeCell'] as AppState), code: text },
-            minimized: false,
             raised: true,
           });
         });
@@ -214,13 +196,11 @@ export async function setupAppForFile(
             title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            ownerId: user._id,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 500, height: 600, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'VegaLite',
             state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
-            minimized: false,
             raised: true,
           });
         });
@@ -268,13 +248,11 @@ export async function setupAppForFile(
                     title: file.originalfilename,
                     roomId: roomId,
                     boardId: boardId,
-                    ownerId: user._id,
                     position: { x: xDrop, y: yDrop, z: 0 },
                     size: { width: 700, height: 700, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
                     type: 'JupyterLab',
                     state: { ...(initialValues['JupyterLab'] as any), notebook: file.originalfilename },
-                    minimized: false,
                     raised: true,
                   });
                 });
@@ -295,13 +273,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        ownerId: user._id,
         position: { x: xDrop, y: yDrop, z: 0 },
         size: { width: 400, height: 400 / aspectRatio, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'PDFViewer',
         state: { ...initialValues['PDFViewer'], assetid: file.id },
-        minimized: false,
         raised: true,
       });
     }

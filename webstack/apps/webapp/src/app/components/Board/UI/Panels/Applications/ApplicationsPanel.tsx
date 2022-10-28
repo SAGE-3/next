@@ -132,8 +132,6 @@ export function ApplicationsPanel(props: ApplicationProps) {
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as any) },
-      ownerId: user._id || '',
-      minimized: false,
       raised: true,
     });
   };

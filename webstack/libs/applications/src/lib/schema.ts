@@ -16,13 +16,11 @@ export type AppSchema = {
   title: string;
   roomId: string;
   boardId: string;
-  ownerId: string;
   position: Position;
   size: Size;
   rotation: Rotation;
   type: AppName;
   state: AppState;
-  minimized: boolean;
   raised: boolean;
 };
 

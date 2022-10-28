@@ -88,9 +88,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             size: { width: w, height: h, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Webview',
-            ownerId: user?._id,
             state: { webviewurl: final_url },
-            minimized: false,
             raised: true,
           });
         } else {
@@ -104,8 +102,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
             state: { text: pastedText, fontSize: 42, color: '#F6E05E' },
-            ownerId: user._id,
-            minimized: false,
             raised: true,
           });
         }

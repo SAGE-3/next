@@ -190,13 +190,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 title: elt.originalname,
                 roomId: req.body.room,
                 boardId: req.body.board,
-                ownerId: user.id,
                 position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
                 size: { width, height, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'ImageViewer',
                 state: { ...initialValues['ImageViewer'], assetid: `/api/assets/static/${elt.filename}` },
-                minimized: false,
                 raised: false,
               },
               user.id
@@ -213,13 +211,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 title: elt.originalname,
                 roomId: req.body.room,
                 boardId: req.body.board,
-                ownerId: user.id,
                 position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
                 size: { width, height, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'ImageViewer',
                 state: { ...initialValues['ImageViewer'], assetid: assetID },
-                minimized: false,
                 raised: false,
               },
               user.id
@@ -238,13 +234,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
               size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'PDFViewer',
               state: { ...initialValues['PDFViewer'], assetid: assetID },
-              minimized: false,
               raised: false,
             },
             user.id
@@ -258,13 +252,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'CSVViewer',
               state: { ...initialValues['CSVViewer'], assetid: assetID },
-              minimized: false,
               raised: false,
             },
             user.id
@@ -279,13 +271,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'VideoViewer',
               state: { ...initialValues['VideoViewer'], assetid: assetID },
-              minimized: false,
               raised: false,
             },
             user.id
@@ -300,13 +290,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'DeepZoomImage',
               state: { assetid: assetID, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
-              minimized: false,
               raised: false,
             },
             user.id
@@ -321,13 +309,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'GLTFViewer',
               state: { assetid: assetID },
-              minimized: false,
               raised: false,
             },
             user.id
@@ -342,13 +328,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'LeafLet',
               state: { assetid: assetID, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
-              minimized: false,
               raised: false,
             },
             user.id
@@ -359,13 +343,12 @@ function uploadHandler(req: express.Request, res: express.Response): void {
           const text = fs.readFileSync(elt.path);
           const w = tw || 400;
           const h = th || 400;
-          const user = await UsersCollection.get(req.user.id);
+          const u = await UsersCollection.get(req.user.id);
           AppsCollection.add(
             {
-              title: user ? user.data.name : 'Unknown',
+              title: u ? u.data.name : 'Unknown',
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user ? user._id : 'Unknown',
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
@@ -377,10 +360,9 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 text: text.toString(),
                 executeInfo: { executeFunc: '', params: {} },
               },
-              minimized: false,
               raised: false,
             },
-            user ? user._id : 'Unknown'
+            user.id
           );
           posx += tw || 400;
           posx += 10;
@@ -393,7 +375,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
@@ -402,7 +383,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 ...initialValues['CodeCell'],
                 code: text.toString(),
               },
-              minimized: false,
               raised: false,
             },
             user.id
@@ -453,7 +433,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                     title: elt.originalname,
                     roomId: req.body.room,
                     boardId: req.body.board,
-                    ownerId: user.id,
                     position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
                     size: { width: w, height: h, depth: 0 },
                     rotation: { x: 0, y: 0, z: 0 },
@@ -462,7 +441,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                       ...initialValues['JupyterLab'],
                       notebook: elt.originalname,
                     },
-                    minimized: false,
                     raised: false,
                   },
                   user.id
@@ -483,13 +461,11 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              ownerId: user.id,
               position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'VegaLite',
               state: { ...initialValues['VegaLite'], spec: text.toString() },
-              minimized: false,
               raised: false,
             },
             user.id

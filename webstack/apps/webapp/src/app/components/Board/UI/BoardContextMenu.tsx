@@ -106,8 +106,6 @@ export function BoardContextMenu(props: ContextProps) {
         rotation: { x: 0, y: 0, z: 0 },
         type: appName,
         state: { ...(initialValues[appName] as any) },
-        ownerId: user._id || '',
-        minimized: false,
         raised: true,
       });
     }
@@ -136,9 +134,7 @@ export function BoardContextMenu(props: ContextProps) {
         size: { width, height, depth: 0 },
         rotation: { x, y, z: 0 },
         type: 'JupyterLab',
-        ownerId: user?._id || '-',
         state: { ...initialValues['JupyterLab'], jupyterURL: '' },
-        minimized: false,
         raised: true,
       });
     }

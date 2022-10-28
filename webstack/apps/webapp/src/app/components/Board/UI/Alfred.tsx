@@ -66,8 +66,6 @@ export function Alfred(props: props) {
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as AppState) },
-      ownerId: user._id || '',
-      minimized: false,
       raised: true,
     });
   };
@@ -108,9 +106,7 @@ export function Alfred(props: props) {
             size: { width, height, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Webview',
-            ownerId: user?._id,
             state: { webviewurl: processContentURL(loc) },
-            minimized: false,
             raised: true,
           });
         }
@@ -125,9 +121,7 @@ export function Alfred(props: props) {
           size: { width, height, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Webview',
-          ownerId: user?._id,
           state: { webviewurl: processContentURL(searchURL) },
-          minimized: false,
           raised: true,
         });
       } else if (terms[0] === 's' || terms[0] === 'n' || terms[0] === 'stick' || terms[0] === 'stickie' || terms[0] === 'note') {
@@ -141,8 +135,6 @@ export function Alfred(props: props) {
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Stickie',
           state: { ...(initialValues['Stickie'] as AppState), text: content },
-          ownerId: user._id,
-          minimized: false,
           raised: true,
         });
       } else if (terms[0] === 'c' || terms[0] === 'cell') {

@@ -139,8 +139,6 @@ function ToolbarComponent(props: App): JSX.Element {
       state: {
         spec: s.spec,
       },
-      ownerId: user?._id,
-      minimized: false,
       raised: true,
     });
   };

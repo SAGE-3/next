@@ -12,7 +12,6 @@ import { SAGE3Collection, sageRouter } from '@sage3/backend';
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
   constructor() {
     super('APPS', {
-      ownerId: '',
       roomId: '',
       boardId: '',
       type: 'Stickie',

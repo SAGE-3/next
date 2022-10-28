@@ -118,8 +118,6 @@ function AppComponent(props: App): JSX.Element {
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Stickie',
         state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
-        ownerId: user._id,
-        minimized: false,
         raised: true,
       });
     }
@@ -193,7 +191,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // Add whitespace at the end of the text to make it a paragraph
     const text = s.text.split('\n').join('  \n');
     const style = `<style type="text/css" rel="stylesheet">body { background-color: ${s.color}} * {color: black} }</style>`;
-    const ownerName = users.find((el) => el._id === props.data.ownerId)?.data.name;
+    const ownerName = users.find((el) => el._id === props._createdBy)?.data.name;
     const content = `# Stickie\n${dt}\n___\n${text}\n___\nCreated by ${ownerName} with SAGE3\n${style}`;
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);

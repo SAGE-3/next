@@ -128,17 +128,7 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(appBottomPosition);
       }
     }
-  }, [
-    app?.data.position,
-    app?.data.size,
-    scale,
-    boardPosition.x,
-    boardPosition.y,
-    window.innerHeight,
-    window.innerWidth,
-    boardDragging,
-    app?.data.minimized,
-  ]);
+  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth, boardDragging]);
 
   function getAppToolbar() {
     if (app) {

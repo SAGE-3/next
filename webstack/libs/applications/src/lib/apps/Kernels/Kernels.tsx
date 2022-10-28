@@ -135,8 +135,6 @@ function AppComponent(props: App): JSX.Element {
       rotation: { x: 0, y: 0, z: 0 },
       type: 'CodeCell',
       state: { ...initialValues['CodeCell'], kernel: kid },
-      ownerId: user._id,
-      minimized: false,
       raised: true,
     });
   }
@@ -154,8 +152,6 @@ function AppComponent(props: App): JSX.Element {
       rotation: { x: 0, y: 0, z: 0 },
       type: 'JupyterLab',
       state: { ...initialValues['JupyterLab'] },
-      ownerId: user._id,
-      minimized: false,
       raised: true,
     });
   }
