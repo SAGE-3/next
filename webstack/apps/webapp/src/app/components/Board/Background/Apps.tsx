@@ -7,7 +7,7 @@
  */
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
-import { useAppStore, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
 import { useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -15,8 +15,11 @@ import { ErrorBoundary } from 'react-error-boundary';
 export function Apps() {
   // Apps Store
   const apps = useAppStore((state) => state.apps);
+  const deleteApp = useAppStore((state) => state.delete);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const resetZIndex = useUIStore((state) => state.resetZIndex);
+
+  const { position } = useCursorBoardPosition();
 
   // Reset the global zIndex when no apps
   useEffect(() => {
@@ -28,6 +31,34 @@ export function Apps() {
     setSelectedApp('');
   });
 
+  // This still doesnt work properly
+  // But a start
+  // useHotkeys(
+  //   'ctrl+d',
+  //   () => {
+  //     if (position && apps.length > 0) {
+  //       const cx = position.x;
+  //       const cy = position.y;
+  //       let found = false;
+  //       // Sort the apps by the last time they were updated to order them correctly
+  //       apps
+  //         .sort((a, b) => b._updatedAt - a._updatedAt)
+  //         .forEach((el) => {
+  //           if (found) return;
+  //           const x1 = el.data.position.x;
+  //           const y1 = el.data.position.y;
+  //           const x2 = x1 + el.data.size.width;
+  //           const y2 = y1 + el.data.size.height;
+  //           // If the cursor is inside the app, delete it. Only delete the top one
+  //           if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+  //             found = true;
+  //             deleteApp(el._id);
+  //           }
+  //         });
+  //     }
+  //   },
+  //   { dependencies: [position.x, position.y, JSON.stringify(apps)] }
+  // );
   return (
     <>
       {/* Apps */}
