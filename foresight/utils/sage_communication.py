@@ -7,6 +7,8 @@ class Borg:
 
 
 
+
+
 class SageCommunication(Borg):
     # The borg pattern allows us to init the config in the proxy and not have to worry about
     # passing it in the smartbits, i.e. no need to pass it in the smartbis!

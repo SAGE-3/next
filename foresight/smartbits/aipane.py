@@ -6,6 +6,8 @@
 # -----------------------------------------------------------------------------
 import time
 
+from pydantic import PrivateAttr
+
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from typing import Optional, TypeVar
@@ -19,6 +21,7 @@ if prod_type == "development":
 
 def get_sharing_url(private_url):
     file_name = private_url.split("/")[-1]
+    print(f"file_name is {file_name}")
     headers = {'Authorization': f"Bearer {conf['token']}"}
     data = requests.get(private_url, headers=headers).content
     if not os.getenv("DROPBOX_TOKEN"):
@@ -26,7 +29,7 @@ def get_sharing_url(private_url):
     dbx = dropbox.Dropbox(os.getenv("DROPBOX_TOKEN"))
     _ = dbx.files_upload(data, f"/sage3_image_folder/{file_name}", mode=dropbox.files.WriteMode("overwrite"))
     sharing_links = dbx.sharing_get_shared_links(f"/sage3_image_folder/{file_name}")
-    if not sharing_links:
+    if sharing_links and not sharing_links.links:
         url = dbx.sharing_create_shared_link_with_settings(f"/sage3_image_folder/{file_name}").url
     else:
         url = sharing_links.links[0].url
@@ -70,12 +73,12 @@ class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
 
-    # _some_private_info: dict = PrivateAttr()
+    _pending_executions: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(AIPane, self).__init__(**kwargs)
-        #self._pending_executions = {}
+        self._pending_executions = {}
 
     def new_app_added(self, app_type):
         """
@@ -100,18 +103,25 @@ class AIPane(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def handle_exec_result(self, msg):
+    def handle_image_exec_result(self, app_uuid, msg_uuid, msg):
         print("I am handling the execution results")
-        print(f" type of msg in aipane{type(msg)}")
+        print(f" type of msg in aipane{msg}")
+        print(f"the apps involved are {self._pending_executions[msg_uuid]}")
 
-        # first, get the ids of the apps
-        # for app in
+        for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
+            d = {x["label"]: x["box"] for x in msg["output"][i]}
+            payload = {"state.boxes": d, "state.annotations": True}
+            print(f"updating the boxes on image {hosted_app_id}")
+            response = self._s3_comm.send_app_update(hosted_app_id, payload)
 
+            print(f"response is {response.status_code}")
+            print("done")
         # self.state.output = json.dumps(msg)
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
+        del(self._pending_executions[msg_uuid])
 
     def execute_model(self, exec_uuid, model_id):
         # Only handling images for now, we getting the image url directly.
@@ -143,12 +153,12 @@ class AIPane(SmartBit):
             }
         }
 
-        #self._pending_executions[exec_uuid] = app_ids
+        self._pending_executions[exec_uuid] = app_ids
 
         payload = {
             "app_uuid": self.app_id,
             "msg_uuid": exec_uuid,
-            "callback_fn": self.handle_exec_result,
+            "callback_fn": self.handle_image_exec_result,
             "funcx_uuid": funcx_config["ai_func_uuid"],
             "endpoint_uuid": funcx_config["endpoint_uuid"],
             "data": params
@@ -159,6 +169,5 @@ class AIPane(SmartBit):
         print(f"params: {params}")
         print("------------------------------------------------------------")
 
-        return
         self._ai_client.execute(payload)
-
+        print("just called the ai_client's execute")

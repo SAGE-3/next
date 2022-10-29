@@ -54,7 +54,7 @@ class AIClient(Borg):
             tasks_to_remove = set()
             for task_id in self.running_jobs:
                 resp = self.fxc.get_task(task_id)
-                print(f" type of resp in ai_client{type(resp)}")
+                #print(f" type of resp in ai_client{type(resp)}")
                 if not resp['pending']:
                     if resp['status'] != 'success':
                         # TODO: Handle the error
@@ -63,7 +63,10 @@ class AIClient(Borg):
                         print("sending the results back")
                         result = resp['result']
                         try:
-                            self.callback_info[task_id][2](result)
+                            app_uuid = self.callback_info[task_id][0]
+                            msg_uuid = self.callback_info[task_id][1]
+                            callback_fn = self.callback_info[task_id][2]
+                            callback_fn(app_uuid, msg_uuid, result)
                             del self.callback_info[task_id]
                             tasks_to_remove.add(task_id)
                         except Exception as e:
