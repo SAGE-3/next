@@ -6,17 +6,21 @@
  *
  */
 
-import { useDisclosure, useColorMode, Avatar, Menu, MenuButton, MenuList, MenuItem, Box, Button } from '@chakra-ui/react';
-import { useAuth, useUser, EditUserModal, initials, EnterBoardByIdModal } from '@sage3/frontend';
-import { MdAccountCircle, MdInput, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
+import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button } from '@chakra-ui/react';
+import { useAuth, useUser, EditUserModal, EnterBoardByIdModal } from '@sage3/frontend';
+import { MdAccountCircle, MdArrowBack, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
 
+type MainButtonProps = {
+  buttonStyle?: 'solid' | 'outline' | 'ghost';
+  showBackHome?: boolean;
+};
 /**
- * HomeAvatar component
+ * Main (StartMenu Button) component
  *
  * @export
  * @returns
  */
-export function HomeAvatar() {
+export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
   const { logout } = useAuth();
   const { toggleColorMode, colorMode } = useColorMode();
@@ -25,12 +29,11 @@ export function HomeAvatar() {
 
   return (
     <>
-      {' '}
       <Menu>
         <MenuButton
           as={Button}
           size="md"
-          variant="outline"
+          variant={props.buttonStyle ? props.buttonStyle : 'outline'}
           colorScheme={user?.data.color ? user.data.color : 'white'}
           leftIcon={<MdAccountCircle />}
         >
@@ -43,6 +46,11 @@ export function HomeAvatar() {
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </MenuItem>
+          {props.showBackHome && (
+            <MenuItem onClick={logout} icon={<MdArrowBack fontSize="24px" />}>
+              Back to Room
+            </MenuItem>
+          )}
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
             Logout
           </MenuItem>

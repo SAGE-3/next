@@ -21,9 +21,9 @@ import {
   useMessageStore,
   usePresenceStore,
   useAssetStore,
+  MainButton,
 } from '@sage3/frontend';
 
-import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { Clock } from '../components/Board/UI/Clock';
 import { Link } from 'react-router-dom';
 
@@ -238,7 +238,7 @@ export function AdminPage() {
         py="2"
         px="2"
       >
-        <HomeAvatar />
+        <MainButton />
         <Box></Box>
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
       </Box>

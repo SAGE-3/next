@@ -19,10 +19,10 @@ import {
   usePresenceStore,
   useRoomStore,
   useUsersStore,
+  MainButton,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
-import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { useParams } from 'react-router-dom';
 import { Clock } from '../components/Board/UI/Clock';
 
@@ -170,7 +170,7 @@ export function HomePage() {
         py="2"
         px="2"
       >
-        <HomeAvatar />
+        <MainButton />
         <Box></Box>
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
       </Box>

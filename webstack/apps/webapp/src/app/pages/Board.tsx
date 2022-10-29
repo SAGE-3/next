@@ -19,6 +19,7 @@ import {
   usePresenceStore,
   useUsersStore,
   PasteHandler,
+  MainButton,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -91,6 +92,10 @@ export function BoardPage() {
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />
+
+      <Box position="absolute" left="2" bottom="2">
+        <MainButton buttonStyle="ghost" showBackHome />
+      </Box>
     </>
   );
 }
