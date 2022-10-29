@@ -91,6 +91,7 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
             <FaEraser />
           </Button>
         </Tooltip>
+
         <Tooltip placement="top" hasArrow label="Erase All">
           <Button onClick={() => setClearAllMarkers(true)} ml="2" size="sm">
             <FaTrash />
