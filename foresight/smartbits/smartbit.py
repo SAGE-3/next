@@ -18,7 +18,6 @@ class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
-
     # make the following params of the constructor. Not all apps need them!
     _jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
     _ai_client: AIClient = AIClient()
