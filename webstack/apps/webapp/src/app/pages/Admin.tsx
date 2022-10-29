@@ -7,10 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  Box, useColorModeValue, Text, Image, Heading, Stack,
-  UnorderedList, ListItem, Button
-} from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Image, Heading, Stack, UnorderedList, ListItem, Button } from '@chakra-ui/react';
 
 import {
   JoinBoardCheck,
@@ -24,9 +21,9 @@ import {
   useMessageStore,
   usePresenceStore,
   useAssetStore,
+  MainButton,
 } from '@sage3/frontend';
 
-import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { Clock } from '../components/Board/UI/Clock';
 import { Link } from 'react-router-dom';
 
@@ -73,8 +70,6 @@ export function AdminPage() {
     subToRooms();
   }, []);
 
-
-
   const delAsset = (id: string) => {
     console.log('delete asset', id);
   };
@@ -116,28 +111,23 @@ export function AdminPage() {
         </Box>
       </Box>
 
-
       {/* Middle Section */}
 
-      <Box
-        justifyContent={'left'}
-        minHeight={0}
-        width="100%"
-        maxWidth="1200px"
-        minWidth="400px"
-        px="4"
-        overflowY={'scroll'}
-      >
+      <Box justifyContent={'left'} minHeight={0} width="100%" maxWidth="1200px" minWidth="400px" px="4" overflowY={'scroll'}>
         <Stack spacing={4}>
-
-          <Heading color={"lightblue"}><Link to="/#/home">Home</Link></Heading>
+          <Heading color={'lightblue'}>
+            <Link to="/#/home">Home</Link>
+          </Heading>
 
           <Heading>Rooms</Heading>
           <UnorderedList pl={10}>
             {rooms.map((room) => {
               return (
-                <ListItem key={room._id}>{room._id}: {room.data.name} ({room.data.description})
-                  <Button mx={3} colorScheme='red' size='xs' onClick={() => delRoom(room._id)}>del</Button>
+                <ListItem key={room._id}>
+                  {room._id}: {room.data.name} ({room.data.description})
+                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delRoom(room._id)}>
+                    del
+                  </Button>
                 </ListItem>
               );
             })}
@@ -147,8 +137,11 @@ export function AdminPage() {
           <UnorderedList pl={10}>
             {boards.map((board) => {
               return (
-                <ListItem key={board._id}>{board._id}: {board.data.name} ({board.data.description})
-                  <Button mx={3} colorScheme='red' size='xs' onClick={() => delBoard(board._id)}>del</Button>
+                <ListItem key={board._id}>
+                  {board._id}: {board.data.name} ({board.data.description})
+                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delBoard(board._id)}>
+                    del
+                  </Button>
                 </ListItem>
               );
             })}
@@ -158,8 +151,11 @@ export function AdminPage() {
           <UnorderedList pl={10}>
             {apps.map((app) => {
               return (
-                <ListItem key={app._id}>{app._id}: {app.data.name}
-                  <Button mx={3} colorScheme='red' size='xs' onClick={() => delApp(app._id)}>del</Button>
+                <ListItem key={app._id}>
+                  {app._id}: {app.data.title}
+                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delApp(app._id)}>
+                    del
+                  </Button>
                 </ListItem>
               );
             })}
@@ -169,8 +165,11 @@ export function AdminPage() {
           <UnorderedList pl={10}>
             {assets.map((a) => {
               return (
-                <ListItem key={a._id}>{a._id}: {a.data.originalfilename}
-                  <Button mx={3} colorScheme='red' size='xs' onClick={() => delAsset(a._id)}>del</Button>
+                <ListItem key={a._id}>
+                  {a._id}: {a.data.originalfilename}
+                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delAsset(a._id)}>
+                    del
+                  </Button>
                 </ListItem>
               );
             })}
@@ -180,11 +179,16 @@ export function AdminPage() {
           <UnorderedList pl={10}>
             {users.map((user) => {
               return (
-                <ListItem key={user._id}>{user._id}: {user.data.name}
-                  <Button mx={3} colorScheme='red' size='xs' onClick={() => delUser(user._id)}>del</Button>
+                <ListItem key={user._id}>
+                  {user._id}: {user.data.name}
+                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delUser(user._id)}>
+                    del
+                  </Button>
                   <UnorderedList pl={10}>
                     <ListItem>email: {user.data.email}</ListItem>
-                    <ListItem>role: {user.data.userRole} - type: {user.data.userType}</ListItem>
+                    <ListItem>
+                      role: {user.data.userRole} - type: {user.data.userType}
+                    </ListItem>
                   </UnorderedList>
                 </ListItem>
               );
@@ -195,9 +199,12 @@ export function AdminPage() {
           <UnorderedList pl={10}>
             {presences.map((p) => {
               return (
-                <ListItem key={p._id}>{p.data.userId}
+                <ListItem key={p._id}>
+                  {p.data.userId}
                   <UnorderedList pl={10}>
-                    <ListItem>room: {p.data.roomId} - board: {p.data.boardId} </ListItem>
+                    <ListItem>
+                      room: {p.data.roomId} - board: {p.data.boardId}{' '}
+                    </ListItem>
                     {/* <ListItem>cursor: {p.data.cursor.x} {p.data.cursor.y}</ListItem>
                     <ListItem>status: {p.data.status}</ListItem>
                     <ListItem>viewport: p {p.data.viewport.position.x} x {p.data.viewport.position.y} - s {p.data.viewport.size.width} x {p.data.viewport.size.height}</ListItem> */}
@@ -211,11 +218,12 @@ export function AdminPage() {
           <UnorderedList pl={10}>
             {messages.map((message) => {
               return (
-                <ListItem key={message._id}>{message.data.type}: {message.data.payload} </ListItem>
+                <ListItem key={message._id}>
+                  {message.data.type}: {message.data.payload}{' '}
+                </ListItem>
               );
             })}
           </UnorderedList>
-
         </Stack>
       </Box>
 
@@ -230,10 +238,10 @@ export function AdminPage() {
         py="2"
         px="2"
       >
-        <HomeAvatar />
+        <MainButton buttonStyle="solid" />
         <Box></Box>
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
       </Box>
-    </Box >
+    </Box>
   );
 }

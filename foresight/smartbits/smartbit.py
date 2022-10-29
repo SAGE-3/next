@@ -166,15 +166,15 @@ class AppTypes(Enum):
     genericsmartbit = "GenericSmartBit"
 
 class Data(TrackedBaseModel):
-    name: str
-    description: str
+    # name: str
+    # description: str
     position: Position
     size: Size
     rotation: Rotation
     #type: AppTypes
     type: str
     # owner_id: str = Field(alias='ownerId')
-    owner_id: str = Field(alias='ownerId')
+    # owner_id: str = Field(alias='ownerId')
 
 
 class SmartBit(TrackedBaseModel):

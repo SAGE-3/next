@@ -13,30 +13,6 @@ import { z } from 'zod';
  * created by: SAGE3 Team
  */
 
-
-// Types
-export type Kernel = {
-  id: string;
-  name?: string;
-  last_activity?: string;
-  execution_state?: string;
-  connections?: boolean;
-};
-
-export type Notebook = {
-  id: string;
-  name: string;
-};
-
-export type Session = {
-  id: string;
-  path: string;
-  name: string;
-  type: string;
-  kernel: Kernel;
-  notebook: Notebook;
-};
-
 export type KernelSpec = {
   name: string;
   spec: {
@@ -56,38 +32,9 @@ export type KernelSpec = {
   };
 };
 
-export type KernelSpecs = [KernelSpec];  
+export type KernelSpecs = [KernelSpec];
 
 export const schema = z.object({
-  kernels: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      last_activity: z.string(),
-      execution_state: z.string(),
-      connections: z.boolean(),
-    })
-  ),
-  sessions: z.array(
-    z.object({
-      id: z.string(),
-      path: z.string(),
-      name: z.string(),
-      type: z.string(),
-      kernel: z.object({
-        id: z.string(),
-        name: z.string(),
-        last_activity: z.string(),
-        execution_state: z.string(),
-        connections: z.boolean(),
-      }),
-      notebook: z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    })
-  ),
-  defaultKernel: z.string(),
   kernelSpecs: z.array(
     z.object({
       name: z.string(),
@@ -104,8 +51,8 @@ export const schema = z.object({
   ),
   availableKernels: z.array(
     z.object({
-      label: z.string(),
-      value: z.string(),
+      key: z.string(),
+      value: z.record(z.string(), z.any()),
     })
   ),
   executeInfo: z.object({
@@ -114,14 +61,9 @@ export const schema = z.object({
   }),
 });
 
-
 export type state = z.infer<typeof schema>;
 
-
 export const init: Partial<state> = {
-  kernels: [],
-  sessions: [],
-  defaultKernel: '',
   kernelSpecs: [],
   availableKernels: [],
   executeInfo: { executeFunc: '', params: {} },

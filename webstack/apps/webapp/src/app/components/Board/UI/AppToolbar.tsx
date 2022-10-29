@@ -37,8 +37,9 @@ export function AppToolbar(props: AppToolbarProps) {
   const panelBackground = useHexColor(background);
 
   const textColor = useColorModeValue('gray.800', 'gray.100');
-  const commonButtonColors = useColorModeValue('gray.300', 'gray.500');
-  const selectColor = '#f39e4a';
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.300');
+  const buttonTextColor = useColorModeValue('white', 'black');
+  const selectColor = useHexColor('teal');
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
@@ -62,9 +63,8 @@ export function AppToolbar(props: AppToolbarProps) {
       const ay = app.data.position.y * scale;
       const ah = app.data.size.height * scale;
       const aw = app.data.size.width * scale;
-      const titleBarHeight = 35 * scale; // Titlebar height including borders
-      let aby = ay + ah + titleBarHeight; // App Bottom Y
-      if (app.data.minimized) aby = ay + titleBarHeight; // If the app is minimized, the bottom of the app is the top of the titlebar
+      const spacing = 32 * scale; // spacing between app and toolbar
+      let aby = ay + ah + spacing; // App Bottom Y
 
       // Board Pos and Size
       const bx = boardPosition.x * scale;
@@ -128,17 +128,7 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(appBottomPosition);
       }
     }
-  }, [
-    app?.data.position,
-    app?.data.size,
-    scale,
-    boardPosition.x,
-    boardPosition.y,
-    window.innerHeight,
-    window.innerWidth,
-    boardDragging,
-    app?.data.minimized,
-  ]);
+  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth, boardDragging]);
 
   function getAppToolbar() {
     if (app) {
@@ -147,18 +137,11 @@ export function AppToolbar(props: AppToolbarProps) {
         <ErrorBoundary fallbackRender={({ error, resetErrorBoundary }) => <Text>An error has occured.</Text>}>
           <>
             <Component key={app._id} {...app}></Component>
-            <ButtonGroup isAttached size="xs" ml="2">
-              <Tooltip placement="top" hasArrow={true} label={'Minimize App'} openDelay={400}>
-                <Button onClick={() => updateApp(app._id, { minimized: !app.data.minimized })} backgroundColor={commonButtonColors}>
-                  {app.data.minimized ? <MdOpenInFull fontSize="18" /> : <MdOutlineCloseFullscreen fontSize="18" />}
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
-                <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors}>
-                  <MdClose fontSize="18" />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+            <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
+              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1">
+                <MdClose color={buttonTextColor} />
+              </Button>
+            </Tooltip>
           </>
         </ErrorBoundary>
       );
@@ -194,7 +177,7 @@ export function AppToolbar(props: AppToolbarProps) {
             userSelect={'none'}
             className="handle"
           >
-            {app?.data.name}
+            {app?.data.type}
           </Text>
           <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
             {getAppToolbar()}

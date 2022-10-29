@@ -7,7 +7,7 @@
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-import json
+
 
 class ImageViewerState(TrackedBaseModel):
     # class Config:

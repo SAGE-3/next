@@ -1,0 +1,14 @@
+FROM python:3.8-bullseye
+
+# Install in that directory
+WORKDIR /app
+
+# Debian package
+RUN apt-get update && rm -rf /var/lib/apt/lists/*
+
+# Project files
+COPY foresight .
+
+# Install dependencies
+RUN pip install -r requirements.txt
+

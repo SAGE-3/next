@@ -32,6 +32,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useParams } from 'react-router';
+import { initialValues } from '@sage3/applications/initialValues';
 
 // Store between app and toolbar
 export const useStore = create((set: any) => ({
@@ -126,17 +127,14 @@ function AppComponent(props: App): JSX.Element {
   function openCell(kid: string) {
     if (!user) return;
     createApp({
-      name: 'CodeCell',
-      description: 'CodeCell',
+      title: 'CodeCell',
       roomId: roomId!,
       boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'CodeCell',
-      state: { kernel: kid },
-      ownerId: user._id,
-      minimized: false,
+      state: { ...initialValues['CodeCell'], kernel: kid },
       raised: true,
     });
   }
@@ -146,17 +144,14 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // TODO: open into the right kerne/notebook
     createApp({
-      name: 'JupyterLab',
-      description: 'JupyterLab',
+      title: 'JupyterLab',
       roomId: roomId!,
       boardId: boardId!,
       position: { x: props.data.position.x, y: props.data.position.y + props.data.size.height + 50, z: 0 },
       size: { width: props.data.size.width, height: props.data.size.width, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'JupyterLab',
-      state: {},
-      ownerId: user._id,
-      minimized: false,
+      state: { ...initialValues['JupyterLab'] },
       raised: true,
     });
   }

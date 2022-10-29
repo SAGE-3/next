@@ -12,7 +12,18 @@ import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
 
-import { useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration, useMessageStore } from '@sage3/frontend';
+import {
+  useUIStore,
+  useAppStore,
+  useUser,
+  useAssetStore,
+  useHexColor,
+  GetConfiguration,
+  useMessageStore,
+  processContentURL,
+  useHotkeys,
+  useCursorBoardPosition,
+} from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 // File information
@@ -22,7 +33,7 @@ import {
   isImage,
   isPDF,
   isCSV,
-  isText,
+  isMD,
   isJSON,
   isDZI,
   isGeoJSON,
@@ -51,13 +62,13 @@ export function Background(props: BackgroundProps) {
   // Messsages
   const subMessage = useMessageStore((state) => state.subscribe);
   const unsubMessage = useMessageStore((state) => state.unsubscribe);
-  // const messages = useMessageStore((state) => state.messages);
   const message = useMessageStore((state) => state.lastone);
 
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
+  const { position: cursorPosition } = useCursorBoardPosition();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -79,6 +90,7 @@ export function Background(props: BackgroundProps) {
       for (let i = 0; i < fileListLength; i++) {
         // check the mime type we got from the browser, and check with mime lib. if needed
         const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
+
         if (isValid(filetype)) {
           if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
             // 100MB
@@ -195,9 +207,9 @@ export function Background(props: BackgroundProps) {
     event.dataTransfer.dropEffect = 'move';
   }
 
-  const newApp = (appName: AppName, x: number, y: number) => {
+  const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
-    createApp(setupApp(appName, x, y, props.roomId, props.boardId, user._id));
+    createApp(setupApp('', type, x, y, props.roomId, props.boardId));
   };
 
   // Create an app for a file
@@ -210,12 +222,12 @@ export function Background(props: BackgroundProps) {
         if (a._id === fileID) {
           createApp(
             setupApp(
+              a.data.originalfilename,
               'ImageViewer',
               xDrop,
               yDrop,
               props.roomId,
               props.boardId,
-              user._id,
               { w: w, h: w },
               { assetid: '/api/assets/static/' + a.data.file }
             )
@@ -229,12 +241,12 @@ export function Background(props: BackgroundProps) {
           const extras = a.data.derived as ExtraImageType;
           createApp(
             setupApp(
+              a.data.originalfilename,
               'ImageViewer',
               xDrop,
               yDrop,
               props.roomId,
               props.boardId,
-              user._id,
               { w: w, h: w / (extras.aspectRatio || 1) },
               { assetid: fileID }
             )
@@ -245,37 +257,21 @@ export function Background(props: BackgroundProps) {
       // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {
-          //  Get the metadata file
-          const localurl = '/api/assets/static/' + a.data.metadata;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (j) {
-              const vw = j['ImageWidth'] || 800;
-              const vh = j['ImageHeight'] || 450;
-              const ar = vw / vh;
-              createApp(
-                setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 500, h: 400 / ar }, { assetid: fileID })
-              );
-            });
+          const extras = a.data.derived as ExtraImageType;
+          const vw = 800;
+          const vh = vw / (extras.aspectRatio || 1);
+          createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, { w: vw, h: vh }, { assetid: fileID }));
         }
       });
     } else if (isCSV(fileType)) {
-      createApp(setupApp('CSVViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'CSVViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isDZI(fileType)) {
-      createApp(setupApp('DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isGLTF(fileType)) {
-      createApp(setupApp('GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 600, h: 600 }, { assetid: fileID }));
+      createApp(setupApp('', 'GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 600, h: 600 }, { assetid: fileID }));
     } else if (isGeoJSON(fileType)) {
-      createApp(setupApp('LeafLet', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isText(fileType)) {
+      createApp(setupApp('', 'LeafLet', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
+    } else if (isMD(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
         if (a._id === fileID) {
@@ -292,7 +288,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('Stickie', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { text: text }));
+              createApp(setupApp('', 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
             });
         }
       });
@@ -313,7 +309,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('CodeCell', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
@@ -361,12 +357,13 @@ export function Background(props: BackgroundProps) {
                       // Create a note from the json
                       createApp(
                         setupApp(
+                          '',
                           'JupyterLab',
                           xDrop,
                           yDrop,
                           props.roomId,
                           props.boardId,
-                          user._id,
+
                           { w: 700, h: 700 },
                           { notebook: a.data.originalfilename }
                         )
@@ -396,12 +393,12 @@ export function Background(props: BackgroundProps) {
               // Create a vis from the json spec
               createApp(
                 setupApp(
+                  '',
                   'VegaLite',
                   xDrop,
                   yDrop,
                   props.roomId,
                   props.boardId,
-                  user._id,
                   { w: 500, h: 600 },
                   { spec: JSON.stringify(spec, null, 2) }
                 )
@@ -422,16 +419,7 @@ export function Background(props: BackgroundProps) {
             aspectRatio = page[0].width / page[0].height;
           }
           createApp(
-            setupApp(
-              'PDFViewer',
-              xDrop,
-              yDrop,
-              props.roomId,
-              props.boardId,
-              user._id,
-              { w: 400, h: 400 / aspectRatio },
-              { assetid: fileID }
-            )
+            setupApp('', 'PDFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
           );
         }
       });
@@ -440,6 +428,7 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (!user) return;
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -453,24 +442,65 @@ export function Background(props: BackgroundProps) {
         uploadFunction(Array.from(files), xdrop, ydrop);
       });
     } else {
-      // if no files were dropped, create an application
-      const appName = event.dataTransfer.getData('app') as AppName;
-      if (appName) {
-        newApp(appName, xdrop, ydrop);
+      // Drag/Drop a URL
+      if (event.dataTransfer.types.includes('text/uri-list')) {
+        event.preventDefault();
+        event.stopPropagation();
+        const pastedText = event.dataTransfer.getData('Url');
+        if (pastedText) {
+          if (pastedText.startsWith('data:image/png;base64')) {
+            // it's a base64 image
+            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
+          } else {
+            const final_url = processContentURL(pastedText);
+            let w, h;
+            if (final_url !== pastedText) {
+              // it must be a video
+              w = 1280;
+              h = 720;
+            } else {
+              w = 800;
+              h = 800;
+            }
+            createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
+          }
+        }
       } else {
-        // Get information from the drop
-        const ids = event.dataTransfer.getData('file');
-        const types = event.dataTransfer.getData('type');
-        const fileIDs = JSON.parse(ids);
-        const fileTypes = JSON.parse(types);
-        // Open the file at the drop location
-        const num = fileIDs.length;
-        for (let i = 0; i < num; i++) {
-          OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+        // if no files were dropped, create an application
+        const appName = event.dataTransfer.getData('app') as AppName;
+        if (appName) {
+          newApp(appName, xdrop, ydrop);
+        } else {
+          // Get information from the drop
+          const ids = event.dataTransfer.getData('file');
+          const types = event.dataTransfer.getData('type');
+          const fileIDs = JSON.parse(ids);
+          const fileTypes = JSON.parse(types);
+          // Open the file at the drop location
+          const num = fileIDs.length;
+          for (let i = 0; i < num; i++) {
+            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+          }
         }
       }
     }
   }
+
+  // Stickies Shortcut
+  useHotkeys(
+    'shift+s',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
+      createApp(setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
+
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
+    // Depends on the cursor to get the correct position
+    { dependencies: [cursorPosition.x, cursorPosition.y] }
+  );
 
   return (
     <Box
@@ -485,11 +515,11 @@ export function Background(props: BackgroundProps) {
       onDrop={OnDrop}
       onDragOver={OnDragOver}
       onScroll={(evt) => {
-        console.log('onScroll> event', evt);
+        // console.log('onScroll> event', evt);
         evt.stopPropagation();
       }}
       onWheel={(evt: any) => {
-        console.log('onWheel> event', evt);
+        // console.log('onWheel> event', evt);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {

@@ -19,7 +19,8 @@ import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
 import { state as AppState } from './index';
-import { dimensions } from './data_types';
+
+// import { dimensions } from './data_types';
 
 /**
  * ImageViewer app
@@ -56,7 +57,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, { description: myasset?.data.originalfilename });
+        update(props._id, { title: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL

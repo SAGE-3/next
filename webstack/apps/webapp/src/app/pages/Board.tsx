@@ -11,12 +11,19 @@ import { useParams } from 'react-router-dom';
 import { Box, useColorModeValue } from '@chakra-ui/react';
 
 import {
-  usePresence, useAppStore, useRouteNav, useBoardStore,
-  useRoomStore, usePresenceStore, useUsersStore
+  usePresence,
+  useAppStore,
+  useRouteNav,
+  useBoardStore,
+  useRoomStore,
+  usePresenceStore,
+  useUsersStore,
+  PasteHandler,
+  MainButton,
 } from '@sage3/frontend';
 
 // Board Layers
-import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
+import { BackgroundLayer, UILayer } from '../components/Board';
 import { Clock } from '../components/Board/UI/Clock';
 
 /**
@@ -80,11 +87,15 @@ export function BoardPage() {
 
       <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
 
-      {/* White Board Layer for marking onto board */}
-      <WhiteboardLayer boardId={boardId} roomId={roomId}></WhiteboardLayer>
-
       {/* Upper layer for local UI stuff */}
       <UILayer boardId={boardId} roomId={roomId}></UILayer>
+
+      {/* Paste data on the board */}
+      <PasteHandler boardId={boardId} roomId={roomId} />
+
+      <Box position="absolute" left="2" bottom="2" zIndex={101}>
+        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} />
+      </Box>
     </>
   );
 }

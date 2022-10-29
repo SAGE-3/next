@@ -7,10 +7,9 @@
  */
 
 import { useEffect } from 'react';
-import { Avatar, Box, Tooltip } from '@chakra-ui/react';
 
-import { useUIStore, useUser, initials, StuckTypes, useHexColor } from '@sage3/frontend';
-import { UserAvatarGroup } from '../../UserAvatarGroup';
+import { useUIStore, useUser, StuckTypes, useHexColor } from '@sage3/frontend';
+import { UserAvatarGroup } from './UserAvatarGroup';
 import { Panel } from '../Panel';
 
 export interface AvatarProps {
@@ -55,7 +54,7 @@ export function UsersPanel(props: AvatarProps) {
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={350}
+      width={0}
       showClose={true}
       show={show}
       setShow={setShow}
@@ -63,23 +62,7 @@ export function UsersPanel(props: AvatarProps) {
       setStuck={setStuck}
       zIndex={zIndex}
     >
-      <Box alignItems="center" pb="1" width="100%" display="flex">
-        {/* User Avatar */}
-        <Tooltip aria-label="username" hasArrow={true} placement="top-start" label={'You'}>
-          <Avatar
-            size="sm"
-            pointerEvents={'all'}
-            name={user?.data.name}
-            getInitials={initials}
-            backgroundColor={color}
-            color="white"
-            border="2px solid white"
-            mr={1}
-          />
-        </Tooltip>
-        {/* Avatar Group */}
-        <UserAvatarGroup boardId={props.boardId} />
-      </Box>
+      <UserAvatarGroup boardId={props.boardId} />
     </Panel>
   );
 }

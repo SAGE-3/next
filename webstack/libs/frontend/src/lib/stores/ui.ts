@@ -16,7 +16,7 @@ import { SAGEColors } from '@sage3/shared';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
-const MaxZoom = 4.0;
+const MaxZoom = 3;
 // Zoom step of 10%
 const StepZoom = 0.1;
 // When using mouse wheel, repeated events
@@ -57,6 +57,7 @@ interface UIState {
   gridSize: number;
   zIndex: number;
   showUI: boolean;
+  showAppTitle: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
@@ -66,10 +67,12 @@ interface UIState {
   // whiteboard
   marker: boolean; // marker mode enabled
   clearMarkers: boolean;
+  clearAllMarkers: boolean;
   markerColor: SAGEColors;
   setMarkerColor: (color: SAGEColors) => void;
   toggleMarker: () => void;
   setClearMarkers: (clear: boolean) => void;
+  setClearAllMarkers: (clear: boolean) => void;
 
   // Panels & Context Menu
   applicationsPanel: PanelUI;
@@ -93,6 +96,7 @@ interface UIState {
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
+  toggleTitle: () => void;
   displayUI: () => void;
   hideUI: () => void;
   incZ: () => void;
@@ -112,17 +116,19 @@ interface UIState {
  */
 export const useUIStore = create<UIState>((set, get) => ({
   scale: 1.0,
-  boardWidth: 5000000,
-  boardHeight: 5000000,
+  boardWidth: 3000000, // Having it set to 5,000,000 caused a bug where you couldn't zoom back out.
+  boardHeight: 3000000, // It was like the div scaleing became to large
   selectedBoardId: '',
   gridSize: 1,
   zIndex: 1,
   showUI: true,
+  showAppTitle: false,
   boardDragging: false,
   appDragging: false,
   marker: false,
   markerColor: 'red',
   clearMarkers: false,
+  clearAllMarkers: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
@@ -267,12 +273,14 @@ export const useUIStore = create<UIState>((set, get) => ({
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
+  toggleTitle: () => set((state) => ({ ...state, showAppTitle: !state.showAppTitle })),
   displayUI: () => set((state) => ({ ...state, showUI: true })),
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
   toggleMarker: () => set((state) => ({ ...state, marker: !state.marker })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
+  setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {

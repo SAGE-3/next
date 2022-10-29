@@ -57,7 +57,7 @@ function AppComponent(props: App): JSX.Element {
   }
 
   useEffect(() => {
-    if (user && props.data.ownerId === user._id) {
+    if (user && props._createdBy === user._id) {
       // Update the local state
       setMine(true);
     }
@@ -74,7 +74,7 @@ function AppComponent(props: App): JSX.Element {
           if (rtcSock.current) {
             console.log('RTC> WS Connection Open', rtcSock.current.readyState);
             setSock(props._id, rtcSock.current);
-            if (props.data.ownerId === user?._id) {
+            if (props._createdBy === user?._id) {
               console.log('RTC> Create group', props._id);
               rtcSock.current.send(JSON.stringify({ type: 'create', user: user?._id, app: props._id }));
             } else {
@@ -162,7 +162,7 @@ function AppComponent(props: App): JSX.Element {
 
         const titleUpdated = (event: any) => {
           // Update the app title
-          update(props._id, { description: event.title });
+          update(props._id, { title: event.title });
 
           const id = webview.getWebContentsId();
           console.log('getWebContentsId Webview id', id);
@@ -237,7 +237,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const sock = useStore((state: any) => state.sock[props._id]);
 
   useEffect(() => {
-    if (user && props.data.ownerId === user._id) {
+    if (user && props._createdBy === user._id) {
       setMine(true);
     }
   }, [user]);

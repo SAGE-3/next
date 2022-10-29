@@ -7,11 +7,19 @@
  */
 import { useCallback } from 'react';
 
-import { AlfredComponent, processContentURL, useAppStore, useBoardStore, usePresenceStore, useUIStore, useUser } from '@sage3/frontend';
-
+import {
+  AlfredComponent,
+  processContentURL,
+  useAppStore,
+  useBoardStore,
+  usePresenceStore,
+  useUIStore,
+  useUser,
+  useData,
+} from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { AppName, AppState, } from '@sage3/applications/schema';
+import { AppName, AppState } from '@sage3/applications/schema';
 import { Applications } from '@sage3/applications/apps';
 
 type props = {
@@ -20,12 +28,10 @@ type props = {
 };
 
 export function Alfred(props: props) {
-  // Boards
-  const boards = useBoardStore((state) => state.boards);
-  // const board = boards.find((el) => el._id === props.boardId);
-  const scale = useUIStore((state) => state.scale);
-
+  // get features
+  const data = useData('/api/info');
   // UI
+  const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const displayUI = useUIStore((state) => state.displayUI);
   const hideUI = useUIStore((state) => state.hideUI);
@@ -43,13 +49,16 @@ export function Alfred(props: props) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
+    if (appName === 'JupyterLab' && data.features && !data.features['jupyter']) return;
+    if (appName === 'CodeCell' && data.features && !data.features['cell']) return;
+    if (appName === 'Screenshare' && data.features && !data.features['twilio']) return;
+
     // Get around  the center of the board
     const x = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
     const y = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
 
     createApp({
-      name: appName,
-      description: appName,
+      title: appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },
@@ -57,8 +66,6 @@ export function Alfred(props: props) {
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as AppState) },
-      ownerId: user._id || '',
-      minimized: false,
       raised: true,
     });
   };
@@ -92,17 +99,14 @@ export function Alfred(props: props) {
             loc = 'https://' + loc;
           }
           createApp({
-            name: 'Webview',
-            description: 'Webview',
+            title: loc,
             roomId: props.roomId,
             boardId: props.boardId,
             position: pos,
             size: { width, height, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Webview',
-            ownerId: user?._id,
             state: { webviewurl: processContentURL(loc) },
-            minimized: false,
             raised: true,
           });
         }
@@ -110,24 +114,20 @@ export function Alfred(props: props) {
         const rest = terms.slice(1).join('+');
         const searchURL = 'https://www.google.com/search?q=' + rest;
         createApp({
-          name: 'Webview',
-          description: 'Webview',
+          title: searchURL,
           roomId: props.roomId,
           boardId: props.boardId,
           position: pos,
           size: { width, height, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Webview',
-          ownerId: user?._id,
           state: { webviewurl: processContentURL(searchURL) },
-          minimized: false,
           raised: true,
         });
       } else if (terms[0] === 's' || terms[0] === 'n' || terms[0] === 'stick' || terms[0] === 'stickie' || terms[0] === 'note') {
         const content = terms.slice(1).join(' ');
         createApp({
-          name: 'Stickie',
-          description: 'Stckie',
+          title: user.data.name,
           roomId: props.roomId,
           boardId: props.boardId,
           position: pos,
@@ -135,12 +135,10 @@ export function Alfred(props: props) {
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Stickie',
           state: { ...(initialValues['Stickie'] as AppState), text: content },
-          ownerId: user._id,
-          minimized: false,
           raised: true,
         });
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
-        newApplication('CodeCell');
+        newApplication('SageCell');
       } else if (terms[0] === 'showui') {
         // Show all the UI elements
         displayUI();
