@@ -8,20 +8,16 @@
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 import json
-# import websocket
-# import threading
 from pydantic import PrivateAttr
-# import time
 from config import config as conf, prod_type
 import requests
-# import redis
 
 
 class KernelDashboardState(TrackedBaseModel):
     """
     This class represents the state of the kernel dashboard
     """
-    kernels: list = []
+    # kernels: list = []
     defaultKernel: str = ""
     kernelSpecs: list = []
     availableKernels: list = []
@@ -46,7 +42,6 @@ class KernelDashboard(SmartBit):
     def get_kernel_specs(self):
         response = requests.get(f"{self._base_url}/kernelspecs", headers=self._headers)
         kernel_specs = response.json()
-        self.state.defaultKernel = kernel_specs['default']
         self.state.kernelSpecs = [kernel_specs]
         self.state.kernels = self._jupyter_client.get_kernels()
         self.state.executeInfo.executeFunc = ""
@@ -74,49 +69,59 @@ class KernelDashboard(SmartBit):
             self.get_available_kernels(user_uuid=owner_uuid)
 
     def delete_kernel(self, kernel_id, user_uuid):
-        j_url = f'{self._base_url}/kernels/{kernel_id}'
-        response = requests.delete(j_url, headers=self._headers)
-        r_json = self._jupyter_client.redis_server.json()
-        if response.status_code == 204:
+        """ Shutdown a kernel
+        """
+        # get all valid kernel ids from jupyter server
+        kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        if kernel_id in kernel_list:
+            # shutdown kernel from jupyter server and remove from redis server
+            j_url = f'{self._base_url}/kernels/{kernel_id}'
+            response = requests.delete(j_url, headers=self._headers)
+            if response.status_code == 204:
+                self.get_available_kernels(user_uuid=user_uuid)
+            r_json = self._jupyter_client.redis_server.json()
             r_json.delete(self._redis_space, kernel_id)
             self.get_available_kernels(user_uuid=user_uuid)
+        else:
+            # cleanup the kernel from redis server if it is not in jupyter server
+            self.get_available_kernels(user_uuid=user_uuid)
+            r_json = self._jupyter_client.redis_server.json()
+            r_json.delete(self._redis_space, kernel_id)
+            self.get_available_kernels(user_uuid=user_uuid)
+
+    def shudown_all_kernels(self):
+        kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        for kernel_id in kernel_list:
+            j_url = f'{self._base_url}/kernels/{kernel_id}'
+            response = requests.delete(j_url, headers=self._headers)
+            if response.status_code == 204:
+                print(f"Kernel {kernel_id} shutdown successfully")
+                r_json = self._jupyter_client.redis_server.json()
+                r_json.delete(self._redis_space, kernel_id)
+                self.get_available_kernels()
 
     def restart_kernel(self, kernel_id, user_uuid):
         j_url = f'{self._base_url}/kernels/{kernel_id}/restart'
         response = requests.post(j_url, headers=self._headers)
         if response.status_code == 200:
             self.get_available_kernels(user_uuid=user_uuid)
-        # self.refresh_list()
 
-    # def refresh_list(self):
-    #     self.state.kernels = self._jupyter_client.get_kernels()
-    #     self.state.executeInfo.executeFunc = ""
-    #     self.state.executeInfo.params = {}
-    #     self.send_updates()
-
-    def get_available_kernels(self, user_uuid):
+    def get_available_kernels(self, user_uuid=None):
         """
         This function will get the kernels from the redis server
         """
-        # get kernels from server
-        r_json = self._jupyter_client.redis_server.json()
-        kernels = r_json.get(self._redis_space, '.')
+        # get all valid kernel ids from jupyter server
+        valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        # get all kernels from redis server
+        kernels = self._jupyter_client.redis_server.json().get(self._redis_space)
+        # remove kernels the list of available kernels that are not in jupyter server
+        [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
         available_kernels = []
-        # for kernel_id, kernel_info in kernels.items():
-        #     if kernel_info['is_private']:
-        #         if user_uuid in kernel_info['']
-
         for kernel in kernels.keys():
-            # if kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
-            #     continue
             if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})
-        if len(available_kernels) > 0:
-            self.state.availableKernels = available_kernels
-        # self.state.kernels = self._jupyter_client.get_kernels()
+        self.state.availableKernels = available_kernels
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        # This is a BROADCAST channel not a private channel to send messages to individual users
-        # We would need to design and new feature for private messaging
         self.send_updates()
