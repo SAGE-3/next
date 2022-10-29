@@ -30,12 +30,7 @@ export function Clock(props: ClockProps) {
 
   return (
     <Box display="flex" style={props.style} alignItems="center" justifyContent="center">
-      <Text
-        fontSize={'xl'}
-        opacity={props.opacity ? props.opacity : 1.0}
-        color={textColor}
-        userSelect="none"
-      >
+      <Text fontSize={'xl'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
         {time}
       </Text>
     </Box>
