@@ -29,6 +29,7 @@ import {
   SliderFilledTrack,
   SliderThumb,
   SliderTrack,
+  Spinner,
 } from '@chakra-ui/react';
 
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdError, MdPlayArrow, MdClearAll } from 'react-icons/md';
@@ -420,7 +421,13 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 aria-label={''}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
-                icon={<MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                icon={
+                  s.executeInfo?.executeFunc === 'execute' ? (
+                    <Spinner size="sm" color="teal.500" />
+                  ) : (
+                    <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
+                  )
+                }
               />
             </Tooltip>
           ) : null}
@@ -440,36 +447,14 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           ) : null}
         </VStack>
       </HStack>
-      <Stack px={4}>
-        <HStack>
-          <Text fontSize="sm" color={useColorModeValue('#000000', '#FFFFFF')}></Text>
-          <Slider
-            aria-label="slider-ex-4"
-            defaultValue={fontSize}
-            min={24}
-            max={48}
-            step={1}
-            onChange={(value) => {
-              setFontSize(value);
-            }}
-          >
-            <SliderTrack>
-              <SliderFilledTrack />
-            </SliderTrack>
-            <SliderThumb />
-          </Slider>
-        </HStack>
-        <Text fontSize="xs" color={useColorModeValue('#000000', '#FFFFFF')}>
-          {s.executeInfo?.executeFunc === 'execute' ? (
-            'Executing...'
-          ) : (
-            <Flex pr={MARGIN} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-              Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
-              {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
-            </Flex>
-          )}
-        </Text>
-      </Stack>
+      {/* <Stack px={4}> */}
+      {/* <Text color={useColorModeValue('#000000', '#FFFFFF')}> */}
+      <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
+        Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
+        {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
+      </Flex>
+      {/* </Text> */}
+      {/* </Stack> */}
     </Box>
   );
 };
