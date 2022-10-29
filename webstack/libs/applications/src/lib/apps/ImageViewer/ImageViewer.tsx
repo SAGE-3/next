@@ -196,28 +196,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
        </div>
-
-        {/*<Tooltip placement="top-start" hasArrow={true} label={'RUN'} openDelay={400}>*/}
-        {/*  <Button*/}
-        {/*    onClick={() => {*/}
-
-        {/*      updateState(props._id,*/}
-        {/*        {*/}
-        {/*          executeInfo: {*/}
-        {/*            "executeFunc": "set_bboxes", "params": {*/}
-        {/*              // "bboxes": {*/}
-        {/*              //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},*/}
-        {/*              //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},*/}
-        {/*              //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},*/}
-        {/*              // }*/}
-        {/*            }*/}
-        {/*          }*/}
-        {/*        })*/}
-        {/*    }}*/}
-        {/*  >*/}
-        {/*    <HiPencilAlt/>*/}
-        {/*  </Button>*/}
-        {/*</Tooltip>*/}
       </ButtonGroup>
     </>
   );

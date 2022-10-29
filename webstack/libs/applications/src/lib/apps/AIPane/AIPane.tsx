@@ -25,7 +25,6 @@ import {
   PopoverHeader,
   PopoverTrigger,
   Portal, Stack,
-  Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
 import {App, AppName} from '../../schema';
@@ -36,12 +35,11 @@ import {AppWindow} from '../../components';
 import React, {useEffect, useState, useRef} from 'react';
 import {FaPlay} from 'react-icons/fa';
 import {BiErrorCircle, BiRun} from 'react-icons/bi';
-// import {GiEmptyHourglass} from 'react-icons/gi';
-// import {CgSmileMouthOpen} from 'react-icons/cg';
+
 import {FiChevronDown} from 'react-icons/fi';
 import {useLocation} from 'react-router-dom';
 
-import { v4 as getUUID } from 'uuid';
+import {v4 as getUUID} from 'uuid';
 
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
@@ -50,14 +48,14 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const zindex = useUIStore((state) => state.zIndex);
+  // const zindex = useUIStore((state) => state.zIndex);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const boardApps = useAppStore((state) => state.apps);
   const selApp = boardApps.find((el) => el._id === selectedAppId);
 
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore((state) => state.assets);
+  // const location = useLocation();
+  // const locationState = location.state as { roomId: string };
+  // const assets = useAssetStore((state) => state.assets);
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
@@ -224,10 +222,10 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
-  const location = useLocation();
+  // const location = useLocation();
   // const locationState = location.state as { roomId: string };
   // const assets = useAssetStore((state) => state.assets);
-  // // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   // const update = useAppStore((state) => state.update);
 
 
@@ -236,12 +234,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const [aiModel, setAIModel] = useState('Models')
   const [task, setTask] = useState('Tasks')
 
-  // const [model, setModel] = useState('Models')
-
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
-
 
 
   function runFunction(model: string) {
@@ -269,7 +264,7 @@ function ToolbarComponent(props: App): JSX.Element {
         <Stack spacing={2} direction='row'>
           <>
             {
-              Object.keys(s.supportedTasks).map((type) => {
+              (Object.keys(s.supportedTasks))?.map((type) => {
                 return (
                   <>
                     <Menu>
@@ -278,15 +273,13 @@ function ToolbarComponent(props: App): JSX.Element {
                       </MenuButton>
                       <Portal>
                         <MenuList>
-                          {
-                            Object.keys(s.supportedTasks[type]).map((tasks) => {
-                              return (
-                                <MenuItem onClick={() => handleSetTask(tasks)}>
-                                  {tasks}
-                                </MenuItem>
-                              )
-                            })
-                          }
+                          {(Object.keys(s.supportedTasks[type])).map((tasks) => {
+                            return (
+                              <MenuItem onClick={() => handleSetTask(tasks)}>
+                                {tasks}
+                              </MenuItem>
+                            )
+                          })}
                         </MenuList>
                       </Portal>
                     </Menu>
@@ -299,7 +292,7 @@ function ToolbarComponent(props: App): JSX.Element {
                         <Portal>
                           <MenuList>
                             {
-                              s.supportedTasks[type][task].map((modelOptions: string) => {
+                              (s.supportedTasks[type][task])?.map((modelOptions: string) => {
                                 return (
                                   <MenuItem onClick={() => handleSetModel(modelOptions)}>
                                     {modelOptions}
