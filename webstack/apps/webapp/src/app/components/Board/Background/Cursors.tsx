@@ -7,7 +7,16 @@
  */
 
 import { Tag } from '@chakra-ui/react';
-import { useHexColor, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
+import {
+  useCursorBoardPosition,
+  useHexColor,
+  usePresence,
+  usePresenceStore,
+  useUIStore,
+  useUser,
+  useUsersStore,
+  useWindowResize,
+} from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import { motion, useAnimation } from 'framer-motion';
 import { useCallback, useEffect } from 'react';
@@ -36,23 +45,18 @@ export function Cursors(props: CursorProps) {
   // Widow resize hook
   const { width: winWidth, height: winHeight } = useWindowResize();
 
+  const { uiToBoard } = useCursorBoardPosition();
+
   // Update the user's cursor every half second
   const throttleCursor = throttle(500, (e: MouseEvent) => {
     // If the user is dragging the board, we get some odd effects. So don't update the curosr if the user is currently dragging
     if (boardDragging) return;
-    const winX = e.clientX;
-    const winY = e.clientY;
-    const bx = boardPosition.x;
-    const by = boardPosition.y;
-    const s = scale;
-    const x = winX / s - bx;
-    const y = winY / s - by;
-    const z = 0;
-    updatePresence({ cursor: { x, y, z } });
+    const position = uiToBoard(e.clientX, e.clientY);
+    updatePresence({ cursor: { ...position, z: 0 } });
   });
 
   // Keep a copy of the function
-  const throttleCursorFunc = useCallback(throttleCursor, [boardPosition.x, boardPosition.y, scale, boardDragging]);
+  const throttleCursorFunc = useCallback(throttleCursor, [uiToBoard, boardDragging]);
   const cursorFunc = (e: MouseEvent) => {
     // Check if event is on the board
     if (updatePresence) {
@@ -135,17 +139,18 @@ function UserCursor(props: UserCursorProps) {
       animate={controls}
       style={{
         position: 'absolute',
-        left: props.position.x - 4 + 'px',
-        top: props.position.y - 3 + 'px',
+        left: props.position.x + 'px',
+        top: props.position.y + 'px',
         transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
         pointerEvents: 'none',
         display: 'flex',
+        transformOrigin: 'top left',
         zIndex: 100000,
         transform: `scale(${1 / props.scale})`,
       }}
     >
       <GiArrowCursor color={color}></GiArrowCursor>
-      <Tag variant="solid" borderRadius="md" mt="3" mb="0" ml="-1" mr="0" p="1" color="white">
+      <Tag variant="solid" borderRadius="md" color="white">
         {props.name}
       </Tag>
     </motion.div>
