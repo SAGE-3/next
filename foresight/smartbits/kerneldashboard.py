@@ -17,8 +17,6 @@ class KernelDashboardState(TrackedBaseModel):
     """
     This class represents the state of the kernel dashboard
     """
-    # kernels: list = []
-    defaultKernel: str = ""
     kernelSpecs: list = []
     availableKernels: list = []
     executeInfo: ExecuteInfo
@@ -33,15 +31,10 @@ class KernelDashboard(SmartBit):
     def __init__(self, **kwargs):
         # print("I am here 1")
         super(KernelDashboard, self).__init__(**kwargs)
-        print("I am here 2")
-        self._redis_server = self._jupyter_client.redis_server
-        jupyter_token = self._redis_server.get("config:jupyter:token").decode()
-        self._headers = {'Authorization': f"Token  {jupyter_token}"}
-        self._base_url = f"{conf[prod_type]['jupyter_server']}/api"
-        r_json = self._redis_server.json()
-        self._redis_store = "JUPYTER:KERNELS"
-        if r_json.get(self._redis_store) is None:
-            r_json.set(self._redis_store, '.', {})
+        # print("I am here 2")
+        r_json = self._jupyter_client.redis_server.json()
+        if r_json.get(self._redis_space) is None:
+            r_json.set(self._redis_space, '.', {})
         self.get_kernel_specs()
 
     def get_kernel_specs(self):
@@ -110,13 +103,6 @@ class KernelDashboard(SmartBit):
         response = requests.post(j_url, headers=self._headers)
         if response.status_code == 200:
             self.get_available_kernels(user_uuid=user_uuid)
-
-    def refresh_list(self):
-        self.state.kernels = self.get_available_kernels()
-        # self.state.sessions = self.get_sessions()
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
 
     def get_available_kernels(self, user_uuid=None):
         """
