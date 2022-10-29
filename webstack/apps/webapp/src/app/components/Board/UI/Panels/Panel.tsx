@@ -193,7 +193,7 @@ export function Panel(props: PanelProps) {
   }, [props.stuck, winWidth, winHeight]);
 
   // Border color to show if panel is anchored to corners or sides
-  const borderColor = useColorModeValue('#92c2ed', '#477eb0 ');
+  const borderColor = useHexColor('teal');
   const border = `solid ${borderColor} 3px`;
   const borderTop =
     props.stuck == StuckTypes.TopLeft || props.stuck == StuckTypes.Top || props.stuck == StuckTypes.TopRight ? border : '0px';

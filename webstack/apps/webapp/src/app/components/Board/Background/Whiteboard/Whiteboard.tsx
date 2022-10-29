@@ -13,7 +13,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useBoardStore, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
+import { useBoardStore, useHotkeys, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 
 type WhiteboardProps = {
@@ -27,12 +27,13 @@ export function Whiteboard(props: WhiteboardProps) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const scale = useUIStore((state) => state.scale);
-  const marker = useUIStore((state) => state.marker);
+  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
+  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
 
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
@@ -219,9 +220,22 @@ export function Whiteboard(props: WhiteboardProps) {
 
   const spacebarPressed = useKeyPress(' ');
 
+  useHotkeys('esc', () => {
+    setWhiteboardMode(false);
+  });
+
+  // Deselect all apps
+  useHotkeys(
+    'shift+w',
+    () => {
+      setWhiteboardMode(!whiteboardMode);
+    },
+    { dependencies: [whiteboardMode] }
+  );
+
   return (
     <>
-      <div className="canvas-container" style={{ pointerEvents: marker && !spacebarPressed ? 'auto' : 'none' }}>
+      <div className="canvas-container" style={{ pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none' }}>
         <svg
           className="canvas-layer"
           style={{
