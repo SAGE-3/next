@@ -110,11 +110,24 @@ export function HomePage() {
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Top Bar */}
-      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100%" px="2">
-        <Box flex="1 1 0px"></Box>
-        <Text fontSize="4xl" flex="1 1 0px" justifyContent="center" display="flex">
-          SAGE3: {config?.serverName}
-        </Text>
+      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100vw" px="2">
+        <Box flex="1 1 0px">
+          {' '}
+          <Text
+            fontSize="xl"
+            flex="1 1 0px"
+            textOverflow={'ellipsis'}
+            overflow={'hidden'}
+            justifyContent="left"
+            display="flex"
+            width="100%"
+            whiteSpace={'nowrap'}
+          >
+            {config?.serverName}
+          </Text>
+        </Box>
+        <Box></Box>
+
         <Box flex="1 1 0px" justifyContent="right" display="flex" alignItems={'start'}>
           <Clock />
         </Box>
