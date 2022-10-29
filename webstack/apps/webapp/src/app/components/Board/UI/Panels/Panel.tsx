@@ -321,9 +321,23 @@ export function Panel(props: PanelProps) {
 
               <Box>
                 {showActions ? (
-                  <IconButton size="xs" icon={<MdExpandLess size="1.5rem" />} aria-label="show less" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
+                  <IconButton
+                    size="xs"
+                    icon={<MdExpandLess size="1.5rem" />}
+                    aria-label="show less"
+                    onClick={handleMinimizeClick}
+                    mx="1"
+                    cursor="pointer"
+                  />
                 ) : (
-                  <IconButton size="xs" icon={<MdExpandMore size="1.5rem" />} aria-label="show more" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
+                  <IconButton
+                    size="xs"
+                    icon={<MdExpandMore size="1.5rem" />}
+                    aria-label="show more"
+                    onClick={handleMinimizeClick}
+                    mx="1"
+                    cursor="pointer"
+                  />
                 )}
                 {props.showClose ? (
                   <IconButton
@@ -339,7 +353,6 @@ export function Panel(props: PanelProps) {
                   />
                 ) : null}
               </Box>
-
             </Box>
 
             {showActions ? <>{props.children}</> : null}
