@@ -33,32 +33,33 @@ export function Apps() {
 
   // This still doesnt work properly
   // But a start
-  // useHotkeys(
-  //   'ctrl+d',
-  //   () => {
-  //     if (position && apps.length > 0) {
-  //       const cx = position.x;
-  //       const cy = position.y;
-  //       let found = false;
-  //       // Sort the apps by the last time they were updated to order them correctly
-  //       apps
-  //         .sort((a, b) => b._updatedAt - a._updatedAt)
-  //         .forEach((el) => {
-  //           if (found) return;
-  //           const x1 = el.data.position.x;
-  //           const y1 = el.data.position.y;
-  //           const x2 = x1 + el.data.size.width;
-  //           const y2 = y1 + el.data.size.height;
-  //           // If the cursor is inside the app, delete it. Only delete the top one
-  //           if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-  //             found = true;
-  //             deleteApp(el._id);
-  //           }
-  //         });
-  //     }
-  //   },
-  //   { dependencies: [position.x, position.y, JSON.stringify(apps)] }
-  // );
+  useHotkeys(
+    'ctrl+d',
+    () => {
+      if (position && apps.length > 0) {
+        const cx = position.x;
+        const cy = position.y;
+        let found = false;
+        // Sort the apps by the last time they were updated to order them correctly
+        apps
+          .slice()
+          .sort((a, b) => b._updatedAt - a._updatedAt)
+          .forEach((el) => {
+            if (found) return;
+            const x1 = el.data.position.x;
+            const y1 = el.data.position.y;
+            const x2 = x1 + el.data.size.width;
+            const y2 = y1 + el.data.size.height;
+            // If the cursor is inside the app, delete it. Only delete the top one
+            if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+              found = true;
+              deleteApp(el._id);
+            }
+          });
+      }
+    },
+    { dependencies: [position.x, position.y, JSON.stringify(apps)] }
+  );
   return (
     <>
       {/* Apps */}
