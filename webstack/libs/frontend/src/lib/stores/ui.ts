@@ -304,6 +304,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       set((state) => {
         const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
         const zoomInVal = Math.min(get().scale + step * get().scale, MaxZoom);
+        console.log('zoomin', d, zoomInVal);
         if (cursor) {
           const b = get().boardPosition;
           const s = get().scale;

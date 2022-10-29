@@ -25,8 +25,8 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // auth
-  const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+  // const { auth } = useAuth();
+  const isGuest = false; // auth?.provider === 'guest';
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -209,6 +209,21 @@ export function AppWindow(props: WindowProps) {
     else setSelectedApp(props.app._id);
   }
 
+  function handleAppTouchStart(e: any) {
+    // e.stopPropagation();
+    console.log('handleAppTouchStart');
+    bringForward();
+    setSelectedApp(props.app._id);
+  }
+  function handleAppTouchMove(e: any) {
+    e.stopPropagation();
+    console.log('handleAppTouchEnd')
+  }
+  function handleAppTouchEnd(e: any) {
+    e.stopPropagation();
+    console.log('handleAppTouchEnd')
+  }
+
   // Bring the app forward
   function bringForward() {
     if (!props.lockToBackground) {
@@ -234,6 +249,11 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
+
+      onTouchStart={handleAppTouchStart}
+      onTouchMove={handleAppTouchMove}
+      onTouchEnd={handleAppTouchEnd}
+
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,

@@ -20,7 +20,7 @@ export default class ContextMenuHandler {
   }
 
   onTouchStart = (e: any) => {
-    // console.log('touchstart');
+    console.log('touchstart');
     this.contextMenuPossible = true;
     this.callback(e.type, e);
     this.longPressCountdown = window.setTimeout(() => {
@@ -30,25 +30,25 @@ export default class ContextMenuHandler {
   };
 
   onTouchMove = (_e: any) => {
-    // console.log('touchmove');
+    console.log('touchmove');
     window.clearTimeout(this.longPressCountdown);
   };
 
   onTouchCancel = (_e: any) => {
-    // console.log('touchcancel');
+    console.log('touchcancel');
     this.contextMenuPossible = false;
     window.clearTimeout(this.longPressCountdown);
   };
 
   onTouchEnd = (e: any) => {
-    // console.log('touchend');
+    console.log('touchend');
     this.contextMenuPossible = false;
     window.clearTimeout(this.longPressCountdown);
     this.callback(e.type, e);
   };
 
   onContextMenu = (e: any) => {
-    // console.log('contextmenu');
+    console.log('contextmenu');
     this.contextMenuPossible = false;
     window.clearTimeout(this.longPressCountdown);
     this.callback("contextmenu", e);

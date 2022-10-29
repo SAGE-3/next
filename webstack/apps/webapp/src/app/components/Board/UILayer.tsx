@@ -118,7 +118,7 @@ export function UILayer(props: UILayerProps) {
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
       <AppToolbar></AppToolbar>
 
-      <ContextMenu divId="board">
+      {/* <ContextMenu divId="board">
         <BoardContextMenu
           boardId={props.boardId}
           roomId={props.roomId}
@@ -126,7 +126,7 @@ export function UILayer(props: UILayerProps) {
           showAllApps={showAllApps}
           downloadBoard={downloadBoard}
         />
-      </ContextMenu>
+      </ContextMenu> */}
 
       <ApplicationsPanel boardId={props.boardId} roomId={props.roomId} />
 

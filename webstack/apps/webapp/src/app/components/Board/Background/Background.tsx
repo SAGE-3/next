@@ -51,6 +51,12 @@ type BackgroundProps = {
   boardId: string;
 };
 
+// Global vars to cache event state
+const evCache = new Array();
+let prevDiff = -1;
+
+
+
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
@@ -73,6 +79,8 @@ export function Background(props: BackgroundProps) {
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
+  const zoomIn = useUIStore((state) => state.zoomIn);
+  const zoomOut = useUIStore((state) => state.zoomOut);
   const scale = useUIStore((state) => state.scale);
 
   // Chakra Color Mode for grid color
@@ -495,6 +503,72 @@ export function Background(props: BackgroundProps) {
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
 
+  function remove_event(ev: any) {
+    // Remove this event from the target's cache
+    for (var i = 0; i < evCache.length; i++) {
+      if (evCache[i].pointerId == ev.pointerId) {
+        evCache.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  const onPointerDown = (ev: any) => {
+    // console.log('onPointerDown');
+    evCache.push(ev);
+  }
+  const onPointerMove = (ev: any) => {
+    // console.log('onPointerMove');
+    // This function implements a 2-pointer horizontal pinch/zoom gesture. 
+    // If the distance between the two pointers has increased (zoom in), 
+    // and if the distance is decreasing (zoom out)
+
+    // Find this event in the cache and update its record with this event
+    for (var i = 0; i < evCache.length; i++) {
+      if (ev.pointerId == evCache[i].pointerId) {
+        evCache[i] = ev;
+        break;
+      }
+    }
+
+    // If two pointers are down, check for pinch gestures
+    if (evCache.length == 2) {
+      // Calculate the distance between the two pointers
+      var curDiff = Math.sqrt(Math.pow(evCache[1].clientX - evCache[0].clientX, 2) + Math.pow(evCache[1].clientY - evCache[0].clientY, 2));
+      if (prevDiff > 0) {
+        if (curDiff > prevDiff) {
+          // The distance between the two pointers has increased
+          console.log("Pinch moving OUT -> Zoom in");
+          zoomIn();
+        }
+        if (curDiff < prevDiff) {
+          // The distance between the two pointers has decreased
+          console.log("Pinch moving IN -> Zoom out");
+          zoomOut();
+        }
+      }
+      // Cache the distance for the next move event 
+      prevDiff = curDiff;
+    }
+  }
+  const onPointerUp = (ev: any) => {
+    // console.log('onPointerUp');
+    // Remove this pointer from the cache
+    remove_event(ev);
+    // If the number of pointers down is less than two then reset diff tracker
+    if (evCache.length < 2) prevDiff = -1;
+  }
+
+  // const onPointerCancel = (ev: any) => {
+  //   console.log('onPointerCancel');
+  // }
+  // const onPointerOut = (ev: any) => {
+  //   console.log('onPointerOut');
+  // }
+  // const onPointerLeave = (ev: any) => {
+  //   console.log('onPointerLeave');
+  // }
+
   return (
     <Box
       className="board-handle"
@@ -511,6 +585,20 @@ export function Background(props: BackgroundProps) {
         // console.log('onScroll> event', evt);
         evt.stopPropagation();
       }}
+
+      // onPointerDown={onPointerDown}
+      // onPointerMove={onPointerMove}
+      // onPointerUp={onPointerUp}
+      // onPointerCancel={onPointerCancel}
+      // onPointerOut={onPointerOut}
+      // onPointerLeave={onPointerLeave}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onPointerOut={onPointerUp}
+      onPointerLeave={onPointerUp}
+
       onWheel={(evt: any) => {
         // console.log('onWheel> event', evt);
         console.log('WheelEvent', evt.deltaY);
