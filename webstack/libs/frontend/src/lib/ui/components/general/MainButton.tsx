@@ -12,7 +12,7 @@ import { MdAccountCircle, MdArrowBack, MdInvertColors, MdManageAccounts, MdOutli
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
-  showBackHome?: boolean;
+  backToRoom?: () => void;
 };
 /**
  * Main (StartMenu Button) component
@@ -46,8 +46,8 @@ export function MainButton(props: MainButtonProps) {
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </MenuItem>
-          {props.showBackHome && (
-            <MenuItem onClick={logout} icon={<MdArrowBack fontSize="24px" />}>
+          {props.backToRoom && (
+            <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />}>
               Back to Room
             </MenuItem>
           )}

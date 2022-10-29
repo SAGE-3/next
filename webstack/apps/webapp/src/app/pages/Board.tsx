@@ -93,8 +93,8 @@ export function BoardPage() {
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />
 
-      <Box position="absolute" left="2" bottom="2">
-        <MainButton buttonStyle="ghost" showBackHome />
+      <Box position="absolute" left="2" bottom="2" zIndex={101}>
+        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} />
       </Box>
     </>
   );

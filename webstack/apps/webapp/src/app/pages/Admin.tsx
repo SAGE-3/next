@@ -238,7 +238,7 @@ export function AdminPage() {
         py="2"
         px="2"
       >
-        <MainButton />
+        <MainButton buttonStyle="solid" />
         <Box></Box>
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
       </Box>
