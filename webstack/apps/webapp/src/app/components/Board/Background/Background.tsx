@@ -68,7 +68,7 @@ export function Background(props: BackgroundProps) {
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
-  const cursorPosition = useCursorBoardPosition();
+  const { position: cursorPosition } = useCursorBoardPosition();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -520,7 +520,6 @@ export function Background(props: BackgroundProps) {
       }}
       onWheel={(evt: any) => {
         // console.log('onWheel> event', evt);
-        console.log('WheelEvent', evt.deltaY);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {
