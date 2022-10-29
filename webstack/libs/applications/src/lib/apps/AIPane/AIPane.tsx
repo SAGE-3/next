@@ -230,7 +230,10 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
-  const [aiModel, setAIModel] = useState('')
+  const [aiModel, setAIModel] = useState('Models')
+  const [task, setTask] = useState('Tasks')
+
+  // const [model, setModel] = useState('Models')
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -246,8 +249,13 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {runStatus: true});
   }
 
-  const handleModelClick = (model: string) => {
+  const handleSetModel = (model: string) => {
     setAIModel(model)
+  }
+
+  const handleSetTask = (task: string) => {
+    setTask(task)
+    setAIModel('Models')
   }
 
   return (
@@ -258,26 +266,48 @@ function ToolbarComponent(props: App): JSX.Element {
             {
               Object.keys(s.supportedTasks).map((type) => {
                 return (
-                  Object.keys(s.supportedTasks[type]).map((tasks) => {
-                    return (
+                  <>
+                    <Menu>
+                      <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+                        {task}
+                      </MenuButton>
+                      <Portal>
+                        <MenuList>
+                          {
+                            Object.keys(s.supportedTasks[type]).map((tasks) => {
+                              return (
+                                <MenuItem onClick={() => handleSetTask(tasks)}>
+                                  {tasks}
+                                </MenuItem>
+                              )
+                            })
+                          }
+                        </MenuList>
+                      </Portal>
+                    </Menu>
+
+                    <div style={{display: task !== 'Tasks' ? "block" : "none"}}>
                       <Menu>
                         <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-                          {tasks}
+                          {aiModel}
                         </MenuButton>
                         <Portal>
                           <MenuList>
                             {
-                              s.supportedTasks[type][tasks].map((model: string) => {
+                              s.supportedTasks[type][task].map((modelOptions: string) => {
                                 return (
-                                  <MenuItem onClick={() => handleModelClick(model)}>{model}</MenuItem>
+                                  <MenuItem onClick={() => handleSetModel(modelOptions)}>
+                                    {modelOptions}
+                                  </MenuItem>
                                 )
                               })
                             }
                           </MenuList>
                         </Portal>
                       </Menu>
-                    )
-                  })
+                    </div>
+
+                  </>
                 )
               })
             }
