@@ -18,7 +18,7 @@ def sage_proxy():
     sp.populate_existing()
     if not sp.room.boards:
         assert False
-        
+
     board_id = list(sp.room.boards.keys())[0]
     counter = Counter(**counter_doc)
     stickie = Stickie(**stickie_doc)

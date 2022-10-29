@@ -29,7 +29,8 @@ class KernelDashboard(SmartBit):
     _redis_space: str = PrivateAttr(default="JUPYTER:KERNELS")
     _base_url: str = PrivateAttr(default=f"{conf[prod_type]['jupyter_server']}/api")
     _headers: dict = PrivateAttr(default=dict(SmartBit._jupyter_client.headers))
-
+    _redis_server = PrivateAttr()
+    _redis_store: str = PrivateAttr(default="JUPYTER:KERNELS")
     def __init__(self, **kwargs):
         # print("I am here 1")
         super(KernelDashboard, self).__init__(**kwargs)
