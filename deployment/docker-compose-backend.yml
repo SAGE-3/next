@@ -21,4 +21,5 @@ services:
       - ENVIRONMENT=development
     depends_on:
       - "redis-server"
+    command: /conf/start.sh
 #    command: /bin/bash
