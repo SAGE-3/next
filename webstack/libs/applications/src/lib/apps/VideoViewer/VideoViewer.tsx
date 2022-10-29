@@ -69,7 +69,7 @@ function AppComponent(props: App): JSX.Element {
       const extras = myasset.data.derived as ExtraImageType;
       setAspecRatio(extras.aspectRatio || 1);
       // Update the app title
-      update(props._id, { description: myasset?.data.originalfilename });
+      update(props._id, { title: myasset?.data.originalfilename });
     }
   }, [s.assetid, assets]);
 
@@ -91,7 +91,7 @@ function AppComponent(props: App): JSX.Element {
           // Diplay the video current time and duration
           const length = getDurationString(videoRef.current.duration);
           const time = getDurationString(videoRef.current.currentTime);
-          update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+          update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
         }
       });
     }
@@ -136,7 +136,7 @@ function AppComponent(props: App): JSX.Element {
           // Convert time numbers to strings
           const length = getDurationString(duration);
           const time = getDurationString(currentTime);
-          update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+          update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
         }, 1000);
       }
     }
@@ -250,7 +250,7 @@ function ToolbarComponent(props: App): JSX.Element {
       updateState(props._id, { play: { ...s.play, uid: user._id, paused: !s.play.paused, currentTime: videoRef.currentTime } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
-      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+      update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -260,7 +260,7 @@ function ToolbarComponent(props: App): JSX.Element {
       updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
-      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+      update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -272,7 +272,7 @@ function ToolbarComponent(props: App): JSX.Element {
       });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
-      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+      update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -284,7 +284,7 @@ function ToolbarComponent(props: App): JSX.Element {
       });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
-      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+      update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 
@@ -322,7 +322,7 @@ function ToolbarComponent(props: App): JSX.Element {
       });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
-      update(props._id, { description: `${file?.data.originalfilename} - ${time} / ${length}` });
+      update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
     }
   };
 

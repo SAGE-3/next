@@ -121,7 +121,7 @@ function AppComponent(props: App): JSX.Element {
                     {apps.map((app, index) => {
                       return (
                         <MenuItem key={index} value={app._id} onClick={(e) => handleChangeApp1(e)}>
-                          {app.data.name}
+                          {app.data.title}
                         </MenuItem>
                       );
                     })}
@@ -175,7 +175,7 @@ function AppComponent(props: App): JSX.Element {
                     {apps.map((app, index) => {
                       return (
                         <MenuItem key={index} value={app._id} onClick={(e) => handleChangeApp2(e)}>
-                          {app.data.name}
+                          {app.data.title}
                         </MenuItem>
                       );
                     })}

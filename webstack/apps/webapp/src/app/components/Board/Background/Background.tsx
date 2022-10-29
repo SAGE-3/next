@@ -13,8 +13,16 @@ import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 import axios, { AxiosProgressEvent } from 'axios';
 
 import {
-  useUIStore, useAppStore, useUser, useAssetStore, useHexColor, GetConfiguration,
-  useMessageStore, processContentURL
+  useUIStore,
+  useAppStore,
+  useUser,
+  useAssetStore,
+  useHexColor,
+  GetConfiguration,
+  useMessageStore,
+  processContentURL,
+  useHotkeys,
+  useCursorBoardPosition,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -60,6 +68,7 @@ export function Background(props: BackgroundProps) {
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
+  const cursorPosition = useCursorBoardPosition();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -198,9 +207,9 @@ export function Background(props: BackgroundProps) {
     event.dataTransfer.dropEffect = 'move';
   }
 
-  const newApp = (appName: AppName, x: number, y: number) => {
+  const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
-    createApp(setupApp(appName, x, y, props.roomId, props.boardId, user._id));
+    createApp(setupApp('', type, x, y, props.roomId, props.boardId));
   };
 
   // Create an app for a file
@@ -213,12 +222,12 @@ export function Background(props: BackgroundProps) {
         if (a._id === fileID) {
           createApp(
             setupApp(
+              a.data.originalfilename,
               'ImageViewer',
               xDrop,
               yDrop,
               props.roomId,
               props.boardId,
-              user._id,
               { w: w, h: w },
               { assetid: '/api/assets/static/' + a.data.file }
             )
@@ -232,12 +241,12 @@ export function Background(props: BackgroundProps) {
           const extras = a.data.derived as ExtraImageType;
           createApp(
             setupApp(
+              a.data.originalfilename,
               'ImageViewer',
               xDrop,
               yDrop,
               props.roomId,
               props.boardId,
-              user._id,
               { w: w, h: w / (extras.aspectRatio || 1) },
               { assetid: fileID }
             )
@@ -251,19 +260,17 @@ export function Background(props: BackgroundProps) {
           const extras = a.data.derived as ExtraImageType;
           const vw = 800;
           const vh = vw / (extras.aspectRatio || 1);
-          createApp(
-            setupApp('VideoViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: vw, h: vh }, { assetid: fileID })
-          );
+          createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, { w: vw, h: vh }, { assetid: fileID }));
         }
       });
     } else if (isCSV(fileType)) {
-      createApp(setupApp('CSVViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'CSVViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isDZI(fileType)) {
-      createApp(setupApp('DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isGLTF(fileType)) {
-      createApp(setupApp('GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 600, h: 600 }, { assetid: fileID }));
+      createApp(setupApp('', 'GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 600, h: 600 }, { assetid: fileID }));
     } else if (isGeoJSON(fileType)) {
-      createApp(setupApp('LeafLet', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'LeafLet', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
     } else if (isMD(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
@@ -281,7 +288,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('Stickie', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { text: text }));
+              createApp(setupApp('', 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
             });
         }
       });
@@ -302,7 +309,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('CodeCell', xDrop, yDrop, props.roomId, props.boardId, user._id, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('', 'CodeCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
@@ -350,12 +357,13 @@ export function Background(props: BackgroundProps) {
                       // Create a note from the json
                       createApp(
                         setupApp(
+                          '',
                           'JupyterLab',
                           xDrop,
                           yDrop,
                           props.roomId,
                           props.boardId,
-                          user._id,
+
                           { w: 700, h: 700 },
                           { notebook: a.data.originalfilename }
                         )
@@ -385,12 +393,12 @@ export function Background(props: BackgroundProps) {
               // Create a vis from the json spec
               createApp(
                 setupApp(
+                  '',
                   'VegaLite',
                   xDrop,
                   yDrop,
                   props.roomId,
                   props.boardId,
-                  user._id,
                   { w: 500, h: 600 },
                   { spec: JSON.stringify(spec, null, 2) }
                 )
@@ -411,16 +419,7 @@ export function Background(props: BackgroundProps) {
             aspectRatio = page[0].width / page[0].height;
           }
           createApp(
-            setupApp(
-              'PDFViewer',
-              xDrop,
-              yDrop,
-              props.roomId,
-              props.boardId,
-              user._id,
-              { w: 400, h: 400 / aspectRatio },
-              { assetid: fileID }
-            )
+            setupApp('', 'PDFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
           );
         }
       });
@@ -457,10 +456,7 @@ export function Background(props: BackgroundProps) {
             w = 800;
             h = 800;
           }
-          createApp(
-            setupApp('Webview', xdrop, ydrop, props.roomId, props.boardId, user._id,
-              { w, h }, { webviewurl: final_url })
-          );
+          createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
         }
       } else {
         // if no files were dropped, create an application
@@ -483,6 +479,22 @@ export function Background(props: BackgroundProps) {
     }
   }
 
+  // Stickies Shortcut
+  useHotkeys(
+    'shift+s',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
+      createApp(setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
+
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
+    // Depends on the cursor to get the correct position
+    { dependencies: [cursorPosition.x, cursorPosition.y] }
+  );
+
   return (
     <Box
       className="board-handle"
@@ -496,11 +508,12 @@ export function Background(props: BackgroundProps) {
       onDrop={OnDrop}
       onDragOver={OnDragOver}
       onScroll={(evt) => {
-        console.log('onScroll> event', evt);
+        // console.log('onScroll> event', evt);
         evt.stopPropagation();
       }}
       onWheel={(evt: any) => {
-        console.log('onWheel> event', evt);
+        // console.log('onWheel> event', evt);
+        console.log('WheelEvent', evt.deltaY);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {

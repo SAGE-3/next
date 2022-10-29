@@ -110,8 +110,7 @@ function AppComponent(props: App): JSX.Element {
     if (e.shiftKey && e.code === 'Tab') {
       // Create a new stickie
       createApp({
-        name: 'Stickie',
-        description: 'Stickie',
+        title: user.data.name,
         roomId: roomId!,
         boardId: boardId!,
         position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
@@ -119,8 +118,6 @@ function AppComponent(props: App): JSX.Element {
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Stickie',
         state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
-        ownerId: user._id,
-        minimized: false,
         raised: true,
       });
     }
@@ -129,12 +126,12 @@ function AppComponent(props: App): JSX.Element {
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0} borderRadius="0 0 6px 6px">
+      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0}>
         <Textarea
           ref={textbox}
           resize={'none'}
           w="100%"
-          h={props.data.size.height - 24}
+          h="100%"
           variant="outline"
           borderWidth="0px"
           p={4}
@@ -194,7 +191,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // Add whitespace at the end of the text to make it a paragraph
     const text = s.text.split('\n').join('  \n');
     const style = `<style type="text/css" rel="stylesheet">body { background-color: ${s.color}} * {color: black} }</style>`;
-    const ownerName = users.find((el) => el._id === props.data.ownerId)?.data.name;
+    const ownerName = users.find((el) => el._id === props._createdBy)?.data.name;
     const content = `# Stickie\n${dt}\n___\n${text}\n___\nCreated by ${ownerName} with SAGE3\n${style}`;
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);

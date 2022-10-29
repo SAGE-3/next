@@ -211,7 +211,7 @@ function AppComponent(props: App): JSX.Element {
 
         const titleUpdated = (event: any) => {
           // Update the app title
-          update(props._id, { description: event.title });
+          update(props._id, { title: event.title });
         };
         webview.addEventListener('page-title-updated', titleUpdated);
 
