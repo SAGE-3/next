@@ -1,5 +1,6 @@
 let barSpecificationTemplate = {
   description: "A bar chart with highlighting on hover and selecting on click. (Inspired by Tableau's interaction style.)",
+  title: '',
   data: {
     url: '',
   },
@@ -8,10 +9,10 @@ let barSpecificationTemplate = {
     x: { field: '', type: '' },
     y: { field: '', type: '', aggregate: '' },
   },
+  transform: [] as any,
 };
 
-export default function createBarChart(headers: string[], data: any, fileName: string) {
-  console.log(headers, data);
+export default function createBarChart(headers: string[], fileName: string) {
   barSpecificationTemplate.data.url = '/api/assets/static/' + fileName;
   barSpecificationTemplate.encoding.x.field = headers[0];
   barSpecificationTemplate.encoding.x.type = 'nominal';

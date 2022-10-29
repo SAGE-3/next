@@ -7,6 +7,5 @@ export default function extractChartType(input: string, availabeCharts: { key: s
       }
     }
   });
-  console.log(extractedChartType);
   return extractedChartType;
 }

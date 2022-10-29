@@ -5,7 +5,7 @@ export default function createPropertyList(data: any, headers: string[]) {
   for (let i = 0; i < headers.length; i++) {
     if (findHeaderType(headers[i], data) === 'nominal') {
       var flags: never[] | boolean[] = [],
-        uniqueNominalValues = [headers[i]],
+        uniqueNominalValues = [],
         l = data.length,
         n;
       for (n = 0; n < l; n++) {
@@ -39,5 +39,6 @@ export default function createPropertyList(data: any, headers: string[]) {
       propertyList.push(propertyInfo);
     }
   }
+  console.log(propertyList);
   return propertyList;
 }
