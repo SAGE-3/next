@@ -6,8 +6,6 @@
  *
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -35,7 +33,7 @@ import { FaPlay } from 'react-icons/fa';
 import { BiErrorCircle, BiRun } from 'react-icons/bi';
 import { FiChevronDown } from 'react-icons/fi';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -43,17 +41,9 @@ import { AppWindow } from '../../components';
 
 import './styles.css';
 
-import {state as AppState} from './index';
-import {AppWindow} from '../../components';
-import React, {useEffect, useState, useRef} from 'react';
-import {FaPlay} from 'react-icons/fa';
-import {BiErrorCircle, BiRun} from 'react-icons/bi';
+import { useEffect, useState, useRef } from 'react';
 
-import {FiChevronDown} from 'react-icons/fi';
-import {useLocation} from 'react-router-dom';
-
-import {v4 as getUUID} from 'uuid';
-
+import { v4 as getUUID } from 'uuid';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -75,9 +65,8 @@ function AppComponent(props: App): JSX.Element {
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
-
   // ANDY THIS WAS IN THE dev-ai
-  # const [outputLocal, setOutputLocal] = useState<{ score: number; label: string; box: object }[]>([]);
+  // const [outputLocal, setOutputLocal] = useState<{ score: number; label: string; box: object }[]>([]);
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
 
@@ -157,7 +146,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-      updateState(props._id, {supportedTasks: {}});
+      updateState(props._id, { supportedTasks: {} });
       // ANDY THIS WAS IN DEV-AI
       // updateState(props._id, { supportedTasks: '' });
     }
@@ -243,88 +232,72 @@ function ToolbarComponent(props: App): JSX.Element {
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   // const update = useAppStore((state) => state.update);
 
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
-
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
-  const [aiModel, setAIModel] = useState('Models')
-  const [task, setTask] = useState('Tasks')
+  const [aiModel, setAIModel] = useState('Models');
+  const [task, setTask] = useState('Tasks');
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
-
 
   function runFunction(model: string) {
     updateState(props._id, {
       runStatus: true,
       executeInfo: {
         executeFunc: 'execute_model',
-        params: {exec_uuid: getUUID(), model_id: model},
+        params: { exec_uuid: getUUID(), model_id: model },
       },
     });
   }
 
   const handleSetModel = (model: string) => {
-    setAIModel(model)
-  }
+    setAIModel(model);
+  };
 
   const handleSetTask = (task: string) => {
-    setTask(task)
-    setAIModel('Models')
-  }
+    setTask(task);
+    setAIModel('Models');
+  };
 
   return (
     <>
-      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? "block" : "none"}}>
-        <Stack spacing={2} direction='row'>
+      <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
+        <Stack spacing={2} direction="row">
           <>
-            {
-              (Object.keys(s.supportedTasks))?.map((type) => {
-                return (
-                  <>
+            {Object.keys(s.supportedTasks)?.map((type) => {
+              return (
+                <>
+                  <Menu>
+                    <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                      {task}
+                    </MenuButton>
+                    <Portal>
+                      <MenuList>
+                        {Object.keys(s.supportedTasks[type]).map((tasks) => {
+                          return <MenuItem onClick={() => handleSetTask(tasks)}>{tasks}</MenuItem>;
+                        })}
+                      </MenuList>
+                    </Portal>
+                  </Menu>
+
+                  <div style={{ display: task !== 'Tasks' ? 'block' : 'none' }}>
                     <Menu>
-                      <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-                        {task}
+                      <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                        {aiModel}
                       </MenuButton>
                       <Portal>
                         <MenuList>
-                          {(Object.keys(s.supportedTasks[type])).map((tasks) => {
-                            return (
-                              <MenuItem onClick={() => handleSetTask(tasks)}>
-                                {tasks}
-                              </MenuItem>
-                            )
+                          {s.supportedTasks[type][task]?.map((modelOptions: string) => {
+                            return <MenuItem onClick={() => handleSetModel(modelOptions)}>{modelOptions}</MenuItem>;
                           })}
                         </MenuList>
                       </Portal>
                     </Menu>
-
-                    <div style={{display: task !== 'Tasks' ? "block" : "none"}}>
-                      <Menu>
-                        <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-                          {aiModel}
-                        </MenuButton>
-                        <Portal>
-                          <MenuList>
-                            {
-                              (s.supportedTasks[type][task])?.map((modelOptions: string) => {
-                                return (
-                                  <MenuItem onClick={() => handleSetModel(modelOptions)}>
-                                    {modelOptions}
-                                  </MenuItem>
-                                )
-                              })
-                            }
-                          </MenuList>
-                        </Portal>
-                      </Menu>
-                    </div>
-
-                  </>
-                )
-              })
-            }
+                  </div>
+                </>
+              );
+            })}
           </>
           <IconButton
             aria-label="Run AI"
