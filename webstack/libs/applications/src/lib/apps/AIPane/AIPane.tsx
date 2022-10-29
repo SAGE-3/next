@@ -36,10 +36,13 @@ import {AppWindow} from '../../components';
 import React, {useEffect, useState, useRef} from 'react';
 import {FaPlay} from 'react-icons/fa';
 import {BiErrorCircle, BiRun} from 'react-icons/bi';
-import {GiEmptyHourglass} from 'react-icons/gi';
-import {CgSmileMouthOpen} from 'react-icons/cg';
+// import {GiEmptyHourglass} from 'react-icons/gi';
+// import {CgSmileMouthOpen} from 'react-icons/cg';
 import {FiChevronDown} from 'react-icons/fi';
 import {useLocation} from 'react-router-dom';
+
+import { v4 as getUUID } from 'uuid';
+
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -222,10 +225,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
-  const update = useAppStore((state) => state.update);
+  // const locationState = location.state as { roomId: string };
+  // const assets = useAssetStore((state) => state.assets);
+  // // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
+  // const update = useAppStore((state) => state.update);
 
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
@@ -236,11 +239,13 @@ function ToolbarComponent(props: App): JSX.Element {
     return supportedApps.includes(app);
   }
 
+
+
   function runFunction(model: string) {
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'execute_model',
-        params: {some_uuid: '12345678', model_id: model},
+        params: {exec_uuid: getUUID(), model_id: model},
       },
     });
     updateState(props._id, {runStatus: true});

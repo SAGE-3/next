@@ -271,6 +271,9 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
+        if not os.getenv("DROPBOX_TOKEN"):
+            print("Dropbox upload token not defined")
+            sys.exit(1)
 
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
     listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
