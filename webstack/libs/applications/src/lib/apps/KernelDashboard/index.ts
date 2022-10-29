@@ -35,15 +35,6 @@ export type KernelSpec = {
 export type KernelSpecs = [KernelSpec];
 
 export const schema = z.object({
-  kernels: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      last_activity: z.string(),
-      execution_state: z.string(),
-      connections: z.boolean(),
-    })
-  ),
   kernelSpecs: z.array(
     z.object({
       name: z.string(),
@@ -73,7 +64,6 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  kernels: [],
   kernelSpecs: [],
   availableKernels: [],
   executeInfo: { executeFunc: '', params: {} },
