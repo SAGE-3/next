@@ -289,7 +289,7 @@ function ToolbarComponent(props: App): JSX.Element {
               </Tooltip>
             </ButtonGroup>
 
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
+            {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
               <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
                 <Button
                   onClick={() =>
@@ -305,7 +305,7 @@ function ToolbarComponent(props: App): JSX.Element {
                   <MdError />
                 </Button>
               </Tooltip>
-            </ButtonGroup>
+            </ButtonGroup> */}
           </>
         ) : (
           <>This CodeCell is Private</>
