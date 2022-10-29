@@ -16,3 +16,4 @@ pytest
 funcx~=1.0.3
 ws4py # we're only using this for the convenience of WebSocketBaseClient
 python_on_whales
+dropbox # needed to upload files to public server when in devel mode

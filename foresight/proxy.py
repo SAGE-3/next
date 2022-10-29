@@ -177,9 +177,9 @@ class SAGEProxy():
                 doc = msg['event']['doc']
                 self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
 
-
-    def __handle_exec(self, msg):
-        pass
+    #
+    # def __handle_exec(self, msg):
+    #     pass
 
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
@@ -271,6 +271,8 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
+        if not os.getenv("DROPBOX_TOKEN"):
+            print("WARNIGN: Dropbox upload token not defined, AI won't be supported in development mode")
 
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
     listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))

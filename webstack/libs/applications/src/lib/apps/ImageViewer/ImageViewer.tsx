@@ -47,11 +47,6 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  // s.boxes = {
-  //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
-  //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
-  //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
-  // }
 
   // Convert the ID to an asset
   useEffect(() => {

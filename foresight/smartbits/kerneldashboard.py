@@ -31,6 +31,10 @@ class KernelDashboardState(TrackedBaseModel):
 
 class KernelDashboard(SmartBit):
     state: KernelDashboardState
+    _redis_server = PrivateAttr()
+    _headers = PrivateAttr()
+    _base_url = PrivateAttr()
+    _redis_store = PrivateAttr()
 
     def __init__(self, **kwargs):
         print("I am here 1")
@@ -41,6 +45,7 @@ class KernelDashboard(SmartBit):
         self._headers = {'Authorization': f"Token  {jupyter_token}"}
         self._base_url = f"{conf[prod_type]['jupyter_server']}/api"
         r_json = self._redis_server.json()
+        self._redis_store = "JUPYTER:KERNELS"
         if r_json.get(self._redis_store) is None:
             r_json.set(self._redis_store, '.', {})
         self.get_kernel_specs()
@@ -92,13 +97,13 @@ class KernelDashboard(SmartBit):
         self.refresh_list()
 
     def refresh_list(self):
-        self.state.kernels = self.get_kernels()
+        self.state.kernels = self.get_available_kernels()
         # self.state.sessions = self.get_sessions()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def get_available_kernels(self, user_uuid):
+    def get_available_kernels(self, user_uuid=None):
         """
         This function will get the kernels from the redis server
         """
@@ -110,7 +115,7 @@ class KernelDashboard(SmartBit):
         available_kernels = []
 
         for kernel in kernels.keys():
-            if kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
+            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
                 continue
             if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
                 kernels[kernel]['kernel_alias'] = kernel[:8]

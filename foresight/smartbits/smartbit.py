@@ -18,7 +18,6 @@ class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
-
     # make the following params of the constructor. Not all apps need them!
     _jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
     _ai_client: AIClient = AIClient()
@@ -30,7 +29,7 @@ class TrackedBaseModel(BaseModel):
         try:
             if self.path is not None:
                 if name[0] != "_":
-                    print(f"in setting __setattr__ {name} to {value}")
+                    # print(f"in setting __setattr__ {name} to {value}")
                     self.touched.add(f"{self.path}.{name}"[1:])
             super().__setattr__(name, value)
         except:
@@ -53,11 +52,17 @@ class TrackedBaseModel(BaseModel):
         def attrsetter(name):
             def setter(obj, val):
                 fields = name.split(".")
+                is_dict = False
                 for field in fields[0:-1]:
                     try:
                         obj = getattr(obj, field)
+
                     except:
-                        obj = obj[field]
+                        try:
+                            obj[field] = {}
+                            obj = obj[field]
+                        except:
+                            raise Exception("Not a dict?")
 
                 # using object setattr to avoid adding field to touched
                 error = True
@@ -80,9 +85,11 @@ class TrackedBaseModel(BaseModel):
                     path.pop(-1)
             else:
                 dotted_path = ".".join(path)
-                yield dotted_path, u_data
+                yield (dotted_path, u_data)
 
+        # print(list(recursive_iter(update_data)))
         for dotted_path, val in recursive_iter(update_data):
+            # print(f"working on {dotted_path} and {val}")
             attrsetter(dotted_path)(self, val)
 
     def copy_touched(self):
