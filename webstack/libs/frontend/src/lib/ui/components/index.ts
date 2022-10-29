@@ -26,3 +26,4 @@ export * from './lists/RoomList';
 export * from './context-menu/context-menu';
 
 export * from './paste-handler/paste-handler';
+export * from './general';

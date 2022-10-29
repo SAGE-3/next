@@ -6,11 +6,11 @@
  *
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUIStore, useUser, usePresenceStore, useRouteNav, useData } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, usePresenceStore, useRouteNav, useData, useCursorBoardPosition } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 type ContextProps = {
@@ -47,6 +47,7 @@ export function BoardContextMenu(props: ContextProps) {
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
   const showAppTitle = useUIStore((state) => state.showAppTitle);
   const toggleTitle = useUIStore((state) => state.toggleTitle);
+  const { uiToBoard } = useCursorBoardPosition();
 
   // UI Menu position setters
   const setControllerPosition = useUIStore((state) => state.controller.setPosition);
@@ -93,15 +94,13 @@ export function BoardContextMenu(props: ContextProps) {
     // Get the position of the cursor
     const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
     if (me) {
-      const pos = me.data.cursor;
-      const x = Math.round(pos.x / gridSize) * gridSize; // Snap to grid
-      const y = Math.round(pos.y / gridSize) * gridSize;
       // Create the app
+      const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
       createApp({
         title: title ? title : '',
         roomId: props.roomId,
         boardId: props.boardId,
-        position: { x, y, z: 0 },
+        position: { ...position, z: 0 },
         size: { width: 400, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: appName,
@@ -120,19 +119,17 @@ export function BoardContextMenu(props: ContextProps) {
     // Get the position of the cursor
     const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
     if (me) {
-      const pos = me.data.cursor;
+      const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
       const width = 700;
       const height = 700;
-      const x = Math.round(pos.x / gridSize) * gridSize; // Snap to grid
-      const y = Math.round(pos.y / gridSize) * gridSize;
       // Open a webview into the SAGE3 builtin Jupyter instance
       createApp({
         title: '',
         roomId: props.roomId,
         boardId: props.boardId,
-        position: { x, y, z: 0 },
+        position: { ...position, z: 0 },
         size: { width, height, depth: 0 },
-        rotation: { x, y, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'JupyterLab',
         state: { ...initialValues['JupyterLab'], jupyterURL: '' },
         raised: true,
