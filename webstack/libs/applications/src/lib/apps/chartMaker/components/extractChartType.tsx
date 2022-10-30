@@ -1,11 +1,13 @@
 export default function extractChartType(input: string, availabeCharts: { key: string; mark: string; available: boolean }[]) {
   let extractedChartType = '';
-  availabeCharts.forEach((chart: { key: string; mark: string; available: boolean }) => {
-    if (chart.available) {
-      if (input.includes(chart.key)) {
-        extractedChartType = chart.mark;
+  for (let i = 0; i < availabeCharts.length; i++) {
+    if (availabeCharts[i].available) {
+      if (input.includes(availabeCharts[i].key)) {
+        extractedChartType = availabeCharts[i].mark;
+        break;
       }
     }
-  });
+  }
+
   return extractedChartType;
 }

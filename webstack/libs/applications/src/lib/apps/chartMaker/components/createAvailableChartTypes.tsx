@@ -24,6 +24,11 @@ export default function (input: string, data: Record<string, any>[]) {
       available: false,
     },
     {
+      key: 'heatmap',
+      mark: 'heatmap',
+      available: false,
+    },
+    {
       key: 'map',
       mark: 'map',
       available: false,

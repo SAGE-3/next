@@ -14,7 +14,7 @@ export interface lineChartProps {
   transform: any[];
 }
 
-export default function creaeteLineChart(extractedHeaders: string[], fileName: string, data: Record<string, string>[]) {
+export default function createLineChart(extractedHeaders: string[], fileName: string, data: Record<string, string>[]) {
   let lineChartSpec: lineChartProps = {
     description: "A bar chart with highlighting on hover and selecting on click. (Inspired by Tableau's interaction style.)",
     title: '',
