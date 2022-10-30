@@ -82,7 +82,7 @@ export function BoardPage() {
 
       {/* The Corner SAGE3 Image */}
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
-        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" />
+        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 
       <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
