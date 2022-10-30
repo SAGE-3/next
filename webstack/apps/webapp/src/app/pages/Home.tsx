@@ -121,6 +121,7 @@ export function HomePage() {
             justifyContent="left"
             display="flex"
             width="100%"
+            userSelect="none"
             whiteSpace={'nowrap'}
           >
             {config?.serverName}
@@ -184,8 +185,7 @@ export function HomePage() {
         px="2"
       >
         <MainButton buttonStyle="solid" />
-        <Box></Box>
-        <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
+        <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
       </Box>
     </Box>
   );

@@ -239,8 +239,7 @@ export function AdminPage() {
         px="2"
       >
         <MainButton buttonStyle="solid" />
-        <Box></Box>
-        <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
+        <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sage3" userSelect={'auto'} draggable={false} />
       </Box>
     </Box>
   );
