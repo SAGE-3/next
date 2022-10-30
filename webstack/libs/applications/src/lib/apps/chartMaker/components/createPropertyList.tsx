@@ -18,7 +18,7 @@ export default function createPropertyList(data: any, headers: string[]) {
       propertyList.push(propertyInfo);
     } else if (findHeaderType(headers[i], data) === 'quantitative') {
       var quantitativeValues = [];
-      quantitativeValues.push(headers[i]);
+      quantitativeValues.push();
       let quantitativeData = [];
       for (let j = 0; j < data.length; j++) {
         let num = parseFloat(data[j][headers[i]]);
@@ -28,8 +28,9 @@ export default function createPropertyList(data: any, headers: string[]) {
           quantitativeData.push(num);
         }
       }
+      quantitativeValues.push(Math.min(...quantitativeData));
+      quantitativeValues.push(Math.max(...quantitativeData));
 
-      quantitativeValues.push(Math.min(...quantitativeData).toString() + ' - ' + Math.max(...quantitativeData).toString());
       quantitativeValues = quantitativeValues.flat();
       let propertyInfo = { header: headers[i], filterValues: quantitativeValues, headerType: 'quantitative' };
 

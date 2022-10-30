@@ -18,9 +18,11 @@ export const createCharts = (input: string, data: Record<string, string>[], head
   const extractedChartType = extractChartType(input, availableCharts);
 
   //Create Data Visualizations
-  let specification = createBarChart(extractedHeaders, fileName);
-  specification.title = createTitle(extractedHeaders, 'bar', extractedFilterValues);
-  specification.transform = createTransform(extractedFilterValues, propertyList);
-  console.log(specification.transform);
-  return specification;
+  let specifications = createBarChart(extractedHeaders, fileName, data);
+  for (let i = 0; i < specifications.length; i++) {
+    specifications[i].title = createTitle(extractedHeaders, 'bar', extractedFilterValues);
+    specifications[i].transform = createTransform(extractedFilterValues, propertyList);
+  }
+
+  return specifications;
 };

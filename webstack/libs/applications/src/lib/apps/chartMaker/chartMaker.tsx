@@ -68,7 +68,12 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const handleChangeFileName = (event: ChangeEvent<HTMLSelectElement>) => {
-    setFileName(event.target.value);
+    const value = event.target.value;
+    if (value === 'none') {
+      setFileName(null);
+    } else {
+      setFileName(event.target.value);
+    }
   };
 
   useEffect(() => {
@@ -100,38 +105,45 @@ function AppComponent(props: App): JSX.Element {
   const generateChart = (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!fileName) return;
-    const specification = createCharts(input, data, headers, fileName);
-    if (!user) return;
-    createApp({
-      name: 'VegaLiteViewer',
-      description: 'Visualization',
-      roomId: roomId!,
-      boardId: boardId!,
-      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-      size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'VegaLiteViewer',
-      state: {
-        spec: JSON.stringify(specification),
-      },
-      ownerId: user._id,
-      minimized: false,
-      raised: true,
-    });
-
-    console.log(specification);
+    try {
+      const specifications = createCharts(input, data, headers, fileName);
+      if (!user) return;
+      for (let i = 0; i < specifications.length; i++) {
+        createApp({
+          title: 'VegaLiteViewer',
+          roomId: roomId!,
+          boardId: boardId!,
+          position: { x: props.data.position.x + props.data.size.width * (i + 1) + 20, y: props.data.position.y, z: 0 },
+          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'VegaLiteViewer',
+          state: {
+            spec: JSON.stringify(specifications[i]),
+          },
+          raised: true,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
     <AppWindow app={props}>
       <>
-        <select onChange={handleChangeFileName}>
+        <select placeholder={fileName != undefined ? fileName : 'Select Dataset'} onChange={handleChangeFileName}>
+          <option value="none" selected>
+            {' '}
+            Select a Dataset{' '}
+          </option>
           {datasets.map((dataset, index) => {
             return <option value={dataset.data.file}>{dataset.data.originalfilename}</option>;
           })}
         </select>
         <Input onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} />
-        <Button onClick={generateChart}>Generate</Button>
+        <Button onClick={generateChart} disabled={fileName ? false : true}>
+          Generate
+        </Button>
       </>
     </AppWindow>
   );
