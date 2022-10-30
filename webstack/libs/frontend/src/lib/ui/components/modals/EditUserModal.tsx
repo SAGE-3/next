@@ -114,25 +114,32 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
 
           <FormControl mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
-            <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
+            <ColorPicker selectedColor={user ? (user?.data.color as SAGEColors) : 'red'} onChange={handleColorChange}></ColorPicker>
           </FormControl>
           <FormControl mt="2">
             <FormLabel htmlFor="type">Type</FormLabel>
             <RadioGroup onChange={handleTypeChange} value={type}>
               <Stack direction="row">
                 {['client', 'wall'].map((value, i) => (
-                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                  <Radio value={value} key={i}>
+                    {value[0].toUpperCase() + value.substring(1)}
+                  </Radio>
                 ))}
               </Stack>
             </RadioGroup>{' '}
           </FormControl>
 
           <Text mt={5} fontSize={'md'}>
-            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
+            Authentication:{' '}
+            <em>
+              {auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}
+            </em>
           </Text>
-          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
-
-
+          {auth?.provider === 'guest' && (
+            <Text mt={1} fontSize={'md'}>
+              Limited functionality as Guest
+            </Text>
+          )}
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name}>

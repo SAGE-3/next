@@ -11,7 +11,6 @@ import { Button, ButtonGroup } from '@chakra-ui/react';
 
 import { SAGEColors, colors } from '@sage3/shared';
 import { useHexColor } from '../../../hooks';
-import { useUIStore } from '@sage3/frontend';
 
 type ColorPickerProps = {
   selectedColor: SAGEColors;
@@ -21,11 +20,9 @@ type ColorPickerProps = {
 
 export function ColorPicker(props: ColorPickerProps) {
   const [selectedColor, setSelectedColor] = useState<SAGEColors>(props.selectedColor);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
 
   const handleChange = (color: SAGEColors) => {
     setSelectedColor(color);
-    setWhiteboardMode(true);
     props.onChange(color);
   };
 
