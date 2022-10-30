@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
 
-import { useAppStore, useUser, useUsersStore } from '@sage3/frontend';
+import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './';
@@ -25,11 +25,9 @@ import dateFormat from 'date-fns/format';
 
 // Styling for the placeholder text
 import './styling.css';
-import { MdRemove, MdAdd, MdFileDownload } from 'react-icons/md';
+import { MdRemove, MdAdd, MdFileDownload, MdOutlineBlock } from 'react-icons/md';
 import { useParams } from 'react-router';
-
-// Stickies colors
-const colors = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#4FD1C5', '#63b3ed', '#B794F4'];
+import { SAGEColors } from '@sage3/shared';
 
 /**
  * NoteApp SAGE3 application
@@ -47,6 +45,13 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const { boardId, roomId } = useParams();
+  const scale = useUIStore((state) => state.scale);
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
+
+  const backgroundColor = useHexColor(s.color + '.300');
+
+  const yours = user?._id === props._createdBy;
+  const selected = selectedAppId === props._id;
 
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
@@ -60,7 +65,9 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    setNote(s.text);
+    if (!yours) {
+      setNote(s.text);
+    }
   }, [s.text]);
   // Update local value with value from the server
   useEffect(() => {
@@ -78,7 +85,7 @@ function AppComponent(props: App): JSX.Element {
   }, [s.fontSize]);
 
   // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(1000, (val) => {
+  const debounceSave = debounce(100, (val) => {
     updateState(props._id, { text: val });
   });
   // Keep a copy of the function
@@ -126,7 +133,7 @@ function AppComponent(props: App): JSX.Element {
   // React component
   return (
     <AppWindow app={props}>
-      <Box bgColor={s.color} color="black" w={'100%'} h={'100%'} p={0}>
+      <Box bgColor={backgroundColor} color="black" w={'100%'} h={'100%'} p={0}>
         <Textarea
           ref={textbox}
           resize={'none'}
@@ -146,7 +153,16 @@ function AppComponent(props: App): JSX.Element {
           value={note}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
+          readOnly={!yours} // Only the creator can edit
+          zIndex={1}
         />
+        {!yours && selected && (
+          <Box position="absolute" right="2" bottom="0" transform={`scale(${1 / scale})`} transformOrigin="bottom right" zIndex={2}>
+            <Tooltip label="Not your Stickie" shouldWrapChildren placement="top" hasArrow>
+              <MdOutlineBlock color="red" />
+            </Tooltip>
+          </Box>
+        )}
       </Box>
     </AppWindow>
   );
@@ -158,6 +174,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   // Access the list of users
   const users = useUsersStore((state) => state.users);
+  const { user } = useUser();
+
+  const yours = user?._id === props._createdBy;
 
   // Larger font size
   function handleIncreaseFont() {
@@ -201,41 +220,39 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
+  const handleColorChange = (color: string) => {
+    updateState(props._id, { color: color });
+  };
+
   return (
     <>
       <HStack>
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-              <MdAdd />
-            </Button>
-          </Tooltip>
+        {yours && (
+          <>
+            <ButtonGroup isAttached size="xs" colorScheme="teal">
+              <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+                <Button
+                  isDisabled={s.fontSize > 128}
+                  onClick={() => handleIncreaseFont()}
+                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+                >
+                  <MdAdd />
+                </Button>
+              </Tooltip>
 
-          <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-              <MdRemove />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
-
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          {/* Colors */}
-          {colors.map((color) => {
-            return (
-              <Button
-                key={color}
-                value={color}
-                bgColor={color}
-                _hover={{ background: color, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                _active={{ background: color, opacity: 0.9 }}
-                size="xs"
-                onClick={() => updateState(props._id, { color: color })}
-              >
-                {' '}
-              </Button>
-            );
-          })}
-        </ButtonGroup>
+              <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+                <Button
+                  isDisabled={s.fontSize <= 8}
+                  onClick={() => handleDecreaseFont()}
+                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+                >
+                  <MdRemove />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+            <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" />
+          </>
+        )}
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>

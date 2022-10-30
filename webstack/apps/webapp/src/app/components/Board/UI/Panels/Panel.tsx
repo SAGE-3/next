@@ -193,7 +193,7 @@ export function Panel(props: PanelProps) {
   }, [props.stuck, winWidth, winHeight]);
 
   // Border color to show if panel is anchored to corners or sides
-  const borderColor = useColorModeValue('#92c2ed', '#477eb0 ');
+  const borderColor = useHexColor('teal');
   const border = `solid ${borderColor} 3px`;
   const borderTop =
     props.stuck == StuckTypes.TopLeft || props.stuck == StuckTypes.Top || props.stuck == StuckTypes.TopRight ? border : '0px';
@@ -321,9 +321,23 @@ export function Panel(props: PanelProps) {
 
               <Box>
                 {showActions ? (
-                  <IconButton size="xs" icon={<MdExpandLess size="1.5rem" />} aria-label="show less" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
+                  <IconButton
+                    size="xs"
+                    icon={<MdExpandLess size="1.5rem" />}
+                    aria-label="show less"
+                    onClick={handleMinimizeClick}
+                    mx="1"
+                    cursor="pointer"
+                  />
                 ) : (
-                  <IconButton size="xs" icon={<MdExpandMore size="1.5rem" />} aria-label="show more" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
+                  <IconButton
+                    size="xs"
+                    icon={<MdExpandMore size="1.5rem" />}
+                    aria-label="show more"
+                    onClick={handleMinimizeClick}
+                    mx="1"
+                    cursor="pointer"
+                  />
                 )}
                 {props.showClose ? (
                   <IconButton
@@ -339,7 +353,6 @@ export function Panel(props: PanelProps) {
                   />
                 ) : null}
               </Box>
-
             </Box>
 
             {showActions ? <>{props.children}</> : null}

@@ -65,12 +65,12 @@ interface UIState {
   appDragging: boolean; // Is the user dragging an app?
 
   // whiteboard
-  marker: boolean; // marker mode enabled
+  whiteboardMode: boolean; // marker mode enabled
   clearMarkers: boolean;
   clearAllMarkers: boolean;
   markerColor: SAGEColors;
   setMarkerColor: (color: SAGEColors) => void;
-  toggleMarker: () => void;
+  setWhiteboardMode: (enable: boolean) => void;
   setClearMarkers: (clear: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
 
@@ -125,7 +125,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showAppTitle: false,
   boardDragging: false,
   appDragging: false,
-  marker: false,
+  whiteboardMode: false,
   markerColor: 'red',
   clearMarkers: false,
   clearAllMarkers: false,
@@ -278,7 +278,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
-  toggleMarker: () => set((state) => ({ ...state, marker: !state.marker })),
+  setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
@@ -326,7 +326,6 @@ export const useUIStore = create<UIState>((set, get) => ({
       set((state) => {
         const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
         const zoomOutVal = Math.max(get().scale - step * get().scale, MinZoom);
-        console.log('zoomout', d, zoomOutVal);
         if (cursor) {
           const b = get().boardPosition;
           const s = get().scale;

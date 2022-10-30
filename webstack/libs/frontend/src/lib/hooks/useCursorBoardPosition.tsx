@@ -6,7 +6,7 @@
  *
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useUIStore } from '../stores';
 
 /**
@@ -14,22 +14,32 @@ import { useUIStore } from '../stores';
  * Usable only on the board page
  * @returns (x, y) position of the cursor
  */
-export function useCursorBoardPosition(): { x: number; y: number } {
+export function useCursorBoardPosition(): {
+  position: { x: number; y: number };
+  uiToBoard: (x: number, y: number) => { x: number; y: number };
+} {
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
+
+  const uiToBoard = useCallback(
+    (x: number, y: number) => {
+      return { x: Math.floor(x / scale - boardPosition.x), y: Math.floor(y / scale - boardPosition.y) };
+    },
+    [boardPosition.x, boardPosition.y, scale]
+  );
 
   // Oberver for window resize
   useEffect(() => {
     const updateCursorPosition = (event: MouseEvent) => {
       setPosition({
-        x: event.clientX / scale - boardPosition.x,
-        y: event.clientY / scale - boardPosition.y,
+        x: Math.floor(event.clientX / scale - boardPosition.x),
+        y: Math.floor(event.clientY / scale - boardPosition.y),
       });
     };
     window.addEventListener('mousemove', updateCursorPosition);
     return () => window.removeEventListener('mousemove', updateCursorPosition);
   }, [boardPosition.x, boardPosition.y, scale]);
 
-  return position;
+  return { position, uiToBoard };
 }

@@ -19,10 +19,10 @@ import {
   usePresenceStore,
   useRoomStore,
   useUsersStore,
+  MainButton,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
-import { HomeAvatar } from '../components/Home/HomeAvatar';
 import { useParams } from 'react-router-dom';
 import { Clock } from '../components/Board/UI/Clock';
 
@@ -110,11 +110,24 @@ export function HomePage() {
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Top Bar */}
-      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100%" px="2">
-        <Box flex="1 1 0px"></Box>
-        <Text fontSize="4xl" flex="1 1 0px" justifyContent="center" display="flex">
-          SAGE3: {config?.serverName}
-        </Text>
+      <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100vw" px="2">
+        <Box flex="1 1 0px">
+          {' '}
+          <Text
+            fontSize="xl"
+            flex="1 1 0px"
+            textOverflow={'ellipsis'}
+            overflow={'hidden'}
+            justifyContent="left"
+            display="flex"
+            width="100%"
+            whiteSpace={'nowrap'}
+          >
+            {config?.serverName}
+          </Text>
+        </Box>
+        <Box></Box>
+
         <Box flex="1 1 0px" justifyContent="right" display="flex" alignItems={'start'}>
           <Clock />
         </Box>
@@ -170,7 +183,7 @@ export function HomePage() {
         py="2"
         px="2"
       >
-        <HomeAvatar />
+        <MainButton buttonStyle="solid" />
         <Box></Box>
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="" />
       </Box>

@@ -35,6 +35,14 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
   const zIndex = useUIStore((state) => state.panelZ).indexOf('whiteboard');
   const controllerPosition = useUIStore((state) => state.controller.position);
 
+  // Whiteboard information
+  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
+  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
+  const setClearMarkers = useUIStore((state) => state.setClearMarkers);
+  const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
+  const markerColor = useUIStore((state) => state.markerColor);
+  const setMarkerColor = useUIStore((state) => state.setMarkerColor);
+
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
     if (!show) {
@@ -49,27 +57,10 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
     }
   }, [controllerPosition]);
 
-  // Whiteboard information
-  const marker = useUIStore((state) => state.marker);
-  const toggleMarker = useUIStore((state) => state.toggleMarker);
-  const setClearMarkers = useUIStore((state) => state.setClearMarkers);
-  const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
-  const markerColor = useUIStore((state) => state.markerColor);
-  const setMarkerColor = useUIStore((state) => state.setMarkerColor);
-
   const handleColorChange = (color: SAGEColors) => {
+    setWhiteboardMode(true);
     setMarkerColor(color);
   };
-
-  // Deselect all apps
-  useHotkeys('esc', () => {
-    toggleMarker();
-  });
-
-  // Deselect all apps
-  useHotkeys('ctrl+m', () => {
-    toggleMarker();
-  });
 
   return (
     <Panel
@@ -88,21 +79,22 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
       zIndex={zIndex}
     >
       <Box alignItems="center" pb="1" width="100%" display="flex">
-        <Tooltip placement="top" hasArrow label={marker ? 'Disable Marker' : 'Enable Marker'}>
-          <Button onClick={toggleMarker} size="md" mr="2" colorScheme={marker ? 'green' : 'gray'}>
+        <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
+          <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
             <BsPencilFill />
           </Button>
         </Tooltip>
 
-        <ColorPicker selectedColor={markerColor} onChange={handleColorChange}></ColorPicker>
+        <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
 
         <Tooltip placement="top" hasArrow label="Erase Your Lines">
-          <Button onClick={() => setClearMarkers(true)} ml="2">
+          <Button onClick={() => setClearMarkers(true)} ml="2" size="sm">
             <FaEraser />
           </Button>
         </Tooltip>
+
         <Tooltip placement="top" hasArrow label="Erase All">
-          <Button onClick={() => setClearAllMarkers(true)} ml="2">
+          <Button onClick={() => setClearAllMarkers(true)} ml="2" size="sm">
             <FaTrash />
           </Button>
         </Tooltip>
