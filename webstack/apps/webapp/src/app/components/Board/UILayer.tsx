@@ -113,7 +113,7 @@ export function UILayer(props: UILayerProps) {
       toast({ title: 'Download in Progress', status: 'success', duration: 2000, isClosable: true });
     });
   };
-  console.log('UILayer', props);
+
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer" position={'absolute'}>
       <AppToolbar></AppToolbar>

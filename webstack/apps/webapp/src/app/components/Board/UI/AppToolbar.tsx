@@ -57,7 +57,6 @@ export function AppToolbar(props: AppToolbarProps) {
   const app = apps.find((app) => app._id === selectedApp);
 
   useLayoutEffect(() => {
-    console.log('useLayoutEffect')
     if (app && boxRef.current) {
       // App Pos and Size
       const ax = app.data.position.x * scale;
@@ -131,10 +130,6 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth, boardDragging]);
 
-  useEffect(() => {
-    console.log('AppToolbar useEffect', selectedApp);
-  }, [selectedApp]);
-
   function getAppToolbar() {
     if (app) {
       const Component = Applications[app.data.type].ToolbarComponent;
@@ -156,7 +151,6 @@ export function AppToolbar(props: AppToolbarProps) {
   }
 
   if (showUI && app) {
-    console.log('Show UI toolbar', showUI, app._id, app.data)
     return (
       <Box
         transform={`translate(${position.x}px, ${position.y}px)`}
