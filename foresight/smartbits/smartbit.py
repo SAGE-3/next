@@ -7,17 +7,21 @@
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field, validate_model
-from utils.generic_utils import create_dict
+# from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
-from jupyterkernelproxy_client import JupyterKernelClient
+from jupyterkernelproxy import JupyterKernelProxy
+from ai.ai_client import AIClient
 from config import config as conf, prod_type
 
 class TrackedBaseModel(BaseModel):
     path: Optional[int]
     touched: Optional[set] = set()
     _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
-    _jupyter_client: JupyterKernelClient =  JupyterKernelClient(conf[prod_type]["flask_server"])
+
+    # make the following params of the constructor. Not all apps need them!
+    _jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
+    _ai_client: AIClient = AIClient()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -32,25 +36,40 @@ class TrackedBaseModel(BaseModel):
         except:
             self.touched.remove(f"{self.path}.{name}"[1:])
 
+    # def refresh_data_form_update_v2(self, msg):
+    #     for label, value in msg['event']["updates"].items():
+    #         if isinstance(value, dict):
+    #             self.
+
     def refresh_data_form_update(self, update_data):
         # TODO replace this temp solution, which updates everything with a
         # solution that updates only necessary fields
         update_data['state'] = update_data['data']['state']
         del (update_data['data']['state'])
         # we don't need to update the following keys:
-        do_not_modify = ["_id", "_createdAt", '_updatedAt']
+        do_not_modify = ["_id", "_createdAt", '_updatedAt', '_createdBy', '_updatedBy']
         _ = [update_data.pop(key) for key in do_not_modify]
 
         def attrsetter(name):
             def setter(obj, val):
                 fields = name.split(".")
                 for field in fields[0:-1]:
-                    obj = getattr(obj, field)
+                    try:
+                        obj = getattr(obj, field)
+                    except:
+                        obj = obj[field]
+
                 # using object setattr to avoid adding field to touched
+                error = True
                 try:
                     object.__setattr__(obj, fields[-1], val)
+                    error = False
                 except:
                     obj[fields[-1]] = val
+                    error = False
+                finally:
+                    if error:
+                        raise Exception("Error Happened")
             return setter
 
         def recursive_iter(u_data, path=[]):
@@ -105,7 +124,8 @@ class TrackedBaseModel(BaseModel):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
         return wrapper
-
+    def cleanup(self):
+        pass
 
 class Position(TrackedBaseModel):
     x: int
@@ -130,23 +150,24 @@ class AppTypes(Enum):
     note = "Note"
     data_table = "DataTable"
     code_cell = "CodeCell"
+    kernel_dashboard = "KernelDashboard"
+    sage_cell = "SageCell"
     slider = "Slider"
     stickie = "Stickie"
     vegalite = "VegaLite"
     vegaliteviewer = "VegaLiteViewer"
-
     genericsmartbit = "GenericSmartBit"
 
 class Data(TrackedBaseModel):
-    name: str
-    description: str
+    # name: str
+    # description: str
     position: Position
     size: Size
     rotation: Rotation
     #type: AppTypes
     type: str
     # owner_id: str = Field(alias='ownerId')
-    owner_id: str = Field(alias='ownerId')
+    # owner_id: str = Field(alias='ownerId')
 
 
 class SmartBit(TrackedBaseModel):
@@ -172,3 +193,6 @@ class ExecuteInfo(TrackedBaseModel):
     # execute_func: str = Field(alias='executeFunc')
     executeFunc: str
     params: dict
+
+# class Boxe(TrackedBaseModel):
+#

@@ -18,7 +18,7 @@ class CounterState(TrackedBaseModel):
 class Counter(SmartBit):
     # the key that is assigned to this in state is
     state: CounterState
-    _some_private_info: dict = PrivateAttr()
+    # _some_private_info: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
@@ -29,4 +29,5 @@ class Counter(SmartBit):
         print("Zeroing requested by te user")
         self.state.count = 0
         self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
         self.send_updates()

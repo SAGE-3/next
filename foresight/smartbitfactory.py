@@ -14,13 +14,16 @@ class SmartBitFactory:
     cls_root = "smartbits"
 
     # TODO: read these names from some conf file; not hardcoded here
-    class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note", "DataTable": "data_table", "CodeCell": "codecell",
-                   "Slider": "slider", "Stickie": "stickie", "VegaLite": "vegalite", "VegaLiteViewer": "vegaliteviewer"}
+    class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note",
+                   "DataTable": "data_table", "CodeCell": "codecell",
+                   "KernelDashboard": "kerneldashboard", "SageCell": "sagecell",
+                   "Slider": "slider", "Stickie": "stickie", "VegaLite": "vegalite",
+                   "VegaLiteViewer": "vegaliteviewer", "ImageViewer": "imageviewer"}
 
 
     @classmethod
     def create_smartbit(cls, doc):
-        smartbit_type = doc["data"]["name"]
+        smartbit_type = doc["data"]["type"]
         # print(f"class path is {cls_path}")
         try:
             # create a smartbit for known classes, ignore others
