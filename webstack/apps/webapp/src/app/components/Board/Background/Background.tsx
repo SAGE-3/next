@@ -317,7 +317,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('', 'CodeCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
@@ -452,19 +452,26 @@ export function Background(props: BackgroundProps) {
     } else {
       // Drag/Drop a URL
       if (event.dataTransfer.types.includes('text/uri-list')) {
+        event.preventDefault();
+        event.stopPropagation();
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
-          const final_url = processContentURL(pastedText);
-          let w, h;
-          if (final_url !== pastedText) {
-            // it must be a video
-            w = 1280;
-            h = 720;
+          if (pastedText.startsWith('data:image/png;base64')) {
+            // it's a base64 image
+            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
           } else {
-            w = 800;
-            h = 800;
+            const final_url = processContentURL(pastedText);
+            let w, h;
+            if (final_url !== pastedText) {
+              // it must be a video
+              w = 1280;
+              h = 720;
+            } else {
+              w = 800;
+              h = 800;
+            }
+            createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
           }
-          createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
         }
       } else {
         // if no files were dropped, create an application
@@ -494,7 +501,7 @@ export function Background(props: BackgroundProps) {
       if (!user) return;
       const x = cursorPosition.x;
       const y = cursorPosition.y;
-      createApp(setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
+      createApp(setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
 
       // Returning false stops the event and prevents default browser events
       return false;

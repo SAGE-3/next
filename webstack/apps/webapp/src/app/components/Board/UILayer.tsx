@@ -115,7 +115,7 @@ export function UILayer(props: UILayerProps) {
   };
 
   return (
-    <Box display="flex" flexDirection="column" height="100vh" id="uilayer">
+    <Box display="flex" flexDirection="column" height="100vh" id="uilayer" position={'absolute'}>
       <AppToolbar></AppToolbar>
 
       {/* <ContextMenu divId="board">

@@ -62,11 +62,9 @@ function AppComponent(props: App): JSX.Element {
           // cursors: true,
           cursors: false, // for now, tracking quill bug with transforms
           toolbar: [
-            [{ font: [] }, { size: [] }],
-            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'header': [1, 2, 3, 4, false] }, { font: [] }],
+            ['bold', 'italic', 'clean', 'code-block'],
             [{ color: [] }, { background: [] }],
-            ['clean'],
-            ['code-block'],
             [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
             ['link', 'image'],
           ],
@@ -157,9 +155,11 @@ function ToolbarComponent(props: App): JSX.Element {
       <head>
         <meta charset="utf-8">
         <title>SAGE3 Notepad - ${dt}</title>
+        <link rel="stylesheet" href="https://cdn.quilljs.com/latest/quill.snow.css"/>
       </head>
-      <body>\n`;
-    const footer = `\n</body></html>`;
+      <body>
+      <div class="ql-snow ql-container">\n`;
+    const footer = `\n</div></body></html>`;
     // Add HTML header and footer
     const content = header + editor.root.innerHTML + footer;
     // Generate a URL containing the text of the document

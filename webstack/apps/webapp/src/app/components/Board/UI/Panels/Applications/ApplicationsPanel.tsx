@@ -28,20 +28,23 @@ const appListed = development
       // "CSVViewer",
       // "Clock",
       // "Cobrowse",
-      'CodeCell',
+      // "CodeCell",
       // "Counter",
       // "DataTable",
       // "DeepZoomImage",
       // "GLTFViewer",
       // "ImageViewer",
       'JupyterLab',
-      'Kernels',
+      // "Kernels",
+      'KernelDashboard',
       'LeafLet',
       // "Linker",
       'Notepad',
       // "PDFViewer",
       // "RTCChat",
+      'SageCell',
       'Screenshare',
+      // "SageCell",
       'Stickie',
       // "TwilioScreenshare",
       // "VegaLite",
@@ -88,11 +91,11 @@ export function ApplicationsPanel(props: ApplicationProps) {
           newlist = newlist.filter((a) => a !== 'AIPane');
         }
         if (!features['cell']) {
-          newlist = newlist.filter((a) => a !== 'CodeCell');
+          newlist = newlist.filter((a) => a !== 'SageCell');
         }
         if (!features['jupyter']) {
           newlist = newlist.filter((a) => a !== 'JupyterLab');
-          newlist = newlist.filter((a) => a !== 'Kernels');
+          newlist = newlist.filter((a) => a !== 'KernelDashboard');
         }
         return newlist;
       });
@@ -122,13 +125,25 @@ export function ApplicationsPanel(props: ApplicationProps) {
 
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
+
+    // Setup initial size
+    let w = 400;
+    let h = 400;
+    if (appName === 'SageCell') {
+      w = 800;
+      h = 300;
+    } else if (appName === 'KernelDashboard') {
+      w = 800;
+      h = 300;
+    }
+
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross
     createApp({
       title: title,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x, y, z: 0 },
-      size: { width: 400, height: 400, depth: 0 },
+      size: { width: w, height: h, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as any) },

@@ -6,9 +6,10 @@
  *
  */
 import { useEffect, useState } from 'react';
-import { Image, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
 import { MdFileDownload } from 'react-icons/md';
+import { HiPencilAlt } from 'react-icons/hi';
 // Utility functions from SAGE3
 import { downloadFile, isUUIDv4 } from '@sage3/frontend';
 
@@ -19,6 +20,8 @@ import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
 import { state as AppState } from './index';
 
+// import { dimensions } from './data_types';
+
 /**
  * ImageViewer app
  *
@@ -27,9 +30,10 @@ import { state as AppState } from './index';
  */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
+
   // Asset data structure
   const [file, setFile] = useState<Asset>();
   // URL used in the image tag
@@ -42,6 +46,52 @@ function AppComponent(props: App): JSX.Element {
   const scale = useUIStore((state) => state.scale);
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
+
+  // const [bboxes, setBboxes] = useState<{ [key: string]: dimensions }>({});
+  //
+  // s.boxes = {
+  //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
+  //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
+  //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
+  // }
+
+  // useEffect(() => {
+  //   if (s.boxes != undefined && Object.keys(s.boxes).length > 0) {
+  //     const parsedBoxes: {[key: string]: dimensions}  = s.boxes
+  //     //const bBoxArr: bbox[] = []
+  //     Object.keys(parsedBoxes).map((key) =>
+  //       {
+  //        console.log(key)
+  //        console.log(parsedBoxes[key].xmin)
+  //
+  //       }
+  //     )
+  //
+  //     // Object.keys(parsedBoxes).forEach((label) => {
+  //     //   bBoxArr.push({
+  //     //     label: label,
+  //     //     dimensions: parsedBoxes[label]
+  //     //   })
+  //     // })
+  //     setBboxes(parsedBoxes)
+  //     // console.log('here')
+  //     // Object.values(bBoxArr).map((el) => {
+  //     //    console.log(el.dimensions.xmin)
+  //     //    console.log(bBoxArr)
+  //     //
+  //     // })
+  //   }
+  // }, [JSON.stringify(s.boxes)])
+
+  // useEffect(() => {
+  //   bboxes.forEach((el) => {
+  //     // console.log(el.label)
+  //     // console.log(el.dimensions)
+  //     // Object.values(el.dimensions).map((item) => {
+  //     //   console.log(item)
+  //     // })
+  //   })
+  // }, [bboxes])
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -69,6 +119,8 @@ function AppComponent(props: App): JSX.Element {
         setSizes(extra.sizes);
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
+        //TODO Extract image size
+
         if (extra) {
           // find the smallest image for this page (multi-resolution)
           const res = extra.sizes.reduce(function (p, v) {
@@ -101,7 +153,81 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
         }}
       >
-        <Image width="100%" userSelect={'auto'} draggable={false} alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
+        <>
+          <Image
+            width="100%"
+            userSelect={'auto'}
+            draggable={false}
+            alt={file?.data.originalfilename}
+            src={url}
+            borderRadius="0 0 6px 6px"
+          />
+
+          {
+            Object.keys(s.boxes).map((label, idx) => {
+              return (
+                <Box
+                  key={label + idx}
+                  position="absolute"
+                  left={s.boxes[label].xmin * (displaySize.width / 649) + 'px'}
+                  top={s.boxes[label].ymin * (displaySize.height / 486) + 'px'}
+                  width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / 649) + 'px'}
+                  height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / 486) + 'px'}
+                  border="2px solid red"
+                  style={{ display: s.annotations === true ? 'block' : 'none' }}
+                >
+                  {label}
+                </Box>
+              );
+            })
+
+            //  Object.values(bboxes).map((el) => {
+            //    console.log(el.dimensions.xmin)
+            //   // return (
+            //   // )
+            // })
+            // bboxes.forEach((el) => {
+            //   return (
+            //     <Box
+            //       position="absolute"
+            //       // left={bboxes[label] * (displaySize.width / 649) + 'px'}
+            //       // top={bboxes[label].ymin * (displaySize.height / 486) + 'px'}
+            //       // width={(bboxes[label].xmax - bboxes[label].xmin) * (displaySize.width / 649) + 'px'}
+            //       // height={(bboxes[label].ymax - bboxes[label].ymin) * (displaySize.height / 486) + 'px'}
+            //       border="2px solid red"
+            //       // style={{display: s.annotations === true ? "block" : "none"}}
+            //     >
+            //       Label: {el.label}
+            //     </Box>
+            //   )
+            // })
+
+            //   bboxes.forEach((el) => {
+            //     console.log(el.label)
+            //     console.log(el.dimensions)
+            //     Object.values(el.dimensions).map((item) => {
+            //       console.log(item)
+            //     })
+            //   })
+
+            // Object.keys(bboxes).map((label) => {
+            //
+            //   return (
+            //     <Box
+            //       position="absolute"
+            //       left={bboxes.label.xmin * (displaySize.width / 649) + 'px'}
+            //       top={bboxes[label].ymin * (displaySize.height / 486) + 'px'}
+            //       width={(bboxes[label].xmax - bboxes[label].xmin) * (displaySize.width / 649) + 'px'}
+            //       height={(bboxes[label].ymax - bboxes[label].ymin) * (displaySize.height / 486) + 'px'}
+            //       border="2px solid red"
+            //       style={{display: s.annotations === true ? "block" : "none"}}
+            //     >
+            //       Label: {label}
+            //     </Box>
+            //   )
+            // })
+          }
+        </>
       </div>
     </AppWindow>
   );
@@ -115,6 +241,8 @@ function AppComponent(props: App): JSX.Element {
  */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  console.log(s.boxes);
+  const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
 
@@ -148,6 +276,37 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+          <Button
+            onClick={() => {
+              updateState(props._id, { annotations: !s.annotations });
+            }}
+          >
+            <HiPencilAlt />
+          </Button>
+        </Tooltip>
+
+        {/*<Tooltip placement="top-start" hasArrow={true} label={'RUN'} openDelay={400}>*/}
+        {/*  <Button*/}
+        {/*    onClick={() => {*/}
+
+        {/*      updateState(props._id,*/}
+        {/*        {*/}
+        {/*          executeInfo: {*/}
+        {/*            "executeFunc": "set_bboxes", "params": {*/}
+        {/*              // "bboxes": {*/}
+        {/*              //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},*/}
+        {/*              //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},*/}
+        {/*              //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},*/}
+        {/*              // }*/}
+        {/*            }*/}
+        {/*          }*/}
+        {/*        })*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    <HiPencilAlt/>*/}
+        {/*  </Button>*/}
+        {/*</Tooltip>*/}
       </ButtonGroup>
     </>
   );
