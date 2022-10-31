@@ -2,6 +2,7 @@ from smartbits.counter import Counter
 import pytest
 from sample_sb_docs import counter_doc
 
+
 @pytest.fixture()
 def counter_instance():
     c = Counter(**counter_doc)

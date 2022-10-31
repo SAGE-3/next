@@ -7,7 +7,6 @@ from smartbits.counter import Counter
 from smartbits.stickie import Stickie
 
 
-
 @ pytest.fixture()
 def sage_proxy():
     sc = SageCommunication(conf, prod_type)
@@ -18,6 +17,7 @@ def sage_proxy():
     sp.populate_existing()
     if not sp.room.boards:
         assert False
+
     board_id = list(sp.room.boards.keys())[0]
     counter = Counter(**counter_doc)
     stickie = Stickie(**stickie_doc)
@@ -30,6 +30,8 @@ def test_linked_app_default(sage_proxy):
     # tests default function (update_dest_from_src) to
     # update src filed with dest field
     pass
+
+
 
 # sage_proxy.register_linked_app(
 #         board_id="ad18901e-e128-4997-9c77-99aa6a6ab313",

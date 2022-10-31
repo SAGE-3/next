@@ -58,7 +58,7 @@ class LinkedApp():
         # self.__OBJECT_CREATION_METHODS = {"BOARDS": self.create_new_board}
         # NB_TRIALS = 5
         self.__config = json.load(open(config_file))
-        self.__headers = {'Authorization': f"Bearer {self.__config['token']}"}
+        self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
         self.listening_process = threading.Thread(target=self.receive_messages)
         self.listening_process.start()
         self.__message_queue = Queue()
@@ -67,7 +67,7 @@ class LinkedApp():
     def receive_messages(self):
         async def _run(self):
             async with websockets.connect(self.__config["socket_server"],
-                                          extra_headers={"Authorization": f"Bearer {self.__config['token']}"}) as ws:
+                                          extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
                 await subscribe(ws, self.room.room_id)
                 print("completed subscription, waiting for messages")
                 async for msg in ws:

@@ -8,18 +8,18 @@
 
 import { z } from 'zod';
 
-const TaskTypes = z.enum(['vision', 'nlp'])
-export type TaskTypes = z.infer<typeof TaskTypes>;
-
-const VisionTasks = z.enum(["Object Detection", "Classification"]);
-export type VisionTasks = z.infer<typeof VisionTasks>;
-
-const NLPTasks = z.enum(["Summarization"]);
-export type NLPTasks = z.infer<typeof NLPTasks>;
-
-// export type supported_tasks = z.infer<(typeof VisionTasks) & (typeof NLPTasks)>;
-export const supported_tasks = {...VisionTasks, ...NLPTasks};
-export type supported_tasks = typeof supported_tasks;
+// const TaskTypes = z.enum(['vision', 'nlp'])
+// export type TaskTypes = z.infer<typeof TaskTypes>;
+//
+// const VisionTasks = z.enum(["Object Detection", "Classification"]);
+// export type VisionTasks = z.infer<typeof VisionTasks>;
+//
+// const NLPTasks = z.enum(["Summarization"]);
+// export type NLPTasks = z.infer<typeof NLPTasks>;
+//
+// // export type supported_tasks = z.infer<(typeof VisionTasks) & (typeof NLPTasks)>;
+// export const supported_tasks = {...VisionTasks, ...NLPTasks};
+// export type supported_tasks = typeof supported_tasks;
 
 
 export const schema = z.object({
@@ -28,7 +28,7 @@ export const schema = z.object({
   // Temp variable to demonstrate app run and idle status
   runStatus: z.boolean(),
 
-  supportedTasks: z.any(),
+  supportedTasks: z.record(z.string(), z.record(z.string(), z.any())),
 
   messages: z.record(z.string(), z.any()),
 

@@ -43,11 +43,6 @@ config = {
         "web_server": f"http://{server}:3333",
         "ws_server": f"ws://{server}:3333",
     },
-
-    # Token should not be stored in code and github
-    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0MUBnbWFpbC5jb20iLCJuYW1lIjoidGVzdDEiLCJhZG1pbiI6dHJ1ZSwiaWF0IjoxNjU0NTc2MTM5LCJleHAiOjE2ODYxMzM3MzksImF1ZCI6InNhZ2UzLmFwcCIsImlzcyI6InNhZ2UzYXBwQGdtYWlsLmNvbSJ9.kwQM\
-DtdKXqGG9DZU8e4Mq_pC_GKCH-sMEalRcbIth3BeTsQ7apdZUPvZ4kTmgipJSoIUvyr72Z-2qDi3tKNdJB2OCnm8FMSRFWCt9KK6kxT2X8EiFh5f3T6q1cd1tRy-Nla9cF1zvRn1ALAetJRpVLIsH-XV-l4deWhrGfHNexwFLEJbvHb4E4UQtiB1bQZ5HwutztQvJtVOZ80HJxJccn7bjpVo-OdAjNjQjMLbJEGR\
-gpJRAhyZaEVDojsiaJOrFtCUC65qvkC0gym-0HDd89Lmc2i54yf6h0Feb96OadeKT2TFjH3Jvi7_r7sTdE7N88oIaN_mQZhKKTUrI7EYTQ"
 }
 
 ai_settings = {
@@ -64,12 +59,10 @@ ai_settings = {
 }
 
 funcx = {
-    "endpoint_uuid": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
-    "funcx_endpoint": "503aabe7-223e-4679-bb01-0b0da37c0ae6",
-    "test_hello_world_uuid": '1dd3b15e-5922-4a03-96cc-ed1c1d71a2ca',
-    "ai_func_uuid": '4f78e565-05b3-4a59-89f0-1f6dd7e20216',
-    "ai_func_uuid_mahdi": 'ab0edbf9-de03-49ac-bd2d-44f314761d3d',
-    "ai_func_uuid_andy ": '4f78e565-05b3-4a59-89f0-1f6dd7e20216'
+    "endpoint_uuid": "7bd65241-0049-4c0f-b69c-c21f3ef6efe3",
+    "funcx_endpoint_lani": "7bd65241-0049-4c0f-b69c-c21f3ef6efe3",
+    "test_hello_world_uuid": 'd06d3bb0-a453-4b7c-a3c9-a0285ac1b67d',
+    "ai_func_uuid": 'bd725c27-8034-44a8-a761-6a73741f0308',
 }
 
 ai_models = {

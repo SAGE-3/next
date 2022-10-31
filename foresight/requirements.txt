@@ -10,3 +10,4 @@ pytest
 funcx~=1.0.3
 ws4py
 python_on_whales
+dropbox # needed to upload files to public server when in devel mode

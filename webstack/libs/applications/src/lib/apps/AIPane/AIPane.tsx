@@ -6,8 +6,6 @@
  *
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -35,7 +33,7 @@ import { FaPlay } from 'react-icons/fa';
 import { BiErrorCircle, BiRun } from 'react-icons/bi';
 import { FiChevronDown } from 'react-icons/fi';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -43,21 +41,32 @@ import { AppWindow } from '../../components';
 
 import './styles.css';
 
+import { useEffect, useState, useRef } from 'react';
+
+import { v4 as getUUID } from 'uuid';
+
+type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
+  // const zindex = useUIStore((state) => state.zIndex);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const boardApps = useAppStore((state) => state.apps);
   const selApp = boardApps.find((el) => el._id === selectedAppId);
 
-  const location = useLocation();
+  // const location = useLocation();
+  // const locationState = location.state as { roomId: string };
+  // const assets = useAssetStore((state) => state.assets);
+  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
-  const [outputLocal, setOutputLocal] = useState<{ score: number; label: string; box: object }[]>([]);
+  // ANDY THIS WAS IN THE dev-ai
+  // const [outputLocal, setOutputLocal] = useState<{ score: number; label: string; box: object }[]>([]);
 
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
 
@@ -137,33 +146,11 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-      updateState(props._id, { supportedTasks: '' });
+      updateState(props._id, { supportedTasks: {} });
+      // ANDY THIS WAS IN DEV-AI
+      // updateState(props._id, { supportedTasks: '' });
     }
   }, [Object.keys(s.hostedApps).length]);
-
-  //TODO parse output
-  useEffect(() => {
-    if (s.output != undefined && Object.keys(s.output).length > 0) {
-      const parsedOT = JSON.parse(s.output);
-      const arrayOT = parsedOT.output.split("'");
-      const parsedArrayOT = JSON.parse(arrayOT[0]);
-      const modelOutput: { score: number; label: string; box: object }[] = [];
-      Object.keys(parsedArrayOT).forEach((array) => {
-        Object.keys(parsedArrayOT[array]).forEach((entity) => {
-          modelOutput.push({
-            score: parsedArrayOT[array][entity].score,
-            label: parsedArrayOT[array][entity].label,
-            box: parsedArrayOT[array][entity].box,
-          });
-        });
-      });
-      setOutputLocal(modelOutput);
-      console.log(modelOutput);
-      for (const score in modelOutput) {
-        console.log(modelOutput[score].score);
-      }
-    }
-  }, [JSON.stringify(s.output)]);
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -238,79 +225,87 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore((state) => state.assets);
+
+  // const location = useLocation();
+  // const locationState = location.state as { roomId: string };
+  // const assets = useAssetStore((state) => state.assets);
   // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
-  const update = useAppStore((state) => state.update);
+  // const update = useAppStore((state) => state.update);
 
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
+  const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
 
-  const [supportedTasks, setSupportedTasks] = useState<{ name: string; models: string[] }[]>([]);
-  const [aiModel, setAIModel] = useState('');
-
-  useEffect(() => {
-    if (s.supportedTasks != undefined && s.supportedTasks != '') {
-      const parsedST = JSON.parse(s.supportedTasks);
-      const newTasks: { name: string; models: string[] }[] = [];
-      Object.keys(parsedST).forEach((aiType) => {
-        Object.keys(parsedST[aiType]).forEach((modelName) => {
-          newTasks.push({
-            name: modelName,
-            models: parsedST[aiType][modelName],
-          });
-        });
-      });
-      setSupportedTasks(newTasks);
-    }
-  }, [JSON.stringify(s.supportedTasks)]);
+  const [aiModel, setAIModel] = useState('Models');
+  const [task, setTask] = useState('Tasks');
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
   }
 
-  function runFunction() {
+  function runFunction(model: string) {
     updateState(props._id, {
       runStatus: true,
       executeInfo: {
         executeFunc: 'execute_model',
-        params: { some_uuid: '12345678', model_id: 'facebook/detr-resnet-50' },
+        params: { exec_uuid: getUUID(), model_id: model },
       },
     });
   }
 
-  const handleModelClick = (model: string) => {
-    console.log('run model: ', model);
+  const handleSetModel = (model: string) => {
     setAIModel(model);
+  };
+
+  const handleSetTask = (task: string) => {
+    setTask(task);
+    setAIModel('Models');
   };
 
   return (
     <>
       <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
         <Stack spacing={2} direction="row">
-          {supportedTasks.map((task) => {
-            return (
-              <Menu>
-                <MenuButton as={Button} rightIcon={<FiChevronDown />}>
-                  {task.name}
-                </MenuButton>
-                <Portal>
-                  <MenuList>
-                    {task.models.map((name) => {
-                      return <MenuItem onClick={() => handleModelClick(name)}>{name}</MenuItem>;
-                    })}
-                  </MenuList>
-                </Portal>
-              </Menu>
-            );
-          })}
+          <>
+            {Object.keys(s.supportedTasks)?.map((type) => {
+              return (
+                <>
+                  <Menu>
+                    <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                      {task}
+                    </MenuButton>
+                    <Portal>
+                      <MenuList>
+                        {Object.keys(s.supportedTasks[type]).map((tasks) => {
+                          return <MenuItem onClick={() => handleSetTask(tasks)}>{tasks}</MenuItem>;
+                        })}
+                      </MenuList>
+                    </Portal>
+                  </Menu>
+
+                  <div style={{ display: task !== 'Tasks' ? 'block' : 'none' }}>
+                    <Menu>
+                      <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                        {aiModel}
+                      </MenuButton>
+                      <Portal>
+                        <MenuList>
+                          {s.supportedTasks[type][task]?.map((modelOptions: string) => {
+                            return <MenuItem onClick={() => handleSetModel(modelOptions)}>{modelOptions}</MenuItem>;
+                          })}
+                        </MenuList>
+                      </Portal>
+                    </Menu>
+                  </div>
+                </>
+              );
+            })}
+          </>
           <IconButton
             aria-label="Run AI"
             icon={s.runStatus ? <BiRun /> : <FaPlay />}
             _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
             isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
             onClick={() => {
-              runFunction();
+              runFunction(aiModel);
             }}
           />
         </Stack>

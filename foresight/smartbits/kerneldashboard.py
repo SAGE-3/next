@@ -17,8 +17,6 @@ class KernelDashboardState(TrackedBaseModel):
     """
     This class represents the state of the kernel dashboard
     """
-    # kernels: list = []
-    defaultKernel: str = ""
     kernelSpecs: list = []
     availableKernels: list = []
     executeInfo: ExecuteInfo
@@ -29,7 +27,8 @@ class KernelDashboard(SmartBit):
     _redis_space: str = PrivateAttr(default="JUPYTER:KERNELS")
     _base_url: str = PrivateAttr(default=f"{conf[prod_type]['jupyter_server']}/api")
     _headers: dict = PrivateAttr(default=dict(SmartBit._jupyter_client.headers))
-
+    _redis_server = PrivateAttr()
+    _redis_store: str = PrivateAttr(default="JUPYTER:KERNELS")
     def __init__(self, **kwargs):
         # print("I am here 1")
         super(KernelDashboard, self).__init__(**kwargs)
@@ -118,6 +117,8 @@ class KernelDashboard(SmartBit):
         [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
         available_kernels = []
         for kernel in kernels.keys():
+            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
+                continue
             if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})

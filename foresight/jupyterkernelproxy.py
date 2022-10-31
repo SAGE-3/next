@@ -1,3 +1,4 @@
+import os
 import redis
 import uuid
 import datetime
@@ -7,7 +8,7 @@ from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager
 from ws4py import format_addresses, configure_logger
 from config import config as conf, prod_type
-import random
+
 logger = configure_logger()
 
 

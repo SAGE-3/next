@@ -30,6 +30,7 @@ import { state as AppState } from './index';
  */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  // console.log(s.boxes);
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
@@ -47,51 +48,6 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
-  // const [bboxes, setBboxes] = useState<{ [key: string]: dimensions }>({});
-  //
-  // s.boxes = {
-  //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},
-  //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},
-  //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},
-  // }
-
-  // useEffect(() => {
-  //   if (s.boxes != undefined && Object.keys(s.boxes).length > 0) {
-  //     const parsedBoxes: {[key: string]: dimensions}  = s.boxes
-  //     //const bBoxArr: bbox[] = []
-  //     Object.keys(parsedBoxes).map((key) =>
-  //       {
-  //        console.log(key)
-  //        console.log(parsedBoxes[key].xmin)
-  //
-  //       }
-  //     )
-  //
-  //     // Object.keys(parsedBoxes).forEach((label) => {
-  //     //   bBoxArr.push({
-  //     //     label: label,
-  //     //     dimensions: parsedBoxes[label]
-  //     //   })
-  //     // })
-  //     setBboxes(parsedBoxes)
-  //     // console.log('here')
-  //     // Object.values(bBoxArr).map((el) => {
-  //     //    console.log(el.dimensions.xmin)
-  //     //    console.log(bBoxArr)
-  //     //
-  //     // })
-  //   }
-  // }, [JSON.stringify(s.boxes)])
-
-  // useEffect(() => {
-  //   bboxes.forEach((el) => {
-  //     // console.log(el.label)
-  //     // console.log(el.dimensions)
-  //     // Object.values(el.dimensions).map((item) => {
-  //     //   console.log(item)
-  //     // })
-  //   })
-  // }, [bboxes])
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -180,52 +136,6 @@ function AppComponent(props: App): JSX.Element {
                 </Box>
               );
             })
-
-            //  Object.values(bboxes).map((el) => {
-            //    console.log(el.dimensions.xmin)
-            //   // return (
-            //   // )
-            // })
-            // bboxes.forEach((el) => {
-            //   return (
-            //     <Box
-            //       position="absolute"
-            //       // left={bboxes[label] * (displaySize.width / 649) + 'px'}
-            //       // top={bboxes[label].ymin * (displaySize.height / 486) + 'px'}
-            //       // width={(bboxes[label].xmax - bboxes[label].xmin) * (displaySize.width / 649) + 'px'}
-            //       // height={(bboxes[label].ymax - bboxes[label].ymin) * (displaySize.height / 486) + 'px'}
-            //       border="2px solid red"
-            //       // style={{display: s.annotations === true ? "block" : "none"}}
-            //     >
-            //       Label: {el.label}
-            //     </Box>
-            //   )
-            // })
-
-            //   bboxes.forEach((el) => {
-            //     console.log(el.label)
-            //     console.log(el.dimensions)
-            //     Object.values(el.dimensions).map((item) => {
-            //       console.log(item)
-            //     })
-            //   })
-
-            // Object.keys(bboxes).map((label) => {
-            //
-            //   return (
-            //     <Box
-            //       position="absolute"
-            //       left={bboxes.label.xmin * (displaySize.width / 649) + 'px'}
-            //       top={bboxes[label].ymin * (displaySize.height / 486) + 'px'}
-            //       width={(bboxes[label].xmax - bboxes[label].xmin) * (displaySize.width / 649) + 'px'}
-            //       height={(bboxes[label].ymax - bboxes[label].ymin) * (displaySize.height / 486) + 'px'}
-            //       border="2px solid red"
-            //       style={{display: s.annotations === true ? "block" : "none"}}
-            //     >
-            //       Label: {label}
-            //     </Box>
-            //   )
-            // })
           }
         </>
       </div>
@@ -241,7 +151,7 @@ function AppComponent(props: App): JSX.Element {
  */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  console.log(s.boxes);
+  // console.log(s.boxes);
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
@@ -276,7 +186,8 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+       <div style={{display: Object.keys(s.boxes).length !== 0 ? "block" : "none"}}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
           <Button
             onClick={() => {
               updateState(props._id, { annotations: !s.annotations });
@@ -285,28 +196,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <HiPencilAlt />
           </Button>
         </Tooltip>
-
-        {/*<Tooltip placement="top-start" hasArrow={true} label={'RUN'} openDelay={400}>*/}
-        {/*  <Button*/}
-        {/*    onClick={() => {*/}
-
-        {/*      updateState(props._id,*/}
-        {/*        {*/}
-        {/*          executeInfo: {*/}
-        {/*            "executeFunc": "set_bboxes", "params": {*/}
-        {/*              // "bboxes": {*/}
-        {/*              //   'dog': {xmin: 109, ymin: 186, xmax: 260, ymax: 454},*/}
-        {/*              //   'bicycle': {xmin: 104, ymin: 107, xmax: 477, ymax: 356},*/}
-        {/*              //   'truck': {xmin: 398, ymin: 62, xmax: 574, ymax: 140},*/}
-        {/*              // }*/}
-        {/*            }*/}
-        {/*          }*/}
-        {/*        })*/}
-        {/*    }}*/}
-        {/*  >*/}
-        {/*    <HiPencilAlt/>*/}
-        {/*  </Button>*/}
-        {/*</Tooltip>*/}
+       </div>
       </ButtonGroup>
     </>
   );
