@@ -36,7 +36,7 @@ sage_proxy.register_linked_app(
 
 This means that any updates to the src_field (count) of src_app will be passed to the dest_field (text) of the destinatin app. For now, we assume the fields exist.
 
-The callback can be any function that take three params, src_val, dest_app (an app SmarBit object) and the field name (str)
+The callback can be any function that take three params, src_val, dest_app (an app SmarBit object) and the string field name to be update
 
 When the source field is updated the callback function is executed. Here the function can simply do something like the following:
 ```python

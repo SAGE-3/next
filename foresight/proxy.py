@@ -1,4 +1,5 @@
-# -----------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
@@ -19,6 +20,8 @@
 
 
 # TODO prevent apps updates on fields that were touched?
+import sys
+import os
 from typing import Callable
 from pydantic import BaseModel
 import asyncio
@@ -39,24 +42,7 @@ import logging
 logging.getLogger().setLevel(logging.INFO)
 
 
-import builtins
 
-# TODO: (should we) replace this by logging instead.
- # Does logging still show up in the code cell?
-
-# def print(*args, **kwargs):
-#     builtins.print("<console-print>", end="")
-#     builtins.print(*args, **kwargs, end="")
-#     builtins.print("</console-print>")
-
-
-# import logging
-# from jupyterkernelproxy_client import JupyterKernelClient
-
-# from threading import Thread
-
-
-# urllib3.disable_warnings()
 
 
 
@@ -76,6 +62,7 @@ async def subscribe(sock, room_id):
         'id': subscription_id, 'method': 'SUB'
     }
     await sock.send(json.dumps(msg_sub))
+
 
 class LinkedInfo(BaseModel):
     board_id: str
@@ -112,14 +99,14 @@ class SAGEProxy():
         r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + '/auth/jwt', headers=self.__headers)
         response = r.json()
 
-    def populate_exisitng(self):
+    def populate_existing(self):
         boards_info = self.s3_comm.get_boards(self.room.room_id)
         for board_info in boards_info:
             self.__handle_create("BOARDS", board_info)
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            logging.info(f"Creating {app_info}")
+            logging.info(f"Creating {app_info['data']['state']}")
             # print(f"Creating {app_info}")
             self.__handle_create("APPS", app_info)
 
@@ -129,10 +116,10 @@ class SAGEProxy():
                                       extra_headers={"Authorization": f"Bearer {self.conf['token']}"}) as ws:
             await subscribe(ws, self.room.room_id)
             # print("completed subscription, checking if boards and apps already there")
-            self.populate_exisitng()
+            self.populate_existing()
             async for msg in ws:
                 msg = json.loads(msg)
-
+                print(f"----- msg: {json.dumps(msg)}")
                 if msg['id'] not in self.received_msg_log or \
                         msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
                     self.__message_queue.put(msg)
@@ -152,18 +139,19 @@ class SAGEProxy():
             msg = self.__message_queue.get()
             # I am watching this message for change?
 
-            #print(f"Getting ready to process: {msg}")
+            # print(f"Getting ready to process: {msg}")
             logging.info(f"Getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
             updated_fields = []
-            print(f"msg received is {msg}")
-
             if msg['event']['type'] == "UPDATE":
+                print("Is update")
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
                 logging.info(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
+                    print("Is callback")
+
                     # handle callback
                     # print("this app is being tracked for updates")
                     # print(f"tracked field is {self.callbacks[app_id].src_field}")
@@ -182,7 +170,7 @@ class SAGEProxy():
                             dest_app = self.room.boards[board_id].smartbits[dest_id]
                             linked_info.callback(src_val, dest_app, dest_field)
 
-            if len(updated_fields) == 1 and updated_fields[0] == 'raised':
+            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 # print("The received update is discribed a raised app... ignoring it")
                 pass
             else:
@@ -274,18 +262,46 @@ def get_cmdline_parser():
     return parser
 
 
-# For development purposes only.
-token = conf['token']
-room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
-sage_proxy = SAGEProxy(room_id, conf, prod_type)
+if __name__ == "__main__":
+    # For development purposes only.
+    token = conf['token']
+    if prod_type == "production" or prod_type == "backend":
+        room_name = os.environ.get("ROOM_NAME")
+        room_id = os.environ.get("ROOM_ID")
+        # if name specified, try to find room or create it
+        if room_name:
+            jsondata = requests.get(conf[prod_type]['web_server']+'/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()
+            rooms = jsondata['data']
+            for r in rooms:
+                room = r['data']
+                if room['name'] == room_name:
+                    room_id = r['_id']
+                    break
+            if not room_id:
+                payload = {
+                  'name': room_name,
+                  'description': 'Room for ' + room_name,
+                  'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
+                }
+                req = requests.post(conf[prod_type]['web_server']+'/api/rooms', headers = {'Authorization':'Bearer ' + token}, json=payload)
+                res = req.json()
+                if res['success']:
+                    room_id = res['data'][0]['_id']
+                else:
+                    print("ROOM_NAME option, failed to create room")
+                    sys.exit(1)
+        elif not room_id:
+            print("ROOM_ID not defined")
+            sys.exit(1)
+    else:
+        room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
 
-# sage_proxy = SAGEProxy("config/config.json", "c9699852-c872-4c1d-a11e-ec4eaf108533")
-# b34cf54e-2f9e-4b9a-a458-27f4b6c658a7
-
-listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
-listening_process.start()
-worker_process = threading.Thread(target=sage_proxy.process_messages)
-worker_process.start()
+    print('Proxy using room_id:', room_id)
+    sage_proxy = SAGEProxy(room_id, conf, prod_type)
+    listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
+    listening_process.start()
+    worker_process = threading.Thread(target=sage_proxy.process_messages)
+    worker_process.start()
 
 
 # asyncio.gather(sage_proxy.produce(), sage_proxy.consume())
@@ -295,7 +311,7 @@ worker_process.start()
 #     # multiprocessing.set_start_method("fork")
 #     # parser = get_cmdline_parser()
 #     # args = parser.parse_args()
-#     sage_proxy = SAGEProxy("config.json", "05828804-d87f-4498-857e-02f288effd3d")
+#     sage_proxy = SAGEProxy("funcx.json", "05828804-d87f-4498-857e-02f288effd3d")
 #
 #     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
 #     # sage_proxy = SAGEProxy(args.config_file, args.room_id)

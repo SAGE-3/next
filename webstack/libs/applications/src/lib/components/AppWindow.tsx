@@ -11,7 +11,7 @@ import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
 import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, useKeyPress, useHexColor, useAuth } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -70,14 +70,9 @@ export function AppWindow(props: WindowProps) {
   // Display messages
   const toast = useToast();
 
-  // Users
-  const users = useUsersStore((state) => state.users);
-  const owner = users.find((el) => el._id === props.app._createdBy);
-
   // App Store
   const apps = useAppStore((state) => state.apps);
   const update = useAppStore((state) => state.update);
-  const deleteApp = useAppStore((state) => state.delete);
   const storeError = useAppStore((state) => state.error);
   const clearError = useAppStore((state) => state.clearError);
 
@@ -259,6 +254,7 @@ export function AppWindow(props: WindowProps) {
           display="flex"
           justifyContent="left"
           alignItems="center"
+          pointerEvents="none"
         >
           <Text
             color={titleColor}

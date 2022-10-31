@@ -1,26 +1,21 @@
-.Table-Container {
-  border: solid red 2px;
-  padding: 10px 10px;
-}
-
-.Subcomponent-Container{
+.Subcomponent-Container {
   border: solid green 2px;
   margin-top: 10px;
   margin-bottom: 10px;
   padding: 10px 10px;
 }
 
-.URL-Container{
+.URL-Container {
   margin-top: 30px;
   padding: 25px 15px 15px 15px;
 }
 
-.Pagination-Container{
+.Pagination-Container {
   margin-top: 20px;
   padding: 10px 10px;
 }
 
-.Message-Container{
+.Message-Container {
   margin-top: 10px;
   margin-bottom: 10px;
   padding: 25px 10px 5px 10px;
@@ -33,6 +28,8 @@
   flex-direction: row;
   justify-content: space-between;
   z-index: 1;
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 .indexColumn {
@@ -54,7 +51,10 @@
 
 td {
   position: relative;
-  /*z-index: 3;*/
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 body:not(.nohover) tbody td:hover {
@@ -62,7 +62,7 @@ body:not(.nohover) tbody td:hover {
 }
 
 .highlight {
-  text-align: match-parent;
+  text-align: justify;
   -webkit-padding-start: 1.5rem;
   padding-inline-start: 1.5rem;
   -webkit-padding-end: 1.5rem;
@@ -70,9 +70,9 @@ body:not(.nohover) tbody td:hover {
   padding-top: 1rem;
   padding-bottom: 1rem;
   line-height: 1px;
-  font-size: 0.85rem;
+  font-size: 1.5rem;
+  font-weight: bold;
   border-bottom: 1px solid;
-  border-color: #29487D;
   background-color: purple;
 }
 
@@ -85,9 +85,9 @@ body:not(.nohover) tbody td:hover {
   padding-top: 1rem;
   padding-bottom: 1rem;
   line-height: 1px;
-  font-size: 0.85rem;
+  font-size: 1.5rem;
+  font-weight: bold;
   border-bottom: 1px solid;
-  border-color: #29487D;
 }
 
 .searchContainer {
@@ -99,15 +99,14 @@ body:not(.nohover) tbody td:hover {
 }
 
 .card {
-    display: inline-block;
+  display: inline-block;
 }
 
 .search {
-  background-color : dimgray;
+  background-color: dimgray;
   border-radius: 5px;
   padding: 0.2rem;
   margin: 0.25rem;
   margin-left: 0.5rem;
   margin-right: 1rem;
-  /*padding-left: 50px;*/
 }

@@ -248,9 +248,9 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => newApplication('CodeCell')}
+            onClick={() => newApplication('SageCell')}
           >
-            CodeCell
+            SageCell
           </Button>
           <Button
             w="100%"

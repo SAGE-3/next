@@ -58,6 +58,7 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
   }, [controllerPosition]);
 
   const handleColorChange = (color: SAGEColors) => {
+    setWhiteboardMode(true);
     setMarkerColor(color);
   };
 

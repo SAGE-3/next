@@ -138,7 +138,7 @@ export function Alfred(props: props) {
           raised: true,
         });
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
-        newApplication('CodeCell');
+        newApplication('SageCell');
       } else if (terms[0] === 'showui') {
         // Show all the UI elements
         displayUI();

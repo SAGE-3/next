@@ -25,22 +25,24 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://${HOST}"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
   python:
-    image: "python:3.9-bullseye"
-    volumes:
-      - ./configurations/python:/code
+    image: "sage3/foresight:arm64"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-    working_dir: /code
-    command: ./GO.sh
+      - ROOM_NAME=Data Science
     restart: always
-    deploy:
-      restart_policy:
-        condition: on-failure
+    working_dir: /app
+    command: python proxy.py
     depends_on:
-      - "redis-server"
-      - "node-server"
+      node-server:
+        condition: service_healthy
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:
