@@ -263,7 +263,7 @@ export function AppWindow(props: WindowProps) {
             textOverflow="ellipsis"
             overflow="hidden"
             background={titleBackground}
-            borderRadius={8 / scale}
+            borderRadius={6}
             px={2}
           >
             {props.app.data.title}
