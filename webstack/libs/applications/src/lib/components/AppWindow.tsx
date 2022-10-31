@@ -184,15 +184,20 @@ export function AppWindow(props: WindowProps) {
   function handleAppClick(e: any) {
     e.stopPropagation();
     bringForward();
+    console.log('click', appWasDragged);
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else setSelectedApp(props.app._id);
   }
 
   function handleAppTouchStart(e: any) {
-    // e.stopPropagation();
-    console.log('handleAppTouchStart');
-    bringForward();
+    e.stopPropagation();
+    // bringForward();
+    // console.log('handleAppTouchStart');
+    // Set the selected app in the UI store
+    // if (appWasDragged) setAppWasDragged(false);
+    // else setSelectedApp(props.app._id);
+    console.log('handleAppTouchStart', props.app._id);
     setSelectedApp(props.app._id);
   }
   function handleAppTouchMove(e: any) {
@@ -201,7 +206,8 @@ export function AppWindow(props: WindowProps) {
   }
   function handleAppTouchEnd(e: any) {
     e.stopPropagation();
-    console.log('handleAppTouchEnd')
+    console.log('handleAppTouchEnd', props.app._id)
+    // setSelectedApp(props.app._id);
   }
 
   // Bring the app forward
@@ -216,12 +222,17 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
+  // function handlePointerDown(e: any) {
+  //   console.log('handlePointerDown', e);
+  // }
+
   return (
     <Rnd
       bounds="parent"
       dragHandleClassName={'handle'}
       size={{ width: size.width, height: size.height }}
       position={pos}
+
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragStop={handleDragStop}
@@ -231,8 +242,9 @@ export function AppWindow(props: WindowProps) {
       onClick={handleAppClick}
 
       onTouchStart={handleAppTouchStart}
-      onTouchMove={handleAppTouchMove}
-      onTouchEnd={handleAppTouchEnd}
+      // onTouchMove={handleAppTouchMove}
+      // onTouchEnd={handleAppTouchEnd}
+      // onPointerCancel={handlePointerDown}
 
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{

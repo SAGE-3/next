@@ -241,7 +241,6 @@ function AppComponent(props: App): JSX.Element {
  */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  console.log(s.boxes);
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
