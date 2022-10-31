@@ -1,4 +1,5 @@
 import httpx
+import os
 
 class Borg:
     _shared_state = {}
@@ -21,7 +22,7 @@ class SageCommunication(Borg):
 
         if conf is None:
             raise Exception("confifuration not found")
-        self.__headers = {'Authorization': f"Bearer {self.conf['token']}"}
+        self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
         self.httpx_client = httpx.Client()
 
         # TODO: laod this from config file

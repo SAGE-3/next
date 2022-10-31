@@ -82,7 +82,7 @@ class SAGEProxy():
         self.room = Room(room_id)
         self.conf = conf
         self.prod_type = prod_type
-        self.__headers = {'Authorization': f"Bearer {self.conf['token']}"}
+        self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
         self.__message_queue = Queue()
         self.__OBJECT_CREATION_METHODS = {
             "CREATE": self.__handle_create,
@@ -112,7 +112,7 @@ class SAGEProxy():
 
     async def receive_messages(self):
         async with websockets.connect(self.conf[self.prod_type]["ws_server"]+"/api",
-                                      extra_headers={"Authorization": f"Bearer {self.conf['token']}"}) as ws:
+                                      extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
             await subscribe(ws, self.room.room_id)
             # print("completed subscription, checking if boards and apps already there")
             self.populate_existing()
@@ -263,7 +263,7 @@ def get_cmdline_parser():
 
 if __name__ == "__main__":
     # For development purposes only.
-    token = conf['token']
+    token = os.getenv("TOKEN")
     if prod_type == "production" or prod_type == "backend":
         room_name = os.environ.get("ROOM_NAME")
         room_id = os.environ.get("ROOM_ID")
@@ -305,34 +305,3 @@ if __name__ == "__main__":
     worker_process.start()
 
 
-# asyncio.gather(sage_proxy.produce(), sage_proxy.consume())
-# TODO start threads cleanly in a way that can be easily stopped.
-# if __name__ == "__main__":
-#     # The below is needed in running in iPython -- need to dig into this more
-#     # multiprocessing.set_start_method("fork")
-#     # parser = get_cmdline_parser()
-#     # args = parser.parse_args()
-#     sage_proxy = SAGEProxy("funcx.json", "05828804-d87f-4498-857e-02f288effd3d")
-#
-#     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
-#     # sage_proxy = SAGEProxy(args.config_file, args.room_id)
-#     # listening_process = multiprocessing.Process(target=sage_proxy.receive_messages)
-#     # worker_process = multiprocessing.Process(target=sage_proxy.process_messages)
-#
-#     listening_process = threading.Thread(target=board_proxy.receive_messages)
-#     worker_process = threading.Thread(target=board_proxy.process_messages)
-#
-#     try:
-#         # start the process responsible for listening to messages and adding them to the queue
-#         listening_process.start()
-#         # start the process responsible for handling message added to the queue.
-#         worker_process.start()
-#
-#         # while True:
-#         #     time.sleep(100)
-#     except (KeyboardInterrupt, SystemExit):
-#         print('\n! Received keyboard interrupt, quitting threads.\n')
-#         sage_proxy.clean_up()
-#         listening_process.st
-#         # worker_process.join()
-#         print("I am here")

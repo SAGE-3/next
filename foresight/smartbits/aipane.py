@@ -22,7 +22,7 @@ if prod_type == "development":
 def get_sharing_url(private_url):
     file_name = private_url.split("/")[-1]
     print(f"file_name is {file_name}")
-    headers = {'Authorization': f"Bearer {conf['token']}"}
+    headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
     data = requests.get(private_url, headers=headers).content
     if not os.getenv("DROPBOX_TOKEN"):
         raise Exception("Cannot find DROPBOX TOKEN")
