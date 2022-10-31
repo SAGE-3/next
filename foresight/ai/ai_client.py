@@ -18,7 +18,7 @@ class AIClient(Borg):
         self.check_every = check_every
         self.callback_info = {}
         self.running_jobs = set()
-        self.fxc = FuncXClient()
+        #self.fxc = FuncXClient()
 
         self.stop_thread = False  # keep on checking until this changes to false
         self.msg_checker = threading.Thread(target=self.process_response,
