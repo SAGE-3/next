@@ -159,7 +159,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={230}
+      width={300}
       showClose={true}
       show={show}
       setShow={setShow}
