@@ -8,10 +8,10 @@
 
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
-import { Box, useToast, Text, Avatar, Tooltip, Spinner, useColorMode, useColorModeValue } from '@chakra-ui/react';
+import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useUsersStore, initials, useKeyPress, useHotkeys, useHexColor, useAuth } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -70,34 +70,14 @@ export function AppWindow(props: WindowProps) {
   // Display messages
   const toast = useToast();
 
-  // Users
-  const users = useUsersStore((state) => state.users);
-  const owner = users.find((el) => el._id === props.app._createdBy);
-  const ocolor = owner ? owner.data.color : 'gray.500';
-  const ownerColor = useHexColor(ocolor);
-
   // App Store
   const apps = useAppStore((state) => state.apps);
   const update = useAppStore((state) => state.update);
-  const deleteApp = useAppStore((state) => state.delete);
   const storeError = useAppStore((state) => state.error);
   const clearError = useAppStore((state) => state.clearError);
 
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
-
-  // Delete an app while mouseover and delete pressed
-  const [mouseOver, setMouseOver] = useState(false);
-
-  useHotkeys(
-    'ctrl+d',
-    () => {
-      if (mouseOver && !selected) {
-        deleteApp(props.app._id);
-      }
-    },
-    { dependencies: [mouseOver, selected] }
-  );
 
   // Track the app store errors
   useEffect(() => {
@@ -274,6 +254,7 @@ export function AppWindow(props: WindowProps) {
           display="flex"
           justifyContent="left"
           alignItems="center"
+          pointerEvents="none"
         >
           <Text
             color={titleColor}
@@ -329,12 +310,6 @@ export function AppWindow(props: WindowProps) {
           userSelect={'none'}
           zIndex={3}
           borderRadius={innerBorderRadius}
-          onMouseEnter={() => {
-            setMouseOver(true);
-          }}
-          onMouseLeave={() => {
-            setMouseOver(false);
-          }}
         ></Box>
       ) : null}
 

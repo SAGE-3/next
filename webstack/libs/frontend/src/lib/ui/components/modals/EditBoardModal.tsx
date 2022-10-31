@@ -164,7 +164,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ColorPicker selectedColor="red" onChange={handleColorChange}></ColorPicker>
+          <ColorPicker selectedColor={color as SAGEColors} onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password

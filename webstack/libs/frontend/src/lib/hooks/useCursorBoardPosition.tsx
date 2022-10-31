@@ -24,7 +24,7 @@ export function useCursorBoardPosition(): {
 
   const uiToBoard = useCallback(
     (x: number, y: number) => {
-      return { x: x / scale - boardPosition.x, y: y / scale - boardPosition.y };
+      return { x: Math.floor(x / scale - boardPosition.x), y: Math.floor(y / scale - boardPosition.y) };
     },
     [boardPosition.x, boardPosition.y, scale]
   );
@@ -33,8 +33,8 @@ export function useCursorBoardPosition(): {
   useEffect(() => {
     const updateCursorPosition = (event: MouseEvent) => {
       setPosition({
-        x: event.clientX / scale - boardPosition.x,
-        y: event.clientY / scale - boardPosition.y,
+        x: Math.floor(event.clientX / scale - boardPosition.x),
+        y: Math.floor(event.clientY / scale - boardPosition.y),
       });
     };
     window.addEventListener('mousemove', updateCursorPosition);

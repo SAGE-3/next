@@ -15,6 +15,7 @@ import { useHexColor } from '../../../hooks';
 type ColorPickerProps = {
   selectedColor: SAGEColors;
   onChange: (newColor: SAGEColors) => void;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 };
 
 export function ColorPicker(props: ColorPickerProps) {
@@ -36,10 +37,9 @@ export function ColorPicker(props: ColorPickerProps) {
             bgColor={c}
             _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
             _active={{ background: c, opacity: 0.9 }}
-            size="md"
+            size={props.size ? props.size : 'md'}
             onClick={() => handleChange(color)}
             transform={selectedColor === color ? 'scaleY(1.2)' : 'scaleY(1)'}
-            width="43px"
           />
         );
       })}
