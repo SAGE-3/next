@@ -137,7 +137,11 @@ function AppComponent(props: App): JSX.Element {
             Select a Dataset{' '}
           </option>
           {datasets.map((dataset, index) => {
-            return <option value={dataset.data.file}>{dataset.data.originalfilename}</option>;
+            return (
+              <option key={index} value={dataset.data.file}>
+                {dataset.data.originalfilename}
+              </option>
+            );
           })}
         </select>
         <Input onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} />

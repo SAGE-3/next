@@ -9,7 +9,7 @@
 import { useEffect } from 'react';
 
 // SAGE imports
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, useUser } from '@sage3/frontend';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -19,6 +19,7 @@ import vegaEmbed from 'vega-embed';
 import { Button } from '@chakra-ui/react';
 
 import create from 'zustand';
+import { useParams } from 'react-router';
 
 // Store to communicate with toolbar
 export const useStore = create((set: any) => ({
@@ -73,8 +74,15 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app VegaLiteViewer */
 
 function ToolbarComponent(props: App): JSX.Element {
+  //state
+  const s = props.data.state as AppState;
   const view = useStore((state: any) => state.view[props._id]);
 
+  const createApp = useAppStore((state) => state.create);
+  const { user } = useUser();
+
+  //BoardInfo
+  const { boardId, roomId } = useParams();
   const downloadAction = () => {
     // generate a PNG snapshot and then download the image
     // Scale up the image 2x
@@ -86,10 +94,32 @@ function ToolbarComponent(props: App): JSX.Element {
       link.dispatchEvent(new MouseEvent('click'));
     });
   };
+
+  // Creates a new VegaLite app with aceeditor text
+  const createEditor = () => {
+    if (!user) return;
+    createApp({
+      title: '',
+      roomId: roomId!,
+      boardId: boardId!,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'VegaLite',
+      state: {
+        spec: s.spec,
+      },
+      raised: true,
+    });
+  };
+
   return (
     <>
-      <Button onClick={downloadAction} colorScheme="green">
+      <Button onClick={downloadAction} size="xs" mr="5px" fontSize={'xs'} colorScheme="green">
         Save as PNG
+      </Button>
+      <Button onClick={createEditor} size="xs" fontSize={'xs'} colorScheme="green">
+        Open Editor
       </Button>
     </>
   );
