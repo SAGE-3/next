@@ -31,6 +31,7 @@ export default class ContextMenuHandler {
 
   onTouchMove = (_e: any) => {
     console.log('touchmove');
+    this.contextMenuPossible = false;
     window.clearTimeout(this.longPressCountdown);
   };
 
