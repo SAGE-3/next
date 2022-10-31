@@ -288,7 +288,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('', 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
+              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
             });
         }
       });

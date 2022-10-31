@@ -62,7 +62,7 @@ function AppComponent(props: App): JSX.Element {
           // cursors: true,
           cursors: false, // for now, tracking quill bug with transforms
           toolbar: [
-            [{ 'header': [1, 2, 3, 4, false] }, { font: [] }],
+            [{ header: [1, 2, 3, 4, false] }, { font: [] }],
             ['bold', 'italic', 'clean', 'code-block'],
             [{ color: [] }, { background: [] }],
             [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
