@@ -1,4 +1,4 @@
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
@@ -6,7 +6,6 @@
 # -----------------------------------------------------------------------------
 # TODO: checking messages that are created at the same time and only executing the first
 #  one keeping info in received_msg_log for now. These seems to be related to raised=True
-
 
 
 # TODO: Fix the issue of messages received twic during updates. There is not need for that!
@@ -19,6 +18,7 @@
 
 
 # TODO prevent apps updates on fields that were touched?
+import logging
 import sys
 import os
 from typing import Callable
@@ -34,15 +34,12 @@ from multiprocessing import Queue
 import requests
 from smartbitfactory import SmartBitFactory
 import httpx
+
+from utils import logging_config
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 
-import logging
-logging.getLogger().setLevel(logging.INFO)
-
-
-
-
+logger = logging_config.get_console_logger()
 
 
 class Room:
@@ -54,8 +51,7 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    logging.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
-    # print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
+    logger.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -71,11 +67,13 @@ class LinkedInfo(BaseModel):
     dest_field: str
     callback: Callable
 
+
 # TODO: sample callback for linked app. Other example
 #  needed. Also new home for such functions is also needed
 def update_dest_from_src(src_val, dest_app, dest_field):
     setattr(dest_app.state, dest_field, src_val)
     dest_app.send_updates()
+
 
 class SAGEProxy():
     def __init__(self, room_id, conf, prod_type):
@@ -94,9 +92,9 @@ class SAGEProxy():
         self.callbacks = {}
         self.received_msg_log = {}
 
-    def authenticat_new_user(self):
-        r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + '/auth/jwt', headers=self.__headers)
-        response = r.json()
+    # def authenticate_new_user(self):
+    #     r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + '/auth/jwt', headers=self.__headers)
+    #     response = r.json()
 
     def populate_existing(self):
         boards_info = self.s3_comm.get_boards(self.room.room_id)
@@ -105,22 +103,20 @@ class SAGEProxy():
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            logging.info(f"Creating {app_info['data']['state']}")
-            # print(f"Creating {app_info}")
+            logger.info(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
-
     async def receive_messages(self):
-        async with websockets.connect(self.conf[self.prod_type]["ws_server"]+"/api",
+        async with websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
                                       extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
             await subscribe(ws, self.room.room_id)
             # print("completed subscription, checking if boards and apps already there")
             self.populate_existing()
             async for msg in ws:
                 msg = json.loads(msg)
-                print(f"----- msg: {json.dumps(msg)}")
+                logger.debug(f"----- msg: {json.dumps(msg)}")
                 if msg['id'] not in self.received_msg_log or \
-                        msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
+                        msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
                     self.__message_queue.put(msg)
                     self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
                     # print(f"in receive_messages adding: {msg}")
@@ -138,19 +134,14 @@ class SAGEProxy():
             msg = self.__message_queue.get()
             # I am watching this message for change?
 
-            # print(f"Getting ready to process: {msg}")
-            logging.info(f"Getting ready to process: {msg}")
+            logger.debug(f"Getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
-            updated_fields = []
             if msg['event']['type'] == "UPDATE":
-                print("Is update")
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
-                logging.info(f"App updated and updated fields are: {updated_fields}")
+                logger.info(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
-                    print("Is callback")
-
                     # handle callback
                     # print("this app is being tracked for updates")
                     # print(f"tracked field is {self.callbacks[app_id].src_field}")
@@ -170,7 +161,6 @@ class SAGEProxy():
                             linked_info.callback(src_val, dest_app, dest_field)
 
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                # print("The received update is discribed a raised app... ignoring it")
                 pass
             else:
                 collection = msg["event"]['col']
@@ -184,13 +174,13 @@ class SAGEProxy():
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
         if collection == "BOARDS":
-            # print("BOARD CREATED")
+            logging.debug("New board created")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            # print("APP CREATED")
+            logging.debug("New app created")
             doc["state"] = doc["data"]["state"]
-            del(doc["data"]["state"])
+            del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
             self.room.boards[doc["data"]["boardId"]].smartbits[smartbit.app_id] = smartbit
 
@@ -201,7 +191,7 @@ class SAGEProxy():
             # print("BOARD UPDATED: UNHANDLED")
             pass
         elif collection == "APPS":
-            # print(f"APP UPDATED")
+            logging.debug("New  app updated")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
 
@@ -213,20 +203,28 @@ class SAGEProxy():
             exec_info = getattr(sb.state, "executeInfo", None)
 
             if exec_info is not None:
-                func_name =  getattr(exec_info, "executeFunc")
+                func_name = getattr(exec_info, "executeFunc")
                 if func_name != '':
                     _func = getattr(sb, func_name)
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
                     # print(f"About to execute function --{func_name}-- with params --{_params}--")
-                    logging.info(f"About to execute function --{func_name}-- with params --{_params}--")
+                    logger.info(f"About to execute function --{func_name}-- with params --{_params}--")
 
                     _func(**_params)
 
-
     def __handle_delete(self, collection, doc):
-        print("HANDLE DELETE: UNHANDLED")
-        pass
+        logger.debug("deleting app")
+        if collection == "APPS":
+            try:
+                del self.room.boards[doc["data"]["boardId"]].smartbits[doc["_id"]]
+            except:
+                logging.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+        if collection == "BOARDS":
+            try:
+                del self.room.boards[doc["_id"]]
+            except:
+                logging.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
 
     def clean_up(self):
         # print("cleaning up the queue")
@@ -236,12 +234,10 @@ class SAGEProxy():
         self.__message_queue.close()
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
-
-        if src_app not in  self.callbacks:
+        if src_app not in self.callbacks:
             self.callbacks[src_app] = {}
-
-        self.callbacks[src_app] = { f"{src_app}:{dest_app}:{src_field}:{dest_field}":
-                                        LinkedInfo(board_id=board_id,
+        self.callbacks[src_app] = {f"{src_app}:{dest_app}:{src_field}:{dest_field}":
+                                       LinkedInfo(board_id=board_id,
                                                   src_app=src_app,
                                                   dest_app=dest_app,
                                                   src_field=src_field,
@@ -249,9 +245,7 @@ class SAGEProxy():
                                                   callback=callback)}
 
     def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
-        del(self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
-
-
+        del (self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
 
 def get_cmdline_parser():
@@ -269,7 +263,8 @@ if __name__ == "__main__":
         room_id = os.environ.get("ROOM_ID")
         # if name specified, try to find room or create it
         if room_name:
-            jsondata = requests.get(conf[prod_type]['web_server']+'/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()
+            jsondata = requests.get(conf[prod_type]['web_server'] + '/api/rooms',
+                                    headers={'Authorization': 'Bearer ' + token}).json()
             rooms = jsondata['data']
             for r in rooms:
                 room = r['data']
@@ -278,11 +273,12 @@ if __name__ == "__main__":
                     break
             if not room_id:
                 payload = {
-                  'name': room_name,
-                  'description': 'Room for ' + room_name,
-                  'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
+                    'name': room_name,
+                    'description': 'Room for ' + room_name,
+                    'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
                 }
-                req = requests.post(conf[prod_type]['web_server']+'/api/rooms', headers = {'Authorization':'Bearer ' + token}, json=payload)
+                req = requests.post(conf[prod_type]['web_server'] + '/api/rooms',
+                                    headers={'Authorization': 'Bearer ' + token}, json=payload)
                 res = req.json()
                 if res['success']:
                     room_id = res['data'][0]['_id']
@@ -293,15 +289,15 @@ if __name__ == "__main__":
             print("ROOM_ID not defined")
             sys.exit(1)
     else:
-        room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
+        room_id = \
+        requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()['data'][0][
+            '_id']
         if not os.getenv("DROPBOX_TOKEN"):
             print("WARNIGN: Dropbox upload token not defined, AI won't be supported in development mode")
 
-    print('Proxy using room_id:', room_id)
+    logger.info(f"Starting proxy with room {room_id}:")
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
     listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
     listening_process.start()
     worker_process = threading.Thread(target=sage_proxy.process_messages)
     worker_process.start()
-
-

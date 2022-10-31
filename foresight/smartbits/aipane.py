@@ -37,8 +37,8 @@ def get_sharing_url(private_url):
 
 
 
-if prod_type == "development":
-    headers = {'Authorization': f"Bearer {conf['token']}"}
+# if prod_type == "development":
+#     headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
 
 # TODO: movie this to a configuration somewhere and call it something else.
 ai_settings = {
