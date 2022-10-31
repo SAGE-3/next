@@ -266,13 +266,37 @@ if __name__ == "__main__":
     # For development purposes only.
     token = conf['token']
     if prod_type == "production" or prod_type == "backend":
+        room_name = os.environ.get("ROOM_NAME")
         room_id = os.environ.get("ROOM_ID")
-        if not room_id:
+        # if name specified, try to find room or create it
+        if room_name:
+            jsondata = requests.get(conf[prod_type]['web_server']+'/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()
+            rooms = jsondata['data']
+            for r in rooms:
+                room = r['data']
+                if room['name'] == room_name:
+                    room_id = r['_id']
+                    break
+            if not room_id:
+                payload = {
+                  'name': room_name,
+                  'description': 'Room for ' + room_name,
+                  'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
+                }
+                req = requests.post(conf[prod_type]['web_server']+'/api/rooms', headers = {'Authorization':'Bearer ' + token}, json=payload)
+                res = req.json()
+                if res['success']:
+                    room_id = res['data'][0]['_id']
+                else:
+                    print("ROOM_NAME option, failed to create room")
+                    sys.exit(1)
+        elif not room_id:
             print("ROOM_ID not defined")
             sys.exit(1)
     else:
         room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
 
+    print('Proxy using room_id:', room_id)
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
     listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
     listening_process.start()

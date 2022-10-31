@@ -36,7 +36,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-      - ROOM_ID=521f75cc-0a02-4ae2-8f3f-0b190bc2b1a0
+      - ROOM_NAME='Data Science'
     restart: always
     working_dir: /app
     command: python proxy.py
