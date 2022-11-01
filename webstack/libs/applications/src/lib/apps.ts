@@ -2,6 +2,7 @@
 
 import { name as AIPaneName } from './apps/AIPane';
 import { name as CSVViewerName } from './apps/CSVViewer';
+import { name as ChartMakerName } from './apps/ChartMaker';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CodeCellName } from './apps/CodeCell';
@@ -29,6 +30,7 @@ import { name as WebviewName } from './apps/Webview';
 
 import AIPane from './apps/AIPane/AIPane';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
+import ChartMaker from './apps/ChartMaker/ChartMaker';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import CodeCell from './apps/CodeCell/CodeCell';
@@ -57,6 +59,7 @@ import Webview from './apps/Webview/Webview';
 export const Applications = {
   [AIPaneName]: AIPane,
   [CSVViewerName]: CSVViewer,
+  [ChartMakerName]: ChartMaker,
   [ClockName]: Clock,
   [CobrowseName]: Cobrowse,
   [CodeCellName]: CodeCell,
@@ -80,6 +83,6 @@ export const Applications = {
   [VegaLiteViewerName]: VegaLiteViewer,
   [VideoViewerName]: VideoViewer,
   [WebviewName]: Webview,
-} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';
