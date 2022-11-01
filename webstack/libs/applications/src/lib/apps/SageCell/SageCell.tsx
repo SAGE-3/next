@@ -20,19 +20,14 @@ import {
   Image,
   Alert,
   AlertIcon,
-  Toast,
+  Toast, useToast,
   IconButton,
   VStack,
   Flex,
-  Stack,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
   Spinner,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdError, MdPlayArrow, MdClearAll } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -51,7 +46,7 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 imports
-import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useUser, downloadFile } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
@@ -334,10 +329,20 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
   const [fontSize, setFontSize] = useState(s.fontSize);
+  const toast = useToast();
 
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
-    if (code) {
+    if (!s.kernel) {
+      toast({
+        title: 'No kernel selected',
+        description: 'Please select a kernel from the toolbar',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+      });
+    } else if (code) {
       updateState(props.app._id, {
         code: code,
         output: '',
@@ -595,9 +600,10 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
           }
           return (
             <Toast
-              status="error"
+              status='error'
+              position='bottom'
               description={message + ', ' + props.user.data.name}
-              duration={5000}
+              duration={4000}
               isClosable
               onClose={() => updateState(props.app._id, { privateMessage: [] })}
               hidden={userId !== props.user._id}
