@@ -27,7 +27,6 @@ def test_create_sagecell_smartbit():
             'code': '',
             'output': '',
             'kernel': 'python3',
-            'kernels': [],
             'availableKernels': [],
             'executeInfo': {'executeFunc': '', 'params': {}}
             }
@@ -40,7 +39,6 @@ def test_create_sagecell_state():
         'code': '',
         'output': '',
         'kernel': 'python3',
-        'kernels': [],
         'availableKernels': [],
         'executeInfo': {'executeFunc': '', 'params': {}}
     }
