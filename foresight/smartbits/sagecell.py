@@ -32,10 +32,9 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def generate_error_message(self, user_uuid):
-        error_message = 'You do not have access to this kernel'
-        pm = []
-        pm.append({'userId': user_uuid, 'message': error_message})
+    def generate_error_message(self, user_uuid, error_msg):
+        # 'You do not have access to this kernel'
+        pm = [{'userId': user_uuid, 'message': error_msg}]
         self.state.privateMessage = pm
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -78,5 +77,11 @@ class SageCell(SmartBit):
             "kernel": self.state.kernel,
             "token": ""
         }
-
-        self._jupyter_client.execute(command_info)
+        if self.state.kernel:
+            self._jupyter_client.execute(command_info)
+        else:
+            # TODO: MLR fix to solve issue #339
+            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+            self.send_updates()
