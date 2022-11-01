@@ -131,11 +131,8 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <select placeholder={fileName != undefined ? fileName : 'Select Dataset'} onChange={handleChangeFileName}>
-          <option value="none" selected>
-            {' '}
-            Select a Dataset{' '}
-          </option>
+        <select defaultValue={'none'} placeholder={fileName != undefined ? fileName : 'Select Dataset'} onChange={handleChangeFileName}>
+          <option value="none"> Select a Dataset </option>
           {datasets.map((dataset, index) => {
             return (
               <option key={index} value={dataset.data.file}>
