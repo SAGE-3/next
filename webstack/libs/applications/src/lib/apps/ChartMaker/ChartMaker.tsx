@@ -7,7 +7,7 @@
  */
 
 import { useAppStore, useAssetStore, useUser } from '@sage3/frontend';
-import { Button, IconButton, Input, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
+import { Box, Button, IconButton, Input, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -17,9 +17,20 @@ import { createCharts } from './components/createCharts';
 
 // Styling
 import './styling.css';
-import { ChangeEvent, MouseEvent, FormEvent, FormEventHandler, ReactEventHandler, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  MouseEvent,
+  FormEvent,
+  FormEventHandler,
+  ReactEventHandler,
+  useEffect,
+  useRef,
+  useState,
+  SyntheticEvent,
+} from 'react';
 import { debounce } from 'throttle-debounce';
 import { useParams } from 'react-router';
+import { Asset } from '@sage3/shared/types';
 
 export interface CreateChartProps {
   input: string;
@@ -31,10 +42,51 @@ export interface CreateChartProps {
 
 function AppComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
-
   const updateState = useAppStore((state) => state.updateState);
   const datasets = useAssetStore((state) => state.assets.filter((file) => file.data.file.split('.').pop() == 'csv'));
-  const [fileName, setFileName] = useState<string | null>(null);
+
+  const handleChangeFile = (value: Asset) => {
+    if (!value) {
+      updateState(props._id, { ...state, file: value });
+    } else {
+      updateState(props._id, { ...state, file: value });
+    }
+  };
+
+  return (
+    <AppWindow app={props}>
+      <Box display="flex" flexDir="column" justifyContent={'center'} alignContent="center" height="100%" width="100%">
+        <Box width="100%" my="2" display="flex" justifyContent={'center'}>
+          <Box bg="orange" w="90%" height="100%">
+            hello
+          </Box>
+        </Box>
+        <Box width="100%" my="2" display="flex" justifyContent={'center'}>
+          <Menu>
+            <MenuButton as={Button}>
+              {state.file?.data.originalfilename ? state.file?.data.originalfilename : 'Select a Dataset'}
+            </MenuButton>
+            <MenuList>
+              {datasets.map((dataset, index) => {
+                return (
+                  <MenuItem onClick={() => handleChangeFile(dataset)} key={index} value={dataset.data.file}>
+                    {dataset.data.originalfilename}
+                  </MenuItem>
+                );
+              })}
+            </MenuList>
+          </Menu>
+        </Box>
+      </Box>
+    </AppWindow>
+  );
+}
+
+/* App toolbar component for the app chartMaker */
+
+function ToolbarComponent(props: App): JSX.Element {
+  const state = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
   const [data, setData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
 
@@ -47,38 +99,14 @@ function AppComponent(props: App): JSX.Element {
   //BoardInfo
   const { boardId, roomId } = useParams();
 
-  // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(1000, (val) => {
-    console.log('debounce');
-    // updateState(props._id, { input: val });
-  });
-
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
-
   // Update local value with value from the server
   useEffect(() => {
     setInput(state.input);
   }, [state.input]);
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const text = event.target.value;
-    setInput(text);
-    debounceFunc.current(text);
-  };
-
-  const handleChangeFileName = (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
-    if (value === 'none') {
-      setFileName(null);
-    } else {
-      setFileName(event.target.value);
-    }
-  };
-
   useEffect(() => {
-    if (fileName) {
-      const localurl = '/api/assets/static/' + fileName;
+    if (state.file) {
+      const localurl = '/api/assets/static/' + state.file?.data.file;
       if (localurl) {
         fetch(localurl, {
           headers: {
@@ -100,13 +128,27 @@ function AppComponent(props: App): JSX.Element {
           });
       }
     }
-  }, [fileName]);
+  }, [state.file?.data.originalfilename]);
 
+  // Saving the text after 1sec of inactivity
+  const debounceSave = debounce(1000, (val) => {
+    console.log('debounce');
+    updateState(props._id, { input: val });
+  });
+
+  // Keep a copy of the function
+  const debounceFunc = useRef(debounceSave);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const text = event.target.value;
+    setInput(text);
+    debounceFunc.current(text);
+  };
   const generateChart = (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (!fileName) return;
+    if (!state.file?.data.originalfilename) return;
     try {
-      const specifications = createCharts(input, data, headers, fileName);
+      const specifications = createCharts(input, data, headers, state.file?.data.file);
       if (!user) return;
       for (let i = 0; i < specifications.length; i++) {
         createApp({
@@ -127,38 +169,17 @@ function AppComponent(props: App): JSX.Element {
       console.error(e);
     }
   };
-
-  return (
-    <AppWindow app={props}>
-      <>
-        <select defaultValue={'none'} placeholder={fileName != undefined ? fileName : 'Select Dataset'} onChange={handleChangeFileName}>
-          <option value="none"> Select a Dataset </option>
-          {datasets.map((dataset, index) => {
-            return (
-              <option key={index} value={dataset.data.file}>
-                {dataset.data.originalfilename}
-              </option>
-            );
-          })}
-        </select>
-        <Input onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} />
-        <Button onClick={generateChart} disabled={fileName ? false : true}>
-          Generate
-        </Button>
-      </>
-    </AppWindow>
-  );
-}
-
-/* App toolbar component for the app chartMaker */
-
-function ToolbarComponent(props: App): JSX.Element {
-  // const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
   return (
     <>
-      <Button colorScheme="green">Action</Button>
+      <Box width="100%" my="2" display="flex" justifyContent={'center'}>
+        <Input onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="400px" />
+        <Button onClick={generateChart} disabled={state.file ? false : true} colorScheme="teal" mx="2">
+          Generate
+        </Button>
+      </Box>
+      <Button colorScheme="green" size="xs">
+        Action
+      </Button>
     </>
   );
 }
