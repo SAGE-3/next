@@ -1,4 +1,3 @@
-
 # ------------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
@@ -23,10 +22,8 @@ import sys
 import os
 from typing import Callable
 from pydantic import BaseModel
-import asyncio
 import json
 import threading
-import websockets
 import argparse
 from board import Board
 import uuid
@@ -91,8 +88,8 @@ class SAGEProxy():
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}
         self.received_msg_log = {}
-        self.ws = None
-        self.loop = None
+        # self.ws = None
+        # self.loop = None
         self.listening_process_2 = WebSocketListener(self.__message_queue)
         # self.listening_process = threading.Thread(target=self.client)
         #### self.listening_process = threading.Thread(target=asyncio.run, args=(self.receive_messages(),))
@@ -114,30 +111,30 @@ class SAGEProxy():
             logger.info(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
-    def client(self):
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.receive_messages())
-        print("Done running client")
-        self.loop.close()
+    # def client(self):
+    #     self.loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(self.loop)
+    #     self.loop.run_until_complete(self.receive_messages())
+    #     print("Done running client")
+    #     self.loop.close()
 
-    async def receive_messages(self):
-        # async with websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
-        #                               extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
-        self.ws = await websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
-                                           extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"})
-        await subscribe(self.ws, self.room.room_id)
-        logger.info("completed subscription, checking if fboards and apps already exist")
-        self.populate_existing()
-        async for msg in self.ws:
-            msg = json.loads(msg)
-            logger.debug(f"msg: {json.dumps(msg)}")
-            # check is needed because we get duplicted messages.
-            # TODO: emtpy the queue when it get to a size of X
-            if msg['id'] not in self.received_msg_log or \
-                    msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
-                self.__message_queue.put(msg)
-                self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
+    # async def receive_messages(self):
+    #     # async with websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
+    #     #                               extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
+    #     self.ws = await websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
+    #                                        extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"})
+    #     await subscribe(self.ws, self.room.room_id)
+    #     logger.info("completed subscription, checking if fboards and apps already exist")
+    #     self.populate_existing()
+    #     async for msg in self.ws:
+    #         msg = json.loads(msg)
+    #         logger.debug(f"msg: {json.dumps(msg)}")
+    #         # check is needed because we get duplicted messages.
+    #         # TODO: emtpy the queue when it get to a size of X
+    #         if msg['id'] not in self.received_msg_log or \
+    #                 msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
+    #             self.__message_queue.put(msg)
+    #             self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
 
     def process_messages(self):
         """
@@ -241,14 +238,11 @@ class SAGEProxy():
             except:
                 logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
 
-    async def clean_up(self):
-        # print("cleaning up the queue")
-        # if self.__message_queue.qsize() > 0:
-        #     logger.warning("Messages queue was not empty while starting to clean proxy")
-        # self.__message_queue.close()
-        # await self.ws.close()
-        self.listening_process.join()
-        pass
+    def clean_up(self):
+        if not self.__message_queue.empty():
+            logger.warning("Messages queue was not empty while starting to clean proxy")
+        self.__message_queue.close()
+        self.listening_process_2.clean_up()
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
         if src_app not in self.callbacks:
