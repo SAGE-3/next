@@ -4,9 +4,13 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
+from pydantic import PrivateAttr
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
+from jupyterkernelproxy import JupyterKernelProxy
+
+
 import json
 
 
@@ -21,10 +25,13 @@ class SageCellState(TrackedBaseModel):
 class SageCell(SmartBit):
     # the key that is assigned to this in state is
     state: SageCellState
+    _jupyter_client = PrivateAttr()
+
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(SageCell, self).__init__(**kwargs)
+        self._jupyter_client = JupyterKernelProxy()
 
     def handle_exec_result(self, msg):
         self.state.output = json.dumps(msg)
@@ -32,10 +39,9 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def generate_error_message(self, user_uuid):
-        error_message = 'You do not have access to this kernel'
-        pm = []
-        pm.append({'userId': user_uuid, 'message': error_message})
+    def generate_error_message(self, user_uuid, error_msg):
+        # 'You do not have access to this kernel'
+        pm = [{'userId': user_uuid, 'message': error_msg}]
         self.state.privateMessage = pm
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -78,5 +84,11 @@ class SageCell(SmartBit):
             "kernel": self.state.kernel,
             "token": ""
         }
-
-        self._jupyter_client.execute(command_info)
+        if self.state.kernel:
+            self._jupyter_client.execute(command_info)
+        else:
+            # TODO: MLR fix to solve issue #339
+            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+            self.send_updates()

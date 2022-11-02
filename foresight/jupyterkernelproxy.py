@@ -27,9 +27,8 @@ def format_execute_request_msg(exec_uuid, code):
     return msg
 
 
-
-
 class JupyterKernelProxy:
+
     class JupyterClient(WebSocketBaseClient):
 
         def __init__(self, address, headers, parent_proxy_instnace):
@@ -147,7 +146,7 @@ class JupyterKernelProxy:
         except:
             raise Exception("couldn't communicate with the Jupyter Kernel Gateway.")
 
-    def cleanup(self):
+    def clean_up(self):
         self.conn_manager.close_all()
         self.conn_manager.stop()
         self.conn_manager.join()

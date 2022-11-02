@@ -13,7 +13,7 @@ from config import config as conf, prod_type
 def jupyter_proxy():
     j = jupyterkernelproxy.JupyterKernelProxy()
     yield j
-    j.cleanup()
+    j.clean_up()
 
 @pytest.fixture()
 def kernel_id(jupyter_proxy):
