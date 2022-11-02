@@ -9,8 +9,7 @@ def counter_instance():
     yield c
     print("cleaning up happend after all the tests completed.")
     c._ai_client.stop_thread = True
-    c._jupyter_client.stop_thread = True
-
+    c._jupyter_client.cleanup()
 
 def test_create_counter(counter_instance):
     assert isinstance(counter_instance, Counter)
