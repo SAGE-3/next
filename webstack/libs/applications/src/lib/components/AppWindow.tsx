@@ -24,9 +24,9 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
-  // auth
-  const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+  // Guest mode disabled for now
+  // const { auth } = useAuth();
+  const isGuest = false; // auth?.provider === 'guest';
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -218,7 +218,8 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', //Guest Blocker
+        // pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', // Guest Blocker
+        pointerEvents: spacebarPressed ? 'none' : 'auto', // Guest Blocker
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },

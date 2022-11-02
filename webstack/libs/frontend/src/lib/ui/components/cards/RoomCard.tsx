@@ -6,12 +6,15 @@
  *
  */
 
+import { useEffect, useState } from 'react';
 import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
-import { Board, Room } from '@sage3/shared/types';
-import { EnterRoomModal } from '../modals/EnterRoomModal';
+
 import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
+
+import { Board, Room } from '@sage3/shared/types';
 import { useHexColor, useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
+import { EnterRoomModal } from '../modals/EnterRoomModal';
 import { BoardList } from '../lists/BoardList';
 
 export type RoomCardProps = {
@@ -35,9 +38,10 @@ export type RoomCardProps = {
  */
 export function RoomCard(props: RoomCardProps) {
   const { user } = useUser();
-
   // Is it my board?
   const yours = user?._id === props.room.data.ownerId;
+  // Can I list the boards: is it mine or not private?
+  const [canList, setCanList] = useState(!props.room.data.isPrivate || yours);
 
   // Edit Modal Disclousure
   const { isOpen: isOpenEdit, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
@@ -46,10 +50,10 @@ export function RoomCard(props: RoomCardProps) {
   const { isOpen: isOpenEnter, onOpen: onOpenEnter, onClose: onCloseEnter } = useDisclosure();
 
   // Colors
-  const borderColor = useColorModeValue('gray.300', 'gray.700');
   const boardColor = useHexColor(props.room.data.color);
-  const backgroundColor = useColorModeValue('whiteAlpha.500', 'gray.900');
-  const bgColor = useHexColor(backgroundColor);
+  // const borderColor = useColorModeValue('gray.300', 'gray.700');
+  // const backgroundColor = useColorModeValue('whiteAlpha.500', 'gray.900');
+  // const bgColor = useHexColor(backgroundColor);
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
@@ -61,6 +65,18 @@ export function RoomCard(props: RoomCardProps) {
     onOpenEdit();
   };
 
+  useEffect(() => {
+    // open the modal when...
+    if (props.selected && props.room.data.isPrivate && !canList) {
+      onOpenEnter();
+    }
+  }, [props.selected, canList, props.room.data.isPrivate, onOpenEnter]);
+
+  const handleOnEnter = () => {
+    // success with password
+    setCanList(true);
+  }
+
   return (
     <>
       <EnterRoomModal
@@ -70,7 +86,8 @@ export function RoomCard(props: RoomCardProps) {
         privatePin={props.room.data.privatePin}
         isOpen={isOpenEnter}
         onClose={onCloseEnter}
-        onEnter={onOpenEnter}
+        // onEnter={onOpenEnter}
+        onEnter={handleOnEnter}
       />
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
 
@@ -127,7 +144,7 @@ export function RoomCard(props: RoomCardProps) {
             </Box>
           </Box>
           <Box height="100%">
-            {props.selected ? (
+            {props.selected && canList ? (
               <BoardList
                 onBoardClick={props.onBackClick}
                 onBackClick={() => props.onBackClick()}

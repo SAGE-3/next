@@ -50,7 +50,7 @@ export function Alfred(props: props) {
     if (!user) return;
 
     if (appName === 'JupyterLab' && data.features && !data.features['jupyter']) return;
-    if (appName === 'CodeCell' && data.features && !data.features['cell']) return;
+    if (appName === 'SageCell' && data.features && !data.features['cell']) return;
     if (appName === 'Screenshare' && data.features && !data.features['twilio']) return;
 
     // Get around  the center of the board
