@@ -1,0 +1,30 @@
+#!/bin/sh
+
+#
+# to generate a list of certificates, add the server name in the list below
+# and run ./GO-mac
+#
+
+#servers="$HOSTNAME localhost 127.0.0.1"
+servers="localhost"
+
+for f in `echo $servers`
+do
+	./init_webserver.cmd $f
+done
+
+macos=`uname -r | tr "." "\n" | head -1`
+echo "MacOS version" $macos
+
+if [ $macos = "16" -o $macos = "17" ]
+then
+	echo ""
+	echo "============================"
+	echo "Enter your password if asked"
+	echo "============================"
+	echo ""
+	sudo /usr/bin/security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain localhost-server.crt
+else
+	/usr/bin/security add-trusted-cert -d -r trustRoot localhost-server.crt
+fi
+

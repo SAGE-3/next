@@ -6,10 +6,19 @@
  *
  */
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
-  Button, ButtonGroup, Tooltip, Stack, UnorderedList, ListItem, Select,
-  Checkbox, CheckboxGroup, Text, Input, InputGroup
+  Button,
+  ButtonGroup,
+  Tooltip,
+  Stack,
+  UnorderedList,
+  ListItem,
+  Select,
+  Checkbox,
+  CheckboxGroup,
+  Text,
+  Input,
+  InputGroup,
 } from '@chakra-ui/react';
 // Zustand store between app and toolbar
 import create from 'zustand';
@@ -22,6 +31,8 @@ import { GetConfiguration, useAppStore, useUser } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { useParams } from 'react-router';
+import { initialValues } from '@sage3/applications/initialValues';
 
 // Store between app and toolbar
 export const useStore = create((set: any) => ({
@@ -39,8 +50,7 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
-  const location = useLocation();
-  const locationState = location.state as { boardId: string; roomId: string; };
+  const { boardId, roomId } = useParams();
 
   const setSelected = useStore((state: any) => state.setSelected);
   const selected = useStore((state: any) => state.selected[props._id]);
@@ -72,9 +82,10 @@ function AppComponent(props: App): JSX.Element {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + token,
+          Authorization: 'Token ' + token,
         },
-      }).then((response) => response.json())
+      })
+        .then((response) => response.json())
         .then((res) => {
           setSessions(res);
         })
@@ -89,7 +100,10 @@ function AppComponent(props: App): JSX.Element {
     const k = e.target.value;
     const value = e.target.checked;
     if (selected.includes(k) && !value) {
-      setSelected(props._id, selected.filter((v: string) => v !== k));
+      setSelected(
+        props._id,
+        selected.filter((v: string) => v !== k)
+      );
     } else if (!selected.includes(k) && value) {
       setSelected(props._id, [...selected, k]);
     }
@@ -113,17 +127,14 @@ function AppComponent(props: App): JSX.Element {
   function openCell(kid: string) {
     if (!user) return;
     createApp({
-      name: 'CodeCell',
-      description: 'CodeCell',
-      roomId: locationState.roomId,
-      boardId: locationState.boardId,
+      title: 'CodeCell',
+      roomId: roomId!,
+      boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'CodeCell',
-      state: { kernel: kid },
-      ownerId: user._id,
-      minimized: false,
+      state: { ...initialValues['CodeCell'], kernel: kid },
       raised: true,
     });
   }
@@ -133,27 +144,24 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // TODO: open into the right kerne/notebook
     createApp({
-      name: 'JupyterLab',
-      description: 'JupyterLab',
-      roomId: locationState.roomId,
-      boardId: locationState.boardId,
+      title: 'JupyterLab',
+      roomId: roomId!,
+      boardId: boardId!,
       position: { x: props.data.position.x, y: props.data.position.y + props.data.size.height + 50, z: 0 },
       size: { width: props.data.size.width, height: props.data.size.width, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'JupyterLab',
-      state: {},
-      ownerId: user._id,
-      minimized: false,
+      state: { ...initialValues['JupyterLab'] },
       raised: true,
     });
   }
 
   return (
     <AppWindow app={props}>
-      <Stack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2}
-        color="black">
+      <Stack roundedBottom="md" bg="whiteAlpha.700" width="100%" height="100%" p={2} color="black">
         <Text>Kernels running: {sessions.length}</Text>
-        <UnorderedList overflowY={"scroll"}
+        <UnorderedList
+          overflowY={'scroll'}
           css={{
             '&::-webkit-scrollbar': {
               width: '6px',
@@ -162,28 +170,49 @@ function AppComponent(props: App): JSX.Element {
               width: '6px',
             },
             '&::-webkit-scrollbar-thumb': {
-              background: "darkgray",
+              background: 'darkgray',
               borderRadius: 'sm',
             },
           }}
         >
           <CheckboxGroup>
-            {sessions.sort((a, b) => a.name.localeCompare(b.name)).map((session, i) => {
-              return (
-                <ListItem key={i}>
-                  <Checkbox colorScheme={"teal"} value={session.kernel.id} checked={selected.includes(session.id)}
-                    backgroundColor={"teal.200"} borderRadius={2} borderColor={"teal.300"}
-                    verticalAlign={"middle"} p={0} ml={1} onChange={onKernelSelected}
-                  /> <b>Kernel: {session.name}</b>
-                  <UnorderedList pl={'8'}>
-                    <ListItem>Kernel: {session.kernel.name}, {session.kernel.execution_state}</ListItem>
-                    <ListItem>Notebook: {session.path}</ListItem>
-                    <ListItem>Links: <span onClick={() => openCell(session.kernel.id)} style={{ textDecoration: "underline", cursor: "pointer" }}>new cell</span>
-                      &nbsp;  <span onClick={() => openJupyter()} style={{ textDecoration: "underline", cursor: "pointer" }}>open jupyter</span></ListItem>
-                  </UnorderedList>
-                </ListItem>
-              );
-            })}
+            {sessions
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((session, i) => {
+                return (
+                  <ListItem key={i}>
+                    <Checkbox
+                      colorScheme={'teal'}
+                      value={session.kernel.id}
+                      checked={selected.includes(session.id)}
+                      backgroundColor={'teal.200'}
+                      borderRadius={2}
+                      borderColor={'teal.300'}
+                      verticalAlign={'middle'}
+                      p={0}
+                      ml={1}
+                      onChange={onKernelSelected}
+                    />{' '}
+                    <b>Kernel: {session.name}</b>
+                    <UnorderedList pl={'8'}>
+                      <ListItem>
+                        Kernel: {session.kernel.name}, {session.kernel.execution_state}
+                      </ListItem>
+                      <ListItem>Notebook: {session.path}</ListItem>
+                      <ListItem>
+                        Links:{' '}
+                        <span onClick={() => openCell(session.kernel.id)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+                          new cell
+                        </span>
+                        &nbsp;{' '}
+                        <span onClick={() => openJupyter()} style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+                          open jupyter
+                        </span>
+                      </ListItem>
+                    </UnorderedList>
+                  </ListItem>
+                );
+              })}
           </CheckboxGroup>
         </UnorderedList>
       </Stack>
@@ -218,7 +247,7 @@ function ToolbarComponent(props: App): JSX.Element {
       if (refreshInterval) {
         clearInterval(refreshInterval);
       }
-    }
+    };
   }, []);
 
   // Plus button
@@ -239,10 +268,11 @@ function ToolbarComponent(props: App): JSX.Element {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + token,
+          Authorization: 'Token ' + token,
         },
-        body: JSON.stringify(payload)
-      }).then((response) => response.json())
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
         .then((res) => {
           // Create a new kernel
           const k_url = base + '/api/kernels';
@@ -253,14 +283,15 @@ function ToolbarComponent(props: App): JSX.Element {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'Token ' + token,
+              Authorization: 'Token ' + token,
             },
-            body: JSON.stringify(kpayload)
-          }).then((response) => response.json())
+            body: JSON.stringify(kpayload),
+          })
+            .then((response) => response.json())
             .then((res) => {
               const kernel = res;
               // Create a new session
-              const s_url = base + '/api/sessions'
+              const s_url = base + '/api/sessions';
               const sid = uuidv1();
               const spayload = {
                 id: sid.replace(/-/g, ''),
@@ -271,16 +302,17 @@ function ToolbarComponent(props: App): JSX.Element {
                   name: `${name}.ipynb`,
                   path: `boards/${name}.ipynb`,
                 },
-                type: 'notebook'
-              }
+                type: 'notebook',
+              };
               fetch(s_url, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': 'Token ' + token,
+                  Authorization: 'Token ' + token,
                 },
-                body: JSON.stringify(spayload)
-              }).then((response) => response.json())
+                body: JSON.stringify(spayload),
+              })
+                .then((response) => response.json())
                 .then(() => {
                   handleRefresh();
                 });
@@ -320,15 +352,20 @@ function ToolbarComponent(props: App): JSX.Element {
         // Talk to the jupyter server API
         fetch(k_url, {
           method: 'DELETE',
-          headers: { 'Authorization': 'Token ' + token }
-        }).then((response) => {
-          if (response.ok) {
-            setSelected(props._id, selected.filter((v: string) => v !== k));
-            updateState(props._id, { refresh: true });
-          }
-        }).catch((err) => {
-          console.log('Jupyter> delete error', err);
-        });
+          headers: { Authorization: 'Token ' + token },
+        })
+          .then((response) => {
+            if (response.ok) {
+              setSelected(
+                props._id,
+                selected.filter((v: string) => v !== k)
+              );
+              updateState(props._id, { refresh: true });
+            }
+          })
+          .catch((err) => {
+            console.log('Jupyter> delete error', err);
+          });
       });
     }
   }
@@ -345,7 +382,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" >
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Delete Selected Kernel(s)'} openDelay={400}>
           <Button isDisabled={!selected || selected.length === 0} onClick={() => handleDeleteKernel()} _hover={{ opacity: 0.7 }}>
             <MdRemove />
@@ -357,7 +394,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Refresh'} openDelay={400}>
-          <Button onClick={handleRefresh} >
+          <Button onClick={handleRefresh}>
             <MdRefresh />
           </Button>
         </Tooltip>
@@ -374,15 +411,23 @@ function ToolbarComponent(props: App): JSX.Element {
               event.stopPropagation();
             }}
             backgroundColor="whiteAlpha.300"
-            padding={"0 4px 0 4px"}
+            padding={'0 4px 0 4px'}
           />
         </InputGroup>
       </form>
 
-      <Select placeholder='Select kernel' width="150px" rounded='lg' size='sm'
-        variant='outline' px={0} colorScheme="teal" defaultValue={kernelType}
-        onChange={handleKernelType}>
-        <option value='python3'>python3</option>
+      <Select
+        placeholder="Select kernel"
+        width="150px"
+        rounded="lg"
+        size="sm"
+        variant="outline"
+        px={0}
+        colorScheme="teal"
+        defaultValue={kernelType}
+        onChange={handleKernelType}
+      >
+        <option value="python3">python3</option>
       </Select>
     </>
   );

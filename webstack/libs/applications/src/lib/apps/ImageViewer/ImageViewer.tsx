@@ -6,9 +6,10 @@
  *
  */
 import { useEffect, useState } from 'react';
-import { Image, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
 import { MdFileDownload } from 'react-icons/md';
+import { HiPencilAlt } from 'react-icons/hi';
 // Utility functions from SAGE3
 import { downloadFile, isUUIDv4 } from '@sage3/frontend';
 
@@ -18,7 +19,8 @@ import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
 import { state as AppState } from './index';
-import { isGIF } from '@sage3/shared';
+
+// import { dimensions } from './data_types';
 
 /**
  * ImageViewer app
@@ -28,9 +30,11 @@ import { isGIF } from '@sage3/shared';
  */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
+  // console.log(s.boxes);
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
+
   // Asset data structure
   const [file, setFile] = useState<Asset>();
   // URL used in the image tag
@@ -44,6 +48,7 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
 
+
   // Convert the ID to an asset
   useEffect(() => {
     const isUUID = isUUIDv4(s.assetid);
@@ -52,7 +57,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, { description: myasset?.data.originalfilename });
+        update(props._id, { title: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL
@@ -70,6 +75,8 @@ function AppComponent(props: App): JSX.Element {
         setSizes(extra.sizes);
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
+        //TODO Extract image size
+
         if (extra) {
           // find the smallest image for this page (multi-resolution)
           const res = extra.sizes.reduce(function (p, v) {
@@ -93,18 +100,48 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
-      <div ref={ref} style={{
-        position: 'relative', overflowY: 'hidden',
-        height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
-        maxHeight: '100%'
-      }}>
-        <Image width="100%" userSelect={"auto"} draggable={false}
-          alt={file?.data.originalfilename} src={url} borderRadius="0 0 6px 6px" />
+      <div
+        ref={ref}
+        style={{
+          position: 'relative',
+          overflowY: 'hidden',
+          height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
+          maxHeight: '100%',
+        }}
+      >
+        <>
+          <Image
+            width="100%"
+            userSelect={'auto'}
+            draggable={false}
+            alt={file?.data.originalfilename}
+            src={url}
+            borderRadius="0 0 6px 6px"
+          />
+
+          {
+            Object.keys(s.boxes).map((label, idx) => {
+              return (
+                <Box
+                  key={label + idx}
+                  position="absolute"
+                  left={s.boxes[label].xmin * (displaySize.width / 649) + 'px'}
+                  top={s.boxes[label].ymin * (displaySize.height / 486) + 'px'}
+                  width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / 649) + 'px'}
+                  height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / 486) + 'px'}
+                  border="2px solid red"
+                  style={{ display: s.annotations === true ? 'block' : 'none' }}
+                >
+                  {label}
+                </Box>
+              );
+            })
+          }
+        </>
       </div>
     </AppWindow>
   );
 }
-
 
 /**
  * UI for the image viewer app
@@ -114,14 +151,17 @@ function AppComponent(props: App): JSX.Element {
  */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  // console.log(s.boxes);
+  const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
 
   // Convert the ID to an asset
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.assetid);
-    if (myasset) {
-      setFile(myasset);
+    const isUUID = isUUIDv4(s.assetid);
+    if (isUUID) {
+      const appasset = assets.find((a) => a._id === s.assetid);
+      setFile(appasset);
     }
   }, [s.assetid, assets]);
 
@@ -135,12 +175,28 @@ function ToolbarComponent(props: App): JSX.Element {
                 const url = file?.data.file;
                 const filename = file?.data.originalfilename;
                 downloadFile('api/assets/static/' + url, filename);
+              } else {
+                const url = s.assetid;
+                const filename = s.assetid.split('/').pop();
+                const appasset = assets.find((a) => a.data.file === filename);
+                downloadFile(url, appasset?.data.originalfilename);
               }
             }}
           >
             <MdFileDownload />
           </Button>
         </Tooltip>
+       <div style={{display: Object.keys(s.boxes).length !== 0 ? "block" : "none"}}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+          <Button
+            onClick={() => {
+              updateState(props._id, { annotations: !s.annotations });
+            }}
+          >
+            <HiPencilAlt />
+          </Button>
+        </Tooltip>
+       </div>
       </ButtonGroup>
     </>
   );

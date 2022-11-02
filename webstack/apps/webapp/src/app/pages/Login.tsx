@@ -6,17 +6,14 @@
  *
  */
 
-import { useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Button, ButtonGroup, IconButton,
-  Box, useColorMode, Image, Center, Text, VStack
-} from '@chakra-ui/react';
+import { useEffect, useCallback, useState } from 'react';
 
-import { BgColor, useAuth } from '@sage3/frontend';
-
+import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Center, Text, VStack, Select, InputGroup } from '@chakra-ui/react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
+
+import { useAuth, useRouteNav } from '@sage3/frontend';
+import { GetServerInfo } from '@sage3/frontend';
 
 // Logos
 import sage3DarkMode from '../../assets/SAGE3DarkMode.png';
@@ -25,21 +22,50 @@ import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
 
 export function LoginPage() {
   const { auth, googleLogin, ciLogin, guestLogin } = useAuth();
-  const navigate = useNavigate();
+  const { toHome } = useRouteNav();
+  // Server name and list
+  const [serverName, setServerName] = useState<string>('');
+  const [serverList, setServerList] = useState<{ name: string; url: string }[]>();
+  // state to disable login buttons during server switch: default is enabled
+  const [shouldDisable, setShouldDisable] = useState(false);
+
+  // Retrieve the name of the server to display in the page
+  useEffect(() => {
+    GetServerInfo().then((conf) => {
+      if (conf.serverName) setServerName(conf.serverName);
+      const servers = conf.servers;
+      setServerList(servers);
+    });
+  }, []);
+
+  // Callback when selection os done
+  const redirectHost = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    // Disable the login buttons
+    setShouldDisable(true);
+    // value selected
+    const host = e.target.value;
+    if (serverList) {
+      // find the matching name
+      const idx = serverList.findIndex((s) => s.name === host);
+      if (idx !== -1) {
+        // do the navigation
+        window.location.href = serverList[idx].url;
+      }
+    }
+  };
 
   const authNavCheck = useCallback(() => {
     if (auth) {
-      navigate('/home');
+      toHome();
     }
-  }, [auth, navigate]);
-
+  }, [auth]);
 
   useEffect(() => {
     authNavCheck();
   }, [authNavCheck]);
 
   //  Dark/light mode
-  const { colorMode } = useColorMode()
+  const { colorMode } = useColorMode();
 
   // Detect if in production or development mode
   let production = true;
@@ -48,7 +74,7 @@ export function LoginPage() {
   }
 
   return (
-    <Box position="absolute" top="30%" left="50%" transform="translateX(-50%)">
+    <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" width="100%" height="100%">
       <Box pb={'2rem'} alignItems="center">
         <Image
           width="20vw"
@@ -60,81 +86,70 @@ export function LoginPage() {
         />
       </Box>
 
-      {/* <Center>
-        <Text mr={'.5rem'}>Host: serverName </Text>
-      </Center> */}
+      <Center>
+        <Text mr={'.5rem'}>Host: {serverName || '-'}</Text>
+      </Center>
+      <Center my="1rem" fontSize="lg">
+        <InputGroup width="17rem">
+          {/* Display the list of servers in a selectable list */}
+          <Select placeholder="Select a server" value={serverName} onChange={redirectHost}>
+            {serverList?.map((s, idx) => (
+              <option key={idx} value={s.name}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+        </InputGroup>
+      </Center>
 
-      <Box w="25rem">
+      <Box width="300px">
         <VStack spacing={4}>
           {/* Google Auth Service */}
-          <ButtonGroup isAttached width="18rem" size="lg">
+          <ButtonGroup isAttached size="lg" width="100%">
             <IconButton
-              width="6rem"
-              px="1rem"
+              width="80px"
               aria-label="Login with Google"
-              icon={<FcGoogle size="25" />}
+              icon={<FcGoogle size="30" width="50px" />}
               pointerEvents="none"
-              borderRight={`3px ${BgColor()} solid`}
+              borderRight={`3px solid`}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button
-              width="18rem"
-              pl="1rem"
-              _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
-              justifyContent="flex-start"
-              disabled={false}
-              onClick={googleLogin}
-            >
+            <Button width="100%" disabled={false} justifyContent="left" onClick={googleLogin}>
               Login with Google
             </Button>
           </ButtonGroup>
 
           {/* CILogon Auth Service */}
-          <ButtonGroup isAttached width="18rem" size="lg">
+          <ButtonGroup isAttached size="lg" width="100%">
             <IconButton
-              width="6rem"
-              px="1rem"
-              aria-label="Login wit CILogon"
-              icon={<Image src={cilogonLogo} width="25px" />}
+              width="80px"
+              aria-label="Login with Google"
+              icon={<Image src={cilogonLogo} alt="CILogon Logo" />}
               pointerEvents="none"
-              borderRight={`3px ${BgColor()} solid`}
+              borderRight={`3px solid`}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button
-              width="18rem"
-              pl="1rem"
-              _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
-              justifyContent="flex-start"
-              disabled={!production}
-              onClick={ciLogin}
-            >
+            <Button width="100%" disabled={!production} justifyContent="left" onClick={ciLogin}>
               Login with CILogon
             </Button>
           </ButtonGroup>
 
           {/* Guest Auth Service */}
-          <ButtonGroup isAttached width="18rem" size="lg">
+          <ButtonGroup isAttached size="lg" width="100%">
             <IconButton
-              width="6rem"
-              px="1rem"
-              aria-label="Login as Guest"
-              icon={<FaGhost size="25" color="gray" />}
+              width="80px"
+              aria-label="Login with Google"
+              icon={<FaGhost size="30" width="50px" />}
               pointerEvents="none"
-              borderRight={`3px ${BgColor()} solid`}
+              borderRight={`3px solid`}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button
-              width="18rem"
-              pl="1rem"
-              _hover={{ bg: 'teal.200', color: 'rgb(26, 32, 44)' }}
-              justifyContent="flex-start"
-              onClick={guestLogin}
-            >
+            <Button width="100%" disabled={false} justifyContent="left" onClick={guestLogin}>
               Login as Guest
             </Button>
           </ButtonGroup>
-
         </VStack>
       </Box>
-
-
-    </Box >
+    </Box>
   );
 }

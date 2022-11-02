@@ -12,10 +12,9 @@ import { SAGE3Collection, sageRouter } from '@sage3/backend';
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
   constructor() {
     super('APPS', {
-      name: '',
-      ownerId: '',
       roomId: '',
       boardId: '',
+      type: 'Stickie',
     });
     const router = sageRouter<AppSchema>(this);
     this.httpRouter = router;

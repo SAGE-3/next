@@ -20,7 +20,6 @@ import {
   useToast,
   Button,
   Checkbox,
-  ButtonGroup,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -30,9 +29,10 @@ import { useData } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
 import { RoomSchema } from '@sage3/shared/types';
-import { SAGEColors } from '@sage3/shared';
+import { randomSAGEColor, SAGEColors } from '@sage3/shared';
 import { useRoomStore } from '../../../stores';
 import { useUser } from '../../../hooks';
+import { ColorPicker } from '../general';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -45,22 +45,22 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const toast = useToast();
 
+  const { user } = useUser();
   const createRoom = useRoomStore((state) => state.create);
   const rooms = useRoomStore((state) => state.rooms);
-
-  const { user } = useUser();
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
   const [isListed, setIsListed] = useState(true);
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
-  const [color, setColor] = useState<RoomSchema['color']>('red');
+  const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
-  const handleColorChange = (color: string) => setColor(color);
+  const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
+  // Run on every open of the dialog
   useEffect(() => {
     // Generate a PIN
     const makeid = (length: number): string => {
@@ -73,7 +73,11 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       return result;
     };
     setPassword(makeid(6));
-  }, []);
+    // Reset the fields
+    setName('');
+    setDescription('');
+    setColor(randomSAGEColor());
+  }, [props.isOpen]);
 
   // the input element
   // When the modal panel opens, select the text for quick replacing
@@ -135,7 +139,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Create Room</ModalHeader>
@@ -168,24 +172,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal" py="2" mt="2">
-            {/* Colors */}
-            {SAGEColors.map((s3color) => {
-              return (
-                <Button
-                  key={s3color.name}
-                  value={s3color.name}
-                  bgColor={s3color.value}
-                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color.value, opacity: 0.9 }}
-                  size="md"
-                  onClick={() => handleColorChange(s3color.name)}
-                  border={s3color.name === color ? '3px solid white' : 'none'}
-                  width="43px"
-                />
-              );
-            })}
-          </ButtonGroup>
+          <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkListed} defaultChecked={isListed}>
             Room Listed Publicly
@@ -206,7 +193,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
-
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>

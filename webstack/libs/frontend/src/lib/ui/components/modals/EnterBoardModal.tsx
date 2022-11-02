@@ -7,49 +7,65 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router';
 import {
-  useToast, Button, Input, InputGroup, InputLeftAddon,
-  Modal, ModalFooter, ModalContent, ModalHeader, ModalBody,
+  useToast,
+  Button,
+  Input,
+  InputGroup,
+  InputLeftAddon,
+  Modal,
+  ModalFooter,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  Progress,
+  ModalOverlay,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
+import { useData, useRouteNav } from 'libs/frontend/src/lib/hooks';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
+import { timeout } from '../../../utils';
+import { Board } from '@sage3/shared/types';
 
 export interface EnterBoardProps {
   isOpen: boolean;
   onClose: () => void;
-  id: string;
-  roomId: string;
-  name: string;
-  isPrivate: boolean;
-  privatePin: string;
+  board: Board;
 }
 
 export const EnterBoardModal = (props: EnterBoardProps) => {
-  const navigate = useNavigate();
+  const { toBoard } = useRouteNav();
   const [privateText, setPrivateText] = useState('');
   const toast = useToast();
   const initialRef = useRef<HTMLInputElement>(null);
   // Fetch configuration from the server
   const config = useData('/api/configuration') as serverConfiguration;
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    // if the room is not protected, go ahead and enter the room
-    if (props.isOpen && !props.isPrivate) {
-      navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
+    async function attemptToEnter() {
+      if (props.isOpen && !props.board.data.isPrivate) {
+        setLoading(true);
+        await timeout(600);
+        toBoard(props.board.data.roomId, props.board._id);
+      }
     }
-  }, [props.isOpen, props.isPrivate, navigate, props.id, props.roomId]);
+    attemptToEnter();
+    // if the room is not protected, go ahead and enter the room
+  }, [props.isOpen, props.board.data.isPrivate, props.board._id, props.board.data.roomId]);
 
   // Checks if the user entered pin matches the board pin
-  const compareKey = () => {
+  const compareKey = async () => {
     // Feature of UUID v5: private key to 'sign' a string
     // Hash the PIN: the namespace comes from the server configuration
     const key = uuidv5(privateText, config.namespace);
     // compare the hashed keys
-    if (key === props.privatePin) {
-      navigate('/board', { state: { roomId: props.roomId, boardId: props.id } });
+    if (key === props.board.data.privatePin) {
+      setLoading(true);
+      await timeout(600);
+      toBoard(props.board.data.roomId, props.board._id);
     } else {
       toast({
         title: `The password you have entered is incorrect`,
@@ -61,32 +77,47 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
   };
 
   return (
-    <Modal isCentered initialFocusRef={initialRef} closeOnEsc={true} closeOnOverlayClick={true}
-      size="md" isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal
+      isCentered
+      initialFocusRef={initialRef}
+      closeOnEsc={loading ? false : true}
+      closeOnOverlayClick={loading ? false : true}
+      size="md"
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      blockScrollOnMount={false}
+    >
+      <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Enter the Board Password</ModalHeader>
+        <ModalHeader>{loading ? 'Entering Board' : 'Enter the Board Password'}</ModalHeader>
         <ModalBody>
-          <InputGroup>
-            <InputLeftAddon children="Password" />
-            <Input
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === 'Enter') compareKey();
-              }}
-              ref={initialRef}
-              width="full"
-              value={privateText}
-              type="password"
-              onChange={(e) => setPrivateText(e.target.value)}
-            />
-          </InputGroup>
-          <ModalFooter>
-            <Button colorScheme="blue" mr={5} onClick={props.onClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="green" onClick={compareKey}>
-              Enter
-            </Button>
-          </ModalFooter>
+          {loading ? (
+            <Progress size="md" colorScheme="teal" isIndeterminate mb="4" borderRadius="md" />
+          ) : (
+            <>
+              <InputGroup>
+                <InputLeftAddon children="Password" />
+                <Input
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter') compareKey();
+                  }}
+                  ref={initialRef}
+                  width="full"
+                  value={privateText}
+                  type="password"
+                  onChange={(e) => setPrivateText(e.target.value)}
+                />
+              </InputGroup>
+              <ModalFooter>
+                <Button colorScheme="blue" mr={5} onClick={props.onClose}>
+                  Cancel
+                </Button>
+                <Button colorScheme="green" onClick={compareKey}>
+                  Enter
+                </Button>
+              </ModalFooter>
+            </>
+          )}
         </ModalBody>
       </ModalContent>
     </Modal>

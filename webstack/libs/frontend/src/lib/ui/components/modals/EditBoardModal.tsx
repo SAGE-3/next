@@ -20,7 +20,7 @@ import {
   Button,
   Box,
   ButtonGroup,
-  Checkbox
+  Checkbox,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -31,6 +31,7 @@ import { useBoardStore } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { useData } from 'libs/frontend/src/lib/hooks';
+import { ColorPicker } from '../general';
 
 interface EditBoardModalProps {
   isOpen: boolean;
@@ -129,9 +130,8 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     setPassword(e.target.value);
   };
 
-
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit Board: {props.board.data.name}</ModalHeader>
@@ -164,24 +164,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
             />
           </InputGroup>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal" py="2">
-            {/* Colors */}
-            {SAGEColors.map((s3color) => {
-              return (
-                <Button
-                  key={s3color.name}
-                  value={s3color.name}
-                  bgColor={s3color.value}
-                  _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  _active={{ background: s3color.value, opacity: 0.9 }}
-                  size="md"
-                  onClick={() => handleColorChange(s3color.name)}
-                  border={s3color.name === color ? '3px solid white' : 'none'}
-                  width="43px"
-                />
-              );
-            })}
-          </ButtonGroup>
+          <ColorPicker selectedColor={color as SAGEColors} onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
@@ -199,15 +182,13 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               disabled={!isProtected}
             />
           </InputGroup>
-
         </ModalBody>
         <ModalFooter pl="4" pr="8" mb="2">
           <Box display="flex" justifyContent="space-between" width="100%">
             <Button colorScheme="red" onClick={handleDeleteBoard} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit}
-              disabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description || !valid}>
               Update
             </Button>
           </Box>

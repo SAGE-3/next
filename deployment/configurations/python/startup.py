@@ -12,57 +12,31 @@ printer = pprint.PrettyPrinter(indent=1, depth=5, width=120, compact=True)
 #########################################################
 ###### Get configuration from environment variable ######
 #########################################################
-prod_type = os.getenv('ENVIRONMENT')
-if prod_type == 'development' and not os.getenv('SAGE3_SERVER'):
-    os.setenv('SAGE3_SERVER', "localhost:3333")
+prod = os.getenv('ENVIRONMENT')
 host = os.getenv('SAGE3_SERVER')
 
-server = host if host else 'host.docker.internal'
-
-# TODO: move this to configuration
-config = {
-    "production": {
-        "jupyterServer": f"https://{server}:4443",
-        "redis_server": "redis-server",
-        "web_server": f"https://{server}",
-        "ws_server": f"wss://{server}/api",
-    },
-    "development": {
-        "jupyter_server": 'http://localhost',
-        "redis_server": "localhost",
-        "web_server": f"http://{server}",
-        "ws_server": f"ws://{server}/api",
-    }
-}
-
-redis_server = config[prod_type]["redis_server"]
-jupyter_server = config[prod_type]["jupyter_server"]
-server = config[prod_type]["server"]
-web_server = config[prod_type]["web_server"]
-ws_server = config[prod_type]["ws_server"]
-
-# if prod == 'backend' or prod == 'production':
-#     print('Mode> Production / Backend')
-#     redisServer = 'redis-server'
-#     if prod == 'production':
-#         # Pass the actual FQDN of the server
-#         if host:
-#           server = host
-#         else:
-#           server = 'host.docker.internal'
-#     else:
-#         jupyterServer = 'http://jupyter:8888'
-#         # host of the docker container in backend mode
-#         server = 'host.docker.internal:3333'
-#         webServer = 'http://' + server
-#         wsServer = 'ws://' + server + '/api'
-# else:
-#     print('Mode> Development')
-#     jupyterServer = 'http://localhost'
-#     redisServer = 'localhost'
-#     server = 'localhost:3333'
-#     webServer = 'http://' + server
-#     wsServer = 'ws://' + server + '/api'
+if prod == 'backend' or prod == 'production':
+    print('Mode> Production / Backend')
+    redisServer = 'redis-server'
+    if prod == 'production':
+        # Pass the actual FQDN of the server
+        if host:
+          server = host
+        else:
+          server = 'host.docker.internal'
+    else:
+        jupyterServer = 'http://jupyter:8888'
+        # host of the docker container in backend mode
+        server = 'host.docker.internal:3333'
+        webServer = 'http://' + server
+        wsServer = 'ws://' + server + '/api'
+else:
+    print('Mode> Development')
+    jupyterServer = 'http://localhost'
+    redisServer = 'localhost'
+    server = 'localhost:3333'
+    webServer = 'http://' + server
+    wsServer = 'ws://' + server + '/api'
 
 #########################################################
 ###### Connect to REDIS to get Jupyter token       ######
@@ -78,7 +52,7 @@ def get_j_token(redis_server, port=6379, token_path="config:jupyter:token"):
 def print_kernels(jupyter_server, j_headers):
     # Get list of kernels
     j_url = jupyter_server + '/api/kernels'
-    print(f"Jupyter url{j_url}")
+    print("Jupyter> URL", j_url)
     response = requests.get(j_url, headers=j_headers)
     if response.status_code == 200:
         kernels = json.loads(response.text)
@@ -100,14 +74,21 @@ async def list_boards(sock):
     await sock.send(json.dumps(msg_sub))
     return  messageId
 
+async def list_rooms(sock):
+    """
+    Get the list of rooms
+    """
+    messageId = str(uuid.uuid4())
+    msg_sub = { 'route': '/api/rooms', 'method': 'GET', 'id': messageId}
+    # send the message
+    await sock.send(json.dumps(msg_sub))
+    return  messageId
+
 
 # Jupyter token for authentication
-j_token = get_j_token(redis_server)
+j_token = get_j_token(redisServer)
 j_headers = {'Authorization': 'Token ' + j_token}
-print_kernels(jupyter_server, j_headers)
-
-
-
+print_kernels(jupyterServer, j_headers)
 
 #########################################################
 ###### Connect SAGE3 Web server                    ######
@@ -118,7 +99,7 @@ token = ''
 with open('jwt_sage3.json') as f:
     data = json.load(f)
     token = data['token']
-print('SAGE3> Token:', token)
+print('SAGE3> Token:', token != '')
 
 
 async def main():
@@ -127,7 +108,7 @@ async def main():
       # async with websockets.connect(socket_server + socket_path) as ws:
       print('SAGE3> connected')
 
-      # list_boards: send the message and wait for the responses
+      # list_rooms: get the existing list of rooms
       msg_id = await list_boards(ws)
 
       # loop to receive messages
@@ -137,9 +118,9 @@ async def main():
             # return message from a previous request
             if msg_id == event['id'] and event['success'] == True:
               if 'data' in event:
-                boards = event['data']
-                print('SAGE3> listBoards')
-                printer.pprint(boards)
+                rooms = event['data']
+                print('SAGE3> listRooms')
+                printer.pprint(rooms)
 
 if __name__ == '__main__':
     asyncio.run(main())

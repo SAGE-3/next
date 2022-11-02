@@ -13,7 +13,7 @@ services:
       restart_policy:
         condition: on-failure
   node-server:
-    image: "sage3/next:prod"
+    image: "sage3/next:arm64"
     ports:
       - "443:443"
     depends_on:
@@ -25,23 +25,24 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 20s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://${HOST}"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
   python:
-    image: "python:3.9-bullseye"
-    volumes:
-      - ./configurations/python:/code
+    image: "sage3/foresight:arm64"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-    command: sleep infinity
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 20s
+      - ROOM_NAME=Data Science
+    restart: always
+    working_dir: /app
+    command: python proxy.py
+    depends_on:
+      node-server:
+        condition: service_healthy
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:

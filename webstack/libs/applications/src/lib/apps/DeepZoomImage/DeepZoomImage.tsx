@@ -16,7 +16,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useAssetStore, useAppStore, useUser } from '@sage3/frontend';
 
-import OpenSeadragon from "openseadragon";
+import OpenSeadragon from 'openseadragon';
 
 /* App component for DeepZoomImage */
 
@@ -40,7 +40,7 @@ function AppComponent(props: App): JSX.Element {
     if (myasset) {
       setFile(myasset);
       // Update the app title
-      update(props._id, { description: myasset?.data.originalfilename });
+      update(props._id, { title: myasset?.data.originalfilename });
     }
   }, [s.assetid, assets]);
 
@@ -54,7 +54,7 @@ function AppComponent(props: App): JSX.Element {
   };
   const panHandler = (event: OpenSeadragon.PanEvent) => {
     updateState(props._id, { zoomCenter: [event.center.x, event.center.y] });
-  }
+  };
 
   // Update from backend
   useEffect(() => {
@@ -62,8 +62,7 @@ function AppComponent(props: App): JSX.Element {
       // disable handlers
       viewer.current.removeAllHandlers('zoom');
       // if it's not my update, then apply
-      if (props._updatedBy !== user?._id)
-        viewer.current.viewport.zoomTo(s.zoomLevel);
+      if (props._updatedBy !== user?._id) viewer.current.viewport.zoomTo(s.zoomLevel);
       // put interaction handler back
       viewer.current.addHandler('zoom', zoomHandler);
     }
@@ -75,8 +74,7 @@ function AppComponent(props: App): JSX.Element {
       // disable handlers
       viewer.current.removeAllHandlers('pan');
       // if it's not my update, then apply
-      if (props._updatedBy !== user?._id)
-        viewer.current.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]));
+      if (props._updatedBy !== user?._id) viewer.current.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]));
       // put interaction handler back
       viewer.current.addHandler('pan', panHandler);
     }
@@ -105,16 +103,16 @@ function AppComponent(props: App): JSX.Element {
         // change tileSources for your dataset
         tileSources: '/api/assets/static/' + file.data.file,
         // setup for CORS
-        crossOriginPolicy: "Anonymous",
+        crossOriginPolicy: 'Anonymous',
       });
 
       // Handler when dataset is loaded
       viewer.current.addHandler('open', (e: OpenSeadragon.OpenEvent) => {
         // @ts-expect-error source missing dimensions
         const imginfo = { w: viewer.current.source.width, h: viewer.current.source.height };
-        const info = imginfo.w.toLocaleString() + " x " + imginfo.h.toLocaleString() + " pixels";
+        const info = imginfo.w.toLocaleString() + ' x ' + imginfo.h.toLocaleString() + ' pixels';
         // Update the app title
-        update(props._id, { description: file.data.originalfilename + ' ' + info });
+        update(props._id, { title: file.data.originalfilename + ' ' + info });
         // Reset the view
         e.eventSource.viewport.zoomTo(s.zoomLevel);
         e.eventSource.viewport.panTo(new OpenSeadragon.Point(s.zoomCenter[0], s.zoomCenter[1]));
@@ -128,8 +126,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box id={'zoom_' + props._id} roundedBottom="md" bg={bgColor} width="100%" height="100%" p={2}>
-      </Box>
+      <Box id={'zoom_' + props._id} roundedBottom="md" bg={bgColor} width="100%" height="100%" p={2}></Box>
     </AppWindow>
   );
 }
@@ -137,11 +134,7 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app DeepZoomImage */
 
 function ToolbarComponent(props: App): JSX.Element {
-
-  return (
-    <>
-    </>
-  );
+  return <></>;
 }
 
 export default { AppComponent, ToolbarComponent };

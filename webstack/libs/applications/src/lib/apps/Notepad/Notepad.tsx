@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { ButtonGroup, Button, Tooltip } from '@chakra-ui/react';
+import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 
 // Yjs Imports
 import * as Y from 'yjs';
@@ -17,7 +17,7 @@ import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
 
 // Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
+import { downloadFile, useAppStore } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
@@ -30,7 +30,6 @@ import { useUser } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '@sage3/applications/schema';
-import { sageColorByName } from '@sage3/shared';
 
 import { MdFileDownload } from 'react-icons/md';
 
@@ -42,13 +41,15 @@ import create from 'zustand';
 
 export const useStore = create((set: any) => ({
   editor: {} as { [key: string]: Quill },
-  setEditor: (id: string, ed: Quill) => set((state: any) => ({ editor: { ...state.editor, ...{ [id]: ed } } })),
+  setEditor: (id: string, ed: Quill) => set((s: any) => ({ editor: { ...s.editor, ...{ [id]: ed } } })),
 }));
 
 function AppComponent(props: App): JSX.Element {
+  const s = props.data.state as AppState;
   const quillRef = useRef(null);
   const { user } = useUser();
-  const setEditor = useStore((state: any) => state.setEditor);
+  const setEditor = useStore((s: any) => s.setEditor);
+  const updateState = useAppStore((state) => state.updateState);
 
   useEffect(() => {
     // Setup Yjs stuff
@@ -61,11 +62,9 @@ function AppComponent(props: App): JSX.Element {
           // cursors: true,
           cursors: false, // for now, tracking quill bug with transforms
           toolbar: [
-            [{ font: [] }, { size: [] }],
-            ['bold', 'italic', 'underline', 'strike'],
+            [{ header: [1, 2, 3, 4, false] }, { font: [] }],
+            ['bold', 'italic', 'clean', 'code-block'],
             [{ color: [] }, { background: [] }],
-            ['clean'],
-            ['code-block'],
             [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
             ['link', 'image'],
           ],
@@ -74,6 +73,7 @@ function AppComponent(props: App): JSX.Element {
             userOnly: true,
           },
         },
+        scrollingContainer: '#scrolling-container',
         placeholder: 'Start collaborating...',
         theme: 'snow', // 'bubble' is also great
       });
@@ -90,15 +90,38 @@ function AppComponent(props: App): JSX.Element {
       // Define a shared text type on the document
       const ytext = ydoc.getText('quill');
 
+      // Observe changes on the text, if user is source of the change, update sage
+      quill.on('text-change', (delta, oldDelta, source) => {
+        if (source == 'user') {
+          const text = ytext.toString();
+          updateState(props._id, { text });
+        }
+      });
+
       // "Bind" the quill editor to a Yjs text type.
       // Uses SAGE3 information to set the color of the cursor
       binding = new QuillBinding(ytext, quill, provider.awareness);
       if (user) {
         provider.awareness.setLocalStateField('user', {
           name: user.data.name,
-          color: sageColorByName(user.data.color), // should be a hex color
+          color: user.data.color, // should be a hex color
         });
       }
+
+      // Sync state with sage when a user connects and is the only one present
+      provider.on('sync', () => {
+        if (provider) {
+          const users = provider.awareness.getStates();
+          const count = users.size;
+          if (count === 1) {
+            const text = ytext.toString();
+            if (text !== s.text) {
+              ytext.delete(0, ytext.length);
+              ytext.insert(0, s.text);
+            }
+          }
+        }
+      });
     }
     return () => {
       // Remove the bindings and disconnect the provider
@@ -110,7 +133,9 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5' }}></div>
+      <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
+        <div ref={quillRef}></div>
+      </Box>
     </AppWindow>
   );
 }
@@ -130,9 +155,11 @@ function ToolbarComponent(props: App): JSX.Element {
       <head>
         <meta charset="utf-8">
         <title>SAGE3 Notepad - ${dt}</title>
+        <link rel="stylesheet" href="https://cdn.quilljs.com/latest/quill.snow.css"/>
       </head>
-      <body>\n`;
-    const footer = `\n</body></html>`;
+      <body>
+      <div class="ql-snow ql-container">\n`;
+    const footer = `\n</div></body></html>`;
     // Add HTML header and footer
     const content = header + editor.root.innerHTML + footer;
     // Generate a URL containing the text of the document
@@ -143,15 +170,17 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  return <>
-    <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="top-start" hasArrow={true} label={'Download as HTML'} openDelay={400}>
-        <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }}>
-          <MdFileDownload />
-        </Button>
-      </Tooltip>
-    </ButtonGroup>
-  </>;
+  return (
+    <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Download as HTML'} openDelay={400}>
+          <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };

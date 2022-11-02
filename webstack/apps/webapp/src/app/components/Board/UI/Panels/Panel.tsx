@@ -6,12 +6,12 @@
  *
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef, createRef } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, StuckTypes, useUIStore } from '@sage3/frontend';
+import { PanelNames, StuckTypes, useHexColor, useUIStore } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -58,22 +58,18 @@ export function ButtonPanel(props: ButtonPanelProps) {
 // Add a title to the chakra button props
 export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
-  isActive: boolean;
   description: string;
 }
 
 // Button with a title and using the font size from parent panel
 export function IconButtonPanel(props: IconButtonPanelProps) {
-  const textColor = useColorModeValue('gray.700', 'gray.300');
-  const hoverColor = useColorModeValue('gray.400', 'gray.100');
+  const iconColor = useColorModeValue('gray.600', 'gray.100');
+  const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
 
-  const iconColor = useColorModeValue('teal.400', 'teal.400');
-  const iconHoverColor = useColorModeValue('teal.300', 'teal.300');
   return (
     <Box>
       <Tooltip label={props.description} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
         <IconButton
-          {...props}
           borderRadius="md"
           h="auto"
           p={1}
@@ -81,9 +77,12 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           justifyContent="flex-center"
           aria-label={props.description}
           icon={props.icon}
-          color={props.isActive ? iconColor : textColor}
+          background="transparent"
+          color={props.isActive ? iconHoverColor : iconColor}
           transition={'all 0.2s'}
-          _hover={{ color: props.isActive ? iconHoverColor : hoverColor, transform: 'scale(1.1)' }}
+          variant="ghost"
+          onClick={props.onClick}
+          _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
         />
       </Tooltip>
     </Box>
@@ -128,13 +127,15 @@ export function Panel(props: PanelProps) {
   const setShowActions = props.setOpened;
 
   // Theme
-  const panelBackground = useColorModeValue('gray.50', '#4A5568');
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+  const panelBackground = useColorModeValue('gray.50', 'gray.700');
+  const textColor = useColorModeValue('gray.800', 'gray.50');
+  const shadowColor = useColorModeValue('#00000050', '#00000080');
+  const grip = useColorModeValue('gray.200', 'gray.900');
+  const gripColor = useHexColor(grip);
 
   // UI store
   const showUI = useUIStore((state) => state.showUI);
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = createRef<HTMLDivElement>();
   const bringPanelForward = useUIStore((state) => state.bringPanelForward);
 
   // Update the window size
@@ -192,7 +193,7 @@ export function Panel(props: PanelProps) {
   }, [props.stuck, winWidth, winHeight]);
 
   // Border color to show if panel is anchored to corners or sides
-  const borderColor = useColorModeValue('#92c2ed', '#477eb0 ');
+  const borderColor = useHexColor('teal');
   const border = `solid ${borderColor} 3px`;
   const borderTop =
     props.stuck == StuckTypes.TopLeft || props.stuck == StuckTypes.Top || props.stuck == StuckTypes.TopRight ? border : '0px';
@@ -272,20 +273,22 @@ export function Panel(props: PanelProps) {
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
-        style={{ maxWidth: w + 'px', zIndex: props.zIndex, overflow: 'hidden' }}
+        width="100%"
+        style={{ maxWidth: w + 'px', zIndex: props.zIndex }}
       >
         <Box
           display="flex"
-          boxShadow="base"
           transition="all .2s "
           bg={panelBackground}
           p="2"
           borderRadius={'md'}
           ref={ref}
+          width="100%"
           borderTop={borderTop}
           borderLeft={borderLeft}
           borderBottom={borderBottom}
           borderRight={borderRight}
+          boxShadow={`4px 4px 10px 0px ${shadowColor}`}
         >
           <Box
             width="25px"
@@ -298,7 +301,7 @@ export function Panel(props: PanelProps) {
           />
 
           <Box bg={panelBackground} cursor="auto" maxWidth={w - 45 + 'px'}>
-            <Box mb={2} display="flex" justifyContent="space-between">
+            <Box mb={2} display="flex" justifyContent="space-between" flexWrap={'nowrap'} width="100%">
               <Box flexGrow={1} maxWidth={w - 80 + 'px'} className="dragHandle">
                 <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
                   <Text
@@ -318,15 +321,29 @@ export function Panel(props: PanelProps) {
                 </Tooltip>
               </Box>
 
-              <Box>
+              <Box display="flex" flexWrap={'nowrap'}>
                 {showActions ? (
-                  <IconButton size="xs" as={MdExpandLess} aria-label="show less" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
+                  <IconButton
+                    size="xs"
+                    icon={<MdExpandLess size="1.5rem" />}
+                    aria-label="show less"
+                    onClick={handleMinimizeClick}
+                    mx="1"
+                    cursor="pointer"
+                  />
                 ) : (
-                  <IconButton size="xs" as={MdExpandMore} aria-label="show more" onClick={handleMinimizeClick} mx="1" cursor="pointer" />
+                  <IconButton
+                    size="xs"
+                    icon={<MdExpandMore size="1.5rem" />}
+                    aria-label="show more"
+                    onClick={handleMinimizeClick}
+                    mx="1"
+                    cursor="pointer"
+                  />
                 )}
                 {props.showClose ? (
                   <IconButton
-                    as={MdClose}
+                    icon={<MdClose size="1.25rem" />}
                     aria-label="close panel"
                     size="xs"
                     mx="1"

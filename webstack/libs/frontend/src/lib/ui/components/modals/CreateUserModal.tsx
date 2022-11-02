@@ -21,12 +21,15 @@ import {
   FormControl,
   FormLabel,
   Text,
-  ButtonGroup,
+  RadioGroup,
+  Radio,
+  Stack,
 } from '@chakra-ui/react';
-import { MdPerson, MdEmail } from 'react-icons/md';
+import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
+import { ColorPicker } from '../general';
 
 type CreateUserProps = {
   createUser: (user: UserSchema) => void;
@@ -34,15 +37,15 @@ type CreateUserProps = {
 
 export function CreateUserModal(props: CreateUserProps): JSX.Element {
   // get the user information
-  const auth = useAuth();
+  const { auth, logout } = useAuth();
 
-  const [name, setName] = useState<UserSchema['name']>(auth.auth?.displayName ?? '');
-  const [email, setEmail] = useState<UserSchema['email']>(auth.auth?.email ?? '');
-  const [color, setColor] = useState<UserSchema['color']>('red');
+  const [name, setName] = useState<UserSchema['name']>(auth?.displayName ?? '');
+  const [type, setType] = useState<UserSchema['userType']>('client');
+  const [color, setColor] = useState<UserSchema['color']>(randomSAGEColor());
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
-  const handleColorChange = (color: string) => setColor(color);
+  const handleColorChange = (color: string) => setColor(color as SAGEColors);
+  const handleTypeChange = (type: UserSchema['userType']) => setType(type);
 
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
@@ -62,13 +65,13 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
   };
 
   function createAccount() {
-    if (name && email) {
+    if (name) {
       const newUser = {
         name,
-        email,
+        email: auth?.email ? auth.email : '',
         color: color,
         userRole: 'user',
-        userType: 'client',
+        userType: type,
         profilePicture: '',
       } as UserSchema;
       props.createUser(newUser);
@@ -83,6 +86,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
       onClose={() => {
         console.log('');
       }}
+      blockScrollOnMount={false}
     >
       <ModalOverlay />
       <ModalContent>
@@ -104,51 +108,30 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
               />
             </InputGroup>
           </FormControl>
-          <FormControl isRequired>
-            <FormLabel htmlFor="email">Email</FormLabel>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<MdEmail size={'1.5rem'} />} />
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                placeholder="name@email.com"
-                _placeholder={{ opacity: 1, color: 'gray.600' }}
-                onChange={handleEmailChange}
-                onKeyDown={onSubmit}
-              />
-            </InputGroup>
-          </FormControl>
           <FormControl isRequired mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
-            <ButtonGroup isAttached size="xs" colorScheme="teal" py="2">
-              {/* Colors */}
-              {SAGEColors.map((s3color) => {
-                return (
-                  <Button
-                    key={s3color.name}
-                    value={s3color.name}
-                    bgColor={s3color.value}
-                    _hover={{ background: s3color.value, opacity: 0.7, transform: 'scaleY(1.3)' }}
-                    _active={{ background: s3color.value, opacity: 0.9 }}
-                    size="md"
-                    onClick={() => handleColorChange(s3color.name)}
-                    border={s3color.name === color ? '3px solid white' : 'none'}
-                    width="43px"
-                  />
-                );
-              })}
-            </ButtonGroup>
+            <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
           </FormControl>
-          <Text mt={3} fontSize={'md'}>
-            Authentication: <em>{auth.auth?.provider}</em>
+          <FormControl mt="2">
+            <FormLabel htmlFor="type">User Type</FormLabel>
+            <RadioGroup onChange={handleTypeChange} value={type}>
+              <Stack direction="row">
+                {['client', 'wall'].map((value, i) => (
+                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                ))}
+              </Stack>
+            </RadioGroup>{' '}
+          </FormControl>
+          <Text mt={5} fontSize={'md'}>
+            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
           </Text>
+          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mx={2} onClick={auth.logout}>
+          <Button colorScheme="red" mx={2} onClick={logout}>
             Cancel
           </Button>
-          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
+          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name}>
             Create Account
           </Button>
         </ModalFooter>

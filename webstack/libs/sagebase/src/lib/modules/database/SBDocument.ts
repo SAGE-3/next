@@ -43,7 +43,7 @@ export type SBDocumentUpdateMessage<Type extends SBJSON> = {
   type: 'UPDATE';
   col: string;
   doc: SBDocument<Type>;
-  updates: Partial<Type>
+  updates: Partial<Type>;
 };
 
 export type SBDocumentDeleteMessage<Type extends SBJSON> = {
@@ -107,11 +107,15 @@ export class SBDocumentRef<Type extends SBJSON> {
    * @param data The data
    * @returns
    */
-  public async set(data: Type, by: string): Promise<SBDocWriteResult> {
+  public async set(data: Type, by: string, ttl: number): Promise<SBDocWriteResult> {
     try {
       const doc = generateSBDocumentTemplate<Type>(data, by);
       doc._id = this.id;
       const redisRes = await this._redisClient.json.set(this.path, '.', doc);
+      if (ttl > -1) {
+        // Set the Time to Live, in sec.
+        this._redisClient.expire(this.path, ttl);
+      }
       const response = redisRes == 'OK' ? generateWriteResult(true) : generateWriteResult(false);
       await this.publishCreateAction(doc);
       return response;
@@ -138,6 +142,8 @@ export class SBDocumentRef<Type extends SBJSON> {
       let updated = false;
       const updatePromises = Object.keys(update).map(async (key) => {
         const value = update[key] as Type[string];
+        // XX - only set the key if it already exists
+        // const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value, { XX: true });
         const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value);
         const res = redisRes === 'OK' ? true : false;
         if (res === true) {
@@ -161,13 +167,13 @@ export class SBDocumentRef<Type extends SBJSON> {
 
   private async refreshUpdate(by?: string): Promise<void> {
     const updatedAt = Date.now();
-    const redisRes = await this._redisClient.json.set(`${this.path}`, `._updatedAt`, updatedAt);
-    if (redisRes != 'OK') {
+    const redisRes = await this._redisClient.json.set(`${this.path}`, `._updatedAt`, updatedAt, { XX: true });
+    if (redisRes && redisRes != 'OK') {
       console.error('refreshUpdate', redisRes);
     }
     if (by) {
-      const res = await this._redisClient.json.set(`${this.path}`, `._updatedBy`, by);
-      if (res != 'OK') {
+      const res = await this._redisClient.json.set(`${this.path}`, `._updatedBy`, by, { XX: true });
+      if (res && res != 'OK') {
         console.error('refreshUpdate', res);
       }
     }
@@ -220,7 +226,7 @@ export class SBDocumentRef<Type extends SBJSON> {
     const action = {
       type: 'UPDATE',
       doc: doc,
-      updates
+      updates,
     } as SBDocumentUpdateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;

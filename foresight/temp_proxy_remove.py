@@ -60,7 +60,7 @@ def handler(signum, frame):
 #     # multiprocessing.set_start_method("fork")
 #     # parser = get_cmdline_parser()
 #     # args = parser.parse_args()
-#     sage_proxy = SAGEProxy("config.json", "05828804-d87f-4498-857e-02f288effd3d")
+#     sage_proxy = SAGEProxy("funcx.json", "05828804-d87f-4498-857e-02f288effd3d")
 #
 #     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
 #     # sage_proxy = SAGEProxy(args.config_file, args.room_id)

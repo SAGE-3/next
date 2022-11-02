@@ -1,15 +1,11 @@
 from funcx.sdk.client import FuncXClient
-from config import funcx
+# from config import funcx
+import time
+import threading
+from utils.borg import Borg
+import json
 
-
-class Borg:
-    """
-    The Borg pattern to store execution state across instances
-    """
-    _shared_state = {}
-
-    def __init__(self):
-        self.__dict__ = self._shared_state
+# TODO: move the borg class to its own file
 
 
 class AIClient(Borg):
@@ -17,11 +13,18 @@ class AIClient(Borg):
     ai Client get requests to execute a model, executed it, gets the results and propagates them to the client.
     """
 
-    def __init__(self):
+    def __init__(self, check_every=5):
         Borg.__init__(self)
+        self.check_every = check_every
         self.callback_info = {}
         self.running_jobs = set()
-        self.fxc = FuncXClient()
+        #self.fxc = FuncXClient()
+
+        self.stop_thread = False  # keep on checking until this changes to false
+        self.msg_checker = threading.Thread(target=self.process_response,
+                                            kwargs={"check_every": self.check_every})
+        self.msg_checker.start()
+
 
     def execute(self, command_info):
         """
@@ -30,40 +33,48 @@ class AIClient(Borg):
         :param command_info: contains model id, model data input
         :return: Execution UUID?
         """
+
         app_uuid = command_info["app_uuid"]
         msg_uuid = command_info["msg_uuid"]
-
         callback_fn = command_info["callback_fn"]
-
-        model_id = command_info["model_id"]
+        funcx_uuid = command_info["funcx_uuid"]
+        endpoint_uuid = command_info["endpoint_uuid"]
         data = command_info["data"]
 
-        resp = self.fxc.run(model_id, data, function_id=funcx["test_ai_func_uuid"],
-                            endpoint_id=funcx["endpoint_id"])
+        resp = self.fxc.run(**data, function_id=funcx_uuid,
+                            endpoint_id=endpoint_uuid)
         self.running_jobs.add(resp)
 
         self.callback_info[resp] = (app_uuid, msg_uuid, callback_fn)
 
         return resp
 
-    def process_response(self):
-        while True:
-            task_id = ""
-            resp = self.fxc.get_task(task_id)
+    def process_response(self, check_every):
+        while not self.stop_thread:
+            tasks_to_remove = set()
+            for task_id in self.running_jobs:
+                resp = self.fxc.get_task(task_id)
+                #print(f" type of resp in ai_client{type(resp)}")
+                if not resp['pending']:
+                    if resp['status'] != 'success':
+                        # TODO: Handle the error
+                        print("report that an error happened")
+                    else:
+                        print("sending the results back")
+                        result = resp['result']
+                        try:
+                            app_uuid = self.callback_info[task_id][0]
+                            msg_uuid = self.callback_info[task_id][1]
+                            callback_fn = self.callback_info[task_id][2]
+                            callback_fn(app_uuid, msg_uuid, result)
+                            del self.callback_info[task_id]
+                            tasks_to_remove.add(task_id)
+                        except Exception as e:
+                            print(f"Error executing calls back.\n{e}")
+            self.running_jobs -= tasks_to_remove
 
-            if not resp['pending']:
-                if resp['status'] != 'success':
-                    print("report it")
-                    pass
-                else:
-                    print("sending the results back")
-
-                # ignore first message
-                if msg["data"] == 1:
-                    continue
-                msg = msg['data'].decode("utf-8")
-                msg=eval(msg)
-                request_id = msg['request_id']
-                self.callback_info[request_id][1](msg)
-
-            time.sleep(1)  # be nice to the system :)
+            time.sleep(self.check_every)  # be nice to the system :)
+            if self.stop_thread:
+                if len(self.running_jobs):
+                    print("Exiting the ai Client but queue still contains not communicated jobs")
+                break

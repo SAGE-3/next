@@ -36,10 +36,45 @@ export function ConfigRouter(): express.Router {
       production: config.production,
       servers: config.servers,
       version: config.version,
+      features: config.features,
       // Jupyter token
       token: token,
       // Namespace for signing uuid v5 keys
       namespace: config.namespace,
+      admins: config.auth.admins || [],
+    };
+    res.json(configuration);
+  });
+
+  return router;
+}
+
+export function InfoRouter(): express.Router {
+  const router = express.Router();
+
+  // Get server configuration data structure
+  router.get('/', async (req, res) => {
+    // Configuration public values
+    const configuration = {
+      serverName: config.serverName,
+      port: config.port,
+      production: config.production,
+      servers: config.servers,
+      version: config.version,
+      features: config.features,
+    };
+    res.json(configuration);
+  });
+
+  return router;
+}
+
+export function TimeRouter(): express.Router {
+  const router = express.Router();
+  router.get('/', async (req, res) => {
+    // Configuration public values
+    const configuration = {
+      epoch: Date.now(),
     };
     res.json(configuration);
   });

@@ -1,4 +1,4 @@
-# We need to start a private kernel using some kernel configs
+# We can start a private kernel using some kernel configs using:
 python -m ipykernel_launcher -f config/kernel-s3-next.json
 
 # Start the Flask server which is responsible for handling the work
@@ -10,6 +10,11 @@ jupyter console --existing ~/Documents/GitHub/next/foresight/config/kernel-s3-ne
 	# whitin the console type
 	run proxy.py
 
+# starting a new kernel
+```bash
+curl --location --request POST 'http://localhost/api/kernels' \
+--header 'Authorization: Token 31aac415791afb49'
+```
 
 
 

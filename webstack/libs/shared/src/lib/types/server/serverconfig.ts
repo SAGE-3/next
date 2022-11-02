@@ -34,6 +34,13 @@ export interface serverConfiguration {
   servers: { name: string; url: string }[];
   // Services
   redis: { url: string };
+  // Feature flags
+  features: {
+    twilio: boolean;
+    ai: boolean;
+    jupyter: boolean;
+    cell: boolean;
+  };
   // ID management API keys
   auth: AuthConfiguration;
   // SSL/HTTPS certificates
@@ -61,7 +68,10 @@ export interface AuthConfiguration {
   sessionSecret: string;
 
   // List of login strategies: guest, google, jwt, cilogon, ...
-  strategies: [string];
+  strategies: string[];
+
+  // Admin users
+  admins: string[];
 
   // Guest
   guestConfig?: {

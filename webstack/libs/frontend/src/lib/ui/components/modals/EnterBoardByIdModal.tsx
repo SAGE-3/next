@@ -13,20 +13,20 @@ import {
   Input,
   InputGroup,
   InputLeftAddon,
-  InputRightAddon,
   Progress,
-  Tooltip,
   useToast,
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
   ModalBody,
+  useDisclosure,
+  ModalFooter,
 } from '@chakra-ui/react';
-import { useNavigate } from 'react-router';
 
 import { Board } from '@sage3/shared/types';
 import { isUUIDv4, useData, timeout } from '@sage3/frontend';
+import { EnterBoardModal } from './EnterBoardModal';
 
 // Props
 interface enterBoardProps {
@@ -46,16 +46,14 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   // Status of the request
   const [submitStatus, setSubmitStatus] = useState<'pending' | 'submitted' | 'success'>('pending');
   // Fetch board from the server
-  const results = useData(`/api/boards/${boardId}`) as { success: boolean, data: Board[] };
+  const results = useData(`/api/boards/${boardId}`) as { success: boolean; data: Board[] };
 
   // Chakra Toast
   const toast = useToast();
 
-  // Navigate to the new board
-  const navigate = useNavigate();
-  function handleEnterBoard(board: Board) {
-    navigate('/board', { state: { roomId: board.data.roomId, boardId: board._id } });
-  }
+  // Enter Board by ID Modal
+  const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
+  const [board, setBoard] = useState<Board>();
 
   // Input Changes
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -72,14 +70,21 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
       setSubmitStatus('success');
       // Get the data
       const board = results.data[0];
+
+      // Set Board
+      setBoard(board);
+      onOpenEnterBoard();
+
       // Give user some feedback
       toast({
-        title: 'Success', description: `Joining Board "${board.data.name}"`,
-        duration: 3000, isClosable: true, status: 'success',
+        title: 'Success',
+        description: `Joining Board "${board.data.name}"`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
       });
-      // Slow down transition
-      await timeout(600);
-      handleEnterBoard(board);
+
+      setSubmitStatus('pending');
     } else {
       // Reset local state
       setSubmitStatus('pending');
@@ -87,13 +92,17 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
       // Give user some feedback
       toast({
         title: 'Invalid Board ID',
-        duration: 3000, isClosable: true, status: 'error',
+        duration: 3000,
+        isClosable: true,
+        status: 'error',
       });
     }
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} size="xl">
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} size="xl" blockScrollOnMount={false}>
+      {board ? <EnterBoardModal isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard} board={board}></EnterBoardModal> : null}
+
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Enter Board by ID</ModalHeader>
@@ -112,24 +121,6 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
                     spellCheck={false}
                     _placeholder={{ opacity: 1, color: 'gray.600' }}
                   />
-                  <InputRightAddon
-                    p="0"
-                    children={
-                      <Tooltip
-                        isOpen={!isUUIDv4(boardId) ? undefined : false}
-                        placement="top-start"
-                        gutter={20}
-                        hasArrow={true}
-                        label={'Enter a Valid BoardID'}
-                        openDelay={400}
-                        shouldWrapChildren
-                      >
-                        <Button colorScheme="green" borderRadius="0 4px 4px 0" onClick={handleSubmit} disabled={!isUUIDv4(boardId)}>
-                          Enter
-                        </Button>
-                      </Tooltip>
-                    }
-                  />
                 </InputGroup>
               </form>
             </Box>
@@ -138,6 +129,14 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
               <Progress size="xs" colorScheme="teal" borderRadius="md" boxShadow="none" isIndeterminate width="100%" />
             </Box>
           )}
+          <ModalFooter>
+            <Button colorScheme="blue" mr={4} onClick={props.onClose}>
+              Cancel
+            </Button>
+            <Button colorScheme="green" onClick={handleSubmit} disabled={!isUUIDv4(boardId)}>
+              Enter
+            </Button>
+          </ModalFooter>
         </ModalBody>
       </ModalContent>
     </Modal>

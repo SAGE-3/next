@@ -7,47 +7,68 @@
  */
 
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
-import { usePresence, useAppStore } from '@sage3/frontend';
+import {
+  usePresence,
+  useAppStore,
+  useRouteNav,
+  useBoardStore,
+  useRoomStore,
+  usePresenceStore,
+  useUsersStore,
+  PasteHandler,
+  MainButton,
+} from '@sage3/frontend';
 
 // Board Layers
-import { WhiteboardLayer, BackgroundLayer, UILayer } from '../components/Board';
-import { Box, useColorModeValue } from '@chakra-ui/react';
-import { BoardClock } from '../components/Board/UI/Clock';
-
-type LocationParams = {
-  boardId: string;
-  roomId: string;
-};
+import { BackgroundLayer, UILayer } from '../components/Board';
+import { Clock } from '../components/Board/UI/Clock';
 
 /**
  * The board page which displays the board and its apps.
  */
 export function BoardPage() {
   // Navigation and routing
-  const location = useLocation();
-  const locationState = location.state as LocationParams;
+  const { roomId, boardId } = useParams();
+  const { toHome } = useRouteNav();
+
+  if (!roomId || !boardId) {
+    toHome(roomId);
+    return null;
+  }
 
   // Board and App Store stuff
-  const subBoard = useAppStore((state) => state.subToBoard);
+  const subApps = useAppStore((state) => state.subToBoard);
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
+  const subBoards = useBoardStore((state) => state.subscribeByRoomId);
+  const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   // Presence Information
   const { update: updatePresence } = usePresence();
+  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // Handle joining and leave a board
   useEffect(() => {
-    // Subscribe to the board that was selected
-    subBoard(locationState.boardId);
+    // This is if someone is joining a board by a link
+    subRooms();
+    // Sub to boards belonging to this room
+    subBoards(roomId);
+    // Subscribe to the app on the board that was selected
+    subApps(boardId);
+    // Sub to users and presence
+    subscribeToPresence();
+    subscribeToUsers();
     // Update the user's presence information
-    updatePresence({ boardId: locationState.boardId, roomId: locationState.roomId });
+    updatePresence({ boardId: boardId, roomId: roomId });
 
-    // Uncmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
+    // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
-      // Unsube from board updates
+      // Unsub from board updates
       unsubBoard();
       // Update the user's presence information
       updatePresence({ boardId: '', roomId: '' });
@@ -57,20 +78,24 @@ export function BoardPage() {
   return (
     <>
       {/* The apps live here */}
-      <BackgroundLayer boardId={locationState.boardId} roomId={locationState.roomId}></BackgroundLayer>
+      <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer>
 
       {/* The Corner SAGE3 Image */}
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
-        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" />
+        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 
-      <BoardClock />
-
-      {/* TODO White Board Layer for marking onto board */}
-      <WhiteboardLayer boardId={locationState.boardId} roomId={locationState.roomId}></WhiteboardLayer>
+      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
 
       {/* Upper layer for local UI stuff */}
-      <UILayer boardId={locationState.boardId} roomId={locationState.roomId}></UILayer>
+      <UILayer boardId={boardId} roomId={roomId}></UILayer>
+
+      {/* Paste data on the board */}
+      <PasteHandler boardId={boardId} roomId={roomId} />
+
+      <Box position="absolute" left="2" bottom="2" zIndex={101}>
+        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} />
+      </Box>
     </>
   );
 }

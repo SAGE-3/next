@@ -11,13 +11,11 @@ import * as express from 'express';
 
 // SAGEBase Imports
 import { SBAuthSchema } from '@sage3/sagebase';
-// User collection
-// import { UsersCollection } from '../collections';
 
 import { Ability, AbilityBuilder } from '@casl/ability';
 
 export type AuthAction = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
-export type AuthSubject = 'USERS' | 'ASSETS' | 'APPS' | 'BOARDS' | 'ROOMS' | 'PRESENCE';
+export type AuthSubject = 'USERS' | 'ASSETS' | 'APPS' | 'BOARDS' | 'ROOMS' | 'PRESENCE' | 'MESSAGE';
 type AppAbility = Ability<[AuthAction, AuthSubject]>;
 
 type Middleware = (req: express.Request, res: express.Response, next: express.NextFunction) => void;
@@ -59,14 +57,15 @@ export function defineAbilityFor(user: SBAuthSchema) {
 
   // Limit the guest accounts
   if (user.provider === 'guest') {
-    can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE']);
+    can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
     // login and update presence
     can(['POST', 'PUT'], ['USERS', 'PRESENCE']);
-    // create and modify apps, not delete
-    can(['POST', 'PUT'], ['APPS']);
+    // can(['POST', 'PUT', 'DELETE'], ['APPS']);
+    // modify apps, not create or delete
+    can(['PUT'], ['APPS']);
   } else {
     // everybody else can do anything
-    can(['GET', 'POST', 'PUT', 'DELETE', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE']);
+    can(['GET', 'POST', 'PUT', 'DELETE', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
   }
 
   return build();

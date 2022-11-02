@@ -17,7 +17,6 @@ import { debounce } from 'throttle-debounce';
 import { useEffect, useRef, useState } from 'react';
 
 //Library imports
-import { useLocation } from 'react-router-dom';
 import { Button } from '@chakra-ui/react';
 
 //Import ace editor tools
@@ -31,6 +30,7 @@ import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/keybinding-vscode';
 import 'ace-builds/src-noconflict/ext-language_tools';
+import { useParams } from 'react-router';
 
 /* App component for VegaLite */
 
@@ -123,20 +123,15 @@ function ToolbarComponent(props: App): JSX.Element {
   const { user } = useUser();
 
   //BoardInfo
-  const location = useLocation();
-  const locationState = location.state as {
-    boardId: string;
-    roomId: string;
-  };
+  const { boardId, roomId } = useParams();
 
   // Creates a new VegaLiteViewer app with aceeditor text
   const createChart = () => {
     if (!user) return;
     createApp({
-      name: 'VegaLiteViewer',
-      description: 'Visualization',
-      roomId: locationState.roomId,
-      boardId: locationState.boardId,
+      title: '',
+      roomId: roomId!,
+      boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
       size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -144,8 +139,6 @@ function ToolbarComponent(props: App): JSX.Element {
       state: {
         spec: s.spec,
       },
-      ownerId: user?._id,
-      minimized: false,
       raised: true,
     });
   };
