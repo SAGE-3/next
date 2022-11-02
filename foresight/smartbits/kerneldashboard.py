@@ -7,10 +7,10 @@
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-import json
 from pydantic import PrivateAttr
 from config import config as conf, prod_type
 import requests
+from jupyterkernelproxy import JupyterKernelProxy
 
 
 class KernelDashboardState(TrackedBaseModel):
@@ -24,18 +24,22 @@ class KernelDashboardState(TrackedBaseModel):
 
 class KernelDashboard(SmartBit):
     state: KernelDashboardState
+
     _redis_space: str = PrivateAttr(default="JUPYTER:KERNELS")
     _base_url: str = PrivateAttr(default=f"{conf[prod_type]['jupyter_server']}/api")
-    _headers: dict = PrivateAttr(default=dict(SmartBit._jupyter_client.headers))
+    _headers: dict = PrivateAttr()
     _redis_server = PrivateAttr()
+    _r_json = PrivateAttr()
     _redis_store: str = PrivateAttr(default="JUPYTER:KERNELS")
+    _jupyter_client = PrivateAttr()
+
     def __init__(self, **kwargs):
-        # print("I am here 1")
         super(KernelDashboard, self).__init__(**kwargs)
-        # print("I am here 2")
-        r_json = self._jupyter_client.redis_server.json()
-        if r_json.get(self._redis_space) is None:
-            r_json.set(self._redis_space, '.', {})
+        self._jupyter_client = JupyterKernelProxy()
+        self._headers = dict(self._jupyter_client.headers)
+        self._r_json = self._jupyter_client.redis_server.json()
+        if self._r_json.get(self._redis_space) is None:
+            self._r_json.set(self._redis_space, '.', {})
         self.get_kernel_specs()
 
     def get_kernel_specs(self):
@@ -63,8 +67,8 @@ class KernelDashboard(SmartBit):
                 "is_private": is_private,
                 "auth_users": auth_users
             }
-            r_json = self._jupyter_client.redis_server.json()
-            r_json.set(self._redis_space, response_data['id'], kernel_info)
+            # r_json = self._jupyter_client.redis_server.json()
+            self._r_json.set(self._redis_space, response_data['id'], kernel_info)
             self.get_available_kernels(user_uuid=owner_uuid)
 
     def delete_kernel(self, kernel_id, user_uuid):
@@ -78,14 +82,14 @@ class KernelDashboard(SmartBit):
             response = requests.delete(j_url, headers=self._headers)
             if response.status_code == 204:
                 self.get_available_kernels(user_uuid=user_uuid)
-            r_json = self._jupyter_client.redis_server.json()
-            r_json.delete(self._redis_space, kernel_id)
+            # r_json = self._jupyter_client.redis_server.json()
+            self._r_json.delete(self._redis_space, kernel_id)
             self.get_available_kernels(user_uuid=user_uuid)
         else:
             # cleanup the kernel from redis server if it is not in jupyter server
             self.get_available_kernels(user_uuid=user_uuid)
-            r_json = self._jupyter_client.redis_server.json()
-            r_json.delete(self._redis_space, kernel_id)
+            # r_json = self._jupyter_client.redis_server.json()
+            self._r_json.delete(self._redis_space, kernel_id)
             self.get_available_kernels(user_uuid=user_uuid)
 
     def shudown_all_kernels(self):
@@ -95,8 +99,8 @@ class KernelDashboard(SmartBit):
             response = requests.delete(j_url, headers=self._headers)
             if response.status_code == 204:
                 print(f"Kernel {kernel_id} shutdown successfully")
-                r_json = self._jupyter_client.redis_server.json()
-                r_json.delete(self._redis_space, kernel_id)
+                # r_json = self._jupyter_client.redis_server.json()
+                self._r_json.delete(self._redis_space, kernel_id)
                 self.get_available_kernels()
 
     def restart_kernel(self, kernel_id, user_uuid):

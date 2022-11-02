@@ -27,9 +27,8 @@ def format_execute_request_msg(exec_uuid, code):
     return msg
 
 
-
-
 class JupyterKernelProxy:
+
     class JupyterClient(WebSocketBaseClient):
 
         def __init__(self, address, headers, parent_proxy_instnace):

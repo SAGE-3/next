@@ -9,8 +9,8 @@ import time
 @pytest.fixture()
 def kernel_dashboard():
     kd = KernelDashboard(**kernel_dashboard_doc)
-    return kd
-
+    yield kd
+    kd._jupyter_client.clean_up()
 
 def test_create_instance(kernel_dashboard):
     isinstance(kernel_dashboard, KernelDashboard)

@@ -7,8 +7,8 @@ from smartbits.tests.sample_sb_docs import counter_doc
 def counter_instance():
     c = Counter(**counter_doc)
     yield c
-    c._ai_client.clean_up()
-    c._jupyter_client.clean_up()
+    # c._ai_client.clean_up()
+    #c._jupyter_client.clean_up()
 
 def test_create_counter(counter_instance):
     assert isinstance(counter_instance, Counter)

@@ -6,24 +6,32 @@
 # -----------------------------------------------------------------------------
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field, validate_model
+from pydantic import BaseModel, Field
+from typing import ClassVar
+
 # from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
 from jupyterkernelproxy import JupyterKernelProxy
 from ai.ai_client import AIClient
 from config import config as conf, prod_type
+from pydantic import PrivateAttr
 
 class TrackedBaseModel(BaseModel):
-    path: Optional[int]
+    path: Optional[str]
     touched: Optional[set] = set()
-    _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
-    # make the following params of the constructor. Not all apps need them!
-    _jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
-    _ai_client: AIClient = AIClient()
+    # _s3_comm: SageCommunication = PrivateAttr()
+    # The following params should be defined as required in
+    # the constructor since Not all apps need them!a
+    # _jupyter_client: JupyterKernelProxy = PrivateAttr()
+    # _ai_client: AIClient  = PrivateAttr()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # self._s3_comm = SageCommunication(conf, prod_type)
+        # self._jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
+        # self._ai_client: AIClient  = AIClient()
+
 
     def __setattr__(self, name, value):
         try:
@@ -131,6 +139,7 @@ class TrackedBaseModel(BaseModel):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
         return wrapper
+
     def cleanup(self):
         pass
 
@@ -182,6 +191,8 @@ class SmartBit(TrackedBaseModel):
     _createdAt: int
     _updatedAt: int
     data: Data
+
+    _s3_comm: ClassVar = SageCommunication(conf, prod_type)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
