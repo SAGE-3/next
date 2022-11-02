@@ -34,11 +34,10 @@ from multiprocessing import Queue
 import requests
 from smartbitfactory import SmartBitFactory
 import httpx
-import websocket
+from websocketlistener import WebSocketListener
 from utils import logging_config
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
-
 
 logger = logging_config.get_console_logger()
 
@@ -76,8 +75,6 @@ def update_dest_from_src(src_val, dest_app, dest_field):
     dest_app.send_updates()
 
 
-
-
 class SAGEProxy():
     def __init__(self, room_id, conf, prod_type):
         self.room = Room(room_id)
@@ -96,15 +93,16 @@ class SAGEProxy():
         self.received_msg_log = {}
         self.ws = None
         self.loop = None
+        self.listening_process_2 = WebSocketListener(self.__message_queue)
+        # self.listening_process = threading.Thread(target=self.client)
+        #### self.listening_process = threading.Thread(target=asyncio.run, args=(self.receive_messages(),))
+        self.worker_process = threading.Thread(target=self.process_messages)
 
-        self.listening_process = threading.Thread(target=self.client)
-
-        # self.listening_process = threading.Thread(target=asyncio.run, args=(self.receive_messages(),))
-        # self.worker_process = threading.Thread(target=self.process_messages)
+        self.populate_existing()
 
     def start_threads(self):
-        self.listening_process.start()
-        #self.worker_process.start()
+        self.listening_process_2.run()
+        self.worker_process.start()
 
     def populate_existing(self):
         boards_info = self.s3_comm.get_boards(self.room.room_id)
@@ -123,26 +121,23 @@ class SAGEProxy():
         print("Done running client")
         self.loop.close()
 
-
     async def receive_messages(self):
         # async with websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
         #                               extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
         self.ws = await websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
-                                      extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"})
+                                           extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"})
         await subscribe(self.ws, self.room.room_id)
         logger.info("completed subscription, checking if fboards and apps already exist")
         self.populate_existing()
         async for msg in self.ws:
             msg = json.loads(msg)
             logger.debug(f"msg: {json.dumps(msg)}")
+            # check is needed because we get duplicted messages.
+            # TODO: emtpy the queue when it get to a size of X
             if msg['id'] not in self.received_msg_log or \
                     msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
                 self.__message_queue.put(msg)
                 self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
-            else:
-                # print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
-                pass
-
 
     def process_messages(self):
         """
@@ -312,8 +307,9 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         room_id = \
-        requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()['data'][0][
-            '_id']
+            requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()[
+                'data'][0][
+                '_id']
         if not os.getenv("DROPBOX_TOKEN"):
             logger.warning("Dropbox upload token not defined, AI won't be supported in development mode")
 
