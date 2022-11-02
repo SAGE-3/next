@@ -88,17 +88,15 @@ class SAGEProxy():
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}
         self.received_msg_log = {}
-        # self.ws = None
-        # self.loop = None
-        self.listening_process_2 = WebSocketListener(self.__message_queue)
-        # self.listening_process = threading.Thread(target=self.client)
-        #### self.listening_process = threading.Thread(target=asyncio.run, args=(self.receive_messages(),))
+        self.listening_process = WebSocketListener(self.__message_queue)
         self.worker_process = threading.Thread(target=self.process_messages)
+        self.stop_worker = False
 
         self.populate_existing()
 
+
     def start_threads(self):
-        self.listening_process_2.run()
+        self.listening_process.run()
         self.worker_process.start()
 
     def populate_existing(self):
@@ -111,30 +109,6 @@ class SAGEProxy():
             logger.info(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
-    # def client(self):
-    #     self.loop = asyncio.new_event_loop()
-    #     asyncio.set_event_loop(self.loop)
-    #     self.loop.run_until_complete(self.receive_messages())
-    #     print("Done running client")
-    #     self.loop.close()
-
-    # async def receive_messages(self):
-    #     # async with websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
-    #     #                               extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
-    #     self.ws = await websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
-    #                                        extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"})
-    #     await subscribe(self.ws, self.room.room_id)
-    #     logger.info("completed subscription, checking if fboards and apps already exist")
-    #     self.populate_existing()
-    #     async for msg in self.ws:
-    #         msg = json.loads(msg)
-    #         logger.debug(f"msg: {json.dumps(msg)}")
-    #         # check is needed because we get duplicted messages.
-    #         # TODO: emtpy the queue when it get to a size of X
-    #         if msg['id'] not in self.received_msg_log or \
-    #                 msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
-    #             self.__message_queue.put(msg)
-    #             self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
 
     def process_messages(self):
         """
@@ -142,8 +116,17 @@ class SAGEProxy():
         potentially work on a multiprocessing version where threads are processed separately
         Messages needs to be numbered to avoid received out of sequences messages.
         """
-        while True:
-            msg = self.__message_queue.get()
+        i = 0
+        print('I am here 1')
+
+        while not self.stop_worker:
+            # i+=1
+            # if i % 100_000 == 0:
+            try:
+                msg = self.__message_queue.get()
+            except EOFError as e:
+                logger.info(f"Message queue was closed")
+                return
             # I am watching this message for change?
 
             logger.debug(f"Getting ready to process: {msg}")
@@ -178,10 +161,7 @@ class SAGEProxy():
                 collection = msg["event"]['col']
                 doc = msg['event']['doc']
                 self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
-
-    #
-    # def __handle_exec(self, msg):
-    #     pass
+        print("exited the function")
 
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
@@ -239,10 +219,20 @@ class SAGEProxy():
                 logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
 
     def clean_up(self):
+        self.listening_process.clean_up()
+
         if not self.__message_queue.empty():
             logger.warning("Messages queue was not empty while starting to clean proxy")
         self.__message_queue.close()
-        self.listening_process_2.clean_up()
+
+        self.stop_worker = True
+        self.worker_process.join()
+
+        # clean up smartbits
+        before closing
+
+
+        # self.__message_queue.join_thread()
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
         if src_app not in self.callbacks:
@@ -259,11 +249,11 @@ class SAGEProxy():
         del (self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
 
-def get_cmdline_parser():
-    parser = argparse.ArgumentParser(description='Sage3 Python Proxy Server')
-    parser.add_argument('-c', '--config_file', type=str, required=True, help="Configuration file path")
-    parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
-    return parser
+# def get_cmdline_parser():
+#     parser = argparse.ArgumentParser(description='Sage3 Python Proxy Server')
+#     parser.add_argument('-c', '--config_file', type=str, required=True, help="Configuration file path")
+#     parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
+#     return parser
 
 
 if __name__ == "__main__":
