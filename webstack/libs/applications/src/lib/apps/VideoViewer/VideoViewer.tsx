@@ -70,7 +70,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     const controllerId = s.play.uid;
     const controller = presences.find((p) => p._id === controllerId && p.data.boardId === props.data.boardId);
-    console.log(presences, controllerId);
     if (!controller && presences.length > 0) {
       updateState(props._id, { play: { ...s.play, uid: '', paused: true } });
     }
@@ -279,7 +278,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (user) {
       const newTime = Math.max(0, videoRef.currentTime - 5);
       videoRef.currentTime = newTime;
-      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: newTime, seeked: true } });
+      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: newTime } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -291,7 +290,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (user) {
       const newTime = Math.max(0, videoRef.currentTime + 5);
       videoRef.currentTime = newTime;
-      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: newTime, seeked: true } });
+      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: newTime } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -341,7 +340,7 @@ function ToolbarComponent(props: App): JSX.Element {
     videoRef.currentTime = value;
     if (user) {
       updateState(props._id, {
-        play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime, seeked: true },
+        play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },
       });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);

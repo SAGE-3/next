@@ -14,13 +14,13 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  play: z.object({ paused: z.boolean(), uid: z.string(), currentTime: z.number(), loop: z.boolean(), seeked: z.boolean() }),
+  play: z.object({ paused: z.boolean(), uid: z.string(), currentTime: z.number(), loop: z.boolean() }),
   assetid: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: state = {
-  play: { paused: true, uid: '', currentTime: 0, loop: false, seeked: false },
+  play: { paused: true, uid: '', currentTime: 0, loop: false },
   assetid: '',
 };
 
