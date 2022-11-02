@@ -22,7 +22,6 @@ import {
   RadioGroup,
   Stack,
   Radio,
-  Box,
   FormLabel,
   FormControl,
 } from '@chakra-ui/react';
@@ -42,6 +41,7 @@ interface EditUserModalProps {
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { user, update } = useUser();
   const { auth } = useAuth();
+  const isGuest = auth?.provider === 'guest';
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
   const [color, setColor] = useState(user?.data.color as SAGEColors);
@@ -132,10 +132,10 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           <Text mt={5} fontSize={'md'}>
             Authentication:{' '}
             <em>
-              {auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}
+              {auth?.provider} {!isGuest && <>- {auth?.email}</>}
             </em>
           </Text>
-          {auth?.provider === 'guest' && (
+          {isGuest && (
             <Text mt={1} fontSize={'md'}>
               Limited functionality as Guest
             </Text>
