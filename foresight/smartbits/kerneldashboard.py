@@ -48,7 +48,7 @@ class KernelDashboard(SmartBit):
         self.send_updates()
 
     def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
-                   kernel_name="python3", auth_users=(), kernel_alias="YO"):
+                   kernel_name="python3", auth_users=(), kernel_alias="my_kernel"):
         body = {"name": kernel_name}
         j_url = f'{self._base_url}/kernels'
         response = requests.post(j_url, headers=self._headers, json=body)
