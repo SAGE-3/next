@@ -20,6 +20,7 @@ import {
   useUsersStore,
   PasteHandler,
   MainButton,
+  useUIStore,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -50,6 +51,9 @@ export function BoardPage() {
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
+  // UI Store
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // Handle joining and leave a board
@@ -66,12 +70,17 @@ export function BoardPage() {
     // Update the user's presence information
     updatePresence({ boardId: boardId, roomId: roomId });
 
+    // Set Selected app to empty
+    setSelectedApp('');
+
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
       unsubBoard();
       // Update the user's presence information
       updatePresence({ boardId: '', roomId: '' });
+      // Set Selected app to empty
+      setSelectedApp('');
     };
   }, []);
 
