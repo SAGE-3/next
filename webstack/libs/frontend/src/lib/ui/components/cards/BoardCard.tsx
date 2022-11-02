@@ -32,6 +32,8 @@ export type BoardCardProps = {
 export function BoardCard(props: BoardCardProps) {
   const { user } = useUser();
   const { auth } = useAuth();
+  // Guest mode disabled for now
+  const isGuest = false; // auth?.provider === 'guest';
 
   // Is it my board?
   const yours = user?._id === props.board.data.ownerId;
@@ -143,11 +145,11 @@ export function BoardCard(props: BoardCardProps) {
           </Tooltip>
 
           <Tooltip openDelay={400} placement="top-start" hasArrow
-            label={auth?.provider === 'guest' ? 'Guests cannot copy sharable link' : 'Copy sharable link'}>
+            label={isGuest ? 'Guests cannot copy sharable link' : 'Copy sharable link'}>
             <IconButton
               aria-label="Board link copy" fontSize="2xl" variant="unstlyed" ml="-3"
               onClick={handleCopyLink}
-              disabled={auth?.provider === 'guest'}
+              disabled={isGuest}
               icon={<MdLink />}
             />
           </Tooltip>
