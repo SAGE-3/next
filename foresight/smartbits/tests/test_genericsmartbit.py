@@ -4,15 +4,13 @@ from sample_sb_docs import generic_smartbit_doc
 
 
 @pytest.fixture()
-def generic_smartbit_instance():
-    generic_smartbit = GenericSmartBit(**generic_smartbit_doc)
-    yield generic_smartbit
-    print("cleaning up happend after all the tests completed.")
-    generic_smartbit._ai_client.stop_thread = True
-    generic_smartbit._jupyter_client.stop_thread = True
+def generic_smartbit():
+    gs = GenericSmartBit(**generic_smartbit_doc)
+    yield gs
+    gs._ai_client.clean_up()
+    gs._jupyter_client.clean_up()
 
-
-def test_create_generic_smartbit(generic_smartbit_instance):
-    assert isinstance(generic_smartbit_instance, GenericSmartBit)
+def test_create_generic_smartbit(generic_smartbit):
+    assert isinstance(generic_smartbit, GenericSmartBit)
 
 

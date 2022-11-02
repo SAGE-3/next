@@ -11,6 +11,7 @@ def kernel_dashboard():
     kd = KernelDashboard(**kernel_dashboard_doc)
     return kd
 
+
 def test_create_instance(kernel_dashboard):
     isinstance(kernel_dashboard, KernelDashboard)
 

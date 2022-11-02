@@ -147,7 +147,7 @@ class JupyterKernelProxy:
         except:
             raise Exception("couldn't communicate with the Jupyter Kernel Gateway.")
 
-    def cleanup(self):
+    def clean_up(self):
         self.conn_manager.close_all()
         self.conn_manager.stop()
         self.conn_manager.join()
