@@ -24,9 +24,9 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
-  // auth
-  const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+  // Guest mode disabled for now
+  // const { auth } = useAuth();
+  const isGuest = false; // auth?.provider === 'guest';
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);

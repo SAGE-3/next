@@ -40,6 +40,8 @@ export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
   const { auth } = useAuth();
+  const isGuest = auth?.provider === 'guest';
+
   // Data stores
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
@@ -131,7 +133,7 @@ export function RoomList(props: RoomListProps) {
           <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
             <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
               <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" mr="2" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={onOpen}>
+                <Button borderRadius="md" mr="2" fontSize="3xl" disabled={isGuest} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
