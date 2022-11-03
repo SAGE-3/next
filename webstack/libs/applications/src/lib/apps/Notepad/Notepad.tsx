@@ -6,8 +6,8 @@
  *
  */
 
-import { useEffect, useRef } from 'react';
-import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
+import { useEffect, useRef, useState } from 'react';
+import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 
 // Yjs Imports
 import * as Y from 'yjs';
@@ -31,7 +31,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '@sage3/applications/schema';
 
-import { MdFileDownload } from 'react-icons/md';
+import { MdFileDownload, MdOutlineFormatListNumbered, MdOutlineList } from 'react-icons/md';
 
 // Have to register the module before using it
 Quill.register('modules/cursors', QuillCursors);
@@ -47,6 +47,7 @@ export const useStore = create((set: any) => ({
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const quillRef = useRef(null);
+  const toolbarRef = useRef(null);
   const { user } = useUser();
   const setEditor = useStore((s: any) => s.setEditor);
   const updateState = useAppStore((state) => state.updateState);
@@ -56,18 +57,12 @@ function AppComponent(props: App): JSX.Element {
     let provider: WebsocketProvider | null = null;
     let ydoc: Y.Doc | null = null;
     let binding: QuillBinding | null = null;
-    if (quillRef.current) {
+    if (quillRef.current && toolbarRef.current) {
       const quill = new Quill(quillRef.current, {
         modules: {
           // cursors: true,
           cursors: false, // for now, tracking quill bug with transforms
-          toolbar: [
-            [{ header: [1, 2, 3, 4, false] }, { font: [] }],
-            ['bold', 'italic', 'clean', 'code-block'],
-            [{ color: [] }, { background: [] }],
-            [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-            ['link', 'image'],
-          ],
+          toolbar: toolbarRef.current,
           history: {
             // Local undo shouldn't undo changes from remote users
             userOnly: true,
@@ -129,11 +124,19 @@ function AppComponent(props: App): JSX.Element {
       if (binding) binding.destroy();
       if (provider) provider.disconnect();
     };
-  }, [quillRef]);
+  }, [quillRef, toolbarRef]);
 
   return (
     <AppWindow app={props}>
       <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
+        <div ref={toolbarRef} hidden>
+          <button className="ql-bold" id={`bold-${props._id}`}></button>
+          <button className="ql-italic" id={`italic-${props._id}`}></button>
+          <button className="ql-underline" id={`underline-${props._id}`}></button>
+
+          <button type="button" className="ql-list" id={`listordered-${props._id}`} value="ordered"></button>
+          <button type="button" className="ql-list" id={`listbullet-${props._id}`} value="bullet"></button>
+        </div>
         <div ref={quillRef}></div>
       </Box>
     </AppWindow>
@@ -145,7 +148,7 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   // const s = props.data.state as AppState;
   const editor: Quill = useStore((state: any) => state.editor[props._id]);
-
+  editor;
   // Download the content as an HTML file
   const downloadHTML = () => {
     // Current date
@@ -170,15 +173,89 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
+  const boldClick = () => {
+    const button = document.getElementById(`bold-${props._id}`) as any;
+    if (button) button.click();
+  };
+
+  const italicClick = () => {
+    const button = document.getElementById(`italic-${props._id}`) as any;
+    if (button) button.click();
+  };
+
+  const underlineClick = () => {
+    const button = document.getElementById(`underline-${props._id}`) as any;
+    if (button) button.click();
+  };
+
+  const listBulletClick = () => {
+    const button = document.getElementById(`listbullet-${props._id}`) as any;
+    if (button) button.click();
+  };
+
+  const listOrderedClick = () => {
+    const button = document.getElementById(`listordered-${props._id}`) as any;
+    if (button) button.click();
+  };
+
+  const smallFontClick = () => {
+    editor.format('size', 'small');
+  };
+
+  const normalFontClick = () => {
+    editor.format('size', 'large');
+  };
+
+  const largeFontClick = () => {
+    editor.format('size', 'huge');
+  };
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Download as HTML'} openDelay={400}>
-          <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Bold'} openDelay={400}>
+          <Button onClick={boldClick}>B</Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Italic'} openDelay={400}>
+          <Button onClick={italicClick}>
+            <i>I</i>
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Underline'} openDelay={400}>
+          <Button onClick={underlineClick}>
+            <u>U</u>
           </Button>
         </Tooltip>
       </ButtonGroup>
+      <Menu>
+        <MenuButton as={Button} size="xs" colorScheme="teal" mx="1">
+          Font Size
+        </MenuButton>
+        <MenuList>
+          {/* MenuItems are not rendered unless Menu is open */}
+          <MenuItem onClick={smallFontClick}>Small</MenuItem>
+          <MenuItem onClick={normalFontClick}>Medium</MenuItem>
+          <MenuItem onClick={largeFontClick}>Large</MenuItem>
+        </MenuList>
+      </Menu>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top" hasArrow={true} label={'Bullet List'} openDelay={400}>
+          <Button onClick={listBulletClick}>
+            <MdOutlineList />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top" hasArrow={true} label={'Numbered List'} openDelay={400}>
+          <Button onClick={listOrderedClick}>
+            <MdOutlineFormatListNumbered />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      <Tooltip placement="top" hasArrow={true} label={'Download as HTML'} openDelay={400}>
+        <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" mx="1">
+          <MdFileDownload />
+        </Button>
+      </Tooltip>
     </>
   );
 }
