@@ -7,7 +7,7 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Box, Button, Center, Tooltip, ButtonGroup } from '@chakra-ui/react';
+import { VStack, Text, Button, Center, Tooltip, ButtonGroup } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -224,21 +224,24 @@ function AppComponent(props: App): JSX.Element {
           :
           mine ?
             <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-              <Center w="100%" h="100%" bg="gray.700" >
-                <Box p={4} >
+              <Center w="100%" h="100%" bg="gray.700" p={0} m={0}>
+                <VStack>
                   <Center>
-                    <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                      CoBrowse is only supported with the SAGE3 Desktop Application.
-                    </Box>
+                    <Text color="white" fontSize={"2rem"} fontWeight="bold"
+                      whiteSpace={"pre-line"} >
+                      CoBrowse only supported in SAGE3 Desktop Application
+                    </Text>
                   </Center>
                   <br />
                   <Center>
-                    <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                      Current URL <a style={{ color: "#13a89e" }} href={s.sharedurl} rel="noreferrer" target="_blank">
-                        {s.sharedurl} </a>
-                    </Box>
+                    <Text color="white" fontSize={"1.5rem"} fontWeight="bold"
+                      whiteSpace={"pre-line"} >
+                      <a style={{ color: '#13a89e' }} href={s.sharedurl} rel="noreferrer" target="_blank">
+                        {s.sharedurl}
+                      </a>
+                    </Text>
                   </Center>
-                </Box>
+                </VStack>
               </Center>
             </div>
             : <img id={"image" + props._id} style={{ objectFit: "contain", width: "100%", height: "100%" }}></img>
