@@ -394,15 +394,15 @@ function AppComponent(props: App): JSX.Element {
         </Box>
         <Tooltip label={s.online ? 'Python Online' : 'Python Offline'} aria-label="Proxy Status" placement="top" fontSize="md" hasArrow>
           <Box
-            width="20px"
-            height="20px"
+            width="30px"
+            height="30px"
             position="absolute"
             right="2"
             bottom="2"
             borderRadius="100%"
             transformOrigin="bottom right"
             zIndex={5}
-            transform={`scale(${0.5 / scale})`}
+            transform={`scale(${0.4 / scale})`}
             backgroundColor={s.online ? green : red}
           ></Box>
         </Tooltip>

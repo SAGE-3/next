@@ -20,7 +20,7 @@ class KernelDashboardState(TrackedBaseModel):
     kernelSpecs: list = []
     availableKernels: list = []
     executeInfo: ExecuteInfo
-    lastHearbeat: int
+    lastHeartBeat: int
     online: bool
 
 
