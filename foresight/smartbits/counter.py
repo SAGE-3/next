@@ -31,3 +31,6 @@ class Counter(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
+
+    def clean_up(self):
+        pass

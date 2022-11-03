@@ -20,6 +20,8 @@ class KernelDashboardState(TrackedBaseModel):
     kernelSpecs: list = []
     availableKernels: list = []
     executeInfo: ExecuteInfo
+    lastHearbeat: int
+    online: bool
 
 
 class KernelDashboard(SmartBit):
@@ -41,6 +43,7 @@ class KernelDashboard(SmartBit):
         if self._r_json.get(self._redis_space) is None:
             self._r_json.set(self._redis_space, '.', {})
         self.get_kernel_specs()
+        self.set_online()
 
     def get_kernel_specs(self):
         response = requests.get(f"{self._base_url}/kernelspecs", headers=self._headers)
@@ -130,3 +133,12 @@ class KernelDashboard(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
+
+    def clean_up(self):
+        self._jupyter_client.clean_up()
+
+    def set_online(self):
+        self.state.lastHearbeat = self._s3_comm.get_time()["epoch"]
+        self.state.online = True
+        self.send_updates()
+

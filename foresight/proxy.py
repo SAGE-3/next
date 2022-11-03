@@ -24,7 +24,7 @@ from typing import Callable
 from pydantic import BaseModel
 import json
 import threading
-import argparse
+# import argparse
 from board import Board
 import uuid
 from multiprocessing import Queue
@@ -228,11 +228,12 @@ class SAGEProxy():
         self.stop_worker = True
         self.worker_process.join()
 
-        # clean up smartbits
-        before closing
+        for app_info in sage_proxy.room.boards["ad18901e-e128-4997-9c77-99aa6a6ab313"].smartbits:
+            app_info[1].clean_up()
 
 
-        # self.__message_queue.join_thread()
+
+
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
         if src_app not in self.callbacks:
