@@ -6,17 +6,18 @@
  *
  */
 
-import { useEffect } from 'react';
-import { Box, Button, Tooltip } from '@chakra-ui/react';
+import { MouseEventHandler, useEffect } from 'react';
+import { Box, Button, useToast, Tooltip } from '@chakra-ui/react';
 
 import { BsPencilFill } from 'react-icons/bs';
-import { FaEraser, FaTrash } from 'react-icons/fa';
+import { FaEraser, FaTrash, FaCamera } from 'react-icons/fa';
 
-import { useUIStore, StuckTypes, useHotkeys } from '@sage3/frontend';
+import { useUIStore, StuckTypes, useAppStore } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
+import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 
 export interface WhiteboardPanelProps {
   boardId: string;
@@ -34,6 +35,12 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
   const setStuck = useUIStore((state) => state.whiteboardPanel.setStuck);
   const zIndex = useUIStore((state) => state.panelZ).indexOf('whiteboard');
   const controllerPosition = useUIStore((state) => state.controller.position);
+  // Apps
+  const hideUI = useUIStore((state) => state.hideUI);
+  const showUI = useUIStore((state) => state.displayUI);
+  const fitApps = useUIStore((state) => state.fitApps);
+  const apps = useAppStore((state) => state.apps);
+  const toast = useToast();
 
   // Whiteboard information
   const whiteboardMode = useUIStore((state) => state.whiteboardMode);
@@ -62,9 +69,34 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
     setMarkerColor(color);
   };
 
+  const screenshot = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (event.shiftKey) {
+      // Cleanup the board
+      toast.closeAll();
+      hideUI();
+      fitApps(apps);
+    }
+    // Ask electron to take a screenshot
+    if (isElectron()) {
+      const electron = window.require('electron');
+      const ipcRenderer = electron.ipcRenderer;
+      setTimeout(() => {
+        // send the message to the main process
+        // small delay to make sure the board is rendered
+        ipcRenderer.send('take-screenshot');
+      }, 100);
+      // Restore the UI
+      setTimeout(() => {
+        if (event.shiftKey) {
+          showUI();
+        }
+      }, 3000);
+    }
+  };
+
   return (
     <Panel
-      title={'Whiteboard'}
+      title={'Annotation'}
       name="whiteboard"
       opened={opened}
       setOpened={setOpened}
@@ -98,7 +130,14 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
             <FaTrash />
           </Button>
         </Tooltip>
+
+        <Tooltip placement="top" hasArrow openDelay={1600} label="Screenshot in SAGE3 client (maximize your window for high-quality)">
+          <Button onClick={screenshot} ml="2" size="sm" disabled={!isElectron()}>
+            <FaCamera />
+          </Button>
+        </Tooltip>
+
       </Box>
-    </Panel>
+    </Panel >
   );
 }
