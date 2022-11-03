@@ -32,7 +32,7 @@ export function MainButton(props: MainButtonProps) {
       <Menu>
         <MenuButton
           as={Button}
-          size="md"
+          size="sm"
           variant={props.buttonStyle ? props.buttonStyle : 'outline'}
           colorScheme={user?.data.color ? user.data.color : 'white'}
           leftIcon={<MdAccountCircle />}

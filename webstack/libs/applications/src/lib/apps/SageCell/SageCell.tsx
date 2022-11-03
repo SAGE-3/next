@@ -20,19 +20,14 @@ import {
   Image,
   Alert,
   AlertIcon,
-  Toast,
+  Toast, useToast,
   IconButton,
   VStack,
   Flex,
-  Stack,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
   Spinner,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdError, MdPlayArrow, MdClearAll } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -51,7 +46,7 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 imports
-import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useUser, downloadFile } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
@@ -334,10 +329,20 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
   const [fontSize, setFontSize] = useState(s.fontSize);
+  const toast = useToast();
 
   const handleExecute = () => {
     const code = ace.current?.editor?.getValue();
-    if (code) {
+    if (!s.kernel) {
+      toast({
+        title: 'No kernel selected',
+        description: 'Please select a kernel from the toolbar',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+      });
+    } else if (code) {
       updateState(props.app._id, {
         code: code,
         output: '',
@@ -409,7 +414,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           }}
           commands={[
             { name: 'Execute', bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' }, exec: handleExecute },
-            { name: 'Clear', bindKey: { win: 'Ctrl-Alt-Backspace', mac: 'Ctrl-Alt-Backspace' }, exec: handleClear },
+            { name: 'Clear', bindKey: { win: 'Ctrl-Alt-Backspace', mac: 'Command-Option-Backspace' }, exec: handleClear },
           ]}
         />
         <VStack pr={2}>
@@ -533,77 +538,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.display_data.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                default:
+                  return MapJSONObject(parsedJSON.display_data[key]);
+              }
+            });
+          }
+          return null;
+        })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.execute_result.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                default:
+                  return null;
+              }
+            });
+          }
+          return null;
+        })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-            // find the user name that matches the userId
-            if (userId !== props.user._id) {
-              return null;
-            }
-            return (
-              <Toast
-                status="error"
-                description={message + ', ' + props.user.data.name}
-                duration={5000}
-                isClosable
-                onClose={() => updateState(props.app._id, { privateMessage: [] })}
-                hidden={userId !== props.user._id}
-              />
-            );
-          })}
+          // find the user name that matches the userId
+          if (userId !== props.user._id) {
+            return null;
+          }
+          return (
+            <Toast
+              status='error'
+              position='bottom'
+              description={message + ', ' + props.user.data.name}
+              duration={4000}
+              isClosable
+              onClose={() => updateState(props.app._id, { privateMessage: [] })}
+              hidden={userId !== props.user._id}
+            />
+          );
+        })}
     </Box>
   );
 };
@@ -629,30 +635,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
+          if (typeof obj[key] === 'object') {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
                 </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
+                <Box as="span" ml={2}>
+                  {MapJSONObject(obj[key])}
                 </Box>
-              );
-            }
-          })
+              </Box>
+            );
+          } else {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
+                </Box>
+                <Box as="span" ml={2}>
+                  {obj[key]}
+                </Box>
+              </Box>
+            );
+          }
+        })
         : null}
     </Box>
   );

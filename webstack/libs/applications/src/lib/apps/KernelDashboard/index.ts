@@ -59,6 +59,8 @@ export const schema = z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
   }),
+  lastHeartBeat: z.number(),
+  online: z.boolean(),
 });
 
 export type state = z.infer<typeof schema>;
@@ -67,6 +69,8 @@ export const init: Partial<state> = {
   kernelSpecs: [],
   availableKernels: [],
   executeInfo: { executeFunc: '', params: {} },
+  online: false,
+  lastHeartBeat: 0,
 };
 
 export const name = 'KernelDashboard';

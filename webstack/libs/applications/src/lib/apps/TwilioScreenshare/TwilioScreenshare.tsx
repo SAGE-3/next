@@ -8,7 +8,20 @@
 
 // Chakra and React imports
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Text, SimpleGrid, useDisclosure, Tabs, TabList, Tab, TabPanels, TabPanel, Image } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Text,
+  SimpleGrid,
+  useDisclosure,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Image,
+  ButtonGroup,
+} from '@chakra-ui/react';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -39,13 +52,10 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const yours = user?._id === props._createdBy;
 
-  // User store to get name of user who created screenshare
-  const users = useUsersStore((state) => state.users);
-  const userWhoCreated = users.find((u) => u._id === props._createdBy);
-
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
   const tracks = useTwilioStore((state) => state.tracks);
+  const stopStreamId = useTwilioStore((state) => state.stopStreamId);
 
   // App Store
   const updateState = useAppStore((state) => state.updateState);
@@ -155,6 +165,13 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
+    if (stopStreamId === props._id) {
+      stopStream();
+      deleteApp(props._id);
+    }
+  }, [stopStreamId]);
+
+  useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current) {
@@ -208,43 +225,11 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <Box
-          display="flex"
-          flexDir="column"
-          height="calc(100% - 25px)"
-          width="100%"
-          position="absolute"
-          left={0}
-          top={6}
-          background="red"
-          overflow="hidden"
-        >
-          <Box backgroundColor="black" width="100%" height="100%">
-            <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
-          </Box>
+        <Box backgroundColor="black" width="100%" height="100%">
+          <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
         </Box>
 
-        <Box
-          display="flex"
-          flexDir="column"
-          height="calc(100% - 25px)"
-          width="100%"
-          position="absolute"
-          left={0}
-          top={6}
-          backgroundColor="gray"
-          justifyContent="center"
-          p="5px"
-          alignItems={'center'}
-          opacity={videoRef.current?.srcObject ? 0 : 1}
-        ></Box>
-        {yours && videoRef.current?.srcObject ? (
-          <Button onClick={stopStream} position="absolute" left={2} bottom={2} colorScheme="red">
-            Stop Stream
-          </Button>
-        ) : null}
-
-        <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color={red}>
+        <Text position="absolute" left={0} bottom={0} m={1} size="sm" fontWeight={'bold'} color={red}>
           {expirationTime}
         </Text>
 
@@ -348,7 +333,23 @@ function isElectron() {
 /* App toolbar component for the app Twilio */
 
 function ToolbarComponent(props: App): JSX.Element {
-  return <></>;
+  // Current User
+  const { user } = useUser();
+  const yours = user?._id === props._createdBy;
+
+  // Twilio Store
+  const stopStream = useTwilioStore((state) => state.setStopStream);
+  return (
+    <>
+      <ButtonGroup>
+        {yours ? (
+          <Button onClick={() => stopStream(props._id)} colorScheme="red" size="xs">
+            Stop Stream
+          </Button>
+        ) : null}
+      </ButtonGroup>
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };
