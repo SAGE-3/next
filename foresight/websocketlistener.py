@@ -13,8 +13,9 @@ from config import config as conf, prod_type
 
 class WebSocketListener:
 
-    def __init__(self, message_queue):
+    def __init__(self, message_queue, room_id):
         # websocket.enableTrace(True)
+        self._room_id = room_id
         self.ws = websocket.WebSocketApp(conf[prod_type]["ws_server"]+"/api",
                                          header={"Authorization": "Bearer " + os.getenv('TOKEN')},
                                          on_message=lambda ws, msg: self.on_message(ws, msg),
@@ -43,7 +44,8 @@ class WebSocketListener:
     #     logger.debug("Connection to webserver closed")
 
     def on_open(self, ws):
-        room_id = "b34cf54e-2f9e-4b9a-a458-27f4b6c658a7"
+        room_id = self._room_id
+        # room_id = "377bf615-4e64-4db8-9e55-9e8e27747df4"
         subscription_id = str(uuid.uuid4())
         msg_sub = {
             'route': f'/api/subscription/rooms/{room_id}',
