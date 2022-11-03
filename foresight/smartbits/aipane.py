@@ -171,3 +171,6 @@ class AIPane(SmartBit):
 
         self._ai_client.execute(payload)
         print("just called the ai_client's execute")
+
+    def clean_up(self):
+        pass

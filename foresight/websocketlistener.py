@@ -9,12 +9,13 @@ import sys
 
 logger = logging_config.get_console_logger()
 
+from config import config as conf, prod_type
 
 class WebSocketListener:
 
     def __init__(self, message_queue):
         # websocket.enableTrace(True)
-        self.ws = websocket.WebSocketApp("ws://localhost:3333/api",
+        self.ws = websocket.WebSocketApp(conf[prod_type]["ws_server"]+"/api",
                                          header={"Authorization": "Bearer " + os.getenv('TOKEN')},
                                          on_message=lambda ws, msg: self.on_message(ws, msg),
                                          on_error=lambda ws, msg: self.on_error(ws, msg),
