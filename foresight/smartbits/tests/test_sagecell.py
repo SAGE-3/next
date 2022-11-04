@@ -8,7 +8,6 @@ from smartbits.tests.sample_sb_docs import sagecell_doc
 def sage_cell():
     sc = SageCell(**sagecell_doc)
     yield sc
-    sc._ai_client.clean_up()
     sc._jupyter_client.clean_up()
 
 

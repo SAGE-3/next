@@ -263,3 +263,6 @@ class DataTable(SmartBit):
         print(f"filter_rows on {col}")
         print("I am sending this information")
         self.send_updates()
+
+    def clean_up(self):
+        pass

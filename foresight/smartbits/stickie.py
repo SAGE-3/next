@@ -15,3 +15,6 @@ class Stickie(SmartBit):
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(Stickie, self).__init__(**kwargs)
+
+    def clean_up(self):
+        pass

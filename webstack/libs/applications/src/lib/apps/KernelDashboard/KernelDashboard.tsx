@@ -33,11 +33,13 @@ import { MdAdd, MdRefresh, MdRestartAlt, MdCode, MdDelete, MdVisibility, MdVisib
 
 // import { GiSpy, GiPublicSpeaker } from 'react-icons/gi';
 
-import { truncateWithEllipsis, useHexColor, useAppStore, useUser } from '@sage3/frontend';
+import { truncateWithEllipsis, useHexColor, useAppStore, useUser, useUIStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
+
+const heartBeatTimeCheck = 1000 * 20 * 60; // 20 mins
 
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {
@@ -54,6 +56,25 @@ function AppComponent(props: App): JSX.Element {
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   // Theme
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+
+  // colors
+  const red = useHexColor('red');
+  const green = useHexColor('green');
+  const scale = useUIStore((state) => state.scale);
+
+  // Interval to check if the proxy is still avilive
+  useEffect(() => {
+    const checkHeartBeat = setInterval(async () => {
+      const response = await fetch('/api/time');
+      const time = await response.json();
+      const delta = Math.abs(time.epoch - s.lastHeartBeat);
+      console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.online);
+      if (delta > heartBeatTimeCheck && s.online) {
+        updateState(props._id, { online: false });
+      }
+    }, 45 * 1000); // 15 Seconds
+    return () => clearInterval(checkHeartBeat);
+  }, [s.lastHeartBeat, s.online]);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -371,6 +392,20 @@ function AppComponent(props: App): JSX.Element {
             ))
           }
         </Box>
+        <Tooltip label={s.online ? 'Python Online' : 'Python Offline'} aria-label="Proxy Status" placement="top" fontSize="md" hasArrow>
+          <Box
+            width="30px"
+            height="30px"
+            position="absolute"
+            right="2"
+            bottom="2"
+            borderRadius="100%"
+            transformOrigin="bottom right"
+            zIndex={5}
+            transform={`scale(${0.4 / scale})`}
+            backgroundColor={s.online ? green : red}
+          ></Box>
+        </Tooltip>
       </VStack>
     </AppWindow>
   );
