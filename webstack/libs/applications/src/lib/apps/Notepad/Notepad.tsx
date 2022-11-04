@@ -228,9 +228,12 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
       <Menu>
-        <MenuButton as={Button} size="xs" colorScheme="teal" mx="1">
-          Font Size
-        </MenuButton>
+        <Tooltip placement="top" hasArrow={true} label={'Font Size'} openDelay={400}>
+          <MenuButton as={Button} size="xs" colorScheme="teal" mx="1">
+            Font Size
+          </MenuButton>
+        </Tooltip>
+
         <MenuList>
           {/* MenuItems are not rendered unless Menu is open */}
           <MenuItem onClick={smallFontClick}>Small</MenuItem>
