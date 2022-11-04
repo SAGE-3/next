@@ -14,7 +14,7 @@ export interface heatmapProps {
   transform: any[];
 }
 
-export default function createHeatmap(extractedHeaders: string[], fileName: string, data: Record<string, string>[]) {
+export default function createHeatmap(extractedHeaders: string[], fileName: string, data: string[]) {
   let lineChartSpec: heatmapProps = {
     description: "A bar chart with highlighting on hover and selecting on click. (Inspired by Tableau's interaction style.)",
     title: '',
@@ -45,7 +45,7 @@ export default function createHeatmap(extractedHeaders: string[], fileName: stri
   return specifications;
 }
 
-function organizeHeatmapHeaders(extractedHeaders: string[], data: Record<string, string>[]) {
+function organizeHeatmapHeaders(extractedHeaders: string[], data: string[]) {
   // let quantitativeFound = false;
   // let temporalFound = false;
   // for (let i = 0; i < extractedHeaders.length; i++) {

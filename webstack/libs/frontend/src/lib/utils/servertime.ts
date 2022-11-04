@@ -6,8 +6,8 @@
  *
  */
 
-export * from './download';
-export * from './strings';
-export * from './timeout';
-export * from './urlBoardCheck';
-export * from './servertime';
+export async function serverTime(): Promise<{ epoch: number }> {
+  const response = await fetch('/api/time');
+  const time = await response.json();
+  return time;
+}

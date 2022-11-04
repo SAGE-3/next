@@ -15,7 +15,7 @@ export interface barChartProps {
   transform: any[];
 }
 
-export default function createBarChart(extractedHeaders: string[], fileName: string, data: Record<string, string>[]) {
+export default function createBarChart(extractedHeaders: string[], fileName: string, data: string[]) {
   let barChartSpec: barChartProps = {
     description: "A bar chart with highlighting on hover and selecting on click. (Inspired by Tableau's interaction style.)",
     title: '',
@@ -58,7 +58,7 @@ export default function createBarChart(extractedHeaders: string[], fileName: str
   return specifications;
 }
 
-function organizeBarChartHeaders(extractedHeaders: string[], data: Record<string, string>[]) {
+function organizeBarChartHeaders(extractedHeaders: string[], data: string[]) {
   let quantitativeFound = false;
   for (let i = 0; i < extractedHeaders.length; i++) {
     if (findHeaderType(extractedHeaders[i], data) === 'quantitative') {

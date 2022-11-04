@@ -1,6 +1,6 @@
 import { specialTypes } from './findHeaderType';
 
-export default function (input: string, data: Record<string, any>[]) {
+export default function (input: string, data: any[]) {
   let availableCharts = [
     {
       key: 'bar',
@@ -56,7 +56,7 @@ export default function (input: string, data: Record<string, any>[]) {
     map: false,
   };
 
-  let keys = Object.keys(data[0]);
+  let keys: any[] = Object.keys(data);
   for (let i = 0; i < keys.length; i++) {
     for (let i = 0; i < specialTypes.length; i++) {
       if (keys[i] === specialTypes[i].header) {
@@ -74,7 +74,7 @@ export default function (input: string, data: Record<string, any>[]) {
       lowerCaseHeader.includes('dates')
     ) {
       typesInDataset.temporal = true;
-    } else if (isNaN(data[1][keys[i]])) {
+    } else if (isNaN(data[keys[i]])) {
       typesInDataset.nominal = true;
     } else {
       typesInDataset.quantitative = true;

@@ -14,7 +14,7 @@ export interface lineChartProps {
   transform: any[];
 }
 
-export default function createLineChart(extractedHeaders: string[], fileName: string, data: Record<string, string>[]) {
+export default function createLineChart(extractedHeaders: string[], fileName: string, data: string[]) {
   let lineChartSpec: lineChartProps = {
     description: "A bar chart with highlighting on hover and selecting on click. (Inspired by Tableau's interaction style.)",
     title: '',
@@ -55,7 +55,7 @@ export default function createLineChart(extractedHeaders: string[], fileName: st
   return specifications;
 }
 
-function organizeLineChartHeaders(extractedHeaders: string[], data: Record<string, string>[]) {
+function organizeLineChartHeaders(extractedHeaders: string[], data: string[]) {
   let quantitativeFound = false;
   let temporalFound = false;
   for (let i = 0; i < extractedHeaders.length; i++) {

@@ -1,11 +1,11 @@
 export default function extractHeaders(input: string, headers: string[]) {
   let extractedHeaders: string[] = [];
+  console.log(headers);
   headers.forEach((header) => {
     if (input.includes(header)) {
       extractedHeaders.push(header);
     }
   });
-
   /**
    * Extracts headers relative to what header was spoken first
    * This is later used to recursivly iterate over the first spoken header

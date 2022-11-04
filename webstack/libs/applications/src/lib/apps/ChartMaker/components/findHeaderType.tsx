@@ -16,7 +16,7 @@ export default function findHeaderType(header: string, data: any) {
     lowerCaseHeader.includes('dates')
   ) {
     return 'temporal';
-  } else if (isNaN(data[1][header])) {
+  } else if (isNaN(data[header])) {
     return 'nominal';
   } else {
     return 'quantitative';

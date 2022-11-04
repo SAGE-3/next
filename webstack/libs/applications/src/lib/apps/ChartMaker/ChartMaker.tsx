@@ -6,8 +6,8 @@
  *
  */
 
-import { useAppStore, useAssetStore, useUser } from '@sage3/frontend';
-import { Box, Button, IconButton, Input, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
+import { serverTime, useAppStore, useAssetStore, useUser } from '@sage3/frontend';
+import { Box, Button, Text, Input, Menu, MenuButton, MenuItem, MenuList, VStack } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -17,20 +17,12 @@ import { createCharts } from './components/createCharts';
 
 // Styling
 import './styling.css';
-import {
-  ChangeEvent,
-  MouseEvent,
-  FormEvent,
-  FormEventHandler,
-  ReactEventHandler,
-  useEffect,
-  useRef,
-  useState,
-  SyntheticEvent,
-} from 'react';
+import { ChangeEvent, MouseEvent, FormEvent, useEffect, useState } from 'react';
 import { debounce } from 'throttle-debounce';
 import { useParams } from 'react-router';
 import { Asset } from '@sage3/shared/types';
+import { genId } from '@sage3/shared';
+import createPropertyList from './components/createPropertyList';
 
 export interface CreateChartProps {
   input: string;
@@ -39,44 +31,53 @@ export interface CreateChartProps {
 }
 
 /* App component for chartMaker */
-
+const messages = [
+  {
+    id: genId(),
+    creationDate: '',
+    userName: 'RJ',
+    text: "Hello I'm RJ",
+  },
+  {
+    userName: 'Arti',
+    text: 'Hello friend, I am Arti, a personal assistant',
+  },
+  {
+    userName: 'Roderick',
+    text: 'I just joined the chat',
+  },
+  {
+    userName: 'Arti',
+    text: 'Hello Roderick, Would you like me to generate a chart for you?',
+  },
+  {
+    userName: 'RJ',
+    text: 'can you show me a bar chart of diabetes and uninsured?',
+  },
+];
 function AppComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const datasets = useAssetStore((state) => state.assets.filter((file) => file.data.file.split('.').pop() == 'csv'));
+  const user = useUser();
 
-  const handleChangeFile = (value: Asset) => {
-    if (!value) {
-      updateState(props._id, { ...state, file: value });
-    } else {
-      updateState(props._id, { ...state, file: value });
-    }
+  const generateChart = async () => {
+    const time = await serverTime();
   };
 
   return (
     <AppWindow app={props}>
-      <Box display="flex" flexDir="column" justifyContent={'center'} alignContent="center" height="100%" width="100%">
-        <Box width="100%" my="2" display="flex" justifyContent={'center'}>
-          <Box bg="orange" w="90%" height="100%">
-            hello
-          </Box>
-        </Box>
-        <Box width="100%" my="2" display="flex" justifyContent={'center'}>
-          <Menu>
-            <MenuButton as={Button}>
-              {state.file?.data.originalfilename ? state.file?.data.originalfilename : 'Select a Dataset'}
-            </MenuButton>
-            <MenuList>
-              {datasets.map((dataset, index) => {
-                return (
-                  <MenuItem onClick={() => handleChangeFile(dataset)} key={index} value={dataset.data.file}>
-                    {dataset.data.originalfilename}
-                  </MenuItem>
-                );
-              })}
-            </MenuList>
-          </Menu>
-        </Box>
+      <Box h="full" w="full" bg="white" onClick={generateChart}>
+        {messages.map((message, index) => {
+          return (
+            <Text
+              color="black"
+              rounded={'md'}
+              textAlign={user.user?.data.name == message.userName ? 'right' : 'left'}
+              bg={user.user?.data.name == message.userName ? 'cyan' : 'grey'}
+            >
+              {message.text}
+            </Text>
+          );
+        })}
       </Box>
     </AppWindow>
   );
@@ -86,27 +87,26 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
+  const datasets = useAssetStore((state) => state.assets.filter((file) => file.data.file.split('.').pop() == 'csv'));
+
   const updateState = useAppStore((state) => state.updateState);
-  const [data, setData] = useState<Record<string, string>[]>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
 
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
 
   // The text of the sticky for React
-  const [input, setInput] = useState(state.input);
+  const [input, setInput] = useState<string>('');
 
   //BoardInfo
   const { boardId, roomId } = useParams();
+  const [selectedFile, setSelectedFile] = useState<Asset | null>(null);
 
-  // Update local value with value from the server
+  const handleChangeFile = (value: Asset) => {
+    setSelectedFile(value);
+  };
   useEffect(() => {
-    setInput(state.input);
-  }, [state.input]);
-
-  useEffect(() => {
-    if (state.file) {
-      const localurl = '/api/assets/static/' + state.file?.data.file;
+    if (selectedFile) {
+      const localurl = '/api/assets/static/' + selectedFile.data.file;
       if (localurl) {
         fetch(localurl, {
           headers: {
@@ -120,35 +120,32 @@ function ToolbarComponent(props: App): JSX.Element {
           .then(async function (text) {
             // Convert the csv to an array
             const arr = await csvToArray(text);
-            // save the data
-            setData(arr);
+            const firstRow = arr[0];
             // extract the headers and save them
             const headers = Object.keys(arr[0]);
-            setHeaders(headers);
+            const propertyList = createPropertyList(arr, headers);
+            updateState(props._id, {
+              ...state,
+              fileName: selectedFile?.data.originalfilename,
+              fileReference: selectedFile?.data.file,
+              headers: headers,
+              dataRow: firstRow,
+              propertyList: propertyList,
+            });
           });
       }
     }
-  }, [state.file?.data.originalfilename]);
-
-  // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(1000, (val) => {
-    console.log('debounce');
-    updateState(props._id, { input: val });
-  });
-
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const text = event.target.value;
-    setInput(text);
-    debounceFunc.current(text);
+  }, [selectedFile]);
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
   };
+
   const generateChart = (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (!state.file?.data.originalfilename) return;
+    if (!state.fileName) return;
     try {
-      const specifications = createCharts(input, data, headers, state.file?.data.file);
+      const specifications = createCharts(input, state.dataRow, state.headers, state.fileReference, state.propertyList);
       if (!user) return;
       for (let i = 0; i < specifications.length; i++) {
         createApp({
@@ -165,18 +162,30 @@ function ToolbarComponent(props: App): JSX.Element {
           raised: true,
         });
       }
+      console.log(specifications);
     } catch (e) {
       console.error(e);
     }
   };
+
   return (
     <>
-      <Box width="100%" my="2" display="flex" justifyContent={'center'}>
-        <Input onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="400px" />
-        <Button onClick={generateChart} disabled={state.file ? false : true} colorScheme="teal" mx="2">
-          Generate
-        </Button>
-      </Box>
+      <Menu>
+        <MenuButton as={Button}>{state.fileName ? state.fileName : 'Select a Dataset'}</MenuButton>
+        <MenuList>
+          {datasets.map((dataset, index) => {
+            return (
+              <MenuItem onClick={() => handleChangeFile(dataset)} key={index} value={dataset.data.file}>
+                {dataset.data.originalfilename}
+              </MenuItem>
+            );
+          })}
+        </MenuList>
+      </Menu>
+      <Input size="xs" onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="400px" />
+      <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1}>
+        Generate
+      </Button>
       <Button colorScheme="green" size="xs">
         Action
       </Button>

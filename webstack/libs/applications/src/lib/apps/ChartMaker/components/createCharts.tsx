@@ -10,9 +10,14 @@ import createAvailableChartTypes from './createAvailableChartTypes';
 import createTitle from './chartTemplates/createTitle';
 import createTransform from './chartTemplates/createTransform';
 
-export const createCharts = (input: string, data: Record<string, string>[], headers: string[], fileName: string) => {
+export const createCharts = (
+  input: string,
+  data: string[],
+  headers: string[],
+  fileName: string,
+  propertyList: { header: string; filterValues: string[]; headerType: string }[]
+) => {
   input = input.toLowerCase();
-  const propertyList = createPropertyList(data, headers);
   const availableCharts = createAvailableChartTypes(input, data);
 
   const extractedHeaders = extractHeaders(input, headers);

@@ -1,9 +1,32 @@
-import findHeaderType from './findHeaderType';
+export const specialTypes = [{ header: 'map', type: 'map' }];
+
+function checkType(header: string, data: any) {
+  let lowerCaseHeader = header.toLowerCase();
+  for (let i = 0; i < specialTypes.length; i++) {
+    if (header === specialTypes[i].header) {
+      return specialTypes[i].type;
+    }
+  }
+  if (
+    lowerCaseHeader.includes('date') ||
+    lowerCaseHeader.includes('year') ||
+    lowerCaseHeader.includes('month') ||
+    lowerCaseHeader.includes('day') ||
+    lowerCaseHeader.includes('months') ||
+    lowerCaseHeader.includes('dates')
+  ) {
+    return 'temporal';
+  } else if (isNaN(data[0][header])) {
+    return 'nominal';
+  } else {
+    return 'quantitative';
+  }
+}
 
 export default function createPropertyList(data: any, headers: string[]) {
   let propertyList = [];
   for (let i = 0; i < headers.length; i++) {
-    if (findHeaderType(headers[i], data) === 'nominal') {
+    if (checkType(headers[i], data) === 'nominal') {
       var flags: never[] | boolean[] = [],
         uniqueNominalValues = [],
         l = data.length,
@@ -16,7 +39,7 @@ export default function createPropertyList(data: any, headers: string[]) {
       }
       let propertyInfo = { header: headers[i], filterValues: uniqueNominalValues, headerType: 'nominal' };
       propertyList.push(propertyInfo);
-    } else if (findHeaderType(headers[i], data) === 'quantitative') {
+    } else if (checkType(headers[i], data) === 'quantitative') {
       var quantitativeValues = [];
       quantitativeValues.push();
       let quantitativeData = [];
