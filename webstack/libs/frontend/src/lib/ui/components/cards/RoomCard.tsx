@@ -86,10 +86,9 @@ export function RoomCard(props: RoomCardProps) {
         privatePin={props.room.data.privatePin}
         isOpen={isOpenEnter}
         onClose={onCloseEnter}
-        // onEnter={onOpenEnter}
         onEnter={handleOnEnter}
       />
-      <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} />
+      <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} boards={props.boards} />
 
       <Box
         boxShadow={'md'}
