@@ -129,13 +129,13 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
-        <div ref={toolbarRef} hidden>
+        <div ref={toolbarRef}>
           <button className="ql-bold" id={`bold-${props._id}`}></button>
           <button className="ql-italic" id={`italic-${props._id}`}></button>
           <button className="ql-underline" id={`underline-${props._id}`}></button>
-
-          <button type="button" className="ql-list" id={`listordered-${props._id}`} value="ordered"></button>
-          <button type="button" className="ql-list" id={`listbullet-${props._id}`} value="bullet"></button>
+          <button className="ql-strike" id={`strike-${props._id}`}></button>
+          <button className="ql-list" id={`listordered-${props._id}`} value="ordered"></button>
+          <button className="ql-list" id={`listbullet-${props._id}`} value="bullet"></button>
         </div>
         <div ref={quillRef}></div>
       </Box>
@@ -173,57 +173,52 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  const boldClick = () => {
-    const button = document.getElementById(`bold-${props._id}`) as any;
-    if (button) button.click();
+  const quillFormatText = (value: 'bold' | 'italic' | 'underline' | 'strike') => {
+    const range = editor.getSelection();
+    if (range) {
+      if (range.length > 0) {
+        const currentFormat = editor.getFormat(range);
+        console.log(currentFormat);
+        const format = currentFormat[value] ? !currentFormat[value] : true;
+        editor.formatText(range.index, range.length, value, format);
+      }
+    }
   };
 
-  const italicClick = () => {
-    const button = document.getElementById(`italic-${props._id}`) as any;
-    if (button) button.click();
+  const quillFormatLine = (value: 'bullet' | 'ordered') => {
+    const range = editor.getSelection();
+    if (range) {
+      if (range.length > 0) {
+        const currentFormat = editor.getFormat(range);
+        const format = currentFormat['list'] === value ? '' : value;
+        editor.formatLine(range.index, range.length, 'list', format);
+      }
+    }
   };
 
-  const underlineClick = () => {
-    const button = document.getElementById(`underline-${props._id}`) as any;
-    if (button) button.click();
-  };
-
-  const listBulletClick = () => {
-    const button = document.getElementById(`listbullet-${props._id}`) as any;
-    if (button) button.click();
-  };
-
-  const listOrderedClick = () => {
-    const button = document.getElementById(`listordered-${props._id}`) as any;
-    if (button) button.click();
-  };
-
-  const smallFontClick = () => {
-    editor.format('size', 'small');
-  };
-
-  const normalFontClick = () => {
-    editor.format('size', 'large');
-  };
-
-  const largeFontClick = () => {
-    editor.format('size', 'huge');
+  const fontSizeClick = (size: string) => {
+    editor.format('size', size);
   };
 
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Bold'} openDelay={400}>
-          <Button onClick={boldClick}>B</Button>
+          <Button onClick={() => quillFormatText('bold')}>B</Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Italic'} openDelay={400}>
-          <Button onClick={italicClick}>
+          <Button onClick={() => quillFormatText('italic')}>
             <i>I</i>
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Underline'} openDelay={400}>
-          <Button onClick={underlineClick}>
+          <Button onClick={() => quillFormatText('underline')}>
             <u>U</u>
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Strike'} openDelay={400}>
+          <Button onClick={() => quillFormatText('strike')}>
+            <s>S</s>
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -236,20 +231,20 @@ function ToolbarComponent(props: App): JSX.Element {
 
         <MenuList>
           {/* MenuItems are not rendered unless Menu is open */}
-          <MenuItem onClick={smallFontClick}>Small</MenuItem>
-          <MenuItem onClick={normalFontClick}>Medium</MenuItem>
-          <MenuItem onClick={largeFontClick}>Large</MenuItem>
+          <MenuItem onClick={() => fontSizeClick('small')}>Small</MenuItem>
+          <MenuItem onClick={() => fontSizeClick('large')}>Medium</MenuItem>
+          <MenuItem onClick={() => fontSizeClick('huge')}>Large</MenuItem>
         </MenuList>
       </Menu>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Bullet List'} openDelay={400}>
-          <Button onClick={listBulletClick}>
+          <Button onClick={() => quillFormatLine('bullet')}>
             <MdOutlineList />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Numbered List'} openDelay={400}>
-          <Button onClick={listOrderedClick}>
+          <Button onClick={(e) => quillFormatLine('ordered')}>
             <MdOutlineFormatListNumbered />
           </Button>
         </Tooltip>
