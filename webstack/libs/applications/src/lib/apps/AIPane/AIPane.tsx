@@ -73,7 +73,7 @@ function AppComponent(props: App): JSX.Element {
   // Checks for apps on or off the pane
   useEffect(() => {
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.title };
+      const client = { [app._id]: app.data.type };
 
       // TODO Handle AIPanes overlapping AIPanes
       // const includedAppTypes: AppName[] = ['AIPane']
@@ -129,7 +129,7 @@ function AppComponent(props: App): JSX.Element {
     const yDiff = props.data.position.y - prevY.current;
 
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.title };
+      const client = { [app._id]: app.data.type };
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
@@ -190,8 +190,8 @@ function AppComponent(props: App): JSX.Element {
 
           <PopoverContent>
             <PopoverArrow />
-            <PopoverCloseButton />
-            <PopoverHeader>History</PopoverHeader>
+            {/*<PopoverCloseButton />*/}
+            {/*<PopoverHeader>History</PopoverHeader>*/}
 
             <PopoverBody>
               {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}

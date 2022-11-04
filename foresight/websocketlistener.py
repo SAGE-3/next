@@ -43,7 +43,7 @@ class WebSocketListener:
     #     logger.debug("Connection to webserver closed")
 
     def on_open(self, ws):
-        room_id = "b34cf54e-2f9e-4b9a-a458-27f4b6c658a7"
+        room_id = "55d27866-6d1c-441f-9718-dcdb4b6faeca"
         subscription_id = str(uuid.uuid4())
         msg_sub = {
             'route': f'/api/subscription/rooms/{room_id}',

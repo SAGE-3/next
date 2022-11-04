@@ -13,6 +13,8 @@ from smartbits.smartbit import TrackedBaseModel
 from typing import Optional, TypeVar
 from config import ai_models, funcx as funcx_config
 from config import config as conf, prod_type
+from ai.ai_client import AIClient
+
 if prod_type == "development":
     import os
     import dropbox
@@ -72,12 +74,14 @@ class AIPaneState(TrackedBaseModel):
 class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
+    _ai_client = PrivateAttr()
 
     _pending_executions: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(AIPane, self).__init__(**kwargs)
+        self._ai_client = AIClient()
         self._pending_executions = {}
 
     def new_app_added(self, app_type):
