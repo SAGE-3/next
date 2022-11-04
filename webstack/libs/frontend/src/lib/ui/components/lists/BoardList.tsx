@@ -42,7 +42,6 @@ type BoardListProps = {
  */
 export function BoardList(props: BoardListProps) {
   // Data stores
-  const deleteBoard = useBoardStore((state) => state.delete);
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
   const storeError = useBoardStore((state) => state.error);
   const clearError = useBoardStore((state) => state.clearError);
@@ -186,7 +185,6 @@ export function BoardList(props: BoardListProps) {
                     board={board}
                     userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
                     onSelect={() => props.onBoardClick(board)}
-                    onDelete={() => deleteBoard(board._id)}
                   />
                 );
               })}

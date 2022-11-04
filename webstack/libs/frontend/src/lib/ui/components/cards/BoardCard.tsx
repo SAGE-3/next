@@ -19,7 +19,6 @@ export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
   userCount: number;
   onSelect: () => void;
-  onDelete: () => void;
 };
 
 /**
