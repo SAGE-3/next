@@ -35,14 +35,21 @@ import {
 
 import { MdRefresh, MdRestartAlt, MdCode, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
 
-import { truncateWithEllipsis, useHexColor, useAppStore, useUser, useUIStore } from '@sage3/frontend';
+import { truncateWithEllipsis, useHexColor, useAppStore, useUser } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
-const heartBeatTimeCheck = 1000 * 20 * 60; // 20 mins
+/**
+ * We check the status of the kernel every 15 seconds
+ * and if it has been over 20 seconds, we show a warning
+ */
+const heartBeatTimeCheck = 20; // seconds
 
+/**
+ * This is a sample state for testing the UI without a backend
+ */
 const fakeKernel = {
   label: '1234',
   key: '1234',
@@ -84,7 +91,7 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, { online: false });
       }
       // console.log('Heartbeat delta: ', delta);
-    }, 45 * 1000); // 45 Seconds
+    }, 15000); // 15 Seconds
     return () => clearInterval(checkHeartBeat);
   }, [s.lastHeartBeat, s.online]);
 
@@ -438,15 +445,17 @@ function ToolbarComponent(props: App): JSX.Element {
               }}
               mt="1"
             >
-              {s.kernelSpecs.length > 0 &&
-                Object.keys(JSON.parse(JSON.stringify(s.kernelSpecs[0])).kernelspecs).map((k) => (
-                  <option key={k} value={k}>
-                    {
-                      // show R for ir, Python for python3, etc.}
-                      k === 'ir' ? 'R' : k === 'python3' ? 'Python' : k === 'julia-1.8' ? 'Julia' : k
-                    }
+              {s.online && s.kernelSpecs.length > 0 ? (
+                s.kernelSpecs.map((kernel) => (
+                  <option key={kernel} value={kernel}>
+                    {kernel === 'ir' ? 'R' : kernel === 'python3' ? 'Python' : kernel === 'julia-1.8' ? 'Julia' : kernel}
                   </option>
-                ))}
+                ))
+              ) : (
+                <option value="" disabled>
+                  No kernels available
+                </option>
+              )}
             </Select>
             <Spacer my="4" />
             Alias
