@@ -18,6 +18,7 @@
 
 
 # TODO prevent apps updates on fields that were touched?
+import signal
 import sys
 import os
 from typing import Callable
@@ -257,7 +258,17 @@ class SAGEProxy():
 #     return parser
 
 
+def clean_up_terminate(signum, frame):
+    logger.info("Cleaning up before terminating")
+    sage_proxy.clean_up()
+
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, clean_up_terminate)
+    signal.signal(signal.SIGTERM, clean_up_terminate)
+    signal.signal(signal.SIGHUP, clean_up_terminate)
+
     # For development purposes only.
     token = os.getenv("TOKEN")
     if prod_type == "production" or prod_type == "backend":
@@ -301,3 +312,4 @@ if __name__ == "__main__":
     logger.info(f"Starting proxy with room {room_id}:")
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
     sage_proxy.start_threads()
+
