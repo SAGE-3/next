@@ -7,7 +7,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
+import {
+  Box, useColorModeValue, Tooltip, IconButton,
+  Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
+  useDisclosure
+} from '@chakra-ui/react';
+
 import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen } from 'react-icons/md';
 
 import { StuckTypes, useAppStore, useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
@@ -49,6 +54,9 @@ export function NavigationPanel(props: NavProps) {
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+
+  // Clear board modal
+  const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
 
   const backgroundColor = useColorModeValue('gray.100', 'gray.600');
   const borderColor = useColorModeValue('teal.500', 'teal.500');
@@ -131,7 +139,7 @@ export function NavigationPanel(props: NavProps) {
   };
 
   // Organize the apps to the current user's screen
-  const oraganizeApps = () => {
+  const organizeApps = () => {
     if (apps.length > 0) {
       const buffer = 100 / scale;
       const winWidth = window.innerWidth / scale - buffer;
@@ -171,98 +179,111 @@ export function NavigationPanel(props: NavProps) {
     }
   };
 
+  // Result the confirmation modal
+  const onOrganizeConfirm = () => {
+    organizeApps();
+    organizeOnClose();
+  };
+
   return (
-    <Panel
-      title={'Navigation'}
-      name="navigation"
-      opened={opened}
-      setOpened={setOpened}
-      setPosition={setPosition}
-      position={position}
-      width={400}
-      showClose={true}
-      show={show}
-      setShow={setShow}
-      stuck={stuck}
-      setStuck={setStuck}
-      zIndex={zIndex}
-    >
-      <Box alignItems="center" display="flex">
-        <Box
-          width={mapWidth}
-          height={mapHeight}
-          backgroundColor={backgroundColor}
-          borderRadius="md"
-          borderWidth="2px"
-          borderStyle="solid"
-          borderColor={borderColor}
-          overflow="hidden"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Box position="relative" height={appHeight} width={appWidth}>
-            {/* Create a copy of app array and sort it by update time */}
-            {apps
-              .slice()
-              .sort((a, b) => a._updatedAt - b._updatedAt)
-              .map((app) => {
-                return (
-                  <Tooltip key={app._id} placement="top-start" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
-                    <Box
-                      backgroundColor={borderColor}
-                      position="absolute"
-                      left={(app.data.position.x - appsX) * mapScale + 'px'}
-                      top={(app.data.position.y - appsY) * mapScale + 'px'}
-                      width={app.data.size.width * mapScale + 'px'}
-                      height={app.data.size.height * mapScale + 'px'}
-                      transition={'all .5s'}
-                      _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
-                      onClick={() => moveToApp(app)}
-                      borderWidth="1px"
-                      borderStyle="solid"
-                      borderColor={appBorderColor}
-                      borderRadius="sm"
-                      cursor="pointer"
-                    ></Box>
-                  </Tooltip>
-                );
-              })}
-            {/* Draw the cursors: filter by board and not myself */}
-            {presences
-              .filter((el) => el.data.boardId === props.boardId)
-              .map((presence) => {
-                const u = users.find((el) => el._id === presence.data.userId);
-                if (!u) return null;
-                return (
-                  <NavMapCursor key={presence._id} presence={presence} user={u} mapScale={mapScale} boardShift={{ x: appsX, y: appsY }} />
-                );
-              })}
+    <>
+      {/* Organize board dialog */}
+      <Modal isCentered isOpen={organizeIsOpen} onClose={organizeOnClose}>
+        <OrganizeBoardModal onClick={onOrganizeConfirm} onClose={organizeOnClose} isOpen={organizeIsOpen}></OrganizeBoardModal>
+      </Modal>
+
+      <Panel
+        title={'Navigation'}
+        name="navigation"
+        opened={opened}
+        setOpened={setOpened}
+        setPosition={setPosition}
+        position={position}
+        width={400}
+        showClose={true}
+        show={show}
+        setShow={setShow}
+        stuck={stuck}
+        setStuck={setStuck}
+        zIndex={zIndex}
+      >
+        <Box alignItems="center" display="flex">
+          <Box
+            width={mapWidth}
+            height={mapHeight}
+            backgroundColor={backgroundColor}
+            borderRadius="md"
+            borderWidth="2px"
+            borderStyle="solid"
+            borderColor={borderColor}
+            overflow="hidden"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Box position="relative" height={appHeight} width={appWidth}>
+              {/* Create a copy of app array and sort it by update time */}
+              {apps
+                .slice()
+                .sort((a, b) => a._updatedAt - b._updatedAt)
+                .map((app) => {
+                  return (
+                    <Tooltip key={app._id} placement="top-start" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
+                      <Box
+                        backgroundColor={borderColor}
+                        position="absolute"
+                        left={(app.data.position.x - appsX) * mapScale + 'px'}
+                        top={(app.data.position.y - appsY) * mapScale + 'px'}
+                        width={app.data.size.width * mapScale + 'px'}
+                        height={app.data.size.height * mapScale + 'px'}
+                        transition={'all .5s'}
+                        _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+                        onClick={() => moveToApp(app)}
+                        borderWidth="1px"
+                        borderStyle="solid"
+                        borderColor={appBorderColor}
+                        borderRadius="sm"
+                        cursor="pointer"
+                      ></Box>
+                    </Tooltip>
+                  );
+                })}
+              {/* Draw the cursors: filter by board and not myself */}
+              {presences
+                .filter((el) => el.data.boardId === props.boardId)
+                .map((presence) => {
+                  const u = users.find((el) => el._id === presence.data.userId);
+                  if (!u) return null;
+                  return (
+                    <NavMapCursor key={presence._id} presence={presence} user={u} mapScale={mapScale} boardShift={{ x: appsX, y: appsY }} />
+                  );
+                })}
+            </Box>
+          </Box>
+          <Box display="flex" flexDir={'column'} ml="2" alignContent={'flexStart'}>
+            <Tooltip label={boardLocked ? 'Unlock board' : 'Lock board'} placement="top-start" hasArrow openDelay={500}>
+              <IconButton
+                icon={boardLocked ? <MdLock /> : <MdLockOpen />}
+                colorScheme="teal"
+                size="sm"
+                aria-label="for board"
+                mb="1"
+                onClick={() => lockBoard(!boardLocked)}
+              />
+            </Tooltip>
+            <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
+              <IconButton icon={<MdFitScreen />} colorScheme="teal" mb="1" size="sm" aria-label="fit apps" onClick={props.fitApps} />
+            </Tooltip>
+            <Tooltip label="Organize Apps" placement="top-start" hasArrow openDelay={500}>
+              <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mb="1" size="sm" aria-label="clear" />
+            </Tooltip>
+            <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
+              <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
+            </Tooltip>
           </Box>
         </Box>
-        <Box display="flex" flexDir={'column'} ml="2" alignContent={'flexStart'}>
-          <Tooltip label={boardLocked ? 'Unlock board' : 'Lock board'} placement="top-start" hasArrow openDelay={500}>
-            <IconButton
-              icon={boardLocked ? <MdLock /> : <MdLockOpen />}
-              colorScheme="teal"
-              size="sm"
-              aria-label="for board"
-              mb="1"
-              onClick={() => lockBoard(!boardLocked)}
-            />
-          </Tooltip>
-          <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdFitScreen />} colorScheme="teal" mb="1" size="sm" aria-label="fit apps" onClick={props.fitApps} />
-          </Tooltip>
-          <Tooltip label="Organize Apps" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdGridView />} colorScheme="teal" mb="1" size="sm" aria-label="clear" onClick={oraganizeApps} />
-          </Tooltip>
-          <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
-            <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
-          </Tooltip>
-        </Box>
-      </Box>
-    </Panel>
+      </Panel>
+    </>
   );
 }
 
@@ -298,3 +319,30 @@ const NavMapCursor = (props: NavMapCusorProps) => {
     ></Box>
   );
 };
+
+
+type OrganizeBoardProps = {
+  onClick: () => void;
+  onClose: () => void;
+  isOpen: boolean;
+};
+
+export function OrganizeBoardModal(props: OrganizeBoardProps) {
+  return (
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Organize the Board</ModalHeader>
+        <ModalBody>Are you sure you want to automatically organize the applications?</ModalBody>
+        <ModalFooter>
+          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
+            Cancel
+          </Button>
+          <Button colorScheme="red" size="sm" onClick={props.onClick}>
+            Yes, Organize the Board
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
