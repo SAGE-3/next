@@ -89,7 +89,7 @@ class SAGEProxy():
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}
         self.received_msg_log = {}
-        self.listening_process = WebSocketListener(self.__message_queue)
+        self.listening_process = WebSocketListener(self.__message_queue, room_id)
         self.worker_process = threading.Thread(target=self.process_messages)
         self.stop_worker = False
 
