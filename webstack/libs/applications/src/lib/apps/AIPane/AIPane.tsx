@@ -19,13 +19,10 @@ import {
   Popover,
   PopoverArrow,
   PopoverBody,
-  PopoverCloseButton,
   PopoverContent,
-  PopoverHeader,
   PopoverTrigger,
   Portal,
   Stack,
-  Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
 
@@ -47,27 +44,22 @@ import {v4 as getUUID} from 'uuid';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
-const heartBeatTimeCheck = 1000 * 10; // 1 min
+// const heartBeatTimeCheck = 1000 * 10; // 1 min
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  // const zindex = useUIStore((state) => state.zIndex);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const boardApps = useAppStore((state) => state.apps);
   const selApp = boardApps.find((el) => el._id === selectedAppId);
 
-  // const location = useLocation();
-  // const locationState = location.state as { roomId: string };
-  // const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
   const update = useAppStore((state) => state.update);
 
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
+  const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
   // Checks for apps on or off the pane
   useEffect(() => {
@@ -76,33 +68,30 @@ function AppComponent(props: App): JSX.Element {
 
       // TODO Handle AIPanes overlapping AIPanes
       // const includedAppTypes: AppName[] = ['AIPane']
-      if (app.data.type === 'AIPane' && app._id !== props._id) {
-        break;
-      } else {
-        if (
-          app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
-          app.data.position.x + app.data.size.width > props.data.position.x &&
-          app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
-          app.data.size.height + app.data.position.y > props.data.position.y
-        ) {
-          if (!Object.keys(s.hostedApps).includes(app._id)) {
-            const hosted = {
-              ...s.hostedApps,
-              ...client,
-            };
-            updateState(props._id, {hostedApps: hosted});
-            updateState(props._id, {messages: hosted});
-            console.log('app ' + app._id + ' added');
-            newAppAdded(app.data.type);
-          } else {
-            console.log('app ' + app._id + ' already in hostedApps');
-          }
+      if (
+        app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
+        app.data.position.x + app.data.size.width > props.data.position.x &&
+        app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
+        app.data.size.height + app.data.position.y > props.data.position.y &&
+        app.data.type !== 'AIPane'
+      ) {
+        if (!Object.keys(s.hostedApps).includes(app._id)) {
+          const hosted = {
+            ...s.hostedApps,
+            ...client,
+          };
+          updateState(props._id, {hostedApps: hosted});
+          updateState(props._id, {messages: hosted});
+          console.log('app ' + app._id + ' added');
+          newAppAdded(app.data.type);
         } else {
-          if (Object.keys(s.hostedApps).includes(app._id)) {
-            const hostedCopy = {...s.hostedApps};
-            delete hostedCopy[app._id];
-            updateState(props._id, {messages: hostedCopy, hostedApps: hostedCopy});
-          }
+          console.log('app ' + app._id + ' already in hostedApps');
+        }
+      } else {
+        if (Object.keys(s.hostedApps).includes(app._id)) {
+          const hostedCopy = {...s.hostedApps};
+          delete hostedCopy[app._id];
+          updateState(props._id, {messages: hostedCopy, hostedApps: hostedCopy});
         }
       }
     }
@@ -150,18 +139,18 @@ function AppComponent(props: App): JSX.Element {
   }, [Object.keys(s.hostedApps).length]);
 
   // Interval to check if the proxy is still alive
-  useEffect(() => {
-    const checkHeartBeat = setInterval(async () => {
-      const response = await fetch('/api/time');
-      const time = await response.json();
-      const delta = Math.abs(time.epoch - s.lastHeartBeat);
-      console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.runStatus);
-      if (delta > heartBeatTimeCheck && s.runStatus) {
-        updateState(props._id, {runStatus: false});
-      }
-    }, 15 * 1000); // 15 Seconds
-    return () => clearInterval(checkHeartBeat);
-  }, [s.lastHeartBeat, s.runStatus]);
+  // useEffect(() => {
+  //   const checkHeartBeat = setInterval(async () => {
+  //     const response = await fetch('/api/time');
+  //     const time = await response.json();
+  //     const delta = Math.abs(time.epoch - s.lastHeartBeat);
+  //     console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.runStatus);
+  //     if (delta > heartBeatTimeCheck && s.runStatus) {
+  //       updateState(props._id, {runStatus: false});
+  //     }
+  //   }, 15 * 1000); // 15 Seconds
+  //   return () => clearInterval(checkHeartBeat);
+  // }, [s.lastHeartBeat, s.runStatus]);
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -201,8 +190,6 @@ function AppComponent(props: App): JSX.Element {
 
           <PopoverContent>
             <PopoverArrow/>
-            {/*<PopoverCloseButton />*/}
-            {/*<PopoverHeader>History</PopoverHeader>*/}
 
             <PopoverBody>
               {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
@@ -237,13 +224,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  // const location = useLocation();
-  // const locationState = location.state as { roomId: string };
-  // const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
-  // const update = useAppStore((state) => state.update);
-
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad', 'PDFViewer'];
+  const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
   const [aiModel, setAIModel] = useState('Models');
   const [task, setTask] = useState('Tasks');
@@ -310,11 +291,12 @@ function ToolbarComponent(props: App): JSX.Element {
               );
             })}
           </>
+
           <IconButton
             aria-label="Run AI"
             icon={s.runStatus ? <BiRun/> : <FaPlay/>}
             _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-            isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0 )}
+            isDisabled={aiModel === 'Models' ? true : false}
             onClick={() => {
               runFunction(aiModel);
             }}

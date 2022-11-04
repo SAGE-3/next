@@ -132,7 +132,14 @@ function AppComponent(props: App): JSX.Element {
                   border="2px solid red"
                   style={{ display: s.annotations === true ? 'block' : 'none' }}
                 >
-                  {label}
+                  <Box
+                    position="relative"
+                    top={'-1.5rem'}
+                    fontWeight={'bold'}
+                    textColor={"black"}
+                  >
+                    {label}
+                  </Box>
                 </Box>
               );
             })
@@ -186,7 +193,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
-       <div style={{display: Object.keys(s.boxes).length !== 0 ? "block" : "none"}}>
+       <div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
           <Button
             onClick={() => {
