@@ -29,23 +29,25 @@ import {
   VisuallyHidden,
 } from '@chakra-ui/react';
 
-import { FaPlay } from 'react-icons/fa';
-import { BiErrorCircle, BiRun } from 'react-icons/bi';
-import { FiChevronDown } from 'react-icons/fi';
+import {FaPlay} from 'react-icons/fa';
+import {BiErrorCircle, BiRun} from 'react-icons/bi';
+import {FiChevronDown} from 'react-icons/fi';
 
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import {useAppStore, useUIStore} from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import {App} from '../../schema';
+import {state as AppState} from './index';
+import {AppWindow} from '../../components';
 
 import './styles.css';
 
-import { useEffect, useState, useRef } from 'react';
+import {useEffect, useState, useRef} from 'react';
 
-import { v4 as getUUID } from 'uuid';
+import {v4 as getUUID} from 'uuid';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+
+const heartBeatTimeCheck = 1000 * 10; // 1 min
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -65,15 +67,12 @@ function AppComponent(props: App): JSX.Element {
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
-  // ANDY THIS WAS IN THE dev-ai
-  // const [outputLocal, setOutputLocal] = useState<{ score: number; label: string; box: object }[]>([]);
-
   const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
 
   // Checks for apps on or off the pane
   useEffect(() => {
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.type };
+      const client = {[app._id]: app.data.type};
 
       // TODO Handle AIPanes overlapping AIPanes
       // const includedAppTypes: AppName[] = ['AIPane']
@@ -91,8 +90,8 @@ function AppComponent(props: App): JSX.Element {
               ...s.hostedApps,
               ...client,
             };
-            updateState(props._id, { hostedApps: hosted });
-            updateState(props._id, { messages: hosted });
+            updateState(props._id, {hostedApps: hosted});
+            updateState(props._id, {messages: hosted});
             console.log('app ' + app._id + ' added');
             newAppAdded(app.data.type);
           } else {
@@ -100,9 +99,9 @@ function AppComponent(props: App): JSX.Element {
           }
         } else {
           if (Object.keys(s.hostedApps).includes(app._id)) {
-            const hostedCopy = { ...s.hostedApps };
+            const hostedCopy = {...s.hostedApps};
             delete hostedCopy[app._id];
-            updateState(props._id, { messages: hostedCopy, hostedApps: hostedCopy });
+            updateState(props._id, {messages: hostedCopy, hostedApps: hostedCopy});
           }
         }
       }
@@ -119,17 +118,17 @@ function AppComponent(props: App): JSX.Element {
     Object.keys(s.hostedApps).forEach((key: string) => {
       if (appIds.includes(key)) copyofhostapps[key] = key;
     });
-    updateState(props._id, { hostedApps: copyofhostapps });
+    updateState(props._id, {hostedApps: copyofhostapps});
   }, [boardApps.length]);
 
   // Move all apps together with the AIPane
   useEffect(() => {
-    const hostedCopy = { ...s.hostedApps };
+    const hostedCopy = {...s.hostedApps};
     const xDiff = props.data.position.x - prevX.current;
     const yDiff = props.data.position.y - prevY.current;
 
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.type };
+      const client = {[app._id]: app.data.type};
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
@@ -146,11 +145,23 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-      updateState(props._id, { supportedTasks: {} });
-      // ANDY THIS WAS IN DEV-AI
-      // updateState(props._id, { supportedTasks: '' });
+      updateState(props._id, {supportedTasks: {}});
     }
   }, [Object.keys(s.hostedApps).length]);
+
+  // Interval to check if the proxy is still alive
+  useEffect(() => {
+    const checkHeartBeat = setInterval(async () => {
+      const response = await fetch('/api/time');
+      const time = await response.json();
+      const delta = Math.abs(time.epoch - s.lastHeartBeat);
+      console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.runStatus);
+      if (delta > heartBeatTimeCheck && s.runStatus) {
+        updateState(props._id, {runStatus: false});
+      }
+    }, 15 * 1000); // 15 Seconds
+    return () => clearInterval(checkHeartBeat);
+  }, [s.lastHeartBeat, s.runStatus]);
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -158,7 +169,7 @@ function AppComponent(props: App): JSX.Element {
 
   function newAppAdded(appType: string) {
     updateState(props._id, {
-      executeInfo: { executeFunc: 'new_app_added', params: { app_type: appType } },
+      executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
   }
 
@@ -167,12 +178,12 @@ function AppComponent(props: App): JSX.Element {
     delete unchecked[info];
 
     // these updateState calls should be combined
-    updateState(props._id, { messages: unchecked });
+    updateState(props._id, {messages: unchecked});
 
     if (Object.keys(s.messages).includes(info)) {
-      const messagesCopy = { ...s.messages };
+      const messagesCopy = {...s.messages};
       delete messagesCopy[info];
-      updateState(props._id, { messages: messagesCopy });
+      updateState(props._id, {messages: messagesCopy});
     }
   }
 
@@ -181,7 +192,7 @@ function AppComponent(props: App): JSX.Element {
       <Box>
         <Popover>
           <PopoverTrigger>
-            <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
+            <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
               <Button variant="ghost" size="lg" color="cyan">
                 Message
               </Button>
@@ -189,7 +200,7 @@ function AppComponent(props: App): JSX.Element {
           </PopoverTrigger>
 
           <PopoverContent>
-            <PopoverArrow />
+            <PopoverArrow/>
             {/*<PopoverCloseButton />*/}
             {/*<PopoverHeader>History</PopoverHeader>*/}
 
@@ -200,7 +211,7 @@ function AppComponent(props: App): JSX.Element {
             {Object.keys(s.messages)?.map((message: string) => (
               <PopoverBody>
                 {s.messages[message]}
-                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)} />
+                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
               </PopoverBody>
             ))}
           </PopoverContent>
@@ -209,9 +220,9 @@ function AppComponent(props: App): JSX.Element {
         <Box className="status-container">
           {s.runStatus ? (
             Object.values(s.hostedApps).every(checkAppType) ? (
-              <Icon as={BiRun} w={8} h={8} />
+              <Icon as={BiRun} w={8} h={8}/>
             ) : (
-              <Icon as={BiErrorCircle} w={8} h={8} />
+              <Icon as={BiErrorCircle} w={8} h={8}/>
             )
           ) : (
             <VisuallyHidden>Empty Board</VisuallyHidden>
@@ -246,7 +257,7 @@ function ToolbarComponent(props: App): JSX.Element {
       runStatus: true,
       executeInfo: {
         executeFunc: 'execute_model',
-        params: { exec_uuid: getUUID(), model_id: model },
+        params: {exec_uuid: getUUID(), model_id: model},
       },
     });
   }
@@ -262,14 +273,14 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
+      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
         <Stack spacing={2} direction="row">
           <>
             {Object.keys(s.supportedTasks)?.map((type) => {
               return (
                 <>
                   <Menu>
-                    <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                    <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
                       {task}
                     </MenuButton>
                     <Portal>
@@ -281,9 +292,9 @@ function ToolbarComponent(props: App): JSX.Element {
                     </Portal>
                   </Menu>
 
-                  <div style={{ display: task !== 'Tasks' ? 'block' : 'none' }}>
+                  <div style={{display: task !== 'Tasks' ? 'block' : 'none'}}>
                     <Menu>
-                      <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                      <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
                         {aiModel}
                       </MenuButton>
                       <Portal>
@@ -301,9 +312,9 @@ function ToolbarComponent(props: App): JSX.Element {
           </>
           <IconButton
             aria-label="Run AI"
-            icon={s.runStatus ? <BiRun /> : <FaPlay />}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-            isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
+            icon={s.runStatus ? <BiRun/> : <FaPlay/>}
+            _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+            isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0 )}
             onClick={() => {
               runFunction(aiModel);
             }}
@@ -314,4 +325,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+export default {AppComponent, ToolbarComponent};

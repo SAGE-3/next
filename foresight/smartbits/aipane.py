@@ -66,8 +66,7 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: bool
-    # output: Optional[dict]
-
+    lastHeartBeat: int
     supportedTasks: Optional[dict]
 
 

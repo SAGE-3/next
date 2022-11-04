@@ -34,6 +34,9 @@ export const schema = z.object({
 
   output: z.any(),
 
+  lastHeartBeat: z.number(),
+  // online: z.boolean(),
+
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -48,8 +51,8 @@ export const init: Partial<state> = {
 
   supportedTasks: {},
   messages: {},
-  output: {},
-
+  // output: {},
+  lastHeartBeat: 0,
 };
 
 export const name = 'AIPane';
