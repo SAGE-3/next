@@ -14,6 +14,7 @@ from typing import Optional, TypeVar
 from config import ai_models, funcx as funcx_config
 from config import config as conf, prod_type
 from ai.ai_client import AIClient
+from task_scheduler import TaskScheduler
 
 if prod_type == "development":
     import os
@@ -38,9 +39,6 @@ def get_sharing_url(private_url):
     return url[: -1]+"1"
 
 
-
-# if prod_type == "development":
-#     headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
 
 # TODO: movie this to a configuration somewhere and call it something else.
 ai_settings = {
@@ -74,7 +72,7 @@ class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
     _ai_client = PrivateAttr()
-
+    _task_scheduler = PrivateAttr()
     _pending_executions: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -82,6 +80,7 @@ class AIPane(SmartBit):
         super(AIPane, self).__init__(**kwargs)
         self._ai_client = AIClient()
         self._pending_executions = {}
+        self._task_scheduler = TaskScheduler()
 
     def new_app_added(self, app_type):
         """
@@ -119,7 +118,7 @@ class AIPane(SmartBit):
 
             print(f"response is {response.status_code}")
             print("done")
-        # self.state.output = json.dumps(msg)
+
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -174,6 +173,9 @@ class AIPane(SmartBit):
 
         self._ai_client.execute(payload)
         print("just called the ai_client's execute")
+
+    def check_stale_jobs(self):
+        pass
 
     def clean_up(self):
         pass
