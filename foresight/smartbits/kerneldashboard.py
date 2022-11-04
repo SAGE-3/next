@@ -29,11 +29,9 @@ class KernelDashboard(SmartBit):
 
     _redis_space: str = PrivateAttr(default="JUPYTER:KERNELS")
     _base_url: str = PrivateAttr(default=f"{conf[prod_type]['jupyter_server']}/api")
-    _headers: dict = PrivateAttr()
-    _redis_server = PrivateAttr()
-    _r_json = PrivateAttr()
-    _redis_store: str = PrivateAttr(default="JUPYTER:KERNELS")
     _jupyter_client = PrivateAttr()
+    _r_json = PrivateAttr()
+    _headers: dict = PrivateAttr()
     _task_scheduler = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -52,10 +50,7 @@ class KernelDashboard(SmartBit):
         response = requests.get(f"{self._base_url}/kernelspecs", headers=self._headers)
         kernel_specs = response.json()
         self.state.kernelSpecs = [kernel_specs]
-        self.state.kernels = self._jupyter_client.get_kernels()
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
+        self.get_available_kernels()
 
     def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
                    kernel_name="python3", auth_users=(), kernel_alias="my_kernel"):
@@ -143,7 +138,8 @@ class KernelDashboard(SmartBit):
 
 
     def set_online(self):
-        self.state.lastHearbeat = self._s3_comm.get_time()["epoch"]
+        self.state.lastHeartBeat = self._s3_comm.get_time()["epoch"]
+        print('set_online', self.state.lastHeartBeat)
         self.state.online = True
         self.send_updates()
 
