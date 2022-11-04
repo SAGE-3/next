@@ -49,7 +49,7 @@ class AIPaneState(TrackedBaseModel):
     messages: dict
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
-    runStatus: bool
+    runStatus: int
     # lastHeartBeat: int
     supportedTasks: Optional[dict]
 
@@ -105,7 +105,7 @@ class AIPane(SmartBit):
             print(f"response is {response.status_code}")
             print("done")
 
-        self.state.runStatus = False
+        self.state.runStatus = 0
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

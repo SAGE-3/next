@@ -67,7 +67,6 @@ function AppComponent(props: App): JSX.Element {
       const client = {[app._id]: app.data.type};
 
       // TODO Handle AIPanes overlapping AIPanes
-      // const includedAppTypes: AppName[] = ['AIPane']
       if (
         app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
         app.data.position.x + app.data.size.width > props.data.position.x &&
@@ -179,11 +178,12 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
+
         <Popover>
           <PopoverTrigger>
             <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
               <Button variant="ghost" size="lg" color="cyan">
-                Message
+                {s.runStatus}
               </Button>
             </div>
           </PopoverTrigger>
@@ -205,15 +205,12 @@ function AppComponent(props: App): JSX.Element {
         </Popover>
 
         <Box className="status-container">
-          {s.runStatus ? (
-            Object.values(s.hostedApps).every(checkAppType) ? (
-              <Icon as={BiRun} w={8} h={8}/>
-            ) : (
-              <Icon as={BiErrorCircle} w={8} h={8}/>
+          {s.runStatus !== 0
+            ? (s.runStatus === 1
+                ? (<Icon as={BiRun} w={8} h={8}/>)
+                : (<Icon as={BiErrorCircle} w={8} h={8}/>)
             )
-          ) : (
-            <VisuallyHidden>Empty Board</VisuallyHidden>
-          )}
+            : (<VisuallyHidden>Empty Board</VisuallyHidden>)}
         </Box>
       </Box>
     </AppWindow>
@@ -235,7 +232,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function runFunction(model: string) {
     updateState(props._id, {
-      runStatus: true,
+      runStatus: 1,
       executeInfo: {
         executeFunc: 'execute_model',
         params: {exec_uuid: getUUID(), model_id: model},
@@ -294,9 +291,9 @@ function ToolbarComponent(props: App): JSX.Element {
 
           <IconButton
             aria-label="Run AI"
-            icon={s.runStatus ? <BiRun/> : <FaPlay/>}
+            icon={s.runStatus === 0 ? <FaPlay/> : s.runStatus === 1 ? <BiRun/> : <BiErrorCircle/>}
             _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-            isDisabled={aiModel === 'Models' ? true : false}
+            isDisabled={aiModel === 'Models' || s.runStatus !== 0 ? true : false}
             onClick={() => {
               runFunction(aiModel);
             }}
