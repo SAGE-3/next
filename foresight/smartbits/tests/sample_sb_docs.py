@@ -64,8 +64,6 @@ kernel_dashboard_doc = {
         'executeInfo': {'executeFunc': '', 'params': {}},
         'lastHeartBeat': 0,
         'online': False
-        
-        
     }
 }
 
