@@ -11,7 +11,7 @@ from pydantic import PrivateAttr
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from typing import Optional, TypeVar
-from config import ai_models, funcx as funcx_config
+from config import ai_models, ai_supported, funcx as funcx_config
 from config import config as conf, prod_type
 from ai.ai_client import AIClient
 from task_scheduler import TaskScheduler
@@ -40,22 +40,8 @@ def get_sharing_url(private_url):
 
 
 
-# TODO: movie this to a configuration somewhere and call it something else.
-ai_settings = {
-    "vision": {
-        "supported_apps": ['ImageViewer'],
-        "tasks": {
-            "Object Detection": ["facebook/detr-resnet-50", "lai_lab/fertilized_egg_detect"],
-            "Classification": ["image_c_model_1", "image_c_model_2"]
-        }
-    },
-    "nlp": {
-        "supported_apps": ['PDFViewer', 'Notepad'],
-        "tasks": {
-            "Summarization": ["facebook/bart-large-cnn", "sshleifer/distilbart-cnn-12-6"],
-        }
-    }
-}
+# if prod_type == "development":
+#     headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
 
 
 class AIPaneState(TrackedBaseModel):
@@ -64,7 +50,7 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: bool
-    lastHeartBeat: int
+    # lastHeartBeat: int
     supportedTasks: Optional[dict]
 
 
@@ -96,7 +82,7 @@ class AIPane(SmartBit):
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
             if len(self.state.hostedApps) == 1:
-                for type, settings in ai_settings.items():
+                for type, settings in ai_supported.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
             self.state.supportedTasks = supported_tasks

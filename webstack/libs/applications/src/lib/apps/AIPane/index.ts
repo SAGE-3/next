@@ -8,19 +8,6 @@
 
 import { z } from 'zod';
 
-// const TaskTypes = z.enum(['vision', 'nlp'])
-// export type TaskTypes = z.infer<typeof TaskTypes>;
-//
-// const VisionTasks = z.enum(["Object Detection", "Classification"]);
-// export type VisionTasks = z.infer<typeof VisionTasks>;
-//
-// const NLPTasks = z.enum(["Summarization"]);
-// export type NLPTasks = z.infer<typeof NLPTasks>;
-//
-// // export type supported_tasks = z.infer<(typeof VisionTasks) & (typeof NLPTasks)>;
-// export const supported_tasks = {...VisionTasks, ...NLPTasks};
-// export type supported_tasks = typeof supported_tasks;
-
 
 export const schema = z.object({
   hostedApps: z.record(z.string(), z.string()),
@@ -34,8 +21,7 @@ export const schema = z.object({
 
   output: z.any(),
 
-  lastHeartBeat: z.number(),
-  // online: z.boolean(),
+  // lastHeartBeat: z.number(),
 
   executeInfo: z.object({
     executeFunc: z.string(),
@@ -51,8 +37,7 @@ export const init: Partial<state> = {
 
   supportedTasks: {},
   messages: {},
-  // output: {},
-  lastHeartBeat: 0,
+  // lastHeartBeat: 0,
 };
 
 export const name = 'AIPane';
