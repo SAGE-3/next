@@ -7,7 +7,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Box, Button, ButtonGroup, Center, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
+import { Box, VStack, Text, Button, ButtonGroup, Center, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
 
 import {
   MdArrowBack,
@@ -296,23 +296,24 @@ function AppComponent(props: App): JSX.Element {
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
         <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-          <Center w="100%" h="100%" bg="gray.700">
-            <Box p={4}>
+          <Center w="100%" h="100%" bg="gray.700" p={0} m={0}>
+            <VStack>
               <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  Webview is only supported with the SAGE3 Desktop Application.
-                </Box>
+                <Text color="white" fontSize={"2rem"} fontWeight="bold"
+                  whiteSpace={"pre-line"} >
+                  Webview only supported in SAGE3 Desktop Application
+                </Text>
               </Center>
               <br />
               <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  Current URL{' '}
+                <Text color="white" fontSize={"1.5rem"} fontWeight="bold"
+                  whiteSpace={"pre-line"} >
                   <a style={{ color: '#13a89e' }} href={s.webviewurl} rel="noreferrer" target="_blank">
-                    {s.webviewurl}{' '}
+                    {props.data.title}
                   </a>
-                </Box>
+                </Text>
               </Center>
-            </Box>
+            </VStack>
           </Center>
         </div>
       )}

@@ -6,7 +6,7 @@
  *
  */
 
-import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Button, ButtonGroup, Tooltip, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack } from '@chakra-ui/react';
 import {
   MdArrowRightAlt,
@@ -24,7 +24,7 @@ import {
 import { format as formatTime } from 'date-fns';
 
 import { Asset, ExtraImageType } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUser, downloadFile, useUIStore, usePresenceStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -49,6 +49,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Current User
   const { user } = useUser();
+  const yourController = user?._id === s.play.uid;
 
   // Assets
   const [url, setUrl] = useState<string>();
@@ -60,6 +61,19 @@ function AppComponent(props: App): JSX.Element {
 
   // Html Ref
   const videoRef = useRef<HTMLVideoElement>(null);
+  const scale = useUIStore((state) => state.scale);
+
+  // Used to detect if the controller disconnected or left board
+  const presences = usePresenceStore((state) => state.presences);
+
+  // Check if the controller left the board and pause the video if so
+  useEffect(() => {
+    const controllerId = s.play.uid;
+    const controller = presences.find((p) => p._id === controllerId && p.data.boardId === props.data.boardId);
+    if (!controller && presences.length > 0) {
+      updateState(props._id, { play: { ...s.play, uid: '', paused: true } });
+    }
+  }, [JSON.stringify(presences)]);
 
   // Get Asset from store
   useEffect(() => {
@@ -97,9 +111,22 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [file, videoRef]);
 
-  // Set the current time of the video
+  // Set the initial time of the video
   useEffect(() => {
     if (videoRef.current) {
+      videoRef.current.currentTime = s.play.currentTime;
+    }
+    return () => {
+      // Remove your uid from the play state if you leave the page
+      if (yourController && videoRef.current) {
+        updateState(props._id, { play: { ...s.play, pause: true, currentTime: videoRef.current.currentTime, uid: '' } });
+      }
+    };
+  }, []);
+
+  // Match the curretTime of the video to the servers time
+  useEffect(() => {
+    if (videoRef.current && !yourController) {
       // The delta between the local video's time and the server's time
       const delta = Math.abs(videoRef.current.currentTime - s.play.currentTime);
       // If there is a 4 second delta, update the video's time
@@ -109,33 +136,23 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.play.currentTime, videoRef.current]);
 
-  // Set the initial time of the video
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = s.play.currentTime;
-    }
-    return () => {
-      if (s.play.uid === user?._id) {
-        updateState(props._id, { play: { ...s.play, uid: '' } });
-      }
-    };
-  }, []);
-
   // If play was updated, update the video
   useEffect(() => {
     // Setup an interval to update the current time if this user initiated the play
     let updateTimeInterval: null | NodeJS.Timeout = null;
-    if (s.play.uid === user?._id) {
+    if (yourController) {
       // If the video is playing, update the current time
       if (!s.play.paused && videoRef.current) {
         updateTimeInterval = setInterval(() => {
           if (!videoRef.current) return;
           const currentTime = videoRef.current.currentTime;
           const duration = videoRef.current.duration;
-          updateState(props._id, { play: { ...s.play, currentTime: currentTime ?? 0 } });
+          const paused = currentTime >= duration && !s.play.loop ? true : false;
+          updateState(props._id, { play: { ...s.play, paused: paused, currentTime: currentTime ?? 0 } });
           // Convert time numbers to strings
           const length = getDurationString(duration);
           const time = getDurationString(currentTime);
+          // Update the title
           update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
         }, 1000);
       }
@@ -164,17 +181,17 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [s.play.paused, s.play.uid, s.play.loop, user, videoRef.current?.readyState]);
 
-  const videoContainerStyle: CSSProperties = {
-    position: 'relative',
-    overflowY: 'hidden',
-    height: props.data.size.width / aspectRatio,
-    maxHeight: '100%',
-    borderRadius: '0 0 6px 6px',
-  };
-
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
-      <div style={videoContainerStyle}>
+      <div
+        style={{
+          position: 'relative',
+          overflowY: 'hidden',
+          height: props.data.size.width / aspectRatio,
+          maxHeight: '100%',
+          borderRadius: '0 0 6px 6px',
+        }}
+      >
         {/* Pause icon in bottom corner to show if video is paused. */}
         {s.play.paused ? (
           <Box
@@ -182,14 +199,16 @@ function AppComponent(props: App): JSX.Element {
             position="absolute"
             left="0"
             bottom="0"
-            fontSize="48px"
+            fontSize="32px"
             backgroundColor="rgba(10,10,10,.75)"
             borderRadius="0 100% 0 0"
-            width="75px"
-            height="75px"
+            width="50px"
+            height="50px"
             display="flex"
             justifyContent="left"
             alignItems="center"
+            transform={`scale(${Math.min(3, 1 / scale)})`}
+            transformOrigin="bottom left"
           >
             <MdPause transform={'translate(5, 5)'} />
           </Box>
@@ -257,7 +276,9 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a rewind action
   const handleRewind = () => {
     if (user) {
-      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime - 5) } });
+      const newTime = Math.max(0, videoRef.currentTime - 5);
+      videoRef.currentTime = newTime;
+      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: newTime } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -267,9 +288,9 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a forward action
   const handleForward = () => {
     if (user) {
-      updateState(props._id, {
-        play: { ...s.play, uid: user._id, currentTime: Math.max(0, videoRef.currentTime + 5) },
-      });
+      const newTime = Math.max(0, videoRef.currentTime + 5);
+      videoRef.currentTime = newTime;
+      updateState(props._id, { play: { ...s.play, uid: user._id, currentTime: newTime } });
       const time = getDurationString(videoRef.currentTime);
       const length = getDurationString(duration);
       update(props._id, { title: `${file?.data.originalfilename} - ${time} / ${length}` });
@@ -314,8 +335,9 @@ function ToolbarComponent(props: App): JSX.Element {
     setSeeking(true);
   };
 
-  const seekEndHandle = () => {
+  const seekEndHandle = (value: number) => {
     setSeeking(false);
+    videoRef.currentTime = value;
     if (user) {
       updateState(props._id, {
         play: { ...s.play, uid: user._id, currentTime: videoRef.currentTime },

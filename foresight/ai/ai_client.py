@@ -3,7 +3,10 @@ from funcx.sdk.client import FuncXClient
 import time
 import threading
 from utils.borg import Borg
-import json
+from utils import logging_config
+
+logger = logging_config.get_console_logger()
+
 
 # TODO: move the borg class to its own file
 
@@ -13,18 +16,18 @@ class AIClient(Borg):
     ai Client get requests to execute a model, executed it, gets the results and propagates them to the client.
     """
 
-    def __init__(self, check_every=5):
+    def __init__(self, check_every=2.5):
         Borg.__init__(self)
         self.check_every = check_every
         self.callback_info = {}
         self.running_jobs = set()
-        #self.fxc = FuncXClient()
+
+        self.fxc = FuncXClient()
 
         self.stop_thread = False  # keep on checking until this changes to false
         self.msg_checker = threading.Thread(target=self.process_response,
                                             kwargs={"check_every": self.check_every})
         self.msg_checker.start()
-
 
     def execute(self, command_info):
         """
@@ -54,23 +57,21 @@ class AIClient(Borg):
             tasks_to_remove = set()
             for task_id in self.running_jobs:
                 resp = self.fxc.get_task(task_id)
-                #print(f" type of resp in ai_client{type(resp)}")
                 if not resp['pending']:
                     if resp['status'] != 'success':
                         # TODO: Handle the error
-                        print("report that an error happened")
+                        logger.error(f"Error while running an AI job {resp}")
                     else:
-                        print("sending the results back")
                         result = resp['result']
                         try:
                             app_uuid = self.callback_info[task_id][0]
                             msg_uuid = self.callback_info[task_id][1]
                             callback_fn = self.callback_info[task_id][2]
                             callback_fn(app_uuid, msg_uuid, result)
-                            del self.callback_info[task_id]
                             tasks_to_remove.add(task_id)
                         except Exception as e:
-                            print(f"Error executing calls back.\n{e}")
+                            logger.error(f"rror while running an AI job {resp}")
+                        del self.callback_info[task_id]
             self.running_jobs -= tasks_to_remove
 
             time.sleep(self.check_every)  # be nice to the system :)
@@ -78,3 +79,7 @@ class AIClient(Borg):
                 if len(self.running_jobs):
                     print("Exiting the ai Client but queue still contains not communicated jobs")
                 break
+
+    def clean_up(self):
+        self.stop_thread = True
+

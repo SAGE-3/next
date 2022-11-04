@@ -18,15 +18,12 @@
 
 
 # TODO prevent apps updates on fields that were touched?
-import logging
 import sys
 import os
 from typing import Callable
 from pydantic import BaseModel
-import asyncio
 import json
 import threading
-import websockets
 import argparse
 from board import Board
 import uuid
@@ -34,7 +31,7 @@ from multiprocessing import Queue
 import requests
 from smartbitfactory import SmartBitFactory
 import httpx
-
+from websocketlistener import WebSocketListener
 from utils import logging_config
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
@@ -91,10 +88,18 @@ class SAGEProxy():
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}
         self.received_msg_log = {}
+        # self.ws = None
+        # self.loop = None
+        self.listening_process_2 = WebSocketListener(self.__message_queue)
+        # self.listening_process = threading.Thread(target=self.client)
+        #### self.listening_process = threading.Thread(target=asyncio.run, args=(self.receive_messages(),))
+        self.worker_process = threading.Thread(target=self.process_messages)
 
-    # def authenticate_new_user(self):
-    #     r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + '/auth/jwt', headers=self.__headers)
-    #     response = r.json()
+        self.populate_existing()
+
+    def start_threads(self):
+        self.listening_process_2.run()
+        self.worker_process.start()
 
     def populate_existing(self):
         boards_info = self.s3_comm.get_boards(self.room.room_id)
@@ -106,23 +111,30 @@ class SAGEProxy():
             logger.info(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
-    async def receive_messages(self):
-        async with websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
-                                      extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
-            await subscribe(ws, self.room.room_id)
-            # print("completed subscription, checking if boards and apps already there")
-            self.populate_existing()
-            async for msg in ws:
-                msg = json.loads(msg)
-                logger.debug(f"----- msg: {json.dumps(msg)}")
-                if msg['id'] not in self.received_msg_log or \
-                        msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
-                    self.__message_queue.put(msg)
-                    self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
-                    # print(f"in receive_messages adding: {msg}")
-                else:
-                    # print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
-                    pass
+    # def client(self):
+    #     self.loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(self.loop)
+    #     self.loop.run_until_complete(self.receive_messages())
+    #     print("Done running client")
+    #     self.loop.close()
+
+    # async def receive_messages(self):
+    #     # async with websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
+    #     #                               extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"}) as ws:
+    #     self.ws = await websockets.connect(self.conf[self.prod_type]["ws_server"] + "/api",
+    #                                        extra_headers={"Authorization": f"Bearer {os.getenv('TOKEN')}"})
+    #     await subscribe(self.ws, self.room.room_id)
+    #     logger.info("completed subscription, checking if fboards and apps already exist")
+    #     self.populate_existing()
+    #     async for msg in self.ws:
+    #         msg = json.loads(msg)
+    #         logger.debug(f"msg: {json.dumps(msg)}")
+    #         # check is needed because we get duplicted messages.
+    #         # TODO: emtpy the queue when it get to a size of X
+    #         if msg['id'] not in self.received_msg_log or \
+    #                 msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
+    #             self.__message_queue.put(msg)
+    #             self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
 
     def process_messages(self):
         """
@@ -174,11 +186,11 @@ class SAGEProxy():
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
         if collection == "BOARDS":
-            logging.debug("New board created")
+            logger.debug("New board created")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            logging.debug("New app created")
+            logger.debug("New app created")
             doc["state"] = doc["data"]["state"]
             del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
@@ -191,7 +203,7 @@ class SAGEProxy():
             # print("BOARD UPDATED: UNHANDLED")
             pass
         elif collection == "APPS":
-            logging.debug("New  app updated")
+            logger.debug("New  app updated")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
 
@@ -219,19 +231,18 @@ class SAGEProxy():
             try:
                 del self.room.boards[doc["data"]["boardId"]].smartbits[doc["_id"]]
             except:
-                logging.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+                logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
         if collection == "BOARDS":
             try:
                 del self.room.boards[doc["_id"]]
             except:
-                logging.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+                logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
 
     def clean_up(self):
-        # print("cleaning up the queue")
-        if self.__message_queue.qsize() > 0:
-            print("Queue was not empty")
-            pass
+        if not self.__message_queue.empty():
+            logger.warning("Messages queue was not empty while starting to clean proxy")
         self.__message_queue.close()
+        self.listening_process_2.clean_up()
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
         if src_app not in self.callbacks:
@@ -290,14 +301,12 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         room_id = \
-        requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()['data'][0][
-            '_id']
+            requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()[
+                'data'][0][
+                '_id']
         if not os.getenv("DROPBOX_TOKEN"):
-            print("WARNIGN: Dropbox upload token not defined, AI won't be supported in development mode")
+            logger.warning("Dropbox upload token not defined, AI won't be supported in development mode")
 
     logger.info(f"Starting proxy with room {room_id}:")
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
-    listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
-    listening_process.start()
-    worker_process = threading.Thread(target=sage_proxy.process_messages)
-    worker_process.start()
+    sage_proxy.start_threads()

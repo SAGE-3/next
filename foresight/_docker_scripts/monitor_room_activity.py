@@ -4,7 +4,7 @@ Will be changed when I get the address of the docker engine API.
 Docker `watcher` or `head` (find a proper name) started with:
 docker run -t \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    python python /foresight/_docker_scripts/test.py
+    python python /foresight/_docker_scripts/websocketlistener.py
 """
 
 import sys
