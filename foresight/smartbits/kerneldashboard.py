@@ -11,7 +11,7 @@ from pydantic import PrivateAttr
 from config import config as conf, prod_type
 import requests
 from jupyterkernelproxy import JupyterKernelProxy
-
+from task_scheduler import TaskScheduler
 
 class KernelDashboardState(TrackedBaseModel):
     """
@@ -34,9 +34,11 @@ class KernelDashboard(SmartBit):
     _r_json = PrivateAttr()
     _redis_store: str = PrivateAttr(default="JUPYTER:KERNELS")
     _jupyter_client = PrivateAttr()
+    _task_scheduler = PrivateAttr()
 
     def __init__(self, **kwargs):
         super(KernelDashboard, self).__init__(**kwargs)
+        self._task_scheduler = TaskScheduler()
         self._jupyter_client = JupyterKernelProxy()
         self._headers = dict(self._jupyter_client.headers)
         self._r_json = self._jupyter_client.redis_server.json()
@@ -44,6 +46,7 @@ class KernelDashboard(SmartBit):
             self._r_json.set(self._redis_space, '.', {})
         self.get_kernel_specs()
         self.set_online()
+        self._task_scheduler.schedule_task(self.set_online, nb_secs=15)
 
     def get_kernel_specs(self):
         response = requests.get(f"{self._base_url}/kernelspecs", headers=self._headers)
@@ -136,6 +139,8 @@ class KernelDashboard(SmartBit):
 
     def clean_up(self):
         self._jupyter_client.clean_up()
+        self._task_scheduler.clean_up()
+
 
     def set_online(self):
         self.state.lastHearbeat = self._s3_comm.get_time()["epoch"]

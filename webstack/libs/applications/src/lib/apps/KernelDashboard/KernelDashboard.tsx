@@ -72,7 +72,7 @@ function AppComponent(props: App): JSX.Element {
       if (delta > heartBeatTimeCheck && s.online) {
         updateState(props._id, { online: false });
       }
-    }, 15 * 1000); // 15 Seconds
+    }, 45 * 1000); // 15 Seconds
     return () => clearInterval(checkHeartBeat);
   }, [s.lastHeartBeat, s.online]);
 
