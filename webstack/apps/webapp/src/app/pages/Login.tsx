@@ -92,7 +92,7 @@ export function LoginPage() {
       <Center my="1rem" fontSize="lg">
         <InputGroup width="17rem">
           {/* Display the list of servers in a selectable list */}
-          <Select placeholder="Select a server" value={serverName} onChange={redirectHost}>
+          <Select placeholder="Switch to server" value={serverName} onChange={redirectHost}>
             {serverList?.map((s, idx) => (
               <option key={idx} value={s.name}>
                 {s.name}

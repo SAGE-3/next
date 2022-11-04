@@ -19,15 +19,14 @@ import {
   Input,
   Button,
   Box,
-  ButtonGroup,
   Checkbox,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
-import { MdPerson, MdLock, MdDescription } from 'react-icons/md';
+import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
-import { useBoardStore } from '@sage3/frontend';
+import { useBoardStore, useAppStore } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { useData } from 'libs/frontend/src/lib/hooks';
@@ -54,6 +53,10 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
 
   const deleteBoard = useBoardStore((state) => state.delete);
   const updateBoard = useBoardStore((state) => state.update);
+
+  // Apps
+  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
+  const deleteApp = useAppStore((state) => state.delete);
 
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
@@ -115,8 +118,16 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     props.onClose();
   };
 
+  /**
+   * Delete the board: delete all the apps and the board itself
+   */
   const handleDeleteBoard = () => {
-    deleteBoard(props.board._id);
+    fetchBoardApps(props.board._id).then((apps) => {
+      // delete all apps in the board
+      if (apps) apps.forEach((a) => deleteApp(a._id));
+    }).finally(() => {
+      deleteBoard(props.board._id);
+    });
   };
 
   // To enable/disable

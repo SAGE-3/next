@@ -145,9 +145,10 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   controller: {
-    position: { x: 16, y: window.innerHeight - 350 },
+    // position: { x: 16, y: window.innerHeight - 350 },
+    position: { x: 5, y: 5 },
     name: 'controller',
-    stuck: StuckTypes.None,
+    stuck: StuckTypes.TopLeft,
     setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, controller: { ...state.controller, position: pos } })),
     setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, controller: { ...state.controller, stuck: stuck } })),
     setOpened: (opened: boolean) => set((state) => ({ ...state, controller: { ...state.controller, opened: opened } })),
