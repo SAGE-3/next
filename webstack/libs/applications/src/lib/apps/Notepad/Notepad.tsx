@@ -286,7 +286,7 @@ function ToolbarComponent(props: App): JSX.Element {
       </Menu>
 
       <Menu>
-        <Tooltip placement="top" hasArrow={true} label={'Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Font Color'} openDelay={400}>
           <MenuButton as={Button} size="xs" colorScheme="teal" mx="1">
             Color
           </MenuButton>
@@ -304,7 +304,7 @@ function ToolbarComponent(props: App): JSX.Element {
       </Menu>
 
       <Menu>
-        <Tooltip placement="top" hasArrow={true} label={'Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Font Background'} openDelay={400}>
           <MenuButton as={Button} size="xs" colorScheme="teal" mx="1">
             Background
           </MenuButton>
