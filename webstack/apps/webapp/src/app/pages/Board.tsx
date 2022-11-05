@@ -8,7 +8,7 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text } from '@chakra-ui/react';
 
 import {
   usePresence,
@@ -21,6 +21,8 @@ import {
   PasteHandler,
   MainButton,
   useUIStore,
+  useData,
+  serverConfiguration,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -34,6 +36,8 @@ export function BoardPage() {
   // Navigation and routing
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
+  const config = useData('/api/configuration') as serverConfiguration;
+  const textColor = useColorModeValue('gray.800', 'gray.100');
 
   if (!roomId || !boardId) {
     toHome(roomId);
@@ -105,6 +109,11 @@ export function BoardPage() {
       <Box position="absolute" left="2" bottom="2" zIndex={101}>
         <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} />
       </Box>
+
+      {/* ServerName */}
+      <Text fontSize={'xl'} opacity={0.7} position="absolute" left="2" color={textColor} userSelect="none" whiteSpace="nowrap">
+        {config?.serverName}
+      </Text>
     </>
   );
 }
