@@ -151,8 +151,19 @@ function AppComponent(props: App): JSX.Element {
   //   return () => clearInterval(checkHeartBeat);
   // }, [s.lastHeartBeat, s.runStatus]);
 
-  function checkAppType(app: string) {
-    return supportedApps.includes(app);
+  function checkAppType() {
+    const hostedTypes = new Set(Object.values(s.hostedApps))
+
+    if (Array.from(hostedTypes).length > 1) {
+      return 2
+    } else {
+      if (supportedApps.includes([...hostedTypes][0])) {
+        return 1
+      } else {
+        return 0
+      }
+    }
+
   }
 
   function newAppAdded(appType: string) {
@@ -183,7 +194,7 @@ function AppComponent(props: App): JSX.Element {
           <PopoverTrigger>
             <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
               <Button variant="ghost" size="lg" color="cyan">
-                {s.runStatus}
+                Messages
               </Button>
             </div>
           </PopoverTrigger>
@@ -192,7 +203,8 @@ function AppComponent(props: App): JSX.Element {
             <PopoverArrow/>
 
             <PopoverBody>
-              {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
+              {/*{message}*/}
+              {checkAppType() === 0 ? 'Error. Unsupported file type' : checkAppType() === 1 ? 'File type accepted' : 'Error. More than 1 app type on board' }
             </PopoverBody>
 
             {Object.keys(s.messages)?.map((message: string) => (
@@ -221,14 +233,14 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
+  // const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
   const [aiModel, setAIModel] = useState('Models');
   const [task, setTask] = useState('Tasks');
 
-  function checkAppType(app: string) {
-    return supportedApps.includes(app);
-  }
+  // function checkAppType(app: string) {
+  //   return supportedApps.includes(app);
+  // }
 
   function runFunction(model: string) {
     updateState(props._id, {
