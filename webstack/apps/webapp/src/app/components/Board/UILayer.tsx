@@ -27,6 +27,8 @@ type UILayerProps = {
 export function UILayer(props: UILayerProps) {
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
+  const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
+
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
@@ -50,6 +52,7 @@ export function UILayer(props: UILayerProps) {
   const onClearConfirm = () => {
     // delete all apps
     apps.forEach((a) => deleteApp(a._id));
+    setClearAllMarkers(true);
     // close the modal
     clearOnClose();
   };

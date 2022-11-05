@@ -80,6 +80,31 @@ function AppComponent(props: App): JSX.Element {
   const [serverTimeDifference, setServerTimeDifference] = useState(0);
   const [expirationTime, setExpirationTime] = useState<string>('Checking Time...');
 
+  // The user that is sharing only sets the selTrack
+  const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
+
+  useEffect(() => {
+    // If the user changes the dimensions of the shared window, resize the app
+    const updateDimensions = (track: any) => {
+      if (track.dimensions.width && track.dimensions.height) {
+        const aspect = track.dimensions.width / track.dimensions.height;
+        let w = props.data.size.width;
+        let h = props.data.size.height;
+        aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+        updateState(props._id, { aspectRatio: aspect });
+        update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
+      }
+    };
+    if (selTrack) {
+      selTrack.addListener('dimensionsChanged', updateDimensions);
+    }
+    return () => {
+      if (selTrack) {
+        selTrack.removeListener('dimensionsChanged', updateDimensions);
+      }
+    };
+  }, [selTrack, props.data.size.width, props.data.size.height]);
+
   // Get server time
   useEffect(() => {
     async function getServerTime() {
@@ -138,8 +163,10 @@ function AppComponent(props: App): JSX.Element {
           videoRef.current.play();
           const videoId = genId();
           const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
+
           room.localParticipant.publishTrack(screenTrack);
           await updateState(props._id, { videoId });
+          setSelTrack(screenTrack);
         } catch (err) {
           deleteApp(props._id);
         }
@@ -223,7 +250,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} lockAspectRatio={s.aspectRatio}>
       <>
         <Box backgroundColor="black" width="100%" height="100%">
           <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
