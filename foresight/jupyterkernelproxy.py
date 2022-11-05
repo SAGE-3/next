@@ -11,7 +11,7 @@ from config import config as conf, prod_type
 
 logger = configure_logger()
 
-
+# TODO : CONVERT JupyterKernelProxy INTO singleton (use BORG)
 def format_execute_request_msg(exec_uuid, code):
     content = {'code': code, 'silent': False}
     hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
@@ -28,14 +28,11 @@ def format_execute_request_msg(exec_uuid, code):
 
 
 class JupyterKernelProxy:
-
     class JupyterClient(WebSocketBaseClient):
-
         def __init__(self, address, headers, parent_proxy_instnace):
             self.pending_reponses = {}
             self.parent_proxy_instance = parent_proxy_instnace
             super().__init__(address, headers=headers)
-
 
         def handshake_ok(self):
             print("Opening %s" % format_addresses(self))

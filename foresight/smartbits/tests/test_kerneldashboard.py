@@ -10,7 +10,7 @@ import time
 def kernel_dashboard():
     kd = KernelDashboard(**kernel_dashboard_doc)
     yield kd
-    kd._jupyter_client.clean_up()
+    kd.clean_up()
 
 def test_create_instance(kernel_dashboard):
     isinstance(kernel_dashboard, KernelDashboard)

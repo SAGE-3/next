@@ -61,7 +61,9 @@ kernel_dashboard_doc = {
     'state': {
         'kernelSpecs': [],
         'availableKernels': [],
-        'executeInfo': {'executeFunc': '', 'params': {}}
+        'executeInfo': {'executeFunc': '', 'params': {}},
+        'lastHeartBeat': 0,
+        'online': False
     }
 }
 

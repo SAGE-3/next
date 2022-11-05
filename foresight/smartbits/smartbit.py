@@ -8,6 +8,8 @@ from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
 from typing import ClassVar
+from abc  import abstractmethod
+
 
 # from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
@@ -204,6 +206,10 @@ class SmartBit(TrackedBaseModel):
         self.touched.clear()
         self._s3_comm.send_app_update(self.app_id, new_data)
 
+    @abstractmethod
+    def clean_up(self):
+        """cleans up any threads that are unused"""
+        pass
 
 class ExecuteInfo(TrackedBaseModel):
     # executeFunc is not recognized duirng manual update in refresh_data_form_update

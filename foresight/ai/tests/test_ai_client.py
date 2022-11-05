@@ -1,5 +1,4 @@
 import time
-
 from ai.ai_client import AIClient
 import uuid
 from config import funcx as fcx_cfg

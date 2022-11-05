@@ -11,8 +11,11 @@ from pydantic import PrivateAttr
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from typing import Optional, TypeVar
-from config import ai_models, funcx as funcx_config
+from config import ai_models, ai_supported, funcx as funcx_config
 from config import config as conf, prod_type
+from ai.ai_client import AIClient
+from task_scheduler import TaskScheduler
+
 if prod_type == "development":
     import os
     import dropbox
@@ -40,23 +43,6 @@ def get_sharing_url(private_url):
 # if prod_type == "development":
 #     headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
 
-# TODO: movie this to a configuration somewhere and call it something else.
-ai_settings = {
-    "vision": {
-        "supported_apps": ['ImageViewer'],
-        "tasks": {
-            "Object Detection": ["facebook/detr-resnet-50", "lai_lab/fertilized_egg_detect"],
-            "Classification": ["image_c_model_1", "image_c_model_2"]
-        }
-    },
-    "nlp": {
-        "supported_apps": ['PDFViewer', 'Notepad'],
-        "tasks": {
-            "Summarization": ["facebook/bart-large-cnn", "sshleifer/distilbart-cnn-12-6"],
-        }
-    }
-}
-
 
 class AIPaneState(TrackedBaseModel):
     executeInfo: ExecuteInfo
@@ -64,21 +50,23 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: bool
-    # output: Optional[dict]
-
+    # lastHeartBeat: int
     supportedTasks: Optional[dict]
 
 
 class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
-
+    _ai_client = PrivateAttr()
+    _task_scheduler = PrivateAttr()
     _pending_executions: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(AIPane, self).__init__(**kwargs)
+        self._ai_client = AIClient()
         self._pending_executions = {}
+        self._task_scheduler = TaskScheduler()
 
     def new_app_added(self, app_type):
         """
@@ -94,7 +82,7 @@ class AIPane(SmartBit):
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
             if len(self.state.hostedApps) == 1:
-                for type, settings in ai_settings.items():
+                for type, settings in ai_supported.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
             self.state.supportedTasks = supported_tasks
@@ -116,7 +104,7 @@ class AIPane(SmartBit):
 
             print(f"response is {response.status_code}")
             print("done")
-        # self.state.output = json.dumps(msg)
+
         self.state.runStatus = False
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -171,3 +159,9 @@ class AIPane(SmartBit):
 
         self._ai_client.execute(payload)
         print("just called the ai_client's execute")
+
+    def check_stale_jobs(self):
+        pass
+
+    def clean_up(self):
+        pass

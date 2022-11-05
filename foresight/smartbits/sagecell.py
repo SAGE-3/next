@@ -92,3 +92,6 @@ class SageCell(SmartBit):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
             self.send_updates()
+
+    def clean_up(self):
+        self._jupyter_client.clean_up()

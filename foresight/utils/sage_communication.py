@@ -32,7 +32,8 @@ class SageCommunication(Borg):
             "get_boards": "/api/boards/",
             "send_update": "/api/apps/{}",
             "create_app": "/api/apps/",
-            "get_assets": "/api/assets/"
+            "get_assets": "/api/assets/",
+            "get_time": "/api/time"
         }
 
     def send_app_update(self, app_id, data):
@@ -125,6 +126,13 @@ class SageCommunication(Borg):
             data = json_data['data']
         return data
 
+    def get_time(self):
+        r = self.httpx_client.get(
+            self.conf[self.prod_type]['web_server'] + self.routes["get_time"],
+            headers=self.__headers
+        )
+        json_data = r.json()
+        return json_data
 
     def get_boards(self, room_id=None):
         """
