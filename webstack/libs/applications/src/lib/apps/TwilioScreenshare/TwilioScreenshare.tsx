@@ -245,6 +245,7 @@ function AppComponent(props: App): JSX.Element {
       const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
       room.localParticipant.publishTrack(screenTrack);
       await updateState(props._id, { videoId });
+      setSelTrack(screenTrack);
       onClose();
     }
   };
