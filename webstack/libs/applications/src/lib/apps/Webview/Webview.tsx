@@ -7,7 +7,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Box, VStack, Text, Button, ButtonGroup, Center, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
+import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
 
 import {
   MdArrowBack,
@@ -24,7 +24,7 @@ import { App } from '../../schema';
 
 import { useAppStore, useUser, processContentURL } from '@sage3/frontend';
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
 
 // Electron and Browser components
@@ -295,27 +295,11 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-          <Center w="100%" h="100%" bg="gray.700" p={0} m={0}>
-            <VStack>
-              <Center>
-                <Text color="white" fontSize={"2rem"} fontWeight="bold"
-                  whiteSpace={"pre-line"} >
-                  Webview only supported in SAGE3 Desktop Application
-                </Text>
-              </Center>
-              <br />
-              <Center>
-                <Text color="white" fontSize={"1.5rem"} fontWeight="bold"
-                  whiteSpace={"pre-line"} >
-                  <a style={{ color: '#13a89e' }} href={s.webviewurl} rel="noreferrer" target="_blank">
-                    {props.data.title}
-                  </a>
-                </Text>
-              </Center>
-            </VStack>
-          </Center>
-        </div>
+        <ElectronRequired
+          appName={props.data.type}
+          link={s.webviewurl}
+          title={props.data.title}
+        />
       )}
     </AppWindow>
   );
@@ -386,63 +370,67 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <HStack>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
-          <Button onClick={goBack}>
-            <MdArrowBack />
-          </Button>
-        </Tooltip>
+      {isElectron() && (
+        <>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
+              <Button onClick={goBack}>
+                <MdArrowBack />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
-          <Button onClick={goForward}>
-            <MdArrowForward />
-          </Button>
-        </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
+              <Button onClick={goForward}>
+                <MdArrowForward />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
-          <Button onClick={() => view.reload()}>
-            <MdRefresh />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
+            <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
+              <Button onClick={() => view.reload()}>
+                <MdRefresh />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
 
-      <form onSubmit={changeUrl}>
-        <InputGroup size="xs" minWidth="200px">
-          <Input
-            placeholder="Web Address"
-            value={urlValue}
-            onChange={handleUrlChange}
-            onPaste={(event) => {
-              event.stopPropagation();
-            }}
-            backgroundColor="whiteAlpha.300"
-          />
-        </InputGroup>
-      </form>
+          <form onSubmit={changeUrl}>
+            <InputGroup size="xs" minWidth="200px">
+              <Input
+                placeholder="Web Address"
+                value={urlValue}
+                onChange={handleUrlChange}
+                onPaste={(event) => {
+                  event.stopPropagation();
+                }}
+                backgroundColor="whiteAlpha.300"
+              />
+            </InputGroup>
+          </form>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-        <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
-          <MdOutlineSubdirectoryArrowLeft />
-        </Button>
-      </Tooltip>
+          <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+            <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
+              <MdOutlineSubdirectoryArrowLeft />
+            </Button>
+          </Tooltip>
 
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button onClick={() => handleZoom('zoom-in')}>
-            <MdAdd />
-          </Button>
-        </Tooltip>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+              <Button onClick={() => handleZoom('zoom-in')}>
+                <MdAdd />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button onClick={() => handleZoom('zoom-out')}>
-            <MdRemove />
-          </Button>
-        </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+              <Button onClick={() => handleZoom('zoom-out')}>
+                <MdRemove />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
-          <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
-        </Tooltip>
-      </ButtonGroup>
+            <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
+              <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
+            </Tooltip>
+          </ButtonGroup>
+        </>
+      )}
     </HStack>
   );
 }
