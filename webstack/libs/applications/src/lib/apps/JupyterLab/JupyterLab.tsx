@@ -7,24 +7,26 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Box, Button, ButtonGroup, Center, Tooltip } from '@chakra-ui/react';
-import { v1 as uuidv1 } from 'uuid';
+import { useParams } from 'react-router';
 
-import { MdFileDownload } from 'react-icons/md';
+import { Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+// UUID generation
+import { v1 as uuidv1 } from 'uuid';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
+// Icons
+import { MdFileDownload } from 'react-icons/md';
 
-import { downloadFile, GetConfiguration, useAppStore, useBoardStore, useHexColor } from '@sage3/frontend';
+import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
+import { state as AppState } from './index';
 import { isElectron } from './util';
+import { App } from '../../schema';
 
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
-import { useParams } from 'react-router';
 
 /* App component for JupyterApp */
 
@@ -39,9 +41,6 @@ function AppComponent(props: App): JSX.Element {
 
   // Room and board
   const { boardId, roomId } = useParams();
-
-  // Link Color
-  const linkColor = useHexColor('teal');
 
   useEffect(() => {
     GetConfiguration().then((conf) => {
@@ -242,11 +241,8 @@ function AppComponent(props: App): JSX.Element {
       ) : (
         <ElectronRequired
           appName={props.data.type}
-          footer={
-            <a style={{ color: linkColor }} href={s.jupyterURL} rel="noreferrer" target="_blank">
-              <u>{s.jupyterURL}</u>
-            </a>
-          }
+          link={url || ''}
+          title={"Jupyter URL"}
         />
       )}
     </AppWindow>
