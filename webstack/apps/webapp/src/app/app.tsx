@@ -32,6 +32,35 @@ import { AccountPage } from './pages/Account';
 import { AdminPage } from './pages/Admin';
 
 /**
+ * Tries to connect for a length of time, then gives up.
+ *
+ * @param {string} url
+ * @param {number} timeout
+ * @returns
+ */
+
+async function checkURL(url: string, timeout: number) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  const response = await fetch(url, {
+    signal: controller.signal
+  });
+  clearTimeout(id);
+  return response;
+}
+
+async function checkServer(url: string) {
+  try {
+    // tries for 2 seconds
+    const response = await checkURL(url, 2000);
+    return true;
+  } catch (error) {
+    // Timeouts
+    return false;
+  }
+}
+
+/**
  * Main application component
  *
  * @export
@@ -50,8 +79,13 @@ export function App() {
       }
     } else {
       interval = setInterval(() => {
-        window.location.reload()
-      }, 4000);
+        // tries every 5 seconds
+        checkServer(window.location.origin).then((status) => {
+          if (status) {
+            window.location.reload();
+          }
+        });
+      }, 5000);
     }
   }, [status]);
 
