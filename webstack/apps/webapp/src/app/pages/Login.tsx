@@ -87,7 +87,7 @@ export function LoginPage() {
       </Box>
 
       <Center>
-        <Text mr={'.5rem'}>Host: {serverName || '-'}</Text>
+        <Text fontSize={'lg'}>Current Server: {serverName || '-'}</Text>
       </Center>
       <Center my="1rem" fontSize="lg">
         <InputGroup width="17rem">
