@@ -22,7 +22,7 @@ import {
 
 import { App } from '../../schema';
 
-import { useAppStore, useUser, processContentURL } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL, useHexColor } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { isElectron } from './util';
@@ -64,6 +64,9 @@ function AppComponent(props: App): JSX.Element {
   // Tracking the dom-ready and did-load events
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
+
+  // Link Color
+  const linkColor = useHexColor('teal');
 
   // Update from backend
   useEffect(() => {
@@ -295,27 +298,16 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-          <Center w="100%" h="100%" bg="gray.700" p={0} m={0}>
-            <VStack>
-              <Center>
-                <Text color="white" fontSize={"2rem"} fontWeight="bold"
-                  whiteSpace={"pre-line"} >
-                  Webview only supported in SAGE3 Desktop Application
-                </Text>
-              </Center>
-              <br />
-              <Center>
-                <Text color="white" fontSize={"1.5rem"} fontWeight="bold"
-                  whiteSpace={"pre-line"} >
-                  <a style={{ color: '#13a89e' }} href={s.webviewurl} rel="noreferrer" target="_blank">
-                    {props.data.title}
-                  </a>
-                </Text>
-              </Center>
-            </VStack>
-          </Center>
-        </div>
+        <Box display="flex" flexDir="column" height="100%" width="100%" justifyContent="center" alignContent="center">
+          <Box display="flex" justifyContent="center" width="100%" textAlign="center" fontWeight="bold">
+            <span>
+              Webview is only supported within the{' '}
+              <a href="https://sage3.sagecommons.org/" style={{ color: linkColor }} target="_blank">
+                <u>SAGE3 Desktop Application</u>
+              </a>
+            </span>
+          </Box>
+        </Box>
       )}
     </AppWindow>
   );
@@ -386,63 +378,67 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <HStack>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
-          <Button onClick={goBack}>
-            <MdArrowBack />
-          </Button>
-        </Tooltip>
+      {isElectron() && (
+        <>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
+              <Button onClick={goBack}>
+                <MdArrowBack />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
-          <Button onClick={goForward}>
-            <MdArrowForward />
-          </Button>
-        </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
+              <Button onClick={goForward}>
+                <MdArrowForward />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
-          <Button onClick={() => view.reload()}>
-            <MdRefresh />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
+            <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
+              <Button onClick={() => view.reload()}>
+                <MdRefresh />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
 
-      <form onSubmit={changeUrl}>
-        <InputGroup size="xs" minWidth="200px">
-          <Input
-            placeholder="Web Address"
-            value={urlValue}
-            onChange={handleUrlChange}
-            onPaste={(event) => {
-              event.stopPropagation();
-            }}
-            backgroundColor="whiteAlpha.300"
-          />
-        </InputGroup>
-      </form>
+          <form onSubmit={changeUrl}>
+            <InputGroup size="xs" minWidth="200px">
+              <Input
+                placeholder="Web Address"
+                value={urlValue}
+                onChange={handleUrlChange}
+                onPaste={(event) => {
+                  event.stopPropagation();
+                }}
+                backgroundColor="whiteAlpha.300"
+              />
+            </InputGroup>
+          </form>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-        <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
-          <MdOutlineSubdirectoryArrowLeft />
-        </Button>
-      </Tooltip>
+          <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+            <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
+              <MdOutlineSubdirectoryArrowLeft />
+            </Button>
+          </Tooltip>
 
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button onClick={() => handleZoom('zoom-in')}>
-            <MdAdd />
-          </Button>
-        </Tooltip>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+              <Button onClick={() => handleZoom('zoom-in')}>
+                <MdAdd />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button onClick={() => handleZoom('zoom-out')}>
-            <MdRemove />
-          </Button>
-        </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+              <Button onClick={() => handleZoom('zoom-out')}>
+                <MdRemove />
+              </Button>
+            </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
-          <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
-        </Tooltip>
-      </ButtonGroup>
+            <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
+              <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
+            </Tooltip>
+          </ButtonGroup>
+        </>
+      )}
     </HStack>
   );
 }
