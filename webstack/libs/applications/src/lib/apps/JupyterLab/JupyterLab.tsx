@@ -14,7 +14,7 @@ import { MdFileDownload } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
+import { downloadFile, GetConfiguration, useAppStore, useBoardStore, useHexColor } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -39,6 +39,9 @@ function AppComponent(props: App): JSX.Element {
 
   // Room and board
   const { boardId, roomId } = useParams();
+
+  // Link Color
+  const linkColor = useHexColor('teal');
 
   useEffect(() => {
     GetConfiguration().then((conf) => {
@@ -237,7 +240,14 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <ElectronRequired appName={props.data.type} />
+        <ElectronRequired
+          appName={props.data.type}
+          footer={
+            <a style={{ color: linkColor }} href={s.jupyterURL} rel="noreferrer" target="_blank">
+              <u>{s.jupyterURL}</u>
+            </a>
+          }
+        />
       )}
     </AppWindow>
   );

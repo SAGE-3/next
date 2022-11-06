@@ -7,9 +7,11 @@
  */
 import { Box } from '@chakra-ui/react';
 import { useHexColor } from '@sage3/frontend';
+import { ReactNode } from 'react';
 
 type ElectronRequiredWarningProps = {
   appName: string;
+  footer?: ReactNode;
 };
 
 export function ElectronRequired(props: ElectronRequiredWarningProps): JSX.Element {
@@ -24,6 +26,9 @@ export function ElectronRequired(props: ElectronRequiredWarningProps): JSX.Eleme
             <u>SAGE3 Desktop Application</u>
           </a>
         </span>
+      </Box>
+      <Box display="flex" justifyContent="center" width="100%" textAlign="center" my="2">
+        {props.footer}
       </Box>
     </Box>
   );

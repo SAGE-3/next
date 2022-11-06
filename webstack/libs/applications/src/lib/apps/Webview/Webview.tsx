@@ -7,7 +7,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
+import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, Box } from '@chakra-ui/react';
 
 import {
   MdArrowBack,
@@ -22,7 +22,7 @@ import {
 
 import { App } from '../../schema';
 
-import { useAppStore, useUser, processContentURL } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL, useHexColor } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
@@ -64,6 +64,9 @@ function AppComponent(props: App): JSX.Element {
   // Tracking the dom-ready and did-load events
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
+
+  // Link Color
+  const linkColor = useHexColor('teal');
 
   // Update from backend
   useEffect(() => {
@@ -295,7 +298,14 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <ElectronRequired appName={props.data.type} />
+        <ElectronRequired
+          appName={props.data.type}
+          footer={
+            <a style={{ color: linkColor }} href={s.webviewurl} rel="noreferrer" target="_blank">
+              <u>{props.data.title}</u>
+            </a>
+          }
+        />
       )}
     </AppWindow>
   );
