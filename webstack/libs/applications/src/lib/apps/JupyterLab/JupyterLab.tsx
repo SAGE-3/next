@@ -18,7 +18,7 @@ import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sag
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
 
 // Electron and Browser components
@@ -237,26 +237,7 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-          <Center w="100%" h="100%" bg="gray.700">
-            <Box p={4}>
-              <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  JupyterLab is only supported with the SAGE3 Desktop Application.
-                </Box>
-              </Center>
-              <br />
-              <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  Current URL{' '}
-                  <a style={{ color: '#13a89e' }} href={s.jupyterURL} rel="noreferrer" target="_blank">
-                    {s.jupyterURL}{' '}
-                  </a>
-                </Box>
-              </Center>
-            </Box>
-          </Center>
-        </div>
+        <ElectronRequired appName={props.data.type} />
       )}
     </AppWindow>
   );

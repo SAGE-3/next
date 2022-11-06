@@ -7,7 +7,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Box, VStack, Text, Button, ButtonGroup, Center, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
+import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
 
 import {
   MdArrowBack,
@@ -22,9 +22,9 @@ import {
 
 import { App } from '../../schema';
 
-import { useAppStore, useUser, processContentURL, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL } from '@sage3/frontend';
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
 
 // Electron and Browser components
@@ -64,9 +64,6 @@ function AppComponent(props: App): JSX.Element {
   // Tracking the dom-ready and did-load events
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
-
-  // Link Color
-  const linkColor = useHexColor('teal');
 
   // Update from backend
   useEffect(() => {
@@ -298,16 +295,7 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <Box display="flex" flexDir="column" height="100%" width="100%" justifyContent="center" alignContent="center">
-          <Box display="flex" justifyContent="center" width="100%" textAlign="center" fontWeight="bold">
-            <span>
-              Webview is only supported within the{' '}
-              <a href="https://sage3.sagecommons.org/" style={{ color: linkColor }} target="_blank">
-                <u>SAGE3 Desktop Application</u>
-              </a>
-            </span>
-          </Box>
-        </Box>
+        <ElectronRequired appName={props.data.type} />
       )}
     </AppWindow>
   );
