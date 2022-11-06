@@ -1058,7 +1058,7 @@ function buildMenu() {
           label: 'Go to Hawaii server',
           click() {
             if (mainWindow) {
-              mainWindow.loadURL('https://sage3.manoa.hawaii.edu');
+              mainWindow.loadURL('https://manoa.sage3.app');
             }
           },
         },
@@ -1066,7 +1066,7 @@ function buildMenu() {
           label: 'Go to Development server',
           click() {
             if (mainWindow) {
-              mainWindow.loadURL('https://minim1.evl.uic.edu');
+              mainWindow.loadURL('https://mini.sage3.app');
             }
           },
         },
