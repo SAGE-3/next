@@ -96,6 +96,7 @@ function UserViewport(props: UserViewportProps) {
   // If this is not a wall usertype, then we don't render the viewport
   if (!props.isWall) return null;
   const color = useHexColor(props.color);
+  const titleBarHeight = 30;
   return (
     <Box
       borderStyle="solid"
@@ -105,16 +106,16 @@ function UserViewport(props: UserViewportProps) {
       position="absolute"
       pointerEvents="none"
       left={props.viewport.position.x + 'px'}
-      top={props.viewport.position.y + 'px'}
+      top={props.viewport.position.y - titleBarHeight + 'px'}
       width={props.viewport.size.width + 'px'}
-      height={props.viewport.size.height + 'px'}
+      height={props.viewport.size.height + titleBarHeight + 'px'}
       opacity={0.5}
       borderRadius="8px 8px 8px 8px"
       transition="all 0.5s"
       color="white"
       fontSize="xl"
       pl="2"
-      background={`linear-gradient(180deg, ${color} 30px, transparent 30px, transparent 100%)`}
+      background={`linear-gradient(180deg, ${color} ${titleBarHeight}px, transparent ${titleBarHeight}px, transparent 100%)`}
     >
       Viewport for {props.name}
     </Box>

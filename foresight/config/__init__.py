@@ -91,18 +91,18 @@ ai_models = {
     }
 }
 
-# ai_settings = {
-#     "vision": {
-#         "supported_apps": ['ImageViewer'],
-#         "tasks": {
-#             "Object Detection": ["image_od_model_1", "image_od_model_2"],
-#             "Classification": ["image_c_model_1", "image_c_model_2"]
-#         }
-#     },
-#     "nlp": {
-#         "supported_apps": ['PDFViewer', 'Notepad'],
-#         "tasks": {
-#             "Summarization": ["text_s_model_1", "text_s_model_2", ],
-#         }
-#     }
-# }
+ai_supported = {
+    "vision": {
+        "supported_apps": ['ImageViewer'],
+        "tasks": {
+            "Object Detection": ["facebook/detr-resnet-50", "lai_lab/fertilized_egg_detect"],
+            "Classification": ["image_c_model_1", "image_c_model_2"]
+        }
+    },
+    "nlp": {
+        "supported_apps": ['PDFViewer', 'Notepad'],
+        "tasks": {
+            "Summarization": ["facebook/bart-large-cnn", "sshleifer/distilbart-cnn-12-6"],
+        }
+    }
+}

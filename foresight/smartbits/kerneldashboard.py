@@ -11,7 +11,7 @@ from pydantic import PrivateAttr
 from config import config as conf, prod_type
 import requests
 from jupyterkernelproxy import JupyterKernelProxy
-
+from task_scheduler import TaskScheduler
 
 class KernelDashboardState(TrackedBaseModel):
     """
@@ -20,6 +20,8 @@ class KernelDashboardState(TrackedBaseModel):
     kernelSpecs: list = []
     availableKernels: list = []
     executeInfo: ExecuteInfo
+    lastHeartBeat: int
+    online: bool
 
 
 class KernelDashboard(SmartBit):
@@ -27,29 +29,28 @@ class KernelDashboard(SmartBit):
 
     _redis_space: str = PrivateAttr(default="JUPYTER:KERNELS")
     _base_url: str = PrivateAttr(default=f"{conf[prod_type]['jupyter_server']}/api")
-    _headers: dict = PrivateAttr()
-    _redis_server = PrivateAttr()
-    _r_json = PrivateAttr()
-    _redis_store: str = PrivateAttr(default="JUPYTER:KERNELS")
     _jupyter_client = PrivateAttr()
+    _r_json = PrivateAttr()
+    _headers: dict = PrivateAttr()
+    _task_scheduler = PrivateAttr()
 
     def __init__(self, **kwargs):
         super(KernelDashboard, self).__init__(**kwargs)
+        self._task_scheduler = TaskScheduler()
         self._jupyter_client = JupyterKernelProxy()
         self._headers = dict(self._jupyter_client.headers)
         self._r_json = self._jupyter_client.redis_server.json()
         if self._r_json.get(self._redis_space) is None:
             self._r_json.set(self._redis_space, '.', {})
         self.get_kernel_specs()
+        self.set_online()
+        self._task_scheduler.schedule_task(self.set_online, nb_secs=15)
 
     def get_kernel_specs(self):
         response = requests.get(f"{self._base_url}/kernelspecs", headers=self._headers)
         kernel_specs = response.json()
         self.state.kernelSpecs = [kernel_specs]
-        self.state.kernels = self._jupyter_client.get_kernels()
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
+        self.get_available_kernels()
 
     def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
                    kernel_name="python3", auth_users=(), kernel_alias="my_kernel"):
@@ -130,3 +131,15 @@ class KernelDashboard(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
+
+    def clean_up(self):
+        self._jupyter_client.clean_up()
+        self._task_scheduler.clean_up()
+
+
+    def set_online(self):
+        self.state.lastHeartBeat = self._s3_comm.get_time()["epoch"]
+        print('set_online', self.state.lastHeartBeat)
+        self.state.online = True
+        self.send_updates()
+

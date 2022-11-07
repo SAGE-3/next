@@ -27,3 +27,6 @@ class VegaLiteViewer(SmartBit):
         # self.state.executeInfo.params = {}
         # self.send_updates()
         # self._some_private_info = {1: 2}
+
+    def clean_up(self):
+        pass

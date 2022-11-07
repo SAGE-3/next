@@ -23,7 +23,8 @@ def sage_proxy():
     stickie = Stickie(**stickie_doc)
     sp.room.boards[board_id].smartbits[counter.app_id] = counter
     sp.room.boards[board_id].smartbits[stickie.app_id] = stickie
-    return sp
+    yield sp
+
 
 
 def test_linked_app_default(sage_proxy):

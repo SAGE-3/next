@@ -8,12 +8,14 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  text: z.string(),
+  content: z.object({
+    ops: z.array(z.any()),
+  }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: state = {
-  text: 'hello world',
+  content: { ops: [] },
 };
 
 export const name = 'Notepad';
