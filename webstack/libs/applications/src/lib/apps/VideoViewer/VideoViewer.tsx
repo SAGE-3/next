@@ -26,15 +26,12 @@ import {
 import { format as formatTime } from 'date-fns';
 
 import { Asset, ExtraImageType } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, useUser, downloadFile, useUIStore, usePresenceStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUser, downloadFile, useUIStore, usePresenceStore, useHexColor } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import create from 'zustand';
-// Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
 
 /**
  * Return a string for a duration
@@ -45,12 +42,6 @@ import { WebsocketProvider } from 'y-websocket';
 function getDurationString(n: number): string {
   return formatTime(n * 1000, 'mm:ss');
 }
-
-// Viewviewer store
-export const useStore = create((set: any) => ({
-  ydocs: {} as { [key: string]: Y.Map<any> },
-  setYDoc: (id: string, doc: Y.Map<any>) => set((s: any) => ({ editor: { ...s.editor, ...{ [id]: doc } } })),
-}));
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -63,14 +54,6 @@ function AppComponent(props: App): JSX.Element {
 
   // Aspect Ratio
   const [aspectRatio, setAspecRatio] = useState(16 / 9);
-
-  // YJS
-  const setYDoc = useStore((s: any) => s.setYDoc);
-
-  // Local State
-  const [paused, setPaused] = useState(true);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [loop, setLoop] = useState(false);
 
   // Html Ref
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -97,107 +80,32 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [file, videoRef]);
 
-  useEffect(() => {
-    // Setup Yjs stuff
-    let provider: WebsocketProvider | null = null;
-    let ydoc: Y.Doc | null = null;
-    // A Yjs document holds the shared data
-    ydoc = new Y.Doc();
-
-    // WS Provider
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
-
-    // Define a shared text type on the document
-    const videoDoc = ydoc.getMap<any>('video');
-
-    videoDoc.observe((ymapEvent) => {
-      // Find out what changed:
-      // Option 1: A set of keys that changed
-      ymapEvent.keysChanged; // => Set<strings>
-      // Option 2: Compute the differences
-      ymapEvent.changes.keys; // => Map<string, { action: 'add'|'update'|'delete', oldValue: any}>
-
-      // sample code.
-      ymapEvent.changes.keys.forEach((change, key) => {
-        if (change.action === 'update') {
-          if (key === 'paused') {
-            setPaused(videoDoc.get('paused'));
-          }
-          if (key === 'currentTime') {
-            setCurrentTime(videoDoc.get('currentTime'));
-          }
-          if (key === 'loop') {
-            setLoop(videoDoc.get('loop'));
-          }
-        }
-      });
-    });
-
-    // Save the instance for the toolbar
-    setYDoc(props._id, videoDoc);
-
-    // Sync state with sage when a user connects and is the only one present
-    provider.on('sync', () => {
-      if (provider) {
-        const users = provider.awareness.getStates();
-        const count = users.size;
-
-        // Get Yjs state
-        const p = videoDoc.get('paused');
-        const ct = videoDoc.get('currentTime');
-        const l = videoDoc.get('loop');
-
-        // If only user present, sync state with sagebase
-        if (count === 1 && videoDoc) {
-          videoDoc.set('currentTime', s.currentTime);
-          videoDoc.set('paused', s.paused);
-          videoDoc.set('loop', s.loop);
-          setCurrentTime(s.currentTime);
-          setPaused(s.paused);
-          setLoop(s.loop);
-        } else {
-          // If not the only one present, sync with YDoc
-          setCurrentTime(ct);
-          setPaused(p);
-          setLoop(l);
-        }
-      }
-    });
-
-    return () => {
-      // Remove the bindings and disconnect the provider
-      if (ydoc) ydoc.destroy();
-      if (provider) provider.disconnect();
-    };
-  }, []);
-
   // Set pause state of the video
   useEffect(() => {
     if (videoRef.current) {
-      if (paused) {
+      if (s.paused) {
         videoRef.current.pause();
       } else {
         videoRef.current.play();
       }
     }
-  }, [paused]);
+  }, [s.paused, videoRef]);
 
   // Set time of video
   useEffect(() => {
     if (videoRef.current) {
-      if (Math.abs(videoRef.current.currentTime - currentTime) > 4) {
-        videoRef.current.currentTime = currentTime;
+      if (Math.abs(videoRef.current.currentTime - s.currentTime) > 4) {
+        videoRef.current.currentTime = s.currentTime;
       }
     }
-  }, [currentTime]);
+  }, [s.currentTime, videoRef]);
 
   // Set loop state of video
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.loop = loop;
+      videoRef.current.loop = s.loop;
     }
-  }, [loop]);
+  }, [s.loop, videoRef]);
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
@@ -218,7 +126,8 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const videoDoc: Y.Map<any> = useStore((state: any) => state.editor[props._id]);
+
+  // Appstore
   const updateState = useAppStore((state) => state.updateState);
 
   // Stores
@@ -227,9 +136,13 @@ function ToolbarComponent(props: App): JSX.Element {
   // React State
   const [videoRef, setVideoRef] = useState<HTMLVideoElement>();
   const [file, setFile] = useState<Asset>();
-  const [sliderTime, setSliderTime] = useState<number | null>(null);
 
+  // Local State
+  const [sliderTime, setSliderTime] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
+
+  // Color
+  const teal = useHexColor('teal');
 
   useEffect(() => {
     let interval: NodeJS.Timer | null = null;
@@ -270,10 +183,8 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a play action
   const handlePlay = () => {
     if (videoRef) {
-      const paused = !videoDoc.get('paused');
+      const paused = !s.paused;
       const time = videoRef.currentTime;
-      videoDoc.set('paused', paused);
-      videoDoc.set('currentTime', time);
       updateState(props._id, { currentTime: time });
       updateState(props._id, { paused: paused });
     }
@@ -283,7 +194,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleRewind = () => {
     if (videoRef) {
       const time = Math.min(videoRef.duration, videoRef.currentTime - 5);
-      videoDoc.set('currentTime', time);
       updateState(props._id, { currentTime: time });
     }
   };
@@ -292,7 +202,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleForward = () => {
     if (videoRef) {
       const time = Math.min(videoRef.duration, videoRef.currentTime + 5);
-      videoDoc.set('currentTime', time);
       updateState(props._id, { currentTime: time });
     }
   };
@@ -300,8 +209,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a forward action
   const handleLoop = () => {
     if (videoRef) {
-      const loop = !videoDoc.get('loop');
-      videoDoc.set('loop', loop);
+      const loop = !s.loop;
       updateState(props._id, { loop: loop });
     }
   };
@@ -316,7 +224,6 @@ function ToolbarComponent(props: App): JSX.Element {
   // Download the file
   const handleDownload = () => {
     if (file) {
-      // const url = file?.data.file;
       const filename = file.data.originalfilename;
       const extras = file.data.derived as ExtraImageType;
       const video_url = extras.url;
@@ -343,18 +250,17 @@ function ToolbarComponent(props: App): JSX.Element {
   const seekEndHandle = (value: number) => {
     if (videoRef) {
       videoRef.currentTime = value;
-      videoDoc.set('currentTime', value);
       updateState(props._id, { currentTime: value });
       setCurrentTime(value);
       setSliderTime(null);
     }
   };
 
-  const handleSync = () => {
+  const handleSyncOnMe = () => {
     if (videoRef) {
-      videoDoc.set('currentTime', videoRef.currentTime);
-      videoDoc.set('paused', videoRef.paused);
-      videoDoc.set('loop', videoRef.loop);
+      updateState(props._id, { currentTime: videoRef.currentTime });
+      updateState(props._id, { loop: videoRef.loop });
+      updateState(props._id, { paused: videoRef.paused });
     }
   };
 
@@ -365,7 +271,7 @@ function ToolbarComponent(props: App): JSX.Element {
       ) : (
         <>
           {/* App State with server */}
-          <ButtonGroup isAttached size="xs" colorScheme="green" mr={1}>
+          <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
             <Tooltip placement="top-start" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
               <Button onClick={handleRewind} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
                 <MdFastRewind />
@@ -385,14 +291,14 @@ function ToolbarComponent(props: App): JSX.Element {
             </Tooltip>
           </ButtonGroup>
 
-          <ButtonGroup isAttached size="xs" colorScheme="green" mx={1}>
+          <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
             <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
               <Button onClick={handleLoop} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
                 {videoRef.loop ? <MdLoop /> : <MdArrowRightAlt />}
               </Button>
             </Tooltip>
-            <Tooltip placement="top-start" hasArrow={true} label={'Resync'} openDelay={400}>
-              <Button onClick={handleSync} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
+            <Tooltip placement="top-start" hasArrow={true} label={'Sync on me'} openDelay={400}>
+              <Button onClick={handleSyncOnMe} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!videoRef}>
                 <MdAccessTime />
               </Button>
             </Tooltip>
@@ -403,13 +309,13 @@ function ToolbarComponent(props: App): JSX.Element {
             value={sliderTime ? sliderTime : currentTime}
             max={videoRef.duration}
             width="150px"
-            mx={2}
+            mx={4}
             onChange={seekChangeHandle}
             onChangeStart={seekStartHandle}
             onChangeEnd={seekEndHandle}
           >
-            <SliderTrack bg="green.100">
-              <SliderFilledTrack bg="green.400" />
+            <SliderTrack bg={'gray.200'}>
+              <SliderFilledTrack bg={teal} />
             </SliderTrack>
             <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
               {' '}
@@ -421,7 +327,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <SliderMark
               value={sliderTime ? sliderTime : currentTime}
               textAlign="center"
-              bg="green.500"
+              bg={teal}
               color="white"
               mt="-9"
               ml="-5"
@@ -432,12 +338,7 @@ function ToolbarComponent(props: App): JSX.Element {
               {getDurationString(sliderTime ? sliderTime : currentTime)}
             </SliderMark>
             <SliderThumb boxSize={4}>
-              <Box
-                color="green.500"
-                as={MdGraphicEq}
-                transition={'all 0.2s'}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)', color: 'green.300' }}
-              />
+              <Box color="teal" as={MdGraphicEq} transition={'all 0.2s'} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)', color: teal }} />
             </SliderThumb>
           </Slider>
 

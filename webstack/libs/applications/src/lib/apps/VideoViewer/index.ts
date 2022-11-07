@@ -18,6 +18,7 @@ export const schema = z.object({
   paused: z.boolean(),
   loop: z.boolean(),
   assetid: z.string(),
+  controllerId: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -26,6 +27,7 @@ export const init: state = {
   currentTime: 0,
   paused: true,
   loop: false,
+  controllerId: '',
 };
 
 export const name = 'VideoViewer';
