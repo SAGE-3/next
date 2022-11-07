@@ -70,7 +70,7 @@ function organizeHeatmapHeaders(extractedHeaders: string[], data: string[]) {
     }
   }
   if (nominalCount < 2) {
-    throw 'Underspecified';
+    throw 'You did not provide enough details to generate a chart';
   } else {
     return extractedHeaders;
   }

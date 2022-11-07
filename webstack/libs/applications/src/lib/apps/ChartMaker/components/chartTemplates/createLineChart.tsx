@@ -73,6 +73,6 @@ function organizeLineChartHeaders(extractedHeaders: string[], data: string[]) {
   if (quantitativeFound && temporalFound) {
     return extractedHeaders;
   } else {
-    throw 'Underspecified';
+    throw 'You did not provide enough details to generate a chart';
   }
 }

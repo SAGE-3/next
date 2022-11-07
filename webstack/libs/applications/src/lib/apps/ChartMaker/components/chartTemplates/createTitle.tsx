@@ -22,22 +22,22 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
       case 1:
         switch (intent) {
           case 'histogram':
-            chartTitle += 'Histogram of ' + headerTitles[0];
+            chartTitle += 'histogram of ' + headerTitles[0];
             break;
           case 'bar':
-            chartTitle += 'Bar chart of ' + headerTitles[0];
+            chartTitle += 'bar chart of ' + headerTitles[0];
             break;
           case 'line':
-            chartTitle += 'Line chart of ' + headerTitles[0];
+            chartTitle += 'line chart of ' + headerTitles[0];
             break;
           case 'scatter':
-            chartTitle += 'Scatter plot of ' + extractedHeaders[0];
+            chartTitle += 'scatter plot of ' + extractedHeaders[0];
             break;
         }
         break;
       case 2:
         if (intent == 'bar') {
-          chartTitle += 'Bar chart of ' + headerTitles[1] + 'vs. ' + headerTitles[0];
+          chartTitle += 'bar chart of ' + headerTitles[1] + 'vs. ' + headerTitles[0];
         } else {
           chartTitle += intent.charAt(0).toUpperCase() + intent.slice(1) + ' Chart of ' + headerTitles[1] + ' vs. ' + headerTitles[0];
         }
@@ -48,11 +48,11 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
         chartTitle +=
           intent.charAt(0).toUpperCase() +
           intent.slice(1) +
-          ' Chart of ' +
+          ' chart of ' +
           headerTitles[1] +
           ' vs. ' +
           headerTitles[0] +
-          'Colored by ' +
+          'colored by ' +
           headerTitles[2];
         break;
       default:

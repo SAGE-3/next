@@ -69,7 +69,7 @@ function organizeBarChartHeaders(extractedHeaders: string[], data: string[]) {
   if (quantitativeFound) {
     return extractedHeaders;
   } else {
-    throw 'Underspecified';
+    throw 'You did not provide enough details to generate a chart';
   }
 }
 

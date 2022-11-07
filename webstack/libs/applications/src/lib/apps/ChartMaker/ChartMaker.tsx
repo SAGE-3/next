@@ -54,9 +54,14 @@ function AppComponent(props: App): JSX.Element {
   const textColor = useColorModeValue('gray.700', 'gray.100');
   const sortedMessages = state.messages.sort((a, b) => a.creationDate - b.creationDate);
 
+  useEffect(() => {
+    const messages = document.getElementById(props._id);
+    if (messages) messages.scrollTop = messages.scrollHeight;
+  }, [state.messages]);
+
   return (
     <AppWindow app={props}>
-      <Box h="100%" w="100%" bg={bgColor} overflowX="scroll">
+      <Box h="100%" w="100%" bg={bgColor} overflowX="scroll" id={props._id}>
         {sortedMessages.map((message, index) => {
           const isMe = user.user?._id == message.userId;
           return (
@@ -203,24 +208,39 @@ function ToolbarComponent(props: App): JSX.Element {
               creationDate: time.epoch,
               userName: user?.data.name,
               query: input,
-              response: 'Arti made a chart',
+              response: 'I made a ' + specifications[i].title,
             },
           ],
         });
       }
-
       setProcessing(false);
       console.log(specifications);
     } catch (e) {
+      updateState(props._id, {
+        ...state,
+        messages: [
+          ...state.messages,
+          {
+            id: genId(),
+            userId: user?._id,
+            creationId: null,
+            creationDate: time.epoch,
+            userName: user?.data.name,
+            query: input,
+            response: e,
+          },
+        ],
+      });
       setProcessing(false);
-      console.error(e);
     }
   };
 
   return (
     <>
       <Menu>
-        <MenuButton as={Button}>{state.fileName ? state.fileName : 'Select a Dataset'}</MenuButton>
+        <MenuButton size="sm" as={Button}>
+          {state.fileName ? state.fileName : 'Select a Dataset'}
+        </MenuButton>
         <MenuList>
           {datasets.map((dataset, index) => {
             return (
@@ -236,14 +256,11 @@ function ToolbarComponent(props: App): JSX.Element {
       ) : (
         <>
           <Input size="xs" onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="400px" />
-          <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1}>
+          <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1} disabled={state.fileName.length === 0}>
             Generate
           </Button>
         </>
       )}
-      <Button colorScheme="green" size="xs">
-        Action
-      </Button>
     </>
   );
 }
