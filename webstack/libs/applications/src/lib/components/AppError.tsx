@@ -14,11 +14,10 @@ import { AppWindow } from '../components';
 /**
  * Error Boundary for applications.
  * Used on the BoardPage (/webstack/apps/webapp/src/app/pages/Board.tsx)
- * @param props 
- * @returns 
+ * @param props
+ * @returns
  */
-export function AppError(props: { app: App, error: Error, resetErrorBoundary: (...args: unknown[]) => void }): JSX.Element {
-
+export function AppError(props: { app: App; error: Error; resetErrorBoundary: (...args: unknown[]) => void }): JSX.Element {
   return (
     //  Still use the AppWindow so we can still position the app correctly
     <AppWindow app={props.app}>
@@ -26,21 +25,23 @@ export function AppError(props: { app: App, error: Error, resetErrorBoundary: (.
       <Box
         width="100%"
         height="100%"
-        p='5'
+        p="5"
         display="flex"
-        justifyContent='center'
-        alignItems='center'
-        flexDirection='column'
+        justifyContent="center"
+        alignItems="center"
+        flexDirection="column"
         backgroundColor="indianred"
       >
         {/* Main Title */}
-        <Text fontSize='lg'>{props.app.data.type} ERROR</Text>
+        <Text fontSize="lg">{props.app.data.type} ERROR</Text>
         {/*  Error Message */}
-        <Text fontSize='md' mb="2">Message: {props.error.message}</Text>
+        <Text fontSize="md" mb="2">
+          Message: {props.error.message}
+        </Text>
         {/* Button to try to the load the application again */}
         <Button
           onClick={() => {
-            props.resetErrorBoundary()
+            props.resetErrorBoundary();
           }}
           colorScheme="green"
           my="4"

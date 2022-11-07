@@ -15,6 +15,8 @@ import { z } from 'zod';
 
 export const schema = z.object({
   currentTime: z.number(),
+  paused: z.boolean(),
+  loop: z.boolean(),
   assetid: z.string(),
 });
 export type state = z.infer<typeof schema>;
@@ -22,6 +24,8 @@ export type state = z.infer<typeof schema>;
 export const init: state = {
   assetid: '',
   currentTime: 0,
+  paused: true,
+  loop: false,
 };
 
 export const name = 'VideoViewer';
