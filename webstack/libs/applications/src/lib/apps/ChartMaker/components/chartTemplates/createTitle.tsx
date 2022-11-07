@@ -1,8 +1,10 @@
+// Generate titles of the charts
 export default function createTitle(extractedHeaders: string | any[], intent: string, extractedFilteredValues: string[]) {
   let chartTitle = '';
   let headerLength = extractedHeaders.length;
   let headerTitles = [];
 
+  // Limited to 3 because of switch statement below
   if (headerLength > 3) {
     headerLength = 3;
   }
@@ -16,11 +18,16 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
   }
 
   if (intent == 'map') {
+    // Maps only have one nominal attribute but extractedHeaders.length is two
+    // But the chart type 'map' is also the same as lat lon and map.
+    // This should not be included in the title/
     chartTitle = 'Map of ' + extractedHeaders[1];
   } else {
+    // All other chart types have will add every extracted header
     switch (headerLength) {
       case 1:
         switch (intent) {
+          // unlikely to use one attribute, but possible
           case 'histogram':
             chartTitle += 'histogram of ' + headerTitles[0];
             break;
@@ -36,6 +43,7 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
         }
         break;
       case 2:
+        // Two attributes, standard
         if (intent == 'bar') {
           chartTitle += 'bar chart of ' + headerTitles[1] + 'vs. ' + headerTitles[0];
         } else {
@@ -43,7 +51,7 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
         }
 
         break;
-
+      // if three headers, most likely will use "colored by.."
       case 3:
         chartTitle +=
           intent.charAt(0).toUpperCase() +
@@ -59,6 +67,7 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
         return '';
     }
   }
+  // add filters to the end
   if (extractedFilteredValues.length > 0) {
     chartTitle += 'filtered by ';
     for (let i = 0; i < extractedFilteredValues.length; i++) {

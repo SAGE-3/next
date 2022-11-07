@@ -58,6 +58,8 @@ export default function createBarChart(extractedHeaders: string[], fileName: str
   return specifications;
 }
 
+// Will put headers in this order
+// [quantitative, nominal, nominal, nominal....]
 function organizeBarChartHeaders(extractedHeaders: string[], data: string[]) {
   let quantitativeFound = false;
   for (let i = 0; i < extractedHeaders.length; i++) {

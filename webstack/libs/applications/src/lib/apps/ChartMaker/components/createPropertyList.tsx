@@ -1,5 +1,5 @@
 export const specialTypes = [{ header: 'map', type: 'map' }];
-
+// Special case to return header type
 function checkType(header: string, data: any) {
   let lowerCaseHeader = header.toLowerCase();
   for (let i = 0; i < specialTypes.length; i++) {
@@ -23,26 +23,32 @@ function checkType(header: string, data: any) {
   }
 }
 
+// Used by ChartMaker.tsx (main app) to create initial property list
+// This will generate unique filter values
 export default function createPropertyList(data: any, headers: string[]) {
   let propertyList = [];
   for (let i = 0; i < headers.length; i++) {
+    // Check for nominal headers
     if (checkType(headers[i], data) === 'nominal') {
       var flags: never[] | boolean[] = [],
         uniqueNominalValues = [],
         l = data.length,
         n;
+      // Get unique values only
       for (n = 0; n < l; n++) {
         if (flags[data[n][headers[i]]]) continue;
         flags[data[n][headers[i]]] = true;
         uniqueNominalValues.push(data[n][headers[i]]);
         uniqueNominalValues = uniqueNominalValues.flat();
       }
+      // Add proprty to list
       let propertyInfo = { header: headers[i], filterValues: uniqueNominalValues, headerType: 'nominal' };
       propertyList.push(propertyInfo);
     } else if (checkType(headers[i], data) === 'quantitative') {
       var quantitativeValues = [];
       quantitativeValues.push();
       let quantitativeData = [];
+      // Get max and min value from dataset
       for (let j = 0; j < data.length; j++) {
         let num = parseFloat(data[j][headers[i]]);
         if (isNaN(num)) {
@@ -59,6 +65,8 @@ export default function createPropertyList(data: any, headers: string[]) {
 
       propertyList.push(propertyInfo);
     } else {
+      // Empty for temporal.
+      // TODO need to add earliest and oldest dates in filter values
       let propertyInfo = { header: headers[i], filterValues: [], headerType: 'specialType' };
       propertyList.push(propertyInfo);
     }

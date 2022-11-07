@@ -24,7 +24,6 @@ export const createCharts = (
   const extractedFilterValues = extractFilters(input, propertyList);
   const extractedChartType = extractChartType(input, availableCharts);
   let specifications: barChartProps[] | lineChartProps[] | heatmapProps[] = [];
-
   //Create Data Visualizations
   if (extractedChartType == 'bar') {
     specifications = createBarChart(extractedHeaders, fileName, data);
@@ -32,8 +31,11 @@ export const createCharts = (
     specifications = createLineChart(extractedHeaders, fileName, data);
   } else if (extractedChartType == 'heatmap') {
     specifications = createHeatmap(extractedHeaders, fileName, data);
+  } else {
+    throw 'Try adding a chart type to your query. (Ex: bar, line, heatmap)';
   }
-  console.log(extractedChartType);
+
+  // For each data visualizations, generate title and filters
   for (let i = 0; i < specifications.length; i++) {
     specifications[i].title = createTitle(extractedHeaders, extractedChartType, extractedFilterValues);
     specifications[i].transform = createTransform(extractedFilterValues, propertyList);

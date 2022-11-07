@@ -1,5 +1,7 @@
+// Special Data types
 export const specialTypes = [{ header: 'map', type: 'map' }];
 
+// Check dataset headers and return data type
 export default function findHeaderType(header: string, data: any) {
   let lowerCaseHeader = header.toLowerCase();
   for (let i = 0; i < specialTypes.length; i++) {

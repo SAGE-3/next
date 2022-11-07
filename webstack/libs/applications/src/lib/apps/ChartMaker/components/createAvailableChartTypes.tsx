@@ -1,5 +1,6 @@
 import { specialTypes } from './findHeaderType';
 
+// Check data types in dataset to mark if charts are available or not available
 export default function (input: string, data: any[]) {
   let availableCharts = [
     {
@@ -49,6 +50,7 @@ export default function (input: string, data: any[]) {
       available: false,
     },
   ];
+  // Checker for each data type in dataset
   let typesInDataset = {
     temporal: false,
     nominal: false,
@@ -56,6 +58,7 @@ export default function (input: string, data: any[]) {
     map: false,
   };
 
+  // Iterate over data types to mark if present in dataset
   let keys: any[] = Object.keys(data);
   for (let i = 0; i < keys.length; i++) {
     for (let i = 0; i < specialTypes.length; i++) {
@@ -81,6 +84,7 @@ export default function (input: string, data: any[]) {
     }
   }
 
+  // helper function to mark chart types as available
   function switchAvailableCharts(type: string) {
     for (let i = 0; i < availableCharts.length; i++) {
       if (availableCharts[i].mark === type) {
@@ -89,6 +93,8 @@ export default function (input: string, data: any[]) {
     }
   }
 
+  // If certain data types are present in dataset,
+  // Should be able to generate these charts
   if (typesInDataset.temporal && typesInDataset.quantitative) {
     switchAvailableCharts('line');
   }

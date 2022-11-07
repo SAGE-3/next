@@ -33,6 +33,7 @@ export default function createLineChart(extractedHeaders: string[], fileName: st
 
   if (extractedHeaders.length == 2) {
     lineChartSpec.data.url = '/api/assets/static/' + fileName;
+
     lineChartSpec.encoding.x.field = extractedHeaders[1];
     lineChartSpec.encoding.x.type = 'temporal';
 

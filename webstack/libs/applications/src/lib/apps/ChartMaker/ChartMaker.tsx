@@ -47,35 +47,33 @@ function AppComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
   const user = useUser();
 
+  //Colors for Dark theme and light theme
   const myColor = useHexColor('blue');
   const artiColor = useHexColor('orange');
   const otherUserColor = useHexColor('gray');
   const bgColor = useColorModeValue('gray.100', 'gray.900');
   const textColor = useColorModeValue('gray.700', 'gray.100');
+
+  //Sort messages by creation date to display in order
   const sortedMessages = state.messages.sort((a, b) => a.creationDate - b.creationDate);
 
+  //Scroll new message into view
   useEffect(() => {
     const messages = document.getElementById(props._id);
     if (messages) messages.scrollTop = messages.scrollHeight;
-  }, [state.messages]);
+  }, [state.messages.length]);
 
   return (
     <AppWindow app={props}>
+      {/* Display Messages */}
       <Box h="100%" w="100%" bg={bgColor} overflowX="scroll" id={props._id}>
         {sortedMessages.map((message, index) => {
           const isMe = user.user?._id == message.userId;
           return (
             <Fragment key={index}>
+              {/* Start of User Messages */}
               <Box position="relative" my={10}>
-                <Text
-                  position={'absolute'}
-                  top="-15px"
-                  // left={user.user?._id == message.userId ? undefined : '15px'}
-                  // right={user.user?._id == message.userId ? '15px' : '0px'}
-                  right={'15px'}
-                  fontWeight="bold"
-                  color={textColor}
-                >
+                <Text position={'absolute'} top="-15px" right={'15px'} fontWeight="bold" color={textColor}>
                   {message.userName}
                 </Text>
                 <Box display={'flex'} justifyContent="right">
@@ -94,6 +92,7 @@ function AppComponent(props: App): JSX.Element {
                 </Box>
               </Box>
 
+              {/* Start of Arti Messages */}
               <Box position="relative" my={10}>
                 <Text position={'absolute'} top="-15px" left={'15px'} fontWeight="bold" color={textColor}>
                   Arti
@@ -116,30 +115,36 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
+
+  // Load Datasets from asset store
   const datasets = useAssetStore((state) => state.assets.filter((file) => file.data.file.split('.').pop() == 'csv'));
 
   const updateState = useAppStore((state) => state.updateState);
 
+  // Create Vega-Lite Viewer app
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
 
-  // The text of the sticky for React
+  // Input text for query
   const [input, setInput] = useState<string>('');
 
-  //BoardInfo
+  // BoardInfo
   const { boardId, roomId } = useParams();
   const [selectedFile, setSelectedFile] = useState<Asset | null>(null);
 
   // Processing
   const [processing, setProcessing] = useState(false);
 
+  // Handler for changing dataset to make charts for
   const handleChangeFile = (value: Asset) => {
     setSelectedFile(value);
   };
+
   useEffect(() => {
     if (selectedFile) {
       const localurl = '/api/assets/static/' + selectedFile.data.file;
       if (localurl) {
+        // Fetch dataset from asset store
         fetch(localurl, {
           headers: {
             'Content-Type': 'text/csv',
@@ -155,6 +160,9 @@ function ToolbarComponent(props: App): JSX.Element {
             const firstRow = arr[0];
             // extract the headers and save them
             const headers = Object.keys(arr[0]);
+
+            // Only generate unique filter values to store in database
+            // Note: I am NOT storing the entire CSV in database
             const propertyList = createPropertyList(arr, headers);
             updateState(props._id, {
               ...state,
@@ -173,16 +181,24 @@ function ToolbarComponent(props: App): JSX.Element {
     setInput(value);
   };
 
+  // Generating chart from user input
   const generateChart = async (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
+    // To slow down UI
     setProcessing(true);
     await timeout(1000);
+
+    // get servertime
     const time = await serverTime();
     if (!state.fileName) return;
     try {
+      // Create array vega-lite Specifications
       const specifications = createCharts(input, state.dataRow, state.headers, state.fileReference, state.propertyList);
       if (!user) return;
+
       for (let i = 0; i < specifications.length; i++) {
+        // Create App for each specification
         const app = await createApp({
           title: 'VegaLiteViewer',
           roomId: roomId!,
@@ -196,7 +212,8 @@ function ToolbarComponent(props: App): JSX.Element {
           },
           raised: true,
         });
-        console.log(app);
+
+        // Add messages
         updateState(props._id, {
           ...state,
           messages: [
@@ -216,6 +233,8 @@ function ToolbarComponent(props: App): JSX.Element {
       setProcessing(false);
       console.log(specifications);
     } catch (e) {
+      // For now, throwing errors to help with responses.
+      // TODO: need to change to send errmessages instead
       updateState(props._id, {
         ...state,
         messages: [

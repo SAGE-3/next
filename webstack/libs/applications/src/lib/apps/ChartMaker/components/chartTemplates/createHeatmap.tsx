@@ -45,6 +45,8 @@ export default function createHeatmap(extractedHeaders: string[], fileName: stri
   return specifications;
 }
 
+// Will put headers in this order
+// [nominal, nominal, nominal....]
 function organizeHeatmapHeaders(extractedHeaders: string[], data: string[]) {
   // let quantitativeFound = false;
   // let temporalFound = false;
