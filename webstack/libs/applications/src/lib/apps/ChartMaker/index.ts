@@ -17,11 +17,23 @@ import { z } from 'zod';
 export const schema = z.object({
   specification: z.number(),
   input: z.string(),
+
   fileReference: z.string(),
   fileName: z.string(),
   headers: z.string().array(),
   dataRow: z.string().array(),
   propertyList: z.any(),
+  messages: z
+    .object({
+      id: z.string(),
+      creationId: z.string(),
+      creationDate: z.number(),
+      userName: z.string(),
+      query: z.string(),
+      response: z.string(),
+      userId: z.string(),
+    })
+    .array(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -33,6 +45,7 @@ export const init: Partial<state> = {
   headers: [],
   dataRow: [],
   propertyList: [],
+  messages: [],
 };
 
 export const name = 'ChartMaker';

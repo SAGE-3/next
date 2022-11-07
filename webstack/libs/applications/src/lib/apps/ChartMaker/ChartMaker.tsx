@@ -6,8 +6,21 @@
  *
  */
 
-import { serverTime, useAppStore, useAssetStore, useUser } from '@sage3/frontend';
-import { Box, Button, Text, Input, Menu, MenuButton, MenuItem, MenuList, VStack } from '@chakra-ui/react';
+import { serverTime, timeout, useAppStore, useAssetStore, useHexColor, useUser } from '@sage3/frontend';
+import {
+  Box,
+  Button,
+  Text,
+  Input,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  VStack,
+  HStack,
+  useColorModeValue,
+  Progress,
+} from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -17,7 +30,7 @@ import { createCharts } from './components/createCharts';
 
 // Styling
 import './styling.css';
-import { ChangeEvent, MouseEvent, FormEvent, useEffect, useState } from 'react';
+import { Fragment, ChangeEvent, MouseEvent, FormEvent, useEffect, useState } from 'react';
 import { debounce } from 'throttle-debounce';
 import { useParams } from 'react-router';
 import { Asset } from '@sage3/shared/types';
@@ -30,52 +43,63 @@ export interface CreateChartProps {
   headers: string[];
 }
 
-/* App component for chartMaker */
-const messages = [
-  {
-    id: genId(),
-    creationDate: '',
-    userName: 'RJ',
-    text: "Hello I'm RJ",
-  },
-  {
-    userName: 'Arti',
-    text: 'Hello friend, I am Arti, a personal assistant',
-  },
-  {
-    userName: 'Roderick',
-    text: 'I just joined the chat',
-  },
-  {
-    userName: 'Arti',
-    text: 'Hello Roderick, Would you like me to generate a chart for you?',
-  },
-  {
-    userName: 'RJ',
-    text: 'can you show me a bar chart of diabetes and uninsured?',
-  },
-];
 function AppComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
   const user = useUser();
 
-  const generateChart = async () => {
-    const time = await serverTime();
-  };
+  const myColor = useHexColor('blue');
+  const artiColor = useHexColor('orange');
+  const otherUserColor = useHexColor('gray');
+  const bgColor = useColorModeValue('gray.100', 'gray.900');
+  const textColor = useColorModeValue('gray.700', 'gray.100');
+  const sortedMessages = state.messages.sort((a, b) => a.creationDate - b.creationDate);
 
   return (
     <AppWindow app={props}>
-      <Box h="full" w="full" bg="white" onClick={generateChart}>
-        {messages.map((message, index) => {
+      <Box h="100%" w="100%" bg={bgColor} overflowX="scroll">
+        {sortedMessages.map((message, index) => {
+          const isMe = user.user?._id == message.userId;
           return (
-            <Text
-              color="black"
-              rounded={'md'}
-              textAlign={user.user?.data.name == message.userName ? 'right' : 'left'}
-              bg={user.user?.data.name == message.userName ? 'cyan' : 'grey'}
-            >
-              {message.text}
-            </Text>
+            <Fragment key={index}>
+              <Box position="relative" my={10}>
+                <Text
+                  position={'absolute'}
+                  top="-15px"
+                  // left={user.user?._id == message.userId ? undefined : '15px'}
+                  // right={user.user?._id == message.userId ? '15px' : '0px'}
+                  right={'15px'}
+                  fontWeight="bold"
+                  color={textColor}
+                >
+                  {message.userName}
+                </Text>
+                <Box display={'flex'} justifyContent="right">
+                  <Box
+                    color="white"
+                    rounded={'md'}
+                    boxShadow="md"
+                    textAlign={'right'}
+                    bg={isMe ? myColor : otherUserColor}
+                    p={2}
+                    m={3}
+                    fontFamily="arial"
+                  >
+                    {message.query}
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box position="relative" my={10}>
+                <Text position={'absolute'} top="-15px" left={'15px'} fontWeight="bold" color={textColor}>
+                  Arti
+                </Text>
+                <Box display={'flex'} justifyContent="left">
+                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={artiColor} p={2} m={3} fontFamily="arial">
+                    {message.response}
+                  </Box>
+                </Box>
+              </Box>
+            </Fragment>
           );
         })}
       </Box>
@@ -100,6 +124,9 @@ function ToolbarComponent(props: App): JSX.Element {
   //BoardInfo
   const { boardId, roomId } = useParams();
   const [selectedFile, setSelectedFile] = useState<Asset | null>(null);
+
+  // Processing
+  const [processing, setProcessing] = useState(false);
 
   const handleChangeFile = (value: Asset) => {
     setSelectedFile(value);
@@ -141,14 +168,17 @@ function ToolbarComponent(props: App): JSX.Element {
     setInput(value);
   };
 
-  const generateChart = (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
+  const generateChart = async (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    setProcessing(true);
+    await timeout(1000);
+    const time = await serverTime();
     if (!state.fileName) return;
     try {
       const specifications = createCharts(input, state.dataRow, state.headers, state.fileReference, state.propertyList);
       if (!user) return;
       for (let i = 0; i < specifications.length; i++) {
-        createApp({
+        const app = await createApp({
           title: 'VegaLiteViewer',
           roomId: roomId!,
           boardId: boardId!,
@@ -161,9 +191,28 @@ function ToolbarComponent(props: App): JSX.Element {
           },
           raised: true,
         });
+        console.log(app);
+        updateState(props._id, {
+          ...state,
+          messages: [
+            ...state.messages,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: app.data._id,
+              creationDate: time.epoch,
+              userName: user?.data.name,
+              query: input,
+              response: 'Arti made a chart',
+            },
+          ],
+        });
       }
+
+      setProcessing(false);
       console.log(specifications);
     } catch (e) {
+      setProcessing(false);
       console.error(e);
     }
   };
@@ -182,10 +231,16 @@ function ToolbarComponent(props: App): JSX.Element {
           })}
         </MenuList>
       </Menu>
-      <Input size="xs" onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="400px" />
-      <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1}>
-        Generate
-      </Button>
+      {processing ? (
+        <Progress hasStripe isIndeterminate width="450px" mx="2" borderRadius="md" />
+      ) : (
+        <>
+          <Input size="xs" onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="400px" />
+          <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1}>
+            Generate
+          </Button>
+        </>
+      )}
       <Button colorScheme="green" size="xs">
         Action
       </Button>
