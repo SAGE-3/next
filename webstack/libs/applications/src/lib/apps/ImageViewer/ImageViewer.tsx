@@ -30,7 +30,6 @@ import { state as AppState } from './index';
  */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // console.log(s.boxes);
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
@@ -125,6 +124,7 @@ function AppComponent(props: App): JSX.Element {
                 <Box
                   key={label + idx}
                   position="absolute"
+                  {/* TODO Need to extract original image sizes, not hardocde*/}
                   left={s.boxes[label].xmin * (displaySize.width / 649) + 'px'}
                   top={s.boxes[label].ymin * (displaySize.height / 486) + 'px'}
                   width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / 649) + 'px'}
@@ -158,7 +158,6 @@ function AppComponent(props: App): JSX.Element {
  */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // console.log(s.boxes);
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();

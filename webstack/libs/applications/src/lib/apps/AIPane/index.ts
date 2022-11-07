@@ -14,11 +14,10 @@ export const schema = z.object({
 
   runStatus: z.number(),
 
+  // Tasks supported by available models for currently hosted apps
   supportedTasks: z.record(z.string(), z.record(z.string(), z.any())),
 
   messages: z.record(z.string(), z.any()),
-
-  output: z.any(),
 
   // lastHeartBeat: z.number(),
 

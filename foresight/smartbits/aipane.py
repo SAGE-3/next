@@ -23,6 +23,10 @@ if prod_type == "development":
 
 
 def get_sharing_url(private_url):
+    """
+    Uploads hosted image original file to DropBox and produces a public sharing url
+    :return: array of hosted image file sharing urls
+    """
     file_name = private_url.split("/")[-1]
     print(f"file_name is {file_name}")
     headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
@@ -78,7 +82,7 @@ class AIPane(SmartBit):
         supported_tasks = {}
         if len(self.state.hostedApps.values()) > 1:
             self.state.messages[time.time()] = """need to return error message saying that we
-            can on operate on one datatype at a time"""
+            can only operate on one datatype at a time"""
         # if this is the second app added, then skip this since it was already done for the first app added.
         else:
             if len(self.state.hostedApps) == 1:
@@ -92,8 +96,11 @@ class AIPane(SmartBit):
         self.send_updates()
 
     def handle_image_exec_result(self, app_uuid, msg_uuid, msg):
+        """
+        Callback function that handles the output produced by AI model. Produces a payload of bounding boxes and labels.
+        Sends output to ImageViewer
+        """
         print("I am handling the execution results")
-        print(f" type of msg in aipane{msg}")
         print(f"the apps involved are {self._pending_executions[msg_uuid]}")
 
         for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
@@ -112,7 +119,7 @@ class AIPane(SmartBit):
         del(self._pending_executions[msg_uuid])
 
     def execute_model(self, exec_uuid, model_id):
-        # Only handling images for now, we getting the image url directly.
+        # Only handling images for now, we are getting the image url directly.
         # TODO: update eventually to handle pdf or data stored in other apps
         app_ids = list(self.state.hostedApps.keys())
         urls = []
@@ -161,6 +168,9 @@ class AIPane(SmartBit):
         print("just called the ai_client's execute")
 
     def check_stale_jobs(self):
+        """
+        Will keep track of pending jobs and return an error message for stale jobs.
+        """
         pass
 
     def clean_up(self):
