@@ -96,6 +96,12 @@ function AppComponent(props: App): JSX.Element {
       }
     };
     if (selTrack) {
+      const width = selTrack.dimensions.width;
+      const height = selTrack.dimensions.height;
+      if (width && height) {
+        const aspect = width / height;
+        updateState(props._id, { aspectRatio: aspect });
+      }
       selTrack.addListener('dimensionsChanged', updateDimensions);
     }
     return () => {
