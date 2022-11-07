@@ -98,7 +98,6 @@ function AppComponent(props: App): JSX.Element {
     if (selTrack) {
       const width = selTrack.dimensions.width;
       const height = selTrack.dimensions.height;
-      console.log(selTrack.dimensions);
       if (width && height) {
         const aspect = width / height;
         let w = props.data.size.width;
