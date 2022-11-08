@@ -66,9 +66,9 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    // if (!updatedByYou) {
-    setNote(s.text);
-    // }
+    if (!updatedByYou) {
+      setNote(s.text);
+    }
   }, [s.text, updatedByYou]);
 
   // Update local value with value from the server
