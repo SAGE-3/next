@@ -89,7 +89,7 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
     // features disabled
     if (appName === 'JupyterLab' && data.features && !data.features['jupyter']) return;
-    if (appName === 'CodeCell' && data.features && !data.features['cell']) return;
+    if (appName === 'SageCell' && data.features && !data.features['cell']) return;
     if (appName === 'Screenshare' && data.features && !data.features['twilio']) return;
     // Get the position of the cursor
     const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
@@ -239,6 +239,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
             Quick Apps
           </Text>
+
           <Button
             w="100%"
             borderRadius={2}
@@ -249,9 +250,11 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => newApplication('SageCell')}
+            disabled={data && data.features && !data.features['cell']}
           >
             SageCell
           </Button>
+
           <Button
             w="100%"
             borderRadius={2}
@@ -262,9 +265,11 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => openJupyter()}
+            disabled={data && data.features && !data.features['jupyter']}
           >
             Jupyter
           </Button>
+
           <Button
             w="100%"
             borderRadius={2}
@@ -275,9 +280,11 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => newApplication('Screenshare')}
+            disabled={data && data.features && !data.features['twilio']}
           >
             Screenshare
           </Button>
+
           <Button
             w="100%"
             borderRadius={2}
@@ -304,6 +311,7 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Webview
           </Button>
+
         </VStack>
 
         <VStack w={'100%'}>
