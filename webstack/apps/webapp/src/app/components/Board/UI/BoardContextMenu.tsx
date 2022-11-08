@@ -6,11 +6,11 @@
  *
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUIStore, useUser, usePresenceStore, useRouteNav, useData, useCursorBoardPosition } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, useRouteNav, useData, useCursorBoardPosition } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 type ContextProps = {
@@ -36,12 +36,10 @@ export function BoardContextMenu(props: ContextProps) {
     toHome(props.roomId);
   }
 
-  const presences = usePresenceStore((state) => state.presences);
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
   const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
-  const gridSize = useUIStore((state) => state.gridSize);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const flipUI = useUIStore((state) => state.flipUI);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
@@ -91,23 +89,19 @@ export function BoardContextMenu(props: ContextProps) {
     if (appName === 'JupyterLab' && data.features && !data.features['jupyter']) return;
     if (appName === 'SageCell' && data.features && !data.features['cell']) return;
     if (appName === 'Screenshare' && data.features && !data.features['twilio']) return;
-    // Get the position of the cursor
-    const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
-    if (me) {
-      // Create the app
-      const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
-      createApp({
-        title: title ? title : '',
-        roomId: props.roomId,
-        boardId: props.boardId,
-        position: { ...position, z: 0 },
-        size: { width: 400, height: 400, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: appName,
-        state: { ...(initialValues[appName] as any) },
-        raised: true,
-      });
-    }
+    // Create the app
+    const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
+    createApp({
+      title: title ? title : '',
+      roomId: props.roomId,
+      boardId: props.boardId,
+      position: { ...position, z: 0 },
+      size: { width: 400, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: appName,
+      state: { ...(initialValues[appName] as any) },
+      raised: true,
+    });
   };
 
   const openJupyter = () => {
@@ -116,25 +110,21 @@ export function BoardContextMenu(props: ContextProps) {
     // jupyter disabled
     if (data.features && !data.features['jupyter']) return;
 
-    // Get the position of the cursor
-    const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
-    if (me) {
-      const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
-      const width = 700;
-      const height = 700;
-      // Open a webview into the SAGE3 builtin Jupyter instance
-      createApp({
-        title: '',
-        roomId: props.roomId,
-        boardId: props.boardId,
-        position: { ...position, z: 0 },
-        size: { width, height, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'JupyterLab',
-        state: { ...initialValues['JupyterLab'], jupyterURL: '' },
-        raised: true,
-      });
-    }
+    const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
+    const width = 700;
+    const height = 700;
+    // Open a webview into the SAGE3 builtin Jupyter instance
+    createApp({
+      title: '',
+      roomId: props.roomId,
+      boardId: props.boardId,
+      position: { ...position, z: 0 },
+      size: { width, height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'JupyterLab',
+      state: { ...initialValues['JupyterLab'], jupyterURL: '' },
+      raised: true,
+    });
   };
 
   return (
