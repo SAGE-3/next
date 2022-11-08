@@ -25,6 +25,7 @@ import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
+import { NLPRouter } from './custom/nlp/nlp';
 
 /**
  * API Loader function
@@ -58,6 +59,8 @@ export function expressAPIRouter(): express.Router {
   router.use('/message', MessageCollection.router());
 
   router.use('/configuration', ConfigRouter());
+
+  router.use('/nlp', NLPRouter());
 
   return router;
 }

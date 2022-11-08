@@ -37,6 +37,23 @@ import { Asset } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
 import createPropertyList from './components/createPropertyList';
 
+type NLPRequestResponse = {
+  success: boolean;
+  message: string;
+};
+export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
+  const response = await fetch('/api/nlp', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
+  });
+  return (await response.json()) as NLPRequestResponse;
+}
+
 export interface CreateChartProps {
   input: string;
   data: Record<string, string>[];
@@ -45,6 +62,8 @@ export interface CreateChartProps {
 
 function AppComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
   const user = useUser();
 
   //Colors for Dark theme and light theme
@@ -55,7 +74,24 @@ function AppComponent(props: App): JSX.Element {
   const textColor = useColorModeValue('gray.700', 'gray.100');
 
   //Sort messages by creation date to display in order
-  const sortedMessages = state.messages.sort((a, b) => a.creationDate - b.creationDate);
+  const sortedMessages = state.messages ? state.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
+
+  useEffect(() => {
+    updateState(props._id, {
+      ...state,
+      messages: [
+        {
+          id: 'starting',
+          creationId: 'starting',
+          creationDate: 0,
+          userName: user.user?.data.name,
+          query: '',
+          response: `Hi ${user.user?.data.name}, I'm Arti. Use the dropdown menu in the App Toolbar to laod in a dataset.`,
+          userId: user.user?._id,
+        },
+      ],
+    });
+  }, []);
 
   //Scroll new message into view
   useEffect(() => {
@@ -72,25 +108,27 @@ function AppComponent(props: App): JSX.Element {
           return (
             <Fragment key={index}>
               {/* Start of User Messages */}
-              <Box position="relative" my={10}>
-                <Text position={'absolute'} top="-15px" right={'15px'} fontWeight="bold" color={textColor}>
-                  {message.userName}
-                </Text>
-                <Box display={'flex'} justifyContent="right">
-                  <Box
-                    color="white"
-                    rounded={'md'}
-                    boxShadow="md"
-                    textAlign={'right'}
-                    bg={isMe ? myColor : otherUserColor}
-                    p={2}
-                    m={3}
-                    fontFamily="arial"
-                  >
-                    {message.query}
+              {message.query.length ? (
+                <Box position="relative" my={10}>
+                  <Text position={'absolute'} top="-15px" right={'15px'} fontWeight="bold" color={textColor}>
+                    {message.userName}
+                  </Text>
+                  <Box display={'flex'} justifyContent="right">
+                    <Box
+                      color="white"
+                      rounded={'md'}
+                      boxShadow="md"
+                      textAlign={'right'}
+                      bg={isMe ? myColor : otherUserColor}
+                      p={2}
+                      m={3}
+                      fontFamily="arial"
+                    >
+                      {message.query}
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
+              ) : null}
 
               {/* Start of Arti Messages */}
               <Box position="relative" my={10}>
@@ -181,8 +219,8 @@ function ToolbarComponent(props: App): JSX.Element {
                   creationId: '',
                   creationDate: time.epoch,
                   userName: user?.data.name,
-                  query: `Hi Arti, I'm ready to generate some charts!`,
-                  response: `Hi ${user?.data.name}`,
+                  query: `*Load Dataset*`,
+                  response: `The dataset: ${selectedFile?.data.originalfilename} has been loaded`,
                 },
               ],
             });
@@ -208,7 +246,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!state.fileName) return;
     try {
       // Create array vega-lite Specifications
-      const specifications = createCharts(input, state.dataRow, state.headers, state.fileReference, state.propertyList);
+      const specifications = await createCharts(input, state.dataRow, state.headers, state.fileReference, state.propertyList);
       if (!user) return;
 
       for (let i = 0; i < specifications.length; i++) {
