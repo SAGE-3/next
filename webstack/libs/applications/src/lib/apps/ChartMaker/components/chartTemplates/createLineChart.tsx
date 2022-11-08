@@ -56,6 +56,8 @@ export default function createLineChart(extractedHeaders: string[], fileName: st
   return specifications;
 }
 
+// Will put headers in this order
+// [quantitative, temporal, nominal, nominal, nominal....]
 function organizeLineChartHeaders(extractedHeaders: string[], data: string[]) {
   let quantitativeFound = false;
   let temporalFound = false;
@@ -71,6 +73,31 @@ function organizeLineChartHeaders(extractedHeaders: string[], data: string[]) {
       temporalFound = true;
     }
   }
+
+  // Automatically look for Quantitative data type
+  if (!quantitativeFound) {
+    const headers = Object.keys(data);
+
+    for (let i = 0; i < headers.length; i++) {
+      if (findHeaderType(headers[i], data) === 'quantitative') {
+        extractedHeaders.unshift(headers[i]);
+        quantitativeFound = true;
+        break;
+      }
+    }
+  }
+  if (!temporalFound) {
+    const headers = Object.keys(data);
+
+    for (let i = 0; i < headers.length; i++) {
+      if (findHeaderType(headers[i], data) === 'temporal') {
+        extractedHeaders.splice(1, 0, headers[i]);
+        temporalFound = true;
+        break;
+      }
+    }
+  }
+
   if (quantitativeFound && temporalFound) {
     return extractedHeaders;
   } else {

@@ -68,6 +68,20 @@ function organizeBarChartHeaders(extractedHeaders: string[], data: string[]) {
       quantitativeFound = true;
     }
   }
+
+  // Automatically look for Quantitative data type
+  if (!quantitativeFound) {
+    const headers = Object.keys(data);
+
+    for (let i = 0; i < headers.length; i++) {
+      if (findHeaderType(headers[i], data) === 'quantitative') {
+        extractedHeaders.unshift(headers[i]);
+        quantitativeFound = true;
+        break;
+      }
+    }
+  }
+
   if (quantitativeFound) {
     return extractedHeaders;
   } else {

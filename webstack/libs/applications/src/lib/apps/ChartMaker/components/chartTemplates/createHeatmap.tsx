@@ -48,21 +48,6 @@ export default function createHeatmap(extractedHeaders: string[], fileName: stri
 // Will put headers in this order
 // [nominal, nominal, nominal....]
 function organizeHeatmapHeaders(extractedHeaders: string[], data: string[]) {
-  // let quantitativeFound = false;
-  // let temporalFound = false;
-  // for (let i = 0; i < extractedHeaders.length; i++) {
-  //   if (findHeaderType(extractedHeaders[i], data) === 'quantitative') {
-  //     switchHeaders(extractedHeaders, 0, i);
-  //     quantitativeFound = true;
-  //   }
-  // }
-  // for (let i = 1; i < extractedHeaders.length; i++) {
-  //   if (findHeaderType(extractedHeaders[i], data) === 'temporal') {
-  //     switchHeaders(extractedHeaders, 1, i);
-  //     temporalFound = true;
-  //   }
-  // }
-  // if (quantitativeFound && temporalFound) {
   let nominalCount = 0;
   for (let i = 0; i < extractedHeaders.length; i++) {
     if (findHeaderType(extractedHeaders[i], data) !== 'nominal') {

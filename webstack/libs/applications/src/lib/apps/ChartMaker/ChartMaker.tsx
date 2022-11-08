@@ -164,6 +164,8 @@ function ToolbarComponent(props: App): JSX.Element {
             // Only generate unique filter values to store in database
             // Note: I am NOT storing the entire CSV in database
             const propertyList = createPropertyList(arr, headers);
+            const time = await serverTime();
+            console.log(propertyList);
             updateState(props._id, {
               ...state,
               fileName: selectedFile?.data.originalfilename,
@@ -171,6 +173,18 @@ function ToolbarComponent(props: App): JSX.Element {
               headers: headers,
               dataRow: firstRow,
               propertyList: propertyList,
+              messages: [
+                ...state.messages,
+                {
+                  id: genId(),
+                  userId: user?._id,
+                  creationId: '',
+                  creationDate: time.epoch,
+                  userName: user?.data.name,
+                  query: `Hi Arti, I'm ready to generate some charts!`,
+                  response: `Hi ${user?.data.name}`,
+                },
+              ],
             });
           });
       }
