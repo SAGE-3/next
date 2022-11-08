@@ -65,10 +65,9 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    if (!yours) {
-      setNote(s.text);
-    }
+    setNote(s.text);
   }, [s.text]);
+
   // Update local value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
