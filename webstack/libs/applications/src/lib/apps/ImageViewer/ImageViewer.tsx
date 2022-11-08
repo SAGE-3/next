@@ -6,7 +6,7 @@
  *
  */
 import {useEffect, useState} from 'react';
-import {Image, Button, ButtonGroup, Tooltip, Box, useSafeLayoutEffect} from '@chakra-ui/react';
+import {Image, Button, ButtonGroup, Tooltip, Box} from '@chakra-ui/react';
 // Icons
 import {MdFileDownload} from 'react-icons/md';
 import {HiPencilAlt} from 'react-icons/hi';
@@ -124,7 +124,7 @@ function AppComponent(props: App): JSX.Element {
 
           {
             Object.keys(s.boxes).map((label, idx) => {
-              // TODO Need to extract original image sizes, not hardcode
+              // TODO Need to handle text overflow for labels
               return (
                 <Box
                   key={label + idx}

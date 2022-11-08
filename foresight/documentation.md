@@ -19,7 +19,7 @@ Some of the current featured are documented below
 
 #### Linked apps
 
-Two apps can be linked uisng `sage_proxy`'s `register_linked_app`. For example, to link a counter and note pad we use and 
+Two apps can be linked using `sage_proxy`'s `register_linked_app`. For example, to link a counter and sticky we use and 
 if we only need to update the dest field with the value in the source field, the function `update_dest_from_src` can be used. 
 > :memo: This function as well need a future home! 
 

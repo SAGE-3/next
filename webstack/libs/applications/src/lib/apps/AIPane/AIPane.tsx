@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 
 import {FaPlay} from 'react-icons/fa';
-import {BiErrorCircle, BiRun} from 'react-icons/bi';
+import {BiErrorCircle, BiRun, BiEnvelope} from 'react-icons/bi';
 import {FiChevronDown} from 'react-icons/fi';
 
 import {useAppStore, useUIStore} from '@sage3/frontend';
