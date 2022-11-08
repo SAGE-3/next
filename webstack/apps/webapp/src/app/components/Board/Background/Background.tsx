@@ -145,6 +145,7 @@ export function Background(props: BackgroundProps) {
             toast.update(toastIdRef.current, {
               title: 'Upload',
               description: 'Progress: ' + progress + '%',
+              isClosable: true,
             });
           }
         },
@@ -187,6 +188,7 @@ export function Background(props: BackgroundProps) {
           title: title,
           description: message.data.payload,
           duration: 5000,
+          isClosable: true,
         });
       } else {
         // or create a new one
