@@ -12,14 +12,12 @@ import { z } from 'zod';
 export const schema = z.object({
   hostedApps: z.record(z.string(), z.string()),
 
-  // Temp variable to demonstrate app run and idle status
-  runStatus: z.boolean(),
+  runStatus: z.number(),
 
+  // Tasks supported by available models for currently hosted apps
   supportedTasks: z.record(z.string(), z.record(z.string(), z.any())),
 
   messages: z.record(z.string(), z.any()),
-
-  output: z.any(),
 
   // lastHeartBeat: z.number(),
 
@@ -33,7 +31,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
   hostedApps: {},
-  runStatus: false,
+  runStatus: 0,
 
   supportedTasks: {},
   messages: {},

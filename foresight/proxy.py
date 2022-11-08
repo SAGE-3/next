@@ -141,7 +141,8 @@ class SAGEProxy():
                     # handle callback
                     # print("this app is being tracked for updates")
                     # print(f"tracked field is {self.callbacks[app_id].src_field}")
-                    for linked_info in self.callbacks[app_id]:
+                    for linked_info in self.callbacks[app_id].values():
+                        print(f"Linked Info {linked_info}")
                         if f"state.{linked_info.src_field}" in updated_fields:
                             # print("Yes, the tracked fields was updated")
                             # TODO 4: make callback function optional. In which case, jsut update dest with src

@@ -15,5 +15,3 @@ export const bboxType = z.record(
     ymax: z.number(),
   })
 );
-
-// export type bboxType2 = z.infer<typeof bboxType>
