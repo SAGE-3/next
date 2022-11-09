@@ -324,9 +324,10 @@ function ToolbarComponent(props: App): JSX.Element {
         const value: [number, number] = [res.latlng.lat, res.latlng.lng];
 
         map.fitBounds([res.bounds._southWest, res.bounds._northEast]);
-        updateState(props._id, { location: value });
         // Sync zoom after fitting bounds
-        updateState(props._id, { zoom: map.getZoom() });
+        const newZoom = map.getZoom();
+        updateState(props._id, { location: value, zoom: newZoom });
+
         // Update the app title
         update(props._id, { title: res.text });
       }
