@@ -7,8 +7,9 @@
  */
 
 import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast } from '@chakra-ui/react';
+import { MdOutlineGridOn, MdAccountCircle, MdArrowBack, MdInvertColors, MdLink, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
+
 import { useAuth, useUser, EditUserModal, EnterBoardByIdModal, copyBoardUrlToClipboard } from '@sage3/frontend';
-import { MdAccountBox, MdAccountCircle, MdArrowBack, MdInvertColors, MdLink, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -54,7 +55,7 @@ export function MainButton(props: MainButtonProps) {
           size="sm"
           variant={props.buttonStyle ? props.buttonStyle : 'outline'}
           colorScheme={user?.data.color ? user.data.color : 'white'}
-          leftIcon={isWall ? <MdAccountBox fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
+          leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
         >
           {user ? user.data.name : ''}
         </MenuButton>
