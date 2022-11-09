@@ -1,7 +1,6 @@
 // Extract explicitly mentioned properties from the user's query
 export default function extractHeaders(input: string, headers: string[]) {
   let extractedHeaders: string[] = [];
-  console.log(headers);
   headers.forEach((header) => {
     if (input.includes(header)) {
       extractedHeaders.push(header);

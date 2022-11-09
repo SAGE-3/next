@@ -2,6 +2,7 @@ import createBarChart, { barChartProps } from './chartTemplates/createBarChart';
 import createLineChart, { lineChartProps } from './chartTemplates/createLineChart';
 import createHeatmap, { heatmapProps } from './chartTemplates/createHeatmap';
 import createMapChart, { mapChartProps } from './chartTemplates/createMapChart';
+import createPointChart, { pointChartProps } from './chartTemplates/createPointChart';
 import findHeaderType, { specialTypes } from './findHeaderType';
 import extractFilters from './extractFilters';
 import extractHeaders from './extractHeaders';
@@ -9,6 +10,7 @@ import normalizeCommand from './normalizeCommand';
 import extractChartType from './extractChartType';
 import createPropertyList from './createPropertyList';
 import createAvailableChartTypes from './createAvailableChartTypes';
+import inferChartType from './inferChartType';
 import createTitle from './chartTemplates/createTitle';
 import createTransform from './chartTemplates/createTransform';
 import { NLPHTTPRequest } from '../ChartMaker';
@@ -24,14 +26,19 @@ export const createCharts = async (
   const availableCharts = createAvailableChartTypes(input, data);
 
   const extractedHeaders = extractHeaders(input, headers);
+  if (extractedHeaders.length == 0) {
+    throw 'Try using attributes in your query.';
+  }
+
   const extractedFilterValues = extractFilters(input, propertyList);
   let extractedChartType = extractChartType(input, availableCharts);
-  let specifications: barChartProps[] | lineChartProps[] | heatmapProps[] | mapChartProps[] = [];
+  let specifications: barChartProps[] | lineChartProps[] | heatmapProps[] | mapChartProps[] | pointChartProps[] = [];
 
   if (extractedChartType == '') {
     input = normalizeCommand(input, propertyList, data);
     const message = await NLPHTTPRequest(input);
-    extractedChartType = message.message;
+    let visualizationTask = message.message;
+    extractedChartType = inferChartType(visualizationTask, extractedHeaders, data);
   }
   //Create Data Visualizations
   if (extractedChartType == 'bar') {
@@ -42,15 +49,23 @@ export const createCharts = async (
     specifications = createHeatmap(extractedHeaders, fileName, data);
   } else if (extractedChartType == 'map') {
     specifications = createMapChart(extractedHeaders, fileName, data);
+  } else if (extractedChartType == 'point') {
+    specifications = createPointChart(extractedHeaders, fileName, data);
   } else {
     throw 'Try adding a chart type to your query. (Ex: bar, line, heatmap)';
   }
+  console.log(specifications);
 
   // For each data visualizations, generate title and filters
   for (let i = 0; i < specifications.length; i++) {
     specifications[i].title = createTitle(extractedHeaders, extractedChartType, extractedFilterValues);
-    specifications[i].transform = createTransform(extractedFilterValues, propertyList);
-
+    // specifications[i].transform = createTransform(extractedFilterValues, propertyList);
+    if (extractedChartType == 'map') {
+      // specifications[i].transform = createTransform(extractedFilterValues, propertyList);
+      // delete specifications[i].transform;
+    } else {
+      specifications[i].transform = createTransform(extractedFilterValues, propertyList);
+    }
     // if (specifications[i].hasOwnProperty('transform')) {
     // }
     // if (extractedChartType == 'map') {

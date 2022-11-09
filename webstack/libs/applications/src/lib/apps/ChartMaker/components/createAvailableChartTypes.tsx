@@ -40,13 +40,13 @@ export default function (input: string, data: any[]) {
       available: false,
     },
     {
-      key: 'point',
-      mark: 'scatter',
+      key: 'scatter',
+      mark: 'point',
       available: false,
     },
     {
       key: 'bubble',
-      mark: 'scatter',
+      mark: 'point',
       available: false,
     },
   ];
@@ -100,6 +100,7 @@ export default function (input: string, data: any[]) {
   }
   if (typesInDataset.quantitative && typesInDataset.nominal) {
     switchAvailableCharts('bar');
+    switchAvailableCharts('point');
     switchAvailableCharts('heatmap');
   }
   if (typesInDataset.map && typesInDataset.nominal) {
@@ -108,5 +109,6 @@ export default function (input: string, data: any[]) {
   if (typesInDataset.nominal) {
     switchAvailableCharts('histogram');
   }
+  console.log(availableCharts);
   return availableCharts;
 }
