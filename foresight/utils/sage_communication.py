@@ -52,8 +52,6 @@ class SageCommunication(Borg):
 
     def create_app(self, data):
         """
-        :param app_id:
-        :param data: data
         :return:
         """
         r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + self.routes["create_app"],
