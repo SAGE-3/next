@@ -52,7 +52,6 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         // Subscribe to user updates
         const route = `/users/${auth.id}`;
         userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-          console.log(message);
           const doc = message.doc as User;
           switch (message.type) {
             case 'CREATE': {
