@@ -74,6 +74,8 @@ export function Background(props: BackgroundProps) {
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
   const scale = useUIStore((state) => state.scale);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const boardPosition = useUIStore((state) => state.boardPosition);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
@@ -487,6 +489,46 @@ export function Background(props: BackgroundProps) {
       }
     }
   }
+
+  // question mark character
+  useHotkeys(
+    'shift+/',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
+
+      console.log('Shortcut> SHOW HELP', x, y);
+      // show image or open doc
+      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
+      // window.open(doc, '_blank');
+
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
+    // Depends on the cursor to get the correct position
+    { dependencies: [cursorPosition.x, cursorPosition.y] }
+  );
+
+  // Move the board with the arrow keys
+  useHotkeys(
+    'up, down, left, right',
+    (event: KeyboardEvent): void | boolean => {
+      if (event.key === 'ArrowUp') {
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + 50 });
+      } else if (event.key === 'ArrowDown') {
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - 50 });
+      } else if (event.key === 'ArrowLeft') {
+        setBoardPosition({ x: boardPosition.x + 50, y: boardPosition.y });
+      } else if (event.key === 'ArrowRight') {
+        setBoardPosition({ x: boardPosition.x - 50, y: boardPosition.y });
+      }
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
+    // Depends on the cursor to get the correct position
+    { dependencies: [cursorPosition.x, cursorPosition.y] }
+  );
 
   // Stickies Shortcut
   useHotkeys(
