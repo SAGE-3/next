@@ -14,7 +14,7 @@
  */
 
 import { User, UserSchema } from '@sage3/shared/types';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
 
@@ -89,27 +89,33 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
    * Create a new user account
    * @param user User to create
    */
-  async function create(user: UserSchema): Promise<void> {
-    if (auth) {
-      const userResponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
-      if (userResponse.data) {
-        setUser(userResponse.data[0]);
+  const create = useCallback(
+    async (user: UserSchema): Promise<void> => {
+      if (auth) {
+        const userResponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
+        if (userResponse.data) {
+          setUser(userResponse.data[0]);
+        }
       }
-    }
-  }
+    },
+    [auth]
+  );
 
   /**
    * Update the current user
    * @param updates Updates to apply to the user
    * @returns
    */
-  async function update(updates: Partial<UserSchema>): Promise<void> {
-    if (user) {
-      await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
+  const update = useCallback(
+    async (updates: Partial<UserSchema>): Promise<void> => {
+      if (user) {
+        await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
+        return;
+      }
       return;
-    }
-    return;
-  }
+    },
+    [user]
+  );
 
   return <UserContext.Provider value={{ user, loading, update, create }}>{props.children}</UserContext.Provider>;
 }
