@@ -107,7 +107,7 @@ export function BoardPage() {
       <PasteHandler boardId={boardId} roomId={roomId} />
 
       <Box position="absolute" left="2" bottom="2" zIndex={101}>
-        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} />
+        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} boardInfo={{ boardId, roomId }} />
       </Box>
 
       {/* ServerName */}
