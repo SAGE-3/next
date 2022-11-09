@@ -8,7 +8,7 @@
 
 import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast } from '@chakra-ui/react';
 import { useAuth, useUser, EditUserModal, EnterBoardByIdModal, copyBoardUrlToClipboard } from '@sage3/frontend';
-import { MdAccountCircle, MdArrowBack, MdInvertColors, MdLink, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
+import { MdAccountBox, MdAccountCircle, MdArrowBack, MdInvertColors, MdLink, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -27,6 +27,8 @@ export function MainButton(props: MainButtonProps) {
   const { toggleColorMode, colorMode } = useColorMode();
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
+
+  const isWall = user?.data.userType === 'wall';
 
   const toast = useToast();
   // Copy a sharable link to the user's os clipboard
@@ -52,7 +54,7 @@ export function MainButton(props: MainButtonProps) {
           size="sm"
           variant={props.buttonStyle ? props.buttonStyle : 'outline'}
           colorScheme={user?.data.color ? user.data.color : 'white'}
-          leftIcon={<MdAccountCircle />}
+          leftIcon={isWall ? <MdAccountBox fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
         >
           {user ? user.data.name : ''}
         </MenuButton>
