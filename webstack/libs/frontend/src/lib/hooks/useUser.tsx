@@ -39,31 +39,35 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
 
     async function fetchUser() {
       if (!auth) return;
-      // Subscribe to user updates
-      const route = `/users/${auth.id}`;
-      userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-        const doc = message.doc as User;
-        switch (message.type) {
-          case 'CREATE': {
-            setUser(doc);
-            break;
-          }
-          case 'UPDATE': {
-            setUser(doc);
-            break;
-          }
-          case 'DELETE': {
-            setUser(undefined);
-          }
-        }
-      });
+      // Unsubscribe from previous user
 
       // Check if user account exists
       const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth.id}`);
 
       // If account exists, set the user context and subscribe to updates
-      if (userResponse.data) {
+      if (userResponse.success && userResponse.data) {
         setUser(userResponse.data[0]);
+        // Unsubscribe if already subscribed
+        if (userSub) userSub();
+        // Subscribe to user updates
+        const route = `/users/${auth.id}`;
+        userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
+          console.log(message);
+          const doc = message.doc as User;
+          switch (message.type) {
+            case 'CREATE': {
+              setUser(doc);
+              break;
+            }
+            case 'UPDATE': {
+              setUser(doc);
+              break;
+            }
+            case 'DELETE': {
+              setUser(undefined);
+            }
+          }
+        });
         setLoading(false);
       } else {
         setUser(undefined);
@@ -71,13 +75,12 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       }
     }
 
-    if (auth) {
-      fetchUser();
-    }
+    fetchUser();
 
     return () => {
       if (userSub) {
         userSub();
+        userSub = null;
       }
     };
   }, [auth]);
