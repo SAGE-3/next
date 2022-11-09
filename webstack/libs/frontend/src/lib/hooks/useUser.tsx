@@ -34,55 +34,23 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let userSub: (() => void) | null = null;
-
-    async function fetchUser() {
-      if (!auth) return;
-      // Unsubscribe from previous user
-
-      // Check if user account exists
+  const fetchUser = useCallback(async () => {
+    if (auth) {
       const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth.id}`);
-
-      // If account exists, set the user context and subscribe to updates
-      if (userResponse.success && userResponse.data) {
+      if (userResponse.data) {
         setUser(userResponse.data[0]);
-        // Unsubscribe if already subscribed
-        if (userSub) userSub();
-        // Subscribe to user updates
-        const route = `/users/${auth.id}`;
-        userSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-          console.log(message);
-          const doc = message.doc as User;
-          switch (message.type) {
-            case 'CREATE': {
-              setUser(doc);
-              break;
-            }
-            case 'UPDATE': {
-              setUser(doc);
-              break;
-            }
-            case 'DELETE': {
-              setUser(undefined);
-            }
-          }
-        });
-        setLoading(false);
       } else {
         setUser(undefined);
         setLoading(false);
       }
+    } else {
+      setUser(undefined);
+      setLoading(false);
     }
+  }, [auth]);
 
+  useEffect(() => {
     fetchUser();
-
-    return () => {
-      if (userSub) {
-        userSub();
-        userSub = null;
-      }
-    };
   }, [auth]);
 
   /**
@@ -110,6 +78,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     async (updates: Partial<UserSchema>): Promise<void> => {
       if (user) {
         await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
+        fetchUser();
         return;
       }
       return;
