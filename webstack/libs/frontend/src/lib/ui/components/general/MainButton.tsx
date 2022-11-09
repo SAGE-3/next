@@ -6,13 +6,15 @@
  *
  */
 
-import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button } from '@chakra-ui/react';
-import { useAuth, useUser, EditUserModal, EnterBoardByIdModal } from '@sage3/frontend';
-import { MdAccountCircle, MdArrowBack, MdInvertColors, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
+import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast } from '@chakra-ui/react';
+import { MdOutlineGridOn, MdAccountCircle, MdArrowBack, MdInvertColors, MdLink, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
+
+import { useAuth, useUser, EditUserModal, EnterBoardByIdModal, copyBoardUrlToClipboard } from '@sage3/frontend';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
   backToRoom?: () => void;
+  boardInfo?: { roomId: string; boardId: string };
 };
 /**
  * Main (StartMenu Button) component
@@ -27,6 +29,24 @@ export function MainButton(props: MainButtonProps) {
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
 
+  const isWall = user?.data.userType === 'wall';
+
+  const toast = useToast();
+  // Copy a sharable link to the user's os clipboard
+  const handleCopyLink = (e: React.MouseEvent) => {
+    if (!props.boardInfo) return;
+    e.stopPropagation();
+    // make it a sage3:// protocol link
+    copyBoardUrlToClipboard(props.boardInfo.roomId, props.boardInfo.boardId);
+    toast({
+      title: 'Success',
+      description: `Sharable Board link copied to clipboard.`,
+      duration: 3000,
+      isClosable: true,
+      status: 'success',
+    });
+  };
+
   return (
     <>
       <Menu>
@@ -35,7 +55,7 @@ export function MainButton(props: MainButtonProps) {
           size="sm"
           variant={props.buttonStyle ? props.buttonStyle : 'outline'}
           colorScheme={user?.data.color ? user.data.color : 'white'}
-          leftIcon={<MdAccountCircle />}
+          leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
         >
           {user ? user.data.name : ''}
         </MenuButton>
@@ -46,6 +66,11 @@ export function MainButton(props: MainButtonProps) {
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </MenuItem>
+          {props.boardInfo && (
+            <MenuItem onClick={handleCopyLink} icon={<MdLink fontSize="24px" />}>
+              Copy Board Link
+            </MenuItem>
+          )}
           {props.backToRoom && (
             <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />}>
               Back to Room

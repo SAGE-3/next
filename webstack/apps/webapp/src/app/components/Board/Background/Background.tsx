@@ -145,6 +145,7 @@ export function Background(props: BackgroundProps) {
             toast.update(toastIdRef.current, {
               title: 'Upload',
               description: 'Progress: ' + progress + '%',
+              isClosable: true,
             });
           }
         },
@@ -187,6 +188,7 @@ export function Background(props: BackgroundProps) {
           title: title,
           description: message.data.payload,
           duration: 5000,
+          isClosable: true,
         });
       } else {
         // or create a new one
@@ -493,7 +495,7 @@ export function Background(props: BackgroundProps) {
       if (!user) return;
       const x = cursorPosition.x;
       const y = cursorPosition.y;
-      createApp(setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, {}));
+      createApp(setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' }));
 
       // Returning false stops the event and prevents default browser events
       return false;

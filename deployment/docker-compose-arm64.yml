@@ -46,6 +46,8 @@ services:
     depends_on:
       node-server:
         condition: service_healthy
+      jupyter:
+        condition: service_healthy
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:
@@ -59,6 +61,12 @@ services:
     depends_on:
       - "redis-server"
     command: /conf/start.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://${HOST}:4443"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     deploy:
       restart_policy:
         condition: on-failure
