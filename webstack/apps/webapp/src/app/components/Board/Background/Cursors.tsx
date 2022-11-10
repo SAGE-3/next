@@ -6,6 +6,7 @@
  *
  */
 
+import React from 'react';
 import { Tag } from '@chakra-ui/react';
 import {
   useCursorBoardPosition,
@@ -87,7 +88,7 @@ export function Cursors(props: CursorProps) {
           const name = u.data.name;
           const color = u.data.color;
           const cursor = presence.data.cursor;
-          return <UserCursor key={'cursor-' + u._id} color={color} position={cursor} name={name} scale={scale} />;
+          return <UserCursorMemo key={'cursor-' + u._id} color={color} position={cursor} name={name} scale={scale} />;
         })}
     </>
   );
@@ -156,3 +157,5 @@ function UserCursor(props: UserCursorProps) {
     </motion.div>
   );
 }
+
+const UserCursorMemo = React.memo(UserCursor);

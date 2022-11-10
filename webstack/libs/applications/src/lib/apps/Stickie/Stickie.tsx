@@ -45,7 +45,6 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const { boardId, roomId } = useParams();
-  const scale = useUIStore((state) => state.scale);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
@@ -159,13 +158,13 @@ function AppComponent(props: App): JSX.Element {
           readOnly={!yours} // Only the creator can edit
           zIndex={1}
         />
-        {!yours && selected && (
+        {/* {!yours && selected && (
           <Box position="absolute" right="2" bottom="0" transform={`scale(${1 / scale})`} transformOrigin="bottom right" zIndex={2}>
             <Tooltip label="Not your Stickie" shouldWrapChildren placement="top" hasArrow>
               <MdOutlineBlock color="red" />
             </Tooltip>
           </Box>
-        )}
+        )} */}
       </Box>
     </AppWindow>
   );

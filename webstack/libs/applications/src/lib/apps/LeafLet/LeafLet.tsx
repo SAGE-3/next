@@ -57,7 +57,7 @@ function AppComponent(props: App): JSX.Element {
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
   const saveMap = useStore((state: any) => state.saveMap);
-
+  console.log('leaflet', 'rerender');
   // Convert ID to asset
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.assetid);
