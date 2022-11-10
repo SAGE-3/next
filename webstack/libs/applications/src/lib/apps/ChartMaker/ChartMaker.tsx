@@ -30,7 +30,7 @@ import { createCharts } from './components/createCharts';
 
 // Styling
 import './styling.css';
-import { Fragment, ChangeEvent, MouseEvent, FormEvent, useEffect, useState } from 'react';
+import { Fragment, ChangeEvent, MouseEvent, FormEvent, useEffect, useState, useRef, useMemo } from 'react';
 import { debounce } from 'throttle-debounce';
 import { useParams } from 'react-router';
 import { Asset } from '@sage3/shared/types';
@@ -54,6 +54,12 @@ export async function NLPHTTPRequest(message: string): Promise<NLPRequestRespons
   return (await response.json()) as NLPRequestResponse;
 }
 
+function getDateString(epoch: number): string {
+  const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  const time = new Date(epoch).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `${date} - ${time}`;
+}
+
 export interface CreateChartProps {
   input: string;
   data: Record<string, string>[];
@@ -68,51 +74,84 @@ function AppComponent(props: App): JSX.Element {
 
   //Colors for Dark theme and light theme
   const myColor = useHexColor('blue');
-  const artiColor = useHexColor('orange');
+  const artiColor = useHexColor('purple');
   const otherUserColor = useHexColor('gray');
   const bgColor = useColorModeValue('gray.100', 'gray.900');
+  const sc = useColorModeValue('gray.400', 'gray.200');
+  const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.700', 'gray.100');
 
   //Sort messages by creation date to display in order
   const sortedMessages = state.messages ? state.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
-  useEffect(() => {
-    updateState(props._id, {
-      ...state,
-      messages: [
-        {
-          id: 'starting',
-          creationId: 'starting',
-          creationDate: 0,
-          userName: user.user?.data.name,
-          query: '',
-          response: `Hi ${user.user?.data.name}, I'm Arti. Use the dropdown menu in the App Toolbar to laod in a dataset.`,
-          userId: user.user?._id,
-        },
-      ],
-    });
-  }, []);
+  // useEffect(() => {
+  //   updateState(props._id, {
+  //     ...state,
+  //     messages: [
+  //       {
+  //         id: 'starting',
+  //         creationId: 'starting',
+  //         creationDate: 0,
+  //         userName: user.user?.data.name,
+  //         query: '',
+  //         response: `Hi ${user.user?.data.name}, I'm Arti. Use the dropdown menu in the App Toolbar to laod in a dataset.`,
+  //         userId: user.user?._id,
+  //       },
+  //     ],
+  //   });
+  // }, []);
+
+  const chatBox = useRef<null | HTMLDivElement>(null);
 
   //Scroll new message into view
   useEffect(() => {
-    const messages = document.getElementById(props._id);
-    if (messages) messages.scrollTop = messages.scrollHeight;
-  }, [state.messages.length]);
+    if (chatBox.current) {
+      // if (messages) messages.scrollTop = messages.scrollHeight;
+
+      chatBox.current.scrollTop = chatBox.current.scrollHeight;
+    }
+  }, [state.messages.length, chatBox]);
 
   return (
     <AppWindow app={props}>
       {/* Display Messages */}
-      <Box h="100%" w="100%" bg={bgColor} overflowX="scroll" id={props._id}>
+      <Box
+        h="100%"
+        w="100%"
+        bg={bgColor}
+        overflowY="scroll"
+        ref={chatBox}
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '12px',
+          },
+          '&::-webkit-scrollbar-track': {
+            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: `${scrollColor}`,
+            borderRadius: '6px',
+            outline: `3px solid ${bgColor}`,
+          },
+        }}
+      >
         {sortedMessages.map((message, index) => {
           const isMe = user.user?._id == message.userId;
+          const time = getDateString(message.creationDate);
           return (
             <Fragment key={index}>
               {/* Start of User Messages */}
               {message.query.length ? (
                 <Box position="relative" my={10}>
-                  <Text position={'absolute'} top="-15px" right={'15px'} fontWeight="bold" color={textColor}>
-                    {message.userName}
-                  </Text>
+                  <Box top="-30px" right={'15px'} position={'absolute'} textAlign="right">
+                    <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="sm">
+                      {message.userName}
+                    </Text>
+                    <Text whiteSpace={'nowrap'} textOverflow="ellipsis" color={textColor} fontSize="xs">
+                      {time}
+                    </Text>
+                  </Box>
+
                   <Box display={'flex'} justifyContent="right">
                     <Box
                       color="white"
@@ -123,6 +162,7 @@ function AppComponent(props: App): JSX.Element {
                       p={2}
                       m={3}
                       fontFamily="arial"
+                      maxWidth="70%"
                     >
                       {message.query}
                     </Box>
@@ -131,10 +171,16 @@ function AppComponent(props: App): JSX.Element {
               ) : null}
 
               {/* Start of Arti Messages */}
-              <Box position="relative" my={10}>
-                <Text position={'absolute'} top="-15px" left={'15px'} fontWeight="bold" color={textColor}>
-                  Arti
-                </Text>
+              <Box position="relative" my={10} maxWidth={'70%'}>
+                <Box top="-30px" left={'15px'} position={'absolute'} textAlign="left">
+                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="sm">
+                    Arti
+                  </Text>
+                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" color={textColor} fontSize="xs">
+                    {time}
+                  </Text>
+                </Box>
+
                 <Box display={'flex'} justifyContent="left">
                   <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={artiColor} p={2} m={3} fontFamily="arial">
                     {message.response}
@@ -155,7 +201,15 @@ function ToolbarComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
 
   // Load Datasets from asset store
-  const datasets = useAssetStore((state) => state.assets.filter((file) => file.data.file.split('.').pop() == 'csv'));
+  const assets = useAssetStore((state) => state.assets);
+
+  const datasets = useMemo(
+    () =>
+      assets.filter((file) => {
+        return file.data.mimetype === 'text/csv';
+      }),
+    [assets]
+  );
 
   const updateState = useAppStore((state) => state.updateState);
 
@@ -203,7 +257,16 @@ function ToolbarComponent(props: App): JSX.Element {
             // Note: I am NOT storing the entire CSV in database
             const propertyList = createPropertyList(arr, headers);
             const time = await serverTime();
-            console.log(propertyList);
+            let listOfHeaders = '';
+            for (let i = 0; i < propertyList.length; i++) {
+              if (i === propertyList.length - 1) {
+                listOfHeaders += ', and ' + propertyList[i].header;
+              } else if (i === 0) {
+                listOfHeaders += propertyList[i].header;
+              } else {
+                listOfHeaders += ', ' + propertyList[i].header;
+              }
+            }
             updateState(props._id, {
               ...state,
               fileName: selectedFile?.data.originalfilename,
@@ -220,7 +283,8 @@ function ToolbarComponent(props: App): JSX.Element {
                   creationDate: time.epoch,
                   userName: user?.data.name,
                   query: `*Load Dataset*`,
-                  response: `The dataset: ${selectedFile?.data.originalfilename} has been loaded`,
+                  response: `The dataset: ${selectedFile?.data.originalfilename} has been loaded.
+                  The attribute headers are ${listOfHeaders}. I created a CSV Viewer for more details.`,
                 },
               ],
             });
@@ -232,7 +296,6 @@ function ToolbarComponent(props: App): JSX.Element {
     const value = e.target.value;
     setInput(value);
   };
-
   // Generating chart from user input
   const generateChart = async (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();

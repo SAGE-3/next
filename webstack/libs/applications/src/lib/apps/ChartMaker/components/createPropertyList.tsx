@@ -25,7 +25,14 @@ function checkType(header: string, data: any) {
 
 // Used by ChartMaker.tsx (main app) to create initial property list
 // This will generate unique filter values
-export default function createPropertyList(data: any, headers: string[]) {
+export default function createPropertyList(
+  data: any,
+  headers: string[]
+): {
+  header: string;
+  filterValues: any[];
+  headerType: string;
+}[] {
   let propertyList = [];
   for (let i = 0; i < headers.length; i++) {
     // Check for nominal headers
@@ -71,6 +78,5 @@ export default function createPropertyList(data: any, headers: string[]) {
       propertyList.push(propertyInfo);
     }
   }
-  console.log(propertyList);
   return propertyList;
 }

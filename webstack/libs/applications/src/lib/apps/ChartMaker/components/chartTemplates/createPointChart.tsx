@@ -39,15 +39,15 @@ export default function createPointChart(extractedHeaders: string[], fileName: s
     pointChartSpec.encoding.x.type = findHeaderType(extractedHeaders[1], data);
 
     pointChartSpec.encoding.y.field = extractedHeaders[0];
-    pointChartSpec.encoding.y.type = 'quantitative';
+    pointChartSpec.encoding.y.type = findHeaderType(extractedHeaders[0], data);
     specifications.push(pointChartSpec);
   } else if (extractedHeaders.length == 3) {
     pointChartSpec.data.url = '/api/assets/static/' + fileName;
-    pointChartSpec.encoding.x.field = findHeaderType(extractedHeaders[1], data);
-    pointChartSpec.encoding.x.type = 'quantitative';
+    pointChartSpec.encoding.x.field = extractedHeaders[1];
+    pointChartSpec.encoding.x.type = findHeaderType(extractedHeaders[1], data);
 
     pointChartSpec.encoding.y.field = extractedHeaders[0];
-    pointChartSpec.encoding.y.type = 'quantitative';
+    pointChartSpec.encoding.y.type = findHeaderType(extractedHeaders[0], data);
     pointChartSpec.encoding.xOffset = { field: extractedHeaders[2] };
     pointChartSpec.encoding.color = { field: extractedHeaders[2] };
     specifications.push(pointChartSpec);

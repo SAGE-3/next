@@ -33,12 +33,17 @@ export const createCharts = async (
   const extractedFilterValues = extractFilters(input, propertyList);
   let extractedChartType = extractChartType(input, availableCharts);
   let specifications: barChartProps[] | lineChartProps[] | heatmapProps[] | mapChartProps[] | pointChartProps[] = [];
-
+  console.log(extractedHeaders, extractedChartType);
   if (extractedChartType == '') {
     input = normalizeCommand(input, propertyList, data);
     const message = await NLPHTTPRequest(input);
     let visualizationTask = message.message;
     extractedChartType = inferChartType(visualizationTask, extractedHeaders, data);
+    input += ' ' + extractedChartType;
+    extractedChartType = extractChartType(input, availableCharts);
+    if (extractedChartType == '') {
+      extractedChartType = availableCharts[Math.floor(Math.random() * availableCharts.length)].mark;
+    }
   }
   //Create Data Visualizations
   if (extractedChartType == 'bar') {

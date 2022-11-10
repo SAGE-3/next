@@ -2,7 +2,7 @@
 export default function extractHeaders(input: string, headers: string[]) {
   let extractedHeaders: string[] = [];
   headers.forEach((header) => {
-    if (input.includes(header)) {
+    if (input.includes(header.toLowerCase())) {
       extractedHeaders.push(header);
     }
   });

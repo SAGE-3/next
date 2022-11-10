@@ -15,9 +15,7 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  specification: z.number(),
   input: z.string(),
-
   fileReference: z.string(),
   fileName: z.string(),
   headers: z.string().array(),
@@ -38,14 +36,23 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  specification: 42,
   input: '',
   fileReference: '',
   fileName: '',
   headers: [],
   dataRow: [],
   propertyList: [],
-  messages: [],
+  messages: [
+    {
+      id: 'starting',
+      creationId: 'starting',
+      creationDate: 0,
+      userName: '',
+      query: '',
+      response: `Hi, I'm Arti. Use the dropdown menu in the App Toolbar to load in a dataset.`,
+      userId: '',
+    },
+  ],
 };
 
 export const name = 'ChartMaker';

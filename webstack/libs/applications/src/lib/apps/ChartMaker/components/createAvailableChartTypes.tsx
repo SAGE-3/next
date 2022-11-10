@@ -1,7 +1,14 @@
 import { specialTypes } from './findHeaderType';
 
 // Check data types in dataset to mark if charts are available or not available
-export default function (input: string, data: any[]) {
+export default function (
+  input: string,
+  data: any[]
+): {
+  key: string;
+  mark: string;
+  available: boolean;
+}[] {
   let availableCharts = [
     {
       key: 'bar',

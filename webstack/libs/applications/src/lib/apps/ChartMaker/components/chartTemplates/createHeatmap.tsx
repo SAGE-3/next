@@ -34,10 +34,10 @@ export default function createHeatmap(extractedHeaders: string[], fileName: stri
 
   lineChartSpec.data.url = '/api/assets/static/' + fileName;
   lineChartSpec.encoding.x.field = extractedHeaders[1];
-  lineChartSpec.encoding.x.type = 'nominal';
+  lineChartSpec.encoding.x.type = findHeaderType(extractedHeaders[1], data);
 
   lineChartSpec.encoding.y.field = extractedHeaders[0];
-  lineChartSpec.encoding.y.type = 'nominal';
+  lineChartSpec.encoding.y.type = findHeaderType(extractedHeaders[0], data);
 
   lineChartSpec.encoding.color = { aggregate: 'count', type: 'quantitative' };
   specifications.push(lineChartSpec);
