@@ -209,9 +209,10 @@ function AppComponent(props: App): JSX.Element {
         <Popover>
           <PopoverTrigger>
             <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
-              <Button variant="ghost" size="lg" color="cyan">
-                Messages
-              </Button>
+              {/*<Button variant="ghost" size="lg" color="cyan">*/}
+              {/*  Messages*/}
+              {/*</Button>*/}
+              <IconButton aria-label='Notifications' icon={<BiEnvelope />} />
             </div>
           </PopoverTrigger>
 
