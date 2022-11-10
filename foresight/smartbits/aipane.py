@@ -102,7 +102,7 @@ class AIPane(SmartBit):
         """
         print("I am handling the execution results")
         print(f"the apps involved are {self._pending_executions[msg_uuid]}")
-        if msg["output"]:
+        if msg["output"] != '':
             for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
                 d = {x["label"]: x["box"] for x in msg["output"][i]}
                 payload = {"state.boxes": d, "state.annotations": True}
@@ -111,10 +111,12 @@ class AIPane(SmartBit):
 
                 print(f"response is {response.status_code}")
                 print("done")
+            self.state.runStatus = 0
         else:
-            pass
+            self.state.runStatus = 2
+            print("---------------------- No bounding boxes returned")
             # set the the warning icon on AI-PANEL to inform the user something went wrong
-        self.state.runStatus = 0
+        # self.state.runStatus = 0
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
