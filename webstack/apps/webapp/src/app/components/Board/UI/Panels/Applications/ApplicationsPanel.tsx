@@ -23,17 +23,7 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 // or all apps if in development mode
 const appListed = development
   ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
-  : [
-    'AIPane',
-    'KernelDashboard',
-    'JupyterLab',
-    'LeafLet',
-    'Notepad',
-    'SageCell',
-    'Screenshare',
-    'Stickie',
-    'Webview',
-  ];
+  : ['AIPane', 'KernelDashboard', 'JupyterLab', 'LeafLet', 'Notepad', 'SageCell', 'Screenshare', 'Stickie', 'Webview'];
 
 export interface ApplicationProps {
   boardId: string;
@@ -175,12 +165,14 @@ export function ApplicationsPanel(props: ApplicationProps) {
           .map((appName) => {
             // put a separator between the two groups, after dashboard
             if (appName == 'KernelDashboard') {
-              return <>
-                <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
-                <ButtonPanel key={'sep'} title={""} candrag={'false'} />
-              </>
+              return (
+                <>
+                  <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+                  <ButtonPanel key={'sep'} title={''} candrag={'false'} />
+                </>
+              );
             } else {
-              return <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+              return <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />;
             }
           })}
       </VStack>

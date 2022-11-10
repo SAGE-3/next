@@ -88,7 +88,7 @@ function ToolbarComponent(props: App): JSX.Element {
   };
   return (
     <>
-      <Button onClick={downloadAction} colorScheme="green">
+      <Button onClick={downloadAction} colorScheme="green" size="xs">
         Save as PNG
       </Button>
     </>

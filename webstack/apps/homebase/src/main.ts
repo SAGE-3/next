@@ -23,7 +23,7 @@ import { IncomingMessage, Server } from 'http';
 
 // Websocket
 import { WebSocket } from 'ws';
-import { SAGEPresence, SubscriptionCache } from '@sage3/backend';
+import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // YJS
 import * as Y from 'yjs';
@@ -98,6 +98,9 @@ async function startServer() {
     },
   };
   await SAGEBase.init(sbConfig, app);
+
+  // init AI models
+  await SAGEnlp.init();
 
   // Load all the models: user, board, ...
   await loadCollections();
