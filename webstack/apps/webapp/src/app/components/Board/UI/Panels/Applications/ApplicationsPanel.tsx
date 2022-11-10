@@ -22,36 +22,18 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 // Build list of applications from apps.json
 // or all apps if in development mode
 const appListed = development
-  ? Object.keys(Applications)
+  ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
   : [
-      'AIPane',
-      // "CSVViewer",
-      // "Clock",
-      // "Cobrowse",
-      // "CodeCell",
-      // "Counter",
-      // "DataTable",
-      // "DeepZoomImage",
-      // "GLTFViewer",
-      // "ImageViewer",
-      'JupyterLab',
-      // "Kernels",
-      'KernelDashboard',
-      'LeafLet',
-      // "Linker",
-      'Notepad',
-      // "PDFViewer",
-      // "RTCChat",
-      'SageCell',
-      'Screenshare',
-      // "SageCell",
-      'Stickie',
-      // "TwilioScreenshare",
-      // "VegaLite",
-      // "VegaLiteViewer",
-      // "VideoViewer",
-      'Webview',
-    ];
+    'AIPane',
+    'KernelDashboard',
+    'JupyterLab',
+    'LeafLet',
+    'Notepad',
+    'SageCell',
+    'Screenshare',
+    'Stickie',
+    'Webview',
+  ];
 
 export interface ApplicationProps {
   boardId: string;
@@ -189,12 +171,18 @@ export function ApplicationsPanel(props: ApplicationProps) {
       >
         {/* <Box > */}
         {appsList
-          // sort alphabetically by name
-          .sort((a, b) => a.localeCompare(b))
           // create a button for each application
-          .map((appName) => (
-            <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
-          ))}
+          .map((appName) => {
+            // put a separator between the two groups, after dashboard
+            if (appName == 'KernelDashboard') {
+              return <>
+                <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+                <ButtonPanel key={'sep'} title={""} candrag={'false'} />
+              </>
+            } else {
+              return <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+            }
+          })}
       </VStack>
       {/* </Box> */}
     </Panel>
