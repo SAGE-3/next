@@ -18,6 +18,7 @@ import * as express from 'express';
 
 // Asset imports
 import { assetExpressRouter } from './custom/asset';
+import { FilesRouter } from './custom/files';
 
 // Collection Imports
 import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection, MessageCollection } from '../collections';
@@ -40,6 +41,11 @@ export function expressAPIRouter(): express.Router {
   // Before auth, so can be accessed by anyone
   router.use('/info', InfoRouter());
   router.use('/time', TimeRouter());
+
+  // Download the file from an Asset
+  // public route with a UUIDv5 token
+  // route: /api/files/:id/:token
+  router.use('/files', FilesRouter());
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
