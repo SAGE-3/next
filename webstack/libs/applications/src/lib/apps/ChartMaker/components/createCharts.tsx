@@ -41,7 +41,6 @@ export const createCharts = async (
   const extractedFilterValues = extractFilters(input, propertyList);
   let extractedChartType = extractChartType(input, availableCharts);
   let specifications: barChartProps[] | lineChartProps[] | heatmapProps[] | mapChartProps[] | pointChartProps[] = [];
-  console.log(extractedHeaders, extractedChartType);
   if (extractedChartType == '') {
     input = normalizeCommand(input, propertyList, data);
     const message = await NLPHTTPRequest(input);
@@ -67,7 +66,6 @@ export const createCharts = async (
   } else {
     throw 'Try adding a chart type to your query. (Ex: bar, line, heatmap)';
   }
-  console.log(specifications);
 
   // For each data visualizations, generate title and filters
   for (let i = 0; i < specifications.length; i++) {

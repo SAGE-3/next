@@ -124,6 +124,5 @@ export default function (
   if (typesInDataset.nominal) {
     switchAvailableCharts('histogram');
   }
-  console.log(availableCharts);
   return availableCharts;
 }

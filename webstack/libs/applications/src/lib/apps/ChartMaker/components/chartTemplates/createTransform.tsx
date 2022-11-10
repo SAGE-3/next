@@ -20,7 +20,6 @@ export default function createTransform(
 
     for (let j = 0; j < extractedFilterValues.length; j++) {
       for (let k = 0; k < propertyList[i].filterValues.length; k++) {
-        console.log('comparing ', propertyList[i].filterValues[k], extractedFilterValues[j]);
         if (propertyList[i].filterValues[k] == extractedFilterValues[j]) {
           tmpFilters.push(propertyList[i].filterValues[k]);
         }

@@ -67,7 +67,6 @@ export default function createPropertyList(
       for (let j = 0; j < data.length; j++) {
         let num = parseFloat(data[j][headers[i]]);
         if (isNaN(num)) {
-          console.log(num);
         } else {
           quantitativeData.push(num);
         }
