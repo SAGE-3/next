@@ -2,6 +2,7 @@
 
 import { state as AIPaneState, name as AIPaneName } from './apps/AIPane';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
+import { state as ChartMakerState, name as ChartMakerName } from './apps/ChartMaker';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as CodeCellState, name as CodeCellName } from './apps/CodeCell';
@@ -30,6 +31,7 @@ export type AppState =
   | {}
   | AIPaneState
   | CSVViewerState
+  | ChartMakerState
   | ClockState
   | CobrowseState
   | CodeCellState
@@ -57,6 +59,7 @@ export type AppState =
 export type AppName =
   | typeof AIPaneName
   | typeof CSVViewerName
+  | typeof ChartMakerName
   | typeof ClockName
   | typeof CobrowseName
   | typeof CodeCellName
