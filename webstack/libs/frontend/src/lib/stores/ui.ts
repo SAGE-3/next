@@ -145,7 +145,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   controller: {
-    // position: { x: 16, y: window.innerHeight - 350 },
     position: { x: 5, y: 5 },
     name: 'controller',
     stuck: StuckTypes.TopLeft,
