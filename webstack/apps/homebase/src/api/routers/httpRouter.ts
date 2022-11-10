@@ -25,7 +25,7 @@ import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
-import { NLPRouter } from './custom/nlp/nlp';
+import { NLPRouter } from './custom/nlp';
 
 /**
  * API Loader function

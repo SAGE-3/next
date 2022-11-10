@@ -1,18 +1,15 @@
 const { NlpManager } = require('node-nlp');
 
 // Training Data File
-import { traindata } from './test';
+import { traindata } from './traindata';
 
 class SAGEnlpClass {
   private _manager: any | null = null;
   constructor() {}
 
   public async init(): Promise<boolean> {
-    console.log('SAGEnlp> nlp initialized');
-    this._manager = new NlpManager({ languages: ['en'], forceNER: true });
+    this._manager = new NlpManager({ languages: ['en'], forceNER: true, nlu: { log: false } });
     traindata.forEach((el: any) => {
-      console.log(el);
-
       this._manager.addDocument('en', el.query, el.VisualizationTask);
     });
     let answers = ['extremum', 'distribution', 'cluster', 'anomoly', 'correlation', 'value', 'trend'];
@@ -23,6 +20,7 @@ class SAGEnlpClass {
     // This needs to be 'await'
     this._manager.train();
     this._manager.save();
+    console.log('SAGEnlp> nlp initialized');
     return true;
   }
 

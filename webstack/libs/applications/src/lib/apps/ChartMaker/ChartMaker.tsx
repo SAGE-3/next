@@ -7,20 +7,7 @@
  */
 
 import { serverTime, timeout, useAppStore, useAssetStore, useHexColor, useUser } from '@sage3/frontend';
-import {
-  Box,
-  Button,
-  Text,
-  Input,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  VStack,
-  HStack,
-  useColorModeValue,
-  Progress,
-} from '@chakra-ui/react';
+import { Box, Button, Text, Input, Menu, MenuButton, MenuItem, MenuList, useColorModeValue, Progress } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -31,7 +18,6 @@ import { createCharts } from './components/createCharts';
 // Styling
 import './styling.css';
 import { Fragment, ChangeEvent, MouseEvent, FormEvent, useEffect, useState, useRef, useMemo } from 'react';
-import { debounce } from 'throttle-debounce';
 import { useParams } from 'react-router';
 import { Asset } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
@@ -68,7 +54,6 @@ export interface CreateChartProps {
 
 function AppComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
 
   const user = useUser();
 
@@ -83,23 +68,6 @@ function AppComponent(props: App): JSX.Element {
 
   //Sort messages by creation date to display in order
   const sortedMessages = state.messages ? state.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
-
-  // useEffect(() => {
-  //   updateState(props._id, {
-  //     ...state,
-  //     messages: [
-  //       {
-  //         id: 'starting',
-  //         creationId: 'starting',
-  //         creationDate: 0,
-  //         userName: user.user?.data.name,
-  //         query: '',
-  //         response: `Hi ${user.user?.data.name}, I'm Arti. Use the dropdown menu in the App Toolbar to laod in a dataset.`,
-  //         userId: user.user?._id,
-  //       },
-  //     ],
-  //   });
-  // }, []);
 
   const chatBox = useRef<null | HTMLDivElement>(null);
 

@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) SAGE3 Development Team
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ *
+ */
+
 import { specialTypes } from './findHeaderType';
 
 // Check data types in dataset to mark if charts are available or not available
