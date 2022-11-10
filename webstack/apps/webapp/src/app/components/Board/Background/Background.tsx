@@ -514,14 +514,15 @@ export function Background(props: BackgroundProps) {
   useHotkeys(
     'up, down, left, right',
     (event: KeyboardEvent): void | boolean => {
+      const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
       if (event.key === 'ArrowUp') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + 50 });
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
       } else if (event.key === 'ArrowDown') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - 50 });
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
       } else if (event.key === 'ArrowLeft') {
-        setBoardPosition({ x: boardPosition.x + 50, y: boardPosition.y });
+        setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
       } else if (event.key === 'ArrowRight') {
-        setBoardPosition({ x: boardPosition.x - 50, y: boardPosition.y });
+        setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
       }
       // Returning false stops the event and prevents default browser events
       return false;
@@ -537,7 +538,9 @@ export function Background(props: BackgroundProps) {
       if (!user) return;
       const x = cursorPosition.x;
       const y = cursorPosition.y;
-      createApp(setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' }));
+      createApp(
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+      );
 
       // Returning false stops the event and prevents default browser events
       return false;
