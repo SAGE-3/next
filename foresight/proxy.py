@@ -135,7 +135,7 @@ class SAGEProxy():
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
-                logger.info(f"App updated and updated fields are: {updated_fields}")
+                logger.debug(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
                     # handle callback
