@@ -25,8 +25,8 @@ const appListed = development
   ? Object.keys(Applications)
   : [
       'AIPane',
-      'ChartMaker',
       // "CSVViewer",
+      'ChartMaker',
       // "Clock",
       // "Cobrowse",
       // "CodeCell",
