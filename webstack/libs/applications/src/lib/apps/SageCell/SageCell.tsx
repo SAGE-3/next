@@ -47,7 +47,7 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 imports
-import { useAppStore, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useUser, downloadFile, truncateWithEllipsis } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
@@ -68,9 +68,16 @@ const AppComponent = (props: App): JSX.Element => {
   const updateState = useAppStore((state) => state.updateState);
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
+  const update = useAppStore((state) => state.update);
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = useColorModeValue('#EFDEDD', '#DDD1D1');
+  const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+
+  // Set the title on start
+  useEffect(() => {
+    // update the title of the app
+    update(props._id, { title: "Sage Cell" });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -101,8 +108,13 @@ const AppComponent = (props: App): JSX.Element => {
     if (s.kernel == '') {
       setAccess(true);
     } else {
-      const access = myKernels.find((kernel) => kernel.key == s.kernel);
+      const access = myKernels.find((kernel) => kernel.key === s.kernel);
       setAccess(access ? true : false);
+      if (access) {
+        const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
+        // update the title of the app
+        update(props._id, { title: "Sage Cell: kernel [" + name + "]" });
+      }
     }
   }, [s.kernel, myKernels]);
 
@@ -216,76 +228,75 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   return (
-    <>
-      <HStack>
-        {access ? (
-          <>
-            {/* check if there are any available kernels and if one is selected */}
-            {!myKernels || !s.kernel ? (
-              // show a red light if the kernel is not running
-              <Badge colorScheme="red" rounded="sm" size="lg">
-                Offline
-              </Badge>
-            ) : (
-              // show a green light if the kernel is running
-              <Badge colorScheme="green" rounded="sm" size="lg">
-                Online
-              </Badge>
-            )}
-            <Select
-              placeholder="Select Kernel"
-              rounded="lg"
-              size="sm"
-              width="150px"
-              ml={2}
-              px={0}
-              colorScheme="teal"
-              icon={<MdArrowDropDown />}
-              onChange={selectKernel}
-              value={selected ?? undefined}
-              variant={'outline'}
-            >
-              {myKernels.map((kernel) => (
-                <option value={kernel.key} key={kernel.key}>
-                  {kernel.value.kernel_alias} (
-                  {
-                    // show kernel name as Python, R, or Julia
-                    kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
-                  }
-                  )
-                </option>
-              ))}
-            </Select>
+    <HStack>
+      {access ? (
+        <>
+          {/* check if there are any available kernels and if one is selected */}
+          {!myKernels || !s.kernel ? (
+            // show a red light if the kernel is not running
+            <Badge colorScheme="red" rounded="sm" size="lg">
+              Offline
+            </Badge>
+          ) : (
+            // show a green light if the kernel is running
+            <Badge colorScheme="green" rounded="sm" size="lg">
+              Online
+            </Badge>
+          )}
+          <Select
+            placeholder="Select Kernel"
+            rounded="lg"
+            size="sm"
+            width="150px"
+            ml={2}
+            px={0}
+            colorScheme="teal"
+            icon={<MdArrowDropDown />}
+            onChange={selectKernel}
+            value={selected ?? undefined}
+            variant={'outline'}
+          >
+            {myKernels.map((kernel) => (
+              <option value={kernel.key} key={kernel.key}>
+                {kernel.value.kernel_alias} (
+                {
+                  // show kernel name as Python, R, or Julia
+                  kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
+                }
+                )
+              </option>
+            ))}
+          </Select>
 
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize <= 8}
-                  onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize > 42}
-                  onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdAdd />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-                <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-                  <MdFileDownload />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize <= 8}
+                onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdRemove />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize > 42}
+                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdAdd />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+                <MdFileDownload />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
 
-            {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
+          {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
               <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
                 <Button
                   onClick={() =>
@@ -302,12 +313,11 @@ function ToolbarComponent(props: App): JSX.Element {
                 </Button>
               </Tooltip>
             </ButtonGroup> */}
-          </>
-        ) : (
-          <>This CodeCell is Private</>
-        )}
-      </HStack>
-    </>
+        </>
+      ) : (
+        <Text width={180}>This CodeCell is Private</Text>
+      )}
+    </HStack>
   );
 }
 
@@ -546,78 +556,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.display_data.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                default:
+                  return MapJSONObject(parsedJSON.display_data[key]);
+              }
+            });
+          }
+          return null;
+        })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.execute_result.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                default:
+                  return null;
+              }
+            });
+          }
+          return null;
+        })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-            // find the user name that matches the userId
-            if (userId !== props.user._id) {
-              return null;
-            }
-            return (
-              <Toast
-                status="error"
-                position="bottom"
-                description={message + ', ' + props.user.data.name}
-                duration={4000}
-                isClosable
-                onClose={() => updateState(props.app._id, { privateMessage: [] })}
-                hidden={userId !== props.user._id}
-              />
-            );
-          })}
+          // find the user name that matches the userId
+          if (userId !== props.user._id) {
+            return null;
+          }
+          return (
+            <Toast
+              status="error"
+              position="bottom"
+              description={message + ', ' + props.user.data.name}
+              duration={4000}
+              isClosable
+              onClose={() => updateState(props.app._id, { privateMessage: [] })}
+              hidden={userId !== props.user._id}
+            />
+          );
+        })}
     </Box>
   );
 };
@@ -643,30 +653,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
+          if (typeof obj[key] === 'object') {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
                 </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
+                <Box as="span" ml={2}>
+                  {MapJSONObject(obj[key])}
                 </Box>
-              );
-            }
-          })
+              </Box>
+            );
+          } else {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
+                </Box>
+                <Box as="span" ml={2}>
+                  {obj[key]}
+                </Box>
+              </Box>
+            );
+          }
+        })
         : null}
     </Box>
   );

@@ -180,6 +180,7 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
 
   // Create Vega-Lite Viewer app
   const createApp = useAppStore((state) => state.create);
@@ -235,6 +236,7 @@ function ToolbarComponent(props: App): JSX.Element {
                 listOfHeaders += ', ' + propertyList[i].header;
               }
             }
+            update(props._id, { title: selectedFile?.data.originalfilename });
             updateState(props._id, {
               ...state,
               fileName: selectedFile?.data.originalfilename,
@@ -340,7 +342,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <Menu>
-        <MenuButton size="sm" as={Button}>
+        <MenuButton size="xs" as={Button} mr="1">
           {state.fileName ? state.fileName : 'Select a Dataset'}
         </MenuButton>
         <MenuList>
@@ -357,7 +359,7 @@ function ToolbarComponent(props: App): JSX.Element {
         <Progress hasStripe isIndeterminate width="450px" mx="2" borderRadius="md" />
       ) : (
         <>
-          <Input size="xs" onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="400px" />
+          <Input size="xs" onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="300px" />
           <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1} disabled={state.fileName.length === 0}>
             Generate
           </Button>

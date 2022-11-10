@@ -48,7 +48,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   code: '',
   language: 'python',
-  fontSize: 24,
+  fontSize: 16,
   theme: 'xcode',
   kernel: '',
   output: '',

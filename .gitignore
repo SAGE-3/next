@@ -23,5 +23,5 @@ foresight/config.json
 webstack/package-lock.json
 *.deb
 
-# NLP Stuff
+# AI
 *.nlp
