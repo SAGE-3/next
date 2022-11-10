@@ -25,7 +25,8 @@ const appListed = development
   ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
   : ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'LeafLet', 'Notepad', 'SageCell', 'Screenshare', 'Stickie', 'Webview'];
 
-const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell'];
+const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell']
+  .sort((a, b) => a.localeCompare(b));
 
 export interface ApplicationProps {
   boardId: string;
@@ -169,7 +170,6 @@ export function ApplicationsPanel(props: ApplicationProps) {
               <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
             ) : null;
           })}
-          <ButtonPanel key={'sep'} title={''} candrag={'false'} />
           <>Apps</>
           {appsList
             // create a button for each application
