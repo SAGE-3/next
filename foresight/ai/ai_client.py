@@ -43,12 +43,17 @@ class AIClient(Borg):
         funcx_uuid = command_info["funcx_uuid"]
         endpoint_uuid = command_info["endpoint_uuid"]
         data = command_info["data"]
+        print(f"Calling funcx with data: {data}")
+        print(f"Function uuid is {funcx_uuid}")
+        print(f"endpoint uuid is {endpoint_uuid}")
 
         resp = self.fxc.run(**data, function_id=funcx_uuid,
                             endpoint_id=endpoint_uuid)
-        self.running_jobs.add(resp)
 
+        self.running_jobs.add(resp)
+        print(f"adding task {resp} to the list of running jobs")
         self.callback_info[resp] = (app_uuid, msg_uuid, callback_fn)
+        print(f"adding call back info with task_id {resp}")
 
         return resp
 
@@ -56,11 +61,15 @@ class AIClient(Borg):
         while not self.stop_thread:
             tasks_to_remove = set()
             for task_id in self.running_jobs:
+                print(f"Working on {task_id}")
                 resp = self.fxc.get_task(task_id)
                 if not resp['pending']:
                     if resp['status'] != 'success':
                         # TODO: Handle the error
                         logger.error(f"Error while running an AI job {resp}")
+                        tasks_to_remove.add(task_id)
+                        del self.callback_info[task_id]
+
                     else:
                         result = resp['result']
                         try:

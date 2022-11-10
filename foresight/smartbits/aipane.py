@@ -159,9 +159,7 @@ class AIPane(SmartBit):
             "data": params
         }
         print("---------------------In execute AI--------------------------")
-        print(f"uuid: {exec_uuid}")
-        print(f"model_id: {model_id}")
-        print(f"params: {params}")
+        print("payload is {payload}")
         print("------------------------------------------------------------")
 
         self._ai_client.execute(payload)
