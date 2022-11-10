@@ -47,7 +47,7 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 imports
-import { useAppStore, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useUser, downloadFile, truncateWithEllipsis } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
@@ -68,9 +68,16 @@ const AppComponent = (props: App): JSX.Element => {
   const updateState = useAppStore((state) => state.updateState);
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
+  const update = useAppStore((state) => state.update);
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+
+  // Set the title on start
+  useEffect(() => {
+    // update the title of the app
+    update(props._id, { title: "Sage Cell" });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -101,8 +108,13 @@ const AppComponent = (props: App): JSX.Element => {
     if (s.kernel == '') {
       setAccess(true);
     } else {
-      const access = myKernels.find((kernel) => kernel.key == s.kernel);
+      const access = myKernels.find((kernel) => kernel.key === s.kernel);
       setAccess(access ? true : false);
+      if (access) {
+        const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
+        // update the title of the app
+        update(props._id, { title: "Sage Cell: kernel [" + name + "]" });
+      }
     }
   }, [s.kernel, myKernels]);
 

@@ -66,13 +66,13 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  const update = useAppStore((state) => state.update);
 
   // User
   const { user } = useUser();
   const [myKernels, setMyKernels] = useState(s.availableKernels);
 
   // UI
-  // const scale = useUIStore((state) => state.scale);
   const red = useHexColor('red');
   const green = useHexColor('green');
   const headerBackground = useColorModeValue('gray.500', 'gray.900');
@@ -82,6 +82,11 @@ function AppComponent(props: App): JSX.Element {
   const scrollColorFix = useHexColor(tableBackground);
   const teal = useHexColor('teal');
 
+  // Set the title on start
+  useEffect(() => {
+    update(props._id, { title: "Kernel Dashboard" });
+  }, []);
+
   useEffect(() => {
     const checkHeartBeat = setInterval(async () => {
       const response = await fetch('/api/time');
@@ -90,7 +95,6 @@ function AppComponent(props: App): JSX.Element {
       if (delta > heartBeatTimeCheck && s.online) {
         updateState(props._id, { online: false });
       }
-      // console.log('Heartbeat delta: ', delta);
     }, 15000); // 15 Seconds
     return () => clearInterval(checkHeartBeat);
   }, [s.lastHeartBeat, s.online]);
