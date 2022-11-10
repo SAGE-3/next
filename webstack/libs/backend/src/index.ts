@@ -8,4 +8,4 @@
 
 export * from './lib/utils';
 export * from './lib/generics';
-export * from './lib/ai';
+export * from './lib/AI';
