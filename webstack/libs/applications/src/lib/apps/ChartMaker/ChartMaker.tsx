@@ -7,7 +7,7 @@
  */
 
 import { serverTime, timeout, useAppStore, useAssetStore, useHexColor, useUser } from '@sage3/frontend';
-import { Box, Button, Text, Input, Menu, MenuButton, MenuItem, MenuList, useColorModeValue, Progress } from '@chakra-ui/react';
+import { Box, Button, Text, Input, Menu, MenuButton, MenuItem, MenuList, useColorModeValue, Progress, FormControl } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -267,8 +267,8 @@ function ToolbarComponent(props: App): JSX.Element {
     setInput(value);
   };
   // Generating chart from user input
-  const generateChart = async (e: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  const generateChart = async (e?: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
+    if (e) e.preventDefault();
 
     // To slow down UI
     setProcessing(true);
@@ -339,6 +339,13 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const onSubmit = (e: React.KeyboardEvent) => {
+    // Keyboard instead of pressing the button
+    if (e.key === 'Enter') {
+      generateChart();
+    }
+  };
+
   return (
     <>
       <Menu>
@@ -359,7 +366,16 @@ function ToolbarComponent(props: App): JSX.Element {
         <Progress hasStripe isIndeterminate width="450px" mx="2" borderRadius="md" />
       ) : (
         <>
-          <Input size="xs" onSubmit={generateChart} value={input} bg="white" color="black" onChange={handleChange} width="300px" />
+          <Input
+            maxWidth={'15rem'}
+            size="xs"
+            value={input}
+            bg="white"
+            color="black"
+            onChange={handleChange}
+            onKeyDown={onSubmit}
+            width="300px"
+          />
           <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1} disabled={state.fileName.length === 0}>
             Generate
           </Button>
