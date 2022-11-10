@@ -28,6 +28,9 @@ class ImageViewer(SmartBit):
         super(ImageViewer, self).__init__(**kwargs)
 
     def set_bboxes(self, bboxes):
+        """
+        Sets bounding boxes from output produced by AI Pane
+        """
         print('+++++++++++++++++')
         print('running set_boxes')
         self.state.boxes = bboxes

@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 
 import {FaPlay} from 'react-icons/fa';
-import {BiErrorCircle, BiRun} from 'react-icons/bi';
+import {BiErrorCircle, BiRun, BiEnvelope} from 'react-icons/bi';
 import {FiChevronDown} from 'react-icons/fi';
 
 import {useAppStore, useUIStore} from '@sage3/frontend';
@@ -44,6 +44,7 @@ import {v4 as getUUID} from 'uuid';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
+// Heatbeat copied from KernelDashboard
 // const heartBeatTimeCheck = 1000 * 10; // 1 min
 
 function AppComponent(props: App): JSX.Element {
@@ -56,18 +57,22 @@ function AppComponent(props: App): JSX.Element {
 
   const update = useAppStore((state) => state.update);
 
+  // Keeps track of AI Pane previous position, necessary to move hosted apps with pane
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
+  // supportedApps currently hardcoded in frontend
+  // TODO Need to let backend set supportedApps
   const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
   // Checks for apps on or off the pane
   useEffect(() => {
+    // Check all apps on board
     for (const app of boardApps) {
       const client = {[app._id]: app.data.type};
 
-      // TODO Handle AIPanes overlapping AIPanes
-      // const includedAppTypes: AppName[] = ['AIPane']
+      // Hosted app window should fall within AI Pane window
+      // Ignore apps already being hosted
       if (
         app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
         app.data.position.x + app.data.size.width > props.data.position.x &&
@@ -81,6 +86,7 @@ function AppComponent(props: App): JSX.Element {
             ...client,
           };
           updateState(props._id, {hostedApps: hosted});
+          // TODO Make messages more informative rather than simply types of apps being hosted
           updateState(props._id, {messages: hosted});
           console.log('app ' + app._id + ' added');
           newAppAdded(app.data.type);
@@ -97,9 +103,10 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
 
-  //TODO Be mindful of client updates
+  // TODO Be mindful of client updates
   // Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
   // Refer to videoViewer play function
+  // Currently needed to keep track of hosted apps that are added when created or removed when deleted from board, rather than only those moved on and off
   useEffect(() => {
     const appIds = boardApps.map((el) => el._id);
     const copyofhostapps = {} as { [key: string]: string };
@@ -132,12 +139,14 @@ function AppComponent(props: App): JSX.Element {
     prevY.current = props.data.position.y;
   }, [props.data.position.x, props.data.position.y, JSON.stringify(s.hostedApps)]);
 
+  // If there are no hostedApps, reset supportedTasks to empty
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
       updateState(props._id, {supportedTasks: {}});
     }
   }, [Object.keys(s.hostedApps).length]);
 
+  // Heartbeat checker copied from KernelDashboard
   // Interval to check if the proxy is still alive
   // useEffect(() => {
   //   const checkHeartBeat = setInterval(async () => {
@@ -152,21 +161,38 @@ function AppComponent(props: App): JSX.Element {
   //   return () => clearInterval(checkHeartBeat);
   // }, [s.lastHeartBeat, s.runStatus]);
 
-  function checkAppType(app: string) {
-    return supportedApps.includes(app);
+  // If more than 1 app added to pane, checks that all hosted apps are of the same type
+  // @return error and disables pane if there is more than 1 hosted app types.
+  function checkAppType() {
+    const hostedTypes = new Set(Object.values(s.hostedApps))
+
+    if (Array.from(hostedTypes).length > 1) {
+      return 2
+    } else {
+      if (supportedApps.includes([...hostedTypes][0])) {
+        return 1
+      } else {
+        return 0
+      }
+    }
+
   }
 
+  // Notifies backend of a new app being added and it's app type
   function newAppAdded(appType: string) {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
   }
 
+  // Custom close button to remove messages from messages menu.
+  // TODO need to permanently keep messages off menu. Currently reproduces full list of messages upon certain renders
   function closePopovers(info: string) {
     const unchecked = s.messages;
     delete unchecked[info];
 
     // these updateState calls should be combined
+    // TODO Ask Ryan what he means
     updateState(props._id, {messages: unchecked});
 
     if (Object.keys(s.messages).includes(info)) {
@@ -179,12 +205,14 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
+
         <Popover>
           <PopoverTrigger>
             <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
-              <Button variant="ghost" size="lg" color="cyan">
-                Message
-              </Button>
+              {/*<Button variant="ghost" size="lg" color="cyan">*/}
+              {/*  Messages*/}
+              {/*</Button>*/}
+              <IconButton aria-label='Notifications' icon={<BiEnvelope />} />
             </div>
           </PopoverTrigger>
 
@@ -192,7 +220,7 @@ function AppComponent(props: App): JSX.Element {
             <PopoverArrow/>
 
             <PopoverBody>
-              {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
+              {checkAppType() === 0 ? 'Error. Unsupported file type' : checkAppType() === 1 ? 'File type accepted' : 'Error. More than 1 app type on board' }
             </PopoverBody>
 
             {Object.keys(s.messages)?.map((message: string) => (
@@ -205,15 +233,12 @@ function AppComponent(props: App): JSX.Element {
         </Popover>
 
         <Box className="status-container">
-          {s.runStatus ? (
-            Object.values(s.hostedApps).every(checkAppType) ? (
-              <Icon as={BiRun} w={8} h={8}/>
-            ) : (
-              <Icon as={BiErrorCircle} w={8} h={8}/>
+          {s.runStatus !== 0
+            ? (s.runStatus === 1
+                ? (<Icon as={BiRun} w={8} h={8}/>)
+                : (<Icon as={BiErrorCircle} w={8} h={8}/>)
             )
-          ) : (
-            <VisuallyHidden>Empty Board</VisuallyHidden>
-          )}
+            : (<VisuallyHidden>Empty Board</VisuallyHidden>)}
         </Box>
       </Box>
     </AppWindow>
@@ -224,18 +249,13 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
-
   const [aiModel, setAIModel] = useState('Models');
   const [task, setTask] = useState('Tasks');
 
-  function checkAppType(app: string) {
-    return supportedApps.includes(app);
-  }
-
+  // Sends request to backend to execute a model
   function runFunction(model: string) {
     updateState(props._id, {
-      runStatus: true,
+      runStatus: 1,
       executeInfo: {
         executeFunc: 'execute_model',
         params: {exec_uuid: getUUID(), model_id: model},
@@ -243,10 +263,13 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }
 
+  // Sets local model selection.
   const handleSetModel = (model: string) => {
     setAIModel(model);
   };
 
+  // Sets local task selection.
+  // TODO Combine setModel and setTask
   const handleSetTask = (task: string) => {
     setTask(task);
     setAIModel('Models');
@@ -294,9 +317,9 @@ function ToolbarComponent(props: App): JSX.Element {
 
           <IconButton
             aria-label="Run AI"
-            icon={s.runStatus ? <BiRun/> : <FaPlay/>}
+            icon={s.runStatus === 0 ? <FaPlay/> : s.runStatus === 1 ? <BiRun/> : <BiErrorCircle/>}
             _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-            isDisabled={aiModel === 'Models' ? true : false}
+            isDisabled={aiModel === 'Models' || s.runStatus !== 0 ? true : false}
             onClick={() => {
               runFunction(aiModel);
             }}
