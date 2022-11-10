@@ -102,16 +102,18 @@ class AIPane(SmartBit):
         """
         print("I am handling the execution results")
         print(f"the apps involved are {self._pending_executions[msg_uuid]}")
+        if msg["output"]
+            for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
+                d = {x["label"]: x["box"] for x in msg["output"][i]}
+                payload = {"state.boxes": d, "state.annotations": True}
+                print(f"updating the boxes on image {hosted_app_id}")
+                response = self._s3_comm.send_app_update(hosted_app_id, payload)
 
-        for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
-            d = {x["label"]: x["box"] for x in msg["output"][i]}
-            payload = {"state.boxes": d, "state.annotations": True}
-            print(f"updating the boxes on image {hosted_app_id}")
-            response = self._s3_comm.send_app_update(hosted_app_id, payload)
-
-            print(f"response is {response.status_code}")
-            print("done")
-
+                print(f"response is {response.status_code}")
+                print("done")
+        else:
+            pass
+            # set the the warning icon on AI-PANEL to inform the user something went wrong
         self.state.runStatus = 0
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
