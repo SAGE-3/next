@@ -13987,10 +13987,10 @@ sisteransi@^1.0.5:
   resolved "https://registry.yarnpkg.com/sisteransi/-/sisteransi-1.0.5.tgz#134d681297756437cc05ca01370d3a7a571075ed"
   integrity sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==
 
-skia-canvas@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/skia-canvas/-/skia-canvas-1.0.1.tgz#d0f6a4c99f273bb79311afa6e4410e09d5bb61b5"
-  integrity sha512-/HtZlmib2BD3Fi6P4ZywSq7VquPl2A1Frc0pA+xD5hJSvSzN7FoOJpBWDpDd0e1ByzrVO6ZIjO98dNSQ2XqlKw==
+skia-canvas@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/skia-canvas/-/skia-canvas-1.0.0.tgz#9c4cfabb65f722bb3dc27d5411eccbb153004f78"
+  integrity sha512-Ec7R7hNdJb1nES/oVryIuQ9rgcpjA1Zjjr7JG718BC7AQBJWaKHRiypOJb7g1V0Msk4YKoPIdvGYY0cnkOoDow==
   dependencies:
     "@mapbox/node-pre-gyp" "^1.0.9"
     cargo-cp-artifact "^0.1"
