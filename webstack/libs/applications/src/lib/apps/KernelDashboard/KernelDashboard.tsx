@@ -50,16 +50,16 @@ const heartBeatTimeCheck = 20; // seconds
 /**
  * This is a sample state for testing the UI without a backend
  */
-const fakeKernel = {
-  label: '1234',
-  key: '1234',
-  value: {
-    is_private: false,
-    owner_uuid: '1234',
-    kernel_alias: 'testKernel',
-    kernel_name: 'python',
-  },
-};
+// const fakeKernel = {
+//   label: '1234',
+//   key: '1234',
+//   value: {
+//     is_private: false,
+//     owner_uuid: '1234',
+//     kernel_alias: 'testKernel',
+//     kernel_name: 'python',
+//   },
+// };
 
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {
@@ -162,7 +162,7 @@ function AppComponent(props: App): JSX.Element {
       state: {
         code: '',
         language: 'python',
-        fontSize: 24,
+        fontSize: 16,
         theme: 'xcode',
         kernel: kernelId,
         availableKernels: [],
@@ -192,20 +192,20 @@ function AppComponent(props: App): JSX.Element {
           borderRadius="8px 8px 0 0"
           borderBottom={`2px solid ${scrollColorFix}`}
         >
-          <Flex w="100%" fontFamily="mono" alignItems="center" justifyContent="center" userSelect={'none'}>
-            <Box justifyContent="center" display="flex" flexGrow={1} flexBasis={0} color="white" fontWeight={'bold'} fontSize="lg">
+          <Flex w="100%" alignItems="center" justifyContent="center" userSelect={'none'}>
+            <Box justifyContent="center" display="flex" flexGrow={1} flexBasis={0} color="white">
               Private
             </Box>
-            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white" fontWeight={'bold'} fontSize="lg">
+            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
               Alias
             </Box>
-            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white" fontWeight={'bold'} fontSize="lg">
+            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
               Kernel Id
             </Box>
-            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white" fontWeight={'bold'} fontSize="lg">
+            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
               Type
             </Box>
-            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white" fontWeight={'bold'} fontSize="lg">
+            <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
               Actions
             </Box>
           </Flex>
@@ -242,7 +242,7 @@ function AppComponent(props: App): JSX.Element {
           {
             // If there are kernels, display them
             myKernels.map((kernel, idx) => (
-              <>
+              <Box key={kernel.key} w="100%">
                 <Box minHeight="2px" width="98%" backgroundColor={tableDividerColor} />
 
                 <Flex w="100%" fontFamily="mono" alignItems="center" justifyContent="center" userSelect={'none'} key={kernel.key + idx}>
@@ -261,7 +261,6 @@ function AppComponent(props: App): JSX.Element {
                         navigator.clipboard.writeText(kernel.value.kernel_alias);
                       }}
                       fontSize="md"
-                      fontWeight="bold"
                     >
                       {kernel.value.kernel_alias}
                     </Text>
@@ -273,7 +272,6 @@ function AppComponent(props: App): JSX.Element {
                         navigator.clipboard.writeText(kernel.key);
                       }}
                       ml={2}
-                      fontWeight="bold"
                     >
                       <Tooltip label={kernel.key} placement="top" fontSize="xs" hasArrow>
                         {truncateWithEllipsis(kernel.key, 8)}
@@ -288,10 +286,10 @@ function AppComponent(props: App): JSX.Element {
                         kernel.value.kernel_name === 'ir'
                           ? 'R'
                           : kernel.value.kernel_name === 'python3'
-                          ? 'Python'
-                          : kernel.value.kernel_name === 'julia-1.8'
-                          ? 'Julia'
-                          : kernel.value.kernel_name
+                            ? 'Python'
+                            : kernel.value.kernel_name === 'julia-1.8'
+                              ? 'Julia'
+                              : kernel.value.kernel_name
                       }
                     </Text>
                   </Box>
@@ -335,7 +333,7 @@ function AppComponent(props: App): JSX.Element {
                     </Flex>
                   </Box>
                 </Flex>
-              </>
+              </Box>
             ))
           }
         </VStack>
@@ -404,6 +402,14 @@ function ToolbarComponent(props: App): JSX.Element {
     setKernelAlias(cleanAlias);
   }
 
+  // Keyboard handler: press enter to activate command
+  const onSubmit = (e: React.KeyboardEvent) => {
+    // Keyboard instead of pressing the button
+    if (e.key === 'Enter') {
+      addKernel();
+    }
+  };
+
   return (
     <HStack>
       <Button size="xs" colorScheme="teal" onClick={onOpen}>
@@ -469,6 +475,7 @@ function ToolbarComponent(props: App): JSX.Element {
               onPaste={(event) => {
                 event.stopPropagation();
               }}
+              onKeyDown={onSubmit}
             />
             <Spacer my="4" />
             Private
