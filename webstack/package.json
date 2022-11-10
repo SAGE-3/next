@@ -95,7 +95,7 @@
     "resize-observer-polyfill": "^1.5.1",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.31.1",
-    "skia-canvas": "^1.0.1",
+    "skia-canvas": "1.0.0",
     "stream-browserify": "^3.0.0",
     "three": "^0.144.0",
     "throttle-debounce": "^5.0.0",

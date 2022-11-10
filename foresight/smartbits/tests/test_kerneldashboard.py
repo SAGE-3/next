@@ -33,10 +33,10 @@ def test_delete_kernel(kernel_dashboard):
     kernel_dashboard.add_kernel(room_uuid, board_uuid, user_uuid, kernel_alias=alias)
     available_kernels = kernel_dashboard._jupyter_client.redis_server.json().get(kernel_dashboard._redis_space)
     nb_kernels_before = len(kernel_dashboard._jupyter_client.redis_server.json().get(kernel_dashboard._redis_space))
-    time.sleep(0.5)
+    # time.sleep(0.5)
     kernel_id_to_remove = [k for k in available_kernels.keys() if available_kernels[k]['kernel_alias'] == alias][0]
     kernel_dashboard.delete_kernel(kernel_id_to_remove, user_uuid)
-    time.sleep(0.5)
+    # time.sleep(0.5)
     nb_kernels_after = len(kernel_dashboard._jupyter_client.redis_server.json().get(kernel_dashboard._redis_space))
     assert nb_kernels_before == nb_kernels_after + 1
 
