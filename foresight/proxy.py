@@ -156,7 +156,6 @@ class SAGEProxy():
                             dest_id = linked_info.dest_app
                             dest_app = self.room.boards[board_id].smartbits[dest_id]
                             linked_info.callback(src_val, dest_app, dest_field)
-
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 pass
             else:
