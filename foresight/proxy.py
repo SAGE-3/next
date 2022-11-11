@@ -136,7 +136,6 @@ class SAGEProxy():
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
-                print(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
                     # handle callback
@@ -193,7 +192,7 @@ class SAGEProxy():
             # print("BOARD UPDATED: UNHANDLED")
             pass
         elif collection == "APPS":
-            print("updating app {doc}")
+            # print(f"updating app {}")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
 
@@ -215,9 +214,8 @@ class SAGEProxy():
 
                     _func(**_params)
 
-    def __handle_delete(self, msg):
-        collection = msg["event"]['col']
-        doc = msg['event']['doc']
+    def __handle_delete(self, collection, doc):
+
 
         print("deleting app")
         if collection == "APPS":
@@ -242,8 +240,9 @@ class SAGEProxy():
         self.stop_worker = True
         self.worker_process.join()
 
-        for app_info in sage_proxy.room.boards["ad18901e-e128-4997-9c77-99aa6a6ab313"].smartbits:
-            app_info[1].clean_up()
+        for board_id in sage_proxy.room.boards.keys():
+            for app_info in sage_proxy.room.boards[board_id].smartbits:
+                app_info[1].clean_up()
 
 
 

@@ -102,7 +102,8 @@ class TrackedBaseModel(BaseModel):
         # print(list(recursive_iter(update_data)))
         # what was updated?
         for updated_field_id, updated_field_val in updates.items():
-            if self.is_dotted_path_dict(updated_field_id):
+            if len(updated_field_id.split(".")) > 1 and \
+                    self.is_dotted_path_dict(updated_field_id):
                 attrsetter(updated_field_id)(self, updated_field_val)
             else:
                 for dotted_path, val in recursive_iter(update_data):
