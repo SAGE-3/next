@@ -9,6 +9,7 @@
 import { Box } from '@chakra-ui/react';
 import { useHexColor, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
+import React from 'react';
 import { useCallback, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
 
@@ -78,7 +79,7 @@ export function Viewports(props: ViewportsProps) {
           const color = u.data.color;
           const viewport = presence.data.viewport;
           const isWall = u.data.userType === 'wall';
-          return <UserViewport key={'viewport-' + u._id} isWall={isWall} name={name} color={color} viewport={viewport} scale={scale} />;
+          return <UserViewportMemo key={'viewport-' + u._id} isWall={isWall} name={name} color={color} viewport={viewport} scale={scale} />;
         })}
     </>
   );
@@ -121,3 +122,5 @@ function UserViewport(props: UserViewportProps) {
     </Box>
   );
 }
+
+const UserViewportMemo = React.memo(UserViewport);

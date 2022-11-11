@@ -27,7 +27,6 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
 
-
 import AIPane from './apps/AIPane/AIPane';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartMaker from './apps/ChartMaker/ChartMaker';
@@ -54,35 +53,38 @@ import VegaLite from './apps/VegaLite/VegaLite';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
-
+import React from 'react';
 
 export const Applications = {
-  [AIPaneName]: AIPane,
-  [CSVViewerName]: CSVViewer,
-  [ChartMakerName]: ChartMaker,
-  [ClockName]: Clock,
-  [CobrowseName]: Cobrowse,
-  [CodeCellName]: CodeCell,
-  [CounterName]: Counter,
-  [DataTableName]: DataTable,
-  [DeepZoomImageName]: DeepZoomImage,
-  [GLTFViewerName]: GLTFViewer,
-  [ImageViewerName]: ImageViewer,
-  [JupyterLabName]: JupyterLab,
-  [KernelDashboardName]: KernelDashboard,
-  [KernelsName]: Kernels,
-  [LeafLetName]: LeafLet,
-  [LinkerName]: Linker,
-  [NotepadName]: Notepad,
-  [PDFViewerName]: PDFViewer,
-  [RTCChatName]: RTCChat,
-  [SageCellName]: SageCell,
-  [StickieName]: Stickie,
-  [TwilioScreenshareName]: TwilioScreenshare,
-  [VegaLiteName]: VegaLite,
-  [VegaLiteViewerName]: VegaLiteViewer,
-  [VideoViewerName]: VideoViewer,
-  [WebviewName]: Webview,
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
+  [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
+  [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent },
+  [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent },
+  [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent },
+  [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent },
+  [CodeCellName]: { AppComponent: React.memo(CodeCell.AppComponent), ToolbarComponent: CodeCell.ToolbarComponent },
+  [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent },
+  [DataTableName]: { AppComponent: React.memo(DataTable.AppComponent), ToolbarComponent: DataTable.ToolbarComponent },
+  [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent },
+  [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent },
+  [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent },
+  [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent },
+  [KernelDashboardName]: { AppComponent: React.memo(KernelDashboard.AppComponent), ToolbarComponent: KernelDashboard.ToolbarComponent },
+  [KernelsName]: { AppComponent: React.memo(Kernels.AppComponent), ToolbarComponent: Kernels.ToolbarComponent },
+  [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent },
+  [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent },
+  [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent },
+  [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent },
+  [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent },
+  [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent },
+  [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent },
+  [TwilioScreenshareName]: {
+    AppComponent: React.memo(TwilioScreenshare.AppComponent),
+    ToolbarComponent: TwilioScreenshare.ToolbarComponent,
+  },
+  [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent },
+  [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent },
+  [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent },
+  [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent },
+} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';
