@@ -22,7 +22,7 @@ if prod_type == "development":
     import dropbox
     import requests
 
-class runStatus(Enum):
+class RunStatus(Enum):
     READY = 0
     RUNNING = 1
     ERROR = 2
@@ -58,7 +58,7 @@ class AIPaneState(TrackedBaseModel):
     messages: dict
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
-    runStatus: int
+    RunStatus: int
     # lastHeartBeat: int
     supportedTasks: Optional[dict]
 
@@ -82,22 +82,20 @@ class AIPane(SmartBit):
         :return: tasks supported based on the apps hosted.
         The tasks returned are exactly as defined in ai_settings above.
         """
-        print("New app added")
+        print("An app was added to AIPAne")
 
         supported_tasks = {}
-        if len(self.state.hostedApps.values()) > 1:
-            self.state.messages[time.time()] = """need to return error message saying that we
-            can only operate on one datatype at a time"""
+        if len(set(self.state.hostedApps.values())) > 1:
+            self.state.messages[time.time()] = """Only one datatime is supported"""
         # if this is the second app added, then skip this since it was already done for the first app added.
-        else:
-            if len(self.state.hostedApps) == 1:
+        elif len(set(self.state.hostedApps)) == 1:
                 for type, settings in ai_supported.items():
                     if app_type in settings["supported_apps"]:
                         supported_tasks[type] = settings['tasks']
-            self.state.supportedTasks = supported_tasks
+                self.state.supportedTasks = supported_tasks
         print(f"supported tasks are: {self.state.supportedTasks}")
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
+        # self.state.executeInfo.executeFunc = ""
+        # self.state.executeInfo.params = {}
         self.send_updates()
 
     def handle_image_exec_result(self, app_uuid, msg_uuid, msg):
@@ -116,9 +114,9 @@ class AIPane(SmartBit):
 
                 print(f"response is {response.status_code}")
                 print("done")
-            self.state.runStatus = runStatus.READY.value
+            self.state.runStatus = RunStatus.READY
         else:
-            self.state.runStatus = runStatus.ERROR.value
+            self.state.runStatus = RunStatus.ERROR
             print("---------------------- No bounding boxes returned ----------------------")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
