@@ -14,11 +14,11 @@ from urllib.parse import urlparse
 from os.path import splitext
 import pandas as pd
 import numpy as np
-import pyarrow as pa
+# import pyarrow as pa
 import pyarrow.csv as csv
 import time
 import math
-import magic
+# import magic
 
 PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 

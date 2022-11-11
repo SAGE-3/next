@@ -114,7 +114,7 @@ class AIPane(SmartBit):
             self.state.runStatus = 0
         else:
             self.state.runStatus = 2
-            print("---------------------- No bounding boxes returned")
+            print("---------------------- No bounding boxes returned ----------------------")
             # set the the warning icon on AI-PANEL to inform the user something went wrong
         # self.state.runStatus = 0
         self.state.executeInfo.executeFunc = ""
