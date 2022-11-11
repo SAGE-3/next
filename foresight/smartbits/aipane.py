@@ -5,6 +5,7 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 import time
+from enum import Enum
 
 from pydantic import PrivateAttr
 
@@ -21,6 +22,10 @@ if prod_type == "development":
     import dropbox
     import requests
 
+class runStatus(Enum):
+    READY = 0
+    RUNNING = 1
+    ERROR = 2
 
 def get_sharing_url(private_url):
     """
@@ -111,12 +116,10 @@ class AIPane(SmartBit):
 
                 print(f"response is {response.status_code}")
                 print("done")
-            self.state.runStatus = 0
+            self.state.runStatus = runStatus.READY.value
         else:
-            self.state.runStatus = 2
+            self.state.runStatus = runStatus.ERROR.value
             print("---------------------- No bounding boxes returned ----------------------")
-            # set the the warning icon on AI-PANEL to inform the user something went wrong
-        # self.state.runStatus = 0
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
