@@ -3,9 +3,9 @@ from funcx.sdk.client import FuncXClient
 import time
 import threading
 from utils.borg import Borg
-from utils import logging_config
+# from utils import _logging_config
 
-logger = logging_config.get_console_logger()
+# logger = logging_config.get_console_logger()
 
 
 # TODO: move the borg class to its own file
@@ -66,7 +66,7 @@ class AIClient(Borg):
                 if not resp['pending']:
                     if resp['status'] != 'success':
                         # TODO: Handle the error
-                        logger.error(f"Error while running an AI job {resp}")
+                        # logger.error(f"Error while running an AI job {resp}")
                         tasks_to_remove.add(task_id)
                         del self.callback_info[task_id]
 
@@ -79,7 +79,7 @@ class AIClient(Borg):
                             callback_fn(app_uuid, msg_uuid, result)
                             tasks_to_remove.add(task_id)
                         except Exception as e:
-                            logger.error(f"Error while running an AI job {resp}")
+                            print(f"Error while running an AI job {resp}")
                         del self.callback_info[task_id]
             self.running_jobs -= tasks_to_remove
 
@@ -91,4 +91,3 @@ class AIClient(Borg):
 
     def clean_up(self):
         self.stop_thread = True
-

@@ -14,10 +14,7 @@ from abc  import abstractmethod
 # from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
-from jupyterkernelproxy import JupyterKernelProxy
-from ai.ai_client import AIClient
 from config import config as conf, prod_type
-from pydantic import PrivateAttr
 
 class TrackedBaseModel(BaseModel):
     path: Optional[str]
@@ -45,14 +42,19 @@ class TrackedBaseModel(BaseModel):
         except:
             self.touched.remove(f"{self.path}.{name}"[1:])
 
-    # def refresh_data_form_update_v2(self, msg):
-    #     for label, value in msg['event']["updates"].items():
-    #         if isinstance(value, dict):
-    #             self.
+    def is_dotted_path_dict(self, dotted_path):
+        partial_obj = self
+        for part in dotted_path.split(".")[:-1]:
+            partial_obj = getattr(partial_obj, part)
+        if type(getattr(partial_obj, dotted_path.split(".")[-1])) is dict:
+            return True
+        else:
+            return False
 
-    def refresh_data_form_update(self, update_data):
+
+    def refresh_data_form_update(self, update_data, updates):
         # TODO replace this temp solution, which updates everything with a
-        # solution that updates only necessary fields
+        #  solution that updates only necessary fields
         update_data['state'] = update_data['data']['state']
         del (update_data['data']['state'])
         # we don't need to update the following keys:
@@ -98,9 +100,15 @@ class TrackedBaseModel(BaseModel):
                 yield (dotted_path, u_data)
 
         # print(list(recursive_iter(update_data)))
-        for dotted_path, val in recursive_iter(update_data):
-            # print(f"working on {dotted_path} and {val}")
-            attrsetter(dotted_path)(self, val)
+        # what was updated?
+        for updated_field_id, updated_field_val in updates.items():
+            if len(updated_field_id.split(".")) > 1 and \
+                    self.is_dotted_path_dict(updated_field_id):
+                attrsetter(updated_field_id)(self, updated_field_val)
+            else:
+                for dotted_path, val in recursive_iter(update_data):
+                    # print(f"working on {dotted_path} and {val}")
+                    attrsetter(dotted_path)(self, val)
 
     def copy_touched(self):
         touched = self.touched
