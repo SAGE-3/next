@@ -28,7 +28,7 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -65,21 +65,15 @@ const MARGIN = 2;
 const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
   const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
-  // Set the title on start
-  useEffect(() => {
-    // update the title of the app
-    update(props._id, { title: 'Sage Cell' });
-  }, []);
-
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -87,7 +81,16 @@ const AppComponent = (props: App): JSX.Element => {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  // Set the title on start
+  useEffect(() => {
+    // update the title of the app
+    if (props.data.title !== 'SageCell') {
+      update(props._id, { title: 'SageCell' });
+    }
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -164,7 +167,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
 
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -172,7 +175,11 @@ function ToolbarComponent(props: App): JSX.Element {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  useEffect(() => {
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -229,7 +236,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <HStack>
-      {access ? (
+      {
         <>
           {/* check if there are any available kernels and if one is selected */}
           {!myKernels || !s.kernel ? (
@@ -268,6 +275,12 @@ function ToolbarComponent(props: App): JSX.Element {
             ))}
           </Select>
 
+          <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
+            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+              <MdRefresh />
+            </Button>
+          </Tooltip>
+
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
               <Button
@@ -295,28 +308,8 @@ function ToolbarComponent(props: App): JSX.Element {
               </Button>
             </Tooltip>
           </ButtonGroup>
-
-          {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
-                <Button
-                  onClick={() =>
-                    updateState(props._id, {
-                      executeInfo: {
-                        executeFunc: 'generate_error_message',
-                        params: { user_uuid: user!._id },
-                      },
-                    })
-                  }
-                  _hover={{ opacity: 0.7 }}
-                >
-                  <MdError />
-                </Button>
-              </Tooltip>
-            </ButtonGroup> */}
         </>
-      ) : (
-        <Text width={180}>This CodeCell is Private</Text>
-      )}
+      }
     </HStack>
   );
 }
@@ -354,7 +347,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   }, [s.kernel, ace.current]);
 
   const handleExecute = (kernel: string) => {
-    console.log('kernel', s.kernel);
     const code = ace.current?.editor?.getValue();
     if (!kernel) {
       toast({
