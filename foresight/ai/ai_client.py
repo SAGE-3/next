@@ -3,7 +3,7 @@ from funcx.sdk.client import FuncXClient
 import time
 import threading
 from utils.borg import Borg
-from utils import logging_config
+from utils import _logging_config
 
 logger = logging_config.get_console_logger()
 

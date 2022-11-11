@@ -33,11 +33,11 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from websocketlistener import WebSocketListener
-from utils import logging_config
+# from utils import logging_config
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 
-logger = logging_config.get_console_logger()
+# logger = logging_config.get_console_logger()
 
 
 class Room:
@@ -49,7 +49,7 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    logger.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
+    print(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -107,7 +107,7 @@ class SAGEProxy():
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            logger.info(f"Creating {app_info['data']['state']}")
+            print(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
 
@@ -126,16 +126,19 @@ class SAGEProxy():
             try:
                 msg = self.__message_queue.get()
             except EOFError as e:
-                logger.info(f"Message queue was closed")
+                print(f"Message queue was closed")
                 return
             # I am watching this message for change?
 
-            logger.debug(f"Getting ready to process: {msg}")
+            # logger.debug(f"Getting ready to process: {msg}")
+
             msg_type = msg["event"]["type"]
+
+            # TODO refactor this
             if msg['event']['type'] == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
-                logger.debug(f"App updated and updated fields are: {updated_fields}")
+                print(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
                     # handle callback
@@ -168,11 +171,11 @@ class SAGEProxy():
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
         if collection == "BOARDS":
-            logger.debug("New board created")
+            print("New board created")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            logger.debug("New app created")
+            print("New app created")
             doc["state"] = doc["data"]["state"]
             del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
@@ -185,7 +188,7 @@ class SAGEProxy():
             # print("BOARD UPDATED: UNHANDLED")
             pass
         elif collection == "APPS":
-            logger.debug("New  app updated")
+            print("New  app updated")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
 
@@ -203,29 +206,29 @@ class SAGEProxy():
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
                     # print(f"About to execute function --{func_name}-- with params --{_params}--")
-                    logger.info(f"About to execute function --{func_name}-- with params --{_params}--")
+                    print(f"About to execute function --{func_name}-- with params --{_params}--")
 
                     _func(**_params)
 
     def __handle_delete(self, collection, doc):
-        logger.debug("deleting app")
+        print("deleting app")
         if collection == "APPS":
             try:
                 del self.room.boards[doc["data"]["boardId"]].smartbits[doc["_id"]]
-                logger.error(f"Successfully deleted app_id {doc['_id']}")
+                print(f"Successfully deleted app_id {doc['_id']}")
             except:
-                logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+                print(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
         if collection == "BOARDS":
             try:
                 del self.room.boards[doc["_id"]]
             except:
-                logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+                print(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
 
     def clean_up(self):
         self.listening_process.clean_up()
 
         if not self.__message_queue.empty():
-            logger.warning("Messages queue was not empty while starting to clean proxy")
+            print("Messages queue was not empty while starting to clean proxy")
         self.__message_queue.close()
 
         self.stop_worker = True
@@ -261,7 +264,7 @@ class SAGEProxy():
 
 
 def clean_up_terminate(signum, frame):
-    logger.info("Cleaning up before terminating")
+    print("Cleaning up before terminating")
     sage_proxy.clean_up()
 
 
@@ -309,9 +312,9 @@ if __name__ == "__main__":
                 'data'][0][
                 '_id']
         if not os.getenv("DROPBOX_TOKEN"):
-            logger.warning("Dropbox upload token not defined, AI won't be supported in development mode")
+            print("Dropbox upload token not defined, AI won't be supported in development mode")
 
-    logger.info(f"Starting proxy with room {room_id}:")
+    print(f"Starting proxy with room {room_id}:")
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
     sage_proxy.start_threads()
 
