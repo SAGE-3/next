@@ -48,8 +48,9 @@ class KernelDashboard(SmartBit):
 
     def get_kernel_specs(self):
         response = requests.get(f"{self._base_url}/kernelspecs", headers=self._headers)
-        kernel_specs = response.json()
-        self.state.kernelSpecs = [kernel_specs]
+        kernel_specs = response.json()['kernelspecs']
+        self.state.kernelSpecs = list(kernel_specs.keys())
+        # self.state.kernelSpecs = [kernel_specs]
         self.get_available_kernels()
 
     def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
@@ -68,7 +69,6 @@ class KernelDashboard(SmartBit):
                 "is_private": is_private,
                 "auth_users": auth_users
             }
-            # r_json = self._jupyter_client.redis_server.json()
             self._r_json.set(self._redis_space, response_data['id'], kernel_info)
             self.get_available_kernels(user_uuid=owner_uuid)
 
@@ -83,13 +83,11 @@ class KernelDashboard(SmartBit):
             response = requests.delete(j_url, headers=self._headers)
             if response.status_code == 204:
                 self.get_available_kernels(user_uuid=user_uuid)
-            # r_json = self._jupyter_client.redis_server.json()
             self._r_json.delete(self._redis_space, kernel_id)
             self.get_available_kernels(user_uuid=user_uuid)
         else:
             # cleanup the kernel from redis server if it is not in jupyter server
             self.get_available_kernels(user_uuid=user_uuid)
-            # r_json = self._jupyter_client.redis_server.json()
             self._r_json.delete(self._redis_space, kernel_id)
             self.get_available_kernels(user_uuid=user_uuid)
 
@@ -100,7 +98,6 @@ class KernelDashboard(SmartBit):
             response = requests.delete(j_url, headers=self._headers)
             if response.status_code == 204:
                 print(f"Kernel {kernel_id} shutdown successfully")
-                # r_json = self._jupyter_client.redis_server.json()
                 self._r_json.delete(self._redis_space, kernel_id)
                 self.get_available_kernels()
 
@@ -133,13 +130,13 @@ class KernelDashboard(SmartBit):
         self.send_updates()
 
     def clean_up(self):
+        self.state.lastHeartBeat = 0
+        self.state.online = False
         self._jupyter_client.clean_up()
         self._task_scheduler.clean_up()
 
-
     def set_online(self):
         self.state.lastHeartBeat = self._s3_comm.get_time()["epoch"]
-        print('set_online', self.state.lastHeartBeat)
         self.state.online = True
         self.send_updates()
 
