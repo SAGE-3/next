@@ -212,6 +212,7 @@ class SAGEProxy():
         if collection == "APPS":
             try:
                 del self.room.boards[doc["data"]["boardId"]].smartbits[doc["_id"]]
+                logger.error(f"Successfully deleted app_id {doc['_id']}")
             except:
                 logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
         if collection == "BOARDS":
