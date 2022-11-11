@@ -129,7 +129,9 @@ class AIPane(SmartBit):
             # img_name = self._s3_comm.get_asset(asset_id)["data"]["path"].split("/")[-1]
             # img_url = self._s3_comm.conf[self._s3_comm.prod_type]['web_server'] + "/api/assets/static/" + img_name
             # public_url = format_public_url(self, asset_id)
-            urls.append(asset_id)
+            # TODO  check that the asset belongs to the room/wall (ISSUE #400)
+            public_url = self._s3_comm.format_public_url(asset_id)
+            urls.append(public_url)
             print(f"Public URLs for data are: {urls}")
 
         # need to upload images to public server so they are visible to Compaas.
