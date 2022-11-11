@@ -6,14 +6,15 @@
  *
  */
 
-import { useCursorBoardPosition, usePresence, useUIStore, useUser, useWindowResize } from '@sage3/frontend';
+import { useCursorBoardPosition, usePresenceStore, useUIStore, useUser, useWindowResize } from '@sage3/frontend';
 import { useCallback, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
 
 // Update this user's presence
 export function UserPresenceUpdate() {
   // Presence Information
-  const { update: updatePresence } = usePresence();
+  const { user } = useUser();
+  const updatePresence = usePresenceStore((state) => state.update);
 
   // UI Scale
   const scale = useUIStore((state) => state.scale);
@@ -26,13 +27,13 @@ export function UserPresenceUpdate() {
 
   // Throttle the Update
   const throttleUpdate = throttle(1000, (vx: number, vy: number, vw: number, vh: number, cx?: number, cy?: number) => {
-    const cursor = cx && cy ? { x: cx, y: cy } : undefined;
-    const viewport = { position: { x: vx, y: vy }, size: { width: vw, height: vh } };
+    const cursor = cx && cy ? { x: cx, y: cy, z: 0 } : undefined;
+    const viewport = { position: { x: vx, y: vy, z: 0 }, size: { width: vw, height: vh, depth: 0 } };
     const update = {
       viewport,
       cursor,
     };
-    updatePresence({ ...update });
+    if (user) updatePresence(user?._id, { ...update });
   });
 
   // Keep the throttlefunc reference

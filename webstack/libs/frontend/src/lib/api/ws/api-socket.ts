@@ -23,6 +23,7 @@ class SocketAPISingleton {
 
   private processServerMessage(message: MessageEvent<any>) {
     const msg = JSON.parse(message.data);
+    console.log(msg);
     if (this._subscriptions[msg.id]) {
       this._subscriptions[msg.id].callback(msg.event);
     } else if (this._restmessages[msg.id]) {
