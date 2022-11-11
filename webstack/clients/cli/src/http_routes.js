@@ -38,29 +38,58 @@ export async function loginGuestUser(server) {
       validateStatus: function (status) {
         return status >= 200 && status <= 302; // redirects are not errors ;-)
       },
-      // add the right headers for the form
-      headers: {
-        ...bodyFormData.getHeaders(),
-      },
-      // the form
-      data: bodyFormData,
+      data: { username: 'guest-username', password: 'guest-pass' },
     });
     // handle success
-    console.log('CLI> login success', response.status, '-', response.statusText);
+    console.log('CLI> login success', response.status, '-', response.statusText, response.data);
     if (response.data) {
       const cookies = response.headers['set-cookie'];
       // two cookies: express:sess and express:sess.sig
       const c1 = cookies[0].split(';');
-      const c2 = cookies[1].split(';');
-      const loginCookies = c1[0] + '; ' + c2[0];
+      // const c2 = cookies[1].split(';');
+      const loginCookies = c1[0];
+      // const loginCookies = c1[0] + '; ' + c2[0];
+      console.log('CLI> login cookies', loginCookies);
       // store the cookies into an axios instance
       axiosInstance.defaults.headers['Cookie'] = loginCookies;
       // return the cookies
       return loginCookies;
     }
-  } catch (e) {
+  } catch (err) {
     // handle error
-    console.log('Error> login', e);
+    console.log('Error> login', err.message);
+  }
+}
+
+export async function loginCreateUser(server) {
+  try {
+    const response = await axiosInstance.request({
+      method: 'post',
+      url: '/api/users/create',
+      baseURL: server,
+      withCredentials: true,
+      maxRedirects: 0, // important to get the cookies before redirection
+      validateStatus: function (status) {
+        return status >= 200 && status <= 302; // redirects are not errors ;-)
+      },
+      data: {
+        name: 'tino',
+        email: '',
+        color: 'red',
+        userRole: 'user',
+        userType: 'client',
+        profilePicture: '',
+      },
+    });
+    // handle success
+    console.log('CLI> login success', response.status, '-', response.statusText, response.data);
+    if (response.data) {
+      console.log('Create user', response.data.data);
+      return response.data.data[0];
+    }
+  } catch (err) {
+    // handle error
+    console.log('Error> create user', err.message);
   }
 }
 
@@ -72,34 +101,13 @@ export function getInstance() {
  * Get user info over HTTP
  * @returns userData  uid, name, email, color, emailVerified, profilePicture
  */
-export async function getUserInfo() {
+export async function getUserInfo(id) {
   try {
-    const response = await axiosInstance.get('/auth/info');
+    const response = await axiosInstance.get('/api/users/' + id);
     // handle success
     console.log('CLI> get user info:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
     if (response.data) {
-      return response.data.user;
-    }
-  } catch (e) {
-    // handle error
-    console.log('Error>', e);
-  }
-}
-
-/**
- * Get data info over HTTP
- * @returns piece of data
- */
-export async function getData(server, id) {
-  try {
-    const response = await axios.request({
-      method: 'get',
-      url: '/api/data/' + id,
-      baseURL: server,
-    });
-    // handle success
-    if (response.status === 200 && response.data) {
-      return response.data;
+      return response.data.data[0];
     }
   } catch (e) {
     // handle error
@@ -112,12 +120,12 @@ export async function getData(server, id) {
  *
  * @param {string} new name
  */
-export async function setUserName(name) {
+export async function setUserName(id, name) {
   const n = name || 'qwerty';
   axiosInstance
     .request({
-      method: 'post',
-      url: '/api/user/update/username',
+      method: 'put',
+      url: '/api/users/' + id,
       withCredentials: true,
       data: { name: n },
     })
@@ -127,7 +135,7 @@ export async function setUserName(name) {
     })
     .catch(function (e) {
       // handle error
-      console.log('setUserName> Error', e);
+      console.log('setUserName> Error', e.message);
     });
 }
 
@@ -136,12 +144,12 @@ export async function setUserName(name) {
  *
  * @param {string} color
  */
-export async function setUserColor(color) {
+export async function setUserColor(id, color) {
   const c = color || '#B794F4'; // purple
   axiosInstance
     .request({
-      method: 'post',
-      url: '/api/user/update/usercolor',
+      method: 'put',
+      url: '/api/users/' + id,
       withCredentials: true,
       data: { color: c },
     })
@@ -151,7 +159,7 @@ export async function setUserColor(color) {
     })
     .catch(function (e) {
       // handle error
-      console.log('setUserColor> Error', e);
+      console.log('setUserColor> Error', e.message);
     });
 }
 
@@ -165,30 +173,29 @@ export async function getBoardsInfo() {
     // handle success
     console.log('CLI> get boards info:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
     if (response.data) {
-      return response.data.boards;
+      return response.data.data;
     }
   } catch (e) {
     // handle error
-    console.log('Error>', e);
+    console.log('Error>', e.message);
   }
 }
 
 /**
- * Get board info over HTTP
- * @param {string} board
- * @returns boardData
+ * Get room info over HTTP
+ * @returns roomsData
  */
-export async function getBoardState(board) {
+export async function getRoomsInfo() {
   try {
-    const response = await axiosInstance.get('/api/boards/state/' + board);
+    const response = await axiosInstance.get('/api/rooms');
     // handle success
-    console.log('CLI> get board info:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
+    console.log('CLI> get rooms info:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
     if (response.data) {
-      return response.data;
+      return response.data.data;
     }
   } catch (e) {
     // handle error
-    console.log('Error>', e);
+    console.log('Error>', e.message);
   }
 }
 
@@ -202,7 +209,7 @@ export async function createBoard(boardInfo) {
     axiosInstance
       .request({
         method: 'post',
-        url: '/api/boards/create',
+        url: '/api/boards/',
         withCredentials: true,
         data: boardInfo,
       })
