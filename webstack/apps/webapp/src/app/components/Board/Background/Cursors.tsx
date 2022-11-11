@@ -8,16 +8,7 @@
 
 import React from 'react';
 import { Tag } from '@chakra-ui/react';
-import {
-  useCursorBoardPosition,
-  useHexColor,
-  usePresence,
-  usePresenceStore,
-  useUIStore,
-  useUser,
-  useUsersStore,
-  useWindowResize,
-} from '@sage3/frontend';
+import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import { motion, useAnimation } from 'framer-motion';
 import { useCallback, useEffect } from 'react';
@@ -35,45 +26,10 @@ export function Cursors(props: CursorProps) {
   const users = useUsersStore((state) => state.users);
 
   // Presences
-  const { update: updatePresence } = usePresence();
   const presences = usePresenceStore((state) => state.presences);
 
   // UI Scale
   const scale = useUIStore((state) => state.scale);
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const boardDragging = useUIStore((state) => state.boardDragging);
-
-  // Widow resize hook
-  const { width: winWidth, height: winHeight } = useWindowResize();
-
-  const { uiToBoard } = useCursorBoardPosition();
-
-  // Update the user's cursor every half second
-  const throttleCursor = throttle(500, (e: MouseEvent) => {
-    // If the user is dragging the board, we get some odd effects. So don't update the curosr if the user is currently dragging
-    if (boardDragging) return;
-    const position = uiToBoard(e.clientX, e.clientY);
-    updatePresence({ cursor: { ...position, z: 0 } });
-  });
-
-  // Keep a copy of the function
-  const throttleCursorFunc = useCallback(throttleCursor, [uiToBoard, boardDragging]);
-  const cursorFunc = (e: MouseEvent) => {
-    // Check if event is on the board
-    if (updatePresence) {
-      // Send the throttled version to the server
-      throttleCursorFunc(e);
-    }
-  };
-
-  // Attach the mouse move event to the window
-  useEffect(() => {
-    const mouseMove = (e: MouseEvent) => {
-      cursorFunc(e);
-    };
-    window.addEventListener('mousemove', mouseMove);
-    return () => window.removeEventListener('mousemove', mouseMove);
-  }, [boardPosition.x, boardPosition.y, scale, boardDragging, winWidth, winHeight]);
 
   // Render the cursors
   return (
