@@ -10,6 +10,7 @@ import { useCursorBoardPosition, usePresence, useUIStore, useUser, useWindowResi
 import { useCallback, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
 
+// Update this user's presence
 export function UserPresenceUpdate() {
   // Presence Information
   const { update: updatePresence } = usePresence();

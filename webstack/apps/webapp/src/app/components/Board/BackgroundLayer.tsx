@@ -112,6 +112,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Cursors boardId={props.boardId} />
         {/* User Viewports */}
         <Viewports boardId={props.boardId} />
+        {/* This user updating prensence */}
         <UserPresenceUpdate />
 
         {/* Draggable Background */}
