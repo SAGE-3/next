@@ -7,11 +7,9 @@
  */
 
 import { Box } from '@chakra-ui/react';
-import { useHexColor, usePresence, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
+import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import React from 'react';
-import { useCallback, useEffect } from 'react';
-import { throttle } from 'throttle-debounce';
 
 type ViewportsProps = {
   boardId: string;
@@ -23,47 +21,10 @@ export function Viewports(props: ViewportsProps) {
   const users = useUsersStore((state) => state.users);
 
   // Presence Information
-  const { update: updatePresence } = usePresence();
   const presences = usePresenceStore((state) => state.presences);
 
   // UI Scale
   const scale = useUIStore((state) => state.scale);
-  const boardPosition = useUIStore((state) => state.boardPosition);
-
-  // Window resize hook
-  const { width: winWidth, height: winHeight } = useWindowResize();
-
-  // Update the user's viewport every half second
-  const throttleViewport = throttle(500, (x: number, y: number, width: number, height: number) => {
-    const viewPos = { x, y, z: 0 };
-    const viewWidth = width;
-    const viewHeight = height;
-    const viewSize = { width: viewWidth, height: viewHeight };
-    updatePresence({ viewport: { position: viewPos, size: viewSize } });
-  });
-
-  // Keep a copy of the function
-  const throttleViewportFunc = useCallback(throttleViewport, []);
-  const viewportFunc = (x: number, y: number, w: number, h: number) => {
-    // Check if event is on the board
-    if (updatePresence) {
-      // Send the throttled version to the server
-      throttleViewportFunc(x, y, w, h);
-    }
-  };
-  // Update Viewport Presence
-  useEffect(() => {
-    viewportFunc(-boardPosition.x, -boardPosition.y, winWidth / scale, winHeight / scale);
-  }, [boardPosition.x, boardPosition.y, winWidth, winHeight, scale]);
-
-  // Attach the mouse move event to the window
-  useEffect(() => {
-    const mouseMove = (e: MouseEvent) => {
-      viewportFunc(-boardPosition.x, -boardPosition.y, winWidth / scale, winHeight / scale);
-    };
-    window.addEventListener('mousemove', mouseMove);
-    return () => window.removeEventListener('mousemove', mouseMove);
-  }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight]);
 
   // Render the Viewports
   return (

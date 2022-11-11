@@ -60,7 +60,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
 
       // Socket Subscribe Message
       const route = `/presence`;
-      presenceSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema | PresenceSchema>(route, (message) => {
+      presenceSub = await SocketAPI.subscribe<PresenceSchema>(route, (message) => {
         const doc = message.doc as Presence;
         switch (message.type) {
           case 'CREATE': {
