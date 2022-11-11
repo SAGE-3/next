@@ -158,17 +158,22 @@ class SAGEProxy():
                             dest_app = self.room.boards[board_id].smartbits[dest_id]
                             linked_info.callback(src_val, dest_app, dest_field)
 
+            collection = msg["event"]['col']
+            doc = msg['event']['doc']
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 pass
-            else:
-                collection = msg["event"]['col']
-                doc = msg['event']['doc']
+            elif msg['event'] == "UPDATE":
                 updates = msg['event']['updates']
                 self.__OBJECT_CREATION_METHODS[msg_type](collection, doc, updates)
+            else:
+                self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
         print("exited the function")
+
 
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
+
+
         if collection == "BOARDS":
             print("New board created")
             new_board = Board(doc)
@@ -183,6 +188,7 @@ class SAGEProxy():
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the comlete object
+
         if collection == "BOARDS":
             # print("BOARD UPDATED: UNHANDLED")
             pass
@@ -209,7 +215,10 @@ class SAGEProxy():
 
                     _func(**_params)
 
-    def __handle_delete(self, collection, doc):
+    def __handle_delete(self, msg):
+        collection = msg["event"]['col']
+        doc = msg['event']['doc']
+
         print("deleting app")
         if collection == "APPS":
             try:
