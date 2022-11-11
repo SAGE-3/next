@@ -162,7 +162,7 @@ class SAGEProxy():
             doc = msg['event']['doc']
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 pass
-            elif msg['event'] == "UPDATE":
+            elif msg['event']["type"] == "UPDATE":
                 updates = msg['event']['updates']
                 self.__OBJECT_CREATION_METHODS[msg_type](collection, doc, updates)
             else:
