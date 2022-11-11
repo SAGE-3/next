@@ -120,6 +120,7 @@ class SageCommunication(Borg):
             url += app_id
         r = self.httpx_client.get(url, headers=self.__headers)
         json_data = r.json()
+        print("json_data result is {json_data}")
         data = json_data['data']
         if r.is_success:
             if room_id is not None:

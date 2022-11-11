@@ -124,6 +124,7 @@ class AIPane(SmartBit):
         app_ids = list(self.state.hostedApps.keys())
         urls = []
         for app_id in app_ids:
+            print(f"getting app info for app_id {app_id}")
             app_data = self._s3_comm.get_app(app_id)
             asset_id = app_data["data"]["state"]["assetid"]
             # img_name = self._s3_comm.get_asset(asset_id)["data"]["path"].split("/")[-1]
