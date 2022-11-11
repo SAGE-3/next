@@ -58,7 +58,7 @@ class AIPaneState(TrackedBaseModel):
     messages: dict
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
-    RunStatus: int
+    runStatus: int
     # lastHeartBeat: int
     supportedTasks: Optional[dict]
 
@@ -89,10 +89,10 @@ class AIPane(SmartBit):
             self.state.messages[time.time()] = """Only one datatime is supported"""
         # if this is the second app added, then skip this since it was already done for the first app added.
         elif len(set(self.state.hostedApps)) == 1:
-                for type, settings in ai_supported.items():
-                    if app_type in settings["supported_apps"]:
-                        supported_tasks[type] = settings['tasks']
-                self.state.supportedTasks = supported_tasks
+            for type, settings in ai_supported.items():
+                if app_type in settings["supported_apps"]:
+                    supported_tasks[type] = settings['tasks']
+                    self.state.supportedTasks = supported_tasks
         print(f"supported tasks are: {self.state.supportedTasks}")
         # self.state.executeInfo.executeFunc = ""
         # self.state.executeInfo.params = {}
