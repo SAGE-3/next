@@ -158,13 +158,13 @@ function AppComponent(props: App): JSX.Element {
           readOnly={!yours} // Only the creator can edit
           zIndex={1}
         />
-        {/* {!yours && selected && (
-          <Box position="absolute" right="2" bottom="0" transform={`scale(${1 / scale})`} transformOrigin="bottom right" zIndex={2}>
+        {!yours && selected && (
+          <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
             <Tooltip label="Not your Stickie" shouldWrapChildren placement="top" hasArrow>
-              <MdOutlineBlock color="red" />
+              <MdOutlineBlock color="red" fontSize="32px" />
             </Tooltip>
           </Box>
-        )} */}
+        )}
       </Box>
     </AppWindow>
   );
