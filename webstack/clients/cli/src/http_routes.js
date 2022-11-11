@@ -61,7 +61,7 @@ export async function loginGuestUser(server) {
   }
 }
 
-export async function loginCreateUser(server) {
+export async function loginCreateUser(server, data) {
   try {
     const response = await axiosInstance.request({
       method: 'post',
@@ -72,14 +72,7 @@ export async function loginCreateUser(server) {
       validateStatus: function (status) {
         return status >= 200 && status <= 302; // redirects are not errors ;-)
       },
-      data: {
-        name: 'tino',
-        email: '',
-        color: 'red',
-        userRole: 'user',
-        userType: 'client',
-        profilePicture: '',
-      },
+      data: data,
     });
     // handle success
     console.log('CLI> login success', response.status, '-', response.statusText, response.data);

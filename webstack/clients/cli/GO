@@ -16,7 +16,7 @@ pointers=10
 
 for i in $(seq 1 ${pointers})
 do
-	node pointer.js -r 15 -s $server -b $board -m $room-m $room -t $length &
+	node pointer.js -r 10 -s $server -b $board -m $room-m $room -t $length &
 done
 
 

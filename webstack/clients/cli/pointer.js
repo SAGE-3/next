@@ -33,6 +33,9 @@ import { loginGuestUser, loginCreateUser, getUserInfo, getBoardsInfo, getRoomsIn
 // WS protocol
 import { socketConnection, boardConnect, boardDisconnect, sendCursor, presenceUpdate } from './src/socket_routes.js';
 
+// Fake user
+import { faker } from '@faker-js/faker';
+
 /**
  * Setup the command line argument parsing (commander module)
  */
@@ -58,12 +61,27 @@ let myID;
 var FPS = params.rate;
 var updateRate = 1000 / FPS;
 
+const colors = ['green', 'blue', 'gray', 'orange', 'purple', 'yellow', 'red', 'cyan', 'teal', 'pink'];
+
 async function start() {
   // Login through HTTP
   const cookies = await loginGuestUser('http://' + params.server);
   console.log('CLI> Logged in');
 
-  const me = await loginCreateUser('http://' + params.server);
+  // Build a user
+  const randomName = faker.name.fullName();
+  const randomEmail = faker.internet.email();
+  const randomAvatar = faker.image.avatar();
+  const userData = {
+    name: randomName,
+    email: randomEmail,
+    color: colors[randomNumber(0, colors.length - 1)],
+    profilePicture: randomAvatar,
+    userRole: 'user',
+    userType: 'client',
+  };
+
+  const me = await loginCreateUser('http://' + params.server, userData);
   myID = me._id;
 
   // Get my own info: uid, name, email, color, emailVerified, profilePicture
@@ -94,11 +112,11 @@ async function start() {
     const totalHeight = 3000;
 
     // Random position within a safe margin
-    var px = 1500691;
-    var py = 1500691;
-    var incx = 1;
-    var incy = 1;
-    var sensitivity = 1;
+    var px = randomNumber(1500000, 1501000);
+    var py = randomNumber(1500000, 1501000);
+    var incx = randomNumber(1, 2) % 2 ? 1 : -1;
+    var incy = randomNumber(1, 2) % 2 ? 1 : -1;
+    var sensitivity = 2;
 
     // intial position
     sendCursor(socket, myID, px, py);
@@ -121,13 +139,13 @@ async function start() {
       const dx = Math.round(movementX * sensitivity);
       const dy = Math.round(movementY * sensitivity);
       // detect wall size limits and reverse course
-      if (px >= totalWidth + 1500691) incx *= -1;
-      if (px <= 1500691) incx *= -1;
-      if (py >= totalHeight + 1500691) incy *= -1;
-      if (py <= 1500691) incy *= -1;
+      if (px >= totalWidth + 1500000) incx *= -1;
+      if (px <= 1500000) incx *= -1;
+      if (py >= totalHeight + 1500000) incy *= -1;
+      if (py <= 1500000) incy *= -1;
       // update global position
-      px = clamp(px + incx * dx, 1500691, 1500691 + totalWidth);
-      py = clamp(py + incy * dy, 1500691, 1500691 + totalHeight);
+      px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
+      py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
 
       // Send message to server
       sendCursor(socket, myID, px, py);
