@@ -11,7 +11,6 @@ import { useParams } from 'react-router-dom';
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
 
 import {
-  usePresence,
   useAppStore,
   useRouteNav,
   useBoardStore,
@@ -23,6 +22,7 @@ import {
   useUIStore,
   useData,
   serverConfiguration,
+  useUser,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -51,7 +51,8 @@ export function BoardPage() {
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   // Presence Information
-  const { update: updatePresence } = usePresence();
+  const { user } = useUser();
+  const updatePresence = usePresenceStore((state) => state.update);
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
@@ -72,7 +73,7 @@ export function BoardPage() {
     subscribeToPresence();
     subscribeToUsers();
     // Update the user's presence information
-    updatePresence({ boardId: boardId, roomId: roomId });
+    if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId });
 
     // Set Selected app to empty
     setSelectedApp('');
@@ -82,7 +83,7 @@ export function BoardPage() {
       // Unsub from board updates
       unsubBoard();
       // Update the user's presence information
-      updatePresence({ boardId: '', roomId: '' });
+      if (user) updatePresence(user._id, { boardId: '', roomId: '' });
       // Set Selected app to empty
       setSelectedApp('');
     };
