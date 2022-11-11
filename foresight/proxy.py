@@ -117,8 +117,6 @@ class SAGEProxy():
         potentially work on a multiprocessing version where threads are processed separately
         Messages needs to be numbered to avoid received out of sequences messages.
         """
-        i = 0
-        print('I am here 1')
 
         while not self.stop_worker:
             # i+=1
@@ -165,7 +163,8 @@ class SAGEProxy():
             else:
                 collection = msg["event"]['col']
                 doc = msg['event']['doc']
-                self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
+                updates = msg['event']['updates']
+                self.__OBJECT_CREATION_METHODS[msg_type](collection, doc, updates)
         print("exited the function")
 
     def __handle_create(self, collection, doc):
@@ -181,21 +180,21 @@ class SAGEProxy():
             smartbit = SmartBitFactory.create_smartbit(doc)
             self.room.boards[doc["data"]["boardId"]].smartbits[smartbit.app_id] = smartbit
 
-    def __handle_update(self, collection, doc):
+    def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the comlete object
         if collection == "BOARDS":
             # print("BOARD UPDATED: UNHANDLED")
             pass
         elif collection == "APPS":
-            print("New  app updated")
+            print("updating app {doc}")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
 
             sb = self.room.boards[board_id].smartbits[app_id]
 
             # Note that set_data_form_update clear touched field
-            sb.refresh_data_form_update(doc)
+            sb.refresh_data_form_update(doc, updates)
 
             exec_info = getattr(sb.state, "executeInfo", None)
 

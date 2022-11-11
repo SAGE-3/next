@@ -79,7 +79,7 @@ class AIClient(Borg):
                             callback_fn(app_uuid, msg_uuid, result)
                             tasks_to_remove.add(task_id)
                         except Exception as e:
-                            # logger.error(f"rror while running an AI job {resp}")
+                            print(f"Error while running an AI job {resp}")
                         del self.callback_info[task_id]
             self.running_jobs -= tasks_to_remove
 
