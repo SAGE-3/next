@@ -88,14 +88,14 @@ class AIPane(SmartBit):
         if len(set(self.state.hostedApps.values())) > 1:
             self.state.messages[time.time()] = """Only one datatime is supported"""
         # if this is the second app added, then skip this since it was already done for the first app added.
-        elif len(set(self.state.hostedApps)) == 1:
+        elif len(set(self.state.hostedApps.values())) == 1:
             for type, settings in ai_supported.items():
                 if app_type in settings["supported_apps"]:
                     supported_tasks[type] = settings['tasks']
                     self.state.supportedTasks = supported_tasks
         print(f"supported tasks are: {self.state.supportedTasks}")
-        # self.state.executeInfo.executeFunc = ""
-        # self.state.executeInfo.params = {}
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
         self.send_updates()
 
     def handle_image_exec_result(self, app_uuid, msg_uuid, msg):

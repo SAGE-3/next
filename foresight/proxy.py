@@ -172,7 +172,6 @@ class SAGEProxy():
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
 
-
         if collection == "BOARDS":
             print("New board created")
             new_board = Board(doc)
@@ -216,7 +215,6 @@ class SAGEProxy():
 
     def __handle_delete(self, collection, doc):
 
-
         print("deleting app")
         if collection == "APPS":
             try:
@@ -243,10 +241,6 @@ class SAGEProxy():
         for board_id in sage_proxy.room.boards.keys():
             for app_info in sage_proxy.room.boards[board_id].smartbits:
                 app_info[1].clean_up()
-
-
-
-
 
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
         if src_app not in self.callbacks:
