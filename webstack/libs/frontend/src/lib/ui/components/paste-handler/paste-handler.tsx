@@ -13,7 +13,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
-import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
+import { useUser, useUIStore, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
 import { processContentURL } from '@sage3/frontend';
 
 type PasteProps = {
@@ -29,7 +29,9 @@ type PasteProps = {
 export const PasteHandler = (props: PasteProps): JSX.Element => {
   // show some notifications
   const toast = useToast();
+  // User information
   const { user } = useUser();
+  const { position: cursorPosition } = useCursorBoardPosition();
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
@@ -61,9 +63,9 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Get content of clipboard
       const pastedText = event.clipboardData?.getData('Text');
 
-      // Get around the center of the board
-      const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-      const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+      // Get the user cursor position
+      const xDrop = cursorPosition.x;
+      const yDrop = cursorPosition.y;
 
       // if there's content
       if (pastedText) {
@@ -84,7 +86,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             title: final_url,
             roomId: props.roomId,
             boardId: props.boardId,
-            position: { x: xDrop - w / 2, y: yDrop - h / 2, z: 0 },
+            position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: w, height: h, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Webview',
@@ -97,11 +99,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             title: user.data.name,
             roomId: props.roomId,
             boardId: props.boardId,
-            position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
+            position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
-            state: { text: pastedText, fontSize: 42, color: '#F6E05E' },
+            state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
             raised: true,
           });
         }
@@ -115,7 +117,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Remove function during cleanup to prevent multiple additions
       document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
     };
-  }, [boardPosition.x, boardPosition.y, props.boardId, props.roomId]);
+  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId]);
 
   return <></>;
 };

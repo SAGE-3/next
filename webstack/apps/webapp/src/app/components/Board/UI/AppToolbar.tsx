@@ -134,10 +134,21 @@ export function AppToolbar(props: AppToolbarProps) {
     if (app) {
       const Component = Applications[app.data.type].ToolbarComponent;
       return (
-        <ErrorBoundary fallbackRender={({ error, resetErrorBoundary }) => <Text>An error has occured.</Text>}>
+        <ErrorBoundary
+          fallbackRender={({ error, resetErrorBoundary }) => (
+            <>
+              <Text whiteSpace="nowrap">An error has occured.</Text>
+              <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">
+                <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1">
+                  <MdClose color={buttonTextColor} />
+                </Button>
+              </Tooltip>
+            </>
+          )}
+        >
           <>
             <Component key={app._id} {...app}></Component>
-            <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
+            <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">
               <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1">
                 <MdClose color={buttonTextColor} />
               </Button>

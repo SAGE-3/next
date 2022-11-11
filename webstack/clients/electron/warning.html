@@ -109,35 +109,40 @@
       box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 
     }
-    h2 {
+
+    h1 {
       color: #3EC174;
-      letter-spacing: 7px;
+      letter-spacing: 2px;
+
+    }
+    hr {
+      width:540px;
+      visibility: hidden;
     }
 
    
     </style>
     <script>
       function redirectToChicago() { 
-        window.location = "https://sage3alpha.evl.uic.edu";
+        window.location = "https://sage3.app";
       }
       function redirectToHawaii() { 
-        // TODO: Change this to the Hawaii URL
-        window.location = "https://pele.manoa.hawaii.edu";
+        window.location = "https://manoa.sage3.app";
       }
       function redirecToDev() { 
-        // TODO: Change this to the Hawaii URL
-        window.location = "https://minim1.evl.uic.edu";
+        window.location = "https://mini.sage3.app";
       }
     </script>
 
     <div class="container" >
     
       <img src="./SAGE3DarkMode.png" alt="" width="540px">
-      <h2>Please select a server below</h2>
+      <hr>
+      <h1>Please select a server below</h1>
       <div style="display: flex; text-align: center">
       <div class="sage-button" onclick="redirectToChicago()" >Chicago</div>
       <div class="sage-button" onclick="redirectToHawaii()" >Hawaii</div>
-      <div class="sage-button" onclick="redirecToDev()" >Ai (Beta)</div>
+      <div class="sage-button" onclick="redirecToDev()" >Development</div>
       </div>
         <div style="display: flex; text-align: center">
           <div class="loading" style=" flex: 1;">

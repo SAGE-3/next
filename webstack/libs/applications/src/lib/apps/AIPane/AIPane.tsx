@@ -5,9 +5,8 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
+import { useEffect, useState, useRef } from 'react';
 
-import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -21,27 +20,27 @@ import {
   Popover,
   PopoverArrow,
   PopoverBody,
-  PopoverCloseButton,
   PopoverContent,
-  PopoverHeader,
   PopoverTrigger,
   Portal,
   Stack,
-  Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
+import { v4 as getUUID } from 'uuid';
 
+// Icons
 import { FaPlay } from 'react-icons/fa';
 import { BiErrorCircle, BiRun } from 'react-icons/bi';
 import { FiChevronDown } from 'react-icons/fi';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 import './styles.css';
+
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -51,50 +50,49 @@ function AppComponent(props: App): JSX.Element {
   const boardApps = useAppStore((state) => state.apps);
   const selApp = boardApps.find((el) => el._id === selectedAppId);
 
-  const location = useLocation();
   const update = useAppStore((state) => state.update);
 
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
-  const [outputLocal, setOutputLocal] = useState<{ score: number; label: string; box: object }[]>([]);
+  const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
+  // Set the title on start
+  useEffect(() => {
+    update(props._id, { title: "AI Panel" });
+  }, []);
 
   // Checks for apps on or off the pane
   useEffect(() => {
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.title };
+      const client = { [app._id]: app.data.type };
 
       // TODO Handle AIPanes overlapping AIPanes
       // const includedAppTypes: AppName[] = ['AIPane']
-      if (app.data.type === 'AIPane' && app._id !== props._id) {
-        break;
-      } else {
-        if (
-          app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
-          app.data.position.x + app.data.size.width > props.data.position.x &&
-          app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
-          app.data.size.height + app.data.position.y > props.data.position.y
-        ) {
-          if (!Object.keys(s.hostedApps).includes(app._id)) {
-            const hosted = {
-              ...s.hostedApps,
-              ...client,
-            };
-            updateState(props._id, { hostedApps: hosted });
-            updateState(props._id, { messages: hosted });
-            console.log('app ' + app._id + ' added');
-            newAppAdded(app.data.type);
-          } else {
-            console.log('app ' + app._id + ' already in hostedApps');
-          }
+      if (
+        app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
+        app.data.position.x + app.data.size.width > props.data.position.x &&
+        app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
+        app.data.size.height + app.data.position.y > props.data.position.y &&
+        app.data.type !== 'AIPane'
+      ) {
+        if (!Object.keys(s.hostedApps).includes(app._id)) {
+          const hosted = {
+            ...s.hostedApps,
+            ...client,
+          };
+          updateState(props._id, { hostedApps: hosted });
+          updateState(props._id, { messages: hosted });
+          console.log('app ' + app._id + ' added');
+          newAppAdded(app.data.type);
         } else {
-          if (Object.keys(s.hostedApps).includes(app._id)) {
-            const hostedCopy = { ...s.hostedApps };
-            delete hostedCopy[app._id];
-            updateState(props._id, { messages: hostedCopy, hostedApps: hostedCopy });
-          }
+          console.log('app ' + app._id + ' already in hostedApps');
+        }
+      } else {
+        if (Object.keys(s.hostedApps).includes(app._id)) {
+          const hostedCopy = { ...s.hostedApps };
+          delete hostedCopy[app._id];
+          updateState(props._id, { messages: hostedCopy, hostedApps: hostedCopy });
         }
       }
     }
@@ -120,7 +118,7 @@ function AppComponent(props: App): JSX.Element {
     const yDiff = props.data.position.y - prevY.current;
 
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.title };
+      const client = { [app._id]: app.data.type };
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
@@ -137,33 +135,23 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-      updateState(props._id, { supportedTasks: '' });
+      updateState(props._id, { supportedTasks: {} });
     }
   }, [Object.keys(s.hostedApps).length]);
 
-  //TODO parse output
-  useEffect(() => {
-    if (s.output != undefined && Object.keys(s.output).length > 0) {
-      const parsedOT = JSON.parse(s.output);
-      const arrayOT = parsedOT.output.split("'");
-      const parsedArrayOT = JSON.parse(arrayOT[0]);
-      const modelOutput: { score: number; label: string; box: object }[] = [];
-      Object.keys(parsedArrayOT).forEach((array) => {
-        Object.keys(parsedArrayOT[array]).forEach((entity) => {
-          modelOutput.push({
-            score: parsedArrayOT[array][entity].score,
-            label: parsedArrayOT[array][entity].label,
-            box: parsedArrayOT[array][entity].box,
-          });
-        });
-      });
-      setOutputLocal(modelOutput);
-      console.log(modelOutput);
-      for (const score in modelOutput) {
-        console.log(modelOutput[score].score);
-      }
-    }
-  }, [JSON.stringify(s.output)]);
+  // Interval to check if the proxy is still alive
+  // useEffect(() => {
+  //   const checkHeartBeat = setInterval(async () => {
+  //     const response = await fetch('/api/time');
+  //     const time = await response.json();
+  //     const delta = Math.abs(time.epoch - s.lastHeartBeat);
+  //     console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.runStatus);
+  //     if (delta > heartBeatTimeCheck && s.runStatus) {
+  //       updateState(props._id, {runStatus: false});
+  //     }
+  //   }, 15 * 1000); // 15 Seconds
+  //   return () => clearInterval(checkHeartBeat);
+  // }, [s.lastHeartBeat, s.runStatus]);
 
   function checkAppType(app: string) {
     return supportedApps.includes(app);
@@ -203,8 +191,6 @@ function AppComponent(props: App): JSX.Element {
 
           <PopoverContent>
             <PopoverArrow />
-            <PopoverCloseButton />
-            <PopoverHeader>History</PopoverHeader>
 
             <PopoverBody>
               {Object.values(s.hostedApps).every(checkAppType) ? 'File type accepted' : 'Error. Unsupported file type'}
@@ -238,84 +224,85 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
-  const assets = useAssetStore((state) => state.assets);
-  // const roomAssets = assets.filter((el) => el.data.room == locationState.roomId);
-  const update = useAppStore((state) => state.update);
 
-  const supportedApps = ['Counter', 'ImageViewer', 'Notepad'];
+  const [aiModel, setAIModel] = useState('Models');
+  const [task, setTask] = useState('Tasks');
 
-  const [supportedTasks, setSupportedTasks] = useState<{ name: string; models: string[] }[]>([]);
-  const [aiModel, setAIModel] = useState('');
+  // const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
+  // function checkAppType(app: string) {
+  //   return supportedApps.includes(app);
+  // }
 
-  useEffect(() => {
-    if (s.supportedTasks != undefined && s.supportedTasks != '') {
-      const parsedST = JSON.parse(s.supportedTasks);
-      const newTasks: { name: string; models: string[] }[] = [];
-      Object.keys(parsedST).forEach((aiType) => {
-        Object.keys(parsedST[aiType]).forEach((modelName) => {
-          newTasks.push({
-            name: modelName,
-            models: parsedST[aiType][modelName],
-          });
-        });
-      });
-      setSupportedTasks(newTasks);
-    }
-  }, [JSON.stringify(s.supportedTasks)]);
 
-  function checkAppType(app: string) {
-    return supportedApps.includes(app);
-  }
-
-  function runFunction() {
+  function runFunction(model: string) {
     updateState(props._id, {
       runStatus: true,
       executeInfo: {
         executeFunc: 'execute_model',
-        params: { some_uuid: '12345678', model_id: 'facebook/detr-resnet-50' },
+        params: { exec_uuid: getUUID(), model_id: model },
       },
     });
   }
 
-  const handleModelClick = (model: string) => {
-    console.log('run model: ', model);
+  const handleSetModel = (model: string) => {
     setAIModel(model);
   };
 
+  const handleSetTask = (task: string) => {
+    setTask(task);
+    setAIModel('Models');
+  };
+
   return (
-    <>
-      <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
-        <Stack spacing={2} direction="row">
-          {supportedTasks.map((task) => {
+    <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
+      <Stack spacing={2} direction="row">
+        <>
+          {Object.keys(s.supportedTasks)?.map((type) => {
             return (
-              <Menu>
-                <MenuButton as={Button} rightIcon={<FiChevronDown />}>
-                  {task.name}
-                </MenuButton>
-                <Portal>
-                  <MenuList>
-                    {task.models.map((name) => {
-                      return <MenuItem onClick={() => handleModelClick(name)}>{name}</MenuItem>;
-                    })}
-                  </MenuList>
-                </Portal>
-              </Menu>
+              <>
+                <Menu>
+                  <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                    {task}
+                  </MenuButton>
+                  <Portal>
+                    <MenuList>
+                      {Object.keys(s.supportedTasks[type]).map((tasks) => {
+                        return <MenuItem onClick={() => handleSetTask(tasks)}>{tasks}</MenuItem>;
+                      })}
+                    </MenuList>
+                  </Portal>
+                </Menu>
+
+                <div style={{ display: task !== 'Tasks' ? 'block' : 'none' }}>
+                  <Menu>
+                    <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                      {aiModel}
+                    </MenuButton>
+                    <Portal>
+                      <MenuList>
+                        {s.supportedTasks[type][task]?.map((modelOptions: string) => {
+                          return <MenuItem onClick={() => handleSetModel(modelOptions)}>{modelOptions}</MenuItem>;
+                        })}
+                      </MenuList>
+                    </Portal>
+                  </Menu>
+                </div>
+              </>
             );
           })}
-          <IconButton
-            aria-label="Run AI"
-            icon={s.runStatus ? <BiRun /> : <FaPlay />}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-            isDisabled={!Object.values(s.hostedApps).every(checkAppType) || !(Object.keys(s.hostedApps).length > 0)}
-            onClick={() => {
-              runFunction();
-            }}
-          />
-        </Stack>
-      </div>
-    </>
+        </>
+
+        <IconButton
+          aria-label="Run AI"
+          icon={s.runStatus ? <BiRun /> : <FaPlay />}
+          _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+          isDisabled={aiModel === 'Models' ? true : false}
+          onClick={() => {
+            runFunction(aiModel);
+          }}
+        />
+      </Stack>
+    </div>
   );
 }
 

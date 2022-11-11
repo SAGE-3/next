@@ -1,3 +1,4 @@
+import os
 import redis
 import uuid
 import datetime
@@ -7,10 +8,10 @@ from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager
 from ws4py import format_addresses, configure_logger
 from config import config as conf, prod_type
-import random
+
 logger = configure_logger()
 
-
+# TODO : CONVERT JupyterKernelProxy INTO singleton (use BORG)
 def format_execute_request_msg(exec_uuid, code):
     content = {'code': code, 'silent': False}
     hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
@@ -26,16 +27,12 @@ def format_execute_request_msg(exec_uuid, code):
     return msg
 
 
-
-
 class JupyterKernelProxy:
     class JupyterClient(WebSocketBaseClient):
-
         def __init__(self, address, headers, parent_proxy_instnace):
             self.pending_reponses = {}
             self.parent_proxy_instance = parent_proxy_instnace
             super().__init__(address, headers=headers)
-
 
         def handshake_ok(self):
             print("Opening %s" % format_addresses(self))
@@ -146,7 +143,7 @@ class JupyterKernelProxy:
         except:
             raise Exception("couldn't communicate with the Jupyter Kernel Gateway.")
 
-    def cleanup(self):
+    def clean_up(self):
         self.conn_manager.close_all()
         self.conn_manager.stop()
         self.conn_manager.join()

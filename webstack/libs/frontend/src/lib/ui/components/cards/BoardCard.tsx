@@ -14,12 +14,12 @@ import { BoardSchema, Board } from '@sage3/shared/types';
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { EditBoardModal } from '../modals/EditBoardModal';
 import { useHexColor, useUser, useAuth } from '../../../hooks';
+import { copyBoardUrlToClipboard } from '@sage3/frontend';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
   userCount: number;
   onSelect: () => void;
-  onDelete: () => void;
 };
 
 /**
@@ -32,6 +32,8 @@ export type BoardCardProps = {
 export function BoardCard(props: BoardCardProps) {
   const { user } = useUser();
   const { auth } = useAuth();
+  // Guest mode disabled for now
+  const isGuest = false; // auth?.provider === 'guest';
 
   // Is it my board?
   const yours = user?._id === props.board.data.ownerId;
@@ -77,8 +79,7 @@ export function BoardCard(props: BoardCardProps) {
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
     // make it a sage3:// protocol link
-    const link = `sage3://${window.location.host}/#/enter/${props.board.data.roomId}/${props.board._id}`;
-    navigator.clipboard.writeText(link);
+    copyBoardUrlToClipboard(props.board.data.roomId, props.board._id);
     toast({
       title: 'Success',
       description: `Sharable Board link copied to clipboard.`,
@@ -142,12 +143,19 @@ export function BoardCard(props: BoardCardProps) {
             <IconButton onClick={handleCopyId} aria-label="Board id copy" fontSize="2xl" variant="unstlyed" icon={<MdOutlineCopyAll />} />
           </Tooltip>
 
-          <Tooltip openDelay={400} placement="top-start" hasArrow
-            label={auth?.provider === 'guest' ? 'Guests cannot copy sharable link' : 'Copy sharable link'}>
+          <Tooltip
+            openDelay={400}
+            placement="top-start"
+            hasArrow
+            label={isGuest ? 'Guests cannot copy sharable link' : 'Copy sharable link'}
+          >
             <IconButton
-              aria-label="Board link copy" fontSize="2xl" variant="unstlyed" ml="-3"
+              aria-label="Board link copy"
+              fontSize="2xl"
+              variant="unstlyed"
+              ml="-3"
               onClick={handleCopyLink}
-              disabled={auth?.provider === 'guest'}
+              disabled={isGuest}
               icon={<MdLink />}
             />
           </Tooltip>

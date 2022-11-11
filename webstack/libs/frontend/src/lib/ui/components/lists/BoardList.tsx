@@ -42,7 +42,6 @@ type BoardListProps = {
  */
 export function BoardList(props: BoardListProps) {
   // Data stores
-  const deleteBoard = useBoardStore((state) => state.delete);
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
   const storeError = useBoardStore((state) => state.error);
   const clearError = useBoardStore((state) => state.clearError);
@@ -54,6 +53,7 @@ export function BoardList(props: BoardListProps) {
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
   const { auth } = useAuth();
+  const isGuest = auth?.provider === 'guest';
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');
@@ -137,7 +137,7 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" disabled={auth?.provider === 'guest'} onClick={onOpen}>
+                <Button borderRadius="md" fontSize="3xl" disabled={isGuest} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
@@ -185,7 +185,6 @@ export function BoardList(props: BoardListProps) {
                     board={board}
                     userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
                     onSelect={() => props.onBoardClick(board)}
-                    onDelete={() => deleteBoard(board._id)}
                   />
                 );
               })}

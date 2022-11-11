@@ -1,5 +1,4 @@
-
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
@@ -7,7 +6,6 @@
 # -----------------------------------------------------------------------------
 # TODO: checking messages that are created at the same time and only executing the first
 #  one keeping info in received_msg_log for now. These seems to be related to raised=True
-
 
 
 # TODO: Fix the issue of messages received twic during updates. There is not need for that!
@@ -20,30 +18,26 @@
 
 
 # TODO prevent apps updates on fields that were touched?
+import signal
 import sys
 import os
 from typing import Callable
 from pydantic import BaseModel
-import asyncio
 import json
 import threading
-import websockets
-import argparse
+# import argparse
 from board import Board
 import uuid
 from multiprocessing import Queue
 import requests
 from smartbitfactory import SmartBitFactory
 import httpx
+from websocketlistener import WebSocketListener
+from utils import logging_config
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 
-import logging
-logging.getLogger().setLevel(logging.INFO)
-
-
-
-
+logger = logging_config.get_console_logger()
 
 
 class Room:
@@ -55,8 +49,7 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    logging.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
-    # print('Subscribing to room:', room_id, 'with subscriptionId:', subscription_id)
+    logger.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -72,18 +65,20 @@ class LinkedInfo(BaseModel):
     dest_field: str
     callback: Callable
 
+
 # TODO: sample callback for linked app. Other example
 #  needed. Also new home for such functions is also needed
 def update_dest_from_src(src_val, dest_app, dest_field):
     setattr(dest_app.state, dest_field, src_val)
     dest_app.send_updates()
 
+
 class SAGEProxy():
     def __init__(self, room_id, conf, prod_type):
         self.room = Room(room_id)
         self.conf = conf
         self.prod_type = prod_type
-        self.__headers = {'Authorization': f"Bearer {self.conf['token']}"}
+        self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
         self.__message_queue = Queue()
         self.__OBJECT_CREATION_METHODS = {
             "CREATE": self.__handle_create,
@@ -94,10 +89,16 @@ class SAGEProxy():
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}
         self.received_msg_log = {}
+        self.listening_process = WebSocketListener(self.__message_queue, room_id)
+        self.worker_process = threading.Thread(target=self.process_messages)
+        self.stop_worker = False
 
-    def authenticat_new_user(self):
-        r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + '/auth/jwt', headers=self.__headers)
-        response = r.json()
+        self.populate_existing()
+
+
+    def start_threads(self):
+        self.listening_process.run()
+        self.worker_process.start()
 
     def populate_existing(self):
         boards_info = self.s3_comm.get_boards(self.room.room_id)
@@ -106,28 +107,9 @@ class SAGEProxy():
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            logging.info(f"Creating {app_info['data']['state']}")
-            # print(f"Creating {app_info}")
+            logger.info(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
-
-    async def receive_messages(self):
-        async with websockets.connect(self.conf[self.prod_type]["ws_server"]+"/api",
-                                      extra_headers={"Authorization": f"Bearer {self.conf['token']}"}) as ws:
-            await subscribe(ws, self.room.room_id)
-            # print("completed subscription, checking if boards and apps already there")
-            self.populate_existing()
-            async for msg in ws:
-                msg = json.loads(msg)
-                print(f"----- msg: {json.dumps(msg)}")
-                if msg['id'] not in self.received_msg_log or \
-                        msg['event']['doc']['_updatedAt'] !=  self.received_msg_log[msg['id']]:
-                    self.__message_queue.put(msg)
-                    self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
-                    # print(f"in receive_messages adding: {msg}")
-                else:
-                    # print(f"in receive_messages ignoring message sent at {self.received_msg_log[msg['id']]}")
-                    pass
 
     def process_messages(self):
         """
@@ -135,23 +117,27 @@ class SAGEProxy():
         potentially work on a multiprocessing version where threads are processed separately
         Messages needs to be numbered to avoid received out of sequences messages.
         """
-        while True:
-            msg = self.__message_queue.get()
+        i = 0
+        print('I am here 1')
+
+        while not self.stop_worker:
+            # i+=1
+            # if i % 100_000 == 0:
+            try:
+                msg = self.__message_queue.get()
+            except EOFError as e:
+                logger.info(f"Message queue was closed")
+                return
             # I am watching this message for change?
 
-            # print(f"Getting ready to process: {msg}")
-            logging.info(f"Getting ready to process: {msg}")
+            logger.debug(f"Getting ready to process: {msg}")
             msg_type = msg["event"]["type"]
-            updated_fields = []
             if msg['event']['type'] == "UPDATE":
-                print("Is update")
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
-                logging.info(f"App updated and updated fields are: {updated_fields}")
+                logger.debug(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
                 if app_id in self.callbacks:
-                    print("Is callback")
-
                     # handle callback
                     # print("this app is being tracked for updates")
                     # print(f"tracked field is {self.callbacks[app_id].src_field}")
@@ -171,27 +157,23 @@ class SAGEProxy():
                             linked_info.callback(src_val, dest_app, dest_field)
 
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                # print("The received update is discribed a raised app... ignoring it")
                 pass
             else:
                 collection = msg["event"]['col']
                 doc = msg['event']['doc']
                 self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
-
-
-    def __handle_exec(self, msg):
-        pass
+        print("exited the function")
 
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
         if collection == "BOARDS":
-            # print("BOARD CREATED")
+            logger.debug("New board created")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            # print("APP CREATED")
+            logger.debug("New app created")
             doc["state"] = doc["data"]["state"]
-            del(doc["data"]["state"])
+            del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
             self.room.boards[doc["data"]["boardId"]].smartbits[smartbit.app_id] = smartbit
 
@@ -202,7 +184,7 @@ class SAGEProxy():
             # print("BOARD UPDATED: UNHANDLED")
             pass
         elif collection == "APPS":
-            # print(f"APP UPDATED")
+            logger.debug("New  app updated")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
 
@@ -214,35 +196,51 @@ class SAGEProxy():
             exec_info = getattr(sb.state, "executeInfo", None)
 
             if exec_info is not None:
-                func_name =  getattr(exec_info, "executeFunc")
+                func_name = getattr(exec_info, "executeFunc")
                 if func_name != '':
                     _func = getattr(sb, func_name)
                     _params = getattr(exec_info, "params")
                     # TODO: validate the params are valid
                     # print(f"About to execute function --{func_name}-- with params --{_params}--")
-                    logging.info(f"About to execute function --{func_name}-- with params --{_params}--")
+                    logger.info(f"About to execute function --{func_name}-- with params --{_params}--")
 
                     _func(**_params)
 
-
     def __handle_delete(self, collection, doc):
-        print("HANDLE DELETE: UNHANDLED")
-        pass
+        logger.debug("deleting app")
+        if collection == "APPS":
+            try:
+                del self.room.boards[doc["data"]["boardId"]].smartbits[doc["_id"]]
+            except:
+                logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+        if collection == "BOARDS":
+            try:
+                del self.room.boards[doc["_id"]]
+            except:
+                logger.error(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
 
     def clean_up(self):
-        # print("cleaning up the queue")
-        if self.__message_queue.qsize() > 0:
-            print("Queue was not empty")
-            pass
+        self.listening_process.clean_up()
+
+        if not self.__message_queue.empty():
+            logger.warning("Messages queue was not empty while starting to clean proxy")
         self.__message_queue.close()
 
+        self.stop_worker = True
+        self.worker_process.join()
+
+        for app_info in sage_proxy.room.boards["ad18901e-e128-4997-9c77-99aa6a6ab313"].smartbits:
+            app_info[1].clean_up()
+
+
+
+
+
     def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
-
-        if src_app not in  self.callbacks:
+        if src_app not in self.callbacks:
             self.callbacks[src_app] = {}
-
-        self.callbacks[src_app] = { f"{src_app}:{dest_app}:{src_field}:{dest_field}":
-                                        LinkedInfo(board_id=board_id,
+        self.callbacks[src_app] = {f"{src_app}:{dest_app}:{src_field}:{dest_field}":
+                                       LinkedInfo(board_id=board_id,
                                                   src_app=src_app,
                                                   dest_app=dest_app,
                                                   src_field=src_field,
@@ -250,64 +248,68 @@ class SAGEProxy():
                                                   callback=callback)}
 
     def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
-        del(self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
+        del (self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
 
+# def get_cmdline_parser():
+#     parser = argparse.ArgumentParser(description='Sage3 Python Proxy Server')
+#     parser.add_argument('-c', '--config_file', type=str, required=True, help="Configuration file path")
+#     parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
+#     return parser
 
 
-def get_cmdline_parser():
-    parser = argparse.ArgumentParser(description='Sage3 Python Proxy Server')
-    parser.add_argument('-c', '--config_file', type=str, required=True, help="Configuration file path")
-    parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
-    return parser
+def clean_up_terminate(signum, frame):
+    logger.info("Cleaning up before terminating")
+    sage_proxy.clean_up()
+
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, clean_up_terminate)
+    signal.signal(signal.SIGTERM, clean_up_terminate)
+    signal.signal(signal.SIGHUP, clean_up_terminate)
+
     # For development purposes only.
-    token = conf['token']
+    token = os.getenv("TOKEN")
     if prod_type == "production" or prod_type == "backend":
+        room_name = os.environ.get("ROOM_NAME")
         room_id = os.environ.get("ROOM_ID")
-        if not room_id:
+        # if name specified, try to find room or create it
+        if room_name:
+            jsondata = requests.get(conf[prod_type]['web_server'] + '/api/rooms',
+                                    headers={'Authorization': 'Bearer ' + token}).json()
+            rooms = jsondata['data']
+            for r in rooms:
+                room = r['data']
+                if room['name'] == room_name:
+                    room_id = r['_id']
+                    break
+            if not room_id:
+                payload = {
+                    'name': room_name,
+                    'description': 'Room for ' + room_name,
+                    'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
+                }
+                req = requests.post(conf[prod_type]['web_server'] + '/api/rooms',
+                                    headers={'Authorization': 'Bearer ' + token}, json=payload)
+                res = req.json()
+                if res['success']:
+                    room_id = res['data'][0]['_id']
+                else:
+                    print("ROOM_NAME option, failed to create room")
+                    sys.exit(1)
+        elif not room_id:
             print("ROOM_ID not defined")
             sys.exit(1)
     else:
-        room_id = requests.get('http://localhost:3333/api/rooms', headers = {'Authorization':'Bearer ' + token}).json()['data'][0]['_id']
+        room_id = \
+            requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()[
+                'data'][0][
+                '_id']
+        if not os.getenv("DROPBOX_TOKEN"):
+            logger.warning("Dropbox upload token not defined, AI won't be supported in development mode")
 
+    logger.info(f"Starting proxy with room {room_id}:")
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
-    listening_process = threading.Thread(target=asyncio.run, args=(sage_proxy.receive_messages(),))
-    listening_process.start()
-    worker_process = threading.Thread(target=sage_proxy.process_messages)
-    worker_process.start()
+    sage_proxy.start_threads()
 
-
-# asyncio.gather(sage_proxy.produce(), sage_proxy.consume())
-# TODO start threads cleanly in a way that can be easily stopped.
-# if __name__ == "__main__":
-#     # The below is needed in running in iPython -- need to dig into this more
-#     # multiprocessing.set_start_method("fork")
-#     # parser = get_cmdline_parser()
-#     # args = parser.parse_args()
-#     sage_proxy = SAGEProxy("funcx.json", "05828804-d87f-4498-857e-02f288effd3d")
-#
-#     # room = Room("08d37fb0-b0a7-475e-a007-6d9dd35538ad")
-#     # sage_proxy = SAGEProxy(args.config_file, args.room_id)
-#     # listening_process = multiprocessing.Process(target=sage_proxy.receive_messages)
-#     # worker_process = multiprocessing.Process(target=sage_proxy.process_messages)
-#
-#     listening_process = threading.Thread(target=board_proxy.receive_messages)
-#     worker_process = threading.Thread(target=board_proxy.process_messages)
-#
-#     try:
-#         # start the process responsible for listening to messages and adding them to the queue
-#         listening_process.start()
-#         # start the process responsible for handling message added to the queue.
-#         worker_process.start()
-#
-#         # while True:
-#         #     time.sleep(100)
-#     except (KeyboardInterrupt, SystemExit):
-#         print('\n! Received keyboard interrupt, quitting threads.\n')
-#         sage_proxy.clean_up()
-#         listening_process.st
-#         # worker_process.join()
-#         print("I am here")

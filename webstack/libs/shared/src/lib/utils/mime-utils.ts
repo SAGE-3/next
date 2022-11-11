@@ -79,7 +79,8 @@ export function isPDF(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isVideo(mimeType: string): boolean {
-  return mimeType.startsWith('video/');
+  // return mimeType.startsWith('video/');
+  return mimeType === 'video/mp4' || mimeType === 'video/webm' || mimeType === 'video/ogg';
 }
 /**
  * Test if a given mime type is an audio file

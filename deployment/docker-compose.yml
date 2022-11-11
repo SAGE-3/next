@@ -13,7 +13,7 @@ services:
       restart_policy:
         condition: on-failure
   node-server:
-    image: "sage3/next:arm64"
+    image: "sage3/next:amd64"
     ports:
       - "443:443"
     depends_on:
@@ -32,16 +32,21 @@ services:
       retries: 3
       start_period: 10s
   python:
-    image: "sage3/foresight:arm64"
+    image: "sage3/foresight:amd64"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${HOST}
-      - ROOM_ID=521f75cc-0a02-4ae2-8f3f-0b190bc2b1a0
+      - FUNCX_SDK_CLIENT_ID=${FUNCX_SDK_CLIENT_ID}
+      - FUNCX_SDK_CLIENT_SECRET=${FUNCX_SDK_CLIENT_SECRET}
+      - ROOM_NAME=${ROOM_NAME}
+      - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
     command: python proxy.py
     depends_on:
       node-server:
+        condition: service_healthy
+      jupyter:
         condition: service_healthy
   jupyter:
     image: "jupyter/datascience-notebook"
@@ -56,6 +61,12 @@ services:
     depends_on:
       - "redis-server"
     command: /conf/start.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://${HOST}:4443"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     deploy:
       restart_policy:
         condition: on-failure

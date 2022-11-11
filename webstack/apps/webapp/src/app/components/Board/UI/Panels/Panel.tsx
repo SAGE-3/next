@@ -35,22 +35,24 @@ export function ButtonPanel(props: ButtonPanelProps) {
 
   return (
     <Box w="100%">
-      <Button
-        {...props}
-        w="100%"
-        borderRadius="md"
-        h="auto"
-        p={1}
-        pl={2}
-        fontSize={smallFont}
-        color={props.textColor ? props.textColor : textColor}
-        justifyContent="flex-start"
-        // Drag and drop the button to create an app
-        onDragStart={onDragStart}
-        draggable={props.candrag === 'true' ? true : false}
-      >
-        {props.title}
-      </Button>
+      {props.title ?
+        <Button
+          {...props}
+          w="100%"
+          borderRadius="md"
+          h="auto"
+          p={1}
+          pl={2}
+          fontSize={smallFont}
+          color={props.textColor ? props.textColor : textColor}
+          justifyContent="flex-start"
+          // Drag and drop the button to create an app
+          onDragStart={onDragStart}
+          draggable={props.candrag === 'true' ? true : false}
+        >
+          {props.title}
+        </Button>
+        : <Box my={1}> <hr /> </Box>}
     </Box>
   );
 }
@@ -273,6 +275,7 @@ export function Panel(props: PanelProps) {
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         enableResizing={false}
+        width="100%"
         style={{ maxWidth: w + 'px', zIndex: props.zIndex }}
       >
         <Box
@@ -282,6 +285,7 @@ export function Panel(props: PanelProps) {
           p="2"
           borderRadius={'md'}
           ref={ref}
+          width="100%"
           borderTop={borderTop}
           borderLeft={borderLeft}
           borderBottom={borderBottom}
@@ -299,7 +303,7 @@ export function Panel(props: PanelProps) {
           />
 
           <Box bg={panelBackground} cursor="auto" maxWidth={w - 45 + 'px'}>
-            <Box mb={2} display="flex" justifyContent="space-between">
+            <Box mb={2} display="flex" justifyContent="space-between" flexWrap={'nowrap'} width="100%">
               <Box flexGrow={1} maxWidth={w - 80 + 'px'} className="dragHandle">
                 <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
                   <Text
@@ -319,7 +323,7 @@ export function Panel(props: PanelProps) {
                 </Tooltip>
               </Box>
 
-              <Box>
+              <Box display="flex" flexWrap={'nowrap'}>
                 {showActions ? (
                   <IconButton
                     size="xs"
@@ -341,7 +345,7 @@ export function Panel(props: PanelProps) {
                 )}
                 {props.showClose ? (
                   <IconButton
-                    icon={<MdClose size="1.5rem" />}
+                    icon={<MdClose size="1.25rem" />}
                     aria-label="close panel"
                     size="xs"
                     mx="1"

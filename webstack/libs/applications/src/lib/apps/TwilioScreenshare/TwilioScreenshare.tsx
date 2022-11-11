@@ -8,7 +8,20 @@
 
 // Chakra and React imports
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Text, SimpleGrid, useDisclosure, Tabs, TabList, Tab, TabPanels, TabPanel, Image } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Text,
+  SimpleGrid,
+  useDisclosure,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Image,
+  ButtonGroup,
+} from '@chakra-ui/react';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -39,13 +52,10 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const yours = user?._id === props._createdBy;
 
-  // User store to get name of user who created screenshare
-  const users = useUsersStore((state) => state.users);
-  const userWhoCreated = users.find((u) => u._id === props._createdBy);
-
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
   const tracks = useTwilioStore((state) => state.tracks);
+  const stopStreamId = useTwilioStore((state) => state.stopStreamId);
 
   // App Store
   const updateState = useAppStore((state) => state.updateState);
@@ -69,6 +79,41 @@ function AppComponent(props: App): JSX.Element {
   // State of the current time
   const [serverTimeDifference, setServerTimeDifference] = useState(0);
   const [expirationTime, setExpirationTime] = useState<string>('Checking Time...');
+
+  // The user that is sharing only sets the selTrack
+  const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
+
+  useEffect(() => {
+    // If the user changes the dimensions of the shared window, resize the app
+    const updateDimensions = (track: any) => {
+      if (track.dimensions.width && track.dimensions.height) {
+        const aspect = track.dimensions.width / track.dimensions.height;
+        let w = props.data.size.width;
+        let h = props.data.size.height;
+        aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+        updateState(props._id, { aspectRatio: aspect });
+        update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
+      }
+    };
+    if (selTrack) {
+      const width = selTrack.dimensions.width;
+      const height = selTrack.dimensions.height;
+      if (width && height) {
+        const aspect = width / height;
+        let w = props.data.size.width;
+        let h = props.data.size.height;
+        aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+        updateState(props._id, { aspectRatio: aspect });
+        update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
+      }
+      selTrack.addListener('dimensionsChanged', updateDimensions);
+    }
+    return () => {
+      if (selTrack) {
+        selTrack.removeListener('dimensionsChanged', updateDimensions);
+      }
+    };
+  }, [selTrack, props.data.size.width, props.data.size.height]);
 
   // Get server time
   useEffect(() => {
@@ -128,8 +173,10 @@ function AppComponent(props: App): JSX.Element {
           videoRef.current.play();
           const videoId = genId();
           const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
+
           room.localParticipant.publishTrack(screenTrack);
           await updateState(props._id, { videoId });
+          setSelTrack(screenTrack);
         } catch (err) {
           deleteApp(props._id);
         }
@@ -153,6 +200,13 @@ function AppComponent(props: App): JSX.Element {
       videoRef.current.srcObject = null;
     }
   };
+
+  useEffect(() => {
+    if (stopStreamId === props._id) {
+      stopStream();
+      deleteApp(props._id);
+    }
+  }, [stopStreamId]);
 
   useEffect(() => {
     if (yours) return;
@@ -201,50 +255,19 @@ function AppComponent(props: App): JSX.Element {
       const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
       room.localParticipant.publishTrack(screenTrack);
       await updateState(props._id, { videoId });
+      setSelTrack(screenTrack);
       onClose();
     }
   };
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} lockAspectRatio={s.aspectRatio}>
       <>
-        <Box
-          display="flex"
-          flexDir="column"
-          height="calc(100% - 25px)"
-          width="100%"
-          position="absolute"
-          left={0}
-          top={6}
-          background="red"
-          overflow="hidden"
-        >
-          <Box backgroundColor="black" width="100%" height="100%">
-            <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
-          </Box>
+        <Box backgroundColor="black" width="100%" height="100%">
+          <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
         </Box>
 
-        <Box
-          display="flex"
-          flexDir="column"
-          height="calc(100% - 25px)"
-          width="100%"
-          position="absolute"
-          left={0}
-          top={6}
-          backgroundColor="gray"
-          justifyContent="center"
-          p="5px"
-          alignItems={'center'}
-          opacity={videoRef.current?.srcObject ? 0 : 1}
-        ></Box>
-        {yours && videoRef.current?.srcObject ? (
-          <Button onClick={stopStream} position="absolute" left={2} bottom={2} colorScheme="red">
-            Stop Stream
-          </Button>
-        ) : null}
-
-        <Text position="absolute" right={0} mr={1} size="sm" fontWeight={'bold'} color={red}>
+        <Text position="absolute" left={0} bottom={0} m={1} size="sm" fontWeight={'bold'} color={red}>
           {expirationTime}
         </Text>
 
@@ -348,7 +371,23 @@ function isElectron() {
 /* App toolbar component for the app Twilio */
 
 function ToolbarComponent(props: App): JSX.Element {
-  return <></>;
+  // Current User
+  const { user } = useUser();
+  const yours = user?._id === props._createdBy;
+
+  // Twilio Store
+  const stopStream = useTwilioStore((state) => state.setStopStream);
+  return (
+    <>
+      <ButtonGroup>
+        {yours ? (
+          <Button onClick={() => stopStream(props._id)} colorScheme="red" size="xs">
+            Stop Stream
+          </Button>
+        ) : null}
+      </ButtonGroup>
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };

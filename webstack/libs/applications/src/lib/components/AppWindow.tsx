@@ -15,7 +15,6 @@ import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sag
 
 type WindowProps = {
   app: App;
-  aspectRatio?: number | boolean;
   children: JSX.Element;
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
@@ -24,7 +23,7 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
-  // auth
+  // Guest mode disabled for now
   // const { auth } = useAuth();
   const isGuest = false; // auth?.provider === 'guest';
 
@@ -54,14 +53,15 @@ export function AppWindow(props: WindowProps) {
   const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
 
-  const titleBackground = useColorModeValue('#00000015', '#ffffff26');
-
+  const titleBackground = useColorModeValue('#00000000', '#ffffff26');
+  const titleBrightness = useColorModeValue('85%', '65%');
   const borderWidth = Math.min(Math.max(4 / scale, 2), 20);
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const outerBorderRadius = 12;
   const innerBorderRadius = outerBorderRadius - borderWidth;
 
-  const titleColor = useColorModeValue('gray.800', 'white');
+  const titleColor = useColorModeValue('white', 'white');
+
   const selectColor = useHexColor('teal');
 
   // Resize Handle scale
@@ -234,7 +234,8 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', //Guest Blocker
+        // pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', // Guest Blocker
+        pointerEvents: spacebarPressed ? 'none' : 'auto', // Guest Blocker
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -267,7 +268,7 @@ export function AppWindow(props: WindowProps) {
           top="0px"
           left="0px"
           width={size.width}
-          transform={`translate(-${2 / scale}px, calc(-100% - 8px))`}
+          transform={`translate(-${2 / scale}px, calc(-100% - ${4 / scale}px))`}
           display="flex"
           justifyContent="left"
           alignItems="center"
@@ -280,7 +281,8 @@ export function AppWindow(props: WindowProps) {
             textOverflow="ellipsis"
             overflow="hidden"
             background={titleBackground}
-            borderRadius={8 / scale}
+            backdropFilter={`blur(${Math.max(5, 5 / scale)}px) brightness(${titleBrightness})`}
+            borderRadius={6}
             px={2}
           >
             {props.app.data.title}

@@ -19,15 +19,15 @@ import {
   Input,
   Button,
   Box,
-  ButtonGroup,
   Checkbox,
+  useDisclosure,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
-import { MdPerson, MdLock, MdDescription } from 'react-icons/md';
+import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
-import { useBoardStore } from '@sage3/frontend';
+import { useBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { useData } from 'libs/frontend/src/lib/hooks';
@@ -55,10 +55,17 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   const deleteBoard = useBoardStore((state) => state.delete);
   const updateBoard = useBoardStore((state) => state.update);
 
+  // Apps
+  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
+  const deleteApp = useAppStore((state) => state.delete);
+
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
   const [valid, setValid] = useState(true);
   const [isPasswordChanged, setPasswordChanged] = useState(false);
+
+  // Delete Confirmation  Modal
+  const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
   useEffect(() => {
     setName(props.board.data.name);
@@ -115,8 +122,19 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     props.onClose();
   };
 
+  /**
+   * Delete the board: delete all the apps and the board itself
+   */
   const handleDeleteBoard = () => {
-    deleteBoard(props.board._id);
+    delConfirmOnClose();
+    fetchBoardApps(props.board._id)
+      .then((apps) => {
+        // delete all apps in the board
+        if (apps) apps.forEach((a) => deleteApp(a._id));
+      })
+      .finally(() => {
+        deleteBoard(props.board._id);
+      });
   };
 
   // To enable/disable
@@ -185,7 +203,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
         </ModalBody>
         <ModalFooter pl="4" pr="8" mb="2">
           <Box display="flex" justifyContent="space-between" width="100%">
-            <Button colorScheme="red" onClick={handleDeleteBoard} mx="2">
+            <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
             <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description || !valid}>
@@ -194,6 +212,16 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
           </Box>
         </ModalFooter>
       </ModalContent>
+      <ConfirmModal
+        isOpen={delConfirmIsOpen}
+        onClose={delConfirmOnClose}
+        onConfirm={handleDeleteBoard}
+        title="Delete Board"
+        message="Are you sure you want to delete this board?"
+        cancelText="Cancel"
+        confirmText="Delete"
+        confirmColor="red"
+      ></ConfirmModal>
     </Modal>
   );
 }

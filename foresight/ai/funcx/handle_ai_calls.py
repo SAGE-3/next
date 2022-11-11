@@ -22,7 +22,7 @@ def handle_ai_calls(model_id, model_url, data):
 
 from funcx.sdk.client import FuncXClient
 
-fxc = FuncXClient()
-func_uuid_ai = fxc.register_function(handle_ai_calls, description="Hanlde a SAGE3 app call")
+# fxc = FuncXClient()
+# func_uuid_ai = fxc.register_function(handle_ai_calls, description="Hanlde a SAGE3 app call")
 
-print(func_uuid_ai)
+# print(func_uuid_ai)

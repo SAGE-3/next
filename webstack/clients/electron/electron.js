@@ -407,6 +407,40 @@ function disableGeolocation(session) {
 }
 
 /**
+ * Take a Screenshot of the visible part of the window
+ */
+function TakeScreenshot() {
+  if (mainWindow) {
+    // Capture the Electron window
+    mainWindow.capturePage().then(function (img) {
+      // convert to JPEG
+      const imageData = img.toJPEG(90);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const day = now.getDate();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const second = now.getSeconds();
+      const dt = `-${year}-${month}-${day}-${hour}-${minute}-${second}`;
+      // dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+      const options = {
+        title: 'Save current board as a JPEG file',
+        defaultPath: app.getPath('downloads') + '/screenshot' + dt + '.jpg',
+      };
+      // Open the save dialog
+      electron.dialog.showSaveDialog(mainWindow, options).then((obj) => {
+        if (!obj.canceled) {
+          // write the file
+          fs.writeFile(obj.filePath.toString(), imageData, 'base64', function (err) {
+            if (err) throw err;
+          });
+        }
+      });
+    });
+  }
+}
+/**
  * Creates an electron window.
  *
  * @method     createWindow
@@ -667,19 +701,21 @@ function createWindow() {
     // Show the warning view
     mainWindow.setBrowserView(warningView);
     warningView.setBounds({ x: 0, y: 0, width, height });
-    // Retry to load the original URL
-    if (tries) {
-      setTimeout(function () {
-        tries--;
-        mainWindow.reload();
-      }, 1000);
-    } else {
-      // When failed to load, redirect to the main server
-      mainWindow.loadURL('https://sage3.app/');
-      mainWindow.setBrowserView(null);
-      // Reset the counter
-      tries = 4;
-    }
+
+    // Since the window has buttons, I don't think we should try to reload the page anymore. People get stuck in a infiinite loop
+    // // Retry to load the original URL
+    // if (tries) {
+    //   setTimeout(function () {
+    //     tries--;
+    //     mainWindow.reload();
+    //   }, 1000);
+    // } else {
+    //   // When failed to load, redirect to the main server
+    //   mainWindow.loadURL('https://sage3.app/');
+    //   mainWindow.setBrowserView(null);
+    //   // Reset the counter
+    //   tries = 4;
+    // }
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
@@ -706,7 +742,7 @@ function createWindow() {
     const sender = event.sender;
     sender.on('ipc-message', function (evt, channel, args) {
       console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
-      console.log('Webview>    message', channel, args);
+      // console.log('Webview>    message', channel, args);
       // Message for the webview pixel streaming
       if (channel === 'streamview') {
         const viewContent = electron.webContents.fromId(args.id);
@@ -819,6 +855,11 @@ function createWindow() {
     });
   });
 
+  // Request for a screenshot from the web client
+  ipcMain.on('take-screenshot', () => {
+    TakeScreenshot();
+  });
+
   // Request from the renderer process
   // ipcMain.on('streamview', (event, arg) => {
   //   console.log('streamview>', arg.url, arg.id);
@@ -836,7 +877,7 @@ function createWindow() {
  * @param {Object} favorites_obj the object containing the list of favorites
  */
 function writeFavoritesOnFile(favorites_obj) {
-  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => { });
+  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => {});
 }
 
 /**
@@ -876,7 +917,6 @@ if (process.platform === 'win32') {
   if (!gotTheLock) {
     app.quit();
   } else {
-
     // For first instance
     const count = process.argv.length;
     if (count > 2) {
@@ -1018,7 +1058,15 @@ function buildMenu() {
           label: 'Go to Hawaii server',
           click() {
             if (mainWindow) {
-              mainWindow.loadURL('https://pele.sage3.app/');
+              mainWindow.loadURL('https://manoa.sage3.app');
+            }
+          },
+        },
+        {
+          label: 'Go to Development server',
+          click() {
+            if (mainWindow) {
+              mainWindow.loadURL('https://mini.sage3.app');
             }
           },
         },
@@ -1046,26 +1094,7 @@ function buildMenu() {
         {
           label: 'Take Screenshot',
           click() {
-            if (mainWindow) {
-              // Capture the Electron window
-              mainWindow.capturePage().then(function (img) {
-                // convert to JPEG
-                const imageData = img.toJPEG(90);
-                const options = {
-                  title: 'Save current board as a JPEG file',
-                  defaultPath: app.getPath('downloads') + '/screenshot.jpg',
-                };
-                // Open the save dialog
-                electron.dialog.showSaveDialog(mainWindow, options).then((obj) => {
-                  if (!obj.canceled) {
-                    // write the file
-                    fs.writeFile(obj.filePath.toString(), imageData, 'base64', function (err) {
-                      if (err) throw err;
-                    });
-                  }
-                });
-              });
-            }
+            TakeScreenshot();
           },
         },
         {

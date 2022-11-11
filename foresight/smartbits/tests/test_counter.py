@@ -1,15 +1,14 @@
 from smartbits.counter import Counter
 import pytest
-from sample_sb_docs import counter_doc
+from smartbits.tests.sample_sb_docs import counter_doc
+
 
 @pytest.fixture()
 def counter_instance():
     c = Counter(**counter_doc)
     yield c
-    print("cleaning up happend after all the tests completed.")
-    c._ai_client.stop_thread = True
-    c._jupyter_client.stop_thread = True
-
+    # c._ai_client.clean_up()
+    #c._jupyter_client.clean_up()
 
 def test_create_counter(counter_instance):
     assert isinstance(counter_instance, Counter)

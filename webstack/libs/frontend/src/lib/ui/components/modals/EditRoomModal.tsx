@@ -20,13 +20,14 @@ import {
   Button,
   Box,
   Checkbox,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
-import { Room, RoomSchema } from '@sage3/shared/types';
-import { useRoomStore } from '@sage3/frontend';
+import { Room, RoomSchema, Board } from '@sage3/shared/types';
+import { useRoomStore, useBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { useData } from 'libs/frontend/src/lib/hooks';
 import { ColorPicker } from '../general';
@@ -36,6 +37,7 @@ interface EditRoomModalProps {
   onOpen: () => void;
   onClose: () => void;
   room: Room;
+  boards: Board[];
 }
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
@@ -53,11 +55,19 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const deleteRoom = useRoomStore((state) => state.delete);
   const updateRoom = useRoomStore((state) => state.update);
 
+  // Apps
+  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
+  const deleteApp = useAppStore((state) => state.delete);
+  const deleteBoard = useBoardStore((state) => state.delete);
+
   const [isListed, setIsListed] = useState(props.room.data.isListed);
   const [isProtected, setProtected] = useState(props.room.data.isPrivate);
   const [password, setPassword] = useState('');
   const [valid, setValid] = useState(true);
   const [isPasswordChanged, setPasswordChanged] = useState(false);
+
+  // Delete Confirmation  Modal
+  const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
   useEffect(() => {
     setName(props.room.data.name);
@@ -117,7 +127,22 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     props.onClose();
   };
 
+  /**
+   * Delete the room and its boards and its apps
+   */
   const handleDeleteRoom = () => {
+    delConfirmOnClose();
+    props.boards.forEach((b) => {
+      fetchBoardApps(b._id)
+        .then((apps) => {
+          // delete all apps in the board
+          if (apps) apps.forEach((a) => deleteApp(a._id));
+        })
+        .finally(() => {
+          deleteBoard(b._id);
+        });
+    });
+    // delete the room
     deleteRoom(props.room._id);
   };
 
@@ -193,7 +218,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
         </ModalBody>
         <ModalFooter pl="4" pr="8" mb="2">
           <Box display="flex" justifyContent="space-between" width="100%">
-            <Button colorScheme="red" onClick={handleDeleteRoom} mx="2">
+            <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
             <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description || !valid}>
@@ -202,6 +227,16 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
           </Box>
         </ModalFooter>
       </ModalContent>
+      <ConfirmModal
+        isOpen={delConfirmIsOpen}
+        onClose={delConfirmOnClose}
+        onConfirm={handleDeleteRoom}
+        title="Delete Room"
+        message="Are you sure you want to delete this room?"
+        cancelText="Cancel"
+        confirmText="Delete"
+        confirmColor="red"
+      ></ConfirmModal>
     </Modal>
   );
 }

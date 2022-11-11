@@ -123,7 +123,7 @@ export function Controller(props: ControllerProps) {
         />
         <IconButtonPanel
           icon={<BiPencil size="32px" />}
-          description="Whiteboard"
+          description="Annotation"
           isActive={whiteboardPanel.show}
           onClick={() => handleShowPanel(whiteboardPanel.name)}
         />

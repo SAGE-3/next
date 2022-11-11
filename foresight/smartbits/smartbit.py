@@ -6,31 +6,40 @@
 # -----------------------------------------------------------------------------
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field, validate_model
+from pydantic import BaseModel, Field
+from typing import ClassVar
+from abc  import abstractmethod
+
+
 # from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
 from jupyterkernelproxy import JupyterKernelProxy
 from ai.ai_client import AIClient
 from config import config as conf, prod_type
+from pydantic import PrivateAttr
 
 class TrackedBaseModel(BaseModel):
-    path: Optional[int]
+    path: Optional[str]
     touched: Optional[set] = set()
-    _s3_comm: SageCommunication = SageCommunication(conf, prod_type)
-
-    # make the following params of the constructor. Not all apps need them!
-    _jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
-    _ai_client: AIClient = AIClient()
+    # _s3_comm: SageCommunication = PrivateAttr()
+    # The following params should be defined as required in
+    # the constructor since Not all apps need them!a
+    # _jupyter_client: JupyterKernelProxy = PrivateAttr()
+    # _ai_client: AIClient  = PrivateAttr()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # self._s3_comm = SageCommunication(conf, prod_type)
+        # self._jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
+        # self._ai_client: AIClient  = AIClient()
+
 
     def __setattr__(self, name, value):
         try:
             if self.path is not None:
                 if name[0] != "_":
-                    print(f"in setting __setattr__ {name} to {value}")
+                    # print(f"in setting __setattr__ {name} to {value}")
                     self.touched.add(f"{self.path}.{name}"[1:])
             super().__setattr__(name, value)
         except:
@@ -53,11 +62,17 @@ class TrackedBaseModel(BaseModel):
         def attrsetter(name):
             def setter(obj, val):
                 fields = name.split(".")
+                is_dict = False
                 for field in fields[0:-1]:
                     try:
                         obj = getattr(obj, field)
+
                     except:
-                        obj = obj[field]
+                        try:
+                            obj[field] = {}
+                            obj = obj[field]
+                        except:
+                            raise Exception("Not a dict?")
 
                 # using object setattr to avoid adding field to touched
                 error = True
@@ -69,7 +84,7 @@ class TrackedBaseModel(BaseModel):
                     error = False
                 finally:
                     if error:
-                        raise Exception("Error Happened")
+                        raise Exception(f"Error Happened updating {obj[fields[-1]]} ")
             return setter
 
         def recursive_iter(u_data, path=[]):
@@ -80,9 +95,11 @@ class TrackedBaseModel(BaseModel):
                     path.pop(-1)
             else:
                 dotted_path = ".".join(path)
-                yield dotted_path, u_data
+                yield (dotted_path, u_data)
 
+        # print(list(recursive_iter(update_data)))
         for dotted_path, val in recursive_iter(update_data):
+            # print(f"working on {dotted_path} and {val}")
             attrsetter(dotted_path)(self, val)
 
     def copy_touched(self):
@@ -124,6 +141,7 @@ class TrackedBaseModel(BaseModel):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
         return wrapper
+
     def cleanup(self):
         pass
 
@@ -176,6 +194,8 @@ class SmartBit(TrackedBaseModel):
     _updatedAt: int
     data: Data
 
+    _s3_comm: ClassVar = SageCommunication(conf, prod_type)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.copy_touched()
@@ -186,6 +206,10 @@ class SmartBit(TrackedBaseModel):
         self.touched.clear()
         self._s3_comm.send_app_update(self.app_id, new_data)
 
+    @abstractmethod
+    def clean_up(self):
+        """cleans up any threads that are unused"""
+        pass
 
 class ExecuteInfo(TrackedBaseModel):
     # executeFunc is not recognized duirng manual update in refresh_data_form_update

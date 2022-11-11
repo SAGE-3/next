@@ -20,7 +20,7 @@ class Sage3Communication:
             cls._instance = cls.__new__(cls)
             cls.__config = config_dict
             cls.board_uuid = cls.__config["board_uuid"]
-            cls.__head = {'Authorization': 'Bearer {}'.format(cls.__config["token"])}
+            cls.__head = {'Authorization': 'Bearer {}'.format(os.getenv('TOKEN'))}
 
             cls.url = cls.__config["server"] + '/api/boards/act/' + cls.board_uuid
             cls.upload_url = cls.__config["server"] + '/api/boards/upload'

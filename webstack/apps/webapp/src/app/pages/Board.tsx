@@ -8,10 +8,9 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text } from '@chakra-ui/react';
 
 import {
-  usePresence,
   useAppStore,
   useRouteNav,
   useBoardStore,
@@ -20,6 +19,10 @@ import {
   useUsersStore,
   PasteHandler,
   MainButton,
+  useUIStore,
+  useData,
+  serverConfiguration,
+  useUser,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -33,6 +36,8 @@ export function BoardPage() {
   // Navigation and routing
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
+  const config = useData('/api/configuration') as serverConfiguration;
+  const textColor = useColorModeValue('gray.800', 'gray.100');
 
   if (!roomId || !boardId) {
     toHome(roomId);
@@ -46,9 +51,13 @@ export function BoardPage() {
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   // Presence Information
-  const { update: updatePresence } = usePresence();
+  const { user } = useUser();
+  const updatePresence = usePresenceStore((state) => state.update);
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
+
+  // UI Store
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
@@ -64,14 +73,19 @@ export function BoardPage() {
     subscribeToPresence();
     subscribeToUsers();
     // Update the user's presence information
-    updatePresence({ boardId: boardId, roomId: roomId });
+    if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId });
+
+    // Set Selected app to empty
+    setSelectedApp('');
 
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
       unsubBoard();
       // Update the user's presence information
-      updatePresence({ boardId: '', roomId: '' });
+      if (user) updatePresence(user._id, { boardId: '', roomId: '' });
+      // Set Selected app to empty
+      setSelectedApp('');
     };
   }, []);
 
@@ -94,8 +108,13 @@ export function BoardPage() {
       <PasteHandler boardId={boardId} roomId={roomId} />
 
       <Box position="absolute" left="2" bottom="2" zIndex={101}>
-        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} />
+        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} boardInfo={{ boardId, roomId }} />
       </Box>
+
+      {/* ServerName */}
+      <Text fontSize={'xl'} opacity={0.7} position="absolute" left="2" color={textColor} userSelect="none" whiteSpace="nowrap">
+        {config?.serverName}
+      </Text>
     </>
   );
 }

@@ -57,3 +57,5 @@ class CodeCell(SmartBit):
         # print(f"Command info is {command_info}")
         # print(f"My proxy is: {self._jupyter_proxy}")
         self._jupyter_client.execute(command_info)
+    def clean_up(self):
+        pass
