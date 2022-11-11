@@ -8,13 +8,6 @@
 
 // Web request
 import axios from 'axios';
-// Prepare a form data structure from login
-import FormData from 'form-data';
-
-// Guest login
-var bodyFormData = new FormData();
-bodyFormData.append('username', 'guest-username');
-bodyFormData.append('password', 'guest-pass');
 
 // An axios instance to store the cookies in
 var axiosInstance;
