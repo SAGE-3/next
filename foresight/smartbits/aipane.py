@@ -22,10 +22,12 @@ if prod_type == "development":
     import dropbox
     import requests
 
+
 class RunStatus(Enum):
     READY = 0
     RUNNING = 1
     ERROR = 2
+
 
 def get_sharing_url(private_url):
     """
@@ -45,8 +47,7 @@ def get_sharing_url(private_url):
         url = dbx.sharing_create_shared_link_with_settings(f"/sage3_image_folder/{file_name}").url
     else:
         url = sharing_links.links[0].url
-    return url[: -1]+"1"
-
+    return url[: -1] + "1"
 
 
 # if prod_type == "development":
@@ -72,15 +73,21 @@ class AIPane(SmartBit):
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        kwargs['state']['runStatus'] = False
-        # kwargs['state']['runStatus'] = False
-        print(kwargs)
+        requires_update = False
+        if kwargs['state']['runStatus']:
+            kwargs['state']['runStatus'] = False
+            requires_update = True
+        if kwargs['state']['executeInfo']["executeFunc"]:
+            kwargs['state']['executeInfo']["executeFunc"] = ''
+            kwargs['state']['executeInfo']["params"] = {}
+            requires_update = True
+
         super(AIPane, self).__init__(**kwargs)
-        print("I am here 1")
+        print("create the ai pane's ai_client")
         self._ai_client = AIClient()
-        print("I am here 2")
         self._pending_executions = {}
-        # self._task_scheduler = TaskScheduler()
+        if requires_update:
+            self.send_updates()
 
     def new_app_added(self, app_type):
         """
@@ -126,7 +133,7 @@ class AIPane(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
-        del(self._pending_executions[msg_uuid])
+        del (self._pending_executions[msg_uuid])
 
     def execute_model(self, exec_uuid, model_id):
         # Only handling images for now, we are getting the image url directly.
