@@ -33,10 +33,10 @@ import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from websocketlistener import WebSocketListener
-# from utils import logging_config
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 
+# from utils import logging_config
 # logger = logging_config.get_console_logger()
 
 
@@ -132,8 +132,8 @@ class SAGEProxy():
 
             msg_type = msg["event"]["type"]
 
-            # TODO refactor this
-            if msg['event']['type'] == "UPDATE":
+            # TODO refactor this to merge with next (nested) if statement
+            if msg_type == "UPDATE":
                 updated_fields = list(msg['event']['updates'].keys())
                 # print(f"App updated and updated fields are: {updated_fields}")
                 app_id = msg["event"]["doc"]["_id"]
@@ -212,6 +212,7 @@ class SAGEProxy():
                     print(f"About to execute function --{func_name}-- with params --{_params}--")
 
                     _func(**_params)
+
 
     def __handle_delete(self, collection, doc):
 

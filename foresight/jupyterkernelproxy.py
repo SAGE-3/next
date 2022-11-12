@@ -27,6 +27,18 @@ def format_execute_request_msg(exec_uuid, code):
     return msg
 
 
+class TestiongJupyterClient(WebSocketBaseClient):
+    def __init__(self, address, headers):
+        super().__init__(address, headers=headers)
+
+    def handshake_ok(self):
+        print("Done opening the connection")
+
+    def received_message(self, msg):
+        # check if the message
+        msg = json.loads(msg.data.decode("utf-8"))
+        print(msg)
+
 class JupyterKernelProxy:
     class JupyterClient(WebSocketBaseClient):
         def __init__(self, address, headers, parent_proxy_instnace):
@@ -103,17 +115,23 @@ class JupyterKernelProxy:
         user_passed_uuid = command_info["uuid"]
         msg = format_execute_request_msg(user_passed_uuid, command_info["code"])
         kernel_id = command_info['kernel']
+        callback_fn = command_info["call_fn"]
+
         if kernel_id not in self.connections:
             self.add_client(kernel_id)
         try:
             self.connections[kernel_id].pending_reponses[user_passed_uuid] = None
+            self.callback_info[user_passed_uuid] = callback_fn
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
-        except:
+        except Exception as e:
             # something happen, do no track this results
-            del(self.results[user_passed_uuid])
+            print("fSomethign Happened here, {e}")
+            del self.results[user_passed_uuid]
+            # TODO something happened and code couldn't be run
+            #  send error back to the user
+            del self.callback_info[user_passed_uuid]
 
-        callback_fn = command_info["call_fn"]
-        self.callback_info[user_passed_uuid] = callback_fn
+
 
     def remove_stale_tokens(self, gateway_kernels):
         kernels_ids = [k["id"] for k in gateway_kernels]
