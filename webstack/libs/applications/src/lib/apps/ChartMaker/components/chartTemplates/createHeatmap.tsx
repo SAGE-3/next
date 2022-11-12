@@ -19,6 +19,7 @@ export interface heatmapProps {
     y: { field: string; type: string };
     color?: { aggregate: string; type: string };
   };
+  layer?: any[];
   transform: any[];
 }
 

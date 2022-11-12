@@ -48,6 +48,38 @@ export interface mapChartProps {
 }
 
 export default function createMapChart(extractedHeaders: string[], fileName: string, data: string[]) {
+  // let mapChartSpec: any = {
+  //   width: 500,
+  //   height: 300,
+  //   projection: { type: 'albersUsa' },
+  //   layer: [
+  //     {
+  //       data: {
+  //         url: 'https://raw.githubusercontent.com/vega/vega/master/docs/data/us-10m.json',
+  //         format: { type: 'topojson', feature: 'counties' },
+  //       },
+  //       transform: [
+  //         {
+  //           lookup: 'id',
+  //           from: {
+  //             data: { url: 'https://raw.githubusercontent.com/Tabalbar/articulate-/dev/covid_data_final.csv' },
+  //             key: 'map',
+  //             fields: [extractedHeaders[1]],
+  //           },
+  //         },
+  //       ],
+  //       mark: 'geoshape',
+  //       encoding: { color: { field: extractedHeaders[1], type: findHeaderType(extractedHeaders[1], data) } },
+  //     },
+  //     {
+  //       data: {
+  //         url: 'https://raw.githubusercontent.com/vega/vega/master/docs/data/us-10m.json?',
+  //         format: { type: 'topojson', feature: 'states' },
+  //       },
+  //       mark: { type: 'geoshape', filled: false, stroke: 'gray' },
+  //     },
+  //   ],
+  // };
   let mapChartSpec: any = {
     width: 500,
     height: 300,
@@ -56,27 +88,41 @@ export default function createMapChart(extractedHeaders: string[], fileName: str
       {
         data: {
           url: 'https://raw.githubusercontent.com/vega/vega/master/docs/data/us-10m.json',
-          format: { type: 'topojson', feature: 'counties' },
-        },
-        transform: [
-          {
-            lookup: 'id',
-            from: {
-              data: { url: 'https://raw.githubusercontent.com/Tabalbar/articulate-/dev/covid_data_final.csv' },
-              key: 'map',
-              fields: [extractedHeaders[1]],
-            },
+          format: {
+            type: 'topojson',
+            feature: 'states',
           },
-        ],
-        mark: 'geoshape',
-        encoding: { color: { field: extractedHeaders[1], type: findHeaderType(extractedHeaders[1], data) } },
+        },
+        mark: {
+          type: 'geoshape',
+          fill: 'lightgray',
+          stroke: 'white',
+        },
       },
       {
-        data: {
-          url: 'https://raw.githubusercontent.com/vega/vega/master/docs/data/us-10m.json?',
-          format: { type: 'topojson', feature: 'states' },
+        data: { url: 'https://raw.githubusercontent.com/Tabalbar/articulate-/dev/covid_data_final.csv' },
+        mark: { type: 'geoshape', stroke: 'black' },
+        transform: [
+          {
+            lookup: 'map',
+            from: {
+              data: {
+                url: 'https://raw.githubusercontent.com/vega/vega/master/docs/data/us-10m.json',
+                format: { type: 'topojson', feature: 'counties' },
+              },
+              key: 'id',
+            },
+            as: 'geo',
+          },
+        ],
+        encoding: {
+          color: {
+            field: extractedHeaders[1],
+            type: findHeaderType(extractedHeaders[1], data),
+            legend: { labelFontSize: 15, titleFontSize: 15, labelLimit: 2000 },
+          },
+          shape: { field: 'geo', type: 'geojson' },
         },
-        mark: { type: 'geoshape', filled: false, stroke: 'gray' },
       },
     ],
   };
