@@ -57,6 +57,10 @@
       "jwt",
       "google"
     ],
+        "admins": [
+      "renambot@gmail.com",
+      "ryancriot@gmail.com"
+    ],
     "guestConfig": {
       "routeEndpoint": "/auth/guest"
     },

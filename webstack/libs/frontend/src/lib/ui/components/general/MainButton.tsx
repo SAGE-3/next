@@ -7,9 +7,27 @@
  */
 
 import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast } from '@chakra-ui/react';
-import { MdOutlineGridOn, MdAccountCircle, MdArrowBack, MdInvertColors, MdLink, MdManageAccounts, MdOutlineLogout } from 'react-icons/md';
+import {
+  MdOutlineGridOn,
+  MdAccountCircle,
+  MdArrowBack,
+  MdInvertColors,
+  MdLink,
+  MdManageAccounts,
+  MdOutlineLogout,
+  MdOutlineVpnKey,
+} from 'react-icons/md';
 
-import { useAuth, useUser, EditUserModal, EnterBoardByIdModal, copyBoardUrlToClipboard } from '@sage3/frontend';
+import {
+  useAuth,
+  useUser,
+  EditUserModal,
+  EnterBoardByIdModal,
+  copyBoardUrlToClipboard,
+  GetConfiguration,
+  useRouteNav,
+} from '@sage3/frontend';
+import { useEffect, useState } from 'react';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -29,6 +47,22 @@ export function MainButton(props: MainButtonProps) {
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
 
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  const { toAdmin } = useRouteNav();
+
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      if (user) {
+        const config = await GetConfiguration();
+        console.log(config);
+        setIsAdmin(config.admins.includes(user.data.email));
+      }
+    };
+
+    fetchAdmins();
+  }, [user]);
+
   const isWall = user?.data.userType === 'wall';
 
   const toast = useToast();
@@ -47,6 +81,10 @@ export function MainButton(props: MainButtonProps) {
     });
   };
 
+  const openAdmin = () => {
+    toAdmin();
+  };
+
   return (
     <>
       <Menu>
@@ -63,6 +101,11 @@ export function MainButton(props: MainButtonProps) {
           <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>
+          {isAdmin && (
+            <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />}>
+              Admin Page
+            </MenuItem>
+          )}
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </MenuItem>
