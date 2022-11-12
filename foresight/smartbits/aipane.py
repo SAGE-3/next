@@ -182,8 +182,6 @@ class AIPane(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-
-
     def check_stale_jobs(self):
         """
         Will keep track of pending jobs and return an error message for stale jobs.
@@ -192,3 +190,6 @@ class AIPane(SmartBit):
 
     def clean_up(self):
         pass
+        # This is borg so no cleeaning up before testing whether it
+        # affects other clients
+        # self._ai_client.clean_up()
