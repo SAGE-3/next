@@ -32,12 +32,11 @@ import {
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: {
-    googleConfig?: SBAuthGoogleConfig;
-    jwtConfig?: SBAuthJWTConfig;
-    guestConfig?: SBAuthGuestConfig;
-    cilogonConfig?: SBAuthCILogonConfig;
-  };
+  strategies: ('google' | 'cilogon' | 'guest' | 'jwt')[];
+  googleConfig?: SBAuthGoogleConfig;
+  jwtConfig?: SBAuthJWTConfig;
+  guestConfig?: SBAuthGuestConfig;
+  cilogonConfig?: SBAuthCILogonConfig;
 };
 
 /**
@@ -87,47 +86,41 @@ export class SBAuth {
 
     if (config.strategies) {
       // Google Setup
-      if (config.strategies.googleConfig) {
-        if (passportGoogleSetup(config.strategies.googleConfig)) {
+      if (config.strategies.includes('google') && config.googleConfig) {
+        if (passportGoogleSetup(config.googleConfig)) {
           express.get(
-            config.strategies.googleConfig.routeEndpoint,
+            config.googleConfig.routeEndpoint,
             passport.authenticate('google', { prompt: 'select_account', scope: ['profile', 'email'] })
           );
-          express.get(
-            config.strategies.googleConfig.callbackURL,
-            passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' })
-          );
+          express.get(config.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
         }
       }
 
       // JWT Setup
-      if (config.strategies.jwtConfig) {
-        if (passportJWTSetup(config.strategies.jwtConfig)) {
-          express.post(config.strategies.jwtConfig.routeEndpoint, passport.authenticate('jwt', { session: false }), (req, res) => {
+      if (config.strategies.includes('jwt') && config.jwtConfig) {
+        if (passportJWTSetup(config.jwtConfig)) {
+          express.post(config.jwtConfig.routeEndpoint, passport.authenticate('jwt', { session: false }), (req, res) => {
             res.status(200).send({ success: true, message: 'logged in', user: req.user });
           });
         }
       }
 
       // Guest Setup
-      if (config.strategies.guestConfig) {
+      if (config.strategies.includes('guest') && config.guestConfig) {
         if (passportGuestSetup()) {
-          express.post(
-            config.strategies.guestConfig.routeEndpoint,
-            passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' })
-          );
+          express.post(config.guestConfig.routeEndpoint, passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' }));
         }
       }
 
       // CILogon Setup
-      if (config.strategies.cilogonConfig) {
-        if (passportCILogonSetup(config.strategies.cilogonConfig)) {
+      if (config.strategies.includes('cilogon') && config.cilogonConfig) {
+        if (passportCILogonSetup(config.cilogonConfig)) {
           express.get(
-            config.strategies.cilogonConfig.routeEndpoint,
+            config.cilogonConfig.routeEndpoint,
             passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid', 'email', 'profile'] })
           );
           express.get(
-            config.strategies.cilogonConfig.callbackURL,
+            config.cilogonConfig.callbackURL,
             passport.authenticate('openidconnect', { successRedirect: '/', failureRedirect: '/' })
           );
         }

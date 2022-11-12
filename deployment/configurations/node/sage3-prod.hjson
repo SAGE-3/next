@@ -40,7 +40,7 @@
     "twilio": true,
     "ai": true,
     "cell": true,
-    "jupyter": true
+    "jupyter": true,
     "articulate": true
   },
 
@@ -53,6 +53,8 @@
       "cilogon",
       "guest",
       "jwt"
+    ],
+    "admins": [
     ],
     "guestConfig": {
       "routeEndpoint": "/auth/guest"

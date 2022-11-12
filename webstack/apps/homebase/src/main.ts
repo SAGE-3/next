@@ -87,14 +87,7 @@ async function startServer() {
     projectName: 'SAGE3',
     redisUrl: config.redis.url || 'redis://localhost:6379',
     authConfig: {
-      sessionMaxAge: config.auth.sessionMaxAge,
-      sessionSecret: config.auth.sessionSecret,
-      strategies: {
-        guestConfig: config.auth.guestConfig,
-        googleConfig: config.auth.googleConfig,
-        cilogonConfig: config.auth.cilogonConfig,
-        jwtConfig: config.auth.jwtConfig,
-      },
+      ...config.auth,
     },
   };
   await SAGEBase.init(sbConfig, app);

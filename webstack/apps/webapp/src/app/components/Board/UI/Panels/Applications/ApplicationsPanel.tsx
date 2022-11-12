@@ -166,13 +166,6 @@ export function ApplicationsPanel(props: ApplicationProps) {
         }}
       >
         <>
-          <>AI Enabled</>
-          {/* <Box > */}
-          {aiApps.map((appName) => {
-            return appsList.includes(appName) ? (
-              <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
-            ) : null;
-          })}
           <>Apps</>
           {appsList
             // create a button for each application
@@ -182,6 +175,13 @@ export function ApplicationsPanel(props: ApplicationProps) {
                 <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
               ) : null;
             })}
+          <>AI Apps</>
+          {/* <Box > */}
+          {aiApps.map((appName) => {
+            return appsList.includes(appName) ? (
+              <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+            ) : null;
+          })}
         </>
       </VStack>
       {/* </Box> */}
