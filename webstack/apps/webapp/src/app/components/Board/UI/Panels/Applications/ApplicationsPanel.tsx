@@ -25,8 +25,7 @@ const appListed = development
   ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
   : ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'LeafLet', 'Notepad', 'SageCell', 'Screenshare', 'Stickie', 'Webview'];
 
-const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell']
-  .sort((a, b) => a.localeCompare(b));
+const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell'].sort((a, b) => a.localeCompare(b));
 
 export interface ApplicationProps {
   boardId: string;
@@ -72,6 +71,10 @@ export function ApplicationsPanel(props: ApplicationProps) {
           newlist = newlist.filter((a) => a !== 'JupyterLab');
           newlist = newlist.filter((a) => a !== 'KernelDashboard');
         }
+        if (!features['articulate']) {
+          newlist = newlist.filter((a) => a !== 'ChartMaker');
+        }
+
         return newlist;
       });
     }
