@@ -53,13 +53,12 @@ class JupyterKernelProxy:
 
         def received_message(self, msg):
             # check if the message
+            #print("processing a message")
             msg = json.loads(msg.data.decode("utf-8"))
             msg_id_uuid = str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0]))
             result = {}
 
-
-            # print(msg["channel"]+ "\t\t" + str(msg))
-
+            # print(f"received {msg}")
             if msg["channel"] != "iopub":
                 return
 
@@ -69,12 +68,11 @@ class JupyterKernelProxy:
                     # ready to send the result back
                     if self.pending_reponses[msg_id_uuid] is None:
                         result = {'request_id': msg_id_uuid, 'execute_result': {}}
-                    else:
-                        result = self.pending_reponses[msg_id_uuid]
-                    self.parent_proxy_instance.callback_info[msg_id_uuid](result)
+                        self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 
                     del(self.pending_reponses[msg_id_uuid])
                     result = {}
+
                 if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
                     result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content'],
                               msg['msg_type']: msg['content']}
@@ -86,6 +84,7 @@ class JupyterKernelProxy:
 
             if result:
                 self.pending_reponses[msg_id_uuid] = result
+                self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 
 
     def __init__(self):
@@ -125,7 +124,7 @@ class JupyterKernelProxy:
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
         except Exception as e:
             # something happen, do no track this results
-            print("fSomethign Happened here, {e}")
+            print(f"Somethign Happened here, {e}")
             del self.results[user_passed_uuid]
             # TODO something happened and code couldn't be run
             #  send error back to the user
