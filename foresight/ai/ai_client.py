@@ -10,6 +10,8 @@ from utils.borg import Borg
 
 # TODO: move the borg class to its own file
 
+# Todo: check if timeout for a job and and cancel it and inform the user.
+
 
 class AIClient(Borg):
     """
@@ -20,6 +22,8 @@ class AIClient(Borg):
         Borg.__init__(self)
         self.check_every = check_every
         self.callback_info = {}
+
+        # TODO reformat this as dict[app_id: str, set ]
         self.running_jobs = set()
 
         self.fxc = FuncXClient()
@@ -82,7 +86,7 @@ class AIClient(Borg):
                             tasks_to_remove.add(task_id)
                         except Exception as e:
                             print(f"Error while running an AI job {e}")
-                            print("response is {resp}")
+                            print(f"response is {resp}")
                         del self.callback_info[task_id]
             self.running_jobs -= tasks_to_remove
             tasks_to_remove.clear()

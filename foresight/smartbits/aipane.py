@@ -74,12 +74,10 @@ class AIPane(SmartBit):
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         requires_update = False
-        if kwargs['state']['runStatus']:
-            kwargs['state']['runStatus'] = False
-            requires_update = True
-        if kwargs['state']['executeInfo']["executeFunc"]:
-            kwargs['state']['executeInfo']["executeFunc"] = ''
-            kwargs['state']['executeInfo']["params"] = {}
+        print("AI PANE'S DATA")
+        print(kwargs)
+        if kwargs['state']['runStatus'] or \
+                kwargs['state']['executeInfo']["executeFunc"]:
             requires_update = True
 
         super(AIPane, self).__init__(**kwargs)
@@ -87,6 +85,10 @@ class AIPane(SmartBit):
         self._ai_client = AIClient()
         self._pending_executions = {}
         if requires_update:
+            print("Sending update")
+            self.state.runStatus = False
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
             self.send_updates()
 
     def new_app_added(self, app_type):
