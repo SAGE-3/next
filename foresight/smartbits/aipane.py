@@ -199,6 +199,6 @@ class AIPane(SmartBit):
 
     def clean_up(self):
         pass
-        # This is borg so no cleeaning up before testing whether it
-        # affects other clients
+        # This ai_client attribute implements the borg pattern so should not clean it here
+        # as it would affect other apps
         # self._ai_client.clean_up()
