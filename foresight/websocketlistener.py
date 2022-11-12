@@ -4,10 +4,10 @@ import threading
 import json
 import uuid
 import time
-from utils import logging_config
+from utils import _logging_config
 import sys
 
-logger = logging_config.get_console_logger()
+# logger = logging_config.get_console_logger()
 
 from config import config as conf, prod_type
 
@@ -29,16 +29,18 @@ class WebSocketListener:
     def on_message(self, ws, message):
 
         msg = json.loads(message)
-        logger.debug(f"msg: {msg}")
+        print(f"msg: {msg}")
         # check is needed because we get duplicted messages.
         # # TODO: emtpy the queue when it get to a size of X
         if msg['id'] not in self.received_msg_log or \
-                msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']]:
+                msg['event']['type'] != self.received_msg_log[msg['id']][0] or \
+                msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']][1]:
+
             self.message_queue.put(msg)
-            self.received_msg_log[msg['id']] = msg['event']['doc']['_updatedAt']
+            self.received_msg_log[msg['id']] = (msg['event']['type'], msg['event']['doc']['_updatedAt'])
 
     def on_error(self, ws, error):
-        logger.error(f"error in webserver connection {error}")
+        print(f"error in webserver connection {error}")
 
     # def on_close(self, ws):
     #     logger.debug("Connection to webserver closed")
@@ -52,7 +54,7 @@ class WebSocketListener:
             'id': subscription_id, 'method': 'SUB'
         }
         self.ws.send(json.dumps(msg_sub))
-        logger.debug(f"Connecting to room_id {room_id}")
+        print(f"Connecting to room_id {room_id}")
 
     def run(self):
         self.wst = threading.Thread(target=self.ws.run_forever)
@@ -70,5 +72,5 @@ class WebSocketListener:
                 self.wst.join()
                 break
         else:
-            logger.error("Couldn't cleanly terminate the program")
+            print("Couldn't cleanly terminate the program")
             sys.exit(1)

@@ -111,3 +111,25 @@ sagecell_doc = {
         'executeInfo': {'executeFunc': '', 'params': {}}
     }
 }
+
+aipane_doc = {
+    '_id': 'f73fd73a-e827-479f-964d-ea3cce86bc15',
+    '_createdAt': 1668070041979,
+    '_createdBy': '34d7534e-f8ad-4cdf-ac8e-190a2dffe37d',
+    '_updatedAt': 1668070041979,
+    '_updatedBy': '34d7534e-f8ad-4cdf-ac8e-190a2dffe37d',
+    'data': {'title': '',
+             'roomId': 'c3f1af32-19db-4762-bc07-e3a6d1058fc9',
+             'boardId': 'cce4a498-0c2f-4b2d-afbf-b19d6b329171',
+             'position': {'x': 1502631, 'y': 1501231, 'z': 0},
+             'size': {'width': 400, 'height': 400, 'depth': 0},
+             'rotation': {'x': 0, 'y': 0, 'z': 0},
+             'type': 'AIPane',
+             'raised': True},
+    'state': {'executeInfo': {'executeFunc': '', 'params': {}},
+              'hostedApps': {},
+              'runStatus': False,
+              'supportedTasks': {},
+              'messages': {}
+              }
+}
