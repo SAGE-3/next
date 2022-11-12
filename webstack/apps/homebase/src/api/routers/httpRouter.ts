@@ -18,6 +18,7 @@ import * as express from 'express';
 
 // Asset imports
 import { assetExpressRouter } from './custom/asset';
+import { FilesRouter } from './custom/files';
 
 // Collection Imports
 import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection, MessageCollection } from '../collections';
@@ -25,6 +26,7 @@ import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
+import { NLPRouter } from './custom/nlp';
 
 /**
  * API Loader function
@@ -39,6 +41,11 @@ export function expressAPIRouter(): express.Router {
   // Before auth, so can be accessed by anyone
   router.use('/info', InfoRouter());
   router.use('/time', TimeRouter());
+
+  // Download the file from an Asset
+  // public route with a UUIDv5 token
+  // route: /api/files/:id/:token
+  router.use('/files', FilesRouter());
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
@@ -58,6 +65,8 @@ export function expressAPIRouter(): express.Router {
   router.use('/message', MessageCollection.router());
 
   router.use('/configuration', ConfigRouter());
+
+  router.use('/nlp', NLPRouter());
 
   return router;
 }

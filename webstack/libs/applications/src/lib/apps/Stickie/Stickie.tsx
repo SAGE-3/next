@@ -45,12 +45,12 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const { boardId, roomId } = useParams();
-  const scale = useUIStore((state) => state.scale);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
 
   const yours = user?._id === props._createdBy;
+  const updatedByYou = user?._id === props._updatedBy;
   const selected = selectedAppId === props._id;
 
   // Keep a reference to the input element
@@ -65,10 +65,11 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    if (!yours) {
+    if (!updatedByYou) {
       setNote(s.text);
     }
-  }, [s.text]);
+  }, [s.text, updatedByYou]);
+
   // Update local value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
@@ -124,6 +125,7 @@ function AppComponent(props: App): JSX.Element {
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Stickie',
+        // keep the same color, like a clone operation except for the text
         state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
         raised: true,
       });
@@ -157,9 +159,9 @@ function AppComponent(props: App): JSX.Element {
           zIndex={1}
         />
         {!yours && selected && (
-          <Box position="absolute" right="2" bottom="0" transform={`scale(${1 / scale})`} transformOrigin="bottom right" zIndex={2}>
+          <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
             <Tooltip label="Not your Stickie" shouldWrapChildren placement="top" hasArrow>
-              <MdOutlineBlock color="red" />
+              <MdOutlineBlock color="red" fontSize="32px" />
             </Tooltip>
           </Box>
         )}

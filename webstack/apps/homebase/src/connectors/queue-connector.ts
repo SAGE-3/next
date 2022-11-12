@@ -26,6 +26,7 @@ export class SBQueue {
     // Create the Bull queue, based on REDIS
     this.aQueue = new Bull(queueName, redisInfo, {
       defaultJobOptions: { removeOnComplete: true },
+      settings: { lockDuration: 60000 },
     });
     // Event handler, not really used (because using promises)
     this.aQueue.on('completed', function (job, _result) {

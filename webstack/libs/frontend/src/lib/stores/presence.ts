@@ -13,9 +13,8 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { BoardSchema, Presence, PresenceSchema, RoomSchema } from '@sage3/shared/types';
+import { BoardSchema, Presence, PresenceSchema } from '@sage3/shared/types';
 import { APIHttp, SocketAPI } from '../api';
-import { AppSchema } from '@sage3/applications/schema';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -24,6 +23,7 @@ interface PresenceState {
   presences: Presence[];
   error: string | null;
   clearError: () => void;
+  update: (id: string, updates: Partial<PresenceSchema>) => void;
   subscribe: () => Promise<void>;
 }
 
@@ -43,6 +43,12 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
     clearError: () => {
       set({ error: null });
     },
+    update: async (id: string, updates: Partial<PresenceSchema>) => {
+      const res = await SocketAPI.sendRESTMessage(`/presence/${id}`, 'PUT', updates);
+      if (!res.success) {
+        set({ error: res.message });
+      }
+    },
     subscribe: async () => {
       set({ presences: [] });
       const reponse = await APIHttp.GET<PresenceSchema, Presence>('/presence');
@@ -60,7 +66,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
 
       // Socket Subscribe Message
       const route = `/presence`;
-      presenceSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema | PresenceSchema>(route, (message) => {
+      presenceSub = await SocketAPI.subscribe<PresenceSchema>(route, (message) => {
         const doc = message.doc as Presence;
         switch (message.type) {
           case 'CREATE': {
