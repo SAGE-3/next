@@ -20,6 +20,7 @@ export interface pointChartProps {
     xOffset?: { field: string };
     color?: { field: string };
   };
+  layer?: any[];
   transform: any[];
 }
 
@@ -30,7 +31,7 @@ export default function createPointChart(extractedHeaders: string[], fileName: s
     data: {
       url: '',
     },
-    mark: 'tick',
+    mark: 'point',
     encoding: {
       x: { field: '', type: '' },
       y: { field: '', type: '', aggregate: '' },

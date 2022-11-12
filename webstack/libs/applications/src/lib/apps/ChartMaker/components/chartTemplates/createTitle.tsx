@@ -20,7 +20,7 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
     let headers = extractedHeaders[i].split(' ');
     let title = '';
     for (let n = 0; n < headers.length; n++) {
-      title += headers[n].charAt(0).toUpperCase() + headers[n].slice(1) + ' ';
+      title += headers[n].charAt(0) + headers[n].slice(1) + ' ';
     }
     headerTitles.push(title);
   }
@@ -29,7 +29,7 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
     // Maps only have one nominal attribute but extractedHeaders.length is two
     // But the chart type 'map' is also the same as lat lon and map.
     // This should not be included in the title/
-    chartTitle = 'Map of ' + extractedHeaders[1];
+    chartTitle = 'map of ' + extractedHeaders[1];
   } else {
     // All other chart types have will add every extracted header
     switch (headerLength) {
@@ -55,21 +55,14 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
         if (intent == 'bar') {
           chartTitle += 'bar chart of ' + headerTitles[1] + 'vs. ' + headerTitles[0];
         } else {
-          chartTitle += intent.charAt(0).toUpperCase() + intent.slice(1) + ' Chart of ' + headerTitles[1] + ' vs. ' + headerTitles[0];
+          chartTitle += intent.charAt(0) + intent.slice(1) + ' chart of ' + headerTitles[1] + ' vs. ' + headerTitles[0];
         }
 
         break;
       // if three headers, most likely will use "colored by.."
       case 3:
         chartTitle +=
-          intent.charAt(0).toUpperCase() +
-          intent.slice(1) +
-          ' chart of ' +
-          headerTitles[1] +
-          ' vs. ' +
-          headerTitles[0] +
-          'colored by ' +
-          headerTitles[2];
+          intent.charAt(0) + intent.slice(1) + ' chart of ' + headerTitles[1] + ' vs. ' + headerTitles[0] + 'colored by ' + headerTitles[2];
         break;
       default:
         return '';
@@ -77,7 +70,7 @@ export default function createTitle(extractedHeaders: string | any[], intent: st
   }
   // add filters to the end
   if (extractedFilteredValues.length > 0) {
-    chartTitle += 'filtered by ';
+    chartTitle += ' filtered by ';
     for (let i = 0; i < extractedFilteredValues.length; i++) {
       if (i == extractedFilteredValues.length - 1) {
         chartTitle += extractedFilteredValues[i];

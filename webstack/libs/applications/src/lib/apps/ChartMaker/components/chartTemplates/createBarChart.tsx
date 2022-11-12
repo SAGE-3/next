@@ -20,6 +20,7 @@ export interface barChartProps {
     xOffset?: { field: string };
     color?: { field: string };
   };
+  layer?: any[];
   transform: any[];
 }
 

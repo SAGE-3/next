@@ -71,12 +71,20 @@ export const createCharts = async (
   for (let i = 0; i < specifications.length; i++) {
     specifications[i].title = createTitle(extractedHeaders, extractedChartType, extractedFilterValues);
     // specifications[i].transform = createTransform(extractedFilterValues, propertyList);
-    if (extractedChartType == 'map') {
+    const filter = createTransform(extractedFilterValues, propertyList);
+    console.log(specifications);
+
+    if (specifications[i].hasOwnProperty('layer')) {
       // specifications[i].transform = createTransform(extractedFilterValues, propertyList);
       // delete specifications[i].transform;
+      for (let i = 0; i < filter.length; i++) {
+        // @ts-ignore:
+        specifications[i].layer[1].transform.push(filter[i]);
+      }
     } else {
-      specifications[i].transform = createTransform(extractedFilterValues, propertyList);
+      specifications[i].transform = filter;
     }
+
     // if (specifications[i].hasOwnProperty('transform')) {
     // }
     // if (extractedChartType == 'map') {

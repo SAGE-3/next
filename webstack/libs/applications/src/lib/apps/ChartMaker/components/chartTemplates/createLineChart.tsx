@@ -19,6 +19,7 @@ export interface lineChartProps {
     y: { field: string; type: string; aggregate: string };
     color?: { field: string };
   };
+  layer?: any[];
   transform: any[];
 }
 
