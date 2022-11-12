@@ -1,9 +1,9 @@
 import { expect, test, describe, it } from '@jest/globals';
-import { SAGEBase, SAGEBaseConfig, SBAuthConfig } from '../lib/core/SAGEBase';
+import { SAGEBase, SAGEBaseConfig, SBAuthConfig, SBAuthSchema } from '../lib/core/SAGEBase';
 // Express web server framework
 const express = require('express');
 import { SBAuthGuestConfig } from '../lib/modules/auth/adapters';
-
+const cookieParser = require('cookie-parser');
 const request = require('supertest');
 /**
  * SAGEBase Testing File
@@ -76,16 +76,18 @@ test('Create Collection and Add Doc with forced ID', async () => {
   });
 });
 
-test('Init SAGEBase with Auth', async () => {
+test('SAGEBase Guest Authentication', async () => {
   const app = express();
+  app.enable('trust proxy');
   app.use(express.json());
+  app.use(cookieParser());
   const config = {
     projectName: 'test',
     authConfig: {
-      sessionMaxAge: 1000,
-      sessionSecret: 'test',
+      sessionMaxAge: 604800000,
+      sessionSecret: 'SUPERSECRET!!$$',
       strategies: {
-        guest: {
+        guestConfig: {
           routeEndpoint: '/auth/guest',
         } as SBAuthGuestConfig,
       },
@@ -95,21 +97,21 @@ test('Init SAGEBase with Auth', async () => {
   expect(SAGEBase.Auth).toBeDefined();
   const response = await request(app)
     .post('/auth/guest')
+    .type('form')
     .send({ username: 'guest-username', password: 'guest-pass' })
     .set('Accept', 'application/json')
     .set('Content-Type', 'application/json');
-  expect(response.status).toEqual(200);
-});
-
-test('supertest test', async () => {
-  const app = express();
-  app.use(express.json());
-  app.post('/users', function (req: any, res: any) {
-    console.log(req.body);
-    res.status(200).json({ name: req.body.name });
-  });
-  const response = await request(app).post('/users').send({ name: 'bill' }).set('Accept', 'application/json');
-
-  expect(response.status).toEqual(200);
-  expect(response.body.name).toEqual('bill');
+  const cookie = response.header['set-cookie'];
+  expect(response.status).toEqual(302);
+  expect(response.header['set-cookie']).toBeDefined();
+  expect(response.headers['location']).toEqual('/');
+  const authRes = await request(app).get('/auth/verify').set('Cookie', cookie);
+  const authBody = authRes.body;
+  const auth = authBody.auth as SBAuthSchema;
+  console.log(auth);
+  expect(authRes.status).toEqual(200);
+  expect(authBody.success).toEqual(true);
+  expect(authBody.authentication).toEqual(true);
+  expect(auth).toBeDefined();
+  expect(auth.provider).toEqual('guest');
 });
