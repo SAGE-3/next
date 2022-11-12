@@ -28,7 +28,7 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -65,21 +65,15 @@ const MARGIN = 2;
 const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
   const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
-  // Set the title on start
-  useEffect(() => {
-    // update the title of the app
-    update(props._id, { title: "Sage Cell" });
-  }, []);
-
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -87,7 +81,16 @@ const AppComponent = (props: App): JSX.Element => {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  // Set the title on start
+  useEffect(() => {
+    // update the title of the app
+    if (props.data.title !== 'SageCell') {
+      update(props._id, { title: 'SageCell' });
+    }
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -113,7 +116,7 @@ const AppComponent = (props: App): JSX.Element => {
       if (access) {
         const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
         // update the title of the app
-        update(props._id, { title: "Sage Cell: kernel [" + name + "]" });
+        update(props._id, { title: 'Sage Cell: kernel [' + name + ']' });
       }
     }
   }, [s.kernel, myKernels]);
@@ -164,7 +167,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
 
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -172,7 +175,11 @@ function ToolbarComponent(props: App): JSX.Element {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  useEffect(() => {
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -229,7 +236,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <HStack>
-      {access ? (
+      {
         <>
           {/* check if there are any available kernels and if one is selected */}
           {!myKernels || !s.kernel ? (
@@ -268,6 +275,12 @@ function ToolbarComponent(props: App): JSX.Element {
             ))}
           </Select>
 
+          <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
+            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+              <MdRefresh />
+            </Button>
+          </Tooltip>
+
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
               <Button
@@ -295,28 +308,8 @@ function ToolbarComponent(props: App): JSX.Element {
               </Button>
             </Tooltip>
           </ButtonGroup>
-
-          {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
-                <Button
-                  onClick={() =>
-                    updateState(props._id, {
-                      executeInfo: {
-                        executeFunc: 'generate_error_message',
-                        params: { user_uuid: user!._id },
-                      },
-                    })
-                  }
-                  _hover={{ opacity: 0.7 }}
-                >
-                  <MdError />
-                </Button>
-              </Tooltip>
-            </ButtonGroup> */}
         </>
-      ) : (
-        <Text width={180}>This CodeCell is Private</Text>
-      )}
+      }
     </HStack>
   );
 }
@@ -341,15 +334,21 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const { user } = useUser();
   const [fontSize, setFontSize] = useState(s.fontSize);
   const toast = useToast();
-  const [selectedKernel, setSelectedKernel] = useState(s.kernel);
 
   useEffect(() => {
-    setSelectedKernel(s.kernel);
-  }, [s.kernel]);
+    if (ace.current) {
+      ace.current.editor.commands.removeCommand('Execute');
+      ace.current.editor.commands.addCommand({
+        name: 'Execute',
+        bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' },
+        exec: () => handleExecute(s.kernel),
+      });
+    }
+  }, [s.kernel, ace.current]);
 
-  const handleExecute = () => {
+  const handleExecute = (kernel: string) => {
     const code = ace.current?.editor?.getValue();
-    if (!selectedKernel) {
+    if (!kernel) {
       toast({
         title: 'No kernel selected',
         description: 'Please select a kernel from the toolbar',
@@ -430,17 +429,13 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
             borderRadius: '4px',
           }}
-          commands={[
-            { name: 'Execute', bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' }, exec: handleExecute },
-            { name: 'Clear', bindKey: { win: 'Ctrl-Alt-Backspace', mac: 'Command-Option-Backspace' }, exec: handleClear },
-          ]}
         />
         <VStack pr={2}>
           {props.access ? (
             <Tooltip hasArrow label="Execute" placement="right-start">
               <IconButton
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleExecute}
+                onClick={() => handleExecute(s.kernel)}
                 aria-label={''}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
@@ -556,78 +551,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.display_data.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.display_data.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  default:
+                    return MapJSONObject(parsedJSON.display_data[key]);
+                }
+              });
+            }
+            return null;
+          })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.execute_result.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                default:
-                  return null;
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.execute_result.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  default:
+                    return null;
+                }
+              });
+            }
+            return null;
+          })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-          // find the user name that matches the userId
-          if (userId !== props.user._id) {
-            return null;
-          }
-          return (
-            <Toast
-              status="error"
-              position="bottom"
-              description={message + ', ' + props.user.data.name}
-              duration={4000}
-              isClosable
-              onClose={() => updateState(props.app._id, { privateMessage: [] })}
-              hidden={userId !== props.user._id}
-            />
-          );
-        })}
+            // find the user name that matches the userId
+            if (userId !== props.user._id) {
+              return null;
+            }
+            return (
+              <Toast
+                status="error"
+                position="bottom"
+                description={message + ', ' + props.user.data.name}
+                duration={4000}
+                isClosable
+                onClose={() => updateState(props.app._id, { privateMessage: [] })}
+                hidden={userId !== props.user._id}
+              />
+            );
+          })}
     </Box>
   );
 };
@@ -653,30 +648,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-          if (typeof obj[key] === 'object') {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
+            if (typeof obj[key] === 'object') {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {MapJSONObject(obj[key])}
+                  </Box>
                 </Box>
-                <Box as="span" ml={2}>
-                  {MapJSONObject(obj[key])}
+              );
+            } else {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {obj[key]}
+                  </Box>
                 </Box>
-              </Box>
-            );
-          } else {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
-                </Box>
-                <Box as="span" ml={2}>
-                  {obj[key]}
-                </Box>
-              </Box>
-            );
-          }
-        })
+              );
+            }
+          })
         : null}
     </Box>
   );

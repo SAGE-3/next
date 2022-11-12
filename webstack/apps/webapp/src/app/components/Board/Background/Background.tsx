@@ -76,6 +76,7 @@ export function Background(props: BackgroundProps) {
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
@@ -514,6 +515,7 @@ export function Background(props: BackgroundProps) {
   useHotkeys(
     'up, down, left, right',
     (event: KeyboardEvent): void | boolean => {
+      if (selectedAppId !== '') return;
       const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
       if (event.key === 'ArrowUp') {
         setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
@@ -528,7 +530,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y] }
+    { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
   );
 
   // Stickies Shortcut
