@@ -50,16 +50,18 @@ class AIClient(Borg):
         resp = self.fxc.run(**data, function_id=funcx_uuid,
                             endpoint_id=endpoint_uuid)
 
-        self.running_jobs.add(resp)
-        print(f"adding task {resp} to the list of running jobs")
-        self.callback_info[resp] = (app_uuid, msg_uuid, callback_fn)
+        # this should be first otherwise the next statement generates an error.
         print(f"adding call back info with task_id {resp}")
+        self.callback_info[resp] = (app_uuid, msg_uuid, callback_fn)
+
+        print(f"adding task {resp} to the list of running jobs")
+        self.running_jobs.add(resp)
 
         return resp
 
     def process_response(self, check_every):
+        tasks_to_remove = set()
         while not self.stop_thread:
-            tasks_to_remove = set()
             for task_id in self.running_jobs:
                 print(f"Working on {task_id}")
                 resp = self.fxc.get_task(task_id)
@@ -79,9 +81,11 @@ class AIClient(Borg):
                             callback_fn(app_uuid, msg_uuid, result)
                             tasks_to_remove.add(task_id)
                         except Exception as e:
-                            print(f"Error while running an AI job {resp}")
+                            print(f"Error while running an AI job {e}")
+                            print("response is {resp}")
                         del self.callback_info[task_id]
             self.running_jobs -= tasks_to_remove
+            tasks_to_remove.clear()
 
             time.sleep(self.check_every)  # be nice to the system :)
             if self.stop_thread:

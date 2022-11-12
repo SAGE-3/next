@@ -67,15 +67,20 @@ class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
     _ai_client = PrivateAttr()
-    _task_scheduler = PrivateAttr()
+    # _task_scheduler = PrivateAttr()
     _pending_executions: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
+        kwargs['state']['runStatus'] = False
+        # kwargs['state']['runStatus'] = False
+        print(kwargs)
         super(AIPane, self).__init__(**kwargs)
+        print("I am here 1")
         self._ai_client = AIClient()
+        print("I am here 2")
         self._pending_executions = {}
-        self._task_scheduler = TaskScheduler()
+        # self._task_scheduler = TaskScheduler()
 
     def new_app_added(self, app_type):
         """
@@ -114,9 +119,9 @@ class AIPane(SmartBit):
 
                 print(f"response is {response.status_code}")
                 print("done")
-            self.state.runStatus = RunStatus.READY
+            self.state.runStatus = int(RunStatus.READY.value)
         else:
-            self.state.runStatus = RunStatus.ERROR
+            self.state.runStatus = int(RunStatus.ERROR.value)
             print("---------------------- No bounding boxes returned ----------------------")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -167,12 +172,17 @@ class AIPane(SmartBit):
             "endpoint_uuid": funcx_config["endpoint_uuid"],
             "data": params
         }
-        print("---------------------In execute AI--------------------------")
-        print("payload is {payload}")
+        print("---------------------In execute AI of AIPanel--------------------------")
+        print(f"payload is {payload}")
         print("------------------------------------------------------------")
 
         self._ai_client.execute(payload)
         print("just called the ai_client's execute")
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
+
+
 
     def check_stale_jobs(self):
         """
