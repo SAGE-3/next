@@ -44,7 +44,8 @@
     "twilio": true,
     "ai": true,
     "cell": true,
-    "jupyter": true
+    "jupyter": true,
+    "articulate": true,
   },
 
   // ID Management

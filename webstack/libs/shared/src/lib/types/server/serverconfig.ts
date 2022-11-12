@@ -40,6 +40,7 @@ export interface serverConfiguration {
     ai: boolean;
     jupyter: boolean;
     cell: boolean;
+    articulate: boolean;
   };
   // ID management API keys
   auth: AuthConfiguration;
