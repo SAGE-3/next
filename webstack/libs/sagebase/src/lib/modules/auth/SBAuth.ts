@@ -7,7 +7,8 @@
  */
 
 import { RedisClientType } from 'redis';
-import * as passport from 'passport';
+import { PassportStatic } from 'passport';
+const passport: PassportStatic = require('passport');
 import { Express, NextFunction, Request, Response } from 'express';
 
 // eslint-disable-next-line

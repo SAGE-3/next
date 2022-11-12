@@ -6,7 +6,8 @@
  *
  */
 
-import * as passport from 'passport';
+import { PassportStatic, Profile } from 'passport';
+const passport: PassportStatic = require('passport');
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
 import { SBAuthDB } from '../SBAuthDatabase';
@@ -31,7 +32,7 @@ export function passportGoogleSetup(config: SBAuthGoogleConfig): boolean {
           clientSecret: config.clientSecret,
           callbackURL: config.callbackURL,
         },
-        async (accessToken: string, refreshToken: string, profile: passport.Profile, done: VerifyCallback) => {
+        async (accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => {
           const displayName = profile.displayName;
           const email = profile.emails ? profile.emails[0].value : '';
           const picture = profile.photos ? profile.photos[0].value : '';

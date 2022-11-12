@@ -6,7 +6,8 @@
  *
  */
 
-import * as passport from 'passport';
+import { PassportStatic } from 'passport';
+const passport: PassportStatic = require('passport');
 
 import { SBAuthDB } from '../SBAuthDatabase';
 import { Strategy } from 'passport-local';

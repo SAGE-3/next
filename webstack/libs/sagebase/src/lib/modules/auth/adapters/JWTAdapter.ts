@@ -6,7 +6,8 @@
  *
  */
 
-import * as passport from 'passport';
+import { PassportStatic } from 'passport';
+const passport: PassportStatic = require('passport');
 import { readFileSync } from 'fs';
 
 import { Strategy, ExtractJwt } from 'passport-jwt';

@@ -1,7 +1,10 @@
-import { expect, test } from '@jest/globals';
+import { expect, test, describe, it } from '@jest/globals';
+import { SAGEBase, SAGEBaseConfig, SBAuthConfig } from '../lib/core/SAGEBase';
+// Express web server framework
+const express = require('express');
+import { SBAuthGuestConfig } from '../lib/modules/auth/adapters';
 
-import { SAGEBase, SAGEBaseConfig } from '../lib/core/SAGEBase';
-
+const request = require('supertest');
 /**
  * SAGEBase Testing File
  * Currently requires a REDIS server to be running on the provided url below
@@ -73,21 +76,40 @@ test('Create Collection and Add Doc with forced ID', async () => {
   });
 });
 
-// NEEDS EXPRESS
-// test('Init SAGEBase with Auth', async () => {
-//   const config = {
-//     projectName: 'test',
-//     authConfig: {
-//       sessionMaxAge: 1000,
-//       sessionSecret: 'test',
-//       strategies: {
-//         guest: {
-//           routeEndpoint: '/auth/guest',
-//         } as SBAuthGuestConfig,
-//       },
-//     } as SBAuthConfig,
-//   } as SAGEBaseConfig;
-//   await SAGEBase.init(config);
-//   expect(SAGEBase.Database).toBeDefined();
-//   expect(SAGEBase.Auth).toBeDefined();
-// });
+test('Init SAGEBase with Auth', async () => {
+  const app = express();
+  app.use(express.json());
+  const config = {
+    projectName: 'test',
+    authConfig: {
+      sessionMaxAge: 1000,
+      sessionSecret: 'test',
+      strategies: {
+        guest: {
+          routeEndpoint: '/auth/guest',
+        } as SBAuthGuestConfig,
+      },
+    } as SBAuthConfig,
+  } as SAGEBaseConfig;
+  await SAGEBase.init(config, app);
+  expect(SAGEBase.Auth).toBeDefined();
+  const response = await request(app)
+    .post('/auth/guest')
+    .send({ username: 'guest-username', password: 'guest-pass' })
+    .set('Accept', 'application/json')
+    .set('Content-Type', 'application/json');
+  expect(response.status).toEqual(200);
+});
+
+test('supertest test', async () => {
+  const app = express();
+  app.use(express.json());
+  app.post('/users', function (req: any, res: any) {
+    console.log(req.body);
+    res.status(200).json({ name: req.body.name });
+  });
+  const response = await request(app).post('/users').send({ name: 'bill' }).set('Accept', 'application/json');
+
+  expect(response.status).toEqual(200);
+  expect(response.body.name).toEqual('bill');
+});

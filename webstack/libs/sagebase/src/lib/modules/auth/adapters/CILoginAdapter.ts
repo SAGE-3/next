@@ -6,7 +6,8 @@
  *
  */
 
-import * as passport from 'passport';
+import { PassportStatic, Profile } from 'passport';
+const passport: PassportStatic = require('passport');
 //import { Strategy, VerifyCallback } from 'passport-openidconnect';
 import { Issuer } from 'openid-client';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -52,7 +53,7 @@ export function passportCILogonSetup(config: SBAuthCILogonConfig): boolean {
         'openidconnect',
         new Strategy(
           cilongconfig,
-          async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: typeof VerifyCallback) => {
+          async (_issuer: string, profile: Profile, _context: unknown, _refreshToken: unknown, done: typeof VerifyCallback) => {
             const displayName = profile.displayName;
             const email = profile.emails ? profile.emails[0].value : '';
             const picture = profile.photos ? profile.photos[0].value : '';
