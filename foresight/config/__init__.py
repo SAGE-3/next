@@ -95,14 +95,14 @@ ai_supported = {
     "vision": {
         "supported_apps": ['ImageViewer'],
         "tasks": {
-            "Object Detection": ["facebook/detr-resnet-50", "lai_lab/fertilized_egg_detect"],
-            "Classification": ["image_c_model_1", "image_c_model_2"]
+            "Object Detection": ["facebook/detr-resnet-50"],
+            "Classification": []
         }
     },
     "nlp": {
         "supported_apps": ['PDFViewer', 'Notepad'],
         "tasks": {
-            "Summarization": ["facebook/bart-large-cnn", "sshleifer/distilbart-cnn-12-6"],
+            "Summarization": [],
         }
     }
 }
