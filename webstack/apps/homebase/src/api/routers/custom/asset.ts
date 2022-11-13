@@ -140,7 +140,8 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     const user = req.user as SBAuthSchema;
 
     // Send message to clients
-    MessageCollection.add({ type: 'upload', payload: `Upload done` }, user.id);
+    // Dont think we need this, axios will let us know
+    // MessageCollection.add({ type: 'upload', payload: `Upload done` }, user.id);
 
     // Do something with the files
     files.forEach(async (elt) => {

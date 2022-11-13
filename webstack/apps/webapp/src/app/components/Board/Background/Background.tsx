@@ -54,8 +54,6 @@ type BackgroundProps = {
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
-  // Handle to a toast
-  const toastIdRef = useRef<ToastId>();
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -104,6 +102,8 @@ export function Background(props: BackgroundProps) {
               duration: 6000,
               isClosable: true,
             });
+            // Return, don't upload
+            return;
           } else {
             fd.append('files', input[i]);
             if (filenames) filenames += ', ' + input[i].name;
@@ -117,6 +117,8 @@ export function Background(props: BackgroundProps) {
             duration: 5000,
             isClosable: true,
           });
+          // Return, don't upload
+          return;
         }
       }
 
@@ -128,7 +130,7 @@ export function Background(props: BackgroundProps) {
       fd.append('targetX', dx.toString());
       fd.append('targetY', dy.toString());
 
-      toastIdRef.current = toast({
+      const uploadToast = toast({
         title: 'Upload',
         description: 'Starting upload of ' + filenames,
         status: 'info',
@@ -143,9 +145,9 @@ export function Background(props: BackgroundProps) {
         url: '/api/assets/upload',
         data: fd,
         onUploadProgress: (p: AxiosProgressEvent) => {
-          if (toastIdRef.current && p.progress) {
+          if (uploadToast && p.progress) {
             const progress = (p.progress * 100).toFixed(0);
-            toast.update(toastIdRef.current, {
+            toast.update(uploadToast, {
               title: 'Upload',
               description: 'Progress: ' + progress + '%',
               isClosable: true,
@@ -155,19 +157,22 @@ export function Background(props: BackgroundProps) {
       })
         .catch((error: Error) => {
           console.log('Upload> Error: ', error);
+          toast.update(uploadToast, {
+            title: 'Upload Error',
+            description: `Could not upload ${filenames}`,
+            isClosable: true,
+            status: 'warning',
+            duration: 4000,
+          });
         })
         .finally(() => {
-          // Close the modal UI
-          // props.onClose();
-
-          if (!filenames) {
-            toast({
-              title: 'Upload with Errors',
-              status: 'warning',
-              duration: 4000,
-              isClosable: true,
-            });
-          }
+          toast.update(uploadToast, {
+            title: 'Upload Success',
+            description: 'Uploaded ' + filenames,
+            isClosable: true,
+            status: 'success',
+            duration: 4000,
+          });
         });
     }
   };
@@ -186,23 +191,24 @@ export function Background(props: BackgroundProps) {
     if (message && message._createdBy === user._id) {
       const title = message.data.type.charAt(0).toUpperCase() + message.data.type.slice(1);
       // Update the toast if we can
-      if (toastIdRef.current) {
-        toast.update(toastIdRef.current, {
-          title: title,
-          description: message.data.payload,
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        // or create a new one
-        toastIdRef.current = toast({
-          title: title,
-          description: message.data.payload,
-          status: 'info',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
+      // if (toastIdRef.current) {
+      //   toast.update(toastIdRef.current, {
+      //     title: title,
+      //     description: message.data.payload,
+      //     duration: 5000,
+      //     isClosable: true,
+      //   });
+      // } else {
+      // or create a new one
+      // toastIdRef.current =
+      toast({
+        title: title,
+        description: message.data.payload,
+        status: 'info',
+        duration: 4000,
+        isClosable: true,
+      });
+      // }
     }
   }, [message]);
 
