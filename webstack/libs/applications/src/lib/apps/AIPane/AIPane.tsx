@@ -89,10 +89,10 @@ function AppComponent(props: App): JSX.Element {
           updateState(props._id, { hostedApps: hosted });
           // TODO Make messages more informative rather than simply types of apps being hosted
           updateState(props._id, { messages: hosted });
-          console.log('app ' + app._id + ' added');
+          // console.log('app ' + app._id + ' added');
           newAppAdded(app.data.type);
         } else {
-          console.log('app ' + app._id + ' already in hostedApps');
+          // console.log('app ' + app._id + ' already in hostedApps');
         }
       } else {
         if (Object.keys(s.hostedApps).includes(app._id)) {
