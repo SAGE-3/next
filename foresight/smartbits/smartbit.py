@@ -1,221 +1,230 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
-
-from utils.wall_utils import Sage3Communication
-from collections import defaultdict
-# from json import JSONEncoder
-#
-# def _default(self, obj):
-#     return getattr(obj.__class__, "jsonify", _default.default)(obj)
-#
-# _default.default = JSONEncoder.default
-# JSONEncoder.default = _default
+# -----------------------------------------------------------------------------
+from enum import Enum
+from typing import Optional
+from pydantic import BaseModel, Field
+from typing import ClassVar
+from abc  import abstractmethod
 
 
-class SmartBit(object):
-    # def __init__(self, app_uuid, state_uuid, x, y, width, height, last_update):
-    def __init__(self, state_name, data):
-        self.state_name = state_name
-        self.app_uuid = data["id"]
-        self.state_uuid = data['state'][self.state_name]["reference"]
-        self.__x = data["position"]["x"]
-        self.__y = data["position"]["y"]
-        self.__width = data["position"]["height"]
-        self.__height = data["position"]["width"]
-        self.state = {}
+# from utils.generic_utils import create_dict
+from utils.sage_communication import SageCommunication
+from operator import attrgetter
+from config import config as conf, prod_type
 
-        self.is_collection = False
+class TrackedBaseModel(BaseModel):
+    path: Optional[str]
+    touched: Optional[set] = set()
+    # _s3_comm: SageCommunication = PrivateAttr()
+    # The following params should be defined as required in
+    # the constructor since Not all apps need them!a
+    # _jupyter_client: JupyterKernelProxy = PrivateAttr()
+    # _ai_client: AIClient  = PrivateAttr()
 
-        self.communication = Sage3Communication.instance()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # self._s3_comm = SageCommunication(conf, prod_type)
+        # self._jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
+        # self._ai_client: AIClient  = AIClient()
 
-        # only listens to state variable updates
-        self.attrs_callbacks = defaultdict(list)
 
-    def update_from_msg(self, data):
-        # update can to features of to data
-        if not bool(data["data"]):
-            self.app_uuid = data["id"]
-            self.state_uuid = data['state'][self.state_name]["reference"]
-            self.__x = data["position"]["x"]
-            self.__y = data["position"]["y"]
-            self.__width = data["position"]["width"]
-            self.__height = data["position"]["height"]
-        else:
-            # update the data (ex. add new image)
-            for datum_type in data["data"].keys():
-                if datum_type != 'file':
-                    for datum in data["data"][datum_type]:
-                        if datum["reference"] not in self.state:
-                            state = self.get_state(datum["reference"])["data"]
-                            self.state[datum["reference"]] = state
-
-    @property
-    def x(self):
-        return self.__x
-
-    @x.setter
-    def x(self, value):
-        if value != self.__x:
-            self.__x = value
-            self.move_app(self.app_uuid, self.__x, self.__y)
-
-    @property
-    def y(self):
-        return self.__y
-
-    @y.setter
-    def y(self, value):
-        if value != self.__y:
-            self.__y = value
-            self.move_app(self.app_uuid, self.__x, self.__y)
-
-    @property
-    def width(self):
-        return self.__width
-
-    @width.setter
-    def width(self, value):
-        if value != self.__width:
-            self.__width = value
-            self.resize_app(self.app_uuid, self.__x, self.__y,
-                            self.__width, self.__height)
-
-    @property
-    def height(self):
-        return self.__height
-
-    @height.setter
-    def height(self, value):
-        if value != self.__height:
-            self.__height = value
-            self.resize_app(self.app_uuid, self.__x, self.__y,
-                            self.__width, self.__height)
-
-    def get_state(self, obj_uuid=None):
-        # TODO: This need to be completely rewritten to use a communication object
-        #  the object should be responsible to do its own thing
-        if obj_uuid is None:
-            obj_uuid = self.state_uuid
-        return self.communication.get_app_data(obj_uuid)
-
-    def apply_new_state(self, state):
-        # gets new data from server and updates local attributes
+    def __setattr__(self, name, value):
         try:
-            # self.state.update(state)
-            # invoke the callback now
-            for key, new_val in state.items():
-                self.state[key] = new_val
-                if key in self.attrs_callbacks:
-                    for func in self.attrs_callbacks[key]:
-                        func(new_val)
+            if self.path is not None:
+                if name[0] != "_":
+                    # print(f"in setting __setattr__ {name} to {value}")
+                    self.touched.add(f"{self.path}.{name}"[1:])
+            super().__setattr__(name, value)
+        except:
+            self.touched.remove(f"{self.path}.{name}"[1:])
 
-        except Exception as e:
-            raise Exception(f"{e} In SmartBit, cannot update the data")
-
-    def update_state(self, new_attr_vals):
-        # updates the states on the Node server
-        print(f"\n\n updating the state with {new_attr_vals}")
-        self.communication.set_app_state(
-            self.state_uuid, new_attr_vals, self.state_type)
-
-    def update_state_attr(self, action_type, new_attr_vals, ):
-        # new_attr_vals is only the subset of state we want to pass
-        self.communication.set_app_attrs_state(
-            self.state_uuid, action_type, new_attr_vals)
-
-    def add_change_listener(self, attr_name, func):
-        self.attrs_callbacks[attr_name].append(func)
-
-    def move_app(self, x, y):
-        payload = {'id': self.app_uuid, 'type': 'move',
-                   'position': {'x': x, 'y': y}}
-        response = self.communication.send_payload(payload)
-        return response
-
-    def resize_app(self, x, y, width, height):
-        payload = {'id': self.app_uuid, 'type': 'resize', 'position': {
-            'x': x, 'y': y, 'width': width, 'height': height}}
-        response = self.communication.send_payload(payload)
-        return response
+    def is_dotted_path_dict(self, dotted_path):
+        partial_obj = self
+        for part in dotted_path.split(".")[:-1]:
+            partial_obj = getattr(partial_obj, part)
+        if type(getattr(partial_obj, dotted_path.split(".")[-1])) is dict:
+            return True
+        else:
+            return False
 
 
-class ContainerMixin:
-    is_collection = True
+    def refresh_data_form_update(self, update_data, updates):
+        # TODO replace this temp solution, which updates everything with a
+        #  solution that updates only necessary fields
+        update_data['state'] = update_data['data']['state']
+        del (update_data['data']['state'])
+        # we don't need to update the following keys:
+        do_not_modify = ["_id", "_createdAt", '_updatedAt', '_createdBy', '_updatedBy']
+        _ = [update_data.pop(key) for key in do_not_modify]
 
-    # def log(self):
-    #     pass
-    #
-    # def save_state(self):
-    #     pass
-    #
-    # #@_action(enqueue=False)
-    # def update_wall_coordinates(self, wall_coordinates):
-    #     # assumes wall coordinates are valid (proxy's job )
-    #
-    #     self.wall_coordinates = wall_coordinates
-    #     params = {"wall_coordinates": wall_coordinates}
-    #     return {"channel": "execute:down", "action": "update", "action_results": params}
-    #
-    # #@_action(enqueue=False)
-    # def update_attribute(self, attr_name, new_attr_value):
-    #     try:
-    #         setattr(self, attr_name, new_attr_value)
-    #     except:
-    #         raise Exception(f"Could not set attribute {attr_name} on class postit {self.__class__.__name__}")
-    #     params = {str(attr_name): new_attr_value}
-    #     return {"channel": "execute:down", "action": "update", "action_results": params}
-    #
-    # def jsonify(self, ignore=None, as_string = True):
-    #     """
-    #     :return:
-    #     """
-    #     if ignore is None:
-    #         ignore = []
-    #     json_repr = {}
-    #
-    #     temp_dict_representation = self.__dict__.copy()
-    #     temp_dict_representation['_created_date'] = self.__dict__['_created_date'].__str__()
-    #     temp_dict_representation["smartbit_type"] = type(self).__name__
-    #     temp_dict_representation["available_actions"] = self.get_actions()
-    #     # ignore certain field
-    #     for field in ignore:
-    #         del(temp_dict_representation[field])
-    #
-    #     # Use field's jsonify() if it has one
-    #     to_remove = []
-    #     for k, v in temp_dict_representation.items():
-    #         # print(k)
-    #         if hasattr(v, "jsonify"):
-    #             # we convert the objects to json because we don't want nest json strings
-    #             json_repr[k] = v.jsonify()
-    #             to_remove.append(k)
-    #     for k in to_remove:
-    #         del (temp_dict_representation[k])
-    #
-    #     if as_string:
-    #         json_repr.update(temp_dict_representation)
-    #
-    #     return json_repr
-    #
-    # def get_possible_actions(self):
-    #     return [func[0] for func in inspect.getmembers(self, predicate=inspect.ismethod) if
-    #                 hasattr(func[1], "action")]
-    #
-    # def get_attributes(self):
-    #     attributes = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
-    #     non_ignore_attributes = []
-    #     return dict([a for a in attributes if not (a[0].startswith('_'))])
-    #
-    # def get_actions(self):
-    #     return [func[0] for func in inspect.getmembers(self, predicate=inspect.ismethod) if
-    #                 hasattr(func[1], "action")]
-    #
-    # def execute_up(self, msg):
-    #     self.redis_client.publish("execute:up", json.dumps(msg))
-    #
-    # def execute_down(self, msg):
-    #     self.redis_client.publish("execute:up", json.dumps(msg))
+        def attrsetter(name):
+            def setter(obj, val):
+                fields = name.split(".")
+                is_dict = False
+                for field in fields[0:-1]:
+                    try:
+                        obj = getattr(obj, field)
+
+                    except:
+                        try:
+                            obj[field] = {}
+                            obj = obj[field]
+                        except:
+                            raise Exception("Not a dict?")
+
+                # using object setattr to avoid adding field to touched
+                error = True
+                try:
+                    object.__setattr__(obj, fields[-1], val)
+                    error = False
+                except:
+                    obj[fields[-1]] = val
+                    error = False
+                finally:
+                    if error:
+                        raise Exception(f"Error Happened updating {obj[fields[-1]]} ")
+            return setter
+
+        def recursive_iter(u_data, path=[]):
+            if isinstance(u_data, dict) and len(u_data) > 0:
+                for k, item in u_data.items():
+                    path.append(k)
+                    yield from recursive_iter(item, path)
+                    path.pop(-1)
+            else:
+                dotted_path = ".".join(path)
+                yield (dotted_path, u_data)
+
+        # print(list(recursive_iter(update_data)))
+        # what was updated?
+        for updated_field_id, updated_field_val in updates.items():
+            if len(updated_field_id.split(".")) > 1 and \
+                    self.is_dotted_path_dict(updated_field_id):
+                attrsetter(updated_field_id)(self, updated_field_val)
+            else:
+                for dotted_path, val in recursive_iter(update_data):
+                    # print(f"working on {dotted_path} and {val}")
+                    attrsetter(dotted_path)(self, val)
+
+    def copy_touched(self):
+        touched = self.touched
+        fields = [("self", self)]
+        while fields:
+            field = fields.pop(0)
+            for child in [(i, field[1].__dict__[i]) for i in field[1].__fields__.keys()]:
+
+                if isinstance(child[1], BaseModel) and child[0] != "_":
+                    child[1].touched = touched
+                    fields.append(child)
+
+    def set_path(self):
+        self.path = ""
+        fields = [("self", self)]
+        while fields:
+            field = fields.pop(0)
+            path = field[1].path
+            for child in [(i, field[1].__dict__[i]) for i in field[1].__fields__.keys()]:
+                if isinstance(child[1], BaseModel):
+                    child[1].path = path + "." + child[0]
+                    fields.append(child)
+
+    def get_all_touched_fields_dict(self):
+        data = {}
+        for field in self.touched:
+            if field.startswith("data."):
+                # updates don't need the data prefix
+                data[field[5:]] = attrgetter(field)(self)
+            else:
+                data[field] = attrgetter(field)(self)
+        return data
+
+    def action_sends_update(_func):
+        def wrapper(self, *args, **kwargs):
+            _func(self, *args, **kwargs)
+            # clearing the func and the and params
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+        return wrapper
+
+    def cleanup(self):
+        pass
+
+class Position(TrackedBaseModel):
+    x: int
+    y: int
+
+
+class Size(TrackedBaseModel):
+    width: int
+    height: int
+    depth: int
+
+
+class Rotation(TrackedBaseModel):
+    x: int
+    y: int
+    z: int
+
+
+class AppTypes(Enum):
+    ai_pane = "AIPane"
+    counter = "Counter"
+    note = "Note"
+    data_table = "DataTable"
+    code_cell = "CodeCell"
+    kernel_dashboard = "KernelDashboard"
+    sage_cell = "SageCell"
+    slider = "Slider"
+    stickie = "Stickie"
+    vegalite = "VegaLite"
+    vegaliteviewer = "VegaLiteViewer"
+    genericsmartbit = "GenericSmartBit"
+
+class Data(TrackedBaseModel):
+    # name: str
+    # description: str
+    position: Position
+    size: Size
+    rotation: Rotation
+    #type: AppTypes
+    type: str
+    # owner_id: str = Field(alias='ownerId')
+    # owner_id: str = Field(alias='ownerId')
+
+
+class SmartBit(TrackedBaseModel):
+    app_id: str = Field(alias='_id')
+    _createdAt: int
+    _updatedAt: int
+    data: Data
+
+    _s3_comm: ClassVar = SageCommunication(conf, prod_type)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.copy_touched()
+        self.set_path()
+
+    def send_updates(self):
+        new_data = self.get_all_touched_fields_dict()
+        self.touched.clear()
+        self._s3_comm.send_app_update(self.app_id, new_data)
+
+    @abstractmethod
+    def clean_up(self):
+        """cleans up any threads that are unused"""
+        pass
+
+class ExecuteInfo(TrackedBaseModel):
+    # executeFunc is not recognized duirng manual update in refresh_data_form_update
+    # so we end up updating executeFunc instead
+    # execute_func: str = Field(alias='executeFunc')
+    executeFunc: str
+    params: dict
+
+# class Boxe(TrackedBaseModel):
+#

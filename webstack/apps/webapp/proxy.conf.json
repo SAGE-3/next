@@ -1,0 +1,27 @@
+{
+  "/api": {
+    "target": "http://localhost:3333",
+    "secure": false,
+    "ws": true
+  },
+  "/auth": {
+    "target": "http://localhost:3333",
+    "secure": false,
+    "ws": true
+  },
+  "/yjs": {
+    "target": "http://localhost:3333",
+    "secure": false,
+    "ws": true
+  },
+  "/rtc": {
+    "target": "http://localhost:3333",
+    "secure": false,
+    "ws": true
+  },
+  "/twilio": {
+    "target": "http://localhost:3333",
+    "secure": false,
+    "ws": true
+  }
+}

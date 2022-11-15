@@ -6,21 +6,24 @@
  *
  */
 
-import { RedisClientType, SchemaFieldTypes } from "redis";
+import { RedisClientType, SchemaFieldTypes } from 'redis';
 import { v4 } from 'uuid';
 
 // The Auth Schema
 export type SBAuthSchema = {
-  provider: string,
-  providerId: string,
-  id: string
-}
+  provider: string;
+  providerId: string;
+  id: string;
+  // data to pass from auth provider to account
+  displayName?: string;
+  email?: string;
+  picture?: string;
+};
 
 /**
  * The SAGEBase Database interface for the SBAuth Class
  */
 class SBAuthDatabase {
-
   private _redisClient!: RedisClientType;
 
   private _prefix!: string;
@@ -30,7 +33,7 @@ class SBAuthDatabase {
     this._redisClient = redisclient.duplicate();
     await this._redisClient.connect();
 
-    this._prefix = prefix + ":DB";
+    this._prefix = prefix + ':DB';
     this._indexName = 'idx:auth';
     await this.createIndex();
 
@@ -38,43 +41,47 @@ class SBAuthDatabase {
   }
 
   /**
-   * Create an index for the SBAuth database. 
-  */
+   * Create an index for the SBAuth database.
+   */
   private async createIndex(): Promise<void> {
     try {
       await this._redisClient.ft.dropIndex(this._indexName);
     } catch (error) {
-      console.log("Index doesnt exist yet, creating it now.")
+      console.log('Index doesnt exist yet, creating it now.');
     }
-    await this._redisClient.ft.create(this._indexName, {
-      '$.provider': {
-        type: SchemaFieldTypes.TEXT,
-        AS: "provider"
+    await this._redisClient.ft.create(
+      this._indexName,
+      {
+        '$.provider': {
+          type: SchemaFieldTypes.TEXT,
+          AS: 'provider',
+        },
+        '$.providerId': {
+          type: SchemaFieldTypes.TEXT,
+          AS: 'providerId',
+        },
       },
-      '$.providerId': {
-        type: SchemaFieldTypes.TEXT,
-        AS: "providerId"
-      },
-    }, {
-      ON: 'JSON',
-      PREFIX: this._prefix
-    });
+      {
+        ON: 'JSON',
+        PREFIX: this._prefix,
+      }
+    );
     return;
   }
 
   /**
-   * A function to find an auth, and if one doesn't exist add it. 
-   * Can still return undefined if the add was unsucessful 
+   * A function to find an auth, and if one doesn't exist add it.
+   * Can still return undefined if the add was unsucessful
    * @param provider The provider name ('google', 'guest', 'jwt')
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthSchema if one was found or added succesfully.
    */
-  public async findOrAddAuth(provider: string, providerId: string): Promise<SBAuthSchema | undefined> {
+  public async findOrAddAuth(provider: string, providerId: string, extras?: any): Promise<SBAuthSchema | undefined> {
     let auth = await this.readAuth(provider, providerId);
     if (auth != undefined) {
       return auth;
     } else {
-      auth = await this.addAuth(provider, providerId);
+      auth = await this.addAuth(provider, providerId, extras);
       return auth;
     }
   }
@@ -85,15 +92,18 @@ class SBAuthDatabase {
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthscema if add was successful
    */
-  public async addAuth(provider: string, providerId: string): Promise<SBAuthSchema | undefined> {
+  public async addAuth(provider: string, providerId: string, extras: any): Promise<SBAuthSchema | undefined> {
     const doc = {
       provider,
       providerId,
-      id: v4()
+      id: v4(),
+      displayName: extras.displayName,
+      email: extras.email,
+      picture: extras.picture,
     } as SBAuthSchema;
     const key = provider + providerId;
     const redisRes = await this._redisClient.json.set(`${this._prefix}:${key}`, '.', doc);
-    if (redisRes == "OK") {
+    if (redisRes == 'OK') {
       return doc;
     } else {
       return undefined;
@@ -112,8 +122,8 @@ class SBAuthDatabase {
       const response = await this._redisClient.json.get(`${this._prefix}:${key}`);
       return response as SBAuthSchema;
     } catch (error) {
-      console.log("SAGEBase SBAuthDatabase error> ", error)
-      return undefined
+      console.log('SAGEBase SBAuthDatabase error> ', error);
+      return undefined;
     }
   }
 
@@ -125,7 +135,7 @@ class SBAuthDatabase {
     try {
       const key = provider + providerId;
       const response = await this._redisClient.json.del(`${this._prefix}:${key}`);
-      return (response > 0) ? true : false;
+      return response > 0 ? true : false;
     } catch (error) {
       this.ERRORLOG(error);
       return false;
@@ -133,9 +143,9 @@ class SBAuthDatabase {
   }
 
   private ERRORLOG(error: unknown) {
-    console.log("SAGEBase SBAuthDatabase ERROR: ", error);
+    console.log('SAGEBase SBAuthDatabase ERROR: ', error);
   }
 }
 
 export type { SBAuthDatabase };
-export const SBAuthDB = new SBAuthDatabase;
+export const SBAuthDB = new SBAuthDatabase();

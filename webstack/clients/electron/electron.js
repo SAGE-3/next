@@ -32,6 +32,9 @@ const Store = require('electron-store');
 // parsing command-line arguments
 var program = require('commander');
 
+// URL received from protocol sage3://
+var gotoURL = '';
+
 // Application modules in 'src'
 // Hashing function
 var md5 = require('./src/md5');
@@ -166,11 +169,19 @@ program
   .option('--height <n>', 'Window height (int)', myParseInt, defaults.height)
   .option('--disable-hardware', 'Disable hardware acceleration', false)
   .option('--show-fps', 'Display the Chrome FPS counter', false)
+  .option('--profile <s>', 'Create a profile (string)')
   .option('--width <n>', 'Window width (int)', myParseInt, defaults.width);
 // Parse the arguments
 program.parse(args);
 // Get the results
 const commander = program.opts();
+
+if (commander.profile) {
+  console.log('Profile>', commander.profile);
+  const profilePath = path.resolve(commander.profile);
+  app.setPath('userData', profilePath);
+  console.log('Profile> userData', profilePath);
+}
 
 // Disable hardware rendering (useful for some large display systems)
 if (commander.disableHardware) {
@@ -182,10 +193,10 @@ if (commander.clear) {
   store.clear();
 }
 
-// Force using integrated GPU when there are multiple GPUs available
 if (process.platform === 'win32') {
-  console.log('Preferences> force integrated GPU (windows)');
-  app.commandLine.appendSwitch('force_low_power_gpu');
+  // Force using integrated GPU when there are multiple GPUs available
+  // console.log('Preferences> force integrated GPU (windows)');
+  // app.commandLine.appendSwitch('force_low_power_gpu');
 }
 
 // Reset the desktop scaling on Windows
@@ -287,12 +298,8 @@ function openWindow() {
     var location = commander.server;
     currentServer = location;
 
-    // location = location + '/#/home';
-    mainWindow.loadURL(location, {
-      // userAgent: 'Chrome Electron SAGE3'
-      // userAgent:
-      //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36 Electron/13.2.0',
-    });
+    if (gotoURL) mainWindow.loadURL(gotoURL);
+    else mainWindow.loadURL(location);
 
     if (commander.monitor !== null) {
       mainWindow.on('show', function () {
@@ -305,9 +312,6 @@ function openWindow() {
       // Once all done, prevent changing the fullscreen state
       mainWindow.fullScreenable = false;
     }
-    // } else {
-    // otherwise open the popup
-    // createRemoteSiteInputWindow();
   }
 }
 
@@ -403,6 +407,40 @@ function disableGeolocation(session) {
 }
 
 /**
+ * Take a Screenshot of the visible part of the window
+ */
+function TakeScreenshot() {
+  if (mainWindow) {
+    // Capture the Electron window
+    mainWindow.capturePage().then(function (img) {
+      // convert to JPEG
+      const imageData = img.toJPEG(90);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const day = now.getDate();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const second = now.getSeconds();
+      const dt = `-${year}-${month}-${day}-${hour}-${minute}-${second}`;
+      // dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+      const options = {
+        title: 'Save current board as a JPEG file',
+        defaultPath: app.getPath('downloads') + '/screenshot' + dt + '.jpg',
+      };
+      // Open the save dialog
+      electron.dialog.showSaveDialog(mainWindow, options).then((obj) => {
+        if (!obj.canceled) {
+          // write the file
+          fs.writeFile(obj.filePath.toString(), imageData, 'base64', function (err) {
+            if (err) throw err;
+          });
+        }
+      });
+    });
+  }
+}
+/**
  * Creates an electron window.
  *
  * @method     createWindow
@@ -432,6 +470,8 @@ function createWindow() {
       webviewTag: true,
       // Disable alert and confirm dialogs
       disableDialogs: true,
+      // nodeIntegration: true,
+      // contextIsolation: false,
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: true,
@@ -441,7 +481,7 @@ function createWindow() {
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
       // Hack to preload jquery for broken sites
-      // preload: path.resolve(path.join(__dirname, 'preload.js')),
+      preload: path.resolve(path.join(__dirname, 'preload.js')),
     },
   };
 
@@ -661,19 +701,21 @@ function createWindow() {
     // Show the warning view
     mainWindow.setBrowserView(warningView);
     warningView.setBounds({ x: 0, y: 0, width, height });
-    // Retry to load the original URL
-    if (tries) {
-      setTimeout(function () {
-        tries--;
-        mainWindow.reload();
-      }, 1000);
-    } else {
-      // When failed to load, redirect to the main server
-      mainWindow.loadURL('https://sage3.app/');
-      mainWindow.setBrowserView(null);
-      // Reset the counter
-      tries = 4;
-    }
+
+    // Since the window has buttons, I don't think we should try to reload the page anymore. People get stuck in a infiinite loop
+    // // Retry to load the original URL
+    // if (tries) {
+    //   setTimeout(function () {
+    //     tries--;
+    //     mainWindow.reload();
+    //   }, 1000);
+    // } else {
+    //   // When failed to load, redirect to the main server
+    //   mainWindow.loadURL('https://sage3.app/');
+    //   mainWindow.setBrowserView(null);
+    //   // Reset the counter
+    //   tries = 4;
+    // }
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
@@ -692,6 +734,40 @@ function createWindow() {
     console.log('will-attach-webview');
     // Disable alert and confirm dialogs
     webPreferences.disableDialogs = true;
+
+    // webPreferences.contextIsolation = true;
+    // webPreferences.nodeIntegration = true;
+    // params.nodeIntegration = true;
+
+    const sender = event.sender;
+    sender.on('ipc-message', function (evt, channel, args) {
+      console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
+      // console.log('Webview>    message', channel, args);
+      // Message for the webview pixel streaming
+      if (channel === 'streamview') {
+        const viewContent = electron.webContents.fromId(args.id);
+        viewContent.beginFrameSubscription(true, (image, dirty) => {
+          let dataenc;
+          let neww, newh;
+          const devicePixelRatio = 2;
+          const quality = 50;
+          if (devicePixelRatio > 1) {
+            neww = dirty.width / devicePixelRatio;
+            newh = dirty.height / devicePixelRatio;
+            const resizedimage = image.resize({ width: neww, height: newh });
+            dataenc = resizedimage.toJPEG(quality);
+          } else {
+            dataenc = image.toJPEG(quality);
+            neww = dirty.width;
+            newh = dirty.height;
+          }
+          evt.reply('paint', {
+            buf: dataenc.toString('base64'),
+            dirty: { ...dirty, width: neww, height: newh },
+          });
+        });
+      }
+    });
 
     // Override the UserAgent variable: make websites behave better
     // Not permanent solution: here pretending to be Google Chrome
@@ -748,15 +824,16 @@ function createWindow() {
 
   // Retrieve media sources for desktop sharing
   ipcMain.on('request-sources', () => {
-    // Get only the monitors and thumbnails.
-    // The types param can also take "window" or "apps"
+    // Get list of the monitors and windows, requesting thumbnails for each.
+    // available types are screen and window
     const mediaInfo = {
-      types: ['screen'],
+      types: ['screen', 'window'],
+      // types: ['screen'],
       thumbnailSize: { width: 200, height: 200 },
     };
 
     // Get the sources and return the result to the renderer
-    desktopCapturer.getSources(mediaInfo).then(async (sources) => {
+    desktopCapturer.getSources(mediaInfo).then((sources) => {
       const values = [];
       for (let s in sources) {
         const source = sources[s];
@@ -777,6 +854,20 @@ function createWindow() {
       mainWindow.webContents.send('set-source', values);
     });
   });
+
+  // Request for a screenshot from the web client
+  ipcMain.on('take-screenshot', () => {
+    TakeScreenshot();
+  });
+
+  // Request from the renderer process
+  // ipcMain.on('streamview', (event, arg) => {
+  //   console.log('streamview>', arg.url, arg.id);
+  //   // const allweb = electron.webContents.getAllWebContents();
+  //   // allweb.forEach((web) => {
+  //   //   console.log('web>', web.id, web);
+  //   // });
+  // });
 }
 
 /**
@@ -820,39 +911,56 @@ app.on('certificate-error', function (event, webContent, url, error, certificate
   }
 });
 
-//
-// Protocol handler sage3://
-// Handle the custom protocol on Windows and other platforms
-//
 if (process.platform === 'win32') {
   const gotTheLock = app.requestSingleInstanceLock();
 
   if (!gotTheLock) {
     app.quit();
   } else {
-    app.on('second-instance', (event, commandLine, workingDirectory) => {
-      // Someone tried to run a second instance, we should focus our window.
+    // For first instance
+    const count = process.argv.length;
+    if (count > 2) {
+      const lastarg = process.argv[count - 1];
+      const newurl = lastarg.replace('sage3://', 'https://');
       if (mainWindow) {
+        mainWindow.loadURL(newurl);
+      } else {
+        // save the URL for later
+        gotoURL = newurl;
+      }
+    }
+
+    // Happens when a window is already opened
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+      const lastarg = commandLine[commandLine.length - 1];
+      // Focus on the main window.
+      if (mainWindow && lastarg) {
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
+        const newurl = lastarg.replace('sage3://', 'https://');
+        mainWindow.loadURL(newurl);
+      } else {
+        // save the URL for later
+        gotoURL = newurl;
       }
     });
   }
 }
 
-/**
- * This method will be called when Electron has finished
- * initialization and is ready to create a browser window.
- */
-app.on('ready', createWindow);
-
+//
+// Protocol handler sage3://
 // Handle the custom protocol
+//
+// Protocol handler for osx while application is not running in the background.
 app.on('open-url', (event, url) => {
+  event.preventDefault();
   // make it a valid URL
   const newurl = url.replace('sage3://', 'https://');
-  console.log(`We are going to: ${newurl}`);
   if (mainWindow) {
     mainWindow.loadURL(newurl);
+  } else {
+    // save the URL for later
+    gotoURL = newurl;
   }
 });
 
@@ -877,6 +985,12 @@ app.on('activate', function () {
     createWindow();
   }
 });
+
+/**
+ * This method will be called when Electron has finished
+ * initialization and is ready to create a browser window.
+ */
+app.on('ready', createWindow);
 
 /**
  * Utiltiy function to parse command line arguments as number
@@ -927,50 +1041,6 @@ function openInterfaceInBrowser() {
   });
 }
 
-/**
- * Creates a remote site input window.
- *
- * @method     createRemoteSiteInputWindow
- */
-function createRemoteSiteInputWindow() {
-  // creating a new window
-  if (remoteSiteInputWindow != undefined) {
-    return;
-  }
-  remoteSiteInputWindow = new BrowserWindow({
-    width: 900,
-    height: 660,
-    frame: true,
-    title: 'Connect to SAGE2 server',
-    webPreferences: {
-      nativeWindowOpen: true,
-      contextIsolation: false,
-      nodeIntegration: true,
-      webSecurity: true,
-    },
-  });
-  // Load html into window
-  remoteSiteInputWindow.loadURL(
-    url.format({
-      // Load the UI for the panel
-      pathname: path.join(__dirname, 'remoteSiteWindow.html'),
-      protocol: 'file',
-      slashes: true,
-    })
-  );
-  setTimeout(() => {
-    remoteSiteInputWindow.webContents.send('current-location', currentDomain);
-  }, 1000);
-
-  // Garbage collection for window (when add window is closed the space should be deallocated)
-  remoteSiteInputWindow.on('closed', () => {
-    remoteSiteInputWindow = null;
-  });
-
-  // No menu needed in this window
-  remoteSiteInputWindow.setMenu(null);
-}
-
 function buildMenu() {
   const template = [
     {
@@ -988,7 +1058,15 @@ function buildMenu() {
           label: 'Go to Hawaii server',
           click() {
             if (mainWindow) {
-              mainWindow.loadURL('https://pele.sage3.app/');
+              mainWindow.loadURL('https://manoa.sage3.app');
+            }
+          },
+        },
+        {
+          label: 'Go to Development server',
+          click() {
+            if (mainWindow) {
+              mainWindow.loadURL('https://mini.sage3.app');
             }
           },
         },
@@ -1016,26 +1094,7 @@ function buildMenu() {
         {
           label: 'Take Screenshot',
           click() {
-            if (mainWindow) {
-              // Capture the Electron window
-              mainWindow.capturePage().then(function (img) {
-                // convert to JPEG
-                const imageData = img.toJPEG(90);
-                const options = {
-                  title: 'Save current board as a JPEG file',
-                  defaultPath: app.getPath('downloads') + '/screenshot.jpg',
-                };
-                // Open the save dialog
-                electron.dialog.showSaveDialog(mainWindow, options).then((obj) => {
-                  if (!obj.canceled) {
-                    // write the file
-                    fs.writeFile(obj.filePath.toString(), imageData, 'base64', function (err) {
-                      if (err) throw err;
-                    });
-                  }
-                });
-              });
-            }
+            TakeScreenshot();
           },
         },
         {

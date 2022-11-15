@@ -19,6 +19,41 @@ def import_cls(abs_module_path, class_name):
     target_class = getattr(module_object, class_name)
     return target_class
 
+
+def create_dict(path, val, data={}):
+    """
+    data = {"A": {"B": {"C": 1}}}
+    create_dic("A.B.C", 10, data)
+    {'A': {'B': {'C': 10}}}
+
+    data = {"A": {"B": {"E": 1}}}
+    create_dic("A.B.C", 10, data)
+    {'A': {'B': {'E': 1, 'C': 10}}}
+
+    data = {"A": {"F": {"E": 1}}}
+    create_dic("A.B.C", 10, data)
+    {'A': {'F': {'E': 1}, 'B': {'C': 10}}}
+
+    :param path:
+    :param val:
+    :param data:
+    :return:
+    """
+
+    path_keys = path.split(".")
+    data_cp = data
+    for key in path_keys[:-1]:
+        subfield = data_cp.get(key, None)
+        if subfield:
+            data_cp = subfield
+        else:
+            data_cp[key] = {}
+            data_cp= data_cp.get(key, None)
+
+    data_cp[path_keys[-1]] = val
+    return data
+
+
 def say_hi(first_name=None, last_name=None):
     if first_name is None:
         first_name = "John"

@@ -1,9 +1,0 @@
-{
-  "production": true,
-  "redis-server": "redis-server",
-  "fluent-server": "fluent-server",
-  "server": "https://node-server",
-  "path": "/api/connect-ws",
-  "board_name": "Main Board",
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QGdtYWlsLmNvbSIsIm5hbWUiOiJUZXN0IFVzZXIiLCJhZG1pbiI6dHJ1ZSwiaWF0IjoxNjI5NzQ2OTY3LCJleHAiOjE2NjEzMDQ1NjcsImF1ZCI6InNhZ2UzLmFwcCIsImlzcyI6InNhZ2UzYXBwQGdtYWlsLmNvbSJ9.hkuQAbZ5GX7A_Le2pJpTvT2SFPAqWRwFeqhnpFWvqhDA5iHR02qrGDFFZMRdKyHoSoVxCtXRmzQ8frrV80RNU3ubh0JYQ_DINX7u0yL-udbblHR5AMxc4Jp3ZrJW2t7yjG7jUJxzEX-agoVm4LrdIOdf_hb3qebB1bMsPkcPiFh8YgoXzgEWF9yyyPbgM2iRkUvdRYRKsYjVeinSzpDwucCaLZON9Qm3fnw8-aQON1j1I3UQ6OcrRJ94mt0_URbndGVDbSAlS1vhYc3qcAAKsgAnGw15-KXnQbHcWChis5X05tbncgopkbaC1dvD2U4q97-0Lm42e4xZhNyEmOPkLg"
-}

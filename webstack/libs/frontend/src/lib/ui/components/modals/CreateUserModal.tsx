@@ -17,39 +17,44 @@ import {
   InputGroup,
   InputLeftElement,
   Input,
-  useToast,
   Button,
+  FormControl,
+  FormLabel,
+  Text,
+  RadioGroup,
+  Radio,
+  Stack,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
-import { useUserStore } from '../../../stores';
+import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+import { useAuth } from '@sage3/frontend';
+import { ColorPicker } from '../general';
 
-interface CreateUserModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+type CreateUserProps = {
+  createUser: (user: UserSchema) => void;
+};
 
-export function CreateUserModal(props: CreateUserModalProps): JSX.Element {
-  const toast = useToast();
+export function CreateUserModal(props: CreateUserProps): JSX.Element {
+  // get the user information
+  const { auth, logout } = useAuth();
 
-  const createUser = useUserStore(state => state.createUser);
+  const [name, setName] = useState<UserSchema['name']>(auth?.displayName ?? '');
+  const [type, setType] = useState<UserSchema['userType']>('client');
+  const [color, setColor] = useState<UserSchema['color']>(randomSAGEColor());
 
-  const [name, setName] = useState<UserSchema['name']>('');
-  const [email, setEmail] = useState<UserSchema['email']>('');
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
+  const handleColorChange = (color: string) => setColor(color as SAGEColors);
+  const handleTypeChange = (type: UserSchema['userType']) => setType(type);
 
-  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)
-
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-  const setRef = useCallback(node => {
+
+  const setRef = useCallback((_node: HTMLInputElement) => {
     if (initialRef.current) {
       initialRef.current.select();
     }
-  }, [])
-
-
+  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -59,62 +64,75 @@ export function CreateUserModal(props: CreateUserModalProps): JSX.Element {
     }
   };
 
-  const createAccount = () => {
-    if (name && email) {
-      // remove leading and trailing space, and limit name length to 20
-      const cleanedName = name.trim().substring(0, 19);
-
-      if (cleanedName.split(' ').join('').length === 0) {
-        toast({
-          title: 'Name must have at least one character',
-          status: 'error',
-          duration: 2 * 1000,
-          isClosable: true,
-        });
-      } else {
-        createUser(cleanedName, email);
-        props.onClose();
-      }
+  function createAccount() {
+    if (name) {
+      const newUser = {
+        name,
+        email: auth?.email ? auth.email : '',
+        color: color,
+        userRole: 'user',
+        userType: type,
+        profilePicture: '',
+      } as UserSchema;
+      props.createUser(newUser);
     }
-  };
-
-
+  }
 
   return (
-    <Modal isCentered isOpen={props.isOpen} closeOnEsc={false} closeOnOverlayClick={false} onClose={props.onClose}>
+    <Modal
+      isCentered
+      isOpen={true}
+      closeOnOverlayClick={false}
+      onClose={() => {
+        console.log('');
+      }}
+      blockScrollOnMount={false}
+    >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create User Account</ModalHeader>
+        <ModalHeader fontSize="3xl">Create User Account</ModalHeader>
         <ModalBody>
-          <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
-            <Input
-              ref={initialRef}
-              type="string"
-              placeholder={'Name'}
-              mr={4}
-              value={name}
-              onChange={handleNameChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
-          <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
-            <Input
-              type="email"
-              placeholder={'Email'}
-              mr={4}
-              value={email}
-              onChange={handleEmailChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
+          <FormControl isRequired mb={4}>
+            <FormLabel htmlFor="htmlFor">Username</FormLabel>
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+              <Input
+                ref={initialRef}
+                type="string"
+                id="first-name"
+                placeholder="First name"
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
+                value={name}
+                onChange={handleNameChange}
+                onKeyDown={onSubmit}
+              />
+            </InputGroup>
+          </FormControl>
+          <FormControl isRequired mt="2">
+            <FormLabel htmlFor="color">Color</FormLabel>
+            <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
+          </FormControl>
+          <FormControl mt="2">
+            <FormLabel htmlFor="type">User Type</FormLabel>
+            <RadioGroup onChange={handleTypeChange} value={type}>
+              <Stack direction="row">
+                {['client', 'wall'].map((value, i) => (
+                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                ))}
+              </Stack>
+            </RadioGroup>{' '}
+          </FormControl>
+          <Text mt={5} fontSize={'md'}>
+            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
+          </Text>
+          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name || !email}>
-            Create
+          <Button colorScheme="red" mx={2} onClick={logout}>
+            Cancel
+          </Button>
+          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name}>
+            Create Account
           </Button>
         </ModalFooter>
       </ModalContent>

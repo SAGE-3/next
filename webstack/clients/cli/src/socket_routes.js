@@ -6,8 +6,9 @@
  *
  */
 
-// Websocket socketio v4+
-import { io } from "socket.io-client";
+// Websocket
+import { WebSocket } from 'ws';
+import { v1 } from 'uuid';
 
 /**
  * Connect to a server with the auth cookies
@@ -19,26 +20,29 @@ import { io } from "socket.io-client";
 export function socketConnection(server, cookies) {
   // socketio options with login info
   const wsopts = {
-    path: '/api/connect-ws',
     withCredentials: true,
-    extraHeaders: {
+    headers: {
       Cookie: cookies,
     },
   };
 
   // socketio v4 api
-  const socket = io(server, wsopts);
+  const socket = new WebSocket(server, wsopts);
 
-  socket.on('disconnect', (e) => {
-    console.log('Socket> disconnect', e);
-    // and quit
-    process.exit(1);
+  // socket.addEventListener('open', (event) => {
+  //   console.log('Connection Open');
+  // });
+
+  // socket.addEventListener('message', (ev) => this.processServerMessage(ev));
+
+  socket.addEventListener('close', (event) => {
+    console.log('Connection Closed');
+    // this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
   });
 
-  socket.on('connect_error', (e) => {
-    console.log('Socket> connect_error', e);
-    // and quit
-    process.exit(1);
+  socket.addEventListener('error', (event) => {
+    console.log('Connection Error', event.message);
+    // socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
   });
 
   return socket;
@@ -57,7 +61,7 @@ export function socketConnectionJWT(server, token) {
     path: '/api/connect-ws',
     withCredentials: true,
     // JWT token
-    auth: { token: token }
+    auth: { token: token },
   };
 
   // socketio v4 api
@@ -84,8 +88,15 @@ export function socketConnectionJWT(server, token) {
  * @param {number} x
  * @param {number} y
  */
-export function sendCursor(socket, x, y) {
-  socket.emit('presence-cursor', { c: [-x, -y] });
+export function sendCursor(socket, id, x, y) {
+  socket.send(
+    JSON.stringify({
+      id: '1',
+      route: '/api/presence/' + id,
+      method: 'PUT',
+      body: { cursor: { x: x, y: y, z: 0 } },
+    })
+  );
 }
 
 /**
@@ -94,7 +105,7 @@ export function sendCursor(socket, x, y) {
  * @param {any} socket
  * @param {funtion} cb
  */
- export function presenceUpdate(socket, cb) {
+export function presenceUpdate(socket, cb) {
   socket.on('presence-update', cb);
 }
 
@@ -104,7 +115,7 @@ export function sendCursor(socket, x, y) {
  * @param {any} socket
  * @param {funtion} cb
  */
- export function cursorUpdate(socket, cb) {
+export function cursorUpdate(socket, cb) {
   socket.on('presence-cursor', cb);
 }
 
@@ -115,7 +126,7 @@ export function sendCursor(socket, x, y) {
  * @param {string} boardId
  */
 export function boardDisconnect(socket, boardId) {
-  socket.emit('board-disconnect', { boardId });
+  // socket.send('board-disconnect', { boardId });
 }
 
 /**
@@ -124,14 +135,15 @@ export function boardDisconnect(socket, boardId) {
  * @param {ws} socket
  * @param {string} boardId
  */
-export function boardConnect(socket, boardId) {
-  // Connect to a board, and get updates
-  socket.emit('board-connect', { boardId });
-
-  // Local time
-  const timePayload = {
-    timeOffset: new Date().getTimezoneOffset(),
-    timeZone: new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ')[2],
-  };
-  socket.emit('presence-time', timePayload);
+export function boardConnect(socket, id, roomId, boardId) {
+  const payload = JSON.stringify({
+    id: v1(),
+    route: '/api/presence/' + id,
+    method: 'PUT',
+    body: {
+      roomId: roomId,
+      boardId: boardId,
+    },
+  });
+  socket.send(payload);
 }

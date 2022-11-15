@@ -1,28 +1,27 @@
 #!/bin/bash
 
-#docker build -f node_server/Dockerfile.prod -t sage3/sage3:prod ..
-#docker push sage3/sage3:prod
-
 # macOS
 if [[ $OSTYPE == 'darwin'* ]]; then
 
-  # M1
+  security -v unlock-keychain ~/Library/Keychains/login.keychain-db
+
   if [[ `uname -m` == 'arm64' ]]; then
-    docker buildx build --push -f node_server/Dockerfile.m1 --platform linux/arm64 --tag sage3/sage3:prod ..
-    docker buildx build        -f foresight/Dockerfile --platform linux/arm64 --tag sage3/foresight ..
+    docker buildx build --push -f node_server/Dockerfile --platform linux/arm64 --tag sage3/next:arm64 ..
+    docker buildx build --push -f foresight/Dockerfile   --platform linux/arm64 --tag sage3/foresight:arm64 ..
   fi
 
   # Intel
   if [[ `uname -m` == 'x86_64' ]]; then
-    docker buildx build -f node_server/Dockerfile.prod --tag sage3/sage3:prod ..
+    docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag sage3/next:amd64 ..
+    docker buildx build --push -f foresight/Dockerfile   --platform linux/amd64 --tag sage3/foresight:amd64 ..
   fi
 
 fi
 
 # linux
 if [[ $OSTYPE == 'linux'* ]]; then
-  docker buildx build --push -f node_server/Dockerfile.prod --platform linux/amd64 --tag sage3/sage3:prod ..
-  docker buildx build --push -f foresight/Dockerfile --platform linux/amd64 --tag sage3/foresight ..
+  docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag sage3/next:amd64 ..
+  docker buildx build --push -f foresight/Dockerfile   --platform linux/amd64 --tag sage3/foresight:amd64 ..
 fi
 
 

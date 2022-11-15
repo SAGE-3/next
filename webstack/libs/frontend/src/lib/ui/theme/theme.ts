@@ -10,7 +10,9 @@
 // SAGE3 Chakra UI Theme
 //
 
-import { extendTheme, ThemeConfig } from '@chakra-ui/react';
+import { extendTheme, StyleFunctionProps, ThemeConfig } from '@chakra-ui/react';
+import { mode } from '@chakra-ui/theme-tools';
+import { colors } from './colors';
 
 // Add your color mode config
 const config: ThemeConfig = {
@@ -18,22 +20,14 @@ const config: ThemeConfig = {
   useSystemColorMode: false,
 };
 
-// Create a drawer variant that doesnt capture event (non-modal)
-const components = {
-  Drawer: {
-    variants: {
-      alwaysOpen: {
-        parts: ['dialog, dialogContainer'],
-        dialog: {
-          pointerEvents: 'auto',
-        },
-        dialogContainer: {
-          pointerEvents: 'none',
-        },
-      },
+const styles = {
+  global: (props: StyleFunctionProps) => ({
+    // styles for the `body`
+    body: {
+      bg: mode('gray.50', '#212121')(props),
     },
-  },
+  }),
 };
 
 // Extend the theme
-export const theme = extendTheme({ config, components });
+export const theme = extendTheme({ config, colors, styles });

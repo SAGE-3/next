@@ -6,9 +6,6 @@
  *
  */
 
-import { KeysInterface } from "./keys";
-
-
 /**
  * Configuration parameters for the SAGE3 server
  *
@@ -36,12 +33,77 @@ export interface serverConfiguration {
   // Server list
   servers: { name: string; url: string }[];
   // Services
-  redis: {
-    host: string;
-  };
-  fluent: {
-    host: string;
+  redis: { url: string };
+  // Feature flags
+  features: {
+    twilio: boolean;
+    ai: boolean;
+    jupyter: boolean;
+    cell: boolean;
+    articulate: boolean;
   };
   // ID management API keys
-  keys: KeysInterface;
+  auth: AuthConfiguration;
+  // SSL/HTTPS certificates
+  ssl: {
+    certificateFile: string;
+    certificateKeyFile: string;
+    certificateChainFile: string;
+  };
+  // Twilio service
+  twilio: TwilioConfiguration;
+  // Namespace for signing uuid v5 keys
+  namespace: string;
+}
+
+/**
+ * Credentials for user autentification APIs (passport, cilogon, ...)
+ *
+ * @export
+ * @interface AuthConfiguration
+ */
+
+export interface AuthConfiguration {
+  // Session management
+  sessionMaxAge: number;
+  sessionSecret: string;
+
+  // List of login strategies: guest, google, jwt, cilogon, ...
+  strategies: ('google' | 'cilogon' | 'guest' | 'jwt')[];
+
+  // Admin users
+  admins: string[];
+
+  // Guest
+  guestConfig?: {
+    routeEndpoint: string;
+  };
+  // Google API keys
+  googleConfig?: {
+    clientID: string;
+    clientSecret: string;
+    routeEndpoint: string;
+    callbackURL: string;
+  };
+  // JSON Web Token (JWT)
+  jwtConfig?: {
+    publicKey: string;
+    issuer: string;
+    audience: string;
+    routeEndpoint: string;
+  };
+  // CILogon credentials
+  cilogonConfig?: {
+    clientID: string;
+    clientSecret?: string;
+    routeEndpoint: string;
+    callbackURL: string;
+  };
+}
+
+// The Twilio Configuration
+export interface TwilioConfiguration {
+  accountSid: string; // Your Account SID from www.twilio.com/console
+  apiKey: string; // API Key
+  apiSecret: string; // API Secret
 }

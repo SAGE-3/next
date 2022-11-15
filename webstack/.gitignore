@@ -9,7 +9,7 @@
 /out-tsc
 /docs/libs
 /docs/homebase
-/docs/collaboration-space
+/docs/webapp
 
 # dependencies
 /node_modules

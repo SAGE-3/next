@@ -1,98 +1,147 @@
-import { SBDocumentMessage, SBJSON } from "@sage3/sagebase";
-import { APIWSEvent, APIWSMessage, APIWSRequest } from "@sage3/shared/types";
-import { webSocket, WebSocketSubject } from "rxjs/webSocket";
-import { v4 } from "uuid";
+import { SBDocumentMessage, SBJSON } from '@sage3/sagebase';
+import { genId } from '@sage3/shared';
+import { APIClientWSMessage } from '@sage3/shared/types';
 
-export class SocketAPI {
-  private static instance: SocketAPI;
-  private socketObserver: apiSocketObserver;
-  private subscriptions: Record<string, (message: any) => void>;
+class SocketAPISingleton {
+  private _socketType: string;
+  private _socket!: WebSocket;
+  private _subscriptions: Record<
+    string,
+    {
+      callback: (message: SBDocumentMessage<any>) => void;
+      unsub: (message: SBDocumentMessage<any>) => void;
+    }
+  >;
 
-  private requestCallbacks: Record<string, Promise<() => void>>;
+  private _restmessages: Record<string, any>;
 
-
-  private constructor() {
-    this.socketObserver = apiSocketObserver.getInstance();
-    this.subscriptions = {};
-    this.requestCallbacks = {};
-    this.socketObserver.observeSocket.subscribe((message: unknown) => this.processServerMessage(message as APIWSMessage | APIWSEvent<SBJSON>));
+  public constructor() {
+    this._subscriptions = {};
+    this._restmessages = {};
+    this._socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   }
 
-  private processServerMessage(message: APIWSMessage | APIWSEvent<SBJSON>) {
-    if (message.type === 'event') {
-      this.subscriptions[message.msgId](message.event);
+  private processServerMessage(message: MessageEvent<any>) {
+    const msg = JSON.parse(message.data);
+    if (this._subscriptions[msg.id]) {
+      this._subscriptions[msg.id].callback(msg.event);
+    } else if (this._restmessages[msg.id]) {
+      this._restmessages[msg.id](msg);
+      delete this._restmessages[msg.id];
     } else {
-      console.log("WS REPONSE> ", message);
+      // this.print('Message received but has no owner:' + msg.event);
     }
   }
 
-  public sendMessage(message: APIWSRequest): void {
-    const id = v4();
-    const request = {
-      ...message,
-      msgId: id
-    } as APIWSMessage;
-    this.socketObserver.send(request);
+  private sendMessage(message: string): void {
+    if (this._socket && this._socket.readyState === WebSocket.OPEN) {
+      this._socket.send(message);
+      // } else {
+      // this.printWarn('Socket still connecting...');
+      // setTimeout(() => this.sendMessage(message), 1000);
+    }
   }
 
-  public subscribe<T extends SBJSON>(message: APIWSRequest, callback: (message: SBDocumentMessage<T>) => void): () => void {
-    const id = v4();
-    const request = {
-      ...message,
-      msgId: id
-    } as APIWSMessage;
-    this.subscriptions[id] = callback;
-    this.socketObserver.send(request);
-    return () => {
-      const parts = message.route.split('/');
-      const route = `/api/${parts[2]}/unsubscribe`;
-      const unsubRequest = {
-        msgId: id,
-        type: 'unsub',
+  public async sendRESTMessage(
+    route: APIClientWSMessage['route'],
+    method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>,
+    body?: Record<string, unknown>
+  ): Promise<any> {
+    await this.init();
+    const message = {
+      id: genId(),
+      route: '/api' + route,
+      method,
+    } as APIClientWSMessage;
+    if (body) message.body = body;
+    let promiseResolve;
+    const promise = new Promise((resolve, reject) => {
+      promiseResolve = resolve;
+    });
+    this._restmessages[message.id] = promiseResolve;
+    this.sendMessage(JSON.stringify(message));
+    return promise;
+  }
+
+  public async subscribe<T extends SBJSON>(route: string, callback: (message: SBDocumentMessage<T>) => void): Promise<() => void> {
+    const subMessage = {
+      id: genId(),
+      route: '/api' + route,
+      method: 'SUB',
+    } as APIClientWSMessage;
+    await this.init();
+    const unsub = () => {
+      const parts = subMessage.route.split('/');
+      const route = `/api/${parts[2]}`;
+      const unsubMessage = {
+        id: subMessage.id,
         route,
-        body: {
-          subId: id
-        }
-      } as APIWSMessage;
-      this.socketObserver.send(unsubRequest)
-      delete this.subscriptions[id];
-    }
+        method: 'UNSUB',
+      } as APIClientWSMessage;
+      delete this._subscriptions[subMessage.id];
+      this.sendMessage(JSON.stringify(unsubMessage));
+      return;
+    };
+
+    this._subscriptions[subMessage.id] = {
+      callback,
+      unsub,
+    };
+    this.sendMessage(JSON.stringify(subMessage));
+
+    return unsub;
   }
 
-  public static getInstance(): SocketAPI {
-    if (!SocketAPI.instance) {
-      // Create the singleton
-      SocketAPI.instance = new SocketAPI();
-    }
-    return SocketAPI.instance;
+  public async init(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this._socket !== undefined) {
+        return resolve();
+      }
+      this.print('Initializating socket...');
+
+      this._subscriptions = {};
+
+      this._socket = new WebSocket(`${this._socketType}//${window.location.host}/api`);
+
+      this._socket.addEventListener('open', (event) => {
+        this.print('Connection Open');
+        return resolve();
+      });
+
+      this._socket.addEventListener('message', (ev) => this.processServerMessage(ev));
+
+      this._socket.addEventListener('close', (event) => {
+        this.printWarn('Connection Closed');
+        this._subscriptions = {};
+        this._restmessages = {};
+        this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
+      });
+
+      this._socket.addEventListener('error', (event) => {
+        this.printError('Connection Error');
+        this._subscriptions = {};
+        this._restmessages = {};
+        this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
+      });
+    });
+  }
+
+  public async getSocket(): Promise<WebSocket> {
+    await this.init();
+    return this._socket;
+  }
+
+  private printWarn(message: string): void {
+    console.warn('SocketAPI> ', message);
+  }
+
+  private printError(message: string): void {
+    console.error('SocketAPI> ', message);
+  }
+
+  private print(message: string): void {
+    console.log('SocketAPI> ', message);
   }
 }
 
-
-class apiSocketObserver {
-  // The singleton instance
-  private static instance: apiSocketObserver;
-  public observeSocket: WebSocketSubject<unknown>;
-
-  private constructor() {
-    console.log("wsObserve> opening socket");
-    // Open a socket.
-    const socketType = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
-
-    this.observeSocket = webSocket(`${socketType}//${window.location.hostname}:${window.location.port}/api`);
-
-
-  }
-
-  public send(message: any): void {
-    this.observeSocket.next(message);
-  }
-
-  public static getInstance(): apiSocketObserver {
-    if (!apiSocketObserver.instance) {
-      // Create the singleton
-      apiSocketObserver.instance = new apiSocketObserver();
-    }
-    return apiSocketObserver.instance;
-  }
-}
+export const SocketAPI = new SocketAPISingleton();
