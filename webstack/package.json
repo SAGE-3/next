@@ -90,6 +90,7 @@
     "react-router-dom": "6.3.0",
     "react-vega": "^7.5.1",
     "react-virtuoso": "^2.17.2",
+    "reaflow": "^5.0.7",
     "redis": "^4.1.0",
     "regenerator-runtime": "0.13.7",
     "resize-observer-polyfill": "^1.5.1",
