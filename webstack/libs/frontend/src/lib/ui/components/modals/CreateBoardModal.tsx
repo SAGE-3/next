@@ -161,7 +161,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <InputGroup mt={4}>
+          <InputGroup my={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               type="text"

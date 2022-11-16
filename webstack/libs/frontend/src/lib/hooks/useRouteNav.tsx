@@ -34,5 +34,8 @@ export function useRouteNav() {
     navigate(`/login`);
   }
 
-  return { toHome, toBoard, toLogin };
+  function toAdmin() {
+    navigate(`/admin`);
+  }
+  return { toHome, toBoard, toLogin, toAdmin };
 }

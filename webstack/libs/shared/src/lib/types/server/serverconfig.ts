@@ -40,6 +40,7 @@ export interface serverConfiguration {
     ai: boolean;
     jupyter: boolean;
     cell: boolean;
+    articulate: boolean;
   };
   // ID management API keys
   auth: AuthConfiguration;
@@ -68,7 +69,7 @@ export interface AuthConfiguration {
   sessionSecret: string;
 
   // List of login strategies: guest, google, jwt, cilogon, ...
-  strategies: string[];
+  strategies: ('google' | 'cilogon' | 'guest' | 'jwt')[];
 
   // Admin users
   admins: string[];

@@ -18,6 +18,7 @@ import { Apps } from './Background/Apps';
 import { Cursors } from './Background/Cursors';
 import { Viewports } from './Background/Viewports';
 import { Whiteboard } from './Background/Whiteboard/Whiteboard';
+import { UserPresenceUpdate } from './Background/UserPresenceUpdate';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -111,6 +112,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Cursors boardId={props.boardId} />
         {/* User Viewports */}
         <Viewports boardId={props.boardId} />
+        {/* This user updating prensence */}
+        <UserPresenceUpdate />
 
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />
