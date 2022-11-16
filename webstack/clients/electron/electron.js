@@ -701,19 +701,21 @@ function createWindow() {
     // Show the warning view
     mainWindow.setBrowserView(warningView);
     warningView.setBounds({ x: 0, y: 0, width, height });
-    // Retry to load the original URL
-    if (tries) {
-      setTimeout(function () {
-        tries--;
-        mainWindow.reload();
-      }, 1000);
-    } else {
-      // When failed to load, redirect to the main server
-      mainWindow.loadURL('https://sage3.app/');
-      mainWindow.setBrowserView(null);
-      // Reset the counter
-      tries = 4;
-    }
+
+    // Since the window has buttons, I don't think we should try to reload the page anymore. People get stuck in a infiinite loop
+    // // Retry to load the original URL
+    // if (tries) {
+    //   setTimeout(function () {
+    //     tries--;
+    //     mainWindow.reload();
+    //   }, 1000);
+    // } else {
+    //   // When failed to load, redirect to the main server
+    //   mainWindow.loadURL('https://sage3.app/');
+    //   mainWindow.setBrowserView(null);
+    //   // Reset the counter
+    //   tries = 4;
+    // }
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
@@ -1056,7 +1058,15 @@ function buildMenu() {
           label: 'Go to Hawaii server',
           click() {
             if (mainWindow) {
-              mainWindow.loadURL('https://pele.sage3.app/');
+              mainWindow.loadURL('https://manoa.sage3.app');
+            }
+          },
+        },
+        {
+          label: 'Go to Development server',
+          click() {
+            if (mainWindow) {
+              mainWindow.loadURL('https://mini.sage3.app');
             }
           },
         },

@@ -26,11 +26,10 @@ import {
   VisuallyHidden,
 } from '@chakra-ui/react';
 
-import {FaPlay} from 'react-icons/fa';
-import {BiErrorCircle, BiRun, BiEnvelope} from 'react-icons/bi';
-import { HiMail } from "react-icons/hi";
-import {FiChevronDown} from 'react-icons/fi';
-
+import { FaPlay } from 'react-icons/fa';
+import { BiErrorCircle, BiRun, BiEnvelope } from 'react-icons/bi';
+import { HiMail } from 'react-icons/hi';
+import { FiChevronDown } from 'react-icons/fi';
 
 import { useAppStore, useUIStore } from '@sage3/frontend';
 
@@ -45,7 +44,6 @@ import { useEffect, useState, useRef } from 'react';
 import { v4 as getUUID } from 'uuid';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
-
 
 // Heatbeat copied from KernelDashboard
 // const heartBeatTimeCheck = 1000 * 10; // 1 min
@@ -209,7 +207,7 @@ function AppComponent(props: App): JSX.Element {
         <Popover>
           <PopoverTrigger>
             <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
-              <IconButton size='lg' aria-label='Notifications' variant="ghost" icon={<HiMail />} />
+              <IconButton size="lg" aria-label="Notifications" variant="ghost" icon={<HiMail />} />
             </div>
           </PopoverTrigger>
 

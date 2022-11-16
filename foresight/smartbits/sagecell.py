@@ -26,12 +26,17 @@ class SageCell(SmartBit):
     # the key that is assigned to this in state is
     state: SageCellState
     _jupyter_client = PrivateAttr()
-
+    _jupyter_client = PrivateAttr()
+    _r_json = PrivateAttr()
+    _redis_space = PrivateAttr(default='JUPYTER:KERNELS')
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(SageCell, self).__init__(**kwargs)
         self._jupyter_client = JupyterKernelProxy()
+        self._r_json = self._jupyter_client.redis_server.json()
+        if self._r_json.get(self._redis_space) is None:
+            self._r_json.set(self._redis_space, '.', {})
 
     def handle_exec_result(self, msg):
         self.state.output = json.dumps(msg)
@@ -47,24 +52,24 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def get_available_kernels(self, user_uuid):
+    def get_available_kernels(self, user_uuid=None):
         """
         This function will get the kernels from the redis server
         """
-        jupyter_kernels = "JUPYTER:KERNELS"
-        r_json = self._jupyter_client.redis_server.json()
-        if r_json.get(jupyter_kernels) is None:
-            r_json.set(jupyter_kernels, '.', {})
-        kernels = r_json.get(jupyter_kernels)
+        # get all valid kernel ids from jupyter server
+        valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        # get all kernels from redis server
+        kernels = self._jupyter_client.redis_server.json().get(self._redis_space)
+        # remove kernels the list of available kernels that are not in jupyter server
+        [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
         available_kernels = []
-        for kernel_id, kernel in kernels.items():
-            # if kernel.is_private and kernel.owner_uuid != user_uuid:
-            #     continue
-            if not kernel['kernel_alias'] or kernel['kernel_alias'] == kernel['kernel_name']:
-                kernel['kernel_alias'] = kernel_id[:8]
-            available_kernels.append({"key": kernel_id, "value": kernel})
-        if len(available_kernels) > 0:
-            self.state.availableKernels = available_kernels
+        for kernel in kernels.keys():
+            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
+                continue
+            if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
+                kernels[kernel]['kernel_alias'] = kernel[:8]
+            available_kernels.append({"key": kernel, "value": kernels[kernel]})
+        self.state.availableKernels = available_kernels
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

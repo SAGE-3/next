@@ -1,21 +1,22 @@
 #!/bin/bash
 
 # URL
-#server="https://traoumad.evl.uic.edu"
-server="http://localhost:4200"
+#server="traoumad.evl.uic.edu"
+server="localhost:4200"
 
 # runtime in sec
 length=60
 
 # which board
-board="board0"
+room="7c49fabf-74f2-40e1-88e4-5728f55770f0"
+board="dedcf4b9-374e-4ceb-b47d-54026bca407d"
 
 # how many pointers
 pointers=10
 
 for i in $(seq 1 ${pointers})
 do
-	node pointer.js -r 15 -s $server -b $board -t $length &
+	node pointer.js -r 10 -s $server -b $board -m $room-m $room -t $length &
 done
 
 

@@ -2,6 +2,7 @@
 
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as ChartMakerName, init as defaultChartMaker } from './apps/ChartMaker';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
@@ -29,6 +30,7 @@ import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
   [CSVViewerName]: defaultCSVViewer,
+  [ChartMakerName]: defaultChartMaker,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
   [CodeCellName]: defaultCodeCell,
@@ -53,3 +55,4 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
 };
+

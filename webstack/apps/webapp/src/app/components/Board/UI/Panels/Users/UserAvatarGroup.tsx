@@ -20,6 +20,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
   const { user } = useUser();
   // UI Stuff
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const setScale = useUIStore((state) => state.setScale);
   const scale = useUIStore((state) => state.scale);
 
   // Get all users
@@ -51,12 +52,32 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
 
   function handleAvatarClick(user: typeof userPresence[0]) {
     if (user) {
-      const cx = -user.presence.data.cursor.x;
-      const cy = -user.presence.data.cursor.y;
-      const wx = window.innerWidth / scale / 2;
-      const wy = window.innerHeight / scale / 2;
+      const type = user.user.data.userType;
+      if (type === 'client') {
+        const cx = -user.presence.data.cursor.x;
+        const cy = -user.presence.data.cursor.y;
+        const wx = window.innerWidth / scale / 2;
+        const wy = window.innerHeight / scale / 2;
 
-      setBoardPosition({ x: cx + wx, y: cy + wy });
+        setBoardPosition({ x: cx + wx, y: cy + wy });
+      } else if (type == 'wall') {
+        const vx = -user.presence.data.viewport.position.x;
+        const vy = -user.presence.data.viewport.position.y;
+        const vw = -user.presence.data.viewport.size.width;
+        const vh = -user.presence.data.viewport.size.height;
+        const vcx = vx + vw / 2;
+        const vcy = vy + vh / 2;
+
+        const ww = window.innerWidth;
+        const wh = window.innerHeight;
+
+        const s = Math.min(ww / -vw, wh / -vh);
+        const cx = vcx + ww / s / 2;
+        const cy = vcy + wh / s / 2;
+
+        setScale(s);
+        setBoardPosition({ x: cx, y: cy });
+      }
     }
   }
 

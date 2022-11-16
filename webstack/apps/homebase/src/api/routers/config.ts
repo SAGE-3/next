@@ -27,7 +27,7 @@ export function ConfigRouter(): express.Router {
     const client = createClient({ url: config.redis.url });
     await client.connect();
     const token = await client.get('config:jupyter:token');
-    console.log('REDIS> token:', token);
+    client.disconnect();
 
     // Configuration public values
     const configuration = {

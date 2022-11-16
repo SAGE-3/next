@@ -87,7 +87,7 @@ export function LoginPage() {
       </Box>
 
       <Center>
-        <Text mr={'.5rem'}>Host: {serverName || '-'}</Text>
+        <Text fontSize={'lg'}>Current Server: {serverName || '-'}</Text>
       </Center>
       <Center my="1rem" fontSize="lg">
         <InputGroup width="17rem">
@@ -114,7 +114,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={false} justifyContent="left" onClick={googleLogin}>
+            <Button width="100%" disabled={shouldDisable} justifyContent="left" onClick={googleLogin}>
               Login with Google
             </Button>
           </ButtonGroup>
@@ -129,7 +129,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={!production} justifyContent="left" onClick={ciLogin}>
+            <Button width="100%" disabled={shouldDisable || !production} justifyContent="left" onClick={ciLogin}>
               Login with CILogon
             </Button>
           </ButtonGroup>
@@ -144,7 +144,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={false} justifyContent="left" onClick={guestLogin}>
+            <Button width="100%" disabled={shouldDisable} justifyContent="left" onClick={guestLogin}>
               Login as Guest
             </Button>
           </ButtonGroup>

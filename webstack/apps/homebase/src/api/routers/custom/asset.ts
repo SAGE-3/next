@@ -18,6 +18,7 @@ import * as express from 'express';
 // Mime type definitions
 import * as mime from 'mime';
 import * as fs from 'fs';
+import { decode as decode8 } from 'utf8';
 import { v4 as getUUID } from 'uuid';
 import { createClient } from 'redis';
 
@@ -143,6 +144,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
 
     // Do something with the files
     files.forEach(async (elt) => {
+      elt.originalname = decode8(elt.originalname);
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Normalize mime types using the mime package
       elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
