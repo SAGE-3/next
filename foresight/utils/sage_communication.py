@@ -24,7 +24,7 @@ class SageCommunication(Borg):
         if conf is None:
             raise Exception("confifuration not found")
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-        self.httpx_client = httpx.Client()
+        self.httpx_client = httpx.Client(timeout=None)
 
         # TODO: laod this from config file
         self.routes = {

@@ -8,7 +8,6 @@ def aipane_instance():
     c = AIPane(**aipane_doc)
     yield c
     c._ai_client.clean_up()
-    c._task_scheduler.clean_up()
 
 
 def test_create_counter(aipane_instance):

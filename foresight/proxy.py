@@ -85,7 +85,7 @@ class SAGEProxy():
             "UPDATE": self.__handle_update,
             "DELETE": self.__handle_delete,
         }
-        self.httpx_client = httpx.Client()
+        self.httpx_client = httpx.Client(timeout=None)
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}
         self.received_msg_log = {}
