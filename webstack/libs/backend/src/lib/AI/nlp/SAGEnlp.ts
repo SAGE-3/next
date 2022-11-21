@@ -1,5 +1,7 @@
 const { NlpManager } = require('node-nlp');
 
+import { spawn } from 'child_process';
+import { response } from 'express';
 // Training Data File
 import { traindata } from './traindata';
 
@@ -35,6 +37,35 @@ class SAGEnlpClass {
       } else {
         return null;
       }
+    }
+  }
+
+  public async extractHeaders(
+    query: string,
+    propertyList: { header: string; filterValues: string[]; headerType: string }[]
+  ): Promise<{ headers: string[]; filterValues: string[] } | null> {
+    // TO DO Processing
+    if (this._manager === null) {
+      return null;
+    } else {
+      let dataToSend: any;
+      let pathToPythonScript = '/Users/rodericktabalba/Documents/GitHub/next/webstack/libs/backend/src/lib/AI/nlp/python/extract.py';
+
+      const python = spawn('python', [pathToPythonScript, query, JSON.stringify(propertyList)]);
+      python.stdout.on('data', (data) => {
+        dataToSend = data.toString();
+        console.log(dataToSend);
+      });
+
+      python.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+      });
+
+      // python.on('exit', (code) => {
+      //   console.log(`child process exited with code ${code}, ${dataToSend}`);
+      //   response.sendFile(`${__dirname}/public/result.html`);
+      // });
+      return { headers: ['diabetes'], filterValues: ['midwest'] };
     }
   }
 }

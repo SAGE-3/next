@@ -23,23 +23,6 @@ import { Asset } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
 import createPropertyList from './components/createPropertyList';
 
-type NLPRequestResponse = {
-  success: boolean;
-  message: string;
-};
-export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
-  const response = await fetch('/api/nlp', {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ message }),
-  });
-  return (await response.json()) as NLPRequestResponse;
-}
-
 function getDateString(epoch: number): string {
   const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
   const time = new Date(epoch).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

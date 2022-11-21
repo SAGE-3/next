@@ -20,6 +20,23 @@ export function NLPRouter(): express.Router {
     let success = false;
 
     const responseMessage = await SAGEnlp.classifiedMessage(message);
+
+    if (responseMessage) success = true;
+
+    if (success) res.status(200).send({ success: true, message: responseMessage });
+    else res.status(500).send({ success: false, message: 'Failed to process the nlp request.' });
+  });
+
+  router.post('/extract', async ({ body, user }, res) => {
+    // @ts-ignore
+    const userId = user.id;
+    const query = body.query;
+    const propertyList = body.propertyList;
+
+    let success = false;
+
+    const responseMessage = await SAGEnlp.extractHeaders(query, propertyList);
+
     if (responseMessage) success = true;
 
     if (success) res.status(200).send({ success: true, message: responseMessage });
