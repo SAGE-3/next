@@ -7,6 +7,7 @@ import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CodeCellName } from './apps/CodeCell';
 import { name as CounterName } from './apps/Counter';
+import { name as DataFlowName } from './apps/DataFlow';
 import { name as DataTableName } from './apps/DataTable';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
@@ -34,6 +35,7 @@ import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import CodeCell from './apps/CodeCell/CodeCell';
 import Counter from './apps/Counter/Counter';
+import DataFlow from './apps/DataFlow/DataFlow';
 import DataTable from './apps/DataTable/DataTable';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
@@ -63,6 +65,7 @@ export const Applications = {
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent },
   [CodeCellName]: { AppComponent: React.memo(CodeCell.AppComponent), ToolbarComponent: CodeCell.ToolbarComponent },
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent },
+  [DataFlowName]: { AppComponent: React.memo(DataFlow.AppComponent), ToolbarComponent: DataFlow.ToolbarComponent },
   [DataTableName]: { AppComponent: React.memo(DataTable.AppComponent), ToolbarComponent: DataTable.ToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent },
