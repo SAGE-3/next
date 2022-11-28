@@ -81,11 +81,10 @@ async function startServer() {
     // Create and start the HTTP web server
     server = listenApp(app, config.port);
   }
-
   // Initialization of SAGEBase
   const sbConfig: SAGEBaseConfig = {
     projectName: 'SAGE3',
-    redisUrl: config.redis.url || 'redis://localhost:6379',
+    redisUrl: config.redis.url || 'redis://127.0.0.1:6379',
     authConfig: {
       ...config.auth,
     },
