@@ -9,7 +9,8 @@ import { useEffect, useState } from 'react';
 import { VStack } from '@chakra-ui/react';
 import { Canvas, NodeData, EdgeData, Node } from 'reaflow';
 
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore } from '@sage3/frontend';
+import { Asset } from '@sage3/shared/types';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -94,25 +95,6 @@ const jdata = {
   // ]
 };
 
-
-function getAllKeys(json_object: any, ret_array: string[]): string[] {
-  for (const json_key in json_object) {
-    if (typeof (json_object[json_key]) === 'object' && !Array.isArray(json_object[json_key])) {
-      ret_array.push(json_key);
-      getAllKeys(json_object[json_key], ret_array);
-    } else if (Array.isArray(json_object[json_key])) {
-      ret_array.push(json_key);
-      const first_element = json_object[json_key][0];
-      if (typeof (first_element) === 'object') {
-        getAllKeys(first_element, ret_array);
-      }
-    } else {
-      ret_array.push(json_key);
-    }
-  }
-  return ret_array
-}
-
 /* JSON:
   a string.
   a number.
@@ -171,19 +153,12 @@ function getNodes(json_object: any, name: string, ret: NodeData[], edg: EdgeData
     return [ret, edg];
   }
 
-  // if (Array.isArray(json_object)) {
-  //   console.log('AARRRARARARA');
-  // } else {
-  //   console.log('OBJECT');
-  // }
-
   const fields = [];
   const keys = Object.keys(json_object).sort();
   for (const json_key of keys) {
     if (isFinal(json_object[json_key])) {
       if (json_object[json_key] === null) {
         // null
-        console.log('json_key> final null', json_key, json_object[json_key]);
         const n = {
           key: json_key,
           value: 'null',
@@ -194,8 +169,6 @@ function getNodes(json_object: any, name: string, ret: NodeData[], edg: EdgeData
         fields.push(n);
       } else {
         // final
-        console.log('json_key> final val', name, json_key, json_object[json_key]);
-        console.log('     key', name + '.' + json_key);
         const n = {
           key: json_key,
           value: typeof json_object[json_key] === 'string' ? `"${json_object[json_key]}"` : json_object[json_key].toString(),
@@ -207,7 +180,6 @@ function getNodes(json_object: any, name: string, ret: NodeData[], edg: EdgeData
       }
     } else if (typeof (json_object[json_key]) === 'object' && !Array.isArray(json_object[json_key])) {
       // object
-      console.log('json_key> object', json_key, json_object[json_key]);
       const n: NodeData = {
         id: name + '.' + json_key + '_obj',
         width: 150,
@@ -226,7 +198,6 @@ function getNodes(json_object: any, name: string, ret: NodeData[], edg: EdgeData
       getNodes(json_object[json_key], name + '.' + json_key, ret, edg);
     } else if (Array.isArray(json_object[json_key])) {
       // array
-      console.log('json_key> array', json_key, json_object[json_key]);
       const n: NodeData = {
         id: name + '.' + json_key + '_arr',
         width: 175,
@@ -293,30 +264,63 @@ function getNodes(json_object: any, name: string, ret: NodeData[], edg: EdgeData
   return [ret, edg];
 }
 
-function getEdges(json_object: any): EdgeData[] {
-  return getAllKeys(json_object, []).map((key, index) => {
-    const n: EdgeData = { id: index.toString(), text: key };
-    return n;
-  });
-}
 
 /* App component for JsonCandy */
 
 function AppComponent(props: App): JSX.Element {
+  // App state
   const s = props.data.state as AppState;
-
-  const updateState = useAppStore((state) => state.updateState);
+  // Update the app
+  const update = useAppStore((state) => state.update);
+  // Asset store
+  const assets = useAssetStore((state) => state.assets);
+  // Get the asset
+  const [file, setFile] = useState<Asset>();
+  // Get the data
+  const [data, setData] = useState<any>(null);
 
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [edges, setEdges] = useState<EdgeData[]>([]);
 
+  // Get the asset from the state id value
   useEffect(() => {
-    const [n, e] = getNodes(jdata, 'root', [], []);
-    console.log('Nodes', n)
-    setNodes(n);
-    // console.log('Edges', e)
-    setEdges(e);
-  }, []);
+    const myasset = assets.find((a) => a._id === s.assetid);
+    if (myasset) {
+      setFile(myasset);
+      // Update the app title
+      update(props._id, { title: myasset?.data.originalfilename });
+    }
+  }, [s.assetid, assets]);
+
+  // Get the data from the asset
+  useEffect(() => {
+    if (file) {
+      const localurl = '/api/assets/static/' + file.data.file;
+      if (localurl) {
+        fetch(localurl, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(async function (json) {
+            // save into the state
+            setData(json);
+          });
+      }
+    }
+  }, [file]);
+
+  useEffect(() => {
+    if (data) {
+      const [n, e] = getNodes(data, 'root', [], []);
+      setNodes(n);
+      setEdges(e);
+    }
+  }, data);
 
   return (
     <AppWindow app={props}>
@@ -331,7 +335,7 @@ function AppComponent(props: App): JSX.Element {
           edges={edges}
           nodes={nodes}
           fit={true}
-          // zoomable={true}
+          zoomable={true}
           pannable={true}
           animated={true}
           readonly={true}

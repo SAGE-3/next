@@ -177,6 +177,18 @@ export async function setupAppForFile(
           });
         });
     } else if (isJSON(file.type)) {
+      resolve({
+        title: file.originalfilename,
+        roomId: roomId,
+        boardId: boardId,
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 800, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'JsonCandy',
+        state: { ...initialValues['JsonCandy'], assetid: file.id },
+        raised: true,
+      });
+      /*
       // Look for the file in the asset store
       const localurl = '/api/assets/static/' + file.filename;
       // Get the content of the file
@@ -203,6 +215,7 @@ export async function setupAppForFile(
             raised: true,
           });
         });
+        */
     } else if (isPythonNotebook(file.type)) {
       // Look for the file in the asset store
       const localurl = '/api/assets/static/' + file.filename;
