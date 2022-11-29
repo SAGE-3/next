@@ -16,7 +16,7 @@
 
   // Services
   "redis": {
-    "url": "redis://127.0.0.1:6379"
+    "url": "redis://localhost:6379"
   },
 
   // Active SAGE3 servers accessible at login page

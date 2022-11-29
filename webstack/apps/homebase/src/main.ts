@@ -20,6 +20,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { IncomingMessage, Server } from 'http';
+import * as dns from 'node:dns';
 
 // Websocket
 import { WebSocket } from 'ws';
@@ -64,6 +65,9 @@ async function startServer() {
   // Load the right configuration file
   const config: serverConfiguration = await loadConfig();
 
+  // Reverts the old DNS order, from v17 and up
+  dns.setDefaultResultOrder('ipv4first');
+
   // Create the Express object
   const assetPath = path.join(config.root, config.assets);
   const app = createApp(assetPath);
@@ -84,7 +88,7 @@ async function startServer() {
   // Initialization of SAGEBase
   const sbConfig: SAGEBaseConfig = {
     projectName: 'SAGE3',
-    redisUrl: config.redis.url || 'redis://127.0.0.1:6379',
+    redisUrl: config.redis.url || 'redis://localhost:6379',
     authConfig: {
       ...config.auth,
     },
