@@ -11,7 +11,7 @@ import { name as DataTableName, init as defaultDataTable } from './apps/DataTabl
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
-import { name as JsonCandyName, init as defaultJsonCandy } from './apps/JsonCandy';
+import { name as JsonExName, init as defaultJsonEx } from './apps/JsonEx';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as KernelDashboardName, init as defaultKernelDashboard } from './apps/KernelDashboard';
 import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
@@ -40,7 +40,7 @@ export const initialValues = {
   [DeepZoomImageName]: defaultDeepZoomImage,
   [GLTFViewerName]: defaultGLTFViewer,
   [ImageViewerName]: defaultImageViewer,
-  [JsonCandyName]: defaultJsonCandy,
+  [JsonExName]: defaultJsonEx,
   [JupyterLabName]: defaultJupyterLab,
   [KernelDashboardName]: defaultKernelDashboard,
   [KernelsName]: defaultKernels,
@@ -57,4 +57,3 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
 };
-

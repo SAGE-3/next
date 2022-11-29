@@ -9,7 +9,7 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: JsonCandy
+ * SAGE3 application: JsonEx
  * created by: Luc Renambot
  */
 
@@ -19,7 +19,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  assetid: 'toto',
+  assetid: '',
 };
 
-export const name = 'JsonCandy';
+export const name = 'JsonEx';

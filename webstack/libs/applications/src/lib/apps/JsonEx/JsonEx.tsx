@@ -19,83 +19,8 @@ import { v1 } from 'uuid';
 // Styling
 import './styling.css';
 
-
-const jdata = {
-  "squadName": "Super hero squad",
-  "homeTown": "Metro City",
-  "formed": 2016,
-  "secretBase": "Super tower",
-  "active": true,
-  "members": [
-    {
-      "name": "Molecule Man",
-      "age": 29,
-      "secretIdentity": "Dan Jukes",
-      "powers": [
-        "Radiation resistance",
-        "Turning tiny",
-        "Radiation blast"
-      ]
-    },
-    {
-      "name": "Madame Uppercut",
-      "age": 39,
-      "secretIdentity": "Jane Wilson",
-      "powers": [
-        "Million tonne punch",
-        "Damage resistance",
-        "Superhuman reflexes"
-      ]
-    },
-    {
-      "name": "Eternal Flame",
-      "age": 1000000,
-      "secretIdentity": "Unknown",
-      "powers": [
-        "Immortality",
-        "Heat Immunity",
-        "Inferno",
-        "Teleportation",
-        "Interdimensional travel"
-      ]
-    }
-  ]
-
-  // "coordinates": [
-  //   ["1", "2", "3", "4"],
-  //   [11, 12, 13, 14],
-  //   [31, 32, 33, 34]
-  // ],
-  // "list": [41, 42, 43, 44],
-  // "data": {
-  //   "a": 21,
-  //   "b": 22,
-  //   "data2": {
-  //     "a": 21,
-  //     "b": 22,
-  //   },
-  // },
-  // "data1": {
-  //   "a": 21,
-  //   "b": 22,
-  // },
-
-  // "type": "Polygon",
-  // "coordinates": [
-  //   -87.6499622,
-  //   41.8861258,
-  //   -87.6504148,
-  //   41.886119,
-  //   -87.6504042,
-  //   41.8857251,
-  //   -87.6499516,
-  //   41.8857318,
-  //   -87.6499622,
-  //   41.8861258
-  // ]
-};
-
-/* JSON:
+/*
+JSON:
   a string.
   a number.
   a boolean.
@@ -214,7 +139,7 @@ function getNodes(json_object: any, name: string, ret: NodeData[], edg: EdgeData
       edg.push({ id: v1(), from: name, to: name + '.' + json_key + '_arr' });
       const values = json_object[json_key];
       // cut array to 10 max
-      values.splice(10, values.length)
+      // values.splice(10, values.length)
       values.forEach((value: any, index: number) => {
         if (Array.isArray(value)) {
           ret.push({
@@ -265,7 +190,7 @@ function getNodes(json_object: any, name: string, ret: NodeData[], edg: EdgeData
 }
 
 
-/* App component for JsonCandy */
+/* App component for JsonEx */
 
 function AppComponent(props: App): JSX.Element {
   // App state
@@ -370,16 +295,13 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app JsonCandy */
+/* App toolbar component for the app JsonEx */
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  return (
-    <>
-    </>
-  );
+  return (<></>);
 }
 
 export default { AppComponent, ToolbarComponent };
