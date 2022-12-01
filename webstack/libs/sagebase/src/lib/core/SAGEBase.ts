@@ -35,7 +35,7 @@ class SAGEBaseCore {
     if (config.redisUrl) {
       this._redisUrl = config.redisUrl;
     } else {
-      this._redisUrl = 'redis://localhost:6379';
+      this._redisUrl = 'redis://127.0.0.1:6379';
     }
 
     // SAGEBase prefix stuff for Redis keys

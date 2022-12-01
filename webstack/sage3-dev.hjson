@@ -57,8 +57,7 @@
       "jwt",
       "google"
     ],
-    "admins": [
-    ],
+    "admins": [],
     "guestConfig": {
       "routeEndpoint": "/auth/guest"
     },
