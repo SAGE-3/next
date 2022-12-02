@@ -55,7 +55,6 @@ export function MainButton(props: MainButtonProps) {
     const fetchAdmins = async () => {
       if (user) {
         const config = await GetConfiguration();
-        console.log(config);
         setIsAdmin(config.admins.includes(user.data.email));
       }
     };
