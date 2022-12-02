@@ -115,20 +115,25 @@ function AppComponent(props: App): JSX.Element {
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!user) return;
-    if (e.shiftKey && e.code === 'Tab') {
-      // Create a new stickie
-      createApp({
-        title: user.data.name,
-        roomId: roomId!,
-        boardId: boardId!,
-        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-        size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'Stickie',
-        // keep the same color, like a clone operation except for the text
-        state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
-        raised: true,
-      });
+    if (e.code === 'Tab') {
+      if (e.shiftKey) {
+        // Create a new stickie
+        createApp({
+          title: user.data.name,
+          roomId: roomId!,
+          boardId: boardId!,
+          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'Stickie',
+          // keep the same color, like a clone operation except for the text
+          state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
+          raised: true,
+        });
+      } else {
+        e.preventDefault();
+        return;
+      }
     }
   };
 
