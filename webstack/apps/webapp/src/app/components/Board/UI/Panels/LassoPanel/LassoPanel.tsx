@@ -25,15 +25,15 @@ export interface LassoPanelProps {
 }
 
 export function LassoPanel(props: LassoPanelProps) {
-  const position = useUIStore((state) => state.whiteboardPanel.position);
-  const setPosition = useUIStore((state) => state.whiteboardPanel.setPosition);
-  const opened = useUIStore((state) => state.whiteboardPanel.opened);
-  const setOpened = useUIStore((state) => state.whiteboardPanel.setOpened);
-  const show = useUIStore((state) => state.whiteboardPanel.show);
-  const setShow = useUIStore((state) => state.whiteboardPanel.setShow);
-  const stuck = useUIStore((state) => state.whiteboardPanel.stuck);
-  const setStuck = useUIStore((state) => state.whiteboardPanel.setStuck);
-  const zIndex = useUIStore((state) => state.panelZ).indexOf('whiteboard');
+  const position = useUIStore((state) => state.lassoPanel.position);
+  const setPosition = useUIStore((state) => state.lassoPanel.setPosition);
+  const opened = useUIStore((state) => state.lassoPanel.opened);
+  const setOpened = useUIStore((state) => state.lassoPanel.setOpened);
+  const show = useUIStore((state) => state.lassoPanel.show);
+  const setShow = useUIStore((state) => state.lassoPanel.setShow);
+  const stuck = useUIStore((state) => state.lassoPanel.stuck);
+  const setStuck = useUIStore((state) => state.lassoPanel.setStuck);
+  const zIndex = useUIStore((state) => state.panelZ).indexOf('lasso');
   const controllerPosition = useUIStore((state) => state.controller.position);
   // Apps
   const hideUI = useUIStore((state) => state.hideUI);
@@ -43,12 +43,12 @@ export function LassoPanel(props: LassoPanelProps) {
   const toast = useToast();
 
   // Whiteboard information
-  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
-  const setClearMarkers = useUIStore((state) => state.setClearMarkers);
-  const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
-  const markerColor = useUIStore((state) => state.markerColor);
-  const setMarkerColor = useUIStore((state) => state.setMarkerColor);
+  const lassoMode = useUIStore((state) => state.lassoMode);
+  const setLassoMode = useUIStore((state) => state.setLassoMode);
+  const setClearLassos = useUIStore((state) => state.setClearLassos);
+  const setClearAllLassos = useUIStore((state) => state.setClearAllLassos);
+  const lassoColor = useUIStore((state) => state.lassoColor);
+  const setLassoColor = useUIStore((state) => state.setLassoColor);
 
   // if a menu is currently closed, make it "jump" to the controller
   useEffect(() => {
@@ -65,8 +65,8 @@ export function LassoPanel(props: LassoPanelProps) {
   }, [controllerPosition]);
 
   const handleColorChange = (color: SAGEColors) => {
-    setWhiteboardMode(true);
-    setMarkerColor(color);
+    setLassoMode(true);
+    setLassoColor(color);
   };
 
   const screenshot = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -97,7 +97,7 @@ export function LassoPanel(props: LassoPanelProps) {
   return (
     <Panel
       title={'Annotation'}
-      name="whiteboard"
+      name="lasso"
       opened={opened}
       setOpened={setOpened}
       setPosition={setPosition}
@@ -111,22 +111,22 @@ export function LassoPanel(props: LassoPanelProps) {
       zIndex={zIndex}
     >
       <Box alignItems="center" pb="1" width="100%" display="flex">
-        <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
-          <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
+        <Tooltip placement="top" hasArrow label={lassoMode ? 'Disable Lasso' : 'Enable Lasso'}>
+          <Button onClick={() => setLassoMode(!lassoMode)} size="sm" mr="2" colorScheme={lassoMode ? 'green' : 'gray'}>
             <BsPencilFill />
           </Button>
         </Tooltip>
 
-        <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
+        <ColorPicker selectedColor={lassoColor} onChange={handleColorChange} size="sm"></ColorPicker>
 
         <Tooltip placement="top" hasArrow label="Erase Your Lines">
-          <Button onClick={() => setClearMarkers(true)} ml="2" size="sm">
+          <Button onClick={() => setClearLassos(true)} ml="2" size="sm">
             <FaEraser />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow label="Erase All">
-          <Button onClick={() => setClearAllMarkers(true)} ml="2" size="sm">
+          <Button onClick={() => setClearAllLassos(true)} ml="2" size="sm">
             <FaTrash />
           </Button>
         </Tooltip>

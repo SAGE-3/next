@@ -74,6 +74,16 @@ interface UIState {
   setClearMarkers: (clear: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
 
+  // lasso
+  lassoMode: boolean; // marker mode enabled
+  clearLassos: boolean;
+  clearAllLassos: boolean;
+  lassoColor: SAGEColors;
+  setLassoColor: (color: SAGEColors) => void;
+  setLassoMode: (enable: boolean) => void;
+  setClearLassos: (clear: boolean) => void;
+  setClearAllLassos: (clear: boolean) => void;
+
   // Panels & Context Menu
   applicationsPanel: PanelUI;
   navigationPanel: PanelUI;
@@ -126,8 +136,11 @@ export const useUIStore = create<UIState>((set, get) => ({
   showAppTitle: false,
   boardDragging: false,
   appDragging: false,
-  whiteboardMode: false,
   lassoMode: false,
+  lassoColor: 'red',
+  clearLassos: false,
+  clearAllLassos: false,
+  whiteboardMode: false,
   markerColor: 'red',
   clearMarkers: false,
   clearAllMarkers: false,
@@ -291,8 +304,12 @@ export const useUIStore = create<UIState>((set, get) => ({
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
-  setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setLassoMode: (enable: boolean) => set((state) => ({ ...state, lassoMode: enable })),
+  setClearLassos: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
+  setClearAllLassos: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
+  setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+
+  setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
