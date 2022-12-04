@@ -21,6 +21,18 @@ type LassoProps = {
   boardId: string;
 };
 
+type BoxProps = {
+  start: {
+    x: number;
+    y: number;
+  };
+  end: {
+    x: number;
+    y: number;
+  };
+  color: string;
+};
+
 export function Lasso(props: LassoProps) {
   const { user } = useUser();
 
@@ -32,7 +44,7 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-  const [boxes, setBoxes] = useState<{ x: number; y: number; color: string }[]>([]);
+  const [boxes, setBoxes] = useState<BoxProps[]>([]);
 
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
@@ -43,6 +55,9 @@ export function Lasso(props: LassoProps) {
 
   const spacebarPressed = useKeyPress(' ');
   const color = useUIStore((state) => state.markerColor);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startPos, setStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [endPos, setEndPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   useHotkeys('esc', () => {
     setLassoMode(false);
@@ -57,14 +72,6 @@ export function Lasso(props: LassoProps) {
     { dependencies: [lassoMode] }
   );
 
-  const createBox = () => {
-    console.log(userCursor.position);
-    const position = userCursor.position;
-    setBoxes((prev) => [...prev, { x: position.x, y: position.y, color: color }]);
-  };
-  // Get around  the center of the board
-  const x = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-  const y = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
   const getPoint = useCallback(
     (x: number, y: number) => {
       x = x / scale;
@@ -75,17 +82,50 @@ export function Lasso(props: LassoProps) {
   );
 
   // On pointer down, start a new current line
-  const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {}, []);
+  const handlePointerDown = () => {
+    setIsMouseDown(true);
+    const position = userCursor.position;
+    setStartPos({ x: position.x, y: position.y });
+  };
+  const handlePointerMove = () => {
+    if (isMouseDown) {
+      const position = userCursor.position;
+      setEndPos({ x: position.x, y: position.y });
+    }
+  };
+  const handlePointerUp = () => {
+    setIsMouseDown(false);
+    const position = userCursor.position;
+    let box: any = null;
+    console.log(startPos);
+    if (startPos && endPos) {
+      box = {
+        start: {
+          x: startPos.x,
+          y: startPos.y,
+        },
+        end: {
+          x: endPos.x,
+          y: endPos.y,
+        },
+        color: color,
+      };
+    }
+    console.log(box);
+    if (box) setBoxes((prev) => [...prev, box]);
+  };
 
-  // On pointer move, update awareness and (if down) update the current line
-  const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {}, []);
+  // // On pointer move, update awareness and (if down) update the current line
+  // const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {}, []);
 
-  // On pointer up, complete the current line
-  const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {}, []);
+  // // On pointer up, complete the current line
+  // const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+  //   const position = userCursor.position;
+  // }, []);
 
   return (
     <>
-      <div className="canvas-container" onClick={createBox} style={{ pointerEvents: lassoMode && !spacebarPressed ? 'auto' : 'none' }}>
+      <div className="canvas-container" style={{ pointerEvents: lassoMode && !spacebarPressed ? 'auto' : 'none' }}>
         <svg
           className="canvas-layer"
           style={{
@@ -103,8 +143,10 @@ export function Lasso(props: LassoProps) {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
         >
+          {isMouseDown ? <BoxOutline start={startPos} end={endPos} color={color} /> : null}
+
           {boxes.map((box, index) => {
-            return <BoxOutline key={index} x={box.x} y={box.y} color={box.color} />;
+            return <BoxOutline key={index} start={box.start} end={box.end} color={box.color} />;
           })}
         </svg>
       </div>
@@ -112,16 +154,18 @@ export function Lasso(props: LassoProps) {
   );
 }
 
-type BoxOutlineProps = {
-  x: number;
-  y: number;
-  color: string;
-};
-
-function BoxOutline(props: BoxOutlineProps) {
+function BoxOutline(props: BoxProps) {
   return (
-    <g id="group_text_1" transform={`translate(${props.x},${props.y}) `}>
-      <rect x={0} y={0} stroke={'#ffffff'} fill={props.color} opacity={0.1} width="200" height="300" />
+    <g id="group_text_1" transform={`translate(${props.start.x},${props.start.y}) `}>
+      <rect
+        x={0}
+        y={0}
+        stroke={'#ffffff'}
+        fill={props.color}
+        opacity={0.1}
+        width={props.end.x - props.start.x}
+        height={props.end.y - props.start.y}
+      />
     </g>
   );
 }
