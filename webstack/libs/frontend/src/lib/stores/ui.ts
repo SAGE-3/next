@@ -35,7 +35,7 @@ export enum StuckTypes {
   BottomLeft, // 9
 }
 
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'whiteboard';
+export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'whiteboard' | 'lasso';
 
 // Typescript interface defining the store
 interface PanelUI {
@@ -81,6 +81,7 @@ interface UIState {
   controller: PanelUI;
   assetsPanel: PanelUI;
   whiteboardPanel: PanelUI;
+  lassoPanel: PanelUI;
   panelZ: string[];
   bringPanelForward: (panel: PanelNames) => void;
 
@@ -126,6 +127,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   boardDragging: false,
   appDragging: false,
   whiteboardMode: false,
+  lassoMode: false,
   markerColor: 'red',
   clearMarkers: false,
   clearAllMarkers: false,
@@ -134,7 +136,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   boardLocked: false,
-  panelZ: ['assets', 'applications', 'navigation', 'users', 'whiteboard'], // List of panels that have zordering
+  panelZ: ['assets', 'applications', 'navigation', 'users', 'whiteboard', 'lasso'], // List of panels that have zordering
   bringPanelForward: (panel: string) => {
     const z = get().panelZ;
     const i = z.indexOf(panel);
@@ -199,6 +201,17 @@ export const useUIStore = create<UIState>((set, get) => ({
     setOpened: (opened: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, opened: opened } })),
     opened: true,
     setShow: (show: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, show: show } })),
+    show: false,
+  },
+  lassoPanel: {
+    position: { x: 20, y: 400 },
+    stuck: StuckTypes.Controller,
+    name: 'lasso',
+    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, position: pos } })),
+    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, stuck: stuck } })),
+    setOpened: (opened: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, opened: opened } })),
+    opened: true,
+    setShow: (show: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, show: show } })),
     show: false,
   },
   whiteboardPanel: {
@@ -279,6 +292,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
   setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
+  setLassoMode: (enable: boolean) => set((state) => ({ ...state, lassoMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),

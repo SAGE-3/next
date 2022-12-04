@@ -10,6 +10,7 @@ import { HStack, useToast } from '@chakra-ui/react';
 
 import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
+import { BsBoundingBoxCircles } from 'react-icons/bs';
 
 import { PanelNames, StuckTypes, useBoardStore, useRoomStore, useRouteNav, useUIStore } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from './Panel';
@@ -40,6 +41,7 @@ export function Controller(props: ControllerProps) {
   const navigationPanel = useUIStore((state) => state.navigationPanel);
   const assetsPanel = useUIStore((state) => state.assetsPanel);
   const whiteboardPanel = useUIStore((state) => state.whiteboardPanel);
+  const lassoPanel = useUIStore((state) => state.lassoPanel);
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome } = useRouteNav();
@@ -62,7 +64,7 @@ export function Controller(props: ControllerProps) {
 
   // Show the various panels
   const handleShowPanel = (menuName: PanelNames) => {
-    [applicationsPanel, navigationPanel, usersPanel, assetsPanel, whiteboardPanel].forEach((panel) => {
+    [applicationsPanel, navigationPanel, usersPanel, assetsPanel, whiteboardPanel, lassoPanel].forEach((panel) => {
       if (panel.name === menuName) {
         if (panel.stuck == StuckTypes.Controller) {
           panel.setShow(!panel.show);
@@ -85,7 +87,7 @@ export function Controller(props: ControllerProps) {
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={350}
+      width={400}
       showClose={false}
       show={show}
       setShow={setShow}
@@ -120,6 +122,12 @@ export function Controller(props: ControllerProps) {
           description="Navigation"
           isActive={navigationPanel.show}
           onClick={() => handleShowPanel(navigationPanel.name)}
+        />
+        <IconButtonPanel
+          icon={<BsBoundingBoxCircles size="32px" />}
+          description="Annotation"
+          isActive={lassoPanel.show}
+          onClick={() => handleShowPanel(lassoPanel.name)}
         />
         <IconButtonPanel
           icon={<BiPencil size="32px" />}
