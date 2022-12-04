@@ -19,6 +19,7 @@ import { Cursors } from './Background/Cursors';
 import { Viewports } from './Background/Viewports';
 import { Whiteboard } from './Background/Whiteboard/Whiteboard';
 import { UserPresenceUpdate } from './Background/UserPresenceUpdate';
+import { Lasso } from './Background/Lasso/Lasso';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -106,6 +107,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/*Whiteboard */}
         <Whiteboard boardId={props.boardId} />
+        {/*Lasso */}
+        <Lasso boardId={props.boardId} />
         {/* The board's apps */}
         <Apps />
         {/* User Cursors */}
