@@ -12,5 +12,5 @@ for row in property_list:
 syn1 = wordnet.synsets('hello')[0]
 syn2 = wordnet.synsets('selling')[0]
  
-
+print(syn1, syn2)
 sys.stdout.flush()
