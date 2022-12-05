@@ -51,6 +51,8 @@ class DataTable(SmartBit):
     _original_df: PandasDataFrame = PrivateAttr()
     # Modified df to keep track of
     _modified_df: PandasDataFrame = PrivateAttr()
+    #  TODO Is current_rows a redundant df?
+    # Rows currently being displayed
     _current_rows: PandasDataFrame = PrivateAttr()
 
     def __init__(self, **kwargs):
@@ -58,7 +60,10 @@ class DataTable(SmartBit):
         super(DataTable, self).__init__(**kwargs)
         # self._some_private_info = {1: 2}
 
+    # TODO Reduce code
+    # Paginator
     def paginate(self):
+        # Just to time how long pagination takes
         p_start = time.time()
         i = 1
         pageNumbers = []
@@ -77,12 +82,11 @@ class DataTable(SmartBit):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         print("paginate")
-        print("I am sending this information")
-        print("=======================")
         p_end = time.time()
         print(f"time to paginate: {p_end - p_start}")
         self.send_updates()
 
+    # TODO Do something other than just print to console?
     def handle_left_arrow(self):
         if self.state.currentPage != 1:
             self.state.currentPage -= 1
@@ -91,11 +95,9 @@ class DataTable(SmartBit):
             print("No page before 1")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        print("handle_left_arrow")
-        print("I am sending this information")
-        print("=======================")
         self.send_updates()
 
+    # TODO Do something other than just print to console?
     def handle_right_arrow(self):
         if self.state.currentPage != len(self.state.pageNumbers):
             self.state.currentPage += 1
@@ -104,11 +106,9 @@ class DataTable(SmartBit):
             print(f"No page after {len(self.state.pageNumbers)}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        print("handle_right_arrow")
-        print("I am sending this information")
-        print("=======================")
         self.send_updates()
 
+    # I think this gets the filetype?
     def get_ext(self, url):
         parsed = urlparse(url)
         root, ext = splitext(parsed.path)
@@ -140,6 +140,8 @@ class DataTable(SmartBit):
 
         # self._modified_df = pd.read_json(response)
         # self._modified_df = pd.read_json(url)
+
+        # Supposed to create an index column for datasets that don't have one
         if pd.Index(np.arange(0, len(self._modified_df))).equals(self._modified_df.index):
             pass
         else:
@@ -149,12 +151,8 @@ class DataTable(SmartBit):
         print(f"time to load_data into dataframe: {end - start}")
         self.paginate()
         self.state.selectedCols = []
-        print("--------------")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        print("load_data")
-        print("I am sending this information")
-        print("=======================")
         self.send_updates()
 
     def table_sort(self, selected_cols):
@@ -167,7 +165,6 @@ class DataTable(SmartBit):
         print("---------------------------------------------------------")
         print("table_sort")
         print(f"selected_columns: {selected_cols}")
-        print("I am sending this information")
         self.send_updates()
 
     def drop_columns(self, selected_cols):
@@ -177,9 +174,6 @@ class DataTable(SmartBit):
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        print("---------------------------------------------------------")
-        print("drop_columns")
-        print("I am sending this information")
         self.send_updates()
 
     def drop_rows(self, selected_rows):
@@ -190,22 +184,18 @@ class DataTable(SmartBit):
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        print("---------------------------------------------------------")
-        print("drop_rows")
-        print("I am sending this information")
         self.send_updates()
 
+    # TODO This doesn't work because of how paginator works
     def transpose_table(self):
         self._modified_df.transpose()
         self.paginate()
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        print("---------------------------------------------------------")
-        print("transpose_table")
-        print("I am sending this information")
         self.send_updates()
 
+    # Restore table to original state, reset selectedCols
     def restore_table(self):
         self._modified_df = self._original_df
         self.paginate()
@@ -213,11 +203,9 @@ class DataTable(SmartBit):
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
-        print("---------------------------------------------------------")
-        print("restore_table")
-        print("I am sending this information")
         self.send_updates()
 
+    # Single column actions, are these redundant?
     def column_sort(self, selected_col):
         self._modified_df.sort_values(by=selected_col, inplace=True)
         self.state.currentPage = 1
@@ -229,7 +217,6 @@ class DataTable(SmartBit):
         print("---------------------------------------------------------")
         print("column_sort")
         print(f"column: {selected_col}")
-        print("I am sending this information")
         self.send_updates()
 
     def drop_column(self, selected_col):

@@ -50,14 +50,18 @@ import {TbWorldDownload} from "react-icons/tb";
 
 import FocusLock from 'react-focus-lock';
 
-import {useAppStore} from '@sage3/frontend';
 import {App} from "../../schema";
 
 import {state as AppState} from "./index";
 import {AppWindow} from '../../components';
 import './styles.css';
 
-import React, {useState, useEffect, useMemo} from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useAppStore, useAssetStore } from '@sage3/frontend';
+
+import { Asset } from '@sage3/shared/types';
+
+// import React, {useState, useEffect, useMemo} from 'react';
 
 
 const Pagination = (props: App): JSX.Element => {
@@ -65,11 +69,12 @@ const Pagination = (props: App): JSX.Element => {
   const s = props.data.state as AppState;
   const updateState = useAppStore(state => state.updateState);
 
+  // Pagination buttons
   const [leftButtonDisable, setLeftButtonDisable] = useState(true)
   const [rightButtonDisable, setRightButtonDisable] = useState(true)
   const [pageNumbers, setPageNumbers] = useState([0])
 
-
+  // Generates dropdown for how many rows to display per page
   const rowsPerPageArr = useMemo(() => {
     const rowDisplayOptions = []
     const minRows = 1
@@ -81,49 +86,46 @@ const Pagination = (props: App): JSX.Element => {
     return (rowDisplayOptions)
   }, [])
 
-
+  // Sets current page and calls python to perform pagination
   function paginater(page: number) {
     updateState(props._id, {currentPage: page})
     updateState(props._id, {executeInfo: {"executeFunc": "paginate", "params": {}}})
-    updateState(props._id, {messages: "Currently on page " + page})
-    console.log("current page " + s.currentPage)
-    console.log("new value of executeInfo is ")
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
+    // updateState(props._id, {messages: "Currently on page " + page})
   }
 
+  // Calls python to set number of rows displayed per page
   const handleRowDisplayCount = (rows: number) => {
     updateState(props._id, {rowsPerPage: rows})
     updateState(props._id, {executeInfo: {"executeFunc": "paginate", "params": {}}})
   }
 
+  // If not on page 1, calls python to display rows of previous page.
   function handleLeftArrow() {
-    console.log("left arrow")
     updateState(props._id, {executeInfo: {"executeFunc": "handle_left_arrow", "params": {}}})
     if (s.currentPage !== 1) {
       setLeftButtonDisable(false)
       updateState(props._id, {messages: "Currently on page " + (s.currentPage)})
-      console.log("current page " + (s.currentPage))
     } else {
-      console.log("No page before 0")
+      console.log("No page before 1")
       setLeftButtonDisable(true)
     }
   }
 
+  // If not on last page, calls python to display rows of next page.
   function handleRightArrow() {
-    console.log("right arrow")
     updateState(props._id, {executeInfo: {"executeFunc": "handle_right_arrow", "params": {}}})
     if (s.currentPage !== s.pageNumbers.length) {
       setRightButtonDisable(false)
       updateState(props._id, {messages: "Currently on page " + (s.currentPage)})
-      console.log("current page " + (s.currentPage))
     } else {
       console.log("No page after " + s.pageNumbers.length)
       setRightButtonDisable(true)
     }
   }
 
+  // TODO Investigate why disabling left and right buttons here as well
+  // Disables left and right buttons if current page is first or last.
+  // Displays page numbers to skip to
   useEffect(() => {
     if (s.currentPage !== 1) {
       setLeftButtonDisable(false)
@@ -262,7 +264,14 @@ const Pagination = (props: App): JSX.Element => {
 
 function AppComponent(props: App): JSX.Element {
 
+  // App state
   const s = props.data.state as AppState;
+    // Update the app
+  const update = useAppStore((state) => state.update);
+  // Asset store
+  const assets = useAssetStore((state) => state.assets);
+  // Get the asset
+  const [file, setFile] = useState<Asset>();
 
   const updateState = useAppStore(state => state.updateState);
 
@@ -275,45 +284,54 @@ function AppComponent(props: App): JSX.Element {
 
   const {onOpen, onClose, isOpen} = useDisclosure()
 
+
+  // TODO Move to a JSON?
   // Array of function references to map through for table actions menu
   const tableColActions = [tableSort, dropColumns]
   const tableColMenuNames = ["Sort on Selected Columns", "Drop Selected Columns"]
+
+  const tableColActs = {"Sort on Selected Columns": tableSort, "Drop Selected Columns": dropColumns}
 
   // Array of function references to map through for table actions menu
   const tableRowActions = [dropRows]
   const tableRowMenuNames = ["Drop Selected Rows"]
 
+  const tableRowActs = {"Drop Selected Rows": dropRows}
+
   // Array of function references to map through for table actions menu
   const tableActions = [transposeTable, restoreTable]
   const tableMenuNames = ["Transpose Table", "Restore Original Table"]
+
+  const tableActs = {"Transpose Table": transposeTable, "Restore Original Table": restoreTable}
 
   // Array of function references to map through for column actions menu
   const columnActions = [columnSort, dropColumn]
   const columnMenuNames = ["Sort on Column", "Drop Column"]
 
+  const columnActs = {"Sort on Column": columnSort, "Drop Column": dropColumn}
 
+  // TODO Change from URLs to SAGE assets
+  // Call python to load data from source
   function handleLoadData() {
-    console.log("in handleLoadData and updating the executeInfo")
     setRunning(true)
     updateState(props._id,
       {executeInfo: {"executeFunc": "load_data", "params": {"url": s.dataUrl}}})
-    console.log("new value of executeInfo is ")
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
   }
 
+  // TODO Should this be tied to something else? Is this best way to propagate change to all clients?
+  // Sets run icon to false when there is no call being made to python
   useEffect(() => {
     (s.executeInfo.executeFunc === "") ? setRunning(false) : setRunning(true)
   }, [s.executeInfo.executeFunc])
 
+  // TODO Why does this rely on a timestamp?
+  // When a dataset is loaded in, set table contents, headers, indices currently shown
+  // This sets every time paginator is called?
   useEffect(() => {
     if (s.viewData != undefined && s.viewData.data != undefined) {
       setData(s.viewData.data)
       setHeaders(s.viewData.columns)
       setIndices(s.viewData.index)
-
-      console.log("loading useEffect")
     }
   }, [s.timestamp, s.rowsPerPage])
 
@@ -334,6 +352,10 @@ function AppComponent(props: App): JSX.Element {
   //   console.log("ONE ARRAY selectedCols useEffect")
   // }, [JSON.stringify(s.selectedCols)])
 
+  // TODO There has to be a better way to do this rather than grab every cells and set their classes individually
+  // Grabs all cells, checks if their data-col tag is in selectedCols, then individually sets all of these cells to blank cell css class
+  // If cell data-col tag is in selectedCols, sets to highlight class
+  // Why is indices[] a trigger?
   useEffect(() => {
     const colDifference = headers?.filter(x => !s.selectedCols.includes(x));
     colDifference.forEach((col) => {
@@ -350,9 +372,9 @@ function AppComponent(props: App): JSX.Element {
         }
       )
     })
-    console.log("TWO ARRAYS selectedCols useEffect")
   }, [JSON.stringify(s.selectedCols), indices.length])
 
+  // TODO Figure out a better way to highlight rows. Currently grabs and checks every cell individually, setting each to a css class
   //Highlighting for row selection
   useEffect(() => {
     const rowDifference = indices.filter(x => !s.selectedRows.includes(x));
@@ -371,29 +393,29 @@ function AppComponent(props: App): JSX.Element {
         }
       )
     })
-    console.log("TWO ARRAYS selectedRows useEffect")
   }, [JSON.stringify(s.selectedRows)])
 
-  //TODO Warning: A component is changing an uncontrolled input to be controlled.
+  //TODO Change to load from SAGE assets and depracate this
+  // Warning: A component is changing an uncontrolled input to be controlled.
   // This is likely caused by the value changing from undefined to a defined value,
   // which should not happen. Decide between using a controlled or uncontrolled input element for the lifetime of the component
   function handleUrlChange(ev: any) {
     updateState(props._id, {dataUrl: ev.target.value})
   }
 
-  //TODO Fix delay in updateState upon click
+  // TODO Fix delay in updateState upon click
+  // Sets message for what cell is clicked... Necessary?
   function handleCellClick() {
-    console.log('initial click')
     const cells = document.querySelectorAll('td');
-    console.log('after cell declaration')
     cells.forEach(cell => {
       cell.addEventListener('click', () => {
         updateState(props._id, {messages: "(Row: " + cell?.closest('tr')?.rowIndex + ", Column: " + cell.cellIndex + ")"})
       })
     })
-    console.log('after click')
   }
 
+  // TODO Currently checks all cells, can we just check headers?
+  // Adds a column to selectedCols and sets a messsage for selectedCols
   function handleColClick(info: string) {
     const cols = document.querySelectorAll("td[data-col=" + info.replace(/\s+/g, '') + "]")
     cols.forEach((cell: any) => {
@@ -419,8 +441,8 @@ function AppComponent(props: App): JSX.Element {
     )
   }
 
+  // TODO Again, find better way to highlight rows, rather than grabbing every cell and setting each individual cell to a specific css class
   function handleRowClick(info: string) {
-    // const infoString = info.toString()
     const row = document.querySelectorAll("td[data-row='" + info + "']")
     row.forEach((cell: any) => {
         if (!s.selectedRows?.includes(info)) {
@@ -436,17 +458,14 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     )
-    console.log("row " + info + " clicked")
   }
 
   // Start of table wide functions
+
+  // Calls python to sort on selected column(s)
   function tableSort() {
-    console.log("Sorting on " + s.selectedCols)
     updateState(props._id,
       {executeInfo: {"executeFunc": "table_sort", "params": {"selected_cols": s.selectedCols}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
   }
 
   //TODO Add Columns
@@ -454,14 +473,13 @@ function AppComponent(props: App): JSX.Element {
     console.log("add column")
   }
 
+  // TODO Once cells are dropped, remove cell highlighting
+  // Calls python to drop selected column(s)
   function dropColumns() {
-    console.log("Dropping columns: " + s.selectedCols)
     updateState(props._id,
       {executeInfo: {"executeFunc": "drop_columns", "params": {"selected_cols": s.selectedCols}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
-    //
+
+    // Change all cells from highlighted class to regular
     // const cols = document.querySelectorAll("td")
     // cols.forEach((cell: any) => {
     //     cell.className = "originalChakra"
@@ -469,14 +487,13 @@ function AppComponent(props: App): JSX.Element {
     // )
   }
 
+  // TODO Once cells are dropped, remove cell highlighting
+  // Calls python to drop selected row(s)
   function dropRows() {
-    console.log("Dropping rows: " + s.selectedRows)
     updateState(props._id,
       {executeInfo: {"executeFunc": "drop_rows", "params": {"selected_rows": s.selectedRows}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
-    //
+
+    // Change all cells from highlighted class to regular
     // const cols = document.querySelectorAll("td")
     // cols.forEach((cell: any) => {
     //     cell.className = "originalChakra"
@@ -484,35 +501,29 @@ function AppComponent(props: App): JSX.Element {
     // )
   }
 
+  // TODO Does not currently work
   function transposeTable() {
-    console.log("Transposing")
     updateState(props._id,
       {executeInfo: {"executeFunc": "transpose_table", "params": {}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
   }
 
+  // Restore table to original view
   function restoreTable() {
-    console.log("Restoring table")
     updateState(props._id,
       {executeInfo: {"executeFunc": "restore_table", "params": {}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
   }
 
   //Start of single column functions
+
+  // Sort on single selected column
   function columnSort(column: any) {
     // updateState(props._id, {selectedCol: column})
-    console.log("Sorting on " + s.selectedCol)
     updateState(props._id,
       {executeInfo: {"executeFunc": "column_sort", "params": {"selected_col": s.selectedCol}}})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
   }
 
+  // Drop single selected column
+  // Remove dropped column from selectedCols
   function dropColumn(column: any) {
     updateState(props._id,
       {executeInfo: {"executeFunc": "drop_column", "params": {"selected_col": s.selectedCol}}})
@@ -521,16 +532,13 @@ function AppComponent(props: App): JSX.Element {
     })
     updateState(props._id, {selectedCols: selectedCols})
     updateState(props._id, {messages: ""})
-    console.log(s.executeInfo)
-    console.log("----")
-    console.log(s)
+
   }
 
+  // Search function that replaces view. Need to keep track of table view states so table doesn't need to restore between each search
   function enterSearch(ev: any, col: string) {
     if (ev.key === "Enter") {
       const value = ev.currentTarget.value;
-      console.log(col)
-      console.log(typeof col)
       setFilterInput(value)
       updateState(props._id, {
         executeInfo: {
@@ -547,6 +555,8 @@ function AppComponent(props: App): JSX.Element {
 
       <>
         <div className="URL-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
+
+
 
           <div className="searchContainer">
             {/*<HStack display="flex" wrap="wrap" justifyContent="space-between" marginTop="1em">*/}
