@@ -170,6 +170,11 @@ function isValidURL(value: string): string | undefined {
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
   if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return;
 
+  // Disable some protocols: chrome sage3
+  if (scheme === 'sage3' || scheme === 'chrome') {
+    return;
+  }
+
   // re-assemble the URL per section 5.3 in RFC 3986
   out += scheme + ':';
   if (authority && authority.length) {
