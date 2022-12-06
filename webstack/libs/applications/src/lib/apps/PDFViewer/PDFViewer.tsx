@@ -29,6 +29,7 @@ import {
   MdSkipNext,
   MdNavigateNext,
   MdNavigateBefore,
+  MdTipsAndUpdates
 } from 'react-icons/md';
 
 function AppComponent(props: App): JSX.Element {
@@ -92,6 +93,12 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   }, [s.currentPage]);
+
+  useEffect(() => {
+    if (s.analyzed) {
+      console.log('Got> result: ', s.analyzed);
+    }
+  }, [s.analyzed]);
 
   // Event handler
   const handleUserKeyPress = useCallback(
@@ -291,6 +298,16 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }
 
+  // Analyze the PDF
+  function analyzePDF() {
+    console.log('Analyzing PDF');
+    if (file) {
+      updateState(props._id, {
+        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file }, }
+      });
+    }
+  }
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -343,6 +360,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
@@ -372,6 +390,23 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
+
+      {/* Remote Action in Python */}
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+              <MdMenu />
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px">
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF}>
+              Analyze
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
     </>
   );
 }
