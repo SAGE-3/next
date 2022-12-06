@@ -28,6 +28,8 @@ class DataTableState(TrackedBaseModel):
 
     viewData: Optional[dict]
 
+    dataUrl: str
+
     totalRows: int
     rowsPerPage: int
     currentPage: int

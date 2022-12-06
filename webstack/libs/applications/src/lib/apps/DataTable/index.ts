@@ -47,6 +47,7 @@ export const init: Partial<state> = {
   totalRows: 0,
   rowsPerPage: 5,
   currentPage: 1,
+  dataUrl: "",
   //TODO Replace arrays
   pageNumbers: [],
   indexOfFirstRow: 0,
