@@ -26,7 +26,6 @@ export const schema = z.object({
     params: z.record(z.any()),
   }),
 });
-
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
