@@ -145,7 +145,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   controller: {
-    // position: { x: 16, y: window.innerHeight - 350 },
     position: { x: 5, y: 5 },
     name: 'controller',
     stuck: StuckTypes.TopLeft,
@@ -241,9 +240,9 @@ export const useUIStore = create<UIState>((set, get) => ({
     const cx = x1 + w / 2;
     const cy = y1 + h / 2;
 
-    // 85% of the smaller dimension (horizontal or vertical)
-    const sw = 0.85 * (window.innerWidth / w);
-    const sh = 0.85 * (window.innerHeight / h);
+    // 75% of the smaller dimension (horizontal or vertical)
+    const sw = 0.75 * (window.innerWidth / w);
+    const sh = 0.75 * (window.innerHeight / h);
     const sm = Math.min(sw, sh);
 
     // Offset to center the board...

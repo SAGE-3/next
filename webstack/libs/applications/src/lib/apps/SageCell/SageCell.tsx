@@ -28,7 +28,7 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -47,7 +47,7 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 imports
-import { useAppStore, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useUser, downloadFile, truncateWithEllipsis } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
@@ -65,14 +65,15 @@ const MARGIN = 2;
 const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
+  const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = useColorModeValue('#EFDEDD', '#DDD1D1');
+  const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -80,7 +81,16 @@ const AppComponent = (props: App): JSX.Element => {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  // Set the title on start
+  useEffect(() => {
+    // update the title of the app
+    if (props.data.title !== 'SageCell') {
+      update(props._id, { title: 'SageCell' });
+    }
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -101,8 +111,13 @@ const AppComponent = (props: App): JSX.Element => {
     if (s.kernel == '') {
       setAccess(true);
     } else {
-      const access = myKernels.find((kernel) => kernel.key == s.kernel);
+      const access = myKernels.find((kernel) => kernel.key === s.kernel);
       setAccess(access ? true : false);
+      if (access) {
+        const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
+        // update the title of the app
+        update(props._id, { title: 'Sage Cell: kernel [' + name + ']' });
+      }
     }
   }, [s.kernel, myKernels]);
 
@@ -152,7 +167,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
 
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -160,7 +175,11 @@ function ToolbarComponent(props: App): JSX.Element {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  useEffect(() => {
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -216,98 +235,82 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   return (
-    <>
-      <HStack>
-        {access ? (
-          <>
-            {/* check if there are any available kernels and if one is selected */}
-            {!myKernels || !s.kernel ? (
-              // show a red light if the kernel is not running
-              <Badge colorScheme="red" rounded="sm" size="lg">
-                Offline
-              </Badge>
-            ) : (
-              // show a green light if the kernel is running
-              <Badge colorScheme="green" rounded="sm" size="lg">
-                Online
-              </Badge>
-            )}
-            <Select
-              placeholder="Select Kernel"
-              rounded="lg"
-              size="sm"
-              width="150px"
-              ml={2}
-              px={0}
-              colorScheme="teal"
-              icon={<MdArrowDropDown />}
-              onChange={selectKernel}
-              value={selected ?? undefined}
-              variant={'outline'}
-            >
-              {myKernels.map((kernel) => (
-                <option value={kernel.key} key={kernel.key}>
-                  {kernel.value.kernel_alias} (
-                  {
-                    // show kernel name as Python, R, or Julia
-                    kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
-                  }
-                  )
-                </option>
-              ))}
-            </Select>
+    <HStack>
+      {
+        <>
+          {/* check if there are any available kernels and if one is selected */}
+          {!myKernels || !s.kernel ? (
+            // show a red light if the kernel is not running
+            <Badge colorScheme="red" rounded="sm" size="lg">
+              Offline
+            </Badge>
+          ) : (
+            // show a green light if the kernel is running
+            <Badge colorScheme="green" rounded="sm" size="lg">
+              Online
+            </Badge>
+          )}
+          <Select
+            placeholder="Select Kernel"
+            rounded="lg"
+            size="sm"
+            width="150px"
+            ml={2}
+            px={0}
+            colorScheme="teal"
+            icon={<MdArrowDropDown />}
+            onChange={selectKernel}
+            value={selected ?? undefined}
+            variant={'outline'}
+          >
+            {myKernels.map((kernel) => (
+              <option value={kernel.key} key={kernel.key}>
+                {kernel.value.kernel_alias} (
+                {
+                  // show kernel name as Python, R, or Julia
+                  kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
+                }
+                )
+              </option>
+            ))}
+          </Select>
 
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize <= 8}
-                  onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize > 42}
-                  onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdAdd />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-                <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-                  <MdFileDownload />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+          <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
+            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+              <MdRefresh />
+            </Button>
+          </Tooltip>
 
-            {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
-                <Button
-                  onClick={() =>
-                    updateState(props._id, {
-                      executeInfo: {
-                        executeFunc: 'generate_error_message',
-                        params: { user_uuid: user!._id },
-                      },
-                    })
-                  }
-                  _hover={{ opacity: 0.7 }}
-                >
-                  <MdError />
-                </Button>
-              </Tooltip>
-            </ButtonGroup> */}
-          </>
-        ) : (
-          <>This CodeCell is Private</>
-        )}
-      </HStack>
-    </>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize <= 8}
+                onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdRemove />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize > 42}
+                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdAdd />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+                <MdFileDownload />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+        </>
+      }
+    </HStack>
   );
 }
 
@@ -331,15 +334,21 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const { user } = useUser();
   const [fontSize, setFontSize] = useState(s.fontSize);
   const toast = useToast();
-  const [selectedKernel, setSelectedKernel] = useState(s.kernel);
 
   useEffect(() => {
-    setSelectedKernel(s.kernel);
-  }, [s.kernel]);
+    if (ace.current) {
+      ace.current.editor.commands.removeCommand('Execute');
+      ace.current.editor.commands.addCommand({
+        name: 'Execute',
+        bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' },
+        exec: () => handleExecute(s.kernel),
+      });
+    }
+  }, [s.kernel, ace.current]);
 
-  const handleExecute = () => {
+  const handleExecute = (kernel: string) => {
     const code = ace.current?.editor?.getValue();
-    if (!selectedKernel) {
+    if (!kernel) {
       toast({
         title: 'No kernel selected',
         description: 'Please select a kernel from the toolbar',
@@ -420,17 +429,13 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
             borderRadius: '4px',
           }}
-          commands={[
-            { name: 'Execute', bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' }, exec: handleExecute },
-            { name: 'Clear', bindKey: { win: 'Ctrl-Alt-Backspace', mac: 'Command-Option-Backspace' }, exec: handleClear },
-          ]}
         />
         <VStack pr={2}>
           {props.access ? (
             <Tooltip hasArrow label="Execute" placement="right-start">
               <IconButton
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleExecute}
+                onClick={() => handleExecute(s.kernel)}
                 aria-label={''}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"

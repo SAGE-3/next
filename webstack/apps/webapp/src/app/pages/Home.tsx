@@ -15,11 +15,11 @@ import {
   serverConfiguration,
   useBoardStore,
   useData,
-  usePresence,
   usePresenceStore,
   useRoomStore,
   useUsersStore,
   MainButton,
+  useUser,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
@@ -42,9 +42,10 @@ export function HomePage() {
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
 
   // Users and presence
+  const { user } = useUser();
+  const updatePresence = usePresenceStore((state) => state.update);
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-  const { update: updatePresence } = usePresence();
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -61,11 +62,11 @@ export function HomePage() {
     if (room) {
       setSelectedRoom(room);
       setSelectedBoard(undefined);
-      updatePresence({ roomId: room._id, boardId: '' });
+      if (user) updatePresence(user._id, { roomId: room._id, boardId: '' });
     } else {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
-      updatePresence({ roomId: '', boardId: '' });
+      if (user) updatePresence(user._id, { roomId: '', boardId: '' });
     }
   }
 

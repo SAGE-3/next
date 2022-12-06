@@ -96,15 +96,18 @@ function AppComponent(props: App): JSX.Element {
   // Event handler
   const handleUserKeyPress = useCallback(
     (evt: KeyboardEvent) => {
+      evt.stopPropagation();
       switch (evt.key) {
-        case 'ArrowRight': {
+        case 'ArrowRight':
+        case 'ArrowDown': {
           // Next page
           if (s.currentPage === s.numPages - s.displayPages) return;
           const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
           updateState(props._id, { currentPage: newpage });
           break;
         }
-        case 'ArrowLeft': {
+        case 'ArrowLeft':
+        case 'ArrowUp': {
           // Previous page
           if (s.currentPage === 0) return;
           const newpage = s.currentPage - 1 >= 0 ? s.currentPage - 1 : 0;

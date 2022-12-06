@@ -15,7 +15,6 @@ import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sag
 
 type WindowProps = {
   app: App;
-  aspectRatio?: number | boolean;
   children: JSX.Element;
   // React Rnd property to control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
