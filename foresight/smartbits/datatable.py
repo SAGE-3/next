@@ -29,6 +29,7 @@ class DataTableState(TrackedBaseModel):
     viewData: Optional[dict]
 
     dataUrl: str
+    assetid: str
 
     totalRows: int
     rowsPerPage: int

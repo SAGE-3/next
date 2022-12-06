@@ -32,6 +32,7 @@ import {
   MenuList,
   MenuItem,
   Portal,
+  Select,
   Spinner,
   MenuDivider,
   ButtonGroup,
@@ -56,10 +57,14 @@ import {state as AppState} from "./index";
 import {AppWindow} from '../../components';
 import './styles.css';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useAppStore, useAssetStore } from '@sage3/frontend';
+import {useState, useEffect, useMemo} from 'react';
+import {useAppStore, useAssetStore} from '@sage3/frontend';
 
-import { Asset } from '@sage3/shared/types';
+import {Asset} from '@sage3/shared/types';
+import {parse} from 'csv-parse/browser/esm';
+import {useLocation} from "react-router-dom";
+
+// import {parse} from "csv-parse/lib";
 
 // import React, {useState, useEffect, useMemo} from 'react';
 
@@ -266,17 +271,26 @@ function AppComponent(props: App): JSX.Element {
 
   // App state
   const s = props.data.state as AppState;
-    // Update the app
+  // Update the app
   const update = useAppStore((state) => state.update);
+
+  const location = useLocation();
+  const locationState = location.state as { roomId: string };
+
+  const assets = useAssetStore(state => state.assets);
+
   // Asset store
-  const assets = useAssetStore((state) => state.assets);
+  // const assets = useAssetStore((state) => state.assets);
+  // Room assets
+  const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
   // Get the asset
   const [file, setFile] = useState<Asset>();
 
   const updateState = useAppStore(state => state.updateState);
 
   // Client local states
-  const [data, setData] = useState([])
+  // const [data, setData] = useState([])
+  const [data, setData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([])
   const [indices, setIndices] = useState<string[]>([])
   const [running, setRunning] = useState((s.executeInfo.executeFunc === "") ? false : true)
@@ -317,6 +331,44 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id,
       {executeInfo: {"executeFunc": "load_data", "params": {"url": s.dataUrl}}})
   }
+
+  //   // Get the asset from the state id value
+  // useEffect(() => {
+  //   const myasset = assets.find((a) => a._id === s.assetid);
+  //   if (myasset) {
+  //     setFile(myasset);
+  //     // Update the app title
+  //     update(props._id, { title: myasset?.data.originalfilename });
+  //   }
+  // }, [s.assetid, assets]);
+  //
+  // // Get the data from the asset
+  // useEffect(() => {
+  //   if (file) {
+  //     const localurl = '/api/assets/static/' + file.data.file;
+  //     if (localurl) {
+  //       fetch(localurl, {
+  //         headers: {
+  //           'Content-Type': 'text/csv',
+  //           Accept: 'text/csv',
+  //         },
+  //       })
+  //         .then(function (response) {
+  //           return response.text();
+  //         })
+  //         .then(async function (text) {
+  //           // Convert the csv to an array
+  //           const arr = await csvToArray(text);
+  //           // save the data
+  //           setData(arr);
+  //           // extract the headers and save them
+  //           const headers = Object.keys(arr[0]);
+  //           setHeaders(headers);
+  //           // setTableWidth(95 / headers.length);
+  //         });
+  //     }
+  //   }
+  // }, [file]);
 
   // TODO Should this be tied to something else? Is this best way to propagate change to all clients?
   // Sets run icon to false when there is no call being made to python
@@ -549,14 +601,16 @@ function AppComponent(props: App): JSX.Element {
     }
   }
 
+  const handleFileSelected = () => {
+    console.log("Do something with file")
+  }
+
 
   return (
     <AppWindow app={props}>
 
       <>
         <div className="URL-Container" style={{display: headers.length !== 0 ? "block" : "none"}}>
-
-
 
           <div className="searchContainer">
             {/*<HStack display="flex" wrap="wrap" justifyContent="space-between" marginTop="1em">*/}
@@ -832,13 +886,52 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const s = props.data.state as AppState;
 
+  const updateState = useAppStore((state) => state.updateState);
+
+  const location = useLocation();
+  const locationState = location.state as { roomId: string };
+  const assets = useAssetStore(state => state.assets);
+  const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
+  const update = useAppStore((state) => state.update);
+
+  const handleFileSelected = () => {
+    console.log("Do something with file")
+  }
+
   return (
     <>
+      <Box>
+        <Select placeholder='Select File' onChange={handleFileSelected}>
+          {roomAssets.map(el =>
+            <option value={el._id}>{el.data.originalfilename}</option>)
+          }
+        </Select>
+      </Box>
     </>
   )
 }
 
-export default {
-  AppComponent, ToolbarComponent
+export default {AppComponent, ToolbarComponent};
+
+// Convert the csv to an array using the csv-parse library
+async function csvToArray(str: string): Promise<Record<string, string>[]> {
+  // use the csv parser library to parse the csv
+  return new Promise((resolve) => {
+    parse(
+      str,
+      {
+        relax_quotes: true,
+        columns: true,
+        skip_empty_lines: true,
+        rtrim: true,
+        trim: true,
+        // delimiter: ",",
+      },
+      function (err, records) {
+        const data = records as Record<string, string>[];
+        // return the array
+        return resolve(data);
+      }
+    );
+  });
 }
-;

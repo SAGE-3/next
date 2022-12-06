@@ -13,6 +13,7 @@ export const schema = z.object({
   // TODO Replace any datatype
   viewData: z.any(),
   dataUrl: z.string(),
+  assetid: z.string(),
   // filterInput: z.string(),
 
   totalRows: z.number(),
@@ -44,6 +45,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
   viewData: {},
+  assetid: "",
   totalRows: 0,
   rowsPerPage: 5,
   currentPage: 1,
