@@ -10,10 +10,17 @@
 import { WebSocket } from 'ws';
 
 // Custom Routes
-import { assetWSRouter } from './custom/asset';
 import { subscriptionWSRouter } from './custom/subscription';
 // Collection Imports
-import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection, MessageCollection } from '../collections';
+import {
+  AssetsCollection,
+  AppsCollection,
+  BoardsCollection,
+  PresenceCollection,
+  RoomsCollection,
+  UsersCollection,
+  MessageCollection,
+} from '../collections';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
@@ -21,7 +28,8 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
 
 const wsRoutes = {
-  '/assets': assetWSRouter,
+  '/assets': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    AssetsCollection.wsRouter(socket, message, user, cache),
   '/apps': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     AppsCollection.wsRouter(socket, message, user, cache),
   '/boards': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
