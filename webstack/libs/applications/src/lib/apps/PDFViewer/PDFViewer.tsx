@@ -6,6 +6,8 @@
  *
  */
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams } from 'react-router';
+
 import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -13,7 +15,7 @@ import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useAssetStore, useAppStore } from '@sage3/frontend';
+import { useAssetStore, useAppStore, useUser } from '@sage3/frontend';
 
 // Utility functions from SAGE3
 import { downloadFile } from '@sage3/frontend';
@@ -40,6 +42,13 @@ function AppComponent(props: App): JSX.Element {
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
+  // App functions
+  const createApp = useAppStore((state) => state.create);
+  // User information
+  const { user } = useUser();
+  const { boardId, roomId } = useParams();
+  // Set the processing UI state
+  const [processing, setProcessing] = useState(false);
 
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
@@ -94,9 +103,34 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.currentPage]);
 
+  // Display the processing UI
   useEffect(() => {
+    if (s.executeInfo.executeFunc)
+      setProcessing(true);
+    else
+      setProcessing(false);
+  }, [s.executeInfo.executeFunc]);
+
+  // Return from the remote python function
+  useEffect(() => {
+    if (!user) return;
     if (s.analyzed) {
-      console.log('Got> result: ', s.analyzed);
+      const result = JSON.parse(s.analyzed);
+      // Create a new stickie to show resuls (temporary, should be a new app for this purpose)
+      createApp({
+        title: 'Analysis - ' + file?.data.originalfilename,
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: 700, height: props.data.size.height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'PDFResult',
+        state: {
+          result: JSON.stringify(result, null, 4),
+        },
+        raised: true,
+      });
+
     }
   }, [s.analyzed]);
 
@@ -195,7 +229,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} processing={processing}>
       <HStack
         roundedBottom="md"
         bg="whiteAlpha.700"
