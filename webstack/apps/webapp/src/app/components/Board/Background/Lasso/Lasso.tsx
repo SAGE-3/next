@@ -13,9 +13,19 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useAppStore, useBoardStore, useCursorBoardPosition, useHotkeys, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
+import {
+  useAppStore,
+  useBoardStore,
+  useCursorBoardPosition,
+  useHexColor,
+  useHotkeys,
+  useKeyPress,
+  useUIStore,
+  useUser,
+} from '@sage3/frontend';
 import { Rnd } from 'react-rnd';
 import { Box } from '@chakra-ui/react';
+import { App } from '@sage3/applications/schema';
 
 type LassoProps = {
   boardId: string;
@@ -40,7 +50,6 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-  const [boxes, setBoxes] = useState<BoxProps[]>([]);
 
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
@@ -55,61 +64,10 @@ export function Lasso(props: LassoProps) {
   const [last_mousey, set_last_mousey] = useState(0);
   const [mousex, set_mousex] = useState(0);
   const [mousey, set_mousey] = useState(0);
+  const [selectedApps, setSelectedApps] = useState<App[]>([]);
 
   const spacebarPressed = useKeyPress(' ');
   const color = useUIStore((state) => state.markerColor);
-
-  // Checks for apps on or off the pane
-  useEffect(() => {
-    console.log('updated');
-    const width = Math.abs(mousex - last_mousex);
-    const height = Math.abs(mousey - last_mousey);
-
-    const rx = mousex < last_mousex ? mousex : last_mousex;
-    const ry = mousey < last_mousey ? mousey : last_mousey;
-    console.log(rx + width, rx, ry + height, ry);
-    // Check all apps on board
-    for (const app of boardApps) {
-      // Hosted app window should fall within AI Pane window
-      // Ignore apps already being hosted
-      console.log(app.data.position.x, app.data.size.width, app.data.position.y, app.data.size.height);
-      console.log(
-        app.data.position.x > rx,
-        app.data.position.x + app.data.size.width < rx + width,
-        app.data.position.y + app.data.size.height < ry + height,
-        app.data.size.height + app.data.position.y > ry
-      );
-
-      if (
-        app.data.position.x + app.data.size.width < rx + width &&
-        app.data.position.x + app.data.size.width > rx &&
-        app.data.position.y + app.data.size.height < ry + height &&
-        app.data.size.height + app.data.position.y > ry
-      ) {
-        console.log('hosting apps');
-        // if (!Object.keys(s.hostedApps).includes(app._id)) {
-        //   const hosted = {
-        //     ...s.hostedApps,
-        //     ...client,
-        //   };
-        //   updateState(props._id, { hostedApps: hosted });
-        //   // TODO Make messages more informative rather than simply types of apps being hosted
-        //   updateState(props._id, { messages: hosted });
-        //   // console.log('app ' + app._id + ' added');
-        //   newAppAdded(app.data.type);
-        // } else {
-        //   // console.log('app ' + app._id + ' already in hostedApps');
-        // }
-      }
-      // else {
-      //   if (Object.keys(s.hostedApps).includes(app._id)) {
-      //     const hostedCopy = { ...s.hostedApps };
-      //     delete hostedCopy[app._id];
-      //     updateState(props._id, { messages: hostedCopy, hostedApps: hostedCopy });
-      //   }
-      // }
-    }
-  }, [JSON.stringify(boardApps)]);
 
   useHotkeys('esc', () => {
     setLassoMode(false);
@@ -125,14 +83,6 @@ export function Lasso(props: LassoProps) {
 
   const mouseUp = () => {
     setMouseDown(false);
-    const box = {
-      mousex: mousex,
-      mousey: mousey,
-      last_mousex: last_mousex,
-      last_mousey: last_mousey,
-      color: color,
-    };
-    if (box) setBoxes((prev) => [...prev, box]);
   };
 
   const mouseMove = () => {
@@ -161,9 +111,27 @@ export function Lasso(props: LassoProps) {
           onMouseMove={mouseMove}
         >
           {mousedown ? (
-            <AddRectangle mousex={mousex} mousey={mousey} last_mousex={last_mousex} last_mousey={last_mousey} color={color} />
+            <AddRectangle
+              mousex={mousex}
+              mousey={mousey}
+              last_mousex={last_mousex}
+              last_mousey={last_mousey}
+              color={color}
+              selectedApps={selectedApps}
+              setSelectedApps={setSelectedApps}
+            />
+          ) : selectedApps.length ? (
+            <AddRectangle
+              mousex={mousex}
+              mousey={mousey}
+              last_mousex={last_mousex}
+              last_mousey={last_mousey}
+              color={color}
+              selectedApps={selectedApps}
+              setSelectedApps={setSelectedApps}
+            />
           ) : null}
-          {boxes.map((box, index) => {
+          {/* {boxes.map((box, index) => {
             return (
               <AddRectangle
                 key={index}
@@ -174,7 +142,7 @@ export function Lasso(props: LassoProps) {
                 color={box.color}
               />
             );
-          })}
+          })} */}
         </svg>
       </div>
     </>
@@ -187,23 +155,45 @@ const AddRectangle = (props: any) => {
 
   const rx = props.mousex < props.last_mousex ? props.mousex : props.last_mousex;
   const ry = props.mousey < props.last_mousey ? props.mousey : props.last_mousey;
+  const boardApps = useAppStore((state) => state.apps);
+
+  const scale = useUIStore((state) => state.scale);
+  const { user } = useUser();
+
+  const strokeColor = useHexColor(user ? user.data.color : 'white');
+
+  useEffect(() => {
+    props.setSelectedApps([]);
+    console.log('called');
+  }, []);
+
+  // Checks for apps on or off the pane
+  useEffect(() => {
+    console.log(props.selectedApps);
+    // Check all apps on board
+    for (const app of boardApps) {
+      if (
+        app.data.position.x + app.data.size.width < rx + width &&
+        app.data.position.x + app.data.size.width > rx &&
+        app.data.position.y + app.data.size.height < ry + height &&
+        app.data.size.height + app.data.position.y > ry
+      ) {
+        if (!props.selectedApps.includes(app)) props.setSelectedApps((prev: App[]) => [...prev, app]);
+      }
+    }
+  }, [width, height]);
 
   return (
     <>
-      <text x={rx} y={ry}>
-        {rx}
-      </text>
-      <text x={rx + width} y={ry}>
-        {rx + width}
-      </text>
-      <text x={rx} y={ry + height}>
-        {ry}
-      </text>
-      <text x={rx + width} y={ry + height}>
-        {ry + height}
-      </text>
       <rect
-        style={{ fill: props.color, strokeWidth: 30, stroke: props.color, opacity: 0.3, zIndex: -1 }}
+        style={{
+          strokeWidth: 6 / scale,
+          strokeDasharray: 10 / scale,
+          stroke: strokeColor,
+          fill: strokeColor,
+          fillOpacity: 0.15,
+          zIndex: -1,
+        }}
         x={rx}
         y={ry}
         height={height}
