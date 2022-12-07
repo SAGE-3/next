@@ -63,11 +63,8 @@ import {useAppStore, useAssetStore} from '@sage3/frontend';
 import {Asset} from '@sage3/shared/types';
 import {parse} from 'csv-parse/browser/esm';
 import {useLocation} from "react-router-dom";
-
-// import {parse} from "csv-parse/lib";
-
-// import React, {useState, useEffect, useMemo} from 'react';
-
+import {useParams} from "react-router";
+import {v4 as getUUID} from "uuid";
 
 const Pagination = (props: App): JSX.Element => {
 
@@ -273,18 +270,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Update the app
   const update = useAppStore((state) => state.update);
-
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
-
-  const assets = useAssetStore(state => state.assets);
-
-  // Asset store
-  // const assets = useAssetStore((state) => state.assets);
-  // Room assets
-  const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
-  // Get the asset
-  const [file, setFile] = useState<Asset>();
 
   const updateState = useAppStore(state => state.updateState);
 
@@ -601,11 +586,6 @@ function AppComponent(props: App): JSX.Element {
     }
   }
 
-  const handleFileSelected = () => {
-    console.log("Do something with file")
-  }
-
-
   return (
     <AppWindow app={props}>
 
@@ -888,21 +868,34 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
-  const location = useLocation();
-  const locationState = location.state as { roomId: string };
+  // BoardInfo
+  const { boardId, roomId } = useParams();
+
   const assets = useAssetStore(state => state.assets);
-  const roomAssets = assets.filter(el => el.data.room == locationState.roomId);
+  // Get the asset
+  const [file, setFile] = useState<Asset>();
+  const roomAssets = assets.filter(el => el.data.room == roomId);
+  const supportedRoomAssets = roomAssets.filter(el => el.data.file.split('.').pop() === 'csv')
   const update = useAppStore((state) => state.update);
 
-  const handleFileSelected = () => {
-    console.log("Do something with file")
+  function handleFileSelected(event: any) {
+    console.log('do something with file ' + event.target.value)
+
+    const myasset = assets.find((a) => a._id === event.target.value);
+    if (myasset) {
+      setFile(myasset);
+      console.log('--------' + myasset)
+      const localurl = '/api/assets/static/' + event.target.value + '.csv';
+      updateState(props._id,
+      {executeInfo: {"executeFunc": "load_data", "params": {"url": localurl}}})
+    }
   }
 
   return (
     <>
       <Box>
         <Select placeholder='Select File' onChange={handleFileSelected}>
-          {roomAssets.map(el =>
+          {supportedRoomAssets.map(el =>
             <option value={el._id}>{el.data.originalfilename}</option>)
           }
         </Select>
