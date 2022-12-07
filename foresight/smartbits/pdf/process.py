@@ -128,7 +128,7 @@ def pdf_analyzer(pdf, output):
     json_file.close()
 
     topic = output_dict["exif_tool"].get(["PDF:Keywords"][0], "")
-    print("Keyword: " + topic)
+    print("Keyword: ", topic)
     search_arxiv(topic, "", 5)
 
     # author = output_dict["exif_tool"]["PDF:Author"]
