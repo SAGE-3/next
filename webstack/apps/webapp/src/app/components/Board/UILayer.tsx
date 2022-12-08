@@ -18,7 +18,6 @@ import { ClearBoardModal } from './UI/ClearBoardModal';
 import { AppToolbar } from './UI/AppToolbar';
 import { Twilio } from './UI/Twilio';
 import { Alfred } from './UI/Alfred';
-import { LassoPanel } from './UI/Panels/LassoPanel/LassoPanel';
 
 type UILayerProps = {
   boardId: string;
@@ -141,8 +140,6 @@ export function UILayer(props: UILayerProps) {
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
       <WhiteboardPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <LassoPanel boardId={props.boardId} roomId={props.roomId} />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>

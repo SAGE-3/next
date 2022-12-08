@@ -64,7 +64,7 @@ export function Controller(props: ControllerProps) {
 
   // Show the various panels
   const handleShowPanel = (menuName: PanelNames) => {
-    [applicationsPanel, navigationPanel, usersPanel, assetsPanel, whiteboardPanel, lassoPanel].forEach((panel) => {
+    [applicationsPanel, navigationPanel, usersPanel, assetsPanel, whiteboardPanel].forEach((panel) => {
       if (panel.name === menuName) {
         if (panel.stuck == StuckTypes.Controller) {
           panel.setShow(!panel.show);
@@ -122,12 +122,6 @@ export function Controller(props: ControllerProps) {
           description="Navigation"
           isActive={navigationPanel.show}
           onClick={() => handleShowPanel(navigationPanel.name)}
-        />
-        <IconButtonPanel
-          icon={<BsBoundingBoxCircles size="32px" />}
-          description="Annotation"
-          isActive={lassoPanel.show}
-          onClick={() => handleShowPanel(lassoPanel.name)}
         />
         <IconButtonPanel
           icon={<BiPencil size="32px" />}

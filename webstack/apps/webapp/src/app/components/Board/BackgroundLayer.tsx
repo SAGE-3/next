@@ -36,6 +36,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -80,6 +81,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     // If it was a drag, then don't deselect the app.
     if (!boardDrag) {
       setSelectedApp('');
+      clearSelectedApps();
     }
     setBoardDrag(false);
   }

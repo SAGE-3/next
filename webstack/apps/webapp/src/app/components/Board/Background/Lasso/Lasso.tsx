@@ -50,6 +50,7 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
+  const selectedApps = useUIStore((state) => state.selectedApps);
 
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
@@ -64,10 +65,17 @@ export function Lasso(props: LassoProps) {
   const [last_mousey, set_last_mousey] = useState(0);
   const [mousex, set_mousex] = useState(0);
   const [mousey, set_mousey] = useState(0);
-  const [selectedApps, setSelectedApps] = useState<App[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
 
   const spacebarPressed = useKeyPress(' ');
   const color = useUIStore((state) => state.markerColor);
+
+  useEffect(() => {
+    if (!lassoMode && mousedown === true) {
+      mouseUp();
+    }
+  }, [lassoMode]);
 
   useHotkeys('esc', () => {
     setLassoMode(false);
@@ -83,11 +91,15 @@ export function Lasso(props: LassoProps) {
 
   const mouseUp = () => {
     setMouseDown(false);
+    if (!isDragging) {
+      clearSelectedApps();
+    }
+    setIsDragging(false);
   };
 
   const mouseMove = () => {
     const position = userCursor.position;
-
+    setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);
   };
@@ -118,31 +130,8 @@ export function Lasso(props: LassoProps) {
               last_mousey={last_mousey}
               color={color}
               selectedApps={selectedApps}
-              setSelectedApps={setSelectedApps}
-            />
-          ) : selectedApps.length ? (
-            <AddRectangle
-              mousex={mousex}
-              mousey={mousey}
-              last_mousex={last_mousex}
-              last_mousey={last_mousey}
-              color={color}
-              selectedApps={selectedApps}
-              setSelectedApps={setSelectedApps}
             />
           ) : null}
-          {/* {boxes.map((box, index) => {
-            return (
-              <AddRectangle
-                key={index}
-                mousex={box.mousex}
-                mousey={box.mousey}
-                last_mousex={box.last_mousex}
-                last_mousey={box.last_mousey}
-                color={box.color}
-              />
-            );
-          })} */}
         </svg>
       </div>
     </>
@@ -161,27 +150,41 @@ const AddRectangle = (props: any) => {
   const { user } = useUser();
 
   const strokeColor = useHexColor(user ? user.data.color : 'white');
+  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
+  const addSelectedApp = useUIStore((state) => state.addSelectedApp);
+  const setSelectedApps = useUIStore((state) => state.setSelectedApps);
+  const [localSelctedApps, setLocalSelectedApps] = useState<string[]>([]);
 
   useEffect(() => {
-    props.setSelectedApps([]);
-    console.log('called');
+    clearSelectedApps();
   }, []);
 
   // Checks for apps on or off the pane
   useEffect(() => {
-    console.log(props.selectedApps);
     // Check all apps on board
     for (const app of boardApps) {
       if (
+        app.data.position.x > rx &&
+        app.data.position.y > ry &&
         app.data.position.x + app.data.size.width < rx + width &&
-        app.data.position.x + app.data.size.width > rx &&
-        app.data.position.y + app.data.size.height < ry + height &&
-        app.data.size.height + app.data.position.y > ry
+        app.data.position.y + app.data.size.height < ry + height
       ) {
-        if (!props.selectedApps.includes(app)) props.setSelectedApps((prev: App[]) => [...prev, app]);
+        // if (!props.selectedApps.includes(app._id)) addSelectedApp(app._id);
+        if (!localSelctedApps.includes(app._id)) setLocalSelectedApps((prev) => [...prev, app._id]);
+      } else {
+        if (localSelctedApps.includes(app._id)) {
+          const newArray = localSelctedApps;
+          const index = newArray.indexOf(app._id);
+          newArray.splice(index, 1);
+          setLocalSelectedApps([...newArray]);
+        }
       }
     }
-  }, [width, height]);
+  }, [width, height, rx, ry, localSelctedApps, boardApps]);
+
+  useEffect(() => {
+    setSelectedApps(localSelctedApps);
+  }, [localSelctedApps]);
 
   return (
     <>

@@ -13,6 +13,7 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
+import { Tracing } from 'trace_events';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -63,6 +64,13 @@ interface UIState {
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
+
+  // Selected Apps
+  selectedApps: string[];
+  setSelectedApps: (appId: string[]) => void;
+  addSelectedApp: (appId: string) => void;
+  removeSelectedApp: (appId: string) => void;
+  clearSelectedApps: () => void;
 
   // whiteboard
   whiteboardMode: boolean; // marker mode enabled
@@ -136,6 +144,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showAppTitle: false,
   boardDragging: false,
   appDragging: false,
+  selectedApps: [],
   lassoMode: false,
   lassoColor: 'red',
   clearLassos: false,
@@ -308,6 +317,17 @@ export const useUIStore = create<UIState>((set, get) => ({
   setClearLassos: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllLassos: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+
+  setSelectedApps: (appIds: string[]) => set((state) => ({ ...state, selectedApps: appIds })),
+  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedApps, appId] })),
+  removeSelectedApp: (appId: string) =>
+    set((state) => {
+      const newArray = state.selectedApps;
+      const index = state.selectedApps.indexOf(appId);
+      newArray.splice(index, 1);
+      return { ...state, selectedApps: newArray };
+    }),
+  clearSelectedApps: () => set((state) => ({ ...state, selectedApps: [] })),
 
   setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),

@@ -39,12 +39,16 @@ export function AppWindow(props: WindowProps) {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
+  const selectedApps = useUIStore((state) => state.selectedApps);
+  const isGrouped = selectedApps.includes(props.app._id);
+  const lassoMode = useUIStore((state) => state.lassoMode);
 
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [myZ, setMyZ] = useState(zindex);
   const [appWasDragged, setAppWasDragged] = useState(false);
+  const [dragStatePos, setDragStartPosition] = useState(props.app.data.position);
 
   // Colors
   const bg = useColorModeValue('gray.100', 'gray.700');
@@ -100,10 +104,11 @@ export function AppWindow(props: WindowProps) {
   function handleDragStart() {
     setAppDragging(true);
     bringForward();
+    setDragStartPosition(props.app.data.position);
   }
 
   // When the window is being dragged
-  function handleDrag() {
+  function handleDrag(_e: any, data: DraggableData) {
     setAppWasDragged(true);
   }
 
@@ -111,6 +116,8 @@ export function AppWindow(props: WindowProps) {
   function handleDragStop(_e: any, data: DraggableData) {
     let x = data.x;
     let y = data.y;
+    const dx = x - props.app.data.position.x;
+    const dy = y - props.app.data.position.y;
     x = Math.round(x / gridSize) * gridSize; // Snap to grid
     y = Math.round(y / gridSize) * gridSize;
     setPos({ x, y });
@@ -122,6 +129,22 @@ export function AppWindow(props: WindowProps) {
         z: props.app.data.position.z,
       },
     });
+    if (isGrouped) {
+      selectedApps.forEach((appId) => {
+        if (appId === props.app._id) return;
+        const app = apps.find((el) => el._id == appId);
+        if (!app) return;
+        console.log('lets move this app by this much', dx, dy);
+        const p = app.data.position;
+        update(appId, {
+          position: {
+            x: p.x + dx,
+            y: p.y + dy,
+            z: p.z,
+          },
+        });
+      });
+    }
   }
 
   // Handle when the window starts to resize
@@ -218,7 +241,7 @@ export function AppWindow(props: WindowProps) {
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
         // pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', // Guest Blocker
-        pointerEvents: spacebarPressed ? 'none' : 'auto', // Guest Blocker
+        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto', // Guest Blocker
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -282,10 +305,9 @@ export function AppWindow(props: WindowProps) {
         height={size.height + borderWidth * 2}
         borderRadius={outerBorderRadius}
         zIndex={-1} // Behind everything
-        background={selected ? selectColor : borderColor}
+        background={selected || isGrouped ? selectColor : borderColor}
         boxShadow={'4px 4px 12px 0px rgb(0 0 0 / 25%)'}
       ></Box>
-
       {/* The Application */}
       <Box
         id={'app_' + props.app._id}
@@ -298,7 +320,6 @@ export function AppWindow(props: WindowProps) {
       >
         {props.children}
       </Box>
-
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
       {!selected ? (
         <Box
@@ -314,7 +335,6 @@ export function AppWindow(props: WindowProps) {
           borderRadius={innerBorderRadius}
         ></Box>
       ) : null}
-
       {/* This div is to block the app from being interacted with when the user is dragging the board or an app */}
       {boardDragging || appDragging ? (
         <Box
@@ -329,7 +349,6 @@ export function AppWindow(props: WindowProps) {
           zIndex={999999999} // Really big number to just force it to be on top
         ></Box>
       ) : null}
-
       {/* Processing Box */}
       {props.processing ? (
         <Box
