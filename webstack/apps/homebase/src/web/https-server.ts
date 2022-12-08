@@ -32,7 +32,7 @@ export function loadCredentials(config: serverConfiguration): https.ServerOption
   const basePath = path.join(config.root, 'keys');
   const privateKeyFile = path.join(basePath, config.ssl.certificateKeyFile);
   const certificateFile = path.join(basePath, config.ssl.certificateFile);
-  const caFile = path.join(basePath, config.ssl.certificateChainFile);
+  // const caFile = path.join(basePath, config.ssl.certificateChainFile);
   try {
     fs.accessSync(privateKeyFile, fs.constants.R_OK);
   } catch (err) {
@@ -43,21 +43,21 @@ export function loadCredentials(config: serverConfiguration): https.ServerOption
   } catch (err) {
     throw new Error(`Certificate file ${certificateFile} not found or unreadable.`);
   }
-  try {
-    fs.accessSync(caFile, fs.constants.R_OK);
-  } catch (err) {
-    throw new Error(`Certificate file ${caFile} not found or unreadable.`);
-  }
+  // try {
+  //   fs.accessSync(caFile, fs.constants.R_OK);
+  // } catch (err) {
+  //   throw new Error(`Certificate file ${caFile} not found or unreadable.`);
+  // }
   // load all the certificates
   const privateKey = fs.readFileSync(privateKeyFile, 'utf8');
   const certificate = fs.readFileSync(certificateFile, 'utf8');
-  const ca = fs.readFileSync(caFile).toString();
+  // const ca = fs.readFileSync(caFile).toString();
   // Build an http server option structure
   const credentials = {
     // Keys
     key: privateKey,
     cert: certificate,
-    ca: ca,
+    // ca: ca,
     // Control the supported version of TLS
     minVersion: config.tlsVersion,
     maxVersion: config.tlsVersion,
