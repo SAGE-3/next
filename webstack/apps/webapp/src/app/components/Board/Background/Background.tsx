@@ -209,7 +209,7 @@ export function Background(props: BackgroundProps) {
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = 'copy';
   }
 
   const newApp = (type: AppName, x: number, y: number) => {
