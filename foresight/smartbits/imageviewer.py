@@ -32,7 +32,8 @@ class ImageViewer(SmartBit):
         Sets bounding boxes from output produced by AI Pane
         """
         print('+++++++++++++++++')
-        print('running set_boxes')
+        print('running set_boxes', bboxes)
+
         self.state.boxes = bboxes
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}

@@ -19,6 +19,7 @@ import {App} from '../../schema';
 import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
+import {v4 as getUUID} from "uuid";
 
 // import { dimensions } from './data_types';
 
@@ -91,7 +92,7 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [file]);
 
-  // Track the size size and pick the 'best' URL
+  // Track the size and pick the 'best' URL
   useEffect(() => {
     const isUUID = isUUIDv4(s.assetid);
     if (isUUID) {
@@ -123,29 +124,31 @@ function AppComponent(props: App): JSX.Element {
           />
 
           {
-            Object.keys(s.boxes).map((label, idx) => {
-              // TODO Need to handle text overflow for labels
-              return (
-                <Box
-                  key={label + idx}
-                  position="absolute"
-                  left={s.boxes[label].xmin * (displaySize.width / origSizes.width ) + 'px'}
-                  top={s.boxes[label].ymin * (displaySize.height / origSizes.height) + 'px'}
-                  width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
-                  height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
-                  border="2px solid red"
-                  style={{display: s.annotations === true ? 'block' : 'none'}}
-                >
+            Object.values(s.boxes).map((box) => {
+              Object.keys(box).map((label, idx) => {
+                // TODO Need to handle text overflow for labels
+                return (
                   <Box
+                    key={label + idx}
                     position="relative"
-                    top={'-1.5rem'}
-                    fontWeight={'bold'}
-                    textColor={"black"}
+                    left={box[label].xmin * (displaySize.width / origSizes.width) + 'px'}
+                    top={box[label].ymin * (displaySize.height / origSizes.height) + 'px'}
+                    width={(box[label].xmax - box[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
+                    height={(box[label].ymax - box[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
+                    border="2px solid red"
+                    style={{display: s.annotations === true ? 'block' : 'none'}}
                   >
-                    {label}
+                    <Box
+                      position="relative"
+                      top={'-1.5rem'}
+                      fontWeight={'bold'}
+                      textColor={"black"}
+                    >
+                      {label}
+                    </Box>
                   </Box>
-                </Box>
-              );
+                );
+              })
             })
           }
         </>
@@ -196,11 +199,39 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload/>
           </Button>
         </Tooltip>
-        <div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>
+        {/*<div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>*/}
+        <div>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
-                updateState(props._id, {annotations: !s.annotations});
+                updateState(props._id, {
+                  // annotations: !s.annotations,
+                  annotations: true,
+                  boxes: {
+                    '1': {'dog': {'xmin': 10, 'ymin': 5, 'xmax': 20, 'ymax': 20}},
+                    '2': {'dog': {'xmin': 20, 'ymin': 20, 'xmax': 10, 'ymax': 10}}
+                  }
+                });
+                Object.values(s.boxes).map((box) => {
+                  Object.keys(box).map((label, idx) => {
+                    // TODO Need to handle text overflow for labels
+                    return (
+                      console.log(box[label])
+                    );
+                  })
+                })
+                // updateState(props._id, {
+                //   annotations: !s.annotations,
+                //   executeInfo: {
+                //     executeFunc: 'set_bboxes',
+                //     params: {
+                //       bboxes: {
+                //         '1': {'dog': {'xmin': 50, 'ymin': 50, 'xmax': 50, 'ymax': 50}},
+                //         '2': {'dog': {'xmin': 150, 'ymin': 150, 'xmax': 150, 'ymax': 150}}
+                //       }
+                //     },
+                //   },
+                // });
               }}
             >
               <HiPencilAlt/>
