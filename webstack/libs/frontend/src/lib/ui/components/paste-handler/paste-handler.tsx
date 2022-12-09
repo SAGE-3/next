@@ -13,7 +13,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
-import { useUser, useUIStore, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
+import { useUser, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
 import { processContentURL } from '@sage3/frontend';
 
 type PasteProps = {
@@ -32,9 +32,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   // User information
   const { user } = useUser();
   const { position: cursorPosition } = useCursorBoardPosition();
-  // UI Store
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
   // App Store
   const createApp = useAppStore((state) => state.create);
 
