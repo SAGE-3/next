@@ -6,10 +6,11 @@
  *
  */
 
-import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
-import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
 import { useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+
+import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
+import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
 
 // Renders all the apps
 export function Apps() {

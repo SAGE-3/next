@@ -61,6 +61,19 @@ export function BoardPage() {
 
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
+  function handleDragOver(event: DragEvent) {
+    const elt = event.target as HTMLElement;
+    if (elt.id !== 'board') {
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'none';
+      }
+      event.preventDefault();
+    }
+  }
+  function handleDrop(event: DragEvent) {
+    event.preventDefault();
+  }
+
   // Handle joining and leave a board
   useEffect(() => {
     // This is if someone is joining a board by a link
@@ -78,6 +91,10 @@ export function BoardPage() {
     // Set Selected app to empty
     setSelectedApp('');
 
+    // Prevent drag/drop when not on the board
+    document.addEventListener("dragover", handleDragOver);
+    document.addEventListener("drop", handleDrop);
+
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
@@ -86,6 +103,9 @@ export function BoardPage() {
       if (user) updatePresence(user._id, { boardId: '', roomId: '' });
       // Set Selected app to empty
       setSelectedApp('');
+      // Remove event listeners
+      document.removeEventListener("dragover", handleDragOver);
+      document.removeEventListener("drop", handleDrop);
     };
   }, []);
 
