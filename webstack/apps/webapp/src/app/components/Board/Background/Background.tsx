@@ -25,6 +25,7 @@ import {
   processContentURL,
   useHotkeys,
   useCursorBoardPosition,
+  useKeyPress,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -110,10 +111,14 @@ export function Background(props: BackgroundProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
+  const setLassoMode = useUIStore((state) => state.setLassoMode);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
   const gridColor = useHexColor(gc);
+
+  // For Lasso
+  const isShiftPressed = useKeyPress('Shift');
 
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {
@@ -586,6 +591,15 @@ export function Background(props: BackgroundProps) {
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
+
+  useEffect(() => {
+    if (isShiftPressed) {
+      document.onselectstart = function () {
+        return false;
+      };
+    }
+    setLassoMode(isShiftPressed);
+  }, [isShiftPressed]);
 
   return (
     <Box
