@@ -36,7 +36,6 @@ export function loadCredentials(config: serverConfiguration): https.ServerOption
   const basePath = path.join(config.root, 'keys');
   const privateKeyFile = path.join(basePath, config.ssl.certificateKeyFile);
   const certificateFile = path.join(basePath, config.ssl.certificateFile);
-  // const caFile = path.join(basePath, config.ssl.certificateChainFile);
   try {
     fs.accessSync(privateKeyFile, fs.constants.R_OK);
   } catch (err) {
@@ -47,43 +46,63 @@ export function loadCredentials(config: serverConfiguration): https.ServerOption
   } catch (err) {
     throw new Error(`Certificate file ${certificateFile} not found or unreadable.`);
   }
-  // try {
-  //   fs.accessSync(caFile, fs.constants.R_OK);
-  // } catch (err) {
-  //   throw new Error(`Certificate file ${caFile} not found or unreadable.`);
-  // }
   // load all the certificates
   const privateKey = fs.readFileSync(privateKeyFile, 'utf8');
-  const certificate = fs.readFileSync(certificateFile, 'utf8');
-  // const ca = fs.readFileSync(caFile).toString();
+  const certificates = fs.readFileSync(certificateFile, 'utf8');
 
-  // Analyze the certificate
-  const acert = new crypto.X509Certificate(certificate);
-  const subject = acert.subject.replaceAll('\n', '-');
   console.log('CERT> =====================================');
-  console.log('CERT> subject', subject, acert.subjectAltName);
-  const issuer = acert.issuer.replaceAll('\n', '-');
-  console.log('CERT> issuer', issuer);
-  if (acert.infoAccess) {
-    const infoAccess = acert.infoAccess.replaceAll('\n', '-');
-    console.log('CERT> infoAccess', infoAccess);
+
+  // Split the certificate chain
+  const listCERTS: Array<string> = [];
+  const lines = certificates.toString().split('\n');
+  let tempcert = [];
+  for (const ln of lines) {
+    if (ln) {
+      tempcert.push(ln);
+      if (ln.includes('END CERTIFICATE')) {
+        const acert = tempcert.join('\n');
+        listCERTS.push(acert);
+        tempcert = [];
+      }
+    }
   }
-  // Show the validity period
-  const dateFrom = new Date(acert.validFrom).toLocaleDateString();
-  const validTo = new Date(acert.validTo).toLocaleDateString();
-  const expires = formatDistance(new Date(acert.validTo), new Date(), { addSuffix: true });
-  console.log('CERT> Valid: from:', dateFrom, '-- to:', validTo, '-- Expires:', expires);
-  // Check the consistency of the certificate with the private key
-  const pubKeyObject = crypto.createPrivateKey({ key: privateKey, format: 'pem' });
-  const valid = acert.checkPrivateKey(pubKeyObject);
-  console.log('CERT> Is consistent with private key', valid);
+  console.log('CERT> chain length:', listCERTS.length);
+
+  // Analyze the certificates (array of certs)
+  for (let idx = 0; idx < listCERTS.length; idx++) {
+    // Get the next one
+    const c = listCERTS[idx];
+    // Build a cert object
+    const acert = new crypto.X509Certificate(c);
+    const subject = acert.subject.replaceAll('\n', '-');
+    console.log('CERT> subject', subject);
+    const issuer = acert.issuer.replaceAll('\n', '-');
+    console.log('CERT> issuer', issuer);
+    if (acert.infoAccess) {
+      const infoAccess = acert.infoAccess.replaceAll('\n', '-');
+      console.log('CERT> infoAccess', infoAccess);
+    }
+    // Show the validity period
+    const dateFrom = new Date(acert.validFrom).toLocaleDateString();
+    const validTo = new Date(acert.validTo).toLocaleDateString();
+    const expires = formatDistance(new Date(acert.validTo), new Date(), { addSuffix: true });
+    console.log('CERT> Valid: from->', dateFrom, '-- to->', validTo, '-- Expires->', expires);
+
+    // First one should be the host certificate
+    if (idx === 0) {
+      // Check the consistency of the certificate with the private key
+      const pubKeyObject = crypto.createPrivateKey({ key: privateKey, format: 'pem' });
+      const valid = acert.checkPrivateKey(pubKeyObject);
+      console.log('CERT> Is consistent with private key', valid);
+    }
+  }
   console.log('CERT> =====================================');
 
   // Build an http server option structure
   const credentials = {
     // Keys
     key: privateKey,
-    cert: certificate,
+    cert: certificates,
     // ca: ca,
     // Control the supported version of TLS
     minVersion: config.tlsVersion,
