@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
+import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 
@@ -126,7 +126,7 @@ export function AppWindow(props: WindowProps) {
   }
 
   // When the window is being dragged
-  function handleDrag(_e: any, data: DraggableData) {
+  function handleDrag(_e: RndDragEvent, data: DraggableData) {
     setAppWasDragged(true);
     if (isGrouped) {
       const dx = data.x - props.app.data.position.x;
@@ -136,7 +136,7 @@ export function AppWindow(props: WindowProps) {
   }
 
   // Handle when the app is finished being dragged
-  function handleDragStop(_e: any, data: DraggableData) {
+  function handleDragStop(_e: RndDragEvent, data: DraggableData) {
     let x = data.x;
     let y = data.y;
     x = Math.round(x / gridSize) * gridSize;
@@ -226,7 +226,7 @@ export function AppWindow(props: WindowProps) {
     }
   }, [props.app.data.raised]);
 
-  function handleAppClick(e: any) {
+  function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
     bringForward();
     // Set the selected app in the UI store

@@ -13,7 +13,6 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
-import { Tracing } from 'trace_events';
 import { Position } from '@sage3/shared/types';
 
 // Zoom limits, from 30% to 400%

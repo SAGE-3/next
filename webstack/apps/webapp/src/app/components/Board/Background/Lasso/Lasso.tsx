@@ -6,26 +6,10 @@
  *
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-// Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+import { useEffect, useState } from 'react';
 
 // SAGE Imports
-import {
-  useAppStore,
-  useBoardStore,
-  useCursorBoardPosition,
-  useHexColor,
-  useHotkeys,
-  useKeyPress,
-  useUIStore,
-  useUser,
-} from '@sage3/frontend';
-import { Rnd } from 'react-rnd';
-import { Box, useColorModeValue } from '@chakra-ui/react';
-import { App } from '@sage3/applications/schema';
+import { useAppStore, useCursorBoardPosition, useHexColor, useKeyPress, useUIStore } from '@sage3/frontend';
 
 type LassoProps = {
   boardId: string;
@@ -40,16 +24,16 @@ type BoxProps = {
 };
 
 export function Lasso(props: LassoProps) {
-  //board state
+  // Board state
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
 
-  //Laso mode apps & Selected apps
+  // Lasso mode apps & Selected apps
   const lassoMode = useUIStore((state) => state.lassoMode);
   const selectedApps = useUIStore((state) => state.selectedApps);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
 
-  //Mouse Positions
+  // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
   const userCursor = useCursorBoardPosition();
   const [last_mousex, set_last_mousex] = useState(0);
@@ -57,20 +41,20 @@ export function Lasso(props: LassoProps) {
   const [mousex, set_mousex] = useState(0);
   const [mousey, set_mousey] = useState(0);
 
-  //State of cursor
+  // State of cursor
   const [isDragging, setIsDragging] = useState(false);
 
-  //key press
+  // Key press
   const spacebarPressed = useKeyPress(' ');
 
   useEffect(() => {
-    //handle if let go shift before mouse up, clear the rectangle
+    // Handle if let go shift before mouse up, clear the rectangle
     if (!lassoMode && mousedown === true) {
       mouseUp();
     }
   }, [lassoMode]);
 
-  //get initial position
+  // Get initial position
   const mouseDown = () => {
     const position = userCursor.position;
     set_last_mousex(position.x);
@@ -80,14 +64,14 @@ export function Lasso(props: LassoProps) {
 
   const mouseUp = () => {
     setMouseDown(false);
-    //Deelect all aps
+    // Deselect all aps
     if (!isDragging) {
       clearSelectedApps();
     }
     setIsDragging(false);
   };
 
-  //get last position
+  // Get last position
   const mouseMove = () => {
     const position = userCursor.position;
     setIsDragging(true);
@@ -122,35 +106,35 @@ export function Lasso(props: LassoProps) {
   );
 }
 
-//Box for selecting apps
+// Box for selecting apps
 const DrawBox = (props: BoxProps) => {
-  //get the left side of the box
+  // Get the left side of the box
   const rx = props.mousex < props.last_mousex ? props.mousex : props.last_mousex;
-  //calculate for right side
+  // Calculate for right side
   const width = Math.abs(props.mousex - props.last_mousex);
 
-  //get the top of the box
+  // Get the top of the box
   const ry = props.mousey < props.last_mousey ? props.mousey : props.last_mousey;
-  //calculate for bottom
+  // Calculate for bottom
   const height = Math.abs(props.mousey - props.last_mousey);
 
-  //app store
+  // App store
   const boardApps = useAppStore((state) => state.apps);
 
-  //ui store
+  // UI store
   const scale = useUIStore((state) => state.scale);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setSelectedApps = useUIStore((state) => state.setSelectedApps);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
-  //used only to update store once # of selected apps change
+  // Used only to update store once # of selected apps change
   const [localSelctedApps, setLocalSelectedApps] = useState<string[]>([]);
 
-  //color
+  // Color state
   const strokeColor = useHexColor('teal');
 
-  //clear slected apps
+  // Clear slected apps
   useEffect(() => {
     clearSelectedApps();
   }, []);
@@ -165,10 +149,10 @@ const DrawBox = (props: BoxProps) => {
         app.data.position.x + app.data.size.width < rx + width &&
         app.data.position.y + app.data.size.height < ry + height
       ) {
-        //add apps as they are envoloped in box area
+        // Add apps as they are envoloped in box area
         if (!localSelctedApps.includes(app._id)) setLocalSelectedApps((prev) => [...prev, app._id]);
       } else {
-        //remove apps if not in box area
+        // Remove apps if not in box area
         if (localSelctedApps.includes(app._id)) {
           const newArray = localSelctedApps;
           const index = newArray.indexOf(app._id);
@@ -180,30 +164,28 @@ const DrawBox = (props: BoxProps) => {
   }, [width, height, rx, ry, localSelctedApps, boardApps]);
 
   useEffect(() => {
-    //if app is selected while starting lasso mode, clear app that is selected
+    // If app is selected while starting lasso mode, clear app that is selected
     if (selectedAppId.length) {
       setSelectedApp('');
     }
-    //only update UI store when local state changes
+    // Only update UI store when local state changes
     setSelectedApps(localSelctedApps);
   }, [localSelctedApps]);
 
   return (
-    <>
-      <rect
-        style={{
-          strokeWidth: 6 / scale,
-          strokeDasharray: 10 / scale,
-          stroke: strokeColor,
-          fill: strokeColor,
-          fillOpacity: 0.15,
-          zIndex: 0,
-        }}
-        x={rx}
-        y={ry}
-        height={height}
-        width={width}
-      />
-    </>
+    <rect
+      style={{
+        strokeWidth: 6 / scale,
+        strokeDasharray: 10 / scale,
+        stroke: strokeColor,
+        fill: strokeColor,
+        fillOpacity: 0.15,
+        zIndex: 0,
+      }}
+      x={rx}
+      y={ry}
+      height={height}
+      width={width}
+    />
   );
 };
