@@ -1,7 +1,7 @@
 # Build Stage 1
 # This build created a staging docker image
 #
-FROM node:16-bullseye as build
+FROM node:18-bullseye as build
 
 # Install in that directory
 WORKDIR /app
@@ -29,7 +29,7 @@ RUN yarn prod
 # Build Stage 2
 # This build takes the production build from staging build
 #
-FROM node:16-bullseye
+FROM node:18-bullseye
 # Debian package
 RUN apt-get update && apt-get install -y exiftool && rm -rf /var/lib/apt/lists/*
 
