@@ -13,6 +13,8 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
+import { Tracing } from 'trace_events';
+import { Position } from '@sage3/shared/types';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -35,7 +37,7 @@ export enum StuckTypes {
   BottomLeft, // 9
 }
 
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'whiteboard';
+export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'whiteboard' | 'lasso';
 
 // Typescript interface defining the store
 interface PanelUI {
@@ -64,6 +66,15 @@ interface UIState {
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
 
+  // Selected Apps
+  selectedApps: string[];
+  deltaPos: { p: Position; id: string };
+  setDeltaPostion: (position: Position, id: string) => void;
+  setSelectedApps: (appId: string[]) => void;
+  addSelectedApp: (appId: string) => void;
+  removeSelectedApp: (appId: string) => void;
+  clearSelectedApps: () => void;
+
   // whiteboard
   whiteboardMode: boolean; // marker mode enabled
   clearMarkers: boolean;
@@ -74,6 +85,16 @@ interface UIState {
   setClearMarkers: (clear: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
 
+  // lasso
+  lassoMode: boolean; // marker mode enabled
+  clearLassos: boolean;
+  clearAllLassos: boolean;
+  lassoColor: SAGEColors;
+  setLassoColor: (color: SAGEColors) => void;
+  setLassoMode: (enable: boolean) => void;
+  setClearLassos: (clear: boolean) => void;
+  setClearAllLassos: (clear: boolean) => void;
+
   // Panels & Context Menu
   applicationsPanel: PanelUI;
   navigationPanel: PanelUI;
@@ -81,6 +102,7 @@ interface UIState {
   controller: PanelUI;
   assetsPanel: PanelUI;
   whiteboardPanel: PanelUI;
+  lassoPanel: PanelUI;
   panelZ: string[];
   bringPanelForward: (panel: PanelNames) => void;
 
@@ -125,6 +147,11 @@ export const useUIStore = create<UIState>((set, get) => ({
   showAppTitle: false,
   boardDragging: false,
   appDragging: false,
+  selectedApps: [],
+  lassoMode: false,
+  lassoColor: 'red',
+  clearLassos: false,
+  clearAllLassos: false,
   whiteboardMode: false,
   markerColor: 'red',
   clearMarkers: false,
@@ -134,7 +161,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   boardLocked: false,
-  panelZ: ['assets', 'applications', 'navigation', 'users', 'whiteboard'], // List of panels that have zordering
+  panelZ: ['assets', 'applications', 'navigation', 'users', 'whiteboard', 'lasso'], // List of panels that have zordering
   bringPanelForward: (panel: string) => {
     const z = get().panelZ;
     const i = z.indexOf(panel);
@@ -199,6 +226,17 @@ export const useUIStore = create<UIState>((set, get) => ({
     setOpened: (opened: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, opened: opened } })),
     opened: true,
     setShow: (show: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, show: show } })),
+    show: false,
+  },
+  lassoPanel: {
+    position: { x: 20, y: 400 },
+    stuck: StuckTypes.Controller,
+    name: 'lasso',
+    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, position: pos } })),
+    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, stuck: stuck } })),
+    setOpened: (opened: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, opened: opened } })),
+    opened: true,
+    setShow: (show: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, show: show } })),
     show: false,
   },
   whiteboardPanel: {
@@ -278,6 +316,24 @@ export const useUIStore = create<UIState>((set, get) => ({
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
+  setLassoMode: (enable: boolean) => set((state) => ({ ...state, lassoMode: enable })),
+  setClearLassos: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
+  setClearAllLassos: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
+  setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+
+  deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
+  setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
+  setSelectedApps: (appIds: string[]) => set((state) => ({ ...state, selectedApps: appIds })),
+  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedApps, appId] })),
+  removeSelectedApp: (appId: string) =>
+    set((state) => {
+      const newArray = state.selectedApps;
+      const index = state.selectedApps.indexOf(appId);
+      newArray.splice(index, 1);
+      return { ...state, selectedApps: newArray };
+    }),
+  clearSelectedApps: () => set((state) => ({ ...state, selectedApps: [] })),
+
   setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),

@@ -9,6 +9,8 @@
 import { useEffect, useRef } from 'react';
 import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 
+import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
+
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
 
@@ -23,6 +25,7 @@ import {
   processContentURL,
   useHotkeys,
   useCursorBoardPosition,
+  useKeyPress,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -46,6 +49,35 @@ import {
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
+import imageHelp from './sage3-help.jpg';
+
+
+type HelpProps = {
+  onClose: () => void;
+  isOpen: boolean;
+};
+
+export function HelpModal(props: HelpProps) {
+  return (
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}
+      size="5xl">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>SAGE3 Help</ModalHeader>
+        <ModalBody>
+          <img src={imageHelp} alt="SAGE3 Help" />
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+
 type BackgroundProps = {
   roomId: string;
   boardId: string;
@@ -56,6 +88,8 @@ export function Background(props: BackgroundProps) {
   const toast = useToast();
   // Handle to a toast
   const toastIdRef = useRef<ToastId>();
+  // Help modal
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -77,10 +111,14 @@ export function Background(props: BackgroundProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
+  const setLassoMode = useUIStore((state) => state.setLassoMode);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
   const gridColor = useHexColor(gc);
+
+  // For Lasso
+  const isShiftPressed = useKeyPress('Shift');
 
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {
@@ -209,7 +247,7 @@ export function Background(props: BackgroundProps) {
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = 'copy';
   }
 
   const newApp = (type: AppName, x: number, y: number) => {
@@ -500,6 +538,9 @@ export function Background(props: BackgroundProps) {
       const y = cursorPosition.y;
 
       console.log('Shortcut> SHOW HELP', x, y);
+
+      helpOnOpen();
+
       // show image or open doc
       // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
       // window.open(doc, '_blank');
@@ -551,6 +592,15 @@ export function Background(props: BackgroundProps) {
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
 
+  useEffect(() => {
+    if (isShiftPressed) {
+      document.onselectstart = function () {
+        return false;
+      };
+    }
+    setLassoMode(isShiftPressed);
+  }, [isShiftPressed]);
+
   return (
     <Box
       className="board-handle"
@@ -577,7 +627,11 @@ export function Background(props: BackgroundProps) {
           zoomOutDelta(evt.deltaY, cursor);
         }
       }}
-    />
+    >
+      <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
+        <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
+      </Modal>
+    </Box>
   );
 }
 
