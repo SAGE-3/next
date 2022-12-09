@@ -24,6 +24,7 @@ class PDFViewerState(TrackedBaseModel):
     numPages: int
     displayPages: int
     analyzed: str
+    client: str
     executeInfo: ExecuteInfo
 
 class PDFViewer(SmartBit):
@@ -39,17 +40,19 @@ class PDFViewer(SmartBit):
         print('PDF> error', msg)
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
+        self.state.client = ''
         self.send_updates()
 
-    def returnData(self, pdf_data):
+    def returnData(self, pdf_data, user):
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         # Send the data as a string
         self.state.analyzed = json.dumps(pdf_data)
+        self.state.client = user
         self.send_updates()
 
-    def analyze_pdf(self, asset):
-        print('PDF> Analyzing', asset)
+    def analyze_pdf(self, asset, user):
+        print('PDF> Analyzing', asset, 'for', user)
         pdf_dir = "smartbits/pdf/"
         token = os.getenv("TOKEN")
         web_server = conf[prod_type]['web_server']
@@ -75,7 +78,7 @@ class PDFViewer(SmartBit):
             f_output = open(pdf_dir + 'output/' + basename + '.json')
             pdf_data = json.load(f_output)
             print('PDF> data', pdf_data)
-            self.returnData(pdf_data)
+            self.returnData(pdf_data, user)
         except:
             self.returnError('Error processing JSON data')
             return
