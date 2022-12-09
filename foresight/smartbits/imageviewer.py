@@ -33,7 +33,6 @@ class ImageViewer(SmartBit):
         """
         print('+++++++++++++++++')
         print('running set_boxes', bboxes)
-
         self.state.boxes = bboxes
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}

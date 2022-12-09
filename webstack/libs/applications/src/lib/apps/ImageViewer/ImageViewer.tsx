@@ -23,6 +23,9 @@ import {v4 as getUUID} from "uuid";
 
 // import { dimensions } from './data_types';
 
+type TranslatedLabelBox = { label: string, box: { xmin: number, ymin: number, xmax: number, ymax: number } }
+type BoxDimensions = { left: number, top: number, width: number, height: number }
+
 /**
  * ImageViewer app
  *
@@ -49,6 +52,30 @@ function AppComponent(props: App): JSX.Element {
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes
   const [origSizes, setOrigSizes] = useState({'width': 0, 'height': 0})
+
+  const [boxes, setBoxes] = useState<TranslatedLabelBox[]>([]);
+  const [boxDims, setBoxDims] = useState<BoxDimensions[]>([]);
+
+  useEffect(() => {
+    const bs = [] as TranslatedLabelBox[];
+    const bsDims = [] as BoxDimensions[];
+    Object.keys(s.boxes).forEach((num) => {
+      Object.keys(s.boxes[num]).forEach((label) => {
+        bs.push({
+          label,
+          box: s.boxes[num][label]
+        })
+        bsDims.push({
+          left: s.boxes[num][label].xmin * (displaySize.width / origSizes.width),
+          top: s.boxes[num][label].ymin * (displaySize.height / origSizes.height),
+          width: (s.boxes[num][label].xmax - s.boxes[num][label].xmin) * (displaySize.width / origSizes.width),
+          height: (s.boxes[num][label].ymax - s.boxes[num][label].ymin) * (displaySize.height / origSizes.height)
+        })
+      })
+    })
+    setBoxes(bs);
+    setBoxDims(bsDims);
+  }, [JSON.stringify(s.boxes), displaySize])
 
 
   // Convert the ID to an asset
@@ -122,33 +149,37 @@ function AppComponent(props: App): JSX.Element {
             src={url}
             borderRadius="0 0 6px 6px"
           />
-
           {
-            Object.values(s.boxes).map((box) => {
-              Object.keys(box).map((label, idx) => {
-                // TODO Need to handle text overflow for labels
-                return (
+            boxes.map((el, idx) => {
+              return (
+                <Box
+                  key={el.label + idx}
+                  position="absolute"
+                  left={boxDims[idx].left + 'px'}
+                  top={boxDims[idx].top + 'px'}
+                  width={boxDims[idx].width + 'px'}
+                  height={boxDims[idx].height + 'px'}
+                  // left={el.box.xmin * (displaySize.width / origSizes.width) + 'px'}
+                  // top={el.box.ymin * (displaySize.height / origSizes.height) + 'px'}
+                  // width={(el.box.xmax - el.box.xmin) * (displaySize.width / origSizes.width) + 'px'}
+                  // height={(el.box.ymax - el.box.ymin) * (displaySize.height / origSizes.height) + 'px'}
+                  border="2px solid red"
+                  style={{display: s.annotations === true ? 'block' : 'none'}}
+                >
                   <Box
-                    key={label + idx}
-                    position="relative"
-                    left={box[label].xmin * (displaySize.width / origSizes.width) + 'px'}
-                    top={box[label].ymin * (displaySize.height / origSizes.height) + 'px'}
-                    width={(box[label].xmax - box[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
-                    height={(box[label].ymax - box[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
-                    border="2px solid red"
-                    style={{display: s.annotations === true ? 'block' : 'none'}}
+                    position={'absolute'}
+                    px={1}
+                    borderRadius={"0 6px 0 0"}
+                    bottom={0}
+                    left={0}
+                    fontWeight={'bold'}
+                    backgroundColor={"red"}
+                    textColor={"black"}
                   >
-                    <Box
-                      position="relative"
-                      top={'-1.5rem'}
-                      fontWeight={'bold'}
-                      textColor={"black"}
-                    >
-                      {label}
-                    </Box>
+                    {el.label}
                   </Box>
-                );
-              })
+                </Box>
+              )
             })
           }
         </>
@@ -199,39 +230,20 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload/>
           </Button>
         </Tooltip>
-        {/*<div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>*/}
-        <div>
+        <div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>
+        {/*<div>*/}
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
                 updateState(props._id, {
-                  // annotations: !s.annotations,
-                  annotations: true,
-                  boxes: {
-                    '1': {'dog': {'xmin': 10, 'ymin': 5, 'xmax': 20, 'ymax': 20}},
-                    '2': {'dog': {'xmin': 20, 'ymin': 20, 'xmax': 10, 'ymax': 10}}
-                  }
+                  annotations: !s.annotations,
+
+                  // annotations: true,
+                  // boxes: {
+                  //   '1': {'dog': {'xmin': 50, 'ymin': 50, 'xmax': 100, 'ymax': 100}},
+                  //   '2': {'dog': {'xmin': 75, 'ymin': 75, 'xmax': 150, 'ymax': 150}}
+                  // }
                 });
-                Object.values(s.boxes).map((box) => {
-                  Object.keys(box).map((label, idx) => {
-                    // TODO Need to handle text overflow for labels
-                    return (
-                      console.log(box[label])
-                    );
-                  })
-                })
-                // updateState(props._id, {
-                //   annotations: !s.annotations,
-                //   executeInfo: {
-                //     executeFunc: 'set_bboxes',
-                //     params: {
-                //       bboxes: {
-                //         '1': {'dog': {'xmin': 50, 'ymin': 50, 'xmax': 50, 'ymax': 50}},
-                //         '2': {'dog': {'xmin': 150, 'ymin': 150, 'xmax': 150, 'ymax': 150}}
-                //       }
-                //     },
-                //   },
-                // });
               }}
             >
               <HiPencilAlt/>

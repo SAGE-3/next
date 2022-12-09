@@ -91,8 +91,6 @@ function AppComponent(props: App): JSX.Element {
           updateState(props._id, { messages: hosted });
           console.log('app ' + app._id + ' added');
           newAppAdded(app.data.type);
-        } else {
-          console.log('app ' + app._id + ' already in hostedApps');
         }
       } else {
         if (Object.keys(s.hostedApps).includes(app._id)) {
