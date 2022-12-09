@@ -562,6 +562,7 @@ export function Background(props: BackgroundProps) {
         return false;
       };
     }
+
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
 
