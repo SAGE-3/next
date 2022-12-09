@@ -54,8 +54,7 @@
       "guest",
       "jwt"
     ],
-    "admins": [
-    ],
+    "admins": [],
     "guestConfig": {
       "routeEndpoint": "/auth/guest"
     },
@@ -80,8 +79,7 @@
   "ssl": {
     // found in the 'keys' folder
     "certificateFile": "_.evl.uic.edu.crt",
-    "certificateKeyFile": "_.evl.uic.edu.key",
-    "certificateChainFile": "_.evl.uic.edu-ca.crt"
+    "certificateKeyFile": "_.evl.uic.edu.key"
   },
   "twilio": {
     "accountSid": "",

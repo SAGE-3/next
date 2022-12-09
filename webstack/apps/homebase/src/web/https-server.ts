@@ -13,6 +13,10 @@ import * as fs from 'fs';
 import * as https from 'https';
 import * as path from 'path';
 import { AddressInfo } from 'net';
+// Nodejs crypto module to analyze the certificate
+import * as crypto from 'crypto';
+// Date management
+import { formatDistance } from 'date-fns';
 
 // Express web server framework
 import * as express from 'express';
@@ -52,6 +56,29 @@ export function loadCredentials(config: serverConfiguration): https.ServerOption
   const privateKey = fs.readFileSync(privateKeyFile, 'utf8');
   const certificate = fs.readFileSync(certificateFile, 'utf8');
   // const ca = fs.readFileSync(caFile).toString();
+
+  // Analyze the certificate
+  const acert = new crypto.X509Certificate(certificate);
+  const subject = acert.subject.replaceAll('\n', '-');
+  console.log('CERT> =====================================');
+  console.log('CERT> subject', subject, acert.subjectAltName);
+  const issuer = acert.issuer.replaceAll('\n', '-');
+  console.log('CERT> issuer', issuer);
+  if (acert.infoAccess) {
+    const infoAccess = acert.infoAccess.replaceAll('\n', '-');
+    console.log('CERT> infoAccess', infoAccess);
+  }
+  // Show the validity period
+  const dateFrom = new Date(acert.validFrom).toLocaleDateString();
+  const validTo = new Date(acert.validTo).toLocaleDateString();
+  const expires = formatDistance(new Date(acert.validTo), new Date(), { addSuffix: true });
+  console.log('CERT> Valid: from:', dateFrom, '-- to:', validTo, '-- Expires:', expires);
+  // Check the consistency of the certificate with the private key
+  const pubKeyObject = crypto.createPrivateKey({ key: privateKey, format: 'pem' });
+  const valid = acert.checkPrivateKey(pubKeyObject);
+  console.log('CERT> Is consistent with private key', valid);
+  console.log('CERT> =====================================');
+
   // Build an http server option structure
   const credentials = {
     // Keys
