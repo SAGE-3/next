@@ -562,9 +562,7 @@ export function Background(props: BackgroundProps) {
         return false;
       };
     }
-    if (!selectedAppId.length) {
-      setLassoMode(isShiftPressed);
-    }
+    setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
 
   return (

@@ -9,9 +9,10 @@
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd } from 'react-rnd';
 import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -26,6 +27,7 @@ export function AppWindow(props: WindowProps) {
   // Guest mode disabled for now
   // const { auth } = useAuth();
   const isGuest = false; // auth?.provider === 'guest';
+  const { user } = useUser();
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -40,8 +42,11 @@ export function AppWindow(props: WindowProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedApps);
+  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const isGrouped = selectedApps.includes(props.app._id);
   const lassoMode = useUIStore((state) => state.lassoMode);
+  const deltaPosition = useUIStore((state) => state.deltaPos);
+  const setDeltaPosition = useUIStore((state) => state.setDeltaPostion);
 
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
@@ -56,6 +61,7 @@ export function AppWindow(props: WindowProps) {
 
   const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
+  const borderColorGroupSelect = useHexColor('gray');
 
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
@@ -83,6 +89,17 @@ export function AppWindow(props: WindowProps) {
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
 
+  // Group Delta Change
+  useEffect(() => {
+    if (isGrouped) {
+      if (selectedApps.includes(props.app._id) && props.app._id != deltaPosition.id) {
+        const x = props.app.data.position.x + deltaPosition.p.x;
+        const y = props.app.data.position.y + deltaPosition.p.y;
+        setPos({ x, y });
+      }
+    }
+  }, [deltaPosition]);
+
   // Track the app store errors
   useEffect(() => {
     if (storeError) {
@@ -105,21 +122,27 @@ export function AppWindow(props: WindowProps) {
     setAppDragging(true);
     bringForward();
     setDragStartPosition(props.app.data.position);
+    setDeltaPosition({ x: 0, y: 0, z: 0 }, props.app._id);
   }
 
   // When the window is being dragged
   function handleDrag(_e: any, data: DraggableData) {
     setAppWasDragged(true);
+    if (isGrouped) {
+      const dx = data.x - props.app.data.position.x;
+      const dy = data.y - props.app.data.position.y;
+      setDeltaPosition({ x: dx, y: dy, z: 0 }, props.app._id);
+    }
   }
 
   // Handle when the app is finished being dragged
   function handleDragStop(_e: any, data: DraggableData) {
     let x = data.x;
     let y = data.y;
+    x = Math.round(x / gridSize) * gridSize;
+    y = Math.round(y / gridSize) * gridSize;
     const dx = x - props.app.data.position.x;
     const dy = y - props.app.data.position.y;
-    x = Math.round(x / gridSize) * gridSize; // Snap to grid
-    y = Math.round(y / gridSize) * gridSize;
     setPos({ x, y });
     setAppDragging(false);
     update(props.app._id, {
@@ -134,7 +157,6 @@ export function AppWindow(props: WindowProps) {
         if (appId === props.app._id) return;
         const app = apps.find((el) => el._id == appId);
         if (!app) return;
-        console.log('lets move this app by this much', dx, dy);
         const p = app.data.position;
         update(appId, {
           position: {
@@ -209,7 +231,10 @@ export function AppWindow(props: WindowProps) {
     bringForward();
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
-    else setSelectedApp(props.app._id);
+    else {
+      clearSelectedApps();
+      setSelectedApp(props.app._id);
+    }
   }
 
   // Bring the app forward
@@ -304,10 +329,13 @@ export function AppWindow(props: WindowProps) {
         width={size.width + borderWidth * 2}
         height={size.height + borderWidth * 2}
         borderRadius={outerBorderRadius}
-        zIndex={-1} // Behind everything
+        opacity={isGrouped ? 0.6 : 1}
+        zIndex={isGrouped ? 1000000 : -1} // Behind everything
         background={selected || isGrouped ? selectColor : borderColor}
         boxShadow={'4px 4px 12px 0px rgb(0 0 0 / 25%)'}
+        pointerEvents={'none'}
       ></Box>
+
       {/* The Application */}
       <Box
         id={'app_' + props.app._id}

@@ -14,6 +14,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Tracing } from 'trace_events';
+import { Position } from '@sage3/shared/types';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -67,6 +68,8 @@ interface UIState {
 
   // Selected Apps
   selectedApps: string[];
+  deltaPos: { p: Position; id: string };
+  setDeltaPostion: (position: Position, id: string) => void;
   setSelectedApps: (appId: string[]) => void;
   addSelectedApp: (appId: string) => void;
   removeSelectedApp: (appId: string) => void;
@@ -318,6 +321,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   setClearAllLassos: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
 
+  deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
+  setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
   setSelectedApps: (appIds: string[]) => set((state) => ({ ...state, selectedApps: appIds })),
   addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedApps, appId] })),
   removeSelectedApp: (appId: string) =>

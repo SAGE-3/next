@@ -24,7 +24,7 @@ import {
   useUser,
 } from '@sage3/frontend';
 import { Rnd } from 'react-rnd';
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import { App } from '@sage3/applications/schema';
 
 type LassoProps = {
@@ -149,10 +149,12 @@ const AddRectangle = (props: any) => {
   const scale = useUIStore((state) => state.scale);
   const { user } = useUser();
 
-  const strokeColor = useHexColor(user ? user.data.color : 'white');
+  const modeColor = useColorModeValue('teal', 'teal');
+  const strokeColor = useHexColor(modeColor);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  const addSelectedApp = useUIStore((state) => state.addSelectedApp);
   const setSelectedApps = useUIStore((state) => state.setSelectedApps);
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const [localSelctedApps, setLocalSelectedApps] = useState<string[]>([]);
 
   useEffect(() => {
@@ -183,6 +185,9 @@ const AddRectangle = (props: any) => {
   }, [width, height, rx, ry, localSelctedApps, boardApps]);
 
   useEffect(() => {
+    if (selectedAppId.length) {
+      setSelectedApp('');
+    }
     setSelectedApps(localSelctedApps);
   }, [localSelctedApps]);
 
