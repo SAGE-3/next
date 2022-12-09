@@ -8,17 +8,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router';
 
+// Chakra UI
 import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
-
-import { App } from '../../schema';
-import { Asset, ExtraPDFType } from '@sage3/shared/types';
-
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { useAssetStore, useAppStore, useUser } from '@sage3/frontend';
-
-// Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
 // Icons
 import {
   MdFileDownload,
@@ -33,6 +24,16 @@ import {
   MdNavigateBefore,
   MdTipsAndUpdates
 } from 'react-icons/md';
+
+// Utility functions from SAGE3
+import { useAssetStore, useAppStore, useUser, downloadFile } from '@sage3/frontend';
+import { Asset, ExtraPDFType } from '@sage3/shared/types';
+
+// App components
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+
 
 function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
@@ -75,7 +76,6 @@ function AppComponent(props: App): JSX.Element {
     if (file) {
       const pages = file.data.derived as ExtraPDFType;
       if (pages) {
-        // setAllPagesInfo(pages);
         const allurls = pages.map((page) => {
           // find the largest image for this page (multi-resolution)
           const res = page.reduce(function (p, v) {
@@ -105,16 +105,20 @@ function AppComponent(props: App): JSX.Element {
 
   // Display the processing UI
   useEffect(() => {
-    if (s.executeInfo.executeFunc)
+    // Only show the processing UI if the user is the one who clicked the button
+    if (s.executeInfo.executeFunc && s.client === user?._id)
       setProcessing(true);
     else
       setProcessing(false);
-  }, [s.executeInfo.executeFunc]);
+  }, [s.executeInfo.executeFunc, s.client]);
 
   // Return from the remote python function
   useEffect(() => {
     if (!user) return;
-    if (s.analyzed) {
+    if (s.analyzed && s.client === user._id) {
+      // Clear the client id after a response
+      updateState(props._id, { client: '' });
+      // Parse the result we got back
       const result = JSON.parse(s.analyzed);
       // Create a new stickie to show resuls (temporary, should be a new app for this purpose)
       createApp({
@@ -130,7 +134,6 @@ function AppComponent(props: App): JSX.Element {
         },
         raised: true,
       });
-
     }
   }, [s.analyzed]);
 
@@ -258,6 +261,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
+  // User information
+  const { user } = useUser();
 
   useEffect(() => {
     const asset = assets.find((a) => a._id === s.assetid);
@@ -334,10 +339,10 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Analyze the PDF
   function analyzePDF() {
-    console.log('Analyzing PDF');
-    if (file) {
+    if (file && user) {
       updateState(props._id, {
-        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file }, }
+        client: user._id,
+        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id }, }
       });
     }
   }

@@ -24,6 +24,7 @@ export const schema = z.object({
     params: z.record(z.any()),
   }),
   analyzed: z.string(),
+  client: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -34,6 +35,7 @@ export const init: Partial<state> = {
   displayPages: 1,
   executeInfo: { executeFunc: '', params: {} },
   analyzed: '',
+  client: '',
 };
 
 export const name = 'PDFViewer';
