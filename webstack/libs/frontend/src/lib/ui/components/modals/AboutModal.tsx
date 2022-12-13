@@ -5,7 +5,7 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-
+import { useEffect, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -21,7 +21,6 @@ import {
 } from '@chakra-ui/react';
 
 import { getBrowserType, GetServerInfo, isElectron, useHexColor } from '@sage3/frontend';
-import { useEffect, useState } from 'react';
 
 // Props for the AboutModal
 interface AboutModalProps {
@@ -57,7 +56,7 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
       const electron = window.require('electron');
       const ipcRenderer = electron.ipcRenderer;
       ipcRenderer.send('client-info-request', {});
-      ipcRenderer.on('client-info-response', async (evt: any, info: any) => {
+      ipcRenderer.on('client-info-response', async (evt: unknown, info: { version: string }) => {
         setClientVersion(info.version);
       });
     } else {
@@ -88,7 +87,7 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
     <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>About</ModalHeader>
+        <ModalHeader>About SAGE3</ModalHeader>
         <ModalCloseButton />
         <ModalBody px={8} pb={8}>
           <Box display="flex" flexDir="row" justifyContent="space-evenly">
@@ -143,45 +142,13 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
 type WebsiteLinkProps = { url: string; displayText: string; color: string };
 
 /**
- * Component to render a website link that will account for client type of Electorn or normal Browser
+ * Component to render a website link that will account for client type of Electron or normal Browser
  * @param props ()
  * @returns
  */
 function WebsiteLink(props: WebsiteLinkProps): JSX.Element {
-  const electron = isElectron();
-  const toast = useToast();
-
-  // Copy the website url to the clipboard
-  // This is for electron only, so we don't redirect the user within electron to the sage3 website
-  const copyWebsiteUrl = () => {
-    navigator.clipboard.writeText(props.url);
-    toast({
-      title: 'Success',
-      description: `Copied URL to clipboard.`,
-      duration: 3000,
-      isClosable: true,
-      status: 'success',
-    });
-  };
-
-  return electron ? (
-    <>
-      <Tooltip
-        label="Copy website url to clipboard"
-        aria-label="Copy website url to clipboard"
-        shouldWrapChildren
-        openDelay={500}
-        hasArrow
-        placement="top"
-      >
-        <Text color={props.color} cursor="pointer" onClick={copyWebsiteUrl}>
-          {props.displayText}
-        </Text>
-      </Tooltip>
-    </>
-  ) : (
-    <a href={props.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: props.color }}>
-      {props.displayText}
-    </a>
-  );
+  // the target 'sage3' target is recognized by the electron main process and will open the url in the user's default browser
+  return <a href={props.url} target="sage3" rel="noreferrer" style={{ textDecoration: 'none', color: props.color }}>
+    {props.displayText}
+  </a>;
 }

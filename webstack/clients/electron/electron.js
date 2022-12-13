@@ -775,6 +775,7 @@ function createWindow() {
     //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36';
   });
 
+  // Probably not used anymore
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
       contents.on('new-window', function (newWindowEvent, url) {
@@ -782,6 +783,14 @@ function createWindow() {
         newWindowEvent.preventDefault();
       });
     }
+  });
+
+  // Handle the new window event now
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    if (details.frameName === 'sage3') {
+      shell.openExternal(details.url);
+    }
+    return { action: 'deny' };
   });
 
   // New webview added
