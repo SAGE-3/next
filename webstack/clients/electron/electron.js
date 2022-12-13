@@ -822,6 +822,8 @@ function createWindow() {
     }
   });
 
+
+
   // Retrieve media sources for desktop sharing
   ipcMain.on('request-sources', () => {
     // Get list of the monitors and windows, requesting thumbnails for each.
@@ -858,6 +860,16 @@ function createWindow() {
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     TakeScreenshot();
+  });
+
+// Request Client Info
+  ipcMain.on('client-info-request', () => {
+    const info = {
+      version: version,
+    }
+    console.log('client request',info)
+      mainWindow.webContents.send('client-info-response', info);
+   
   });
 
   // Request from the renderer process
