@@ -23,6 +23,7 @@ import {
 import { getBrowserType, GetServerInfo, isElectron, useHexColor } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
 
+// Props for the AboutModal
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -75,6 +76,8 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
     getServerInfo();
   }, []);
 
+  // Send a IPC message to the main process to check for updates
+  // Uses Luc's update checker
   const checkForUpdates = () => {
     const electron = window.require('electron');
     const ipcRenderer = electron.ipcRenderer;
@@ -85,7 +88,7 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
     <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>About SAGE3</ModalHeader>
+        <ModalHeader>About</ModalHeader>
         <ModalCloseButton />
         <ModalBody px={8} pb={8}>
           <Box display="flex" flexDir="row" justifyContent="space-evenly">
@@ -97,18 +100,32 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
               <Box fontWeight={'bold'}>Website</Box>
             </Box>
             <Box display="flex" flexDir="column" textAlign={'left'} width="100%">
+              {/* Authors */}
               <Box>
                 <WebsiteLink url={authorsURL} displayText={authorsDisplay} color={copyColor} />
               </Box>
+
+              {/* License */}
               <Box>
                 <WebsiteLink url={licenseURL} displayText={licenseDisplay} color={copyColor} />
               </Box>
+
+              {/* Client Info */}
               <Box>
-                <Text onClick={checkForUpdates} cursor="pointer" color={copyColor}>
-                  {clientVersion}
-                </Text>
+                {/* If a browser just show the browser type. If Electron display the version number and allow user's to click to run the update checker */}
+                {electron ? (
+                  <Text onClick={checkForUpdates} cursor="pointer" color={copyColor}>
+                    {clientVersion}
+                  </Text>
+                ) : (
+                  clientVersion
+                )}
               </Box>
+
+              {/* Server Info */}
               <Box>{serverVersion}</Box>
+
+              {/* Website */}
               <Box display="flex">
                 <WebsiteLink url={s3homeURL} displayText={s3homeDisplay} color={copyColor} />
               </Box>
