@@ -822,8 +822,6 @@ function createWindow() {
     }
   });
 
-
-
   // Retrieve media sources for desktop sharing
   ipcMain.on('request-sources', () => {
     // Get list of the monitors and windows, requesting thumbnails for each.
@@ -862,14 +860,19 @@ function createWindow() {
     TakeScreenshot();
   });
 
-// Request Client Info
+  // Request from user for Client Info
   ipcMain.on('client-info-request', () => {
     const info = {
       version: version,
-    }
-    console.log('client request',info)
-      mainWindow.webContents.send('client-info-response', info);
-   
+    };
+    mainWindow.webContents.send('client-info-response', info);
+  });
+
+  // Request from user to check for updates to the client
+  ipcMain.on('client-update-check', () => {
+    const currentURL = mainWindow.webContents.getURL();
+    const parsedURL = new URL(currentURL);
+    updater.checkForUpdates(parsedURL.origin, true);
   });
 
   // Request from the renderer process

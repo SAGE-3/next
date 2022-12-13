@@ -11,9 +11,8 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
   ModalBody,
-  Button,
+  Text,
   ModalCloseButton,
   Box,
   useToast,
@@ -21,8 +20,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react';
 
-import { MdContentCopy } from 'react-icons/md';
-import { GetServerInfo, useHexColor } from '@sage3/frontend';
+import { getBrowserType, GetServerInfo, isElectron, useHexColor } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
 
 interface AboutModalProps {
@@ -31,39 +29,39 @@ interface AboutModalProps {
 }
 
 /**
- * Check if browser is Electron based on the userAgent.
- * @returns {boolean}
- */
-export function isElectron(): boolean {
-  return typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.includes('Electron');
-}
-
-/**
  * About Modal
  * @param props
  * @returns
  */
 export function AboutModal(props: AboutModalProps): JSX.Element {
+  // URLs of SAGE3 resources
+  const s3homeURL = 'https://sage3.sagecommons.org';
+  const s3homeDisplay = 'sage3.sagecommons.org';
+  const licenseURL = 'https://sage3.sagecommons.org/?page_id=79';
+  const licenseDisplay = 'SAGE3 License';
+  const authorsURL = 'https://sage3.sagecommons.org/?page_id=57';
+  const authorsDisplay = 'SAGE3 Development Team';
+
+  // Versions
   const [clientVersion, setClientVersion] = useState('');
   const [serverVersion, setServerVersion] = useState('');
-  const authors = 'SAGE3 Development Team';
-  const liscense = 'SAGE3 License';
-  const website = 'sage3.sagecommons.org';
-  const toast = useToast();
+
   const cc = useColorModeValue('teal.600', 'teal.200');
   const copyColor = useHexColor(cc);
+  const electron = isElectron();
 
   // Get Client info
   useEffect(() => {
-    if (isElectron()) {
+    if (electron) {
       const electron = window.require('electron');
       const ipcRenderer = electron.ipcRenderer;
       ipcRenderer.send('client-info-request', {});
       ipcRenderer.on('client-info-response', async (evt: any, info: any) => {
-        setClientVersion('Electron ' + info.version);
+        setClientVersion(info.version);
       });
     } else {
-      setClientVersion('Browser');
+      const browser = getBrowserType();
+      setClientVersion(browser);
     }
   }, []);
 
@@ -77,15 +75,10 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
     getServerInfo();
   }, []);
 
-  const copyWebsiteUrl = () => {
-    navigator.clipboard.writeText('https://' + website);
-    toast({
-      title: 'Success',
-      description: `Copied website url to clipboard.`,
-      duration: 3000,
-      isClosable: true,
-      status: 'success',
-    });
+  const checkForUpdates = () => {
+    const electron = window.require('electron');
+    const ipcRenderer = electron.ipcRenderer;
+    ipcRenderer.send('client-update-check', {});
   };
 
   return (
@@ -97,44 +90,81 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
         <ModalBody px={8} pb={8}>
           <Box display="flex" flexDir="row" justifyContent="space-evenly">
             <Box display="flex" flexDir="column" textAlign={'left'} width="55%">
-              <Box fontWeight={'bold'}>Author</Box>
+              <Box fontWeight={'bold'}>Authors</Box>
               <Box fontWeight={'bold'}>License</Box>
               <Box fontWeight={'bold'}>Client Version</Box>
               <Box fontWeight={'bold'}>Server Version</Box>
               <Box fontWeight={'bold'}>Website</Box>
             </Box>
             <Box display="flex" flexDir="column" textAlign={'left'} width="100%">
-              <Box>{authors}</Box>
-              <Box>{liscense}</Box>
-              <Box>{clientVersion}</Box>
+              <Box>
+                <WebsiteLink url={authorsURL} displayText={authorsDisplay} color={copyColor} />
+              </Box>
+              <Box>
+                <WebsiteLink url={licenseURL} displayText={licenseDisplay} color={copyColor} />
+              </Box>
+              <Box>
+                <Text onClick={checkForUpdates} cursor="pointer" color={copyColor}>
+                  {clientVersion}
+                </Text>
+              </Box>
               <Box>{serverVersion}</Box>
               <Box display="flex">
-                {website}
-                <Tooltip
-                  label="Copy website url to clipboard"
-                  aria-label="Copy website url to clipboard"
-                  shouldWrapChildren
-                  openDelay={500}
-                  hasArrow
-                  placement="top"
-                >
-                  <MdContentCopy
-                    color={copyColor}
-                    style={{ transform: 'translateY(4px)', paddingLeft: '2px', cursor: 'pointer', fontSize: '20px' }}
-                    onClick={copyWebsiteUrl}
-                  />
-                </Tooltip>
+                <WebsiteLink url={s3homeURL} displayText={s3homeDisplay} color={copyColor} />
               </Box>
             </Box>
           </Box>
         </ModalBody>
-
-        {/* <ModalFooter>
-          <Button colorScheme="teal" onClick={props.onClose}>
-            Close
-          </Button>
-        </ModalFooter> */}
       </ModalContent>
     </Modal>
+  );
+}
+
+/**
+ * Website Link Props
+ */
+type WebsiteLinkProps = { url: string; displayText: string; color: string };
+
+/**
+ * Component to render a website link that will account for client type of Electorn or normal Browser
+ * @param props ()
+ * @returns
+ */
+function WebsiteLink(props: WebsiteLinkProps): JSX.Element {
+  const electron = isElectron();
+  const toast = useToast();
+
+  // Copy the website url to the clipboard
+  // This is for electron only, so we don't redirect the user within electron to the sage3 website
+  const copyWebsiteUrl = () => {
+    navigator.clipboard.writeText(props.url);
+    toast({
+      title: 'Success',
+      description: `Copied URL to clipboard.`,
+      duration: 3000,
+      isClosable: true,
+      status: 'success',
+    });
+  };
+
+  return electron ? (
+    <>
+      <Tooltip
+        label="Copy website url to clipboard"
+        aria-label="Copy website url to clipboard"
+        shouldWrapChildren
+        openDelay={500}
+        hasArrow
+        placement="top"
+      >
+        <Text color={props.color} cursor="pointer" onClick={copyWebsiteUrl}>
+          {props.displayText}
+        </Text>
+      </Tooltip>
+    </>
+  ) : (
+    <a href={props.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: props.color }}>
+      {props.displayText}
+    </a>
   );
 }
