@@ -10,12 +10,11 @@
   "dependencies": {
     "commander": "^7",
     "electron-store": "^8",
-    "jquery": "^3.6.1",
     "node-fetch": "^2",
     "semver": "^7"
   },
   "devDependencies": {
-    "electron": "^21",
+    "electron": "^22.0.0",
     "electron-notarize": "^1",
     "electron-packager": "latest"
   },
