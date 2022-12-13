@@ -12,12 +12,11 @@ import { Box, Button, useToast, Tooltip } from '@chakra-ui/react';
 import { BsPencilFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera } from 'react-icons/fa';
 
-import { useUIStore, StuckTypes, useAppStore } from '@sage3/frontend';
+import { useUIStore, StuckTypes, useAppStore, isElectron } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
-import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 
 export interface WhiteboardPanelProps {
   boardId: string;
@@ -136,8 +135,7 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
             <FaCamera />
           </Button>
         </Tooltip>
-
       </Box>
-    </Panel >
+    </Panel>
   );
 }
