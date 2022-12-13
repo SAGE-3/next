@@ -22,14 +22,14 @@ import {
   Image,
   ButtonGroup,
 } from '@chakra-ui/react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody } from '@chakra-ui/react';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
-import { useAppStore, useUser, useTwilioStore, useUsersStore, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUser, useTwilioStore, useHexColor, isElectron } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Twilio Imports
@@ -355,17 +355,6 @@ function AppComponent(props: App): JSX.Element {
       </>
     </AppWindow>
   );
-}
-
-/**
- * Check if browser is Electron based on the userAgent.
- * NOTE: this does a require check, UNLIKE web view app.
- *
- * @returns true or false.
- */
-function isElectron() {
-  const w = window as any; // eslint-disable-line
-  return typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.includes('Electron') && w.require;
 }
 
 /* App toolbar component for the app Twilio */

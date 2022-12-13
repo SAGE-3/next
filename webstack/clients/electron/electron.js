@@ -775,6 +775,7 @@ function createWindow() {
     //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36';
   });
 
+  // Probably not used anymore
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
       contents.on('new-window', function (newWindowEvent, url) {
@@ -782,6 +783,14 @@ function createWindow() {
         newWindowEvent.preventDefault();
       });
     }
+  });
+
+  // Handle the new window event now
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    if (details.frameName === 'sage3') {
+      shell.openExternal(details.url);
+    }
+    return { action: 'deny' };
   });
 
   // New webview added
@@ -858,6 +867,21 @@ function createWindow() {
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     TakeScreenshot();
+  });
+
+  // Request from user for Client Info
+  ipcMain.on('client-info-request', () => {
+    const info = {
+      version: version,
+    };
+    mainWindow.webContents.send('client-info-response', info);
+  });
+
+  // Request from user to check for updates to the client
+  ipcMain.on('client-update-check', () => {
+    const currentURL = mainWindow.webContents.getURL();
+    const parsedURL = new URL(currentURL);
+    updater.checkForUpdates(parsedURL.origin, true);
   });
 
   // Request from the renderer process

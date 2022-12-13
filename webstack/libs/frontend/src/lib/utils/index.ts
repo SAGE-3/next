@@ -12,3 +12,5 @@ export * from './timeout';
 export * from './urlBoardCheck';
 export * from './servertime';
 export * from './copyboardurl';
+export * from './isElectron';
+export * from './browserType';
