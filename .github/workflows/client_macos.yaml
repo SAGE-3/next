@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   run:
-    runs-on: macos-latest
+    runs-on: macos-12
 
     steps:
       - uses: actions/checkout@v3
@@ -38,7 +38,7 @@ jobs:
           MACOS_CERTIFICATE: ${{ secrets.LUC_DEV_CERTIFICATE }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.LUC_DEV_CERTIFICATE_PASS }}
         run: |
-          echo $MACOS_CERTIFICATE | base64 —d > certificate.p12
+          echo $MACOS_CERTIFICATE | base64 -d > certificate.p12
           security create-keychain -p blabla123 build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p blabla123 build.keychain
