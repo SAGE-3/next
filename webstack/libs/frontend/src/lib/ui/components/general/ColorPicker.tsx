@@ -16,6 +16,7 @@ type ColorPickerProps = {
   selectedColor: SAGEColors;
   onChange: (newColor: SAGEColors) => void;
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  disabled?: boolean;
 };
 
 export function ColorPicker(props: ColorPickerProps) {
@@ -35,6 +36,7 @@ export function ColorPicker(props: ColorPickerProps) {
             key={c}
             value={c}
             bgColor={c}
+            disabled={props.disabled}
             _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
             _active={{ background: c, opacity: 0.9 }}
             size={props.size ? props.size : 'md'}
