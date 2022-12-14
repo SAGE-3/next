@@ -34,6 +34,19 @@ jobs:
         run: npx electron-packager ./ --platform=darwin --arch=x64 --icon=s3.icns --overwrite
         working-directory: webstack/clients/electron
       - name: Build2
+        env: 
+          MACOS_CERTIFICATE: ${{ secrets.LUC_DEV_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.LUC_DEV_CERTIFICATE_PASS }}
+        run: |
+          echo $MACOS_CERTIFICATE | base64 —decode > certificate.p12
+          security create-keychain -p blabla123 build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p blabla123 build.keychain
+          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k blabla123 build.keychain
+          /usr/bin/codesign --force -s <identity-id> SAGE3-darwin-x64/SAGE3.app -v
+        working-directory: webstack/clients/electron
+      - name: Build3
         run: npx electron-installer-dmg SAGE3-darwin-x64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-x64/SAGE3-darwin-x64.dmg --icon=s3.icns --background=background.png --overwrite
         working-directory: webstack/clients/electron
       - uses: actions/upload-artifact@v3
