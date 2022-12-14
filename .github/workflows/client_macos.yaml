@@ -44,7 +44,7 @@ jobs:
           security unlock-keychain -p blabla123 build.keychain
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k blabla123 build.keychain
-          /usr/bin/codesign --force -s 1B03EB588B2B36D12500F0B9B5D1F0C131060E33 SAGE3-darwin-x64/SAGE3.app -v
+          /usr/bin/codesign --force --deep -s 1B03EB588B2B36D12500F0B9B5D1F0C131060E33 SAGE3-darwin-x64/SAGE3.app -v
         working-directory: webstack/clients/electron
       - name: Build3
         run: npx electron-installer-dmg SAGE3-darwin-x64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-x64/SAGE3-darwin-x64.dmg --icon=s3.icns --background=background.png --overwrite
