@@ -33,6 +33,14 @@ jobs:
       - name: Build1
         run: npx electron-packager ./ --platform=darwin --arch=x64 --icon=s3.icns --overwrite
         working-directory: webstack/clients/electron
+      - name: cleanup
+        run: |
+          rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/app/node_modules/electron-installer*
+          rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/app/node_modules/electron-winstaller*
+          rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/app/node_modules/appdmg
+          rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Resources/*.lproj
+          rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Frameworks/Electron\ Framework.framework/Versions/A/Resources/*.lproj
+        working-directory: webstack/clients/electron
       - name: Build2
         env: 
           MACOS_CERTIFICATE: ${{ secrets.LUC_DEV_CERTIFICATE }}
