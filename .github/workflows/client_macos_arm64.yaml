@@ -1,4 +1,4 @@
-name: Client macos
+name: Client macos-arm
 
 on:
   push:
