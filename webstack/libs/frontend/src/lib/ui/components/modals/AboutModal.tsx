@@ -53,11 +53,9 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
   // Get Client info
   useEffect(() => {
     if (electron) {
-      // @ts-ignore
       window.electron.on('client-info-response', async (info: { version: string }) => {
         setClientVersion(info.version);
       });
-      // @ts-ignore
       window.electron.send('client-info-request', {});
     } else {
       const browser = getBrowserType();
@@ -78,7 +76,6 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
   // Send a IPC message to the main process to check for updates
   // Uses Luc's update checker
   const checkForUpdates = () => {
-    // @ts-ignore
     window.electron.send('client-update-check', {});
   };
 

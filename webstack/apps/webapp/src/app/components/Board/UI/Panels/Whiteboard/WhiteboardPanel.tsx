@@ -80,8 +80,6 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
       setTimeout(() => {
         // send the message to the main process
         // small delay to make sure the board is rendered
-        console.log('snap');
-        // @ts-ignore
         window.electron.send('take-screenshot', {});
       }, 100);
       // Restore the UI

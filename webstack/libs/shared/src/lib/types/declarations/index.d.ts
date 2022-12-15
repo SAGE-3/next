@@ -26,3 +26,11 @@ declare module '*.svg' {
   const content: any;
   export default content;
 }
+
+// Trick to make electron available in the window object
+import { Electron } from 'electron';
+declare global {
+  interface Window {
+    electron: Electron;
+  }
+}

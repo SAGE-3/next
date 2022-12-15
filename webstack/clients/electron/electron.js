@@ -741,7 +741,7 @@ function createWindow() {
 
     const sender = event.sender;
     sender.on('ipc-message', function (evt, channel, args) {
-      console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
+      // console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
       // console.log('Webview>    message', channel, args);
       // Message for the webview pixel streaming
       if (channel === 'streamview') {
