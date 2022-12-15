@@ -45,6 +45,9 @@ jobs:
         env: 
           MACOS_CERTIFICATE: ${{ secrets.LUC_DEV_CERTIFICATE }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.LUC_DEV_CERTIFICATE_PASS }}
+          APPLE_ID: ${{ secrets.LUC_APPLE_ID }}
+          APPLE_ID_PWD: ${{ secrets.LUC_APPLE_ID_PWD }}
+          APPLE_TEAM_ID: ${{ secrets.LUC_APPLE_TEAM_ID }}
         run: |
           echo $MACOS_CERTIFICATE | base64 -d > certificate.p12
           security create-keychain -p blabla123 build.keychain
@@ -55,6 +58,7 @@ jobs:
           #/usr/bin/codesign --force --deep -s 1B03EB588B2B36D12500F0B9B5D1F0C131060E33 SAGE3-darwin-x64/SAGE3.app -v
           # Sign
           npx electron-osx-sign --type=development --signature-flags=library --hardened-runtime --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist SAGE3-darwin-x64/SAGE3.app
+          node notarize.js
         working-directory: webstack/clients/electron
       - name: DMG
         run: npx electron-installer-dmg SAGE3-darwin-x64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-x64/SAGE3-darwin-x64.dmg --icon=s3.icns --background=background.png --overwrite
