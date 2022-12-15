@@ -11,25 +11,31 @@ var electron_notarize = require('electron-notarize');
 
 async function GO() {
   console.log('Starting');
+
   // Same appId in electron-builder.
   let appId = 'app.sage3';
   let appPath = 'SAGE3_client-darwin-x64/SAGE3_client.app';
   if (!fs.existsSync(appPath)) {
     throw new Error(`Cannot find application at: ${appPath}`);
   }
+
   console.log(`Notarizing ${appId} found at ${appPath}`);
   try {
     await electron_notarize.notarize({
       tool: 'notarytool',
       appBundleId: appId,
       appPath: appPath,
-      appleId: 'XXXX',
-      appleIdPassword: 'YYYYY', // an application specific password
-      teamId: 'ZZZZZ',
+      // Apple ID  toto@mac.com
+      appleId: process.env.APPLE_ID || 'XXXX',
+      // an application specific password
+      appleIdPassword: process.env.APPLE_ID_PWD || 'YYYYY',
+      // number at end of `security find-identity -p basic -v`
+      teamId: process.env.APPLE_TEAM_ID || 'ZZZZZ',
     });
   } catch (error) {
     console.error(error);
   }
+
   console.log(`Done notarizing ${appId}`);
 }
 
