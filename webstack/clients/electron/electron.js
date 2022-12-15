@@ -473,7 +473,7 @@ function createWindow() {
       // nodeIntegration: true,
       // contextIsolation: false,
       nodeIntegration: true,
-      contextIsolation: false,
+      contextIsolation: true,
       webSecurity: true,
       backgroundThrottling: false,
       allowDisplayingInsecureContent: commander.allowDisplayingInsecure,
@@ -481,7 +481,7 @@ function createWindow() {
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
       // Hack to preload some js
-      // preload: path.resolve(path.join(__dirname, 'preload.js')),
+      preload: path.resolve(path.join(__dirname, 'preload.js')),
     },
   };
 
@@ -866,6 +866,7 @@ function createWindow() {
 
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
+    console.log('takescreenshot');
     TakeScreenshot();
   });
 
