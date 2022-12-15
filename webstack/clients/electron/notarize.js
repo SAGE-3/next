@@ -20,11 +20,12 @@ async function GO() {
   console.log(`Notarizing ${appId} found at ${appPath}`);
   try {
     await electron_notarize.notarize({
+      tool: 'notarytool',
       appBundleId: appId,
       appPath: appPath,
-      appleId: ' XXXX '
-      appleIdPassword: ' YYYYY ', // an application specific password
-      ascProvider: ' ZZZZZ ',
+      appleId: 'XXXX',
+      appleIdPassword: 'YYYYY', // an application specific password
+      teamId: 'ZZZZZ',
     });
   } catch (error) {
     console.error(error);
