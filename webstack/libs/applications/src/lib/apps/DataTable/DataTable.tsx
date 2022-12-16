@@ -605,132 +605,136 @@ function AppComponent(props: App): JSX.Element {
             ))}
           </div>
 
-          <HStack
-            position='absolute'
-            top='35px'
-            right='15px'
-          >
-            <Box>
-              <Popover
-                isOpen={isOpen}
-                onOpen={onOpen}
-                onClose={onClose}
-                placement='right'
-                closeOnBlur={false}
-              >
-                <PopoverTrigger>
-                  <Button rightIcon={<TbWorldDownload/>}>
-                    New Dataset
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent p={5}>
-                  <FocusLock returnFocus persistentFocus={true}>
-                    <PopoverArrow/>
-                    <PopoverCloseButton/>
-                    <Stack spacing={4}>
-                      <FormControl>
-                        <FormLabel>Online Dataset</FormLabel>
-                        <Input
-                          size='md'
-                          type="text"
-                          value={s.dataUrl}
-                          onChange={handleUrlChange}
-                        />
-                        <FormHelperText>Link to online dataset</FormHelperText>
-                      </FormControl>
-                      <ButtonGroup display='flex' justifyContent='flex-end'>
-                        <Button variant='outline' onClick={onClose}>
-                          Cancel
-                        </Button>
-                        <Button
-                          variant='outline'
-                          onClick={() => handleLoadData()}
-                          isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}
-                        >
-                          Load Data
-                        </Button>
-                      </ButtonGroup>
-                    </Stack>
-                  </FocusLock>
-                </PopoverContent>
-              </Popover>
-            </Box>
-            <Menu>
-              <MenuButton
-                as={IconButton}
-                aria-label='Table Operations'
-                icon={<GoKebabVertical/>}
-                // position='absolute'
-                // top='35px'
-                // right='15px'
-                size="md"
-              />
-              <Portal>
-                <MenuList
-                >
-                  {tableColActions.map((action, key) => {
-                    return (
-                      <MenuItem
-                        key={key}
-                        onClick={action}
-                      >
-                        {tableColMenuNames[key]}
-                      </MenuItem>
-                    )
-                  })
-                  }
-                  <MenuDivider/>
-                  {tableRowActions.map((action, key) => {
-                    return (
-                      <MenuItem
-                        key={key}
-                        onClick={action}
-                      >
-                        {tableRowMenuNames[key]}
-                      </MenuItem>
-                    )
-                  })
-                  }
-                  <MenuDivider/>
-                  {tableActions.map((action, key) => {
-                    return (
-                      <MenuItem
-                        key={key}
-                        onClick={action}
-                      >
-                        {tableMenuNames[key]}
-                      </MenuItem>
-                    )
-                  })
-                  }
-                </MenuList>
-              </Portal>
-            </Menu>
-          </HStack>
+          {/*TODO Depracate this option to upload different dataset from API and the kebab menu for table action*/}
+          {/*<HStack*/}
+          {/*  position='absolute'*/}
+          {/*  top='35px'*/}
+          {/*  right='15px'*/}
+          {/*>*/}
+          {/*  <Box>*/}
+          {/*    <Popover*/}
+          {/*      isOpen={isOpen}*/}
+          {/*      onOpen={onOpen}*/}
+          {/*      onClose={onClose}*/}
+          {/*      placement='right'*/}
+          {/*      closeOnBlur={false}*/}
+          {/*    >*/}
+          {/*      <PopoverTrigger>*/}
+          {/*        <Button rightIcon={<TbWorldDownload/>}>*/}
+          {/*          New Dataset*/}
+          {/*        </Button>*/}
+          {/*      </PopoverTrigger>*/}
+          {/*      <PopoverContent p={5}>*/}
+          {/*        <FocusLock returnFocus persistentFocus={true}>*/}
+          {/*          <PopoverArrow/>*/}
+          {/*          <PopoverCloseButton/>*/}
+          {/*          <Stack spacing={4}>*/}
+          {/*            <FormControl>*/}
+          {/*              <FormLabel>Online Dataset</FormLabel>*/}
+          {/*              <Input*/}
+          {/*                size='md'*/}
+          {/*                type="text"*/}
+          {/*                value={s.dataUrl}*/}
+          {/*                onChange={handleUrlChange}*/}
+          {/*              />*/}
+          {/*              <FormHelperText>Link to online dataset</FormHelperText>*/}
+          {/*            </FormControl>*/}
+          {/*            <ButtonGroup display='flex' justifyContent='flex-end'>*/}
+          {/*              <Button variant='outline' onClick={onClose}>*/}
+          {/*                Cancel*/}
+          {/*              </Button>*/}
+          {/*              <Button*/}
+          {/*                variant='outline'*/}
+          {/*                onClick={() => handleLoadData()}*/}
+          {/*                isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}*/}
+          {/*              >*/}
+          {/*                Load Data*/}
+          {/*              </Button>*/}
+          {/*            </ButtonGroup>*/}
+          {/*          </Stack>*/}
+          {/*        </FocusLock>*/}
+          {/*      </PopoverContent>*/}
+          {/*    </Popover>*/}
+          {/*  </Box>*/}
+          {/*  <Menu>*/}
+          {/*    <MenuButton*/}
+          {/*      as={IconButton}*/}
+          {/*      aria-label='Table Operations'*/}
+          {/*      icon={<GoKebabVertical/>}*/}
+          {/*      // position='absolute'*/}
+          {/*      // top='35px'*/}
+          {/*      // right='15px'*/}
+          {/*      size="md"*/}
+          {/*    />*/}
+          {/*    <Portal>*/}
+          {/*      <MenuList*/}
+          {/*      >*/}
+          {/*        {tableColActions.map((action, key) => {*/}
+          {/*          return (*/}
+          {/*            <MenuItem*/}
+          {/*              key={key}*/}
+          {/*              onClick={action}*/}
+          {/*            >*/}
+          {/*              {tableColMenuNames[key]}*/}
+          {/*            </MenuItem>*/}
+          {/*          )*/}
+          {/*        })*/}
+          {/*        }*/}
+          {/*        <MenuDivider/>*/}
+          {/*        {tableRowActions.map((action, key) => {*/}
+          {/*          return (*/}
+          {/*            <MenuItem*/}
+          {/*              key={key}*/}
+          {/*              onClick={action}*/}
+          {/*            >*/}
+          {/*              {tableRowMenuNames[key]}*/}
+          {/*            </MenuItem>*/}
+          {/*          )*/}
+          {/*        })*/}
+          {/*        }*/}
+          {/*        <MenuDivider/>*/}
+          {/*        {tableActions.map((action, key) => {*/}
+          {/*          return (*/}
+          {/*            <MenuItem*/}
+          {/*              key={key}*/}
+          {/*              onClick={action}*/}
+          {/*            >*/}
+          {/*              {tableMenuNames[key]}*/}
+          {/*            </MenuItem>*/}
+          {/*          )*/}
+          {/*        })*/}
+          {/*        }*/}
+          {/*      </MenuList>*/}
+          {/*    </Portal>*/}
+          {/*  </Menu>*/}
+          {/*</HStack>*/}
         </div>
-        <div
-          style={{display: s.totalRows !== 0 ? "none" : "block"}}
-          className='URL-Container'
-        >
-          <InputGroup size='md'>
-            <Input
-              type="text"
-              value={s.dataUrl}
-              onChange={handleUrlChange}
-              placeholder={'URL here'}
-            />
-            <InputRightElement width='5rem'>
-              <Button
-                variant='outline'
-                onClick={handleLoadData}
-                // disabled={running}
-                isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}
-              >
-                Load Data
-              </Button>
-            </InputRightElement>
-          </InputGroup>
-        </div>
+
+        {/*TODO Depracate this input bar for loading datasets from APIs*/}
+        {/*TODO Figure out what app should look like when table is not loaded in*/}
+        {/*<div*/}
+        {/*  style={{display: s.totalRows !== 0 ? "none" : "block"}}*/}
+        {/*  className='URL-Container'*/}
+        {/*>*/}
+        {/*  <InputGroup size='md'>*/}
+        {/*    <Input*/}
+        {/*      type="text"*/}
+        {/*      value={s.dataUrl}*/}
+        {/*      onChange={handleUrlChange}*/}
+        {/*      placeholder={'URL here'}*/}
+        {/*    />*/}
+        {/*    <InputRightElement width='5rem'>*/}
+        {/*      <Button*/}
+        {/*        variant='outline'*/}
+        {/*        onClick={handleLoadData}*/}
+        {/*        // disabled={running}*/}
+        {/*        isDisabled={s.dataUrl === undefined || s.dataUrl === "" || running ? true : false}*/}
+        {/*      >*/}
+        {/*        Load Data*/}
+        {/*      </Button>*/}
+        {/*    </InputRightElement>*/}
+        {/*  </InputGroup>*/}
+        {/*</div>*/}
 
         <Center>
           <Spinner
@@ -991,7 +995,8 @@ function ToolbarComponent(props: App): JSX.Element {
           onChange={handleFileSelected}
           size="sm"
           width="8rem"
-
+          borderRadius={"6px 6px 6px 6px"}
+          textOverflow={"ellipsis"}
         >
         {supportedRoomAssets.map(el =>
           <option value={el._id}>{el.data.originalfilename}</option>)

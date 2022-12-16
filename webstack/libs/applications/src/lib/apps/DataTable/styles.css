@@ -45,8 +45,8 @@
   position: relative;
   justify-content: center;
   width: 5%;
-  color: darkblue;
-  font-weight: bolder;
+  color: black;
+  /*font-weight: bold;*/
 }
 
 td {
@@ -63,14 +63,14 @@ body:not(.nohover) tbody td:hover {
 
 .highlight {
   text-align: justify;
-  -webkit-padding-start: 1.5rem;
-  padding-inline-start: 1.5rem;
-  -webkit-padding-end: 1.5rem;
-  padding-inline-end: 1.5rem;
+  -webkit-padding-start: 1rem;
+  padding-inline-start: 1rem;
+  -webkit-padding-end: 1rem;
+  padding-inline-end: 1rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
   line-height: 1px;
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: bold;
   border-bottom: 1px solid;
   background-color: purple;
@@ -78,14 +78,14 @@ body:not(.nohover) tbody td:hover {
 
 .originalChakra {
   text-align: justify;
-  -webkit-padding-start: 1.5rem;
-  padding-inline-start: 1.5rem;
-  -webkit-padding-end: 1.5rem;
-  padding-inline-end: 1.5rem;
+  -webkit-padding-start: 1rem;
+  padding-inline-start: 1rem;
+  -webkit-padding-end: 1rem;
+  padding-inline-end: 1rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
   line-height: 1px;
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: bold;
   border-bottom: 1px solid;
 }
