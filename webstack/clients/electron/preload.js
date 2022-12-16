@@ -10,6 +10,8 @@ const validChannels = [
   'asynchronous-message',
   'close-connect-page',
   'take-screenshot',
+  'streamview',
+  'paint',
 ];
 
 contextBridge.exposeInMainWorld('electron', {

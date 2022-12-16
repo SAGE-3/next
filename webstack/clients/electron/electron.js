@@ -739,34 +739,31 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
-    const sender = event.sender;
-    sender.on('ipc-message', function (evt, channel, args) {
+    ipcMain.on('streamview', (e, args) => {
       // console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
       // console.log('Webview>    message', channel, args);
       // Message for the webview pixel streaming
-      if (channel === 'streamview') {
-        const viewContent = electron.webContents.fromId(args.id);
-        viewContent.beginFrameSubscription(true, (image, dirty) => {
-          let dataenc;
-          let neww, newh;
-          const devicePixelRatio = 2;
-          const quality = 50;
-          if (devicePixelRatio > 1) {
-            neww = dirty.width / devicePixelRatio;
-            newh = dirty.height / devicePixelRatio;
-            const resizedimage = image.resize({ width: neww, height: newh });
-            dataenc = resizedimage.toJPEG(quality);
-          } else {
-            dataenc = image.toJPEG(quality);
-            neww = dirty.width;
-            newh = dirty.height;
-          }
-          evt.reply('paint', {
-            buf: dataenc.toString('base64'),
-            dirty: { ...dirty, width: neww, height: newh },
-          });
+      const viewContent = electron.webContents.fromId(args.id);
+      viewContent.beginFrameSubscription(true, (image, dirty) => {
+        let dataenc;
+        let neww, newh;
+        const devicePixelRatio = 2;
+        const quality = 50;
+        if (devicePixelRatio > 1) {
+          neww = dirty.width / devicePixelRatio;
+          newh = dirty.height / devicePixelRatio;
+          const resizedimage = image.resize({ width: neww, height: newh });
+          dataenc = resizedimage.toJPEG(quality);
+        } else {
+          dataenc = image.toJPEG(quality);
+          neww = dirty.width;
+          newh = dirty.height;
+        }
+        mainWindow.webContents.send('paint', {
+          buf: dataenc.toString('base64'),
+          dirty: { ...dirty, width: neww, height: newh },
         });
-      }
+      });
     });
 
     // Override the UserAgent variable: make websites behave better
