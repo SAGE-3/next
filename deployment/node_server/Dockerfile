@@ -39,7 +39,7 @@ WORKDIR /app
 COPY webstack/package.json package.json
 COPY webstack/yarn.lock yarn.lock
 # nodejs module to reduce size
-RUN npm install modclean -g
+RUN npm install modclean patch-package -g
 # Install deps in production mode and cleanup
 RUN yarn install --frozen-lockfile --prod && modclean -P -r --patterns="default:*" --ignore="pdfjs-dist/**"
 
