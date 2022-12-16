@@ -986,23 +986,25 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Select placeholder='Select File' onChange={handleFileSelected}>
+        <Select
+          placeholder='Select File'
+          onChange={handleFileSelected}
+          size="sm"
+          width="8rem"
+
+        >
         {supportedRoomAssets.map(el =>
           <option value={el._id}>{el.data.originalfilename}</option>)
         }
       </Select>
+      <div style={{display: s.totalRows === 0 ? "none" : "block"}}>
       <Menu>
         <MenuButton
           as={Button}
           aria-label='Table Operations'
-          rightIcon={<GoKebabVertical/>}
+          rightIcon={<FiChevronDown/>}
           variant='outline'
-          iconSpacing='7rem'
-          // position='absolute'
-          // top='35px'
-          // right='15px'
-
-          size="md"
+          size="sm"
         >
           Table Actions
         </MenuButton>
@@ -1047,6 +1049,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Portal>
       </Menu>
+      </div>
     </>
   )
 }
