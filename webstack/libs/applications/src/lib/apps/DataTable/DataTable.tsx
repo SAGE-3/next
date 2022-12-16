@@ -736,6 +736,7 @@ function AppComponent(props: App): JSX.Element {
         {/*  </InputGroup>*/}
         {/*</div>*/}
 
+        {/*TODO Spinner appears when there is a python request in que. Just show spinner when loading in table?*/}
         <Center>
           <Spinner
             style={{display: (s.executeInfo.executeFunc === "") ? "none" : "flex"}}
@@ -745,6 +746,7 @@ function AppComponent(props: App): JSX.Element {
             emptyColor='gray.200'
             color='blue.500'
             size='xl'
+            padding="5rem"
           />
         </Center>
 

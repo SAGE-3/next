@@ -222,11 +222,13 @@ class DataTable(SmartBit):
         self.send_updates()
 
     def drop_column(self, selected_col):
+        local_selected_cols = self.state.selectedCols
         self._modified_df.drop(columns=selected_col, axis=1, inplace=True)
         self.paginate()
-        if selected_col in self.state.selectedCols:
-            self.state.selectedCols.remove(selected_col)
+        if selected_col in local_selected_cols:
+            local_selected_cols.remove(selected_col)
             print('removed ---------')
+            self.state.selectedCols = local_selected_cols
         self.state.selectedCol = ""
         self.state.timestamp = time.time()
         self.state.executeInfo.executeFunc = ""
