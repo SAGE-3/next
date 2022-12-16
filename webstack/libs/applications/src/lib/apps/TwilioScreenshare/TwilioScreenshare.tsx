@@ -150,7 +150,6 @@ function AppComponent(props: App): JSX.Element {
       if (isElectron()) {
         try {
           // Get sources from the main process
-          // @ts-ignore
           window.electron.on('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
             const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
@@ -160,7 +159,6 @@ function AppComponent(props: App): JSX.Element {
             setElectronSources(allSources);
             onOpen();
           });
-          // @ts-ignore
           window.electron.send('request-sources');
         } catch (err) {
           deleteApp(props._id);

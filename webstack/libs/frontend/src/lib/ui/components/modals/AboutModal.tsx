@@ -15,9 +15,7 @@ import {
   Text,
   ModalCloseButton,
   Box,
-  useToast,
   useColorModeValue,
-  Tooltip,
 } from '@chakra-ui/react';
 
 import { getBrowserType, GetServerInfo, isElectron, useHexColor } from '@sage3/frontend';
