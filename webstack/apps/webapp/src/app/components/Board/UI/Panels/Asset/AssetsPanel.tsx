@@ -7,8 +7,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer } from '@chakra-ui/react';
-import { StuckTypes, UploadModal, useAssetStore, useRoomStore, useUIStore, useUsersStore } from '@sage3/frontend';
+import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer, Tooltip } from '@chakra-ui/react';
+
+import { StuckTypes, UploadModal, useAssetStore, useRoomStore, useUIStore, useUsersStore, useAuth } from '@sage3/frontend';
 
 import { Panel } from '../Panel';
 import { Files } from './Files';
@@ -19,6 +20,13 @@ type AssetsPanelProps = {
   roomId: string;
 };
 
+/**
+ * The asset manager panel
+ *
+ * @export
+ * @param {AssetsPanelProps} props containing the boardId and roomId
+ * @returns {JSX.Element}
+ */
 export function AssetsPanel(props: AssetsPanelProps) {
   const position = useUIStore((state) => state.assetsPanel.position);
   const setPosition = useUIStore((state) => state.assetsPanel.setPosition);
@@ -36,6 +44,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   // Access the list of users
   const users = useUsersStore((state) => state.users);
+  const { auth } = useAuth();
 
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
@@ -119,9 +128,15 @@ export function AssetsPanel(props: AssetsPanelProps) {
           <Flex>
             <Text fontSize={'xs'}>To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder</Text>
             <Spacer />
-            <Button colorScheme="green" width="100px" size={'xs'} onClick={onOpen}>
-              Upload
-            </Button>
+
+            <Tooltip placement="top-start" label={auth?.provider === 'guest' ? "Guests cannot upload assets" : "Upload assets"} openDelay={500} hasArrow>
+              <Button colorScheme="green" width="100px" size={'xs'} onClick={onOpen}
+                // Block guests from uploading assets
+                disabled={auth?.provider === 'guest'}>
+                Upload
+              </Button>
+            </Tooltip>
+
           </Flex>
         </Box>
       </Panel>
