@@ -246,12 +246,10 @@ function ToolbarComponent(props: App): JSX.Element {
     if (isElectron()) {
       console.log('Cobrowse> startStream');
       // Load electron and the IPCRender
-      const electron = window.require('electron');
-      const ipcRenderer = electron.ipcRenderer;
-      ipcRenderer.send('streamview', { url: s.sharedurl, id: s.frame });
-      ipcRenderer.on('paint', (_evt: any, arg: any) => {
+      window.electron.on('paint', (arg: any) => {
         sock.send(JSON.stringify({ type: 'paint', data: arg.buf }));
       });
+      window.electron.send('streamview', { url: s.sharedurl, id: s.frame });
     }
   };
 

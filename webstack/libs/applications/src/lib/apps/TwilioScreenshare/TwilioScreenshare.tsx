@@ -149,10 +149,8 @@ function AppComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       if (isElectron()) {
         try {
-          const electron = window.require('electron');
-          const ipcRenderer = electron.ipcRenderer;
           // Get sources from the main process
-          ipcRenderer.on('set-source', async (evt: any, sources: any) => {
+          window.electron.on('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
             const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
             for (const source of sources) {
@@ -161,7 +159,7 @@ function AppComponent(props: App): JSX.Element {
             setElectronSources(allSources);
             onOpen();
           });
-          ipcRenderer.send('request-sources');
+          window.electron.send('request-sources');
         } catch (err) {
           deleteApp(props._id);
         }

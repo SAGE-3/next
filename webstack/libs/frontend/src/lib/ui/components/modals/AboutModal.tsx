@@ -15,9 +15,7 @@ import {
   Text,
   ModalCloseButton,
   Box,
-  useToast,
   useColorModeValue,
-  Tooltip,
 } from '@chakra-ui/react';
 
 import { getBrowserType, GetServerInfo, isElectron, useHexColor } from '@sage3/frontend';
@@ -53,12 +51,10 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
   // Get Client info
   useEffect(() => {
     if (electron) {
-      const electron = window.require('electron');
-      const ipcRenderer = electron.ipcRenderer;
-      ipcRenderer.send('client-info-request', {});
-      ipcRenderer.on('client-info-response', async (evt: unknown, info: { version: string }) => {
+      window.electron.on('client-info-response', async (info: { version: string }) => {
         setClientVersion(info.version);
       });
+      window.electron.send('client-info-request', {});
     } else {
       const browser = getBrowserType();
       setClientVersion(browser);
@@ -78,9 +74,7 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
   // Send a IPC message to the main process to check for updates
   // Uses Luc's update checker
   const checkForUpdates = () => {
-    const electron = window.require('electron');
-    const ipcRenderer = electron.ipcRenderer;
-    ipcRenderer.send('client-update-check', {});
+    window.electron.send('client-update-check', {});
   };
 
   return (
@@ -148,7 +142,9 @@ type WebsiteLinkProps = { url: string; displayText: string; color: string };
  */
 function WebsiteLink(props: WebsiteLinkProps): JSX.Element {
   // the target 'sage3' target is recognized by the electron main process and will open the url in the user's default browser
-  return <a href={props.url} target="sage3" rel="noreferrer" style={{ textDecoration: 'none', color: props.color }}>
-    {props.displayText}
-  </a>;
+  return (
+    <a href={props.url} target="sage3" rel="noreferrer" style={{ textDecoration: 'none', color: props.color }}>
+      {props.displayText}
+    </a>
+  );
 }

@@ -77,12 +77,10 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
     }
     // Ask electron to take a screenshot
     if (isElectron()) {
-      const electron = window.require('electron');
-      const ipcRenderer = electron.ipcRenderer;
       setTimeout(() => {
         // send the message to the main process
         // small delay to make sure the board is rendered
-        ipcRenderer.send('take-screenshot');
+        window.electron.send('take-screenshot', {});
       }, 100);
       // Restore the UI
       setTimeout(() => {
