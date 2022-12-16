@@ -5,13 +5,21 @@
  * the file LICENSE, distributed as part of this software.
  *
  */
-import { useCallback } from 'react';
+
+import React, { useCallback, useState } from 'react';
+// Import Chakra UI elements
+import {
+  useDisclosure,
+  Modal, ModalOverlay, ModalContent,
+  InputGroup, Input, VStack, Button,
+} from '@chakra-ui/react';
+
+import { MdApps } from 'react-icons/md';
 
 import {
-  AlfredComponent,
   processContentURL,
   useAppStore,
-  useBoardStore,
+  useHotkeys, HotkeysEvent,
   usePresenceStore,
   useUIStore,
   useUser,
@@ -154,3 +162,92 @@ export function Alfred(props: props) {
 
   return <AlfredComponent onAction={alfredAction} />;
 }
+
+/**
+ * Props for the file manager modal behavior
+ * from Chakra UI Modal dialog
+ */
+type AlfredUIProps = {
+  onAction: (command: string) => void;
+};
+
+/**
+ * React component to get and display the asset list
+ */
+function AlfredUI({ onAction }: AlfredUIProps): JSX.Element {
+  // Element to set the focus to when opening the dialog
+  const initialRef = React.useRef<HTMLInputElement>(null);
+  const [term, setTerm] = useState<string>();
+  const { isOpen, onOpen, onClose } = useDisclosure({ id: 'alfred' });
+
+  useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
+    // Open the window
+    onOpen();
+    // Returning false stops the event and prevents default browser events
+    return false;
+  });
+
+  // Select the file when clicked
+  const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const val = event.currentTarget.value;
+    if (val) {
+      // Set the value, trimming spaces at begining and end
+      setTerm(val.trim());
+    }
+  };
+
+  // Keyboard handler: press enter to activate command
+  const onSubmit = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onClose();
+      if (term) {
+        onAction(term);
+      }
+    }
+  };
+  // Keyboard handler: press enter to activate command
+  const onButton = (e: React.MouseEvent) => {
+    onClose();
+    const text = e.currentTarget.textContent || '';
+    onAction('app ' + text);
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" isCentered initialFocusRef={initialRef} blockScrollOnMount={false}>
+      <ModalOverlay />
+      <ModalContent h={'265px'}>
+        {/* Search box */}
+        <InputGroup>
+          <Input
+            ref={initialRef}
+            placeholder="Command..."
+            _placeholder={{ opacity: 1, color: 'gray.600' }}
+            m={2}
+            p={2}
+            focusBorderColor="gray.500"
+            fontSize="xl"
+            onChange={handleChange}
+            onKeyDown={onSubmit}
+          />
+        </InputGroup>
+        <VStack m={1} p={1}>
+          {/* <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
+            SageCell
+          </Button>
+          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
+            Screenshare
+          </Button> */}
+          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
+            Stickie
+          </Button>
+          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
+            Webview
+          </Button>
+        </VStack>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+const AlfredComponent = React.memo(AlfredUI);
