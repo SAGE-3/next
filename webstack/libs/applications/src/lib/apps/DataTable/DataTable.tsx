@@ -148,7 +148,6 @@ const Pagination = (props: App): JSX.Element => {
       setRightButtonDisable(true)
       setPageNumbers([s.currentPage - 1, s.currentPage])
     }
-    console.log("pagination useEffect")
   }, [s.currentPage, JSON.stringify(s.pageNumbers)])
 
 
@@ -879,16 +878,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   function handleFileSelected(event: any) {
-    console.log('do something with file ' + event.target.value)
-
     const myasset = assets.find((a) => a._id === event.target.value);
-    if (myasset) {
-      setFile(myasset);
-      console.log('--------' + myasset)
-      const localurl = '/api/assets/static/' + event.target.value + '.csv';
-      updateState(props._id,
-      {executeInfo: {"executeFunc": "load_data", "params": {"url": localurl}}})
-    }
+    // if (myasset) {
+    //   setFile(myasset);
+    //   console.log('--------' + JSON.stringify(myasset))
+    //   const assetId = myasset._id;
+    //   updateState(props._id,
+    //   {executeInfo: {"executeFunc": "load_data", "params": {"asset_id": assetId}}})
+    // }
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "load_data", "params": {"url": myasset?._id}}})
   }
 
   return (

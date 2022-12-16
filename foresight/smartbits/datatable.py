@@ -121,11 +121,10 @@ class DataTable(SmartBit):
     # and params to ""
     def load_data(self, url):
         start = time.time()
+        url = 'https://www.dropbox.com/s/1camf7gmkxi8hdx/100%20Sales%20Records.csv?dl=1'
         extension = self.get_ext(url)
         response = urlopen(url)
-        # Leave magic in for retrieving file extensions of uploaded datasets, not API datasets
-        # print(magic.from_file(response))
-        # print(magic.from_file(response, mime=True))
+
         valid_exts = ['csv', 'tsv', 'json', 'xlxs']
         if extension in valid_exts:
             if extension == 'csv':
