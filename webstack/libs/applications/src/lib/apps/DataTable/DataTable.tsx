@@ -868,7 +868,27 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   // BoardInfo
-  const { boardId, roomId } = useParams();
+  const {boardId, roomId} = useParams();
+
+  // TODO Move to a JSON?
+  // Array of function references to map through for table actions menu
+  const tableColActions = [tableSort, dropColumns]
+  const tableColMenuNames = ["Sort on Selected Columns", "Drop Selected Columns"]
+
+  const tableColActs = {"Sort on Selected Columns": tableSort, "Drop Selected Columns": dropColumns}
+
+  // Array of function references to map through for table actions menu
+  const tableRowActions = [dropRows]
+  const tableRowMenuNames = ["Drop Selected Rows"]
+
+  const tableRowActs = {"Drop Selected Rows": dropRows}
+
+  // Array of function references to map through for table actions menu
+  const tableActions = [transposeTable, restoreTable]
+  const tableMenuNames = ["Transpose Table", "Restore Original Table"]
+
+  const tableActs = {"Transpose Table": transposeTable, "Restore Original Table": restoreTable}
+
 
   const assets = useAssetStore(state => state.assets);
   // Get the asset
@@ -876,6 +896,80 @@ function ToolbarComponent(props: App): JSX.Element {
   const roomAssets = assets.filter(el => el.data.room == roomId);
   const supportedRoomAssets = roomAssets.filter(el => el.data.file.split('.').pop() === 'csv')
   const update = useAppStore((state) => state.update);
+
+  // Calls python to sort on selected column(s)
+  function tableSort() {
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "table_sort", "params": {"selected_cols": s.selectedCols}}})
+  }
+
+  //TODO Add Columns
+  function addCols() {
+    console.log("add column")
+  }
+
+  // TODO Once cells are dropped, remove cell highlighting
+  // Calls python to drop selected column(s)
+  function dropColumns() {
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "drop_columns", "params": {"selected_cols": s.selectedCols}}})
+
+    // Change all cells from highlighted class to regular
+    // const cols = document.querySelectorAll("td")
+    // cols.forEach((cell: any) => {
+    //     cell.className = "originalChakra"
+    //   }
+    // )
+  }
+
+  // TODO Once cells are dropped, remove cell highlighting
+  // Calls python to drop selected row(s)
+  function dropRows() {
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "drop_rows", "params": {"selected_rows": s.selectedRows}}})
+
+    // Change all cells from highlighted class to regular
+    // const cols = document.querySelectorAll("td")
+    // cols.forEach((cell: any) => {
+    //     cell.className = "originalChakra"
+    //   }
+    // )
+  }
+
+  // TODO Does not currently work
+  function transposeTable() {
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "transpose_table", "params": {}}})
+  }
+
+  // Restore table to original view
+  function restoreTable() {
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "restore_table", "params": {}}})
+  }
+
+  //Start of single column functions
+
+  // Sort on single selected column
+  function columnSort(column: any) {
+    // updateState(props._id, {selectedCol: column})
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "column_sort", "params": {"selected_col": s.selectedCol}}})
+  }
+
+  // Drop single selected column
+  // Remove dropped column from selectedCols
+  function dropColumn(column: any) {
+    updateState(props._id,
+      {executeInfo: {"executeFunc": "drop_column", "params": {"selected_col": s.selectedCol}}})
+    const selectedCols = s.selectedCols.filter(function (e) {
+      return e !== column
+    })
+    updateState(props._id, {selectedCols: selectedCols})
+    updateState(props._id, {messages: ""})
+
+  }
+
 
   function handleFileSelected(event: any) {
     const myasset = assets.find((a) => a._id === event.target.value);
@@ -892,13 +986,67 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Box>
-        <Select placeholder='Select File' onChange={handleFileSelected}>
-          {supportedRoomAssets.map(el =>
-            <option value={el._id}>{el.data.originalfilename}</option>)
-          }
-        </Select>
-      </Box>
+      <Select placeholder='Select File' onChange={handleFileSelected}>
+        {supportedRoomAssets.map(el =>
+          <option value={el._id}>{el.data.originalfilename}</option>)
+        }
+      </Select>
+      <Menu>
+        <MenuButton
+          as={Button}
+          aria-label='Table Operations'
+          rightIcon={<GoKebabVertical/>}
+          variant='outline'
+          iconSpacing='7rem'
+          // position='absolute'
+          // top='35px'
+          // right='15px'
+
+          size="md"
+        >
+          Table Actions
+        </MenuButton>
+        <Portal>
+          <MenuList
+          >
+            {tableColActions.map((action, key) => {
+              return (
+                <MenuItem
+                  key={key}
+                  onClick={action}
+                >
+                  {tableColMenuNames[key]}
+                </MenuItem>
+              )
+            })
+            }
+            <MenuDivider/>
+            {tableRowActions.map((action, key) => {
+              return (
+                <MenuItem
+                  key={key}
+                  onClick={action}
+                >
+                  {tableRowMenuNames[key]}
+                </MenuItem>
+              )
+            })
+            }
+            <MenuDivider/>
+            {tableActions.map((action, key) => {
+              return (
+                <MenuItem
+                  key={key}
+                  onClick={action}
+                >
+                  {tableMenuNames[key]}
+                </MenuItem>
+              )
+            })
+            }
+          </MenuList>
+        </Portal>
+      </Menu>
     </>
   )
 }
