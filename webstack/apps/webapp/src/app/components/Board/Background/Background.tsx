@@ -26,6 +26,7 @@ import {
   useHotkeys,
   useCursorBoardPosition,
   useKeyPress,
+  useAuth,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -102,6 +103,7 @@ export function Background(props: BackgroundProps) {
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
+  const { auth } = useAuth();
   const { position: cursorPosition } = useCursorBoardPosition();
 
   // UI Store
@@ -472,6 +474,18 @@ export function Background(props: BackgroundProps) {
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
+
+    // Block guests from uploading assets
+    if (auth?.provider === 'guest') {
+      toast({
+        title: 'Guests cannot upload assets',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
