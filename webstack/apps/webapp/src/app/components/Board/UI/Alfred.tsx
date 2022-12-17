@@ -6,7 +6,7 @@
  *
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 // Import Chakra UI elements
 import {
   useDisclosure,
@@ -14,7 +14,10 @@ import {
   InputGroup, Input, VStack, Button,
 } from '@chakra-ui/react';
 
-import { MdApps } from 'react-icons/md';
+import { MdApps, MdAccountCircle } from 'react-icons/md';
+
+// Icons for file types
+import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
 import {
   processContentURL,
@@ -23,12 +26,22 @@ import {
   usePresenceStore,
   useUIStore,
   useUser,
+  useAuth,
   useData,
+  useCursorBoardPosition,
+  // EditUserModal,
+  useAssetStore,
+  useUsersStore,
 } from '@sage3/frontend';
+
+import { getExtension } from '@sage3/shared';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { Applications } from '@sage3/applications/apps';
+
+import { FileEntry } from './Panels/Asset/types';
+import { setupAppForFile } from './Panels/Asset/CreateApp';
 
 type props = {
   boardId: string;
@@ -160,7 +173,7 @@ export function Alfred(props: props) {
     [user, apps, props.boardId, presences]
   );
 
-  return <AlfredComponent onAction={alfredAction} />;
+  return <AlfredComponent onAction={alfredAction} roomId={props.roomId} boardId={props.boardId} />;
 }
 
 /**
@@ -169,16 +182,30 @@ export function Alfred(props: props) {
  */
 type AlfredUIProps = {
   onAction: (command: string) => void;
+  roomId: string;
+  boardId: string;
 };
 
 /**
  * React component to get and display the asset list
  */
-function AlfredUI({ onAction }: AlfredUIProps): JSX.Element {
+function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   // Element to set the focus to when opening the dialog
   const initialRef = React.useRef<HTMLInputElement>(null);
   const [term, setTerm] = useState<string>();
   const { isOpen, onOpen, onClose } = useDisclosure({ id: 'alfred' });
+  // const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
+  // Apps
+  const createApp = useAppStore((state) => state.create);
+  // Assets store
+  const assets = useAssetStore((state) => state.assets);
+  const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
+  // Access the list of users
+  const users = useUsersStore((state) => state.users);
+  // check if user is a guest
+  const { user } = useUser();
+  // const { auth } = useAuth();
+  const { position: cursorPosition } = useCursorBoardPosition();
 
   useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
     // Open the window
@@ -206,17 +233,66 @@ function AlfredUI({ onAction }: AlfredUIProps): JSX.Element {
       }
     }
   };
-  // Keyboard handler: press enter to activate command
-  const onButton = (e: React.MouseEvent) => {
+
+  useEffect(() => {
+    // Filter the asset keys for this room
+    const filterbyRoom = assets.filter((k) => k.data.room === roomId);
+    const keys = Object.keys(filterbyRoom);
+    // Create entries
+    setAssetsList(
+      filterbyRoom.map((item) => {
+        // build an FileEntry object
+        const entry: FileEntry = {
+          id: item._id,
+          owner: item.data.owner,
+          ownerName: users.find((el) => el._id === item.data.owner)?.data.name || '-',
+          filename: item.data.file,
+          originalfilename: item.data.originalfilename,
+          date: new Date(item.data.dateCreated).getTime(),
+          dateAdded: new Date(item.data.dateAdded).getTime(),
+          room: item.data.room,
+          size: item.data.size,
+          type: item.data.mimetype,
+          derived: item.data.derived,
+          metadata: item.data.metadata,
+          selected: false,
+        };
+        return entry;
+      }).sort((a, b) => {
+        // compare dates (number)
+        return b.dateAdded - a.dateAdded;
+      })
+    )
+  }, [assets, roomId]);
+
+  // Open the file
+  const openFile = async (id: string) => {
     onClose();
-    const text = e.currentTarget.textContent || '';
-    onAction('app ' + text);
+    if (!user) return;
+    // Create the app
+    const file = assetsList.find((a) => a.id === id);
+    if (file) {
+      const setup = await setupAppForFile(file, cursorPosition.x, cursorPosition.y, roomId, boardId, user);
+      if (setup) createApp(setup);
+    }
   };
+
+  // Build the list of actions
+  const actions = assetsList.map((a) => {
+    const extension = getExtension(a.type);
+    return { id: a.id, filename: a.originalfilename, icon: whichIcon(extension) };
+  });
+
+  // Build the list of buttons
+  const buttonList = actions.slice(0, 10).map((b) => (
+    <Button key={b.id} my={1} minHeight={"40px"} onClick={() => openFile(b.id)} leftIcon={b.icon} fontSize="lg" justifyContent="flex-start" width={'100%'} variant="outline">
+      {b.filename}
+    </Button>));
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl" isCentered initialFocusRef={initialRef} blockScrollOnMount={false}>
       <ModalOverlay />
-      <ModalContent h={'265px'}>
+      <ModalContent maxH={300}>
         {/* Search box */}
         <InputGroup>
           <Input
@@ -231,23 +307,36 @@ function AlfredUI({ onAction }: AlfredUIProps): JSX.Element {
             onKeyDown={onSubmit}
           />
         </InputGroup>
-        <VStack m={1} p={1}>
-          {/* <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
-            SageCell
-          </Button>
-          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
-            Screenshare
-          </Button> */}
-          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
-            Stickie
-          </Button>
-          <Button onClick={onButton} justifyContent="flex-start" leftIcon={<MdApps />} width={'100%'} variant="outline">
-            Webview
-          </Button>
+        <VStack m={1} p={1} overflowY={"scroll"}>
+          {buttonList}
         </VStack>
       </ModalContent>
     </Modal>
+
+    // <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
   );
 }
 
 const AlfredComponent = React.memo(AlfredUI);
+
+
+/**
+ * Pick an icon based on file type (extension string)
+ *
+ * @param {string} type
+ * @returns {JSX.Element}
+ */
+function whichIcon(type: string) {
+  switch (type) {
+    case 'pdf':
+      return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
+    case 'jpeg':
+      return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
+    case 'mp4':
+      return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
+    case 'json':
+      return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
+    default:
+      return <MdOutlineFilePresent size={'20px'} />;
+  }
+}
