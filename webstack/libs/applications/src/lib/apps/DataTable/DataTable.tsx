@@ -964,7 +964,6 @@ function ToolbarComponent(props: App): JSX.Element {
   }
 
   // Drop single selected column
-  // Remove dropped column from selectedCols
   function dropColumn(column: any) {
     updateState(props._id,
       {executeInfo: {"executeFunc": "drop_column", "params": {"selected_col": s.selectedCol}}})
@@ -979,109 +978,80 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function handleFileSelected(event: any) {
     const myasset = assets.find((a) => a._id === event.target.value);
-    // if (myasset) {
-    //   setFile(myasset);
-    //   console.log('--------' + JSON.stringify(myasset))
-    //   const assetId = myasset._id;
-    //   updateState(props._id,
-    //   {executeInfo: {"executeFunc": "load_data", "params": {"asset_id": assetId}}})
-    // }
+
     updateState(props._id,
-      {executeInfo: {"executeFunc": "load_data", "params": {"url": myasset?._id}}})
+      {executeInfo: {"executeFunc": "load_data", "params": {"asset_id": myasset?._id}}})
   }
 
   return (
     <>
-        <Select
-          placeholder='Select File'
-          onChange={handleFileSelected}
-          size="sm"
-          width="8rem"
-          borderRadius={"6px 6px 6px 6px"}
-          textOverflow={"ellipsis"}
-        >
+      <Select
+        placeholder='Select File'
+        onChange={handleFileSelected}
+        size="sm"
+        width="8rem"
+        borderRadius={"6px 6px 6px 6px"}
+        textOverflow={"ellipsis"}
+      >
         {supportedRoomAssets.map(el =>
           <option value={el._id}>{el.data.originalfilename}</option>)
         }
       </Select>
       <div style={{display: s.totalRows === 0 ? "none" : "block"}}>
-      <Menu>
-        <MenuButton
-          as={Button}
-          aria-label='Table Operations'
-          rightIcon={<FiChevronDown/>}
-          variant='outline'
-          size="sm"
-        >
-          Table Actions
-        </MenuButton>
-        <Portal>
-          <MenuList
+        <Menu>
+          <MenuButton
+            as={Button}
+            aria-label='Table Operations'
+            rightIcon={<FiChevronDown/>}
+            variant='outline'
+            size="sm"
           >
-            {tableColActions.map((action, key) => {
-              return (
-                <MenuItem
-                  key={key}
-                  onClick={action}
-                >
-                  {tableColMenuNames[key]}
-                </MenuItem>
-              )
-            })
-            }
-            <MenuDivider/>
-            {tableRowActions.map((action, key) => {
-              return (
-                <MenuItem
-                  key={key}
-                  onClick={action}
-                >
-                  {tableRowMenuNames[key]}
-                </MenuItem>
-              )
-            })
-            }
-            <MenuDivider/>
-            {tableActions.map((action, key) => {
-              return (
-                <MenuItem
-                  key={key}
-                  onClick={action}
-                >
-                  {tableMenuNames[key]}
-                </MenuItem>
-              )
-            })
-            }
-          </MenuList>
-        </Portal>
-      </Menu>
+            Table Actions
+          </MenuButton>
+          <Portal>
+            <MenuList
+            >
+              {tableColActions.map((action, key) => {
+                return (
+                  <MenuItem
+                    key={key}
+                    onClick={action}
+                  >
+                    {tableColMenuNames[key]}
+                  </MenuItem>
+                )
+              })
+              }
+              <MenuDivider/>
+              {tableRowActions.map((action, key) => {
+                return (
+                  <MenuItem
+                    key={key}
+                    onClick={action}
+                  >
+                    {tableRowMenuNames[key]}
+                  </MenuItem>
+                )
+              })
+              }
+              <MenuDivider/>
+              {tableActions.map((action, key) => {
+                return (
+                  <MenuItem
+                    key={key}
+                    onClick={action}
+                  >
+                    {tableMenuNames[key]}
+                  </MenuItem>
+                )
+              })
+              }
+            </MenuList>
+          </Portal>
+        </Menu>
       </div>
     </>
   )
 }
 
 export default {AppComponent, ToolbarComponent};
-
-// Convert the csv to an array using the csv-parse library
-async function csvToArray(str: string): Promise<Record<string, string>[]> {
-  // use the csv parser library to parse the csv
-  return new Promise((resolve) => {
-    parse(
-      str,
-      {
-        relax_quotes: true,
-        columns: true,
-        skip_empty_lines: true,
-        rtrim: true,
-        trim: true,
-        // delimiter: ",",
-      },
-      function (err, records) {
-        const data = records as Record<string, string>[];
-        // return the array
-        return resolve(data);
-      }
-    );
-  });
-}
