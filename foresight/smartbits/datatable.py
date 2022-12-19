@@ -5,8 +5,9 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 import os
-
+from io import BytesIO
 import requests
+
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from pydantic import Field, PrivateAttr
@@ -122,57 +123,46 @@ class DataTable(SmartBit):
     # TODO, add a decorator to automatically set executeFunc
     # and params to ""
     def load_data(self, asset_id):
-
-        # asset = self._s3_comm.get_asset(asset_id)
-        # print(f"========================= asset: {asset}")
-
         file_name = self._s3_comm.get_asset(asset_id)["data"]["path"].split("/")[-1]
         file_url = self._s3_comm.conf[self._s3_comm.prod_type]['web_server'] + "/api/assets/static/" + file_name
-        # # TODO  check that the asset belongs to the room/wall (ISSUE #400)
-        file_public_url = self._s3_comm.format_public_url(asset_id)
-        # print(f"Public URL for data is: {file_url}")
-        #
         headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-        #
-        #
-        # start = time.time()
-        # url = 'https://www.dropbox.com/s/1camf7gmkxi8hdx/100%20Sales%20Records.csv?dl=1'
+
+        start = time.time()
+
         extension = self.get_ext(file_url)
-        req = requests.Request(
+        req = requests.get(
             url=file_url,
             headers=headers
-        )
-        response = urlopen(file_url).read()
-        print('5')
+        ).content
+
+        # response = urlopen(req)
+        # decoded_bytes = StringIO(req.decode('utf-8'))
 
         valid_exts = ['csv', 'tsv', 'json', 'xlxs']
         if extension in valid_exts:
-            print('6')
             if extension == 'csv':
-                # arrow_tbl = csv.read_csv(response)
+                # arrow_tbl = csv.read_csv(BytesIO(req))
                 # self._modified_df = arrow_tbl.to_pandas()
-                print('reading csv')
-                self._modified_df = pd.read_csv(response)
-                print('read csv')
-            elif extension == 'tsv':
-                self._modified_df = pd.read_table(response)
-            elif extension == 'json':
-                self._modified_df = pd.read_json(response)
-            elif extension == 'xlxs':
-                self._modified_df = pd.read_excel(response)
+                self._modified_df = pd.read_csv(BytesIO(req))
+            # elif extension == 'tsv':
+            #     self._modified_df = pd.read_table(decoded_bytes)
+            # elif extension == 'json':
+            #     self._modified_df = pd.read_json(decoded_bytes)
+            # elif extension == 'xlxs':
+            #     self._modified_df = pd.read_excel(decoded_bytes)
         else:
             raise Exception("unsupported format")
-        #
-        # # Supposed to create an index column for datasets that don't have one
-        # if pd.Index(np.arange(0, len(self._modified_df))).equals(self._modified_df.index):
-        #     pass
-        # else:
-        #     self._modified_df.reset_index()
-        # self._original_df = self._modified_df
-        # end = time.time()
-        # print(f"time to load_data into dataframe: {end - start}")
-        # self.paginate()
-        # self.state.selectedCols = []
+
+        # Supposed to create an index column for datasets that don't have one
+        if pd.Index(np.arange(0, len(self._modified_df))).equals(self._modified_df.index):
+            pass
+        else:
+            self._modified_df.reset_index()
+        self._original_df = self._modified_df
+        end = time.time()
+        print(f"time to load_data into dataframe: {end - start}")
+        self.paginate()
+        self.state.selectedCols = []
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
