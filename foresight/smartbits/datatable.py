@@ -4,24 +4,18 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
-import os
-from io import BytesIO
-import requests
-
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from pydantic import Field, PrivateAttr
 from typing import Optional, TypeVar
-from urllib.request import urlopen
 from urllib.parse import urlparse
-from os.path import splitext
+from io import BytesIO
 import pandas as pd
 import numpy as np
-# import pyarrow as pa
-import pyarrow.csv as csv
 import time
 import math
-# import magic
+import os
+import requests
 
 PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
 
@@ -135,21 +129,20 @@ class DataTable(SmartBit):
             headers=headers
         ).content
 
-        # response = urlopen(req)
-        # decoded_bytes = StringIO(req.decode('utf-8'))
+        decoded_bytes = BytesIO(req)
 
         valid_exts = ['csv', 'tsv', 'json', 'xlxs']
         if extension in valid_exts:
             if extension == 'csv':
                 # arrow_tbl = csv.read_csv(BytesIO(req))
                 # self._modified_df = arrow_tbl.to_pandas()
-                self._modified_df = pd.read_csv(BytesIO(req))
-            # elif extension == 'tsv':
-            #     self._modified_df = pd.read_table(decoded_bytes)
-            # elif extension == 'json':
-            #     self._modified_df = pd.read_json(decoded_bytes)
-            # elif extension == 'xlxs':
-            #     self._modified_df = pd.read_excel(decoded_bytes)
+                self._modified_df = pd.read_csv(decoded_bytes)
+            elif extension == 'tsv':
+                self._modified_df = pd.read_table(decoded_bytes)
+            elif extension == 'json':
+                self._modified_df = pd.read_json(decoded_bytes)
+            elif extension == 'xlxs':
+                self._modified_df = pd.read_excel(decoded_bytes)
         else:
             raise Exception("unsupported format")
 
