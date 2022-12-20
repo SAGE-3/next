@@ -1,3 +1,5 @@
+import uuid
+
 import httpx
 import os
 
@@ -19,11 +21,10 @@ class SageCommunication(Borg):
 
         self.conf = conf
         self.prod_type = prod_type
-
         if conf is None:
             raise Exception("confifuration not found")
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-        self.httpx_client = httpx.Client()
+        self.httpx_client = httpx.Client(timeout=None)
 
         # TODO: laod this from config file
         self.routes = {
@@ -33,8 +34,10 @@ class SageCommunication(Borg):
             "send_update": "/api/apps/{}",
             "create_app": "/api/apps/",
             "get_assets": "/api/assets/",
-            "get_time": "/api/time"
+            "get_time": "/api/time",
+            "get_configuration": "/api/configuration"
         }
+        self.web_config = self.get_configuration()
 
     def send_app_update(self, app_id, data):
         """
@@ -52,13 +55,11 @@ class SageCommunication(Borg):
 
     def create_app(self, data):
         """
-        :param app_id:
-        :param data: data
         :return:
         """
         r = self.httpx_client.post(self.conf[self.prod_type]['web_server'] + self.routes["create_app"],
                                    headers=self.__headers,
-                                   json=data
+                                       json=data
                                    )
         return r
 
@@ -68,11 +69,27 @@ class SageCommunication(Borg):
         if asset:
             return asset[0]
 
+    def get_configuration(self):
+        r = self.httpx_client.get(
+            self.conf[self.prod_type]['web_server'] + self.routes["get_configuration"],
+            headers=self.__headers
+        )
+        json_data = r.json()
+        return json_data
+
+    def format_public_url(self, asset_id):
+        web_server = self.conf[self.prod_type]['web_server']
+        sage3_namespace = uuid.UUID(self.web_config["namespace"])
+        token = uuid.uuid5(sage3_namespace, asset_id)
+        public_url = f"{web_server}/api/files/{asset_id}/{token}"
+        return public_url
+
     def get_assets(self, room_id=None, board_id=None, asset_id=None):
         url = self.conf[self.prod_type]['web_server']+self.routes["get_assets"]
+
         if asset_id:
             url += asset_id
-        r = self.httpx_client.get(url,headers=self.__headers)
+        r = self.httpx_client.get(url, headers=self.__headers)
         json_data = r.json()
         data = json_data['data']
         if r.is_success:
@@ -80,7 +97,6 @@ class SageCommunication(Borg):
                 data = [app for app in data if app["data"]["roomId"] == room_id]
             if board_id is not None:
                 data = [app for app in data if app["data"]["boardId"] == board_id]
-
         return data
 
     def get_app(self, app_id=None, room_id=None, board_id=None):
@@ -104,6 +120,7 @@ class SageCommunication(Borg):
             url += app_id
         r = self.httpx_client.get(url, headers=self.__headers)
         json_data = r.json()
+        print(f"json_data result is {json_data}")
         data = json_data['data']
         if r.is_success:
             if room_id is not None:

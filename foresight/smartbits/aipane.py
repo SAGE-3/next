@@ -5,6 +5,7 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 import time
+from enum import Enum
 
 from pydantic import PrivateAttr
 
@@ -20,6 +21,12 @@ if prod_type == "development":
     import os
     import dropbox
     import requests
+
+
+class RunStatus(Enum):
+    READY = 0
+    RUNNING = 1
+    ERROR = 2
 
 
 def get_sharing_url(private_url):
@@ -40,8 +47,7 @@ def get_sharing_url(private_url):
         url = dbx.sharing_create_shared_link_with_settings(f"/sage3_image_folder/{file_name}").url
     else:
         url = sharing_links.links[0].url
-    return url[: -1]+"1"
-
+    return url[: -1] + "1"
 
 
 # if prod_type == "development":
@@ -62,34 +68,45 @@ class AIPane(SmartBit):
     # the key that is assigned to this in state is
     state: AIPaneState
     _ai_client = PrivateAttr()
-    _task_scheduler = PrivateAttr()
+    # _task_scheduler = PrivateAttr()
     _pending_executions: dict = PrivateAttr()
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
+        requires_update = False
+        print("AI PANE'S DATA")
+        print(kwargs)
+        if kwargs['state']['runStatus'] or \
+                kwargs['state']['executeInfo']["executeFunc"]:
+            requires_update = True
+
         super(AIPane, self).__init__(**kwargs)
+        print("create the ai pane's ai_client")
         self._ai_client = AIClient()
         self._pending_executions = {}
-        self._task_scheduler = TaskScheduler()
+        if requires_update:
+            print("Sending update")
+            self.state.runStatus = False
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+            self.send_updates()
 
     def new_app_added(self, app_type):
         """
         :return: tasks supported based on the apps hosted.
         The tasks returned are exactly as defined in ai_settings above.
         """
-        print("New app added")
+        print("An app was added to AIPAne")
 
         supported_tasks = {}
-        if len(self.state.hostedApps.values()) > 1:
-            self.state.messages[time.time()] = """need to return error message saying that we
-            can only operate on one datatype at a time"""
+        if len(set(self.state.hostedApps.values())) > 1:
+            self.state.messages[time.time()] = """Only one datatime is supported"""
         # if this is the second app added, then skip this since it was already done for the first app added.
-        else:
-            if len(self.state.hostedApps) == 1:
-                for type, settings in ai_supported.items():
-                    if app_type in settings["supported_apps"]:
-                        supported_tasks[type] = settings['tasks']
-            self.state.supportedTasks = supported_tasks
+        elif len(set(self.state.hostedApps.values())) == 1:
+            for _type, settings in ai_supported.items():
+                if app_type in settings["supported_apps"]:
+                    supported_tasks[_type] = settings['tasks']
+                    self.state.supportedTasks = supported_tasks
         print(f"supported tasks are: {self.state.supportedTasks}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -102,21 +119,24 @@ class AIPane(SmartBit):
         """
         print("I am handling the execution results")
         print(f"the apps involved are {self._pending_executions[msg_uuid]}")
+        if msg["output"] != '':
+            for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
+                d = {i: x for i, x in enumerate(msg["output"][i])}
+                # d = {x["label"]: x["box"] for x in msg["output"][i]}
+                payload = {"state.objects": d, "state.annotations": True}
+                print(f"updating the boxes on image {hosted_app_id}")
+                response = self._s3_comm.send_app_update(hosted_app_id, payload)
 
-        for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
-            d = {x["label"]: x["box"] for x in msg["output"][i]}
-            payload = {"state.boxes": d, "state.annotations": True}
-            print(f"updating the boxes on image {hosted_app_id}")
-            response = self._s3_comm.send_app_update(hosted_app_id, payload)
-
-            print(f"response is {response.status_code}")
-            print("done")
-
-        self.state.runStatus = 0
+                print(f"response is {response.status_code}")
+                print("done")
+            self.state.runStatus = int(RunStatus.READY.value)
+        else:
+            self.state.runStatus = int(RunStatus.ERROR.value)
+            print("---------------------- No bounding boxes returned ----------------------")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()
-        del(self._pending_executions[msg_uuid])
+        del (self._pending_executions[msg_uuid])
 
     def execute_model(self, exec_uuid, model_id):
         # Only handling images for now, we are getting the image url directly.
@@ -124,12 +144,16 @@ class AIPane(SmartBit):
         app_ids = list(self.state.hostedApps.keys())
         urls = []
         for app_id in app_ids:
+            print(f"getting app info for app_id {app_id}")
             app_data = self._s3_comm.get_app(app_id)
             asset_id = app_data["data"]["state"]["assetid"]
-            img_name = self._s3_comm.get_asset(asset_id)["data"]["path"].split("/")[-1]
-            img_url = self._s3_comm.conf[self._s3_comm.prod_type]['web_server'] + "/api/assets/static/" + img_name
-            urls.append(img_url)
-
+            # img_name = self._s3_comm.get_asset(asset_id)["data"]["path"].split("/")[-1]
+            # img_url = self._s3_comm.conf[self._s3_comm.prod_type]['web_server'] + "/api/assets/static/" + img_name
+            # public_url = format_public_url(self, asset_id)
+            # TODO  check that the asset belongs to the room/wall (ISSUE #400)
+            public_url = self._s3_comm.format_public_url(asset_id)
+            urls.append(public_url)
+            print(f"Public URLs for data are: {urls}")
 
         # need to upload images to public server so they are visible to Compaas.
         # TODO: make this an async call
@@ -158,14 +182,15 @@ class AIPane(SmartBit):
             "endpoint_uuid": funcx_config["endpoint_uuid"],
             "data": params
         }
-        print("---------------------In execute AI--------------------------")
-        print(f"uuid: {exec_uuid}")
-        print(f"model_id: {model_id}")
-        print(f"params: {params}")
+        print("---------------------In execute AI of AIPanel--------------------------")
+        print(f"payload is {payload}")
         print("------------------------------------------------------------")
 
         self._ai_client.execute(payload)
         print("just called the ai_client's execute")
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
 
     def check_stale_jobs(self):
         """
@@ -175,3 +200,6 @@ class AIPane(SmartBit):
 
     def clean_up(self):
         pass
+        # This is borg so no cleeaning up before testing whether it
+        # affects other clients
+        # self._ai_client.clean_up()

@@ -22,36 +22,10 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 // Build list of applications from apps.json
 // or all apps if in development mode
 const appListed = development
-  ? Object.keys(Applications)
-  : [
-      'AIPane',
-      // "CSVViewer",
-      // "Clock",
-      // "Cobrowse",
-      // "CodeCell",
-      // "Counter",
-      // "DataTable",
-      // "DeepZoomImage",
-      // "GLTFViewer",
-      // "ImageViewer",
-      'JupyterLab',
-      // "Kernels",
-      'KernelDashboard',
-      'LeafLet',
-      // "Linker",
-      'Notepad',
-      // "PDFViewer",
-      // "RTCChat",
-      'SageCell',
-      'Screenshare',
-      // "SageCell",
-      'Stickie',
-      // "TwilioScreenshare",
-      // "VegaLite",
-      // "VegaLiteViewer",
-      // "VideoViewer",
-      'Webview',
-    ];
+  ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
+  : ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'LeafLet', 'Notepad', 'SageCell', 'Screenshare', 'Stickie', 'Webview'];
+
+const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell'].sort((a, b) => a.localeCompare(b));
 
 export interface ApplicationProps {
   boardId: string;
@@ -97,6 +71,10 @@ export function ApplicationsPanel(props: ApplicationProps) {
           newlist = newlist.filter((a) => a !== 'JupyterLab');
           newlist = newlist.filter((a) => a !== 'KernelDashboard');
         }
+        if (!features['articulate']) {
+          newlist = newlist.filter((a) => a !== 'ChartMaker');
+        }
+
         return newlist;
       });
     }
@@ -187,14 +165,24 @@ export function ApplicationsPanel(props: ApplicationProps) {
           },
         }}
       >
-        {/* <Box > */}
-        {appsList
-          // sort alphabetically by name
-          .sort((a, b) => a.localeCompare(b))
-          // create a button for each application
-          .map((appName) => (
-            <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
-          ))}
+        <>
+          <>Apps</>
+          {appsList
+            // create a button for each application
+            .map((appName) => {
+              const isAi = aiApps.includes(appName);
+              return !isAi ? (
+                <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+              ) : null;
+            })}
+          <>AI Apps</>
+          {/* <Box > */}
+          {aiApps.map((appName) => {
+            return appsList.includes(appName) ? (
+              <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+            ) : null;
+          })}
+        </>
       </VStack>
       {/* </Box> */}
     </Panel>

@@ -7,42 +7,35 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Text, Image, Heading, Stack, UnorderedList, ListItem, Button } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabList, TabPanel, TabPanels, Tabs, useToast } from '@chakra-ui/react';
 
-import {
-  JoinBoardCheck,
-  RoomList,
-  serverConfiguration,
-  useBoardStore,
-  useData,
-  useRoomStore,
-  useAppStore,
-  useUsersStore,
-  useMessageStore,
-  usePresenceStore,
-  useAssetStore,
-  MainButton,
-} from '@sage3/frontend';
+import { JoinBoardCheck, serverConfiguration, useData, MainButton } from '@sage3/frontend';
 
 import { Clock } from '../components/Board/UI/Clock';
 import { Link } from 'react-router-dom';
 
+import './adminStyle.css';
+
 // Application specific schema
-import { Board, BoardSchema, Asset, AssetSchema } from '@sage3/shared/types';
+import {
+  Board,
+  BoardSchema,
+  Asset,
+  AssetSchema,
+  User,
+  Room,
+  UserSchema,
+  RoomSchema,
+  Message,
+  Presence,
+  MessageSchema,
+  PresenceSchema,
+} from '@sage3/shared/types';
 
 import { APIHttp } from '@sage3/frontend';
 import { App, AppSchema } from '@sage3/applications/schema';
 
 export function AdminPage() {
-  const rooms = useRoomStore((state) => state.rooms);
-  const users = useUsersStore((state) => state.users);
-  const messages = useMessageStore((state) => state.messages);
-  const presences = usePresenceStore((state) => state.presences);
-  // Users and presence
-  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
-  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-  const subToRooms = useRoomStore((state) => state.subscribeToAllRooms);
-
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
   const config = useData('/api/configuration') as serverConfiguration;
@@ -51,47 +44,121 @@ export function AdminPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [apps, setApps] = useState<App[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
-  useEffect(() => {
-    APIHttp.GET<BoardSchema, Board>('/boards').then((bb) => {
-      if (bb.success && bb.data) setBoards(bb.data);
-    });
+  const [users, setUsers] = useState<User[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [presences, setPresences] = useState<Presence[]>([]);
+
+  const fetchApps = () => {
     APIHttp.GET<AppSchema, App>('/apps').then((bb) => {
       if (bb.success && bb.data) setApps(bb.data);
     });
+  };
+
+  const fetchBoards = () => {
+    APIHttp.GET<BoardSchema, Board>('/boards').then((bb) => {
+      if (bb.success && bb.data) setBoards(bb.data);
+    });
+  };
+  const fetchAssets = () => {
     APIHttp.GET<AssetSchema, Asset>('/assets').then((bb) => {
       if (bb.success && bb.data) setAssets(bb.data);
     });
-  }, []);
+  };
+  const fetchUsers = () => {
+    APIHttp.GET<UserSchema, User>('/users').then((bb) => {
+      if (bb.success && bb.data) setUsers(bb.data);
+    });
+  };
+  const fetchRooms = () => {
+    APIHttp.GET<RoomSchema, Room>('/rooms').then((bb) => {
+      if (bb.success && bb.data) setRooms(bb.data);
+    });
+  };
 
-  // Subscribe to user updates
+  const fetchMessages = () => {
+    APIHttp.GET<MessageSchema, Message>('/message').then((bb) => {
+      if (bb.success && bb.data) setMessages(bb.data);
+    });
+  };
+  const fetchPresences = () => {
+    APIHttp.GET<PresenceSchema, Presence>('/presence').then((bb) => {
+      if (bb.success && bb.data) setPresences(bb.data);
+    });
+  };
+
+  const fetchAll = () => {
+    fetchApps();
+    fetchBoards();
+    fetchAssets();
+    fetchUsers();
+    fetchRooms();
+    fetchMessages();
+    fetchPresences();
+  };
+
+  const toast = useToast();
+
   useEffect(() => {
-    subscribeToPresence();
-    subscribeToUsers();
-    subToRooms();
+    fetchAll();
   }, []);
 
   const delAsset = (id: string) => {
-    console.log('delete asset', id);
+    APIHttp.DELETE('/assets/' + id).then((resp) => {
+      if (resp.success) {
+        toast({ title: 'Asset Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchAssets();
+      }
+    });
   };
 
   const delApp = (id: string) => {
     APIHttp.DELETE('/apps/' + id).then((resp) => {
-      console.log('delete app', id, resp);
+      if (resp.success) {
+        toast({ title: 'App Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchApps();
+      }
     });
   };
   const delRoom = (id: string) => {
     APIHttp.DELETE('/rooms/' + id).then((resp) => {
-      console.log('delete room', id, resp);
+      if (resp.success) {
+        toast({ title: 'Room Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchRooms();
+      }
     });
   };
   const delBoard = (id: string) => {
     APIHttp.DELETE('/boards/' + id).then((resp) => {
-      console.log('delete board', id, resp);
+      if (resp.success) {
+        toast({ title: 'Board Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchBoards();
+      }
     });
   };
   const delUser = (id: string) => {
     APIHttp.DELETE('/users/' + id).then((resp) => {
-      console.log('delete user', id, resp);
+      if (resp.success) {
+        toast({ title: 'User Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchUsers();
+      }
+    });
+  };
+
+  const delMessage = (id: string) => {
+    APIHttp.DELETE('/message/' + id).then((resp) => {
+      if (resp.success) {
+        toast({ title: 'Message Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchMessages();
+      }
+    });
+  };
+  const delPresence = (id: string) => {
+    APIHttp.DELETE('/presence/' + id).then((resp) => {
+      if (resp.success) {
+        toast({ title: 'Presence Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchPresences();
+      }
     });
   };
 
@@ -113,118 +180,233 @@ export function AdminPage() {
 
       {/* Middle Section */}
 
-      <Box justifyContent={'left'} minHeight={0} width="100%" maxWidth="1200px" minWidth="400px" px="4" overflowY={'scroll'}>
-        <Stack spacing={4}>
-          <Heading color={'lightblue'}>
+      <Box
+        display="flex"
+        flexDir="column"
+        height="100%"
+        minHeight={0}
+        width="100%"
+        maxWidth="1600px"
+        minWidth="400px"
+        px="4"
+        overflowY={'scroll'}
+      >
+        <Heading color={'lightblue'}>
+          <Box display="flex" justifyContent="space-between">
             <Link to="/#/home">Home</Link>
-          </Heading>
+            <></>
+            <Button onClick={fetchAll}>Refresh</Button>
+          </Box>
+        </Heading>
 
-          <Heading>Rooms</Heading>
-          <UnorderedList pl={10}>
-            {rooms.map((room) => {
-              return (
-                <ListItem key={room._id}>
-                  {room._id}: {room.data.name} ({room.data.description})
-                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delRoom(room._id)}>
-                    del
-                  </Button>
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
+        <Tabs width="100%">
+          <TabList>
+            <Tab>Rooms</Tab>
+            <Tab>Boards</Tab>
+            <Tab>Apps</Tab>
+            <Tab>Assets</Tab>
+            <Tab>Users</Tab>
+            <Tab>Presences</Tab>
+            <Tab>Messages</Tab>
+          </TabList>
 
-          <Heading>Boards</Heading>
-          <UnorderedList pl={10}>
-            {boards.map((board) => {
-              return (
-                <ListItem key={board._id}>
-                  {board._id}: {board.data.name} ({board.data.description})
-                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delBoard(board._id)}>
-                    del
-                  </Button>
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
+          <TabPanels>
+            <TabPanel>
+              <Heading>Rooms</Heading>
+              <table>
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rooms.map((room) => {
+                    return (
+                      <tr key={room._id}>
+                        <td>{room._id}</td>
+                        <td>{room.data.name}</td>
+                        <td> {room.data.description}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delRoom(room._id)}>
+                            del
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </TabPanel>
+            <TabPanel>
+              <Heading>Boards</Heading>
 
-          <Heading>Apps</Heading>
-          <UnorderedList pl={10}>
-            {apps.map((app) => {
-              return (
-                <ListItem key={app._id}>
-                  {app._id}: {app.data.title}
-                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delApp(app._id)}>
-                    del
-                  </Button>
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
+              <table>
+                <tr>
+                  <th>id</th>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Actions</th>
+                </tr>
 
-          <Heading>Assets</Heading>
-          <UnorderedList pl={10}>
-            {assets.map((a) => {
-              return (
-                <ListItem key={a._id}>
-                  {a._id}: {a.data.originalfilename}
-                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delAsset(a._id)}>
-                    del
-                  </Button>
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
+                {boards.map((board) => {
+                  return (
+                    <tr key={board._id}>
+                      <td>{board._id}</td>
+                      <td>{board.data.name}</td>
+                      <td> {board.data.description}</td>
+                      <td>
+                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delBoard(board._id)}>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </table>
+            </TabPanel>
+            <TabPanel>
+              <Heading>Apps</Heading>
 
-          <Heading>Users</Heading>
-          <UnorderedList pl={10}>
-            {users.map((user) => {
-              return (
-                <ListItem key={user._id}>
-                  {user._id}: {user.data.name}
-                  <Button mx={3} colorScheme="red" size="xs" onClick={() => delUser(user._id)}>
-                    del
-                  </Button>
-                  <UnorderedList pl={10}>
-                    <ListItem>email: {user.data.email}</ListItem>
-                    <ListItem>
-                      role: {user.data.userRole} - type: {user.data.userType}
-                    </ListItem>
-                  </UnorderedList>
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
+              <table>
+                <tr>
+                  <th>id</th>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Actions</th>
+                </tr>
 
-          <Heading>Presences</Heading>
-          <UnorderedList pl={10}>
-            {presences.map((p) => {
-              return (
-                <ListItem key={p._id}>
-                  {p.data.userId}
-                  <UnorderedList pl={10}>
-                    <ListItem>
-                      room: {p.data.roomId} - board: {p.data.boardId}{' '}
-                    </ListItem>
-                    {/* <ListItem>cursor: {p.data.cursor.x} {p.data.cursor.y}</ListItem>
-                    <ListItem>status: {p.data.status}</ListItem>
-                    <ListItem>viewport: p {p.data.viewport.position.x} x {p.data.viewport.position.y} - s {p.data.viewport.size.width} x {p.data.viewport.size.height}</ListItem> */}
-                  </UnorderedList>
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
+                {apps.map((app) => {
+                  return (
+                    <tr key={app._id}>
+                      <td>{app._id}</td>
+                      <td>{app.data.title}</td>
+                      <td>{app.data.type}</td>
+                      <td>
+                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delApp(app._id)}>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </table>
+            </TabPanel>
+            <TabPanel>
+              <Heading>Assets</Heading>
 
-          <Heading>Messages</Heading>
-          <UnorderedList pl={10}>
-            {messages.map((message) => {
-              return (
-                <ListItem key={message._id}>
-                  {message.data.type}: {message.data.payload}{' '}
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
-        </Stack>
+              <table>
+                <tr>
+                  <th>id</th>
+                  <th>Name</th>
+                  <th>Actions</th>
+                </tr>
+
+                {assets.map((asset) => {
+                  return (
+                    <tr key={asset._id}>
+                      <td>{asset._id}</td>
+                      <td>{asset.data.originalfilename}</td>
+                      <td>
+                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delAsset(asset._id)}>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </table>
+            </TabPanel>
+            <TabPanel>
+              <Heading>Users</Heading>
+
+              <table>
+                <tr>
+                  <th>id</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Type</th>
+                  <th>Actions</th>
+                </tr>
+
+                {users.map((user) => {
+                  return (
+                    <tr key={user._id}>
+                      <td>{user._id}</td>
+                      <td>{user.data.name}</td>
+                      <td>{user.data.email}</td>
+                      <td>{user.data.userRole}</td>
+                      <td>{user.data.userType}</td>
+                      <td>
+                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delUser(user._id)}>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </table>
+            </TabPanel>
+
+            <TabPanel>
+              <Heading>Presences</Heading>
+
+              <table>
+                <tr>
+                  <th>id</th>
+                  <th>RoomId</th>
+                  <th>BoardId</th>
+                  <th>Actions</th>
+                </tr>
+
+                {presences.map((p) => {
+                  return (
+                    <tr key={p._id}>
+                      <td>{p._id}</td>
+                      <td>{p.data.roomId}</td>
+                      <td>{p.data.boardId}</td>
+                      <td>
+                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delPresence(p._id)}>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </table>
+            </TabPanel>
+            <TabPanel>
+              <Heading>Messages</Heading>
+
+              <table>
+                <tr>
+                  <th>id</th>
+                  <th>Type</th>
+                  <th>Payload</th>
+                  <th>Actions</th>
+                </tr>
+
+                {messages.map((message) => {
+                  return (
+                    <tr key={message._id}>
+                      <td>{message._id}</td>
+                      <td>{message.data.type}</td>
+                      <td>{message.data.payload}</td>
+                      <td>
+                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delMessage(message._id)}>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </table>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
       </Box>
 
       {/* Bottom Bar */}

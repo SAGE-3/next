@@ -36,9 +36,9 @@ class SocketAPISingleton {
   private sendMessage(message: string): void {
     if (this._socket && this._socket.readyState === WebSocket.OPEN) {
       this._socket.send(message);
-    } else {
-      this.printWarn('Socket still connecting...');
-      setTimeout(() => this.sendMessage(message), 1000);
+      // } else {
+      // this.printWarn('Socket still connecting...');
+      // setTimeout(() => this.sendMessage(message), 1000);
     }
   }
 

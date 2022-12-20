@@ -1,6 +1,7 @@
 [
     "AIPane",
     "CSVViewer",
+    "ChartMaker",
     "Clock",
     "Cobrowse",
     "CodeCell",
