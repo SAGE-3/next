@@ -89,7 +89,7 @@ class SageCommunication(Borg):
 
         if asset_id:
             url += asset_id
-        r = self.httpx_client.get(url,headers=self.__headers)
+        r = self.httpx_client.get(url, headers=self.__headers)
         json_data = r.json()
         data = json_data['data']
         if r.is_success:
