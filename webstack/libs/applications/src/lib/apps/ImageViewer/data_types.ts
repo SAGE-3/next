@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import {z} from 'zod';
 
 export interface dimensions {
   xmin: number;
@@ -8,10 +8,12 @@ export interface dimensions {
 }
 
 export const bboxType = z.record(
-  z.object({
-    xmin: z.number(),
-    ymin: z.number(),
-    xmax: z.number(),
-    ymax: z.number(),
-  })
+  z.record(
+    z.object({
+      xmin: z.number(),
+      ymin: z.number(),
+      xmax: z.number(),
+      ymax: z.number(),
+    })
+  )
 );

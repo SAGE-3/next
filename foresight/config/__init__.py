@@ -59,7 +59,8 @@ ai_settings = {
 }
 
 funcx = {
-    "endpoint_uuid": "7bd65241-0049-4c0f-b69c-c21f3ef6efe3",
+    "endpoint_uuid": "4b116d3c-1703-4f8f-9f6f-39921e5864df", # Temporary, FuncX public endpoint
+    # "endpoint_uuid": "7bd65241-0049-4c0f-b69c-c21f3ef6efe3",
     "funcx_endpoint_lani": "7bd65241-0049-4c0f-b69c-c21f3ef6efe3",
     "test_hello_world_uuid": 'd06d3bb0-a453-4b7c-a3c9-a0285ac1b67d',
     "ai_func_uuid": 'bd725c27-8034-44a8-a761-6a73741f0308',

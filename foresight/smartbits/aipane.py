@@ -123,7 +123,7 @@ class AIPane(SmartBit):
             for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
                 d = {i: x for i, x in enumerate(msg["output"][i])}
                 # d = {x["label"]: x["box"] for x in msg["output"][i]}
-                payload = {"state.objects": d, "state.annotations": True}
+                payload = {"state.boxes": d, "state.annotations": True}
                 print(f"updating the boxes on image {hosted_app_id}")
                 response = self._s3_comm.send_app_update(hosted_app_id, payload)
 

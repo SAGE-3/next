@@ -19,8 +19,12 @@ import {App} from '../../schema';
 import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
+import {v4 as getUUID} from "uuid";
 
 // import { dimensions } from './data_types';
+
+type TranslatedLabelBox = { label: string, box: { xmin: number, ymin: number, xmax: number, ymax: number } }
+type BoxDimensions = { left: number, top: number, width: number, height: number }
 
 /**
  * ImageViewer app
@@ -48,6 +52,30 @@ function AppComponent(props: App): JSX.Element {
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes
   const [origSizes, setOrigSizes] = useState({'width': 0, 'height': 0})
+
+  const [boxes, setBoxes] = useState<TranslatedLabelBox[]>([]);
+  const [boxDims, setBoxDims] = useState<BoxDimensions[]>([]);
+
+  useEffect(() => {
+    const bs = [] as TranslatedLabelBox[];
+    const bsDims = [] as BoxDimensions[];
+    Object.keys(s.boxes).forEach((num) => {
+      Object.keys(s.boxes[num]).forEach((label) => {
+        bs.push({
+          label,
+          box: s.boxes[num][label]
+        })
+        bsDims.push({
+          left: s.boxes[num][label].xmin * (displaySize.width / origSizes.width),
+          top: s.boxes[num][label].ymin * (displaySize.height / origSizes.height),
+          width: (s.boxes[num][label].xmax - s.boxes[num][label].xmin) * (displaySize.width / origSizes.width),
+          height: (s.boxes[num][label].ymax - s.boxes[num][label].ymin) * (displaySize.height / origSizes.height)
+        })
+      })
+    })
+    setBoxes(bs);
+    setBoxDims(bsDims);
+  }, [JSON.stringify(s.boxes), displaySize])
 
 
   // Convert the ID to an asset
@@ -91,7 +119,7 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [file]);
 
-  // Track the size size and pick the 'best' URL
+  // Track the size and pick the 'best' URL
   useEffect(() => {
     const isUUID = isUUIDv4(s.assetid);
     if (isUUID) {
@@ -121,31 +149,37 @@ function AppComponent(props: App): JSX.Element {
             src={url}
             borderRadius="0 0 6px 6px"
           />
-
           {
-            Object.keys(s.boxes).map((label, idx) => {
-              // TODO Need to handle text overflow for labels
+            boxes.map((el, idx) => {
               return (
                 <Box
-                  key={label + idx}
+                  key={el.label + idx}
                   position="absolute"
-                  left={s.boxes[label].xmin * (displaySize.width / origSizes.width ) + 'px'}
-                  top={s.boxes[label].ymin * (displaySize.height / origSizes.height) + 'px'}
-                  width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
-                  height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
+                  left={boxDims[idx].left + 'px'}
+                  top={boxDims[idx].top + 'px'}
+                  width={boxDims[idx].width + 'px'}
+                  height={boxDims[idx].height + 'px'}
+                  // left={el.box.xmin * (displaySize.width / origSizes.width) + 'px'}
+                  // top={el.box.ymin * (displaySize.height / origSizes.height) + 'px'}
+                  // width={(el.box.xmax - el.box.xmin) * (displaySize.width / origSizes.width) + 'px'}
+                  // height={(el.box.ymax - el.box.ymin) * (displaySize.height / origSizes.height) + 'px'}
                   border="2px solid red"
                   style={{display: s.annotations === true ? 'block' : 'none'}}
                 >
                   <Box
-                    position="relative"
-                    top={'-1.5rem'}
+                    position={'absolute'}
+                    px={1}
+                    borderRadius={"0 6px 0 0"}
+                    bottom={0}
+                    left={0}
                     fontWeight={'bold'}
+                    backgroundColor={"red"}
                     textColor={"black"}
                   >
-                    {label}
+                    {el.label}
                   </Box>
                 </Box>
-              );
+              )
             })
           }
         </>
@@ -197,10 +231,19 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>
+        {/*<div>*/}
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
-                updateState(props._id, {annotations: !s.annotations});
+                updateState(props._id, {
+                  annotations: !s.annotations,
+
+                  // annotations: true,
+                  // boxes: {
+                  //   '1': {'dog': {'xmin': 50, 'ymin': 50, 'xmax': 100, 'ymax': 100}},
+                  //   '2': {'dog': {'xmin': 75, 'ymin': 75, 'xmax': 150, 'ymax': 150}}
+                  // }
+                });
               }}
             >
               <HiPencilAlt/>
