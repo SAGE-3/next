@@ -261,7 +261,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
         <Stack spacing={2} direction="row">
           <>
-            {Object.keys(s.supportedTasks)?.map((type) => {
+            {Object.keys(s.supportedTasks)?.map((type, idx) => {
               return (
                 <>
                   <Menu>
@@ -270,7 +270,7 @@ function ToolbarComponent(props: App): JSX.Element {
                     </MenuButton>
                     <Portal>
                       <MenuList>
-                        {Object.keys(s.supportedTasks[type]).map((tasks) => {
+                        {Object.keys(s.supportedTasks[type]).map((tasks, idx) => {
                           return <MenuItem onClick={() => handleSetTask(tasks)}>{tasks}</MenuItem>;
                         })}
                       </MenuList>
