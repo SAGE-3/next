@@ -34,13 +34,20 @@ def get_sharing_url(private_url):
     Uploads hosted image original file to DropBox and produces a public sharing url
     :return: array of hosted image file sharing urls
     """
+
     file_name = private_url.split("/")[-1]
     print(f"file_name is {file_name}")
     headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
     data = requests.get(private_url, headers=headers).content
-    if not os.getenv("DROPBOX_TOKEN"):
-        raise Exception("Cannot find DROPBOX TOKEN")
-    dbx = dropbox.Dropbox(os.getenv("DROPBOX_TOKEN"))
+    # TODO Move key, secret, token to env.sh file
+    dbx = dropbox.Dropbox(
+        app_key = 'nk107a3fcfzpgnp',
+        app_secret = '4wysx2l2t033dnl',
+        oauth2_refresh_token = '12kU7xq092oAAAAAAAAAAdoXuT8FXUBdRxisjTUxv6SE5a6rDFgj4CydF7CbjP7x'
+    )
+    # if not os.getenv("DROPBOX_TOKEN"):
+    #     raise Exception("Cannot find DROPBOX TOKEN")
+    # dbx = dropbox.Dropbox(os.getenv("DROPBOX_TOKEN"))
     _ = dbx.files_upload(data, f"/sage3_image_folder/{file_name}", mode=dropbox.files.WriteMode("overwrite"))
     sharing_links = dbx.sharing_get_shared_links(f"/sage3_image_folder/{file_name}")
     if sharing_links and not sharing_links.links:
