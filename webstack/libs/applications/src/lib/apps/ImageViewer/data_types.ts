@@ -7,18 +7,18 @@ export interface dimensions {
   ymax: number;
 }
 
-export const bboxType = z.record(
-  z.record(
-    z.object({
-      xmin: z.number(),
-      ymin: z.number(),
-      xmax: z.number(),
-      ymax: z.number(),
-    })
-  )
-);
+// export const bboxType = z.record(
+//   z.record(
+//     z.object({
+//       xmin: z.number(),
+//       ymin: z.number(),
+//       xmax: z.number(),
+//       ymax: z.number(),
+//     })
+//   )
+// );
 
-export const bboxtype2 = z.record(
+export const bboxType = z.record(
   z.object({
       score: z.number(),
       label: z.string(),
