@@ -8,7 +8,7 @@
 
 import {
   Box,
-  Button,
+  Button, ButtonGroup,
   CloseButton,
   Icon,
   IconButton,
@@ -183,16 +183,17 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <Popover>
+        <Box padding={'1rem'} >
+          <Popover
+          placement='bottom-start'
+        >
           <PopoverTrigger>
             <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
-              <IconButton size="lg" aria-label="Notifications" variant="ghost" icon={<HiMail />} />
+              <IconButton fontSize={'2rem'} aria-label="Notifications" variant="ghost" icon={<HiMail />} />
             </div>
           </PopoverTrigger>
 
-          <PopoverContent>
-            <PopoverArrow />
-
+            <PopoverContent>
             <PopoverBody>
               {checkAppType() === 0
                 ? 'Error. Unsupported file type'
@@ -209,6 +210,7 @@ function AppComponent(props: App): JSX.Element {
             ))}
           </PopoverContent>
         </Popover>
+        </Box>
 
         <Box className="status-container">
           {s.runStatus !== 0 ? (
@@ -259,13 +261,13 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
-        <Stack spacing={2} direction="row">
+        <ButtonGroup spacing={1} size={'sm'}>
           <>
             {Object.keys(s.supportedTasks)?.map((type, idx) => {
               return (
                 <>
                   <Menu>
-                    <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                    <MenuButton as={Button} rightIcon={<FiChevronDown />} >
                       {task}
                     </MenuButton>
                     <Portal>
@@ -305,7 +307,7 @@ function ToolbarComponent(props: App): JSX.Element {
               runFunction(aiModel);
             }}
           />
-        </Stack>
+        </ButtonGroup>
       </div>
     </>
   );
