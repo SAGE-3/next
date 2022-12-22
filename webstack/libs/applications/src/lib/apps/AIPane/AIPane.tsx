@@ -17,31 +17,30 @@ import {
   MenuItem,
   MenuList,
   Popover,
-  PopoverArrow,
   PopoverBody,
   PopoverContent,
   PopoverTrigger,
   Portal,
-  Stack,
+  Tooltip,
   VisuallyHidden,
 } from '@chakra-ui/react';
 
-import { FaPlay } from 'react-icons/fa';
-import { BiErrorCircle, BiRun, BiEnvelope } from 'react-icons/bi';
-import { HiMail } from 'react-icons/hi';
-import { FiChevronDown } from 'react-icons/fi';
+import {FaPlay} from 'react-icons/fa';
+import {BiErrorCircle, BiRun} from 'react-icons/bi';
+import {HiMail} from 'react-icons/hi';
+import {FiChevronDown} from 'react-icons/fi';
 
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import {useAppStore, useUIStore} from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import {App} from '../../schema';
+import {state as AppState} from './index';
+import {AppWindow} from '../../components';
 
 import './styles.css';
 
-import { useEffect, useState, useRef } from 'react';
+import {useEffect, useState, useRef} from 'react';
 
-import { v4 as getUUID } from 'uuid';
+import {v4 as getUUID} from 'uuid';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -67,7 +66,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     // Check all apps on board
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.type };
+      const client = {[app._id]: app.data.type};
 
       // Hosted app window should fall within AI Pane window
       // Ignore apps already being hosted
@@ -83,16 +82,16 @@ function AppComponent(props: App): JSX.Element {
             ...s.hostedApps,
             ...client,
           };
-          updateState(props._id, { hostedApps: hosted });
+          updateState(props._id, {hostedApps: hosted});
           // TODO Make messages more informative rather than simply types of apps being hosted
-          updateState(props._id, { messages: hosted });
+          updateState(props._id, {messages: hosted});
           newAppAdded(app.data.type);
         }
       } else {
         if (Object.keys(s.hostedApps).includes(app._id)) {
-          const hostedCopy = { ...s.hostedApps };
+          const hostedCopy = {...s.hostedApps};
           delete hostedCopy[app._id];
-          updateState(props._id, { messages: hostedCopy, hostedApps: hostedCopy });
+          updateState(props._id, {messages: hostedCopy, hostedApps: hostedCopy});
         }
       }
     }
@@ -108,17 +107,17 @@ function AppComponent(props: App): JSX.Element {
       const app = boardApps.find((el) => el._id === key);
       if (app) copyofhostapps[key] = app.data.type;
     });
-    updateState(props._id, { hostedApps: copyofhostapps });
+    updateState(props._id, {hostedApps: copyofhostapps});
   }, [boardApps.length]);
 
   // Move all apps together with the AIPane
   useEffect(() => {
-    const hostedCopy = { ...s.hostedApps };
+    const hostedCopy = {...s.hostedApps};
     const xDiff = props.data.position.x - prevX.current;
     const yDiff = props.data.position.y - prevY.current;
 
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.type };
+      const client = {[app._id]: app.data.type};
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
@@ -136,7 +135,7 @@ function AppComponent(props: App): JSX.Element {
   // If there are no hostedApps, reset supportedTasks to empty
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
-      updateState(props._id, { supportedTasks: {} });
+      updateState(props._id, {supportedTasks: {}});
     }
   }, [Object.keys(s.hostedApps).length]);
 
@@ -159,7 +158,7 @@ function AppComponent(props: App): JSX.Element {
   // Notifies backend of a new app being added and it's app type
   function newAppAdded(appType: string) {
     updateState(props._id, {
-      executeInfo: { executeFunc: 'new_app_added', params: { app_type: appType } },
+      executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
   }
 
@@ -171,53 +170,57 @@ function AppComponent(props: App): JSX.Element {
 
     // these updateState calls should be combined
     // TODO Ask Ryan what he means
-    updateState(props._id, { messages: unchecked });
+    updateState(props._id, {messages: unchecked});
 
     if (Object.keys(s.messages).includes(info)) {
-      const messagesCopy = { ...s.messages };
+      const messagesCopy = {...s.messages};
       delete messagesCopy[info];
-      updateState(props._id, { messages: messagesCopy });
+      updateState(props._id, {messages: messagesCopy});
     }
   }
 
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <Box padding={'1rem'} >
+        <Box padding={'1rem'}>
           <Popover
-          placement='bottom-start'
-        >
-          <PopoverTrigger>
-            <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
-              <IconButton fontSize={'2rem'} aria-label="Notifications" variant="ghost" icon={<HiMail />} />
-            </div>
-          </PopoverTrigger>
+            placement='bottom-start'
+          >
+            <PopoverTrigger>
+              <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
+                <IconButton fontSize={'2rem'} aria-label="Notifications" variant="ghost" icon={<HiMail/>}/>
+              </div>
+            </PopoverTrigger>
 
             <PopoverContent>
-            <PopoverBody>
-              {checkAppType() === 0
-                ? 'Error. Unsupported file type'
-                : checkAppType() === 1
-                ? 'File type accepted'
-                : 'Error. More than 1 app type on board'}
-            </PopoverBody>
-
-            {Object.keys(s.messages)?.map((message: string) => (
               <PopoverBody>
-                {s.messages[message]}
-                <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)} />
+                {checkAppType() === 0
+                  ? 'Error. Unsupported file type'
+                  : checkAppType() === 1
+                    ? 'File type accepted'
+                    : 'Error. More than 1 app type on board'}
               </PopoverBody>
-            ))}
-          </PopoverContent>
-        </Popover>
+
+              {Object.keys(s.messages)?.map((message: string) => (
+                <PopoverBody>
+                  {s.messages[message]}
+                  <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
+                </PopoverBody>
+              ))}
+            </PopoverContent>
+          </Popover>
         </Box>
 
         <Box className="status-container">
           {s.runStatus !== 0 ? (
             s.runStatus === 1 ? (
-              <Icon as={BiRun} w={8} h={8} />
+              <Tooltip label="Running jobs">
+                <span><Icon as={BiRun} w={8} h={8}/></span>
+              </Tooltip>
             ) : (
-              <Icon as={BiErrorCircle} w={8} h={8} />
+              <Tooltip label="Error">
+                <span><Icon as={BiErrorCircle} w={8} h={8}/></span>
+              </Tooltip>
             )
           ) : (
             <VisuallyHidden>Empty Board</VisuallyHidden>
@@ -241,7 +244,7 @@ function ToolbarComponent(props: App): JSX.Element {
       runStatus: 1,
       executeInfo: {
         executeFunc: 'execute_model',
-        params: { exec_uuid: getUUID(), model_id: model },
+        params: {exec_uuid: getUUID(), model_id: model},
       },
     });
   }
@@ -260,14 +263,14 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <div style={{ display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none' }}>
+      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
         <ButtonGroup spacing={1} size={'sm'}>
           <>
             {Object.keys(s.supportedTasks)?.map((type, idx) => {
               return (
                 <>
                   <Menu>
-                    <MenuButton as={Button} rightIcon={<FiChevronDown />} >
+                    <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
                       {task}
                     </MenuButton>
                     <Portal>
@@ -279,9 +282,9 @@ function ToolbarComponent(props: App): JSX.Element {
                     </Portal>
                   </Menu>
 
-                  <div style={{ display: task !== 'Tasks' ? 'block' : 'none' }}>
+                  <div style={{display: task !== 'Tasks' ? 'block' : 'none'}}>
                     <Menu>
-                      <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                      <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
                         {aiModel}
                       </MenuButton>
                       <Portal>
@@ -300,8 +303,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
           <IconButton
             aria-label="Run AI"
-            icon={s.runStatus === 0 ? <FaPlay /> : s.runStatus === 1 ? <BiRun /> : <BiErrorCircle />}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+            icon={s.runStatus === 0 ? <FaPlay/> : s.runStatus === 1 ? <BiRun/> : <BiErrorCircle/>}
+            _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
             isDisabled={aiModel === 'Models' || s.runStatus !== 0 ? true : false}
             onClick={() => {
               runFunction(aiModel);
@@ -313,4 +316,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+export default {AppComponent, ToolbarComponent};
