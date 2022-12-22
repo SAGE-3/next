@@ -67,7 +67,6 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: int
-    # lastHeartBeat: int
     supportedTasks: Optional[dict]
 
 
@@ -86,7 +85,6 @@ class AIPane(SmartBit):
         if kwargs['state']['runStatus'] or \
                 kwargs['state']['executeInfo']["executeFunc"]:
             requires_update = True
-
         super(AIPane, self).__init__(**kwargs)
         print("create the ai pane's ai_client")
         self._ai_client = AIClient()
@@ -97,6 +95,10 @@ class AIPane(SmartBit):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
             self.send_updates()
+        # supported_apps = []
+        # for _type in ai_supported.items():
+        #     supported_apps.append(_type["supported_apps"])
+        # print(f"++++++++++++++++++++++++++++++++++++++++ {supported_apps} ++++++++++++++++++++++++++++++++++++++++ ")
 
     def new_app_added(self, app_type):
         """

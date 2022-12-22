@@ -89,6 +89,7 @@ function AppComponent(props: App): JSX.Element {
           }
           updateState(props._id, {hostedApps: hosted});
           // TODO Make messages more informative rather than simply types of apps being hosted
+          // Maybe show results in message? Objects detected and scores?
           updateState(props._id, {messages: messages});
           newAppAdded(app.data.type);
         }
@@ -153,6 +154,7 @@ function AppComponent(props: App): JSX.Element {
 
     if (Array.from(hostedTypes).length > 1) {
       updateState(props._id, {runStatus: 2})
+      updateState(props._id, {supportedTasks: {}});
       return 2;
     } else {
       if (supportedApps.includes([...hostedTypes][0])) {
