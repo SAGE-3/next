@@ -152,6 +152,7 @@ function AppComponent(props: App): JSX.Element {
     const hostedTypes = new Set(Object.values(s.hostedApps));
 
     if (Array.from(hostedTypes).length > 1) {
+      updateState(props._id, {runStatus: 2})
       return 2;
     } else {
       if (supportedApps.includes([...hostedTypes][0])) {
