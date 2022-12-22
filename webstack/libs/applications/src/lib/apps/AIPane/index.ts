@@ -19,8 +19,6 @@ export const schema = z.object({
 
   messages: z.record(z.string(), z.any()),
 
-  // lastHeartBeat: z.number(),
-
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -35,7 +33,6 @@ export const init: Partial<state> = {
 
   supportedTasks: {},
   messages: {},
-  // lastHeartBeat: 0,
 };
 
 export const name = 'AIPane';

@@ -17,3 +17,17 @@ export const bboxType = z.record(
     })
   )
 );
+
+export const bboxtype2 = z.record(
+  z.object({
+      score: z.number(),
+      label: z.string(),
+      box: z.object({
+        xmin: z.number(),
+        ymin: z.number(),
+        xmax: z.number(),
+        ymax: z.number(),
+      })
+    }
+  )
+)

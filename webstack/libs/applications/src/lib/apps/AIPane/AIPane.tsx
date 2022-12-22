@@ -45,9 +45,6 @@ import { v4 as getUUID } from 'uuid';
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
-// Heatbeat copied from KernelDashboard
-// const heartBeatTimeCheck = 1000 * 10; // 1 min
-
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -89,10 +86,7 @@ function AppComponent(props: App): JSX.Element {
           updateState(props._id, { hostedApps: hosted });
           // TODO Make messages more informative rather than simply types of apps being hosted
           updateState(props._id, { messages: hosted });
-          console.log('app ' + app._id + ' added');
           newAppAdded(app.data.type);
-        } else {
-          console.log('app ' + app._id + ' already in hostedApps');
         }
       } else {
         if (Object.keys(s.hostedApps).includes(app._id)) {
@@ -145,21 +139,6 @@ function AppComponent(props: App): JSX.Element {
       updateState(props._id, { supportedTasks: {} });
     }
   }, [Object.keys(s.hostedApps).length]);
-
-  // Heartbeat checker copied from KernelDashboard
-  // Interval to check if the proxy is still alive
-  // useEffect(() => {
-  //   const checkHeartBeat = setInterval(async () => {
-  //     const response = await fetch('/api/time');
-  //     const time = await response.json();
-  //     const delta = Math.abs(time.epoch - s.lastHeartBeat);
-  //     console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.runStatus);
-  //     if (delta > heartBeatTimeCheck && s.runStatus) {
-  //       updateState(props._id, {runStatus: false});
-  //     }
-  //   }, 15 * 1000); // 15 Seconds
-  //   return () => clearInterval(checkHeartBeat);
-  // }, [s.lastHeartBeat, s.runStatus]);
 
   // If more than 1 app added to pane, checks that all hosted apps are of the same type
   // @return error and disables pane if there is more than 1 hosted app types.

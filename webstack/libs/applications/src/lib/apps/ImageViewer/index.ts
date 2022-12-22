@@ -12,14 +12,14 @@
  */
 
 import {z} from 'zod';
-import {bboxType} from "./data_types";
+import {bboxType, bboxtype2} from "./data_types";
 
 
 export const schema = z.object({
   assetid: z.string(),
   annotations: z.boolean(),
 
-  boxes:  bboxType,
+  boxes:  bboxtype2,
 
 
   executeInfo: z.object({

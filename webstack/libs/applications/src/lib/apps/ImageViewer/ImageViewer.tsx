@@ -6,12 +6,12 @@
  *
  */
 import {useEffect, useState} from 'react';
-import {Image, Button, ButtonGroup, Tooltip, Box} from '@chakra-ui/react';
+import {Image, Button, ButtonGroup, Tooltip, Box, useColorModeValue} from '@chakra-ui/react';
 // Icons
 import {MdFileDownload} from 'react-icons/md';
 import {HiPencilAlt} from 'react-icons/hi';
 // Utility functions from SAGE3
-import {downloadFile, isUUIDv4} from '@sage3/frontend';
+import {downloadFile, isUUIDv4, useHexColor} from '@sage3/frontend';
 
 import {AppWindow} from '../../components';
 
@@ -19,11 +19,8 @@ import {App} from '../../schema';
 import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
-import {v4 as getUUID} from "uuid";
 
-// import { dimensions } from './data_types';
-
-type TranslatedLabelBox = { label: string, box: { xmin: number, ymin: number, xmax: number, ymax: number } }
+type TranslatedLabelBox = { score: number, label: string, box: { xmin: number, ymin: number, xmax: number, ymax: number } }
 type BoxDimensions = { left: number, top: number, width: number, height: number }
 
 /**
@@ -37,6 +34,9 @@ function AppComponent(props: App): JSX.Element {
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+
+  const boxc = useColorModeValue('red', 'blue');
+  const boxColor = useHexColor(boxc);
 
   // Asset data structure
   const [file, setFile] = useState<Asset>();
@@ -59,18 +59,18 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     const bs = [] as TranslatedLabelBox[];
     const bsDims = [] as BoxDimensions[];
-    Object.keys(s.boxes).forEach((num) => {
-      Object.keys(s.boxes[num]).forEach((label) => {
-        bs.push({
-          label,
-          box: s.boxes[num][label]
-        })
-        bsDims.push({
-          left: s.boxes[num][label].xmin * (displaySize.width / origSizes.width),
-          top: s.boxes[num][label].ymin * (displaySize.height / origSizes.height),
-          width: (s.boxes[num][label].xmax - s.boxes[num][label].xmin) * (displaySize.width / origSizes.width),
-          height: (s.boxes[num][label].ymax - s.boxes[num][label].ymin) * (displaySize.height / origSizes.height)
-        })
+    Object.keys(s.boxes).map((num) => {
+      const b = s.boxes[num];
+      bs.push({
+        score: b.score,
+        label: b.label,
+        box: b.box
+      })
+      bsDims.push({
+        left: s.boxes[num].box.xmin * (displaySize.width / origSizes.width),
+        top: s.boxes[num].box.ymin * (displaySize.height / origSizes.height),
+        width: (s.boxes[num].box.xmax - s.boxes[num].box.xmin) * (displaySize.width / origSizes.width),
+        height: (s.boxes[num].box.ymax - s.boxes[num].box.ymin) * (displaySize.height / origSizes.height)
       })
     })
     setBoxes(bs);
@@ -159,11 +159,7 @@ function AppComponent(props: App): JSX.Element {
                   top={boxDims[idx].top + 'px'}
                   width={boxDims[idx].width + 'px'}
                   height={boxDims[idx].height + 'px'}
-                  // left={el.box.xmin * (displaySize.width / origSizes.width) + 'px'}
-                  // top={el.box.ymin * (displaySize.height / origSizes.height) + 'px'}
-                  // width={(el.box.xmax - el.box.xmin) * (displaySize.width / origSizes.width) + 'px'}
-                  // height={(el.box.ymax - el.box.ymin) * (displaySize.height / origSizes.height) + 'px'}
-                  border="2px solid red"
+                  border={`2px solid ${boxColor}`}
                   style={{display: s.annotations === true ? 'block' : 'none'}}
                 >
                   <Box
@@ -173,7 +169,7 @@ function AppComponent(props: App): JSX.Element {
                     bottom={0}
                     left={0}
                     fontWeight={'bold'}
-                    backgroundColor={"red"}
+                    backgroundColor={boxColor}
                     textColor={"black"}
                   >
                     {el.label}
@@ -231,18 +227,11 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>
-        {/*<div>*/}
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
                 updateState(props._id, {
                   annotations: !s.annotations,
-
-                  // annotations: true,
-                  // boxes: {
-                  //   '1': {'dog': {'xmin': 50, 'ymin': 50, 'xmax': 100, 'ymax': 100}},
-                  //   '2': {'dog': {'xmin': 75, 'ymin': 75, 'xmax': 150, 'ymax': 150}}
-                  // }
                 });
               }}
             >
