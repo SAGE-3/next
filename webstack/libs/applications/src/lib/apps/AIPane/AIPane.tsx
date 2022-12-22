@@ -67,6 +67,7 @@ function AppComponent(props: App): JSX.Element {
     // Check all apps on board
     for (const app of boardApps) {
       const client = {[app._id]: app.data.type};
+      const message = {[app._id]: app.data.title};
 
       // Hosted app window should fall within AI Pane window
       // Ignore apps already being hosted
@@ -80,18 +81,24 @@ function AppComponent(props: App): JSX.Element {
         if (!Object.keys(s.hostedApps).includes(app._id)) {
           const hosted = {
             ...s.hostedApps,
-            ...client,
+            ...client
           };
+          const messages = {
+            ...s.messages,
+            ...message
+          }
           updateState(props._id, {hostedApps: hosted});
           // TODO Make messages more informative rather than simply types of apps being hosted
-          updateState(props._id, {messages: hosted});
+          updateState(props._id, {messages: messages});
           newAppAdded(app.data.type);
         }
       } else {
         if (Object.keys(s.hostedApps).includes(app._id)) {
           const hostedCopy = {...s.hostedApps};
+          const messagesCopy = {...s.messages};
           delete hostedCopy[app._id];
-          updateState(props._id, {messages: hostedCopy, hostedApps: hostedCopy});
+          delete messagesCopy[app._id];
+          updateState(props._id, {messages: messagesCopy, hostedApps: hostedCopy});
         }
       }
     }
@@ -182,17 +189,17 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <Box padding={'2rem'}>
+        <Box padding={'2rem'} >
           <Popover
             placement='bottom-start'
           >
             <PopoverTrigger>
               <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
-                <IconButton fontSize={'2.5rem'} aria-label="Notifications" variant="ghost" icon={<HiMail/>}/>
+                <IconButton padding={"1.5rem"} fontSize={'2.5rem'} aria-label="Notifications" variant="ghost" icon={<HiMail/>}/>
               </div>
             </PopoverTrigger>
 
-            <PopoverContent>
+            <PopoverContent fontSize="1.5rem">
               <PopoverBody>
                 {checkAppType() === 0
                   ? 'Error. Unsupported file type'
@@ -204,7 +211,7 @@ function AppComponent(props: App): JSX.Element {
               {Object.keys(s.messages)?.map((message: string) => (
                 <PopoverBody>
                   {s.messages[message]}
-                  <CloseButton size="sm" className="popover-close" onClick={() => closePopovers(message)}/>
+                  <CloseButton size="lg" className="popover-close" onClick={() => closePopovers(message)}/>
                 </PopoverBody>
               ))}
             </PopoverContent>
