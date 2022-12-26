@@ -1,15 +1,16 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { HStack, useToast } from '@chakra-ui/react';
 
 import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
+import { BsBoundingBoxCircles } from 'react-icons/bs';
 
 import { PanelNames, StuckTypes, useBoardStore, useRoomStore, useRouteNav, useUIStore } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from './Panel';
@@ -40,6 +41,7 @@ export function Controller(props: ControllerProps) {
   const navigationPanel = useUIStore((state) => state.navigationPanel);
   const assetsPanel = useUIStore((state) => state.assetsPanel);
   const whiteboardPanel = useUIStore((state) => state.whiteboardPanel);
+  const lassoPanel = useUIStore((state) => state.lassoPanel);
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome } = useRouteNav();
@@ -85,7 +87,7 @@ export function Controller(props: ControllerProps) {
       setOpened={setOpened}
       setPosition={setPosition}
       position={position}
-      width={350}
+      width={400}
       showClose={false}
       show={show}
       setShow={setShow}

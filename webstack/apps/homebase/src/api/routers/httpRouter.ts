@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -17,11 +17,18 @@
 import * as express from 'express';
 
 // Asset imports
-import { assetExpressRouter } from './custom/asset';
 import { FilesRouter } from './custom/files';
 
 // Collection Imports
-import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection, MessageCollection } from '../collections';
+import {
+  AssetsCollection,
+  AppsCollection,
+  BoardsCollection,
+  PresenceCollection,
+  RoomsCollection,
+  UsersCollection,
+  MessageCollection,
+} from '../collections';
 import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 
 // SAGEBase Imports
@@ -42,30 +49,23 @@ export function expressAPIRouter(): express.Router {
   router.use('/info', InfoRouter());
   router.use('/time', TimeRouter());
 
-  // Download the file from an Asset
-  // public route with a UUIDv5 token
+  // Download the file from an Asset using a public route with a UUIDv5 token
   // route: /api/files/:id/:token
   router.use('/files', FilesRouter());
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
+  // Collections
   router.use('/users', UsersCollection.router());
-
-  router.use('/assets', assetExpressRouter());
-
+  router.use('/assets', AssetsCollection.router());
   router.use('/apps', AppsCollection.router());
-
   router.use('/boards', BoardsCollection.router());
-
   router.use('/rooms', RoomsCollection.router());
-
   router.use('/presence', PresenceCollection.router());
-
   router.use('/message', MessageCollection.router());
 
   router.use('/configuration', ConfigRouter());
-
   router.use('/nlp', NLPRouter());
 
   return router;

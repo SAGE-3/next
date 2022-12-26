@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -20,6 +20,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { IncomingMessage, Server } from 'http';
+import * as dns from 'node:dns';
 
 // Websocket
 import { WebSocket } from 'ws';
@@ -64,6 +65,9 @@ async function startServer() {
   // Load the right configuration file
   const config: serverConfiguration = await loadConfig();
 
+  // Reverts the old DNS order, from v17 and up
+  dns.setDefaultResultOrder('ipv4first');
+
   // Create the Express object
   const assetPath = path.join(config.root, config.assets);
   const app = createApp(assetPath);
@@ -81,7 +85,6 @@ async function startServer() {
     // Create and start the HTTP web server
     server = listenApp(app, config.port);
   }
-
   // Initialization of SAGEBase
   const sbConfig: SAGEBaseConfig = {
     projectName: 'SAGE3',

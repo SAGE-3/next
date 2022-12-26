@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast } from '@chakra-ui/react';
@@ -16,6 +16,7 @@ import {
   MdManageAccounts,
   MdOutlineLogout,
   MdOutlineVpnKey,
+  MdHelp,
 } from 'react-icons/md';
 
 import {
@@ -23,6 +24,7 @@ import {
   useUser,
   EditUserModal,
   EnterBoardByIdModal,
+  AboutModal,
   copyBoardUrlToClipboard,
   GetConfiguration,
   useRouteNav,
@@ -46,7 +48,7 @@ export function MainButton(props: MainButtonProps) {
   const { toggleColorMode, colorMode } = useColorMode();
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
-
+  const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const { toAdmin } = useRouteNav();
@@ -55,7 +57,6 @@ export function MainButton(props: MainButtonProps) {
     const fetchAdmins = async () => {
       if (user) {
         const config = await GetConfiguration();
-        console.log(config);
         setIsAdmin(config.admins.includes(user.data.email));
       }
     };
@@ -83,6 +84,10 @@ export function MainButton(props: MainButtonProps) {
 
   const openAdmin = () => {
     toAdmin();
+  };
+
+  const openAbout = () => {
+    aboutOnOpen();
   };
 
   return (
@@ -119,6 +124,9 @@ export function MainButton(props: MainButtonProps) {
               Back to Room
             </MenuItem>
           )}
+          <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
+            About
+          </MenuItem>
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
             Logout
           </MenuItem>
@@ -126,6 +134,7 @@ export function MainButton(props: MainButtonProps) {
       </Menu>
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
       <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
+      <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
     </>
   );
 }
