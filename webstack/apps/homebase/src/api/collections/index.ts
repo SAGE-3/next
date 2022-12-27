@@ -65,6 +65,7 @@ export async function loadCollections(): Promise<void> {
               ownerId: '-',
               isPrivate: false,
               privatePin: '',
+	      executeInfo: { executeFunc: '', params: {} },
             },
             '-'
           );

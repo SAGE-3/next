@@ -7,8 +7,8 @@
 #-----------------------------------------------------------------------------
 
 from smartbitcollection import SmartBitsCollection
-from utils.generic_utils import import_cls
-from utils.wall_utils import Sage3Communication
+# from utils.generic_utils import import_cls
+# from utils.wall_utils import Sage3Communication
 
 
 class Board():
@@ -25,12 +25,28 @@ class Board():
         self.ownerId = doc["data"]["ownerId"]
 
         self.smartbits = SmartBitsCollection()
+        if "executeInfo" in doc["data"]:
+            self.executeInfo = doc["data"]["executeInfo"]
+        else:
+            self.executeInfo = {'executeFunc': '', 'params': {}}
 
 
-        # if data:
+
+
+
+            # if data:
         #     for app_uuid, app_data in data["state"]["apps"].items():
         #         self.create_smartbit(app_uuid, app_data)
 
+    def reorganize_layout(self, by="app_type", mode="tiles"):
+        if by not in ["app_type", "semantic"]:
+            print(f"{by} not a valid by option to organize layout. Not executing")
+            return
+        if mode not in ["tiles", "stacks"]:
+            print(f"{mode} not a valid mode to organize layout. Not executing")
+            return
+        print("Started executing organize_layout on the baord")
+        print("Done executing organize_layout on the baord")
 
     # def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
     #     # intentionally not providing a default to x and y. Easy to get lazy with things that overlap

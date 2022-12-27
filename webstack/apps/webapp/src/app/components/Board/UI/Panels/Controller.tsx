@@ -7,8 +7,8 @@
  */
 
 import { HStack, useToast } from '@chakra-ui/react';
-
-import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack } from 'react-icons/md';
+import { useState } from 'react';
+import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack, MdOutlineViewModule } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 import { BsBoundingBoxCircles } from 'react-icons/bs';
 
@@ -21,6 +21,7 @@ export interface ControllerProps {
 }
 
 export function Controller(props: ControllerProps) {
+  const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === props.boardId);
   const rooms = useRoomStore((state) => state.rooms);
@@ -43,10 +44,17 @@ export function Controller(props: ControllerProps) {
   const whiteboardPanel = useUIStore((state) => state.whiteboardPanel);
   const lassoPanel = useUIStore((state) => state.lassoPanel);
 
+
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome } = useRouteNav();
   function handleHomeClick() {
     toHome(props.roomId);
+  }
+
+  function reorganizeLayout(){
+    console.log("Sending request to reorganize layout");
+    updateBoard(props.boardId, { executeInfo: { executeFunc: 'reorganize_layout',  params: {by: "app_type", "mode": "tiles"}}});
+    console.log("I am done")
   }
 
   // Copy the board id to the clipboard
@@ -128,6 +136,11 @@ export function Controller(props: ControllerProps) {
           description="Annotation"
           isActive={whiteboardPanel.show}
           onClick={() => handleShowPanel(whiteboardPanel.name)}
+        />
+        <IconButtonPanel
+          icon={< MdOutlineViewModule size="32px" />}
+          description="reorganize layout"
+          onClick={() => reorganizeLayout()}
         />
       </HStack>
     </Panel>
