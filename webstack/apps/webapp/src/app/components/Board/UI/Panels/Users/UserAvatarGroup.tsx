@@ -48,7 +48,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     const aType = a?.user.data.userType === 'wall' ? 0 : 1;
     const bType = b?.user.data.userType === 'wall' ? 0 : 1;
     return aType - bType;
-  });
+  })
 
   function handleAvatarClick(user: typeof userPresence[0]) {
     if (user) {

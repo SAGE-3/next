@@ -160,9 +160,10 @@ class SAGEProxy:
             msg_type = msg["event"]["type"]
             if msg_type == "UPDATE":
                 app_id = msg["event"]["doc"]["_id"]
-                updates = msg['event']['updates']
                 if app_id in self.callbacks:
                     self.handle_linked_app(app_id, msg)
+
+                updates = msg['event']['updates']
                 self.__MSG_METHODS[msg_type](collection, doc, updates)
             else:
                 self.__MSG_METHODS[msg_type](collection, doc)
