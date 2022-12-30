@@ -7,7 +7,7 @@
 #-----------------------------------------------------------------------------
 
 from smartbitcollection import SmartBitsCollection
-from rectpack import newPacker
+from utils.layout import Layout
 # from utils.generic_utils import import_cls
 # from utils.wall_utils import Sage3Communication
 
@@ -35,45 +35,18 @@ class Board():
 
 
 
-            # if data:
-        #     for app_uuid, app_data in data["state"]["apps"].items():
-        #         self.create_smartbit(app_uuid, app_data)
-
-    # TODO: move to utils file
-    # TODO: change left right top and bottom gutters to 0
-    def convert_relative_to_absolute_pos(self, rel_positions, viewport_position, left_gutter=20, top_gutter=20):
-        new_positions = []
-        for rel_pos in rel_positions:
-            abs_pos = (0,) * 4
-            abs_pos[0] = rel_pos[0]+viewport_position[0]+ left_gutter
-            abs_pos[1] = rel_pos[1]+viewport_position[1]+ top_gutter
-            abs_pos[2], abs_pos[3] = rel_pos[2], rel_pos[3]
-            new_positions.append(abs_pos)
 
 
 
-    # TODO: move to utils file
-    def handle_rectpacking_layout(self, rectangles, bin):
-        packer = newPacker()
-
-        # Add the rectangles to packing queue
-        for r in rectangles:
-            packer.add_rect(*r)
-            packer.add_bin(*bin)
-
-        # Start packing
-        packer.pack()
-        return list(packer[0])
 
 
 
-    def reorganize_layout(self, viewport_position, viewport_size, by="UNUSED", mode="rectpacking"):
+
+
+    def reorganize_layout(self, viewport_position, viewport_size, buffer_size = 100, by="UNUSED", mode="rectpacking"):
         # TODO: get rid of by
-        # get position
-        # positions = [(x[1].data.position.x, x[1].data.position.y) for x in
-        #              sage_proxy.room.boards["1e5cfceb-7f36-42d6-af6e-7ae2669c61a8"].smartbits]
-        #
-
+        smartbits_list = None
+        app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size) for x in smartbits_list}
 
         if by not in ["app_type", "semantic"]:
             print(f"{by} not a valid by option to organize layout. Not executing")
@@ -86,6 +59,8 @@ class Board():
         print(f"viewport position is {viewport_position}")
         print(f"viewport size  is {viewport_size}")
 
+        l = Layout(app_dims, viewport_position, viewport_size)
+        l.rectpacking_layout()
 
 
         print("Done executing organize_layout on the baord")
