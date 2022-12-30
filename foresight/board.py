@@ -61,7 +61,7 @@ class Board():
 
         app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size) for x in self.smartbits.smartbits_collection.values()}
         l = Layout(app_dims, viewport_position, viewport_size)
-        l.rectpacking_layout()
+        l.graphviz_layout()
 
         for app_id, coords in l._layout_dict.items():
             sb = self.smartbits[app_id]

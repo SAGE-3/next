@@ -1,5 +1,8 @@
 from rectpack import newPacker
 import rectpack.packer
+import networkx as nx
+import graphviz
+import json
 
 
 class Layout:
@@ -10,6 +13,53 @@ class Layout:
         self._layout = None
         self._layout_dict = {}
         self._layout_method = None
+
+    def graphviz_layout(self,  top_gutter=None, left_gutter=None,):
+        self._layout = []
+        g = graphviz.Graph()
+        g.attr(overlap="compress", sep="-3.5")
+
+        for app_id, dim in self.app_dims.items():
+            g.node(app_id, shape="box", width=f"{dim[0]/100}", height=f"{dim[1]/100}", fixedsize="True")
+
+        # for node1, node2 in zip(self.app_dims.keys(), list(self.app_dims.keys())[1:]):
+        #     print(f"drawing edge between {node1} and {node2}")
+        #     g.edge(node1, node2, style="invis")
+
+
+        objects = json.loads(g.pipe(engine="neato", format="json").decode())["objects"]
+        for obj in objects:
+            bin_id = 0
+            coords = obj["_draw_"][1]["points"][1]
+            app_id = obj["name"]
+            width = self.app_dims[app_id][0]
+            height = self.app_dims[app_id][1]
+            self._layout.append((bin_id, coords[0], self.viewport_dim[1] - coords[1], width, height, app_id))
+
+        self._layout_method = "graphviz"
+        temp_app_id = objects[0]["name"]
+        drawn_width = obj["_draw_"][1]["points"][3][0] - obj["_draw_"][1]["points"][2][0]
+        scale = self.app_dims[temp_app_id][0] / drawn_width / 1.3
+
+        min_x_offset = min(x[1] for x in self._layout)
+        min_y_offset = min(x[2] for x in self._layout)
+
+
+        if top_gutter is None:
+            top_gutter = self.viewport_dim[1]/8
+        if left_gutter is None:
+            left_gutter = self.viewport_dim[0] / 10
+
+        self._layout_dict = {x[-1]: (((x[1] - min_x_offset) * scale + self.viewport_coords[0] + left_gutter,
+                                      (x[2] - min_y_offset) * scale + self.viewport_coords[1] + top_gutter))
+                             for x in self._layout}
+        # self._layout_dict = {x[-1]: (((x[1] - min_x_offset) * scale + self.viewport_coords[0], (x[2] - min_y_offset) * scale + self.viewport_coords[0]))
+        #                      for x in self._layout}
+        #
+
+
+        # self._layout_dict = {x[-1]: (x[1], x[2]) for x in self._layout}
+        # self.__convert_relative_to_absolute_pos()
 
     def rectpacking_layout(self):
         packer = newPacker(sort_algo=rectpack.packer.SORT_RATIO, rotation=False)
