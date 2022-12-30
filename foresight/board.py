@@ -45,8 +45,6 @@ class Board():
 
     def reorganize_layout(self, viewport_position, viewport_size, buffer_size = 100, by="UNUSED", mode="rectpacking"):
         # TODO: get rid of by
-        smartbits_list = None
-        app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size) for x in smartbits_list}
 
         if by not in ["app_type", "semantic"]:
             print(f"{by} not a valid by option to organize layout. Not executing")
@@ -54,15 +52,22 @@ class Board():
         if mode not in ["tiles", "stacks"]:
             print(f"{mode} not a valid mode to organize layout. Not executing")
             return
+        viewport_position = (float(viewport_position["x"]), float(viewport_position["y"]))
+        viewport_size = (float(viewport_size["width"]), float(viewport_size["height"]))
 
         print("Started executing organize_layout on the baord")
         print(f"viewport position is {viewport_position}")
         print(f"viewport size  is {viewport_size}")
 
+        app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size) for x in self.smartbits.smartbits_collection.values()}
         l = Layout(app_dims, viewport_position, viewport_size)
         l.rectpacking_layout()
 
-
+        for app_id, coords in l._layout_dict.items():
+            sb = self.smartbits[app_id]
+            sb.data.position.x = coords[0]
+            sb.data.position.y = coords[1]
+            sb.send_updates()
         print("Done executing organize_layout on the baord")
 
         self.executeInfo = {'executeFunc': '', 'params': {}}
