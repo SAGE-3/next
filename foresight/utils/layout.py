@@ -13,7 +13,7 @@ class Layout:
 
     def rectpacking_layout(self):
         packer = newPacker(sort_algo=rectpack.packer.SORT_RATIO, rotation=False)
-        self.bins = self.__split_viewport_grid()
+        self.bins = self.split_viewport_grid()
 
         for _bin in self.bins:
             packer.add_bin(*_bin)
@@ -51,7 +51,8 @@ class Layout:
                     # top row
                     self._layout_dict[el[-1]][1] += self.bins[bin_id][1] + getter_width
 
-    def __split_viewport_grid(self):
+    # private?
+    def split_viewport_grid(self):
         unit_height = (self.viewport_dim[1]) / 2
         unit_width = 0.8 * unit_height
         nb_cell_width = self.viewport_dim[0] // unit_width
