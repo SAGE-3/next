@@ -16,9 +16,8 @@ class Layout:
 
     def graphviz_layout(self,  top_gutter=None, left_gutter=None,):
         self._layout = []
+        print(f"layout is {self._layout}")
         g = graphviz.Graph()
-        g.attr(overlap="compress", sep="-3.5")
-
         for app_id, dim in self.app_dims.items():
             g.node(app_id, shape="box", width=f"{dim[0]/100}", height=f"{dim[1]/100}", fixedsize="True")
 
@@ -39,7 +38,7 @@ class Layout:
         self._layout_method = "graphviz"
         temp_app_id = objects[0]["name"]
         drawn_width = obj["_draw_"][1]["points"][3][0] - obj["_draw_"][1]["points"][2][0]
-        scale = self.app_dims[temp_app_id][0] / drawn_width / 1.3
+        scale = self.app_dims[temp_app_id][0] / drawn_width * 1.2
 
         min_x_offset = min(x[1] for x in self._layout)
         min_y_offset = min(x[2] for x in self._layout)
