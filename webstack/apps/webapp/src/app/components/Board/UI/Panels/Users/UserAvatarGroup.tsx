@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { Avatar, Box, Tooltip, AvatarGroup, GridItem, Grid } from '@chakra-ui/react';
@@ -48,7 +48,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     const aType = a?.user.data.userType === 'wall' ? 0 : 1;
     const bType = b?.user.data.userType === 'wall' ? 0 : 1;
     return aType - bType;
-  });
+  })
 
   function handleAvatarClick(user: typeof userPresence[0]) {
     if (user) {

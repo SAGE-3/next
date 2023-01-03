@@ -1,9 +1,11 @@
-# -----------------------------------------------------------------------------
-#  Copyright (c) SAGE3 Development Team
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-# -----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -44,6 +46,9 @@ class TrackedBaseModel(BaseModel):
 
     def is_dotted_path_dict(self, dotted_path):
         partial_obj = self
+        if dotted_path.split(".")[0] != "state":
+            dotted_path = "data." + dotted_path
+
         for part in dotted_path.split(".")[:-1]:
             partial_obj = getattr(partial_obj, part)
         if type(getattr(partial_obj, dotted_path.split(".")[-1])) is dict:
@@ -99,7 +104,6 @@ class TrackedBaseModel(BaseModel):
                 dotted_path = ".".join(path)
                 yield (dotted_path, u_data)
 
-        # print(list(recursive_iter(update_data)))
         # what was updated?
         for updated_field_id, updated_field_val in updates.items():
             if len(updated_field_id.split(".")) > 1 and \

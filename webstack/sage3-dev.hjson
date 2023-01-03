@@ -57,8 +57,7 @@
       "jwt",
       "google"
     ],
-    "admins": [
-    ],
+    "admins": [],
     "guestConfig": {
       "routeEndpoint": "/auth/guest"
     },
@@ -78,7 +77,6 @@
   "ssl": {
     // found in the 'keys' folder
     "certificateFile": "localhost-server.crt",
-    "certificateChainFile": "localhost-ca.crt",
     "certificateKeyFile": "localhost-server.key"
   },
   "twilio": {

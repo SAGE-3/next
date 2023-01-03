@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useState } from 'react';
@@ -16,6 +16,7 @@ type ColorPickerProps = {
   selectedColor: SAGEColors;
   onChange: (newColor: SAGEColors) => void;
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  disabled?: boolean;
 };
 
 export function ColorPicker(props: ColorPickerProps) {
@@ -35,6 +36,7 @@ export function ColorPicker(props: ColorPickerProps) {
             key={c}
             value={c}
             bgColor={c}
+            disabled={props.disabled}
             _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
             _active={{ background: c, opacity: 0.9 }}
             size={props.size ? props.size : 'md'}

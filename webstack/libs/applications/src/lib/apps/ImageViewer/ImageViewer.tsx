@@ -1,19 +1,24 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 import {useEffect, useState} from 'react';
 import {Image, Button, ButtonGroup, Tooltip, Box, useColorModeValue} from '@chakra-ui/react';
 // Icons
-import {MdFileDownload} from 'react-icons/md';
-import {HiPencilAlt} from 'react-icons/hi';
-// Utility functions from SAGE3
-import {downloadFile, isUUIDv4, useHexColor} from '@sage3/frontend';
+import { MdFileDownload } from 'react-icons/md';
+import { HiPencilAlt } from 'react-icons/hi';
 
-import {AppWindow} from '../../components';
+// Utility functions from SAGE3
+import { downloadFile, isUUIDv4 } from '@sage3/frontend';
+import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
+import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
+
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+import { App } from '../../schema';
 
 import {App} from '../../schema';
 import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
@@ -33,7 +38,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
 
   const boxc = useColorModeValue('red', 'blue');
   const boxColor = useHexColor(boxc);
@@ -51,7 +55,7 @@ function AppComponent(props: App): JSX.Element {
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes
-  const [origSizes, setOrigSizes] = useState({'width': 0, 'height': 0})
+  const [origSizes, setOrigSizes] = useState({ 'width': 0, 'height': 0 })
 
   const [boxes, setBoxes] = useState<TranslatedLabelBox[]>([]);
   const [boxDims, setBoxDims] = useState<BoxDimensions[]>([]);
@@ -86,7 +90,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, {title: myasset?.data.originalfilename});
+        update(props._id, { title: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL
@@ -105,7 +109,7 @@ function AppComponent(props: App): JSX.Element {
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
         //TODO Extract image size
-        const localOrigSizes = {'width': extra.width, 'height': extra.height}
+        const localOrigSizes = { 'width': extra.width, 'height': extra.height }
         setOrigSizes(localOrigSizes)
 
         if (extra) {
@@ -223,19 +227,17 @@ function ToolbarComponent(props: App): JSX.Element {
               }
             }}
           >
-            <MdFileDownload/>
+            <MdFileDownload />
           </Button>
         </Tooltip>
-        <div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>
+        <div style={{ display: Object.keys(s.boxes).length !== 0 ? "flex" : "none" }}>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
-                updateState(props._id, {
-                  annotations: !s.annotations,
-                });
+                updateState(props._id, { annotations: !s.annotations });
               }}
             >
-              <HiPencilAlt/>
+              <HiPencilAlt />
             </Button>
           </Tooltip>
         </div>
@@ -267,4 +269,4 @@ function getImageUrl(src: string, sizes: ImageInfoType[], width: number): string
   return src;
 }
 
-export default {AppComponent, ToolbarComponent};
+export default { AppComponent, ToolbarComponent };
