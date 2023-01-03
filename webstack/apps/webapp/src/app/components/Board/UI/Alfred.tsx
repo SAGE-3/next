@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 // Import Chakra UI elements
 import {
   useDisclosure,
@@ -26,10 +26,8 @@ import {
   usePresenceStore,
   useUIStore,
   useUser,
-  useAuth,
   useData,
   useCursorBoardPosition,
-  // EditUserModal,
   useAssetStore,
   useUsersStore,
 } from '@sage3/frontend';
@@ -191,25 +189,30 @@ type AlfredUIProps = {
  */
 function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   // Element to set the focus to when opening the dialog
-  const initialRef = React.useRef<HTMLInputElement>(null);
+  const initialRef = useRef<HTMLInputElement>(null);
+  // List of elements
+  const listRef = useRef<HTMLDivElement>(null);
   const [term, setTerm] = useState<string>();
   const { isOpen, onOpen, onClose } = useDisclosure({ id: 'alfred' });
-  // const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   // Apps
   const createApp = useAppStore((state) => state.create);
   // Assets store
   const assets = useAssetStore((state) => state.assets);
   const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
+  const [filteredList, setFilteredList] = useState<FileEntry[]>([]);
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   // check if user is a guest
   const { user } = useUser();
-  // const { auth } = useAuth();
   const { position: cursorPosition } = useCursorBoardPosition();
+  const [listIndex, setListIndex] = useState(0);
 
   useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
     // Open the window
     onOpen();
+    setListIndex(0);
+    // Clear the search
+    setTerm('');
     // Returning false stops the event and prevents default browser events
     return false;
   });
@@ -221,23 +224,63 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
     if (val) {
       // Set the value, trimming spaces at begining and end
       setTerm(val.trim());
+    } else {
+      setTerm('');
     }
   };
+
+  useEffect(() => {
+    if (term) {
+      // If something to search
+      setFilteredList(
+        assetsList.filter((item) => {
+          // if term is in the filename
+          return (
+            // search in the filename
+            item.originalfilename.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
+            // search in the type
+            item.type.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
+            // search in the owner name
+            item.ownerName.toUpperCase().indexOf(term.toUpperCase()) !== -1
+          );
+        })
+      );
+    } else {
+      // Full list if no search term
+      setFilteredList(assetsList);
+    }
+  }, [term]);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onClose();
-      if (term) {
-        onAction(term);
-      }
+      if (listIndex > 0) {
+        const elt = assetsList[listIndex - 1];
+        if (elt) openFile(elt.id);
+      } else
+        if (term) {
+          onAction(term);
+        }
+    } else if (e.key === 'ArrowDown') {
+      setListIndex((prev) => prev + 1 >= assetsList.length ? assetsList.length - 1 : prev + 1);
+    } else if (e.key === 'ArrowUp') {
+      setListIndex((prev) => prev - 1 < 0 ? 0 : prev - 1);
     }
   };
 
   useEffect(() => {
+    if (listIndex >= 0 && listIndex < assetsList.length) {
+      listRef.current?.scrollTo({
+        top: (listIndex - 1) * 50,
+        behavior: 'smooth'
+      });
+    }
+  }, [listIndex]);
+
+  useEffect(() => {
     // Filter the asset keys for this room
     const filterbyRoom = assets.filter((k) => k.data.room === roomId);
-    const keys = Object.keys(filterbyRoom);
     // Create entries
     setAssetsList(
       filterbyRoom.map((item) => {
@@ -262,7 +305,7 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
         // compare dates (number)
         return b.dateAdded - a.dateAdded;
       })
-    )
+    );
   }, [assets, roomId]);
 
   // Open the file
@@ -278,14 +321,25 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   };
 
   // Build the list of actions
-  const actions = assetsList.map((a) => {
+  const actions = filteredList.map((a, idx) => {
     const extension = getExtension(a.type);
-    return { id: a.id, filename: a.originalfilename, icon: whichIcon(extension) };
+    return {
+      id: a.id, filename: a.originalfilename, icon: whichIcon(extension),
+      selected: idx === (listIndex - 1)
+    };
   });
 
   // Build the list of buttons
-  const buttonList = actions.slice(0, 10).map((b) => (
-    <Button key={b.id} my={1} minHeight={"40px"} onClick={() => openFile(b.id)} leftIcon={b.icon} fontSize="lg" justifyContent="flex-start" width={'100%'} variant="outline">
+  const buttonList = actions.slice(0, 10).map((b, i) => (
+    <Button key={b.id} my={1} minHeight={"40px"}
+      leftIcon={b.icon} fontSize="lg" justifyContent="flex-start"
+      width={'100%'} variant="outline"
+      backgroundColor={b.selected ? 'blue.500' : ''}
+      _hover={{ backgroundColor: 'blue.500' }}
+      onMouseOver={() => setListIndex(i + 1)}
+      onMouseLeave={() => setListIndex(0)}
+      onClick={() => openFile(b.id)}
+    >
       {b.filename}
     </Button>));
 
@@ -307,13 +361,11 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
             onKeyDown={onSubmit}
           />
         </InputGroup>
-        <VStack m={1} p={1} overflowY={"scroll"}>
+        <VStack m={1} p={1} overflowY={"scroll"} ref={listRef}>
           {buttonList}
         </VStack>
       </ModalContent>
     </Modal>
-
-    // <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
   );
 }
 
