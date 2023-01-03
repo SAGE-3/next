@@ -1,20 +1,20 @@
-# ------------------------------------------------------------------------------
-#  Copyright (c) SAGE3 Development Team
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-# -----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+
 # TODO: checking messages that are created at the same time and only executing the first
 #  one keeping info in received_msg_log for now. These seems to be related to raised=True
 
 
-# TODO: Fix the issue of messages received twic during updates. There is not need for that!
-
 # TODO: CRITICAL, I am a proxy -- ignore my own messages.
 
 # TODO: add a new validator function that takes a message received on a
-#  channel and makes sure it's structurally valid, i.e., has the right required fields
-#  and no unknwon fields
+#  channel and makes sure it's structurally valid, i.e., has all the required fields
+#  and no unknown fields
 
 
 # TODO prevent apps updates on fields that were touched?
@@ -73,28 +73,28 @@ def update_dest_from_src(src_val, dest_app, dest_field):
     dest_app.send_updates()
 
 
-class SAGEProxy():
+class SAGEProxy:
     def __init__(self, room_id, conf, prod_type):
         self.room = Room(room_id)
         self.conf = conf
         self.prod_type = prod_type
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
         self.__message_queue = Queue()
-        self.__OBJECT_CREATION_METHODS = {
+        self.__MSG_METHODS = {
             "CREATE": self.__handle_create,
             "UPDATE": self.__handle_update,
             "DELETE": self.__handle_delete,
         }
         self.httpx_client = httpx.Client(timeout=None)
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
-        self.callbacks = {}
+        self.callbacks = {}  # for linked apps
         self.received_msg_log = {}
         self.listening_process = WebSocketListener(self.__message_queue, room_id)
         self.worker_process = threading.Thread(target=self.process_messages)
         self.stop_worker = False
 
+        # Grab and load info already on the board
         self.populate_existing()
-
 
     def start_threads(self):
         self.listening_process.run()
@@ -110,63 +110,63 @@ class SAGEProxy():
             print(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
+    def handle_linked_app(self, app_id, msg):
+        if app_id in self.callbacks:
+            # handle callback
+            # print("this app is being tracked for updates")
+            # print(f"tracked field is {self.callbacks[app_id].src_field}")
+            for linked_info in self.callbacks[app_id].values():
+                print(f"Linked Info {linked_info}")
+                if f"state.{linked_info.src_field}" in msg['event']['updates']:
+                    # print("Yes, the tracked fields was updated")
+                    # TODO 4: make callback function optional. In which case, jsut update dest with src
+                    # TODO 1. We need to dispatch the function on a different thread, not run it
+                    #  on the same thread as proxy
+                    # TODO 2. Catch to avoid errors here so the thread does not crash
+                    try:
+                        board_id = linked_info.board_id
+                        src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
+                        dest_field = linked_info.dest_field
+                        dest_id = linked_info.dest_app
+                        dest_app = self.room.boards[board_id].smartbits[dest_id]
+                        linked_info.callback(src_val, dest_app, dest_field)
+                    except Exception as e:
+                        print(f"Error happened during callback for linked app {e}")
+                        print(f"app_id: {app_id}")
 
     def process_messages(self):
         """
-        Running this in the main thread to not deal with sharing variables right.
+        Running this in the main thread to not deal with sharing variables right now.
         potentially work on a multiprocessing version where threads are processed separately
         Messages needs to be numbered to avoid received out of sequences messages.
         """
 
         while not self.stop_worker:
-            # i+=1
-            # if i % 100_000 == 0:
             try:
                 msg = self.__message_queue.get()
             except EOFError as e:
                 print(f"Message queue was closed")
                 return
-            # I am watching this message for change?
+
+            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                pass
 
             # logger.debug(f"Getting ready to process: {msg}")
 
-            msg_type = msg["event"]["type"]
-
-            # TODO refactor this to merge with next (nested) if statement
-            if msg_type == "UPDATE":
-                updated_fields = list(msg['event']['updates'].keys())
-                # print(f"App updated and updated fields are: {updated_fields}")
-                app_id = msg["event"]["doc"]["_id"]
-                if app_id in self.callbacks:
-                    # handle callback
-                    # print("this app is being tracked for updates")
-                    # print(f"tracked field is {self.callbacks[app_id].src_field}")
-                    for linked_info in self.callbacks[app_id].values():
-                        print(f"Linked Info {linked_info}")
-                        if f"state.{linked_info.src_field}" in updated_fields:
-                            # print("Yes, the tracked fields was updated")
-                            # TODO 4: make callback function optional. In which case, jsut update dest with src
-                            # TODO 1. We need to dispatch the function on a different thread, not run it
-                            #  on the same thread as proxy
-                            # TODO 2. Catch to avoid errors here so the thread does not crash
-                            # TODO 3. Refactor the below into a function
-                            board_id = linked_info.board_id
-                            src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
-                            dest_field = linked_info.dest_field
-                            dest_id = linked_info.dest_app
-                            dest_app = self.room.boards[board_id].smartbits[dest_id]
-                            linked_info.callback(src_val, dest_app, dest_field)
 
             collection = msg["event"]['col']
             doc = msg['event']['doc']
-            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                pass
-            elif msg['event']["type"] == "UPDATE":
+
+            msg_type = msg["event"]["type"]
+            if msg_type == "UPDATE":
+                app_id = msg["event"]["doc"]["_id"]
+                if app_id in self.callbacks:
+                    self.handle_linked_app(app_id, msg)
+
                 updates = msg['event']['updates']
-                self.__OBJECT_CREATION_METHODS[msg_type](collection, doc, updates)
+                self.__MSG_METHODS[msg_type](collection, doc, updates)
             else:
-                self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
-        print("exited the function")
+                self.__MSG_METHODS[msg_type](collection, doc)
 
 
     def __handle_create(self, collection, doc):
@@ -183,13 +183,33 @@ class SAGEProxy():
             smartbit = SmartBitFactory.create_smartbit(doc)
             self.room.boards[doc["data"]["boardId"]].smartbits[smartbit.app_id] = smartbit
 
+    def handle_exec_function(self):
+        pass
+
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
-        # TODO: this in a smarter way. For now, just overwrite the comlete object
+        # TODO: this in a smarter way. For now, just overwrite the complete object
 
         if collection == "BOARDS":
-            # print("BOARD UPDATED: UNHANDLED")
-            pass
+            print("BOARD UPDATED: UNHANDLED")
+            print(f"\t\t updates is {updates}\n")
+            board_id = doc["_id"]
+            # TODO: proceed to BOARD update with the updates field passed as param
+            if "executeInfo" in updates and updates["executeInfo"]["executeFunc"]:
+                func_name = updates["executeInfo"]["executeFunc"]
+                print(f"executing function {func_name}")
+                try:
+                    board = self.room.boards[board_id]
+                    _func = getattr(board, func_name)
+                    _params = updates["executeInfo"]["params"]
+
+                    print(f"About to execute board function --{func_name}-- with params --{_params}--")
+                    _func(**_params)
+                except Exception as e:
+                    print(f"Exception trying to execute board function {func_name}. \n\t{e}")
+
+
+
         elif collection == "APPS":
             # print(f"updating app {}")
             app_id = doc["_id"]
@@ -201,18 +221,19 @@ class SAGEProxy():
             sb.refresh_data_form_update(doc, updates)
 
             exec_info = getattr(sb.state, "executeInfo", None)
-
             if exec_info is not None:
                 func_name = getattr(exec_info, "executeFunc")
                 if func_name != '':
-                    _func = getattr(sb, func_name)
-                    _params = getattr(exec_info, "params")
-                    # TODO: validate the params are valid
-                    # print(f"About to execute function --{func_name}-- with params --{_params}--")
-                    print(f"About to execute function --{func_name}-- with params --{_params}--")
+                    try:
+                        _func = getattr(sb, func_name)
+                        _params = getattr(exec_info, "params")
+                        # TODO: validate the params are valid
+                        # print(f"About to execute function --{func_name}-- with params --{_params}--")
+                        print(f"About to execute function --{func_name}-- with params --{_params}--")
 
-                    _func(**_params)
-
+                        _func(**_params)
+                    except Exception as e:
+                        print(f"Exception trying to execute sb function {func_name}. \n\t{e}")
 
     def __handle_delete(self, collection, doc):
 
@@ -253,6 +274,7 @@ class SAGEProxy():
                                                   src_field=src_field,
                                                   dest_field=dest_field,
                                                   callback=callback)}
+
 
     def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
         del (self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])

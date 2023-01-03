@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -13,34 +13,45 @@
  * @version 1.0.0
  */
 
-import { niceCollection } from './nice-collection';
+// Express web server framework
+import * as express from 'express';
+
 import { AssetSchema } from '@sage3/shared/types';
-import { SBDocument, SBDocumentMessage } from '@sage3/sagebase';
-import { getStaticAssetUrl } from '@sage3/backend';
+import { getStaticAssetUrl, SAGE3Collection, sageRouter } from '@sage3/backend';
+import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
-
+import { uploadHandler } from '../routers/custom/asset';
 import { config } from '../../config';
 
-import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
-
-/**
- * The database model for SAGE3 rooms.
- * This class must be initilized at least once.
- * This is handled in ./loaders/models-loader.ts
- */
-class SAGE3AssetsCollection {
-  private assetCollection!: niceCollection<AssetSchema>;
-  private collectionName = 'ASSETS';
+class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   private metaQ!: MetadataProcessor;
   private imgQ!: ImageProcessor;
   private pdfQ!: PDFProcessor;
 
+  constructor() {
+    super('ASSETS', { file: '' });
+    const router = sageRouter<AssetSchema>(this);
+    this.httpRouter = router;
+  }
+
+  public async initialize(clear?: boolean, ttl?: number): Promise<void> {
+    // call the base class method
+    await super.initialize(clear, ttl);
+    // Upload files: POST /api/assets/upload
+    this.router().post('/upload', uploadHandler);
+    // Access to uploaded files: GET /api/assets/static/:filename
+    const assetFolder = config.public;
+    this.router().use('/static', express.static(assetFolder));
+    // Finish the initialization by adding file processors
+    this.setup();
+  }
+
   /**
-   * Contructor initializing the collection.
+   * Initializing the collection.
    */
-  public async initialize(): Promise<void> {
+  public setup() {
     // Get some values from the configuration object
     const assetFolder = config.public;
     const redisUrl = config.redis.url;
@@ -54,15 +65,6 @@ class SAGE3AssetsCollection {
     // A queue for PDF processing
     this.pdfQ = new PDFProcessor(redisUrl, assetFolder);
     console.log('Queue> pdf initialized', this.pdfQ.getName());
-
-    // Create the collection
-    const indexObj = { file: '' } as AssetSchema;
-    this.assetCollection = new niceCollection<AssetSchema>(this.collectionName);
-    await this.assetCollection.init(indexObj, async (updt: any) => {
-      if (updt.type === 'CREATE') {
-        console.log('Asset created>', updt.doc.data.originalfilename);
-      }
-    });
   }
 
   /**
@@ -132,40 +134,6 @@ class SAGE3AssetsCollection {
         }
       });
     });
-  }
-
-  /**
-   * Subscribe to the Apps Collection
-   * @param {() = void} callback The callback function for subscription events.
-   * @return {() => void | undefined} The unsubscribe function.
-   */
-  public async subscribeAll(callback: (message: SBDocumentMessage<AssetSchema>) => void): Promise<(() => Promise<void>) | undefined> {
-    try {
-      const unsubscribe = await this.assetCollection.subscribe(callback);
-      return unsubscribe;
-    } catch (error) {
-      console.log('Asset subscribeToApps error>', error);
-      return undefined;
-    }
-  }
-
-  public async getAsset(id: string): Promise<SBDocument<AssetSchema> | undefined> {
-    return this.assetCollection.getItem(id);
-  }
-  public async delAsset(id: string): Promise<boolean> {
-    return this.assetCollection.deleteItem(id);
-  }
-  public getAllAssets(): Promise<SBDocument<AssetSchema>[]> {
-    return this.assetCollection.getAllItems();
-  }
-
-  /**
-   * Add a file in the database.
-   * @param {AssetType} newAsset The new asset to add to the database
-   * @returns {Promise<string | undefined>} Returns id of the asset
-   */
-  public async addAsset(newAsset: AssetSchema, by: string): Promise<string | undefined> {
-    return this.assetCollection.addItem(newAsset, by);
   }
 }
 
