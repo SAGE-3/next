@@ -12,18 +12,17 @@ import { MdFileDownload } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { downloadFile, isUUIDv4 } from '@sage3/frontend';
-import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
-import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
-
+import {downloadFile, isUUIDv4, useHexColor} from '@sage3/frontend';
 import { AppWindow } from '../../components';
-import { state as AppState } from './index';
-import { App } from '../../schema';
 
 import {App} from '../../schema';
 import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
 import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
 import {state as AppState} from './index';
+
+
+
+
 
 type TranslatedLabelBox = { score: number, label: string, box: { xmin: number, ymin: number, xmax: number, ymax: number } }
 type BoxDimensions = { left: number, top: number, width: number, height: number }
