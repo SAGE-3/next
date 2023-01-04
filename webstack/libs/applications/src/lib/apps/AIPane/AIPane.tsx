@@ -62,6 +62,10 @@ function AppComponent(props: App): JSX.Element {
   // TODO Need to let backend set supportedApps
   const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
+  // Manages pane status
+  // 0 is netural, 1 is hosted app type is unsupported, 2 is multiple app types hosted.
+  // const [localStatus, setLocalStatus] = useState(0)
+
   // Checks for apps on or off the pane
   useEffect(() => {
     // Check all apps on board
@@ -147,25 +151,38 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [Object.keys(s.hostedApps).length]);
 
+  // Sets run status to error if user attempts to run pane on > 1 app type
+  useEffect(() => {
+    checkAppType()
+    console.log('runStatus ' + s.runStatus)
+  }, [JSON.stringify(s.hostedApps)])
+
   // If more than 1 app added to pane, checks that all hosted apps are of the same type
-  // @return error and disables pane if there is more than 1 hosted app types.
+  // @return sets run status to error if there is more than 1 hosted app types.
   function checkAppType() {
     const hostedTypes = new Set(Object.values(s.hostedApps));
+    console.log('hostedTypes ' + [...hostedTypes][0])
 
     if (Array.from(hostedTypes).length > 1) {
       updateState(props._id, {runStatus: 2})
+      // setLocalStatus(2)
       updateState(props._id, {supportedTasks: {}});
-      return 2;
+      console.log('error error error, more than 1 app type hosted')
     } else {
-      if (supportedApps.includes([...hostedTypes][0])) {
-        return 1;
+      if (supportedApps.includes([...hostedTypes][0]) || Object.keys(s.hostedApps).length === 0) {
+        updateState(props._id, {runStatus: 0})
+        // Hosted apps are supported
+        // setLocalStatus(0)
       } else {
-        return 0;
+        updateState(props._id, {runStatus: 3})
+
+        // Unsupported app types
+        // setLocalStatus(1)
       }
     }
   }
 
-  // Notifies backend of a new app being added and it's app type
+  // Notifies backend of a new app being added, and it's app type
   function newAppAdded(appType: string) {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
@@ -192,23 +209,31 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <Box>
-        <Box padding={'2rem'} >
+        <Box padding={'2rem'}>
           <Popover
             placement='bottom-start'
           >
             <PopoverTrigger>
               <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
-                <IconButton padding={"1.5rem"} fontSize={'2.5rem'} aria-label="Notifications" variant="ghost" icon={<HiMail/>}/>
+                <IconButton padding={"1.5rem"} fontSize={'2.5rem'} aria-label="Notifications" variant="ghost"
+                            icon={<HiMail/>}/>
               </div>
             </PopoverTrigger>
 
             <PopoverContent fontSize="1.5rem">
               <PopoverBody>
-                {checkAppType() === 0
-                  ? 'Error. Unsupported file type'
-                  : checkAppType() === 1
+                {s.runStatus === 2
+                  ? 'Error: Unsupported file type'
+                  : s.runStatus === 0
                     ? 'File type accepted'
-                    : 'Error. More than 1 app type on board'}
+                    : s.runStatus === 1
+                      ? 'Running '
+                      : 'Error: More than 1 app type on board'}
+                {/*{s.runStatus === 2*/}
+                {/*  ? 'Error: Unsupported file type'*/}
+                {/*  : s.runStatus === 0*/}
+                {/*    ? 'File type accepted'*/}
+                {/*    : 'Error: More than 1 app type on board'}*/}
               </PopoverBody>
 
               {Object.keys(s.messages)?.map((message: string) => (
