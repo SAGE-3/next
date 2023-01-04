@@ -62,10 +62,6 @@ function AppComponent(props: App): JSX.Element {
   // TODO Need to let backend set supportedApps
   const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
-  // Manages pane status
-  // 0 is netural, 1 is hosted app type is unsupported, 2 is multiple app types hosted.
-  // const [localStatus, setLocalStatus] = useState(0)
-
   // Checks for apps on or off the pane
   useEffect(() => {
     // Check all apps on board
@@ -154,30 +150,23 @@ function AppComponent(props: App): JSX.Element {
   // Sets run status to error if user attempts to run pane on > 1 app type
   useEffect(() => {
     checkAppType()
-    console.log('runStatus ' + s.runStatus)
   }, [JSON.stringify(s.hostedApps)])
 
   // If more than 1 app added to pane, checks that all hosted apps are of the same type
   // @return sets run status to error if there is more than 1 hosted app types.
   function checkAppType() {
     const hostedTypes = new Set(Object.values(s.hostedApps));
-    console.log('hostedTypes ' + [...hostedTypes][0])
 
     if (Array.from(hostedTypes).length > 1) {
       updateState(props._id, {runStatus: 2})
-      // setLocalStatus(2)
       updateState(props._id, {supportedTasks: {}});
-      console.log('error error error, more than 1 app type hosted')
     } else {
       if (supportedApps.includes([...hostedTypes][0]) || Object.keys(s.hostedApps).length === 0) {
         updateState(props._id, {runStatus: 0})
-        // Hosted apps are supported
-        // setLocalStatus(0)
+
       } else {
         updateState(props._id, {runStatus: 3})
 
-        // Unsupported app types
-        // setLocalStatus(1)
       }
     }
   }
