@@ -72,7 +72,7 @@
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "passport-openidconnect": "^0.1.1",
-    "pdfjs-dist": "^3.1.81",
+    "pdfjs-dist": "^3.2.146",
     "peerjs": "^1.4.6",
     "perfect-freehand": "^1.2.0",
     "quill": "^1.3.7",
