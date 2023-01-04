@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -13,7 +13,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
-import { useUser, useUIStore, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
+import { useUser, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
 import { processContentURL } from '@sage3/frontend';
 
 type PasteProps = {
@@ -32,9 +32,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   // User information
   const { user } = useUser();
   const { position: cursorPosition } = useCursorBoardPosition();
-  // UI Store
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
   // App Store
   const createApp = useAppStore((state) => state.create);
 
@@ -169,6 +166,11 @@ function isValidURL(value: string): string | undefined {
 
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
   if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return;
+
+  // Disable some protocols: chrome sage3
+  if (scheme === 'sage3' || scheme === 'chrome') {
+    return;
+  }
 
   // re-assemble the URL per section 5.3 in RFC 3986
   out += scheme + ':';
