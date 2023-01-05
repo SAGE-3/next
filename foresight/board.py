@@ -33,9 +33,7 @@ class Board():
         else:
             self.executeInfo = {'executeFunc': '', 'params': {}}
 
-
     def reorganize_layout(self, viewport_position, viewport_size, buffer_size = 100, by="combined", mode="graphviz"):
-
         if by not in ["app_type", "semantic"]:
             print(f"{by} not a valid by option to organize layout. Not executing")
             return
