@@ -7,6 +7,7 @@ import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as CodeCellState, name as CodeCellName } from './apps/CodeCell';
 import { state as CounterState, name as CounterName } from './apps/Counter';
+import { state as SeerState, name as SeerName } from './apps/Seer';
 import { state as DataTableState, name as DataTableName } from './apps/DataTable';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFViewer';
@@ -36,6 +37,7 @@ export type AppState =
   | CobrowseState
   | CodeCellState
   | CounterState
+  | SeerState
   | DataTableState
   | DeepZoomImageState
   | GLTFViewerState
@@ -64,6 +66,7 @@ export type AppName =
   | typeof CobrowseName
   | typeof CodeCellName
   | typeof CounterName
+  | typeof SeerName  
   | typeof DataTableName
   | typeof DeepZoomImageName
   | typeof GLTFViewerName

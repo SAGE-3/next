@@ -7,6 +7,7 @@ import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
+import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
@@ -35,6 +36,7 @@ export const initialValues = {
   [CobrowseName]: defaultCobrowse,
   [CodeCellName]: defaultCodeCell,
   [CounterName]: defaultCounter,
+  [SeerName]: defaultSeer,  
   [DataTableName]: defaultDataTable,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [GLTFViewerName]: defaultGLTFViewer,

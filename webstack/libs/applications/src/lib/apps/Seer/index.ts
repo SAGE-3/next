@@ -6,56 +6,40 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-/**
- * SAGE3 application: SageCell
- * created by: SAGE3 team
- */
 import { z } from 'zod';
+import {executeInfoType} from "../SageCell";
+
+/**
+ * SAGE3 application: Seer
+ * created by: Mahdi
+ */
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.record(z.any()),
+
 });
 
 export const schema = z.object({
-  code: z.string(),
-  language: z.string(),
   fontSize: z.number(),
-  theme: z.string(),
-  kernel: z.string(),
-  privateMessage: z.array(
-    z.object({
-      userId: z.string(),
-      message: z.string(),
-    })
-  ),
-  availableKernels: z.array(
-    z.object({
-      key: z.string(),
-      value: z.record(z.string(), z.any()),
-    })
-  ),
+  execCount: z.number(),
+  code: z.string(),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
   }),
+
 });
 
-
-export type executeInfoType = z.infer<typeof executeInfoSchema>;
+// export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
-  language: 'python',
-  fontSize: 24,
-  theme: 'xcode',
-  kernel: '',
   output: '',
-  privateMessage: [],
-  availableKernels: [],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
+  fontSize: 24,
 };
 
-export const name = 'SageCell';
+export const name = 'Seer';
