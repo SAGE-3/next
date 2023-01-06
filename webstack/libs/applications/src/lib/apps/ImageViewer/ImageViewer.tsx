@@ -1,26 +1,26 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
 import { useEffect, useState } from 'react';
 import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
 import { MdFileDownload } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
+
 // Utility functions from SAGE3
 import { downloadFile, isUUIDv4 } from '@sage3/frontend';
-
-import { AppWindow } from '../../components';
-
-import { App } from '../../schema';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
-import { state as AppState } from './index';
 
-// import { dimensions } from './data_types';
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+import { App } from '../../schema';
+
 
 /**
  * ImageViewer app
@@ -32,7 +32,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
 
   // Asset data structure
   const [file, setFile] = useState<Asset>();

@@ -1,15 +1,16 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useState } from 'react';
 
 // SAGE Imports
 import { useAppStore, useCursorBoardPosition, useHexColor, useKeyPress, useUIStore } from '@sage3/frontend';
+import { Position, Rotation, Size } from '@sage3/shared/types';
 
 type LassoProps = {
   boardId: string;
@@ -106,6 +107,28 @@ export function Lasso(props: LassoProps) {
   );
 }
 
+
+function checkContain(pos: Position, size: Size, pt: Position, size2: Size) {
+  const res = pos.x > pt.x &&
+    pos.y > pt.y &&
+    pos.x + size.width < pt.x + size2.width &&
+    pos.y + size.height < pt.y + size2.height;
+  return res;
+}
+
+function checkOverlap(pos: Position, size: Size, pt: Position, size2: Size) {
+  // if rectangle has area 0, no overlap
+  if (size.width === 0 || size.height === 0 || size2.width === 0 || size2.height === 0)
+    return false;
+  // If one rectangle is on left side of other
+  if (pos.x > pt.x + size2.width || pt.x > pos.x + size.width)
+    return false;
+  // If one rectangle is above other
+  if (pos.y + size.height < pt.y || pt.y + size2.height < pos.y)
+    return false;
+  return true;
+}
+
 // Box for selecting apps
 const DrawBox = (props: BoxProps) => {
   // Get the left side of the box
@@ -143,13 +166,11 @@ const DrawBox = (props: BoxProps) => {
   useEffect(() => {
     // Check all apps on board
     for (const app of boardApps) {
-      if (
-        app.data.position.x > rx &&
-        app.data.position.y > ry &&
-        app.data.position.x + app.data.size.width < rx + width &&
-        app.data.position.y + app.data.size.height < ry + height
-      ) {
-        // Add apps as they are envoloped in box area
+      // Add apps as they are enveloped in box area
+      // if (checkContain(app.data.position, app.data.size, { x: rx, y: ry, z: 0 }, { width, height, depth: 0 })) {
+
+      // Add apps as they are overlap the box area
+      if (checkOverlap(app.data.position, app.data.size, { x: rx, y: ry, z: 0 }, { width, height, depth: 0 })) {
         if (!localSelctedApps.includes(app._id)) setLocalSelectedApps((prev) => [...prev, app._id]);
       } else {
         // Remove apps if not in box area
