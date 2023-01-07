@@ -12,9 +12,8 @@ import {
   useDisclosure,
   Modal, ModalOverlay, ModalContent,
   InputGroup, Input, VStack, Button,
+  useColorMode,
 } from '@chakra-ui/react';
-
-import { MdApps, MdAccountCircle } from 'react-icons/md';
 
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
@@ -32,19 +31,20 @@ import {
   useUsersStore,
 } from '@sage3/frontend';
 
-import { getExtension } from '@sage3/shared';
-
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { Applications } from '@sage3/applications/apps';
 
 import { FileEntry } from './Panels/Asset/types';
 import { setupAppForFile } from './Panels/Asset/CreateApp';
+import { getExtension } from '@sage3/shared';
 
 type props = {
   boardId: string;
   roomId: string;
 };
+
+const MaxElements = 12;
 
 export function Alfred(props: props) {
   // get features
@@ -54,6 +54,8 @@ export function Alfred(props: props) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const displayUI = useUIStore((state) => state.displayUI);
   const hideUI = useUIStore((state) => state.hideUI);
+  // chakra color mode
+  const { colorMode, toggleColorMode } = useColorMode();
 
   // Apps
   const apps = useAppStore((state) => state.apps);
@@ -164,11 +166,15 @@ export function Alfred(props: props) {
       } else if (terms[0] === 'hideui') {
         // Hide all the UI elements
         hideUI();
+      } else if (terms[0] === 'light') {
+        if (colorMode !== 'light') toggleColorMode();
+      } else if (terms[0] === 'dark') {
+        if (colorMode !== 'dark') toggleColorMode();
       } else if (terms[0] === 'clear' || terms[0] === 'clearall' || terms[0] === 'closeall') {
         apps.forEach((a) => deleteApp(a._id));
       }
     },
-    [user, apps, props.boardId, presences]
+    [user, apps, props.boardId, presences, colorMode]
   );
 
   return <AlfredComponent onAction={alfredAction} roomId={props.roomId} boardId={props.boardId} />;
@@ -256,31 +262,39 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
     if (e.key === 'Enter') {
       onClose();
       if (listIndex > 0) {
-        const elt = assetsList[listIndex - 1];
+        const elt = filteredList[listIndex - 1];
         if (elt) openFile(elt.id);
-      } else
+      } else {
         if (term) {
           onAction(term);
         }
+      }
     } else if (e.key === 'ArrowDown') {
-      setListIndex((prev) => prev + 1 >= assetsList.length ? assetsList.length - 1 : prev + 1);
+      setListIndex((prev) => {
+        const limit = Math.min(MaxElements, filteredList.length);
+        const newVal = prev + 1 >= limit ? limit : prev + 1;
+        if (newVal >= 0 && newVal < limit) {
+          // Scroll the list to the selected element
+          listRef.current?.children[newVal].scrollIntoView({ behavior: "smooth", block: "end", inline: "center" });
+        }
+        return newVal;
+      });
     } else if (e.key === 'ArrowUp') {
-      setListIndex((prev) => prev - 1 < 0 ? 0 : prev - 1);
+      setListIndex((prev) => {
+        const limit = Math.min(MaxElements, filteredList.length);
+        const newVal = prev - 1 < 0 ? 0 : prev - 1;
+        if (newVal >= 0 && newVal < limit) {
+          // Scroll the list to the selected element
+          listRef.current?.children[newVal].scrollIntoView({ behavior: "smooth", block: "end", inline: "center" });
+        }
+        return newVal;
+      });
     }
   };
 
   useEffect(() => {
-    if (listIndex >= 0 && listIndex < assetsList.length) {
-      listRef.current?.scrollTo({
-        top: (listIndex - 1) * 50,
-        behavior: 'smooth'
-      });
-    }
-  }, [listIndex]);
-
-  useEffect(() => {
     // Filter the asset keys for this room
-    const filterbyRoom = assets.filter((k) => k.data.room === roomId);
+    const filterbyRoom = assets.filter((k) => k.data.room === roomId && k.data.owner === user?._id);
     // Create entries
     setAssetsList(
       filterbyRoom.map((item) => {
@@ -306,7 +320,7 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
         return b.dateAdded - a.dateAdded;
       })
     );
-  }, [assets, roomId]);
+  }, [assets, roomId, user]);
 
   // Open the file
   const openFile = async (id: string) => {
@@ -330,13 +344,12 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   });
 
   // Build the list of buttons
-  const buttonList = actions.slice(0, 10).map((b, i) => (
-    <Button key={b.id} my={1} minHeight={"40px"}
-      leftIcon={b.icon} fontSize="lg" justifyContent="flex-start"
-      width={'100%'} variant="outline"
+  const buttonList = actions.slice(0, MaxElements).map((b, i) => (
+    <Button key={b.id} my={1} minHeight={"40px"} width={'100%'}
+      leftIcon={b.icon} fontSize="lg" justifyContent="flex-start" variant="outline"
       backgroundColor={b.selected ? 'blue.500' : ''}
       _hover={{ backgroundColor: 'blue.500' }}
-      onMouseOver={() => setListIndex(i + 1)}
+      onMouseEnter={() => setListIndex(i + 1)}
       onMouseLeave={() => setListIndex(0)}
       onClick={() => openFile(b.id)}
     >
@@ -344,14 +357,14 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
     </Button>));
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl" isCentered initialFocusRef={initialRef} blockScrollOnMount={false}>
-      <ModalOverlay />
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" initialFocusRef={initialRef} blockScrollOnMount={false}>
+      <ModalOverlay backdropFilter='blur(1px)' bg='none' />
       <ModalContent maxH={300}>
         {/* Search box */}
         <InputGroup>
           <Input
             ref={initialRef}
-            placeholder="Command..."
+            placeholder="Asset or Command..."
             _placeholder={{ opacity: 1, color: 'gray.600' }}
             m={2}
             p={2}
