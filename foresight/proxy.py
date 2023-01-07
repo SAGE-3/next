@@ -10,13 +10,11 @@
 #  one keeping info in received_msg_log for now. These seems to be related to raised=True
 
 
-# TODO: Fix the issue of messages received twic during updates. There is not need for that!
-
 # TODO: CRITICAL, I am a proxy -- ignore my own messages.
 
 # TODO: add a new validator function that takes a message received on a
-#  channel and makes sure it's structurally valid, i.e., has the right required fields
-#  and no unknwon fields
+#  channel and makes sure it's structurally valid, i.e., has all the required fields
+#  and no unknown fields
 
 
 # TODO prevent apps updates on fields that were touched?
@@ -75,7 +73,7 @@ def update_dest_from_src(src_val, dest_app, dest_field):
     dest_app.send_updates()
 
 
-class SAGEProxy():
+class SAGEProxy:
     def __init__(self, room_id, conf, prod_type):
         self.room = Room(room_id)
         self.conf = conf
@@ -89,14 +87,14 @@ class SAGEProxy():
         }
         self.httpx_client = httpx.Client()
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
-        self.callbacks = {}
+        self.callbacks = {}  # for linked apps
         self.received_msg_log = {}
         self.listening_process = WebSocketListener(self.__message_queue, room_id)
         self.worker_process = threading.Thread(target=self.process_messages)
         self.stop_worker = False
 
+        # Grab and load info already on the board
         self.populate_existing()
-
 
     def start_threads(self):
         self.listening_process.run()
@@ -112,63 +110,61 @@ class SAGEProxy():
             print(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
+    def handle_linked_app(self, app_id, updated_fields, msg):
+        if app_id in self.callbacks:
+            # handle callback
+            # print("this app is being tracked for updates")
+            # print(f"tracked field is {self.callbacks[app_id].src_field}")
+            for linked_info in self.callbacks[app_id].values():
+                print(f"Linked Info {linked_info}")
+                if f"state.{linked_info.src_field}" in updated_fields:
+                    # print("Yes, the tracked fields was updated")
+                    # TODO 4: make callback function optional. In which case, jsut update dest with src
+                    # TODO 1. We need to dispatch the function on a different thread, not run it
+                    #  on the same thread as proxy
+                    # TODO 2. Catch to avoid errors here so the thread does not crash
+                    try:
+                        board_id = linked_info.board_id
+                        src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
+                        dest_field = linked_info.dest_field
+                        dest_id = linked_info.dest_app
+                        dest_app = self.room.boards[board_id].smartbits[dest_id]
+                        linked_info.callback(src_val, dest_app, dest_field)
+                    except Exception as e:
+                        print(f"Error happened during callback for linked app {e}")
+                        print(f"app_id: {app_id}")
 
     def process_messages(self):
         """
-        Running this in the main thread to not deal with sharing variables right.
+        Running this in the main thread to not deal with sharing variables right now.
         potentially work on a multiprocessing version where threads are processed separately
         Messages needs to be numbered to avoid received out of sequences messages.
         """
 
         while not self.stop_worker:
-            # i+=1
-            # if i % 100_000 == 0:
             try:
                 msg = self.__message_queue.get()
             except EOFError as e:
                 print(f"Message queue was closed")
                 return
-            # I am watching this message for change?
 
             # logger.debug(f"Getting ready to process: {msg}")
 
             msg_type = msg["event"]["type"]
-
-            # TODO refactor this to merge with next (nested) if statement
-            if msg_type == "UPDATE":
-                updated_fields = list(msg['event']['updates'].keys())
-                # print(f"App updated and updated fields are: {updated_fields}")
-                app_id = msg["event"]["doc"]["_id"]
-                if app_id in self.callbacks:
-                    # handle callback
-                    # print("this app is being tracked for updates")
-                    # print(f"tracked field is {self.callbacks[app_id].src_field}")
-                    for linked_info in self.callbacks[app_id].values():
-                        print(f"Linked Info {linked_info}")
-                        if f"state.{linked_info.src_field}" in updated_fields:
-                            # print("Yes, the tracked fields was updated")
-                            # TODO 4: make callback function optional. In which case, jsut update dest with src
-                            # TODO 1. We need to dispatch the function on a different thread, not run it
-                            #  on the same thread as proxy
-                            # TODO 2. Catch to avoid errors here so the thread does not crash
-                            # TODO 3. Refactor the below into a function
-                            board_id = linked_info.board_id
-                            src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
-                            dest_field = linked_info.dest_field
-                            dest_id = linked_info.dest_app
-                            dest_app = self.room.boards[board_id].smartbits[dest_id]
-                            linked_info.callback(src_val, dest_app, dest_field)
 
             collection = msg["event"]['col']
             doc = msg['event']['doc']
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 pass
             elif msg['event']["type"] == "UPDATE":
+                app_id = msg["event"]["doc"]["_id"]
+                if app_id in self.callbacks:
+                    updated_fields = list(msg['event']['updates'].keys())
+                    self.handle_linked_app(app_id, updated_fields, msg)
                 updates = msg['event']['updates']
                 self.__OBJECT_CREATION_METHODS[msg_type](collection, doc, updates)
             else:
                 self.__OBJECT_CREATION_METHODS[msg_type](collection, doc)
-        print("exited the function")
 
 
     def __handle_create(self, collection, doc):
@@ -255,6 +251,7 @@ class SAGEProxy():
                                                   src_field=src_field,
                                                   dest_field=dest_field,
                                                   callback=callback)}
+
 
     def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
         del (self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
