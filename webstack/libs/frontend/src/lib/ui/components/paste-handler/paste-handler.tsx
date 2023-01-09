@@ -67,7 +67,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // if there's content
       if (pastedText) {
         // check and validate the URL
-        const isValid = isValidURL(pastedText);
+        const isValid = isValidURL(pastedText.trim());
         // If the start of pasted text is http, can assume is a url
         if (isValid) {
           let w = 800;

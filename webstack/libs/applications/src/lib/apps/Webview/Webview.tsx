@@ -288,6 +288,7 @@ function AppComponent(props: App): JSX.Element {
     width: props.data.size.width + 'px',
     height: props.data.size.height + 'px',
     objectFit: 'contain',
+    background: 'white',
   };
 
   return (
