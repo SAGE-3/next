@@ -19,8 +19,7 @@ class SmartBitFactory:
                    "DataTable": "data_table", "CodeCell": "codecell",
                    "KernelDashboard": "kerneldashboard", "SageCell": "sagecell",
                    "Slider": "slider", "Stickie": "stickie", "VegaLite": "vegalite",
-                   "VegaLiteViewer": "vegaliteviewer", "ImageViewer": "imageviewer",
-                   "PDFViewer": "pdfviewer"}
+                   "VegaLiteViewer": "vegaliteviewer", "ImageViewer": "imageviewer"}
 
 
     @classmethod
