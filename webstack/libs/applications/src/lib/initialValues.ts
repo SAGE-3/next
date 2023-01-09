@@ -17,6 +17,7 @@ import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
+import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
@@ -45,6 +46,7 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [NotepadName]: defaultNotepad,
+  [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,

@@ -17,6 +17,7 @@ import { state as KernelsState, name as KernelsName } from './apps/Kernels';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
+import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as SageCellState, name as SageCellName } from './apps/SageCell';
@@ -27,7 +28,8 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 
-export type AppState =
+
+export type AppState = 
   | {}
   | AIPaneState
   | CSVViewerState
@@ -46,6 +48,7 @@ export type AppState =
   | LeafLetState
   | LinkerState
   | NotepadState
+  | PDFResultState
   | PDFViewerState
   | RTCChatState
   | SageCellState
@@ -56,30 +59,5 @@ export type AppState =
   | VideoViewerState
   | WebviewState;
 
-export type AppName =
-  | typeof AIPaneName
-  | typeof CSVViewerName
-  | typeof ChartMakerName
-  | typeof ClockName
-  | typeof CobrowseName
-  | typeof CodeCellName
-  | typeof CounterName
-  | typeof DataTableName
-  | typeof DeepZoomImageName
-  | typeof GLTFViewerName
-  | typeof ImageViewerName
-  | typeof JupyterLabName
-  | typeof KernelDashboardName
-  | typeof KernelsName
-  | typeof LeafLetName
-  | typeof LinkerName
-  | typeof NotepadName
-  | typeof PDFViewerName
-  | typeof RTCChatName
-  | typeof SageCellName
-  | typeof StickieName
-  | typeof TwilioScreenshareName
-  | typeof VegaLiteName
-  | typeof VegaLiteViewerName
-  | typeof VideoViewerName
-  | typeof WebviewName;
+
+export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CodeCellName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof RTCChatName | typeof SageCellName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
