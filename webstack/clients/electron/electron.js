@@ -776,8 +776,12 @@ function createWindow() {
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
       contents.on('new-window', function (newWindowEvent, url) {
-        console.log('block');
         newWindowEvent.preventDefault();
+      });
+
+      // Block automatic download from webviews
+      contents.session.on('will-download', (event, item, webContents) => {
+        event.preventDefault();
       });
     }
   });
