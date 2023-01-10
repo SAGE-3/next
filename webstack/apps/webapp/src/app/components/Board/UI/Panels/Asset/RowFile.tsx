@@ -34,7 +34,7 @@ import {
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
-import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore } from '@sage3/frontend';
+import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore, useCursorBoardPosition } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
@@ -76,6 +76,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const { position: cursorPosition } = useCursorBoardPosition();
+
   const scale = useUIStore((state) => state.scale);
 
   // Select the file when clicked
@@ -119,7 +121,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         toast({
           title: 'Guests cannot delete assets',
           status: 'warning',
-          duration: 4000,
+          duration: 3000,
           isClosable: true,
         });
       }
@@ -193,7 +195,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // Add an image to the cursor during the drag
   const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragImage) {
-      e.dataTransfer.setDragImage(dragImage, 1, 1);
+      e.dataTransfer.setDragImage(dragImage, cursorPosition.x, cursorPosition.y);
     }
     // call drag callback in the parent
     if (selected) dragCB(e);

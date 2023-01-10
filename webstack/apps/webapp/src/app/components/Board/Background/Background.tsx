@@ -475,17 +475,6 @@ export function Background(props: BackgroundProps) {
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
 
-    // Block guests from uploading assets
-    if (auth?.provider === 'guest') {
-      toast({
-        title: 'Guests cannot upload assets',
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
-      return;
-    }
-
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -493,6 +482,18 @@ export function Background(props: BackgroundProps) {
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
+
+      // Block guests from uploading assets
+      if (auth?.provider === 'guest') {
+        toast({
+          title: 'Guests cannot upload assets',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer).then((files) => {
         // do the actual upload
@@ -503,6 +504,18 @@ export function Background(props: BackgroundProps) {
       if (event.dataTransfer.types.includes('text/uri-list')) {
         event.preventDefault();
         event.stopPropagation();
+
+        // Block guests from uploading assets
+        if (auth?.provider === 'guest') {
+          toast({
+            title: 'Guests cannot upload assets',
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+          return;
+        }
+
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
           if (pastedText.startsWith('data:image/png;base64')) {

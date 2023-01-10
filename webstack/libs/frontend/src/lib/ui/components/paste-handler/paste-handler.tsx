@@ -13,7 +13,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
-import { useUser, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
+import { useUser, useAuth, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
 import { processContentURL } from '@sage3/frontend';
 
 type PasteProps = {
@@ -31,6 +31,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   const toast = useToast();
   // User information
   const { user } = useUser();
+  const { auth } = useAuth();
   const { position: cursorPosition } = useCursorBoardPosition();
   // App Store
   const createApp = useAppStore((state) => state.create);
@@ -42,6 +43,17 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // get the target element and make sure it is the background board
       const elt = event.target as HTMLElement;
       if (elt.id !== 'board') return;
+
+      // Block guests from uploading assets
+      if (auth?.provider === 'guest') {
+        toast({
+          title: 'Guests cannot upload assets',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
 
       // Open webview if url, otherwise, open a sticky
       if (event.clipboardData?.files) {
@@ -114,7 +126,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Remove function during cleanup to prevent multiple additions
       document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
     };
-  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId]);
+  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user]);
 
   return <></>;
 };
