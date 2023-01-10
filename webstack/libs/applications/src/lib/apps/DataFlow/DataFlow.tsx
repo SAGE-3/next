@@ -15,9 +15,10 @@ import { AppWindow } from '../../components';
 
 import 'reactflow/dist/style.css';
 
-import AceEditor from 'react-ace';
-import { v5 as uuidv5 } from 'uuid';
+// import AceEditor from 'react-ace';
+// import { v5 as uuidv5 } from 'uuid';
 import { initialNodes, initialEdges } from './nodes-edges';
+import TextUpdaterNode from './TextUpdaterNode'
 
 import { useState, useCallback, useMemo } from 'react';
 import ReactFlow, {
@@ -38,11 +39,11 @@ import ReactFlow, {
 } from 'reactflow';
 
 
-function getNodeLength(node: Node): number {
-  return node.data.code.length;
-}
+// function getNodeLength(node: Node): number {
+//   return node.data.code.length;
+// }
 
-// const nodeTypes = { textUpdater: TextUpdaterNode };
+const nodeTypes = { textUpdater: TextUpdaterNode };
 
 const minimapStyle = {
   height: 50,
@@ -50,18 +51,15 @@ const minimapStyle = {
 };
 
 
-
-
-import React from 'react';
-import shallow from 'zustand/shallow';
+// import shallow from 'zustand/shallow';
 
 import 'reactflow/dist/style.css';
 
 import useStore from './store';
-import ColorChooserNode from './ColorChooserNode';
-import { motion } from 'framer-motion';
+// import ColorChooserNode from './ColorChooserNode';
+// import { motion } from 'framer-motion';
 
-const nodeTypes = { colorChooser: ColorChooserNode };
+// const nodeTypes = { colorChooser: ColorChooserNode };
 
 const selector = (state: { nodes: Node[]; edges: Edge[]; onNodesChange: any; onEdgesChange: any; onConnect: any; }) => ({
   nodes: state.nodes,
@@ -72,24 +70,24 @@ const selector = (state: { nodes: Node[]; edges: Edge[]; onNodesChange: any; onE
 });
 
 
-function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore(selector, shallow);
+// function Flow() {
+//   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore(selector, shallow);
 
-  return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      nodeTypes={nodeTypes}
-      proOptions={{ hideAttribution: true }}
-      fitView
-    />
-  );
-}
-
-
+//   return (
+//     <ReactFlow
+//       nodes={nodes}
+//       edges={edges}
+//       onNodesChange={onNodesChange}
+//       onEdgesChange={onEdgesChange}
+//       onConnect={onConnect}
+//       nodeTypes={nodeTypes}
+//       proOptions={{ hideAttribution: true }}
+//       fitView
+//     />
+//   );
+// }
+import Flow from './FlowCanvas'
+import OverviewFlow from './OverviewExample/Flow.js'
 function AppComponent(props: App): JSX.Element {
 
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
@@ -101,8 +99,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockToBackground={true}>
-      <motion.div style={{ width: '100%', height: '100%', scale: .475}}>
-     <Flow />
+     {/* <Flow /> */}
       {/* <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -118,7 +115,7 @@ function AppComponent(props: App): JSX.Element {
         <Controls />
         <Background color="#aaa" gap={16}/>
       </ReactFlow> */}
-    </motion.div>
+      <OverviewFlow />
     </AppWindow>
   );
 }
