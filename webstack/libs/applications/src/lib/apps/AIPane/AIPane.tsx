@@ -54,19 +54,29 @@ function AppComponent(props: App): JSX.Element {
 
   const update = useAppStore((state) => state.update);
 
-  // Keeps track of AI Pane previous position, necessary to move hosted apps with pane
+  /**
+   * Keeps track of AI Pane previous position, necessary to move hosted apps with pane
+   */
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
-  // supportedApps currently hardcoded in frontend
+  /**
+   * supportedApps currently hardcoded in frontend
+   */
   // TODO Need to let backend set supportedApps
   const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
-  // Checks for apps on or off the pane
+  /**
+   * Checks for apps on or off the pane
+   */
   useEffect(() => {
     // Check all apps on board
     for (const app of boardApps) {
       const client = {[app._id]: app.data.type};
+
+
+      // Doing this, a message for what apps are on the board will be re-added even after deletion from the popover if pane is moved
+      // Or rerendered in some way
       const message = {[app._id]: app.data.title};
 
       // Hosted app window should fall within AI Pane window
@@ -105,10 +115,13 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
 
+
+  /**
+   * Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
+   * Refer to videoViewer play function
+   * Currently needed to keep track of hosted apps that are added when created or removed when deleted from board, rather than only those moved on and off
+   */
   // TODO Be mindful of client updates
-  // Currently, every client updates once one does. Eventually add a way to monitor userID's and let only one person send update to server
-  // Refer to videoViewer play function
-  // Currently needed to keep track of hosted apps that are added when created or removed when deleted from board, rather than only those moved on and off
   useEffect(() => {
     const copyofhostapps = {} as { [key: string]: string };
     Object.keys(s.hostedApps).forEach((key: string) => {
@@ -118,7 +131,9 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, {hostedApps: copyofhostapps});
   }, [boardApps.length]);
 
-  // Move all apps together with the AIPane
+  /**
+   * Move all apps together with the AIPane
+   */
   useEffect(() => {
     const hostedCopy = {...s.hostedApps};
     const xDiff = props.data.position.x - prevX.current;
@@ -140,20 +155,26 @@ function AppComponent(props: App): JSX.Element {
     prevY.current = props.data.position.y;
   }, [props.data.position.x, props.data.position.y, JSON.stringify(s.hostedApps)]);
 
-  // If there are no hostedApps, reset supportedTasks to empty
+  /**
+   * If there are no hostedApps, reset supportedTasks to empty
+   */
   useEffect(() => {
     if (Object.keys(s.hostedApps).length === 0) {
       updateState(props._id, {supportedTasks: {}});
     }
   }, [Object.keys(s.hostedApps).length]);
 
-  // Sets run status to error if user attempts to run pane on > 1 app type
+  /**
+   * Sets run status to error if user attempts to run pane on > 1 app type
+   */
   useEffect(() => {
     checkAppType()
   }, [JSON.stringify(s.hostedApps)])
 
-  // If more than 1 app added to pane, checks that all hosted apps are of the same type
-  // @return sets run status to error if there is more than 1 hosted app types.
+  /**
+   * If more than 1 app added to pane, checks that all hosted apps are of the same type
+   *   @return sets run status to error if there is more than 1 hosted app types.
+   */
   function checkAppType() {
     const hostedTypes = new Set(Object.values(s.hostedApps));
 
@@ -171,14 +192,22 @@ function AppComponent(props: App): JSX.Element {
     }
   }
 
-  // Notifies backend of a new app being added, and it's app type
+  /**
+   * Notifies backend of a new app being added, and it's app type
+   *
+   * @param appType
+   */
   function newAppAdded(appType: string) {
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
   }
 
-  // Custom close button to remove messages from messages menu.
+  /**
+   * Custom close button to remove messages from messages menu.
+   *
+   * @param info
+   */
   // TODO need to permanently keep messages off menu. Currently reproduces full list of messages upon certain renders
   function closePopovers(info: string) {
     const unchecked = s.messages;
@@ -262,7 +291,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const [aiModel, setAIModel] = useState('Models');
   const [task, setTask] = useState('Tasks');
 
-  // Sends request to backend to execute a model
+  /**
+   * Sends request to backend to execute a model
+   *
+   * @param model
+   */
   function runFunction(model: string) {
     updateState(props._id, {
       runStatus: 1,
@@ -273,12 +306,20 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }
 
-  // Sets local model selection.
+  /**
+   * Sets local model selection.
+   *
+   * @param model
+   */
   const handleSetModel = (model: string) => {
     setAIModel(model);
   };
 
-  // Sets local task selection.
+  /**
+   * Sets local task selection.
+   *
+   * @param task
+   */
   // TODO Combine setModel and setTask
   const handleSetTask = (task: string) => {
     setTask(task);
