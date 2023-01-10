@@ -45,13 +45,11 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const { boardId, roomId } = useParams();
-  const selectedAppId = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
 
   const yours = user?._id === props._createdBy;
   const updatedByYou = user?._id === props._updatedBy;
-  const selected = selectedAppId === props._id;
   const locked = s.lock;
 
   // Keep a reference to the input element
@@ -116,6 +114,7 @@ function AppComponent(props: App): JSX.Element {
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!user) return;
+    if (e.repeat) { return }
     if (e.code === 'Tab') {
       if (e.shiftKey) {
         // Create a new stickie
