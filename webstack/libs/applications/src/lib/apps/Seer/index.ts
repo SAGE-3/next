@@ -19,9 +19,13 @@ const executeInfoSchema = z.object({
   params: z.record(z.any()),
 
 });
+const fieldTypes = z.enum(["code", "text"])
+export type fieldT =  z.infer<typeof fieldTypes>;
+
 
 export const schema = z.object({
   fontSize: z.number(),
+  fieldType: fieldTypes,
   execCount: z.number(),
   code: z.string(),
   output: z.string(),
@@ -36,6 +40,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
+  fieldType: "code",
   code: '',
   output: '',
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,

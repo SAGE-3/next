@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import {App} from '../../schema';
 
-import {state as AppState} from './index';
+import {state as AppState, fieldT} from './index';
 import {AppWindow} from '../../components';
 
 
@@ -45,6 +45,9 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
+  const [code, setCode] = useState<string>(s.code);
+  const [fieldType, setFieldType] = useState<fieldT>(s.fieldType);
+
 
 
   return (
@@ -68,8 +71,16 @@ function AppComponent(props: App): JSX.Element {
           },
         }}
       >
-        <InputBox app={props}/>
-        {!s.output ? null : <OutputBox output={s.output} app={props}/>}
+        <InputBox app={props}
+                  fieldType={fieldType}
+                  setFieldType={setFieldType}/>
+
+
+        {
+          !s.output ?
+            null :
+            <OutputBox output={s.output} app={props} fieldType={fieldType}/>
+        }
       </Box>
     </AppWindow>
   );
@@ -95,16 +106,20 @@ export default {AppComponent, ToolbarComponent};
 
 type InputBoxProps = {
   app: App;
+  fieldType: fieldT;
+  setFieldType: (newVal: fieldT) => void;
 };
 
 
 const InputBox = (props: InputBoxProps): JSX.Element => {
+
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const [code, setCode] = useState<string>(s.code);
   const {user} = useUser();
   const [fontSize, setFontSize] = useState(s.fontSize);
   const toast = useToast();
+  const fieldType = props.fieldType;
 
   const handleExecute = () => {
     console.log("handling execute and code is: " + code)
@@ -130,11 +145,20 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   };
 
 
-  // Update from Ace Editor
   const updateCode = (e: any) => {
-    const newCode = e.target.value
-    setCode(newCode);
-    console.log("Code changed, new value is: " + code)
+    console.log("code updated");
+    setCode(e.target.value);
+    if (e.target.value.length > 4) {
+      console.log("flipping the property");
+      props.setFieldType("text");
+    }
+    else {
+      console.log("flipping the property");
+      props.setFieldType("code");
+    }
+
+
+    console.log(code)
   };
 
 
@@ -144,6 +168,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         <Textarea
           ml={MARGIN}
           mt={MARGIN}
+          value={code}
           onChange={updateCode}
           placeholder='Add your code here'
           size='lg'
@@ -182,6 +207,11 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         </VStack>
 
       </HStack>
+      <div style={{border: "1px solid black"}}>
+        <p>CODE IS: {code}</p>
+        <p>FIELD TYPE IS: {fieldType}</p>
+      </div>
+
 
     </Box>
   );
@@ -190,10 +220,22 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
 type OutputBoxProps = {
   output: string;
   app: App;
+  fieldType: fieldT
 };
 
 const OutputBox = (props: OutputBoxProps): JSX.Element => {
-  return(<></>);
+  const s = props.app.data.state as AppState;
+  const parsedJSON = JSON.parse(props.output);
+  const fieldType = props.fieldType;
+  // parsedJSON["stream"]["text"]
+  return(
+    <div>
+      <div>FieldType is: {fieldType}</div>
+      <div>Received output is: {s.output}</div>
+
+    </div>
+  );
+
 //   const parsedJSON = JSON.parse(props.output);
 //   const s = props.app.data.state as AppState;
 //   const updateState = useAppStore((state) => state.updateState);

@@ -377,11 +377,11 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     ace.current?.editor?.setValue('');
   };
 
-  useEffect(() => {
-    if (s.code !== code) {
-      setCode(s.code);
-    }
-  }, [s.code]);
+  // useEffect(() => {
+  //   if (s.code !== code) {
+  //     setCode(s.code);
+  //   }
+  // }, [s.code]);
 
   // Update from Ace Editor
   const updateCode = (c: string) => {

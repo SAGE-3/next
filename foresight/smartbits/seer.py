@@ -12,7 +12,6 @@ from pydantic import PrivateAttr
 
 import json
 
-
 class SeerState(TrackedBaseModel):
     code: str = ""
     output: str = ""
