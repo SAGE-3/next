@@ -60,6 +60,8 @@ function AppComponent(props: App): JSX.Element {
   const prevX = useRef(props.data.position.x);
   const prevY = useRef(props.data.position.y);
 
+  const prevHosted = useRef(s.hostedApps);
+
   /**
    * supportedApps currently hardcoded in frontend
    */
@@ -68,6 +70,7 @@ function AppComponent(props: App): JSX.Element {
 
   /**
    * Checks for apps on or off the pane
+   * Should work if pane or any hosted apps are moved, resized, or closed out
    */
   useEffect(() => {
     // Check all apps on board
@@ -98,12 +101,13 @@ function AppComponent(props: App): JSX.Element {
             ...message
           }
           updateState(props._id, {hostedApps: hosted});
-          // TODO Make messages more informative rather than simply types of apps being hosted
+          // TODO Make messages more informative rather than simply names of apps being hosted
           // Maybe show results in message? Objects detected and scores?
           updateState(props._id, {messages: messages});
           newAppAdded(app.data.type);
         }
       } else {
+        // This code is necessary to remove hosted apps and messages once apps are no longer being hosted
         if (Object.keys(s.hostedApps).includes(app._id)) {
           const hostedCopy = {...s.hostedApps};
           const messagesCopy = {...s.messages};
@@ -113,7 +117,8 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     }
-  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
+  //  Removed JSON.stringify(boardApps) from dep so that new apps that happen to open on pane aren't automatically hosted
+  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width]);
 
 
   /**
@@ -122,6 +127,7 @@ function AppComponent(props: App): JSX.Element {
    * Currently needed to keep track of hosted apps that are added when created or removed when deleted from board, rather than only those moved on and off
    */
   // TODO Be mindful of client updates
+  // TODO This seems pretty bad and does not clear messages if app is closed out instead of moved off pane
   useEffect(() => {
     const copyofhostapps = {} as { [key: string]: string };
     Object.keys(s.hostedApps).forEach((key: string) => {
