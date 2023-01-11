@@ -345,13 +345,13 @@ function ToolbarComponent(props: App): JSX.Element {
               return (
                 <>
                   <Menu>
-                    <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+                    <MenuButton as={Button} rightIcon={<FiChevronDown/>} key={idx}>
                       {task}
                     </MenuButton>
                     <Portal>
                       <MenuList>
                         {Object.keys(s.supportedTasks[type]).map((tasks, idx) => {
-                          return <MenuItem onClick={() => handleSetTask(tasks)}>{tasks}</MenuItem>;
+                          return <MenuItem onClick={() => handleSetTask(tasks)} key={idx}>{tasks}</MenuItem>;
                         })}
                       </MenuList>
                     </Portal>
@@ -364,8 +364,8 @@ function ToolbarComponent(props: App): JSX.Element {
                       </MenuButton>
                       <Portal>
                         <MenuList>
-                          {s.supportedTasks[type][task]?.map((modelOptions: string) => {
-                            return <MenuItem onClick={() => handleSetModel(modelOptions)}>{modelOptions}</MenuItem>;
+                          {s.supportedTasks[type][task]?.map((modelOptions: string, idx: number) => {
+                            return <MenuItem onClick={() => handleSetModel(modelOptions)} key={idx}>{modelOptions}</MenuItem>;
                           })}
                         </MenuList>
                       </Portal>
