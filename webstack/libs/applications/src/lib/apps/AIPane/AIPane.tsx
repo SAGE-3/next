@@ -117,8 +117,7 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     }
-  //  Removed JSON.stringify(boardApps) from dep so that new apps that happen to open on pane aren't automatically hosted
-  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width]);
+  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
 
 
   /**
@@ -130,11 +129,16 @@ function AppComponent(props: App): JSX.Element {
   // TODO This seems pretty bad and does not clear messages if app is closed out instead of moved off pane
   useEffect(() => {
     const copyofhostapps = {} as { [key: string]: string };
+    const copyofmessages= {} as { [key: string]: string };
     Object.keys(s.hostedApps).forEach((key: string) => {
       const app = boardApps.find((el) => el._id === key);
-      if (app) copyofhostapps[key] = app.data.type;
+      if (app) {
+        copyofhostapps[key] = app.data.type
+        copyofhostapps[key] = app.data.title
+      }
     });
     updateState(props._id, {hostedApps: copyofhostapps});
+    updateState(props._id, {messages: copyofmessages})
   }, [boardApps.length]);
 
   /**

@@ -93,7 +93,7 @@ class AIPane(SmartBit):
         self._pending_executions = {}
         if requires_update:
             print("Sending update")
-            self.state.runStatus = False
+            self.state.runStatus = 0
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
             self.send_updates()
