@@ -117,7 +117,7 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     }
-  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps)]);
+  }, [selApp?.data.position.x, selApp?.data.position.y, selApp?.data.size.height, selApp?.data.size.width, JSON.stringify(boardApps), JSON.stringify(s.hostedApps)]);
 
 
   /**
@@ -236,6 +236,11 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockToBackground={true}>
+      <>
+        <p>
+          {JSON.stringify(s.hostedApps)}
+        </p>
+
       <Box>
         <Box padding={'2rem'}>
           <Popover
@@ -290,6 +295,7 @@ function AppComponent(props: App): JSX.Element {
           )}
         </Box>
       </Box>
+        </>
     </AppWindow>
   );
 }
@@ -350,7 +356,7 @@ function ToolbarComponent(props: App): JSX.Element {
                     </MenuButton>
                     <Portal>
                       <MenuList>
-                        {Object.keys(s.supportedTasks[type]).map((tasks, idx) => {
+                        {Object.keys(s.supportedTasks[type])?.map((tasks, idx) => {
                           return <MenuItem onClick={() => handleSetTask(tasks)} key={idx}>{tasks}</MenuItem>;
                         })}
                       </MenuList>
@@ -380,7 +386,7 @@ function ToolbarComponent(props: App): JSX.Element {
             aria-label="Run AI"
             icon={s.runStatus === 0 ? <FaPlay/> : s.runStatus === 1 ? <BiRun/> : <BiErrorCircle/>}
             _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-            isDisabled={aiModel === 'Models' || s.runStatus !== 1 ? false : true}
+            isDisabled={aiModel !== 'Models' && s.runStatus === 0 ? false : true}
             onClick={() => {
               runFunction(aiModel);
             }}
