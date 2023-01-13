@@ -18,6 +18,7 @@ import { ClearBoardModal } from './UI/ClearBoardModal';
 import { AppToolbar } from './UI/AppToolbar';
 import { Twilio } from './UI/Twilio';
 import { Alfred } from './UI/Alfred';
+import { LassoToolbar } from './UI/LassoToolbar';
 
 type UILayerProps = {
   boardId: string;
@@ -149,6 +150,10 @@ export function UILayer(props: UILayerProps) {
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
       <Controller boardId={props.boardId} roomId={props.roomId} />
+
+      {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
+      <LassoToolbar />
+
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />
     </Box>
