@@ -7,7 +7,6 @@ import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
-import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
@@ -22,6 +21,7 @@ import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResul
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
+import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -37,7 +37,6 @@ export const initialValues = {
   [CobrowseName]: defaultCobrowse,
   [CodeCellName]: defaultCodeCell,
   [CounterName]: defaultCounter,
-  [SeerName]: defaultSeer,  
   [DataTableName]: defaultDataTable,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [GLTFViewerName]: defaultGLTFViewer,
@@ -52,6 +51,7 @@ export const initialValues = {
   [PDFViewerName]: defaultPDFViewer,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
+  [SeerName]: defaultSeer,
   [StickieName]: defaultStickie,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
