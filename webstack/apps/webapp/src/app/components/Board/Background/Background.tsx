@@ -104,7 +104,7 @@ export function Background(props: BackgroundProps) {
   // User
   const { user } = useUser();
   const { auth } = useAuth();
-  const { position: cursorPosition } = useCursorBoardPosition();
+  const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -556,65 +556,72 @@ export function Background(props: BackgroundProps) {
     }
   }
 
-  // question mark character
-  useHotkeys(
-    'shift+/',
-    (event: KeyboardEvent): void | boolean => {
-      if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
+  // Question mark character for help
+  useHotkeys('shift+/', (event: KeyboardEvent): void | boolean => {
+    if (!user) return;
+    const x = cursorPosition.x;
+    const y = cursorPosition.y;
 
-      console.log('Shortcut> SHOW HELP', x, y);
+    helpOnOpen();
 
-      helpOnOpen();
+    // show image or open doc
+    // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
+    // window.open(doc, '_blank');
 
-      // show image or open doc
-      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
-      // window.open(doc, '_blank');
-
-      // Returning false stops the event and prevents default browser events
-      return false;
-    },
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
 
   // Move the board with the arrow keys
-  useHotkeys(
-    'up, down, left, right',
-    (event: KeyboardEvent): void | boolean => {
-      if (selectedAppId !== '') return;
-      const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
-      if (event.key === 'ArrowUp') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
-      } else if (event.key === 'ArrowDown') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
-      } else if (event.key === 'ArrowLeft') {
-        setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
-      } else if (event.key === 'ArrowRight') {
-        setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
-      }
-      // Returning false stops the event and prevents default browser events
-      return false;
-    },
+  useHotkeys('up, down, left, right', (event: KeyboardEvent): void | boolean => {
+    if (selectedAppId !== '') return;
+    const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
+    if (event.key === 'ArrowUp') {
+      setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
+    } else if (event.key === 'ArrowDown') {
+      setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
+    } else if (event.key === 'ArrowLeft') {
+      setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
+    } else if (event.key === 'ArrowRight') {
+      setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
+    }
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
   );
 
-  // Stickies Shortcut
-  useHotkeys(
-    'shift+s',
-    (event: KeyboardEvent): void | boolean => {
-      if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
-      createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
-      );
+  // Zoom in/out of the board with the -/+ keys
+  useHotkeys('-, =', (event: KeyboardEvent): void | boolean => {
+    if (selectedAppId !== '') return;
+    if (event.key === '-') {
+      zoomOutDelta(-10, mousePosition);
+    } else if (event.key === '=') {
+      zoomInDelta(10, mousePosition);
+    }
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
+    // Depends on the cursor to get the correct position
+    { dependencies: [mousePosition.x, mousePosition.y, selectedAppId] }
+  );
 
-      // Returning false stops the event and prevents default browser events
-      return false;
-    },
+  // Stickies Shortcut
+  useHotkeys('shift+s', (event: KeyboardEvent): void | boolean => {
+    if (!user) return;
+    const x = cursorPosition.x;
+    const y = cursorPosition.y;
+    createApp(
+      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+    );
+
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
@@ -642,11 +649,9 @@ export function Background(props: BackgroundProps) {
       onDrop={OnDrop}
       onDragOver={OnDragOver}
       onScroll={(evt) => {
-        // console.log('onScroll> event', evt);
         evt.stopPropagation();
       }}
       onWheel={(evt: any) => {
-        // console.log('onWheel> event', evt);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {
