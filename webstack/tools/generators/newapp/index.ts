@@ -150,7 +150,7 @@ async function updateTypes(root: string) {
   }
   output += `\n`;
   output += `\n`;
-  output += `export type AppState = \n`;
+  output += `export type AppState =\n`;
   output += `  | {}\n`;
   for (let i in apps) {
     const it = apps[i];
