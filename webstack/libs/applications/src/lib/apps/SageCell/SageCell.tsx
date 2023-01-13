@@ -12,6 +12,7 @@ import {
   Button,
   HStack,
   useColorModeValue,
+  useColorMode,
   Tooltip,
   ButtonGroup,
   Select,
@@ -30,12 +31,7 @@ import {
 
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
-import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-json';
-import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
-import 'ace-builds/src-noconflict/theme-xcode';
-import 'ace-builds/src-noconflict/keybinding-vscode';
+import Editor, { Monaco } from "@monaco-editor/react";
 
 // UUID generation
 import { v4 as getUUID } from 'uuid';
@@ -329,25 +325,36 @@ type InputBoxProps = {
 const InputBox = (props: InputBoxProps): JSX.Element => {
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const ace = useRef<AceEditor>(null);
+  const monaco = useRef<Monaco>();
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
+  const { colorMode } = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
+  const [lines, setLines] = useState(1);
   const toast = useToast();
 
   useEffect(() => {
-    if (ace.current) {
-      ace.current.editor.commands.removeCommand('Execute');
-      ace.current.editor.commands.addCommand({
-        name: 'Execute',
-        bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' },
-        exec: () => handleExecute(s.kernel),
+    // if (ace.current) {
+    //   ace.current.editor.commands.removeCommand('Execute');
+    //   ace.current.editor.commands.addCommand({
+    //     name: 'Execute',
+    //     bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' },
+    //     exec: () => handleExecute(s.kernel),
+    //   });
+    // }
+
+    if (monaco.current) {
+      monaco.current.addAction({
+        id: 'execute',
+        label: 'Execute',
+        keybindings: [KeyMod.Shift | KeyCode.Enter],
+        run: () => handleExecute(s.kernel),
       });
     }
-  }, [s.kernel, ace.current]);
+  }, [s.kernel, monaco.current]);
 
   const handleExecute = (kernel: string) => {
-    const code = ace.current?.editor?.getValue();
+    const code = monaco.current?.getValue();
     if (!kernel) {
       toast({
         title: 'No kernel selected',
@@ -374,7 +381,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       output: '',
       executeInfo: { executeFunc: '', params: {} },
     });
-    ace.current?.editor?.setValue('');
+    monaco.current?.setValue('');
   };
 
   useEffect(() => {
@@ -383,38 +390,30 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     }
   }, [s.code]);
 
-  // Update from Ace Editor
-  const updateCode = (c: string) => {
-    setCode(c);
-  };
+  // Update from Monaco Editor
+  function updateCode(value: string | undefined) {
+    if (value) {
+      // Store the code in the state
+      setCode(value);
+      // Update the number of lines
+      setLines(value.split('\n').length);
+    }
+  }
 
   useEffect(() => {
     // update local state from global state
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  // Get the reference to the Monaco Editor after it mounts
+  function handleEditorDidMount(editor: Monaco) {
+    monaco.current = editor;
+  }
+
   return (
     <Box>
       <HStack>
-        <AceEditor
-          ref={ace}
-          name="ace"
-          value={code}
-          onChange={updateCode}
-          fontSize={`${fontSize}px`}
-          minLines={4}
-          maxLines={20}
-          placeholder="Enter code here"
-          mode={s.language}
-          theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
-          editorProps={{ $blockScrolling: true }}
-          setOptions={{
-            hasCssTransforms: true,
-            showGutter: true,
-            showPrintMargin: false,
-            highlightActiveLine: true,
-            showLineNumbers: true,
-          }}
+        <Box
           style={{
             width: '100%',
             height: '100%',
@@ -429,7 +428,78 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
             borderRadius: '4px',
           }}
-        />
+        >
+          <Editor
+            onMount={handleEditorDidMount}
+            defaultValue={code}
+            onChange={updateCode}
+            height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
+            language={s.language}
+            theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
+            options={{
+              fontSize: `${fontSize}px`,
+              minimap: { enabled: false },
+              lineNumbersMinChars: 4,
+              "acceptSuggestionOnCommitCharacter": true,
+              "acceptSuggestionOnEnter": "on",
+              "accessibilitySupport": "auto",
+              "autoIndent": false,
+              "automaticLayout": true,
+              "codeLens": true,
+              "colorDecorators": true,
+              "contextmenu": false,
+              "cursorBlinking": "blink",
+              "cursorSmoothCaretAnimation": false,
+              "cursorStyle": "line",
+              "disableLayerHinting": false,
+              "disableMonospaceOptimizations": false,
+              "dragAndDrop": false,
+              "fixedOverflowWidgets": false,
+              "folding": true,
+              "foldingStrategy": "auto",
+              "fontLigatures": false,
+              "formatOnPaste": false,
+              "formatOnType": false,
+              "hideCursorInOverviewRuler": false,
+              "highlightActiveIndentGuide": true,
+              "links": true,
+              "mouseWheelZoom": false,
+              "multiCursorMergeOverlapping": true,
+              "multiCursorModifier": "alt",
+              "overviewRulerBorder": false,
+              "overviewRulerLanes": 0,
+              "quickSuggestions": false,
+              "quickSuggestionsDelay": 100,
+              "readOnly": false,
+              "renderControlCharacters": false,
+              "renderFinalNewline": true,
+              "renderIndentGuides": true,
+              "renderLineHighlight": "all",
+              "renderWhitespace": "none",
+              "revealHorizontalRightPadding": 30,
+              "roundedSelection": true,
+              "rulers": [],
+              "scrollBeyondLastColumn": 5,
+              "scrollBeyondLastLine": true,
+              "selectOnLineNumbers": true,
+              "selectionClipboard": true,
+              "selectionHighlight": true,
+              "showFoldingControls": "mouseover",
+              "smoothScrolling": false,
+              "suggestOnTriggerCharacters": true,
+              "wordBasedSuggestions": true,
+              "wordSeparators": "~!@#$%^&*()-=+[{]}|;:'\",.<>/?",
+              "wordWrap": "off",
+              "wordWrapBreakAfterCharacters": "\t})]?|&,;",
+              "wordWrapBreakBeforeCharacters": "{([+",
+              "wordWrapBreakObtrusiveCharacters": ".",
+              "wordWrapColumn": 80,
+              "wordWrapMinified": true,
+              "wrappingIndent": "none"
+
+            }}
+          />
+        </Box>
         <VStack pr={2}>
           {props.access ? (
             <Tooltip hasArrow label="Execute" placement="right-start">
@@ -467,10 +537,10 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       </HStack>
       {/* <Stack px={4}> */}
       {/* <Text color={useColorModeValue('#000000', '#FFFFFF')}> */}
-      <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
+      {/* <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
         Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
         {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
-      </Flex>
+      </Flex> */}
       {/* </Text> */}
       {/* </Stack> */}
     </Box>
