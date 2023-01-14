@@ -86,26 +86,26 @@ export function BoardPage() {
     subscribeToPresence();
     subscribeToUsers();
     // Update the user's presence information
-    if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId });
+    if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId, following: '' });
 
     // Set Selected app to empty
     setSelectedApp('');
 
     // Prevent drag/drop when not on the board
-    document.addEventListener("dragover", handleDragOver);
-    document.addEventListener("drop", handleDrop);
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('drop', handleDrop);
 
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
       unsubBoard();
       // Update the user's presence information
-      if (user) updatePresence(user._id, { boardId: '', roomId: '' });
+      if (user) updatePresence(user._id, { boardId: '', roomId: '', following: '' });
       // Set Selected app to empty
       setSelectedApp('');
       // Remove event listeners
-      document.removeEventListener("dragover", handleDragOver);
-      document.removeEventListener("drop", handleDrop);
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('drop', handleDrop);
     };
   }, []);
 

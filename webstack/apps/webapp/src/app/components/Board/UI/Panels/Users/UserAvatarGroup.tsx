@@ -6,13 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup } from '@chakra-ui/react';
+import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
 
 import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
 import { Presence, User } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
+import { GiArrowCursor } from 'react-icons/gi';
+import { IoMdSquareOutline } from 'react-icons/io';
+import { HiOutlineChevronDoubleRight } from 'react-icons/hi';
 
-import { MdRemoveRedEye } from 'react-icons/md';
+import { MdArrowForward, MdOutlineFollowTheSigns, MdRemoveRedEye } from 'react-icons/md';
 
 type AvatarGroupProps = {
   boardId: string;
@@ -22,20 +25,24 @@ type UserAndPresence = { presence: Presence; user: User };
 export function UserAvatarGroup(props: AvatarGroupProps) {
   // Get current user
   const { user } = useUser();
+
+  // User you are currently following
+  const [following, setFollowing] = useState<UserAndPresence | null>(null);
+
+  // PrsenceStore
+  const updatePresence = usePresenceStore((state) => state.update);
+
   // UI Stuff
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
   const scale = useUIStore((state) => state.scale);
-  const followColor = useHexColor('red.300');
-  const borderColor = useHexColor('');
-
-  // User you are currently following
-  const [following, setFollowing] = useState<UserAndPresence | null>(null);
+  const toast = useToast();
 
   // Get all users
   const users = useUsersStore((state) => state.users);
   // Get presences of users
   let presences = usePresenceStore((state) => state.presences);
+
   // Filter out the users who are not present on the board and is not the current user
   presences = presences.filter((el) => el.data.boardId === props.boardId && el._id !== user?._id);
 
@@ -52,18 +59,21 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
   useEffect(() => {
     // If not following anyone, exit
     if (!following) return;
-    const user = userPresence.find((el) => el.presence._id === following.presence._id);
+    const u = userPresence.find((el) => el.presence._id === following.presence._id);
     // Check if the you are following is still on this board
-    if (!user) {
+    if (!u) {
+      user && updatePresence(user?._id, { following: '' });
       setFollowing(null);
     } else {
       // Set you position to their current position
-      goToViewport(user);
+      goToViewport(u);
     }
-  }, [userPresence, following]);
+  }, [userPresence, following, user]);
 
+  // If the user closed the UserPanel, stop following
   useEffect(() => {
     return () => {
+      user && updatePresence(user?._id, { following: '' });
       setFollowing(null);
     };
   }, []);
@@ -75,10 +85,9 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     return aType - bType;
   });
 
+  // Go to the user's cursor
   function goToCursor(user: UserAndPresence) {
     if (user) {
-      const type = user.user.data.userType;
-
       const cx = -user.presence.data.cursor.x;
       const cy = -user.presence.data.cursor.y;
       const wx = window.innerWidth / scale / 2;
@@ -88,6 +97,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     }
   }
 
+  // Go to the user's viewport
   function goToViewport(user: UserAndPresence) {
     if (user) {
       const type = user.user.data.userType;
@@ -110,11 +120,25 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     }
   }
 
-  function followUser(user: UserAndPresence) {
-    if (user.user._id === following?.user._id) {
+  // Follow a user
+  function followUser(u: UserAndPresence) {
+    if (!user) return;
+    if (u.user._id === following?.user._id) {
       setFollowing(null);
+      user && updatePresence(user._id, { following: '' });
     } else {
-      setFollowing(user);
+      // If the other user is following you, you can't follow them
+      if (u.presence.data.following === user._id) {
+        toast({
+          status: 'error',
+          description: `${u.user.data.name} is already following you.`,
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+      setFollowing(u);
+      user && updatePresence(user._id, { following: u.user._id });
     }
   }
 
@@ -164,9 +188,15 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                   </MenuButton>
                   <MenuList>
                     <MenuGroup title={el.user.data.name}>
-                      <MenuItem onClick={() => goToCursor(el)}>Go to Cursor</MenuItem>
-                      <MenuItem onClick={() => goToViewport(el)}>Match Viewport</MenuItem>
-                      <MenuItem onClick={() => followUser(el)}>{followingThisUser ? 'Unfollow' : 'Follow'}</MenuItem>
+                      <MenuItem height="30px" icon={<GiArrowCursor />} onClick={() => goToCursor(el)}>
+                        Show Cursor
+                      </MenuItem>
+                      <MenuItem height="30px" icon={<IoMdSquareOutline />} onClick={() => goToViewport(el)}>
+                        Show View
+                      </MenuItem>
+                      <MenuItem height="30px" icon={<HiOutlineChevronDoubleRight />} onClick={() => followUser(el)}>
+                        {followingThisUser ? 'Unfollow' : 'Follow'}
+                      </MenuItem>
                     </MenuGroup>
                   </MenuList>
                 </Menu>
