@@ -31,7 +31,8 @@ import {
 
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
-import Editor, { Monaco } from "@monaco-editor/react";
+import Editor, { Monaco, useMonaco } from "@monaco-editor/react";
+// import * as MEditor from 'monaco-editor';
 
 // UUID generation
 import { v4 as getUUID } from 'uuid';
@@ -325,36 +326,34 @@ type InputBoxProps = {
 const InputBox = (props: InputBoxProps): JSX.Element => {
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const monaco = useRef<Monaco>();
+  // Reference to the editor
+  const editor = useRef<Monaco>();
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
   const { colorMode } = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
-  const [lines, setLines] = useState(1);
+  const [lines, setLines] = useState(s.code.split('\n').length);
+  const [position, setPosition] = useState({ r: 1, c: 1 });
+  // Make a toast to show errors
   const toast = useToast();
+  // Handle to the Monoco API
+  const monaco = useMonaco();
 
+  // Register a new command to evaluate the code
   useEffect(() => {
-    // if (ace.current) {
-    //   ace.current.editor.commands.removeCommand('Execute');
-    //   ace.current.editor.commands.addCommand({
-    //     name: 'Execute',
-    //     bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' },
-    //     exec: () => handleExecute(s.kernel),
-    //   });
-    // }
-
-    if (monaco.current) {
-      monaco.current.addAction({
+    if (editor.current) {
+      editor.current.addAction({
         id: 'execute',
         label: 'Execute',
-        keybindings: [KeyMod.Shift | KeyCode.Enter],
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
         run: () => handleExecute(s.kernel),
       });
     }
-  }, [s.kernel, monaco.current]);
+
+  }, [s.kernel, editor.current]);
 
   const handleExecute = (kernel: string) => {
-    const code = monaco.current?.getValue();
+    const code = editor.current?.getValue();
     if (!kernel) {
       toast({
         title: 'No kernel selected',
@@ -381,7 +380,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       output: '',
       executeInfo: { executeFunc: '', params: {} },
     });
-    monaco.current?.setValue('');
+    editor.current?.setValue('');
   };
 
   useEffect(() => {
@@ -406,8 +405,11 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   }, [s.fontSize]);
 
   // Get the reference to the Monaco Editor after it mounts
-  function handleEditorDidMount(editor: Monaco) {
-    monaco.current = editor;
+  function handleEditorDidMount(ed: typeof Editor) {
+    editor.current = ed;
+    editor.current.onDidChangeCursorPosition((ev: any) => {
+      setPosition({ r: ev.position.lineNumber, c: ev.position.column });
+    });
   }
 
   return (
@@ -496,7 +498,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               "wordWrapColumn": 80,
               "wordWrapMinified": true,
               "wrappingIndent": "none"
-
             }}
           />
         </Box>
@@ -535,14 +536,9 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           ) : null}
         </VStack>
       </HStack>
-      {/* <Stack px={4}> */}
-      {/* <Text color={useColorModeValue('#000000', '#FFFFFF')}> */}
-      {/* <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
-        {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
-      </Flex> */}
-      {/* </Text> */}
-      {/* </Stack> */}
+      <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
+        Ln: {position.r}, Col:{' '} {position.c}
+      </Flex>
     </Box>
   );
 };
