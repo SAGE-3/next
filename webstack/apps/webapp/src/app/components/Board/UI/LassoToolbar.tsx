@@ -6,8 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure } from '@chakra-ui/react';
 import { MdClose, MdZoomOutMap } from 'react-icons/md';
+
 import { ConfirmModal, useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
 
 /**
@@ -25,7 +27,11 @@ export function LassoToolbar() {
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedApps);
   const fitApps = useUIStore((state) => state.fitApps);
-  const showLasso = lassoApps.length > 0;
+  const [showLasso, setShowLasso] = useState(lassoApps.length > 0)
+
+  useEffect(() => {
+    setShowLasso(lassoApps.length > 0);
+  }, [lassoApps]);
 
   // Theme
   const background = useColorModeValue('gray.50', 'gray.700');
@@ -42,6 +48,7 @@ export function LassoToolbar() {
       deleteApp(app);
     });
     deleteOnClose();
+    setShowLasso(false);
   };
 
   // Zoom the user's view to fit all the selected apps
@@ -49,6 +56,7 @@ export function LassoToolbar() {
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     fitApps(selectedApps);
   };
+
   return (
     <>
       {showLasso && (
@@ -98,6 +106,7 @@ export function LassoToolbar() {
           </Box>
         </Box>
       )}
+
       <ConfirmModal
         isOpen={deleteIsOpen}
         onClose={deleteOnClose}
