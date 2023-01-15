@@ -31,7 +31,7 @@ import {
 
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
-import Editor, { Monaco, useMonaco } from "@monaco-editor/react";
+import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 // import * as MEditor from 'monaco-editor';
 
 // UUID generation
@@ -282,7 +282,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
               <Button
                 isDisabled={s.fontSize <= 8}
-                onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
+                onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
                 _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
               >
                 <MdRemove />
@@ -349,7 +349,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         run: () => handleExecute(s.kernel),
       });
     }
-
   }, [s.kernel, editor.current]);
 
   const handleExecute = (kernel: string) => {
@@ -442,62 +441,62 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               fontSize: `${fontSize}px`,
               minimap: { enabled: false },
               lineNumbersMinChars: 4,
-              "acceptSuggestionOnCommitCharacter": true,
-              "acceptSuggestionOnEnter": "on",
-              "accessibilitySupport": "auto",
-              "autoIndent": false,
-              "automaticLayout": true,
-              "codeLens": true,
-              "colorDecorators": true,
-              "contextmenu": false,
-              "cursorBlinking": "blink",
-              "cursorSmoothCaretAnimation": false,
-              "cursorStyle": "line",
-              "disableLayerHinting": false,
-              "disableMonospaceOptimizations": false,
-              "dragAndDrop": false,
-              "fixedOverflowWidgets": false,
-              "folding": true,
-              "foldingStrategy": "auto",
-              "fontLigatures": false,
-              "formatOnPaste": false,
-              "formatOnType": false,
-              "hideCursorInOverviewRuler": false,
-              "highlightActiveIndentGuide": true,
-              "links": true,
-              "mouseWheelZoom": false,
-              "multiCursorMergeOverlapping": true,
-              "multiCursorModifier": "alt",
-              "overviewRulerBorder": false,
-              "overviewRulerLanes": 0,
-              "quickSuggestions": false,
-              "quickSuggestionsDelay": 100,
-              "readOnly": false,
-              "renderControlCharacters": false,
-              "renderFinalNewline": true,
-              "renderIndentGuides": true,
-              "renderLineHighlight": "all",
-              "renderWhitespace": "none",
-              "revealHorizontalRightPadding": 30,
-              "roundedSelection": true,
-              "rulers": [],
-              "scrollBeyondLastColumn": 5,
-              "scrollBeyondLastLine": true,
-              "selectOnLineNumbers": true,
-              "selectionClipboard": true,
-              "selectionHighlight": true,
-              "showFoldingControls": "mouseover",
-              "smoothScrolling": false,
-              "suggestOnTriggerCharacters": true,
-              "wordBasedSuggestions": true,
-              "wordSeparators": "~!@#$%^&*()-=+[{]}|;:'\",.<>/?",
-              "wordWrap": "off",
-              "wordWrapBreakAfterCharacters": "\t})]?|&,;",
-              "wordWrapBreakBeforeCharacters": "{([+",
-              "wordWrapBreakObtrusiveCharacters": ".",
-              "wordWrapColumn": 80,
-              "wordWrapMinified": true,
-              "wrappingIndent": "none"
+              acceptSuggestionOnCommitCharacter: true,
+              acceptSuggestionOnEnter: 'on',
+              accessibilitySupport: 'auto',
+              autoIndent: false,
+              automaticLayout: true,
+              codeLens: true,
+              colorDecorators: true,
+              contextmenu: false,
+              cursorBlinking: 'blink',
+              cursorSmoothCaretAnimation: false,
+              cursorStyle: 'line',
+              disableLayerHinting: false,
+              disableMonospaceOptimizations: false,
+              dragAndDrop: false,
+              fixedOverflowWidgets: false,
+              folding: true,
+              foldingStrategy: 'auto',
+              fontLigatures: false,
+              formatOnPaste: false,
+              formatOnType: false,
+              hideCursorInOverviewRuler: false,
+              highlightActiveIndentGuide: true,
+              links: true,
+              mouseWheelZoom: false,
+              multiCursorMergeOverlapping: true,
+              multiCursorModifier: 'alt',
+              overviewRulerBorder: false,
+              overviewRulerLanes: 0,
+              quickSuggestions: false,
+              quickSuggestionsDelay: 100,
+              readOnly: false,
+              renderControlCharacters: false,
+              renderFinalNewline: true,
+              renderIndentGuides: true,
+              renderLineHighlight: 'all',
+              renderWhitespace: 'none',
+              revealHorizontalRightPadding: 30,
+              roundedSelection: true,
+              rulers: [],
+              scrollBeyondLastColumn: 5,
+              scrollBeyondLastLine: true,
+              selectOnLineNumbers: true,
+              selectionClipboard: true,
+              selectionHighlight: true,
+              showFoldingControls: 'mouseover',
+              smoothScrolling: false,
+              suggestOnTriggerCharacters: true,
+              wordBasedSuggestions: true,
+              wordSeparators: '~!@#$%^&*()-=+[{]}|;:\'",.<>/?',
+              wordWrap: 'off',
+              wordWrapBreakAfterCharacters: '\t})]?|&,;',
+              wordWrapBreakBeforeCharacters: '{([+',
+              wordWrapBreakObtrusiveCharacters: '.',
+              wordWrapColumn: 80,
+              wordWrapMinified: true,
+              wrappingIndent: 'none',
             }}
           />
         </Box>
@@ -537,7 +536,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         </VStack>
       </HStack>
       <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {position.r}, Col:{' '} {position.c}
+        Ln: {position.r}, Col: {position.c}
       </Flex>
     </Box>
   );
@@ -617,78 +616,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.display_data.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.display_data.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  default:
+                    return MapJSONObject(parsedJSON.display_data[key]);
+                }
+              });
+            }
+            return null;
+          })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.execute_result.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                default:
-                  return null;
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.execute_result.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  default:
+                    return null;
+                }
+              });
+            }
+            return null;
+          })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-          // find the user name that matches the userId
-          if (userId !== props.user._id) {
-            return null;
-          }
-          return (
-            <Toast
-              status="error"
-              position="bottom"
-              description={message + ', ' + props.user.data.name}
-              duration={4000}
-              isClosable
-              onClose={() => updateState(props.app._id, { privateMessage: [] })}
-              hidden={userId !== props.user._id}
-            />
-          );
-        })}
+            // find the user name that matches the userId
+            if (userId !== props.user._id) {
+              return null;
+            }
+            return (
+              <Toast
+                status="error"
+                position="bottom"
+                description={message + ', ' + props.user.data.name}
+                duration={4000}
+                isClosable
+                onClose={() => updateState(props.app._id, { privateMessage: [] })}
+                hidden={userId !== props.user._id}
+              />
+            );
+          })}
     </Box>
   );
 };
@@ -714,30 +713,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-          if (typeof obj[key] === 'object') {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
+            if (typeof obj[key] === 'object') {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {MapJSONObject(obj[key])}
+                  </Box>
                 </Box>
-                <Box as="span" ml={2}>
-                  {MapJSONObject(obj[key])}
+              );
+            } else {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {obj[key]}
+                  </Box>
                 </Box>
-              </Box>
-            );
-          } else {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
-                </Box>
-                <Box as="span" ml={2}>
-                  {obj[key]}
-                </Box>
-              </Box>
-            );
-          }
-        })
+              );
+            }
+          })
         : null}
     </Box>
   );
