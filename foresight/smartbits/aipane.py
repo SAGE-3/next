@@ -119,7 +119,6 @@ class AIPane(SmartBit):
         Callback function that handles the output produced by AI model. Produces a payload of bounding boxes and labels.
         Sends output to ImageViewer
         """
-        print("I am handling the execution results")
         print(f"the apps involved are {self._pending_executions[msg_uuid]}")
         if msg["output"] != '':
             for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):

@@ -28,7 +28,6 @@ class Seer(SmartBit):
     _jupyter_client = PrivateAttr()
     _token = PrivateAttr()
 
-
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(Seer, self).__init__(**kwargs)
@@ -67,7 +66,7 @@ class Seer(SmartBit):
         if self._kernel:
             self._jupyter_client.execute(command_info)
 
-    def execute(self, uuid):
+    def execute(self, _uuid):
         print("I am in seer's execute.")
         # TODO: handle the posts as async instead
         intent = None
@@ -80,7 +79,7 @@ class Seer(SmartBit):
 
             if intent is None or intent == "?":
                 # TODO return an error saying that we cannot find the intent.
-                msg = {"request_id": uuid,
+                msg = {"request_id": _uuid,
                        "error": {
                            'ename': "IntentNotFound",  # Exception name, as a string
                            'evalue': "Errot detection instruction intent",  # Exception value, as a string
@@ -96,16 +95,16 @@ class Seer(SmartBit):
                         code = resp.json()["code"]
                     headers = f"storage_params = {self._token}"
                     code = headers + "\n\n" + code
-                    print(f"\n\n\ncode is: {code}\n\n\n")
-                    self.exec_python(uuid, code)
+                    print(f"\n\n\ncode is:\n {code}\n\n\n")
+                    self.exec_python(_uuid, code)
                 elif intent.upper() == "QUERY" or intent.upper() == "VISUAL":
                     resp = httpx.post('http://127.0.0.1:5000/handle_query', headers=headers, json=payload)
                     if resp.status_code == 200 and resp.json()["status"] == "success":
                         code = resp.json()["code"]
                         print(f"\n\n\ncode is: {code}\n\n\n")
-                        self.exec_python(uuid, code)
+                        self.exec_python(_uuid, code)
         else:
-            self.exec_python(uuid, self.state.code)
+            self.exec_python(_uuid, self.state.code)
 
     def clean_up(self):
         pass
