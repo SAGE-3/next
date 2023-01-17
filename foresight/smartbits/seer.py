@@ -89,20 +89,23 @@ class Seer(SmartBit):
                 self.handle_exec_result(msg)
 
             else:
-                if intent == "LOAD":
-                    resp = httpx.post('http://127.0.0.1:5000/load_dataset', headers=headers, json=payload)
+                if intent.upper() == "LOAD":
+                    print("\n\n\n\nI AM HERE\n\n\n\n")
+                    resp = httpx.post('http://127.0.0.1:5000/load_dataset', headers=headers, json=payload, timeout=10.0)
                     if resp.status_code == 200 and resp.json()["status"] == "success":
                         code = resp.json()["code"]
-                    headers = f"storage_params = {self._token}"
-                    code = headers + "\n\n" + code
+                    # headers = f"storage_params = {self._token}"
+                    # code = headers + "\n\n" + code
                     print(f"\n\n\ncode is:\n {code}\n\n\n")
                     self.exec_python(_uuid, code)
                 elif intent.upper() == "QUERY" or intent.upper() == "VISUAL":
-                    resp = httpx.post('http://127.0.0.1:5000/handle_query', headers=headers, json=payload)
+                    resp = httpx.post('http://127.0.0.1:5000/handle_query', headers=headers, json=payload, timeout=10.0)
                     if resp.status_code == 200 and resp.json()["status"] == "success":
                         code = resp.json()["code"]
                         print(f"\n\n\ncode is: {code}\n\n\n")
                         self.exec_python(_uuid, code)
+                else:
+                    self.exec_python(_uuid, "print('Not yet supported')")
         else:
             self.exec_python(_uuid, self.state.code)
 

@@ -128,7 +128,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       updateState(props.app._id, {
         code: code,
         output: '',
-        executeInfo: {executeFunc: 'execute', params: {uuid: getUUID()}},
+        executeInfo: {executeFunc: 'execute', params: {_uuid: getUUID()}},
       });
     }
   };
