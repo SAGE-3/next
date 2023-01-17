@@ -108,8 +108,8 @@ export function ApplicationsPanel(props: ApplicationProps) {
     let w = 400;
     let h = 400;
     if (appName === 'SageCell') {
-      w = 800;
-      h = 300;
+      w = 650;
+      h = 400;
     } else if (appName === 'KernelDashboard') {
       w = 800;
       h = 300;

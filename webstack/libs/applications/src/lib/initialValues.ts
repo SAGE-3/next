@@ -5,7 +5,6 @@ import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewe
 import { name as ChartMakerName, init as defaultChartMaker } from './apps/ChartMaker';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
-import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
@@ -34,7 +33,6 @@ export const initialValues = {
   [ChartMakerName]: defaultChartMaker,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
-  [CodeCellName]: defaultCodeCell,
   [CounterName]: defaultCounter,
   [DataTableName]: defaultDataTable,
   [DeepZoomImageName]: defaultDeepZoomImage,
