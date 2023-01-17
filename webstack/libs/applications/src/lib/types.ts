@@ -28,7 +28,6 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 
-
 export type AppState =
   | {}
   | AIPaneState
@@ -59,9 +58,30 @@ export type AppState =
   | VideoViewerState
   | WebviewState;
 
-
-<<<<<<< HEAD
-export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CodeCellName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
-=======
-export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof RTCChatName | typeof SageCellName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
->>>>>>> dev
+export type AppName =
+  | typeof AIPaneName
+  | typeof CSVViewerName
+  | typeof ChartMakerName
+  | typeof ClockName
+  | typeof CobrowseName
+  | typeof CounterName
+  | typeof DataTableName
+  | typeof DeepZoomImageName
+  | typeof GLTFViewerName
+  | typeof ImageViewerName
+  | typeof JupyterLabName
+  | typeof KernelDashboardName
+  | typeof KernelsName
+  | typeof LeafLetName
+  | typeof LinkerName
+  | typeof NotepadName
+  | typeof PDFResultName
+  | typeof PDFViewerName
+  | typeof RTCChatName
+  | typeof SageCellName
+  | typeof StickieName
+  | typeof TwilioScreenshareName
+  | typeof VegaLiteName
+  | typeof VegaLiteViewerName
+  | typeof VideoViewerName
+  | typeof WebviewName;
