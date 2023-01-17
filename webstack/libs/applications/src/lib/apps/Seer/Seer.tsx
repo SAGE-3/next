@@ -32,7 +32,7 @@ import './styling.css';
 import {MdClearAll, MdPlayArrow} from "react-icons/md";
 import {useEffect, useRef, useState} from "react";
 
-import AceEditor from "react-ace";
+// import AceEditor from "react-ace";
 import {v4 as getUUID} from "uuid";
 import {User} from "@sage3/shared/types";
 import Ansi from "ansi-to-react";
