@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useRef } from 'react';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ModalCloseButton } from '@chakra-ui/react';
 
 import { SAGEColors } from '@sage3/shared';
@@ -32,8 +33,10 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
   const confirmText = props.confirmText || 'Confirm';
   const cancelButtonColor = props.cancelColor || 'gray';
   const confirmButtonColor = props.confirmColor || 'teal';
+  const initialRef = useRef(null);
+
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered>
+    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered initialFocusRef={initialRef}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{props.title}</ModalHeader>
@@ -41,7 +44,7 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
         <ModalBody>{props.message}</ModalBody>
 
         <ModalFooter>
-          <Button colorScheme={cancelButtonColor} mr={3} onClick={props.onClose}>
+          <Button colorScheme={cancelButtonColor} mr={3} ref={initialRef} onClick={props.onClose}>
             {cancelText}
           </Button>
           <Button colorScheme={confirmButtonColor} onClick={props.onConfirm}>

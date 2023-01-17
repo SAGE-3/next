@@ -6,31 +6,24 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-//Sage3 Imports
+// React Imports
+import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router';
+
+// Library imports
+import { Button, ButtonGroup, Box } from '@chakra-ui/react';
+
+// Import Monaco Editor
+import Editor, { Monaco, useMonaco } from "@monaco-editor/react";
+
+
+// Sage3 Imports
 import { useAppStore, useUser } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from '.';
 import { AppWindow } from '../../components';
 import { debounce } from 'throttle-debounce';
 
-//React Imports
-import { useEffect, useRef, useState } from 'react';
-
-//Library imports
-import { Button } from '@chakra-ui/react';
-
-//Import ace editor tools
-import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-json';
-import 'ace-builds/src-noconflict/mode-html';
-import 'ace-builds/src-noconflict/mode-typescript';
-import 'ace-builds/src-noconflict/theme-monokai';
-import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
-import 'ace-builds/src-noconflict/theme-xcode';
-import 'ace-builds/src-noconflict/keybinding-vscode';
-import 'ace-builds/src-noconflict/ext-language_tools';
-import { useParams } from 'react-router';
 
 /* App component for VegaLite */
 
@@ -41,15 +34,15 @@ import { useParams } from 'react-router';
  * @returns {JSX.Element}
  */
 function AppComponent(props: App): JSX.Element {
-  //SAGE state
+  // SAGE state
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  //LocalState
+  // LocalState
   const [spec, setSpec] = useState(s.spec);
 
-  //aceEditor ref
-  const ace = useRef<AceEditor>(null);
+  // Editor ref
+  const editor = useRef<Monaco>();
 
   // Update local value with value from the server
   useEffect(() => {
@@ -58,7 +51,6 @@ function AppComponent(props: App): JSX.Element {
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(1000, (val) => {
-    console.log('debounce');
     updateState(props._id, { spec: val });
   });
 
@@ -66,50 +58,43 @@ function AppComponent(props: App): JSX.Element {
   const debounceFunc = useRef(debounceSave);
 
   // callback for aceditor change
-  function handleTextChange(ev: string) {
-    const inputValue = ev;
+  function handleTextChange(value: string | undefined) {
+    if (!value) return;
     // Update the local value
-    setSpec(inputValue);
+    setSpec(value);
     // Update the text when not typing
-    debounceFunc.current(inputValue);
+    debounceFunc.current(value);
   }
 
   return (
     <AppWindow app={props}>
-      <>
-        <AceEditor
-          ref={ace}
-          value={spec}
+      <Box style={{
+        width: '95%',
+        height: '100%',
+        border: 'none',
+        marginTop: 15,
+        marginLeft: 15,
+        marginRight: 0,
+        marginBottom: 10,
+        padding: 0,
+        overflow: 'hidden',
+        borderRadius: '8px',
+      }}
+      >
+        <Editor
+          defaultValue={spec}
           onChange={handleTextChange}
-          style={{
-            width: '95%',
-            height: '100%',
-            border: 'none',
-            marginTop: 15,
-            marginLeft: 15,
-            marginRight: 0,
-            marginBottom: 10,
-            padding: 0,
-            overflow: 'hidden',
-            borderRadius: '12px',
-          }}
-          name="ace"
-          fontSize={'1em'}
-          minLines={6}
-          maxLines={Math.floor(props.data.size.height / 18)}
-          placeholder="Enter code here"
-          mode={'python'}
-          editorProps={{ $blockScrolling: true }}
-          setOptions={{
-            hasCssTransforms: true,
-            showGutter: true,
-            showPrintMargin: false,
-            highlightActiveLine: true,
-            showLineNumbers: true,
-            wrap: true,
+          height={"95%"}
+          language={'json'}
+          options={{
+            fontSize: '10px',
+            minimap: { enabled: false },
+            lineNumbersMinChars: 4,
+            "overviewRulerBorder": false,
+            "overviewRulerLanes": 0,
           }}
         />
-      </>
+      </Box>
     </AppWindow>
   );
 }
@@ -117,12 +102,12 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app VegaLite */
 
 function ToolbarComponent(props: App): JSX.Element {
-  //State
+  // State
   const s = props.data.state as AppState;
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
 
-  //BoardInfo
+  // BoardInfo
   const { boardId, roomId } = useParams();
 
   // Creates a new VegaLiteViewer app with aceeditor text
@@ -144,11 +129,11 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   return (
-    <>
+    <ButtonGroup isAttached size="xs" colorScheme="teal">
       <Button onClick={createChart} colorScheme="green">
         Create View
       </Button>
-    </>
+    </ButtonGroup>
   );
 }
 

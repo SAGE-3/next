@@ -5,7 +5,6 @@ import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as ChartMakerName } from './apps/ChartMaker';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
-import { name as CodeCellName } from './apps/CodeCell';
 import { name as CounterName } from './apps/Counter';
 import { name as DataTableName } from './apps/DataTable';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
@@ -35,7 +34,6 @@ import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartMaker from './apps/ChartMaker/ChartMaker';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
-import CodeCell from './apps/CodeCell/CodeCell';
 import Counter from './apps/Counter/Counter';
 import DataTable from './apps/DataTable/DataTable';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
@@ -67,7 +65,6 @@ export const Applications = {
   [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent },
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent },
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent },
-  [CodeCellName]: { AppComponent: React.memo(CodeCell.AppComponent), ToolbarComponent: CodeCell.ToolbarComponent },
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent },
   [DataTableName]: { AppComponent: React.memo(DataTable.AppComponent), ToolbarComponent: DataTable.ToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent },
