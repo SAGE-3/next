@@ -13,7 +13,7 @@ from utils.layout import Layout
 
 
 class Board():
-    # cls_root = "smartbits"
+
 
     def __init__(self, doc):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
@@ -24,28 +24,16 @@ class Board():
         self.description = doc["data"]["description"]
         self.color = doc["data"]["color"]
         self.ownerId = doc["data"]["ownerId"]
-
+        self.layout = None
+        self.whiteboard_lines = None
         self.smartbits = SmartBitsCollection()
+
         if "executeInfo" in doc["data"]:
             self.executeInfo = doc["data"]["executeInfo"]
         else:
             self.executeInfo = {'executeFunc': '', 'params': {}}
 
-
-
-
-
-
-
-
-
-
-
-
-
-    def reorganize_layout(self, viewport_position, viewport_size, buffer_size = 100, by="UNUSED", mode="rectpacking"):
-        # TODO: get rid of by
-
+    def reorganize_layout(self, viewport_position, viewport_size, buffer_size = 100, by="combined", mode="graphviz"):
         if by not in ["app_type", "semantic"]:
             print(f"{by} not a valid by option to organize layout. Not executing")
             return
@@ -60,10 +48,14 @@ class Board():
         print(f"viewport size  is {viewport_size}")
 
         app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size) for x in self.smartbits.smartbits_collection.values()}
-        l = Layout(app_dims, viewport_position, viewport_size)
-        l.graphviz_layout()
+        app_to_type = {x:type(self.smartbits[x]).__name__ for x in app_dims.keys()}
 
-        for app_id, coords in l._layout_dict.items():
+        self.layout = Layout(app_dims, viewport_position, viewport_size)
+        # self.layout = Layout(app_dims, viewport_position, viewport_size)
+        #self.layout.graphviz_layout()
+        self.layout.fdp_graphviz_layout(app_to_type)
+
+        for app_id, coords in self.layout._layout_dict.items():
             sb = self.smartbits[app_id]
             sb.data.position.x = coords[0]
             sb.data.position.y = coords[1]

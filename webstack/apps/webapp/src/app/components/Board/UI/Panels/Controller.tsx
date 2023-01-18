@@ -74,7 +74,8 @@ export function Controller(props: ControllerProps) {
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'reorganize_layout',
-        params: { viewport_position: presence.data.viewport.position, viewport_size: presence.data.viewport.size,  by: "app_type", "mode": "tiles"}
+        params: { viewport_position: presence.data.viewport.position, viewport_size: presence.data.viewport.size,
+          by: "app_type", "mode": "tiles"}
       }
     });
     console.log("I am done");

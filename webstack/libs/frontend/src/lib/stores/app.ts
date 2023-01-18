@@ -12,9 +12,6 @@ import createVanilla from 'zustand/vanilla';
 // The React Version of Zustand
 import createReact from 'zustand';
 
-// Application specific schema
-import { genId } from '@sage3/shared';
-
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
 

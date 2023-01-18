@@ -54,6 +54,9 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
     if (!show) {
       setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
       setStuck(StuckTypes.Controller);
+      setWhiteboardMode(false);
+    } else {
+      setWhiteboardMode(true);
     }
   }, [show]);
 

@@ -6,41 +6,45 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-/**
- * SAGE3 application: CodeCell
- * created by: SAGE3 team
- */
 import { z } from 'zod';
+import {executeInfoType} from "../SageCell";
+
+/**
+ * SAGE3 application: Seer
+ * created by: Mahdi
+ */
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.record(z.any()),
+
 });
+const fieldTypes = z.enum(["code", "text"])
+export type fieldT =  z.infer<typeof fieldTypes>;
+
 
 export const schema = z.object({
-  code: z.string(),
-  language: z.string(),
   fontSize: z.number(),
-  theme: z.string(),
-  kernel: z.string(),
+  fieldType: fieldTypes,
+  execCount: z.number(),
+  code: z.string(),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
   }),
+
 });
 
-export type executeInfoType = z.infer<typeof executeInfoSchema>;
+// export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 
-export const init: state = {
+export const init: Partial<state> = {
+  fieldType: "code",
   code: '',
-  language: 'python',
-  fontSize: 1,
-  theme: 'xcode',
-  kernel: '',
   output: '',
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
+  fontSize: 24,
 };
 
-export const name = 'CodeCell';
+export const name = 'Seer';

@@ -112,7 +112,6 @@ export function NavigationPanel(props: NavProps) {
     setSelectedApp(app._id);
 
     // Scale
-    const s = scale;
     const aW = app.data.size.width + 60; // Border Buffer
     const aH = app.data.size.height + 100; // Border Buffer
     const wW = window.innerWidth;
