@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import {executeInfoType} from "../SageCell";
+import { executeInfoType } from '../SageCell';
 
 /**
  * SAGE3 application: Seer
@@ -17,34 +17,30 @@ import {executeInfoType} from "../SageCell";
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.record(z.any()),
-
 });
-const fieldTypes = z.enum(["code", "text"])
-export type fieldT =  z.infer<typeof fieldTypes>;
-
+// const fieldTypes = z.enum(["code", "text"])
+// export type fieldT =  z.infer<typeof fieldTypes>;
 
 export const schema = z.object({
   fontSize: z.number(),
-  fieldType: fieldTypes,
-  execCount: z.number(),
+  input: z.string(),
   code: z.string(),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
   }),
-
 });
 
 // export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  fieldType: "code",
+  fontSize: 24,
+  input: '',
   code: '',
   output: '',
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
-  fontSize: 24,
 };
 
 export const name = 'Seer';

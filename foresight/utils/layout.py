@@ -1,7 +1,7 @@
-from rectpack import newPacker
-import rectpack.packer
-import networkx as nx
-import graphviz
+# from rectpack import newPacker
+# import rectpack.packer
+# import networkx as nx
+# import graphviz
 import json
 
 
