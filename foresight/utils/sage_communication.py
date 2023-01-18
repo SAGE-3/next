@@ -53,9 +53,12 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        print("app update data is")
-        print(data)
-        print("------------")
+        if 'state.online' in data:
+            pass
+        else:
+            print("\n\napp update data is")
+            print(data)
+            print("------------\n\n")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
                                    json=data)

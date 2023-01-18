@@ -148,8 +148,13 @@ class SAGEProxy:
                 print(f"Message queue was closed")
                 return
 
-            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                pass
+            if "updates" in msg['event']:
+                if 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                    pass
+                # if 'state.online' in msg['event']['updates'] and msg['event']['updates']['state.online']:
+                #     pass
+                # if 'state.lastHeartbeat' in msg['event']['updates'] and msg['event']['updates']['state.lastHeartbeat'] != 0:
+                #     pass
 
             # logger.debug(f"Getting ready to process: {msg}")
 

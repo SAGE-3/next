@@ -37,7 +37,48 @@ class WebSocketListener:
     def on_message(self, ws, message):
 
         msg = json.loads(message)
-        print(f"msg: {msg}")
+        # msg: {
+        #     'id': 'f90ca6b5-1025-4875-92b3-6cc69387ed5c',
+        #     'event': {
+        #         'type': 'UPDATE',
+        #         'doc': {
+        #             '_id': '82beeb64-3910-4cac-beb9-e676ac9a363d',
+        #             '_createdAt': 1673670963591,
+        #             '_createdBy': 'e5a9a3da-e141-4412-8a51-51567c6ee810',
+        #             '_updatedAt': 1674030074889,
+        #             '_updatedBy': 'c922f4c5-b2b4-4942-9391-f5f949cb2dd4',
+        #             'data': {
+        #                 'title': 'Kernel Dashboard',
+        #                 'roomId': '257024f7-fa24-4eab-8443-e4ab4b81ff75',
+        #                 'boardId': 'b00c2139-50fb-4e1b-8694-746c5680c652',
+        #                 'position': {'x': 1501157, 'y': 1499601, 'z': 0 },
+        #                 'size': {'width': 2100, 'height': 787, 'depth': 0},
+        #                 'rotation': {'x': 0, 'y': 0, 'z': 0},
+        #                 'type': 'KernelDashboard',
+        #                 'state': {
+        #                     'kernelSpecs': ['python3', 'julia-1.8', 'ir'],
+        #                     'availableKernels': [],
+        #                     'executeInfo': {
+        #                         'executeFunc': '', 'params': {}
+        #                         },
+        #                     'online': True,
+        #                     'lastHeartBeat': 1674030074879
+        #                     },
+        #                 'raised': False
+        #                 }
+        #             },
+        #         'updates': {
+        #             'state.lastHeartBeat': 1674030074879,
+        #             'state.online': True
+        #             },
+        #         'col': 'APPS'
+        #         }
+        #      }
+        if 'updates' in msg['event'] and 'state.online' in msg['event']['updates'] and msg['event']['updates']['state.online'] == True:
+            # print("online")
+            pass
+        else:
+            print(f"msg: {msg}")
         # check is needed because we get duplicted messages.
         # # TODO: emtpy the queue when it get to a size of X
         if msg['id'] not in self.received_msg_log or \
@@ -46,6 +87,7 @@ class WebSocketListener:
 
             self.message_queue.put(msg)
             self.received_msg_log[msg['id']] = (msg['event']['type'], msg['event']['doc']['_updatedAt'])
+
 
     def on_error(self, ws, error):
         print(f"error in webserver connection {error}")
