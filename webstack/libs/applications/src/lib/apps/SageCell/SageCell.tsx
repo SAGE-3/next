@@ -12,6 +12,7 @@ import {
   Button,
   HStack,
   useColorModeValue,
+  useColorMode,
   Tooltip,
   ButtonGroup,
   Select,
@@ -30,12 +31,8 @@ import {
 
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
-import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-json';
-import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
-import 'ace-builds/src-noconflict/theme-xcode';
-import 'ace-builds/src-noconflict/keybinding-vscode';
+import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
+// import * as MEditor from 'monaco-editor';
 
 // UUID generation
 import { v4 as getUUID } from 'uuid';
@@ -285,7 +282,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
               <Button
                 isDisabled={s.fontSize <= 8}
-                onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
+                onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
                 _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
               >
                 <MdRemove />
@@ -329,25 +326,33 @@ type InputBoxProps = {
 const InputBox = (props: InputBoxProps): JSX.Element => {
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const ace = useRef<AceEditor>(null);
+  // Reference to the editor
+  const editor = useRef<Monaco>();
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
+  const { colorMode } = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
+  const [lines, setLines] = useState(s.code.split('\n').length);
+  const [position, setPosition] = useState({ r: 1, c: 1 });
+  // Make a toast to show errors
   const toast = useToast();
+  // Handle to the Monoco API
+  const monaco = useMonaco();
 
+  // Register a new command to evaluate the code
   useEffect(() => {
-    if (ace.current) {
-      ace.current.editor.commands.removeCommand('Execute');
-      ace.current.editor.commands.addCommand({
-        name: 'Execute',
-        bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' },
-        exec: () => handleExecute(s.kernel),
+    if (editor.current) {
+      editor.current.addAction({
+        id: 'execute',
+        label: 'Execute',
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+        run: () => handleExecute(s.kernel),
       });
     }
-  }, [s.kernel, ace.current]);
+  }, [s.kernel, editor.current]);
 
   const handleExecute = (kernel: string) => {
-    const code = ace.current?.editor?.getValue();
+    const code = editor.current?.getValue();
     if (!kernel) {
       toast({
         title: 'No kernel selected',
@@ -374,7 +379,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       output: '',
       executeInfo: { executeFunc: '', params: {} },
     });
-    ace.current?.editor?.setValue('');
+    editor.current?.setValue('');
   };
 
   useEffect(() => {
@@ -383,38 +388,33 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     }
   }, [s.code]);
 
-  // Update from Ace Editor
-  const updateCode = (c: string) => {
-    setCode(c);
-  };
+  // Update from Monaco Editor
+  function updateCode(value: string | undefined) {
+    if (value) {
+      // Store the code in the state
+      setCode(value);
+      // Update the number of lines
+      setLines(value.split('\n').length);
+    }
+  }
 
   useEffect(() => {
     // update local state from global state
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  // Get the reference to the Monaco Editor after it mounts
+  function handleEditorDidMount(ed: typeof Editor) {
+    editor.current = ed;
+    editor.current.onDidChangeCursorPosition((ev: any) => {
+      setPosition({ r: ev.position.lineNumber, c: ev.position.column });
+    });
+  }
+
   return (
     <Box>
       <HStack>
-        <AceEditor
-          ref={ace}
-          name="ace"
-          value={code}
-          onChange={updateCode}
-          fontSize={`${fontSize}px`}
-          minLines={4}
-          maxLines={20}
-          placeholder="Enter code here"
-          mode={s.language}
-          theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
-          editorProps={{ $blockScrolling: true }}
-          setOptions={{
-            hasCssTransforms: true,
-            showGutter: true,
-            showPrintMargin: false,
-            highlightActiveLine: true,
-            showLineNumbers: true,
-          }}
+        <Box
           style={{
             width: '100%',
             height: '100%',
@@ -429,7 +429,77 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
             borderRadius: '4px',
           }}
-        />
+        >
+          <Editor
+            onMount={handleEditorDidMount}
+            defaultValue={code}
+            onChange={updateCode}
+            height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
+            language={s.language}
+            theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
+            options={{
+              fontSize: `${fontSize}px`,
+              minimap: { enabled: false },
+              lineNumbersMinChars: 4,
+              acceptSuggestionOnCommitCharacter: true,
+              acceptSuggestionOnEnter: 'on',
+              accessibilitySupport: 'auto',
+              autoIndent: false,
+              automaticLayout: true,
+              codeLens: true,
+              colorDecorators: true,
+              contextmenu: false,
+              cursorBlinking: 'blink',
+              cursorSmoothCaretAnimation: false,
+              cursorStyle: 'line',
+              disableLayerHinting: false,
+              disableMonospaceOptimizations: false,
+              dragAndDrop: false,
+              fixedOverflowWidgets: false,
+              folding: true,
+              foldingStrategy: 'auto',
+              fontLigatures: false,
+              formatOnPaste: false,
+              formatOnType: false,
+              hideCursorInOverviewRuler: false,
+              highlightActiveIndentGuide: true,
+              links: true,
+              mouseWheelZoom: false,
+              multiCursorMergeOverlapping: true,
+              multiCursorModifier: 'alt',
+              overviewRulerBorder: false,
+              overviewRulerLanes: 0,
+              quickSuggestions: false,
+              quickSuggestionsDelay: 100,
+              readOnly: false,
+              renderControlCharacters: false,
+              renderFinalNewline: true,
+              renderIndentGuides: true,
+              renderLineHighlight: 'all',
+              renderWhitespace: 'none',
+              revealHorizontalRightPadding: 30,
+              roundedSelection: true,
+              rulers: [],
+              scrollBeyondLastColumn: 5,
+              scrollBeyondLastLine: true,
+              selectOnLineNumbers: true,
+              selectionClipboard: true,
+              selectionHighlight: true,
+              showFoldingControls: 'mouseover',
+              smoothScrolling: false,
+              suggestOnTriggerCharacters: true,
+              wordBasedSuggestions: true,
+              wordSeparators: '~!@#$%^&*()-=+[{]}|;:\'",.<>/?',
+              wordWrap: 'off',
+              wordWrapBreakAfterCharacters: '\t})]?|&,;',
+              wordWrapBreakBeforeCharacters: '{([+',
+              wordWrapBreakObtrusiveCharacters: '.',
+              wordWrapColumn: 80,
+              wordWrapMinified: true,
+              wrappingIndent: 'none',
+            }}
+          />
+        </Box>
         <VStack pr={2}>
           {props.access ? (
             <Tooltip hasArrow label="Execute" placement="right-start">
@@ -465,14 +535,9 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           ) : null}
         </VStack>
       </HStack>
-      {/* <Stack px={4}> */}
-      {/* <Text color={useColorModeValue('#000000', '#FFFFFF')}> */}
       <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
-        {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
+        Ln: {position.r}, Col: {position.c}
       </Flex>
-      {/* </Text> */}
-      {/* </Stack> */}
     </Box>
   );
 };
@@ -551,78 +616,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.display_data.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.display_data.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  default:
+                    return MapJSONObject(parsedJSON.display_data[key]);
+                }
+              });
+            }
+            return null;
+          })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.execute_result.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                default:
-                  return null;
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.execute_result.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  default:
+                    return null;
+                }
+              });
+            }
+            return null;
+          })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-          // find the user name that matches the userId
-          if (userId !== props.user._id) {
-            return null;
-          }
-          return (
-            <Toast
-              status="error"
-              position="bottom"
-              description={message + ', ' + props.user.data.name}
-              duration={4000}
-              isClosable
-              onClose={() => updateState(props.app._id, { privateMessage: [] })}
-              hidden={userId !== props.user._id}
-            />
-          );
-        })}
+            // find the user name that matches the userId
+            if (userId !== props.user._id) {
+              return null;
+            }
+            return (
+              <Toast
+                status="error"
+                position="bottom"
+                description={message + ', ' + props.user.data.name}
+                duration={4000}
+                isClosable
+                onClose={() => updateState(props.app._id, { privateMessage: [] })}
+                hidden={userId !== props.user._id}
+              />
+            );
+          })}
     </Box>
   );
 };
@@ -648,30 +713,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-          if (typeof obj[key] === 'object') {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
+            if (typeof obj[key] === 'object') {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {MapJSONObject(obj[key])}
+                  </Box>
                 </Box>
-                <Box as="span" ml={2}>
-                  {MapJSONObject(obj[key])}
+              );
+            } else {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {obj[key]}
+                  </Box>
                 </Box>
-              </Box>
-            );
-          } else {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
-                </Box>
-                <Box as="span" ml={2}>
-                  {obj[key]}
-                </Box>
-              </Box>
-            );
-          }
-        })
+              );
+            }
+          })
         : null}
     </Box>
   );
