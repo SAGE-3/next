@@ -65,7 +65,7 @@ function AppComponent(props: App): JSX.Element {
   /**
    * supportedApps currently hardcoded in frontend
    */
-  // TODO Need to let backend set supportedApps
+    // TODO Need to let backend set supportedApps
   const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
 
   /**
@@ -81,6 +81,7 @@ function AppComponent(props: App): JSX.Element {
       // Doing this, a message for what apps are on the board will be re-added even after deletion from the popover if pane is moved
       // Or rerendered in some way
       const message = {[app._id]: app.data.title};
+
 
       // Hosted app window should fall within AI Pane window
       // Ignore apps already being hosted
@@ -104,7 +105,9 @@ function AppComponent(props: App): JSX.Element {
           // TODO Make messages more informative rather than simply names of apps being hosted
           // Maybe show results in message? Objects detected and scores?
           updateState(props._id, {messages: messages});
+          console.log('Before new app added useEffect')
           newAppAdded(app.data.type);
+          console.log('After new  app added useEffect')
         }
       } else {
         // This code is necessary to remove hosted apps and messages once apps are no longer being hosted
@@ -129,7 +132,7 @@ function AppComponent(props: App): JSX.Element {
   // TODO This seems pretty bad and does not clear messages if app is closed out instead of moved off pane
   useEffect(() => {
     const copyofhostapps = {} as { [key: string]: string };
-    const copyofmessages= {} as { [key: string]: string };
+    const copyofmessages = {} as { [key: string]: string };
     Object.keys(s.hostedApps).forEach((key: string) => {
       const app = boardApps.find((el) => el._id === key);
       if (app) {
@@ -178,14 +181,11 @@ function AppComponent(props: App): JSX.Element {
    * Sets run status to error if user attempts to run pane on > 1 app type
    */
   useEffect(() => {
-    checkAppType()
-  }, [JSON.stringify(s.hostedApps)])
 
-  /**
-   * If more than 1 app added to pane, checks that all hosted apps are of the same type
-   *   @return sets run status to error if there is more than 1 hosted app types.
-   */
-  function checkAppType() {
+    /**
+     * If more than 1 app added to pane, checks that all hosted apps are of the same type
+     *   @return sets run status to error if there is more than 1 hosted app types.
+     */
     const hostedTypes = new Set(Object.values(s.hostedApps));
 
     if (Array.from(hostedTypes).length > 1) {
@@ -200,7 +200,8 @@ function AppComponent(props: App): JSX.Element {
 
       }
     }
-  }
+  }, [Object.keys(s.hostedApps).length])
+
 
   /**
    * Notifies backend of a new app being added, and it's app type
@@ -208,9 +209,11 @@ function AppComponent(props: App): JSX.Element {
    * @param appType
    */
   function newAppAdded(appType: string) {
+    console.log('Hey a new app added')
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
+    console.log('Hey, after new_app_added call to python')
   }
 
   /**
@@ -237,65 +240,61 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <>
-        <p>
-          {JSON.stringify(s.hostedApps)}
-        </p>
+        <Box>
+          <Box padding={'2rem'}>
+            <Popover
+              placement='bottom-start'
+            >
+              <PopoverTrigger>
+                <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
+                  <IconButton padding={"1.5rem"} fontSize={'2.5rem'} aria-label="Notifications" variant="ghost"
+                              icon={<HiMail/>}/>
+                </div>
+              </PopoverTrigger>
 
-      <Box>
-        <Box padding={'2rem'}>
-          <Popover
-            placement='bottom-start'
-          >
-            <PopoverTrigger>
-              <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
-                <IconButton padding={"1.5rem"} fontSize={'2.5rem'} aria-label="Notifications" variant="ghost"
-                            icon={<HiMail/>}/>
-              </div>
-            </PopoverTrigger>
-
-            <PopoverContent fontSize="1.5rem">
-              <PopoverBody>
-                {s.runStatus === 2
-                  ? 'Error: Unsupported file type'
-                  : s.runStatus === 0
-                    ? 'File type accepted'
-                    : s.runStatus === 1
-                      ? 'Running '
-                      : 'Error: More than 1 app type on board'}
-                {/*{s.runStatus === 2*/}
-                {/*  ? 'Error: Unsupported file type'*/}
-                {/*  : s.runStatus === 0*/}
-                {/*    ? 'File type accepted'*/}
-                {/*    : 'Error: More than 1 app type on board'}*/}
-              </PopoverBody>
-
-              {Object.keys(s.messages)?.map((message: string) => (
+              <PopoverContent fontSize="1.5rem">
                 <PopoverBody>
-                  {s.messages[message]}
-                  <CloseButton size="lg" className="popover-close" onClick={() => closePopovers(message)}/>
+                  {s.runStatus === 2
+                    ? 'Error: Unsupported file type'
+                    : s.runStatus === 0
+                      ? 'File type accepted'
+                      : s.runStatus === 1
+                        ? 'Running '
+                        : 'Error: More than 1 app type on board'}
+                  {/*{s.runStatus === 2*/}
+                  {/*  ? 'Error: Unsupported file type'*/}
+                  {/*  : s.runStatus === 0*/}
+                  {/*    ? 'File type accepted'*/}
+                  {/*    : 'Error: More than 1 app type on board'}*/}
                 </PopoverBody>
-              ))}
-            </PopoverContent>
-          </Popover>
-        </Box>
 
-        <Box className="status-container">
-          {s.runStatus !== 0 ? (
-            s.runStatus === 1 ? (
-              <Tooltip label="Running jobs">
-                <span><Icon as={BiRun} w={10} h={10}/></span>
-              </Tooltip>
+                {Object.keys(s.messages)?.map((message: string) => (
+                  <PopoverBody>
+                    {s.messages[message]}
+                    <CloseButton size="lg" className="popover-close" onClick={() => closePopovers(message)}/>
+                  </PopoverBody>
+                ))}
+              </PopoverContent>
+            </Popover>
+          </Box>
+
+          <Box className="status-container">
+            {s.runStatus !== 0 ? (
+              s.runStatus === 1 ? (
+                <Tooltip label="Running jobs">
+                  <span><Icon as={BiRun} w={10} h={10}/></span>
+                </Tooltip>
+              ) : (
+                <Tooltip label="Error when trying to run model">
+                  <span><Icon as={BiErrorCircle} w={12} h={12}/></span>
+                </Tooltip>
+              )
             ) : (
-              <Tooltip label="Error when trying to run model">
-                <span><Icon as={BiErrorCircle} w={12} h={12}/></span>
-              </Tooltip>
-            )
-          ) : (
-            <VisuallyHidden>Empty Board</VisuallyHidden>
-          )}
+              <VisuallyHidden>Empty Board</VisuallyHidden>
+            )}
+          </Box>
         </Box>
-      </Box>
-        </>
+      </>
     </AppWindow>
   );
 }
@@ -306,6 +305,9 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const [aiModel, setAIModel] = useState('Models');
   const [task, setTask] = useState('Tasks');
+
+  const hasHostedApps = Object.keys(s.hostedApps).length !== 0;
+  // console.log("SupportedTasks", s.supportedTasks);
 
   /**
    * Sends request to backend to execute a model
@@ -336,63 +338,67 @@ function ToolbarComponent(props: App): JSX.Element {
    *
    * @param task
    */
-  // TODO Combine setModel and setTask
+    // TODO Combine setModel and setTask
   const handleSetTask = (task: string) => {
-    setTask(task);
-    setAIModel('Models');
-  };
+      setTask(task);
+      setAIModel('Models');
+    };
 
   return (
     <>
-      <div style={{display: Object.keys(s.hostedApps).length !== 0 ? 'block' : 'none'}}>
-        <ButtonGroup spacing={1} size={'sm'}>
-          <>
-            {Object.keys(s.supportedTasks)?.map((type, idx) => {
-              return (
-                <>
-                  <Menu>
-                    <MenuButton as={Button} rightIcon={<FiChevronDown/>} key={idx}>
-                      {task}
-                    </MenuButton>
-                    <Portal>
-                      <MenuList>
-                        {Object.keys(s.supportedTasks[type])?.map((tasks, idx) => {
-                          return <MenuItem onClick={() => handleSetTask(tasks)} key={idx}>{tasks}</MenuItem>;
-                        })}
-                      </MenuList>
-                    </Portal>
-                  </Menu>
+      {hasHostedApps &&
+        <div>
 
-                  <div style={{display: task !== 'Tasks' ? 'block' : 'none'}}>
+          <ButtonGroup spacing={1} size={'sm'}>
+            <>
+              {Object.keys(s.supportedTasks)?.map((type, idx) => {
+                return (
+                  <>
                     <Menu>
-                      <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
-                        {aiModel}
+                      <MenuButton as={Button} rightIcon={<FiChevronDown/>} key={idx}>
+                        {task}
                       </MenuButton>
                       <Portal>
                         <MenuList>
-                          {s.supportedTasks[type][task]?.map((modelOptions: string, idx: number) => {
-                            return <MenuItem onClick={() => handleSetModel(modelOptions)} key={idx}>{modelOptions}</MenuItem>;
+                          {Object.keys(s.supportedTasks[type])?.map((tasks, idx) => {
+                            return <MenuItem onClick={() => handleSetTask(tasks)} key={idx}>{tasks}</MenuItem>;
                           })}
                         </MenuList>
                       </Portal>
                     </Menu>
-                  </div>
-                </>
-              );
-            })}
-          </>
 
-          <IconButton
-            aria-label="Run AI"
-            icon={s.runStatus === 0 ? <FaPlay/> : s.runStatus === 1 ? <BiRun/> : <BiErrorCircle/>}
-            _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
-            isDisabled={aiModel !== 'Models' && s.runStatus === 0 ? false : true}
-            onClick={() => {
-              runFunction(aiModel);
-            }}
-          />
-        </ButtonGroup>
-      </div>
+                    <div style={{display: task !== 'Tasks' ? 'block' : 'none'}}>
+                      <Menu>
+                        <MenuButton as={Button} rightIcon={<FiChevronDown/>}>
+                          {aiModel}
+                        </MenuButton>
+                        <Portal>
+                          <MenuList>
+                            {s.supportedTasks[type][task]?.map((modelOptions: string, idx: number) => {
+                              return <MenuItem onClick={() => handleSetModel(modelOptions)}
+                                               key={idx}>{modelOptions}</MenuItem>;
+                            })}
+                          </MenuList>
+                        </Portal>
+                      </Menu>
+                    </div>
+                  </>
+                );
+              })}
+            </>
+
+            <IconButton
+              aria-label="Run AI"
+              icon={s.runStatus === 0 ? <FaPlay/> : s.runStatus === 1 ? <BiRun/> : <BiErrorCircle/>}
+              _hover={{opacity: 0.7, transform: 'scaleY(1.3)'}}
+              isDisabled={aiModel !== 'Models' && s.runStatus === 0 ? false : true}
+              onClick={() => {
+                runFunction(aiModel);
+              }}
+            />
+          </ButtonGroup>
+        </div>
+      }
     </>
   );
 }
