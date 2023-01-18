@@ -24,7 +24,7 @@
   },
   "private": true,
   "dependencies": {
-    "@casl/ability": "^6.0.0",
+    "@casl/ability": "^6.3.3",
     "@chakra-ui/react": "^2.4.1",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
