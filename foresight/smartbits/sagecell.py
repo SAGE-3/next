@@ -28,7 +28,6 @@ class SageCell(SmartBit):
     # the key that is assigned to this in state is
     state: SageCellState
     _jupyter_client = PrivateAttr()
-    _jupyter_client = PrivateAttr()
     _r_json = PrivateAttr()
     _redis_space = PrivateAttr(default='JUPYTER:KERNELS')
 

@@ -124,18 +124,18 @@ function AppComponent(props: App): JSX.Element {
    type: "notebook"
   */
 
-  // Open a CodeCell for this kernel
+  // Open a SageCell for this kernel
   function openCell(kid: string) {
     if (!user) return;
     createApp({
-      title: 'CodeCell',
+      title: 'SageCell',
       roomId: roomId!,
       boardId: boardId!,
       position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
       size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
-      type: 'CodeCell',
-      state: { ...initialValues['CodeCell'], kernel: kid },
+      type: 'SageCell',
+      state: { ...initialValues['SageCell'], kernel: kid },
       raised: true,
     });
   }

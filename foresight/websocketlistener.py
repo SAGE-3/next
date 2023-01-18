@@ -37,15 +37,19 @@ class WebSocketListener:
     def on_message(self, ws, message):
 
         msg = json.loads(message)
-        print(f"msg: {msg}")
+
         # check is needed because we get duplicted messages.
         # # TODO: emtpy the queue when it get to a size of X
-        if msg['id'] not in self.received_msg_log or \
-                msg['event']['type'] != self.received_msg_log[msg['id']][0] or \
-                msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']][1]:
 
+        # if msg['id'] not in self.received_msg_log or \
+        #         msg['event']['type'] != self.received_msg_log[msg['id']][0] or \
+        #         msg['event']['doc']['_updatedAt'] != self.received_msg_log[msg['id']][1]:
+        if True:
             self.message_queue.put(msg)
             self.received_msg_log[msg['id']] = (msg['event']['type'], msg['event']['doc']['_updatedAt'])
+            print(f"msg: {msg}")
+        else:
+            print(f"msg ignored: {msg}")
 
     def on_error(self, ws, error):
         print(f"error in webserver connection {error}")

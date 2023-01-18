@@ -368,8 +368,9 @@ export function Files(props: FilesProps): JSX.Element {
 
   // Select the file when clicked
   const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
       setList((prev) => {
         if (e.key === 'ArrowDown') {
           const first = filesList.findIndex((k) => k.selected);

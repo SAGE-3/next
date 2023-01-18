@@ -189,7 +189,7 @@ class SAGEProxy:
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
-
+        print("\n\n\n\n\n\nin Handle Update: ")
         if collection == "BOARDS":
             print("BOARD UPDATED: UNHANDLED")
             print(f"\t\t updates is {updates}\n")
@@ -214,13 +214,14 @@ class SAGEProxy:
             # print(f"updating app {}")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
-
+            print(f"\n\n\n\n in apps and app_id = {app_id} and updates is: {updates}")
             sb = self.room.boards[board_id].smartbits[app_id]
 
             # Note that set_data_form_update clear touched field
             sb.refresh_data_form_update(doc, updates)
 
             exec_info = getattr(sb.state, "executeInfo", None)
+
             if exec_info is not None:
                 func_name = getattr(exec_info, "executeFunc")
                 if func_name != '':

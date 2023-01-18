@@ -240,12 +240,12 @@ export function AppWindow(props: WindowProps) {
   // Bring the app forward
   function bringForward() {
     if (!props.lockToBackground) {
-      // Raise down
+      // Raise down all the other apps, if needed
       apps.forEach((a) => {
-        if (a.data.raised) update(a._id, { raised: false });
+        if (a.data.raised && props.app._id !== a._id) update(a._id, { raised: false });
       });
       // Bring to front function
-      update(props.app._id, { raised: true });
+      if (!props.app.data.raised) update(props.app._id, { raised: true });
     }
   }
 
