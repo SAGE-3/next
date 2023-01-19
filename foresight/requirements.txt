@@ -13,3 +13,7 @@ python_on_whales
 dropbox # needed to upload files to public server when in devel mode
 websocket-client
 schedule
+pyarrow
+rectpack
+networkx
+graphviz

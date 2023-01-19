@@ -1,3 +1,11 @@
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+#-----------------------------------------------------------------------------
+
 import os
 import redis
 import uuid
@@ -83,6 +91,7 @@ class JupyterKernelProxy:
                         result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
 
             if result:
+                print(f"result is {result}")
                 self.pending_reponses[msg_id_uuid] = result
                 self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 
@@ -124,7 +133,7 @@ class JupyterKernelProxy:
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
         except Exception as e:
             # something happen, do no track this results
-            print(f"Somethign Happened here, {e}")
+            print(f"Something happened here, {e}")
             del self.results[user_passed_uuid]
             # TODO something happened and code couldn't be run
             #  send error back to the user

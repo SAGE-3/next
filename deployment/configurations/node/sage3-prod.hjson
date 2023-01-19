@@ -22,16 +22,16 @@
     // Active SAGE3 servers accessible at login page
   "servers": [
     {
-      "name": "SAGE3 Main Server",
+      "name": "Chicago",
       "url": "https://sage3.app"
     },
     {
-      "name": "MacMini - EVL",
-      "url": "https://mini.sage3.app"
+      "name": "Hawaii",
+      "url": "https://manoa.sage3.app"
     },
     {
-      "name": "Pele",
-      "url": "https://pele.sage3.app"
+      "name": "Development",
+      "url": "https://mini.sage3.app"
     }
   ],
 
@@ -40,7 +40,8 @@
     "twilio": true,
     "ai": true,
     "cell": true,
-    "jupyter": true
+    "jupyter": true,
+    "articulate": true
   },
 
   // ID Management
@@ -53,6 +54,7 @@
       "guest",
       "jwt"
     ],
+    "admins": [],
     "guestConfig": {
       "routeEndpoint": "/auth/guest"
     },
@@ -78,7 +80,6 @@
   "ssl": {
     // found in the 'keys' folder
     "certificateFile": "localhost-server.crt",
-    "certificateChainFile": "localhost-ca.crt",
     "certificateKeyFile": "localhost-server.key"
   },
   "twilio": {

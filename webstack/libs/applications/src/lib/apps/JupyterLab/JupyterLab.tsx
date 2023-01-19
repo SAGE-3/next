@@ -1,30 +1,32 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Box, Button, ButtonGroup, Center, Tooltip } from '@chakra-ui/react';
-import { v1 as uuidv1 } from 'uuid';
+import { useParams } from 'react-router';
 
-import { MdFileDownload } from 'react-icons/md';
+import { Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+// UUID generation
+import { v1 as uuidv1 } from 'uuid';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
+// Icons
+import { MdFileDownload } from 'react-icons/md';
 
 import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
 
-import { App } from '../../schema';
+import { AppWindow, ElectronRequired } from '../../components';
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
 import { isElectron } from './util';
+import { App } from '../../schema';
 
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
-import { useParams } from 'react-router';
 
 /* App component for JupyterApp */
 
@@ -237,26 +239,11 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <div style={{ width: props.data.size.width + 'px', height: props.data.size.height + 'px' }}>
-          <Center w="100%" h="100%" bg="gray.700">
-            <Box p={4}>
-              <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  JupyterLab is only supported with the SAGE3 Desktop Application.
-                </Box>
-              </Center>
-              <br />
-              <Center>
-                <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  Current URL{' '}
-                  <a style={{ color: '#13a89e' }} href={s.jupyterURL} rel="noreferrer" target="_blank">
-                    {s.jupyterURL}{' '}
-                  </a>
-                </Box>
-              </Center>
-            </Box>
-          </Center>
-        </div>
+        <ElectronRequired
+          appName={props.data.type}
+          link={url || ''}
+          title={"Jupyter URL"}
+        />
       )}
     </AppWindow>
   );

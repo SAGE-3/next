@@ -57,7 +57,7 @@ td {
   text-overflow: ellipsis;
 }
 
-body:not(.nohover) tbody td:hover {
+tbody td:hover {
   background-color: darkslategray;
 }
 

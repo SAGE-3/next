@@ -22,16 +22,16 @@
   // Active SAGE3 servers accessible at login page
   "servers": [
     {
-      "name": "SAGE3 Main Server",
+      "name": "Chicago",
       "url": "https://sage3.app"
     },
     {
-      "name": "MacMini - EVL",
-      "url": "https://mini.sage3.app"
+      "name": "Hawaii",
+      "url": "https://manoa.sage3.app"
     },
     {
-      "name": "Pele",
-      "url": "https://pele.sage3.app"
+      "name": "Development",
+      "url": "https://mini.sage3.app"
     }
   ],
 
@@ -40,7 +40,8 @@
     "twilio": true,
     "ai": true,
     "cell": true,
-    "jupyter": true
+    "jupyter": true,
+    "articulate": true
   },
 
   // ID Management
@@ -53,10 +54,7 @@
       "guest",
       "jwt"
     ],
-    "admins": [
-      "renambot@gmail.com",
-      "ryancriot@gmail.com"
-    ],
+    "admins": [],
     "guestConfig": {
       "routeEndpoint": "/auth/guest"
     },
@@ -81,14 +79,13 @@
   "ssl": {
     // found in the 'keys' folder
     "certificateFile": "_.evl.uic.edu.crt",
-    "certificateKeyFile": "_.evl.uic.edu.key",
-    "certificateChainFile": "_.evl.uic.edu-ca.crt"
+    "certificateKeyFile": "_.evl.uic.edu.key"
   },
   "twilio": {
-    "accountSid": "AC43f67ea8d72208ae398d8d234d365d99",
-    "apiKey": "SKbe39af89723afe3232a9d0abb60b4d85",
-    "apiSecret": "UycFTsz4JrjPJCucCBGP4uIntl4Pg3iT"
+    "accountSid": "",
+    "apiKey": "",
+    "apiSecret": ""
   },
   // Namespace for signing uuid v5 keys
-  "namespace": "71111d6e-64d8-4eab-953d-f88117f79f9c"
+  "namespace": "150e32f0-62b8-11ed-974d-1b79350be347"
 }

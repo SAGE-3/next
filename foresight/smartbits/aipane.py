@@ -1,9 +1,11 @@
-# -----------------------------------------------------------------------------
-#  Copyright (c) SAGE3 Development Team
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-# -----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+
 import time
 from enum import Enum
 
@@ -34,13 +36,20 @@ def get_sharing_url(private_url):
     Uploads hosted image original file to DropBox and produces a public sharing url
     :return: array of hosted image file sharing urls
     """
+
     file_name = private_url.split("/")[-1]
     print(f"file_name is {file_name}")
     headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
     data = requests.get(private_url, headers=headers).content
-    if not os.getenv("DROPBOX_TOKEN"):
-        raise Exception("Cannot find DROPBOX TOKEN")
-    dbx = dropbox.Dropbox(os.getenv("DROPBOX_TOKEN"))
+    # TODO Move key, secret, token to env.sh file
+    dbx = dropbox.Dropbox(
+        app_key = 'nk107a3fcfzpgnp',
+        app_secret = '4wysx2l2t033dnl',
+        oauth2_refresh_token = '12kU7xq092oAAAAAAAAAAdoXuT8FXUBdRxisjTUxv6SE5a6rDFgj4CydF7CbjP7x'
+    )
+    # if not os.getenv("DROPBOX_TOKEN"):
+    #     raise Exception("Cannot find DROPBOX TOKEN")
+    # dbx = dropbox.Dropbox(os.getenv("DROPBOX_TOKEN"))
     _ = dbx.files_upload(data, f"/sage3_image_folder/{file_name}", mode=dropbox.files.WriteMode("overwrite"))
     sharing_links = dbx.sharing_get_shared_links(f"/sage3_image_folder/{file_name}")
     if sharing_links and not sharing_links.links:
@@ -60,7 +69,6 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: int
-    # lastHeartBeat: int
     supportedTasks: Optional[dict]
 
 
@@ -79,17 +87,20 @@ class AIPane(SmartBit):
         if kwargs['state']['runStatus'] or \
                 kwargs['state']['executeInfo']["executeFunc"]:
             requires_update = True
-
         super(AIPane, self).__init__(**kwargs)
         print("create the ai pane's ai_client")
         self._ai_client = AIClient()
         self._pending_executions = {}
         if requires_update:
             print("Sending update")
-            self.state.runStatus = False
+            self.state.runStatus = 0
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
             self.send_updates()
+        # supported_apps = []
+        # for _type in ai_supported.items():
+        #     supported_apps.append(_type["supported_apps"])
+        # print(f"++++++++++++++++++++++++++++++++++++++++ {supported_apps} ++++++++++++++++++++++++++++++++++++++++ ")
 
     def new_app_added(self, app_type):
         """
@@ -117,11 +128,11 @@ class AIPane(SmartBit):
         Callback function that handles the output produced by AI model. Produces a payload of bounding boxes and labels.
         Sends output to ImageViewer
         """
-        print("I am handling the execution results")
         print(f"the apps involved are {self._pending_executions[msg_uuid]}")
         if msg["output"] != '':
             for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
-                d = {x["label"]: x["box"] for x in msg["output"][i]}
+                d = {i: x for i, x in enumerate(msg["output"][i])}
+                # d = {x["label"]: x["box"] for x in msg["output"][i]}
                 payload = {"state.boxes": d, "state.annotations": True}
                 print(f"updating the boxes on image {hosted_app_id}")
                 response = self._s3_comm.send_app_update(hosted_app_id, payload)

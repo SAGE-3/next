@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
@@ -246,12 +246,10 @@ function ToolbarComponent(props: App): JSX.Element {
     if (isElectron()) {
       console.log('Cobrowse> startStream');
       // Load electron and the IPCRender
-      const electron = window.require('electron');
-      const ipcRenderer = electron.ipcRenderer;
-      ipcRenderer.send('streamview', { url: s.sharedurl, id: s.frame });
-      ipcRenderer.on('paint', (_evt: any, arg: any) => {
+      window.electron.on('paint', (arg: any) => {
         sock.send(JSON.stringify({ type: 'paint', data: arg.buf }));
       });
+      window.electron.send('streamview', { url: s.sharedurl, id: s.frame });
     }
   };
 

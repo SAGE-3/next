@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -12,6 +12,7 @@ import {
   Button,
   HStack,
   useColorModeValue,
+  useColorMode,
   Tooltip,
   ButtonGroup,
   Select,
@@ -28,14 +29,10 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
 
-import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-json';
-import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
-import 'ace-builds/src-noconflict/theme-xcode';
-import 'ace-builds/src-noconflict/keybinding-vscode';
+import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
+// import * as MEditor from 'monaco-editor';
 
 // UUID generation
 import { v4 as getUUID } from 'uuid';
@@ -47,7 +44,7 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 imports
-import { useAppStore, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useUser, downloadFile, truncateWithEllipsis } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
@@ -65,14 +62,15 @@ const MARGIN = 2;
 const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
+  const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = useColorModeValue('#EFDEDD', '#DDD1D1');
+  const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -80,7 +78,16 @@ const AppComponent = (props: App): JSX.Element => {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  // Set the title on start
+  useEffect(() => {
+    // update the title of the app
+    if (props.data.title !== 'SageCell') {
+      update(props._id, { title: 'SageCell' });
+    }
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -101,8 +108,13 @@ const AppComponent = (props: App): JSX.Element => {
     if (s.kernel == '') {
       setAccess(true);
     } else {
-      const access = myKernels.find((kernel) => kernel.key == s.kernel);
+      const access = myKernels.find((kernel) => kernel.key === s.kernel);
       setAccess(access ? true : false);
+      if (access) {
+        const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
+        // update the title of the app
+        update(props._id, { title: 'Sage Cell: kernel [' + name + ']' });
+      }
     }
   }, [s.kernel, myKernels]);
 
@@ -152,7 +164,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
 
-  useEffect(() => {
+  function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
@@ -160,7 +172,11 @@ function ToolbarComponent(props: App): JSX.Element {
         params: { user_uuid: user._id },
       },
     });
-  }, [user]);
+  }
+
+  useEffect(() => {
+    getKernels();
+  }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -216,98 +232,82 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   return (
-    <>
-      <HStack>
-        {access ? (
-          <>
-            {/* check if there are any available kernels and if one is selected */}
-            {!myKernels || !s.kernel ? (
-              // show a red light if the kernel is not running
-              <Badge colorScheme="red" rounded="sm" size="lg">
-                Offline
-              </Badge>
-            ) : (
-              // show a green light if the kernel is running
-              <Badge colorScheme="green" rounded="sm" size="lg">
-                Online
-              </Badge>
-            )}
-            <Select
-              placeholder="Select Kernel"
-              rounded="lg"
-              size="sm"
-              width="150px"
-              ml={2}
-              px={0}
-              colorScheme="teal"
-              icon={<MdArrowDropDown />}
-              onChange={selectKernel}
-              value={selected ?? undefined}
-              variant={'outline'}
-            >
-              {myKernels.map((kernel) => (
-                <option value={kernel.key} key={kernel.key}>
-                  {kernel.value.kernel_alias} (
-                  {
-                    // show kernel name as Python, R, or Julia
-                    kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
-                  }
-                  )
-                </option>
-              ))}
-            </Select>
+    <HStack>
+      {
+        <>
+          {/* check if there are any available kernels and if one is selected */}
+          {!myKernels || !s.kernel ? (
+            // show a red light if the kernel is not running
+            <Badge colorScheme="red" rounded="sm" size="lg">
+              Offline
+            </Badge>
+          ) : (
+            // show a green light if the kernel is running
+            <Badge colorScheme="green" rounded="sm" size="lg">
+              Online
+            </Badge>
+          )}
+          <Select
+            placeholder="Select Kernel"
+            rounded="lg"
+            size="sm"
+            width="150px"
+            ml={2}
+            px={0}
+            colorScheme="teal"
+            icon={<MdArrowDropDown />}
+            onChange={selectKernel}
+            value={selected ?? undefined}
+            variant={'outline'}
+          >
+            {myKernels.map((kernel) => (
+              <option value={kernel.key} key={kernel.key}>
+                {kernel.value.kernel_alias} (
+                {
+                  // show kernel name as Python, R, or Julia
+                  kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
+                }
+                )
+              </option>
+            ))}
+          </Select>
 
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize <= 8}
-                  onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize > 42}
-                  onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdAdd />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-                <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-                  <MdFileDownload />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+          <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
+            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+              <MdRefresh />
+            </Button>
+          </Tooltip>
 
-            {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Generate Error'} openDelay={400}>
-                <Button
-                  onClick={() =>
-                    updateState(props._id, {
-                      executeInfo: {
-                        executeFunc: 'generate_error_message',
-                        params: { user_uuid: user!._id },
-                      },
-                    })
-                  }
-                  _hover={{ opacity: 0.7 }}
-                >
-                  <MdError />
-                </Button>
-              </Tooltip>
-            </ButtonGroup> */}
-          </>
-        ) : (
-          <>This CodeCell is Private</>
-        )}
-      </HStack>
-    </>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize <= 8}
+                onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdRemove />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize > 42}
+                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdAdd />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+                <MdFileDownload />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+        </>
+      }
+    </HStack>
   );
 }
 
@@ -326,20 +326,34 @@ type InputBoxProps = {
 const InputBox = (props: InputBoxProps): JSX.Element => {
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const ace = useRef<AceEditor>(null);
+  // Reference to the editor
+  const editor = useRef<Monaco>();
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
+  const { colorMode } = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
+  const [lines, setLines] = useState(s.code.split('\n').length);
+  const [position, setPosition] = useState({ r: 1, c: 1 });
+  // Make a toast to show errors
   const toast = useToast();
-  const [selectedKernel, setSelectedKernel] = useState(s.kernel);
+  // Handle to the Monoco API
+  const monaco = useMonaco();
 
+  // Register a new command to evaluate the code
   useEffect(() => {
-    setSelectedKernel(s.kernel);
-  }, [s.kernel]);
+    if (editor.current) {
+      editor.current.addAction({
+        id: 'execute',
+        label: 'Execute',
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+        run: () => handleExecute(s.kernel),
+      });
+    }
+  }, [s.kernel, editor.current]);
 
-  const handleExecute = () => {
-    const code = ace.current?.editor?.getValue();
-    if (!selectedKernel) {
+  const handleExecute = (kernel: string) => {
+    const code = editor.current?.getValue();
+    if (!kernel) {
       toast({
         title: 'No kernel selected',
         description: 'Please select a kernel from the toolbar',
@@ -365,47 +379,42 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       output: '',
       executeInfo: { executeFunc: '', params: {} },
     });
-    ace.current?.editor?.setValue('');
+    editor.current?.setValue('');
   };
 
-  useEffect(() => {
-    if (s.code !== code) {
-      setCode(s.code);
+  // useEffect(() => {
+  //   if (s.code !== code) {
+  //     setCode(s.code);
+  //   }
+  // }, [s.code]);
+
+  // Update from Monaco Editor
+  function updateCode(value: string | undefined) {
+    if (value) {
+      // Store the code in the state
+      setCode(value);
+      // Update the number of lines
+      setLines(value.split('\n').length);
     }
-  }, [s.code]);
-
-  // Update from Ace Editor
-  const updateCode = (c: string) => {
-    setCode(c);
-  };
+  }
 
   useEffect(() => {
     // update local state from global state
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  // Get the reference to the Monaco Editor after it mounts
+  function handleEditorDidMount(ed: typeof Editor) {
+    editor.current = ed;
+    editor.current.onDidChangeCursorPosition((ev: any) => {
+      setPosition({ r: ev.position.lineNumber, c: ev.position.column });
+    });
+  }
+
   return (
     <Box>
       <HStack>
-        <AceEditor
-          ref={ace}
-          name="ace"
-          value={code}
-          onChange={updateCode}
-          fontSize={`${fontSize}px`}
-          minLines={4}
-          maxLines={20}
-          placeholder="Enter code here"
-          mode={s.language}
-          theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
-          editorProps={{ $blockScrolling: true }}
-          setOptions={{
-            hasCssTransforms: true,
-            showGutter: true,
-            showPrintMargin: false,
-            highlightActiveLine: true,
-            showLineNumbers: true,
-          }}
+        <Box
           style={{
             width: '100%',
             height: '100%',
@@ -420,17 +429,83 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
             borderRadius: '4px',
           }}
-          commands={[
-            { name: 'Execute', bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' }, exec: handleExecute },
-            { name: 'Clear', bindKey: { win: 'Ctrl-Alt-Backspace', mac: 'Command-Option-Backspace' }, exec: handleClear },
-          ]}
-        />
+        >
+          <Editor
+            onMount={handleEditorDidMount}
+            defaultValue={code}
+            onChange={updateCode}
+            height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
+            language={s.language}
+            theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
+            options={{
+              fontSize: `${fontSize}px`,
+              minimap: { enabled: false },
+              lineNumbersMinChars: 4,
+              acceptSuggestionOnCommitCharacter: true,
+              acceptSuggestionOnEnter: 'on',
+              accessibilitySupport: 'auto',
+              autoIndent: false,
+              automaticLayout: true,
+              codeLens: true,
+              colorDecorators: true,
+              contextmenu: false,
+              cursorBlinking: 'blink',
+              cursorSmoothCaretAnimation: false,
+              cursorStyle: 'line',
+              disableLayerHinting: false,
+              disableMonospaceOptimizations: false,
+              dragAndDrop: false,
+              fixedOverflowWidgets: false,
+              folding: true,
+              foldingStrategy: 'auto',
+              fontLigatures: false,
+              formatOnPaste: false,
+              formatOnType: false,
+              hideCursorInOverviewRuler: false,
+              highlightActiveIndentGuide: true,
+              links: true,
+              mouseWheelZoom: false,
+              multiCursorMergeOverlapping: true,
+              multiCursorModifier: 'alt',
+              overviewRulerBorder: false,
+              overviewRulerLanes: 0,
+              quickSuggestions: false,
+              quickSuggestionsDelay: 100,
+              readOnly: false,
+              renderControlCharacters: false,
+              renderFinalNewline: true,
+              renderIndentGuides: true,
+              renderLineHighlight: 'all',
+              renderWhitespace: 'none',
+              revealHorizontalRightPadding: 30,
+              roundedSelection: true,
+              rulers: [],
+              scrollBeyondLastColumn: 5,
+              scrollBeyondLastLine: true,
+              selectOnLineNumbers: true,
+              selectionClipboard: true,
+              selectionHighlight: true,
+              showFoldingControls: 'mouseover',
+              smoothScrolling: false,
+              suggestOnTriggerCharacters: true,
+              wordBasedSuggestions: true,
+              wordSeparators: '~!@#$%^&*()-=+[{]}|;:\'",.<>/?',
+              wordWrap: 'off',
+              wordWrapBreakAfterCharacters: '\t})]?|&,;',
+              wordWrapBreakBeforeCharacters: '{([+',
+              wordWrapBreakObtrusiveCharacters: '.',
+              wordWrapColumn: 80,
+              wordWrapMinified: true,
+              wrappingIndent: 'none',
+            }}
+          />
+        </Box>
         <VStack pr={2}>
           {props.access ? (
             <Tooltip hasArrow label="Execute" placement="right-start">
               <IconButton
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleExecute}
+                onClick={() => handleExecute(s.kernel)}
                 aria-label={''}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
@@ -460,14 +535,9 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           ) : null}
         </VStack>
       </HStack>
-      {/* <Stack px={4}> */}
-      {/* <Text color={useColorModeValue('#000000', '#FFFFFF')}> */}
       <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
-        {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
+        Ln: {position.r}, Col: {position.c}
       </Flex>
-      {/* </Text> */}
-      {/* </Stack> */}
     </Box>
   );
 };

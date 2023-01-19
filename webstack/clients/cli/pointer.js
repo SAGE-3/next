@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -29,9 +29,12 @@ const version = pkg.version;
 // Some utitlity functions
 import { randomNumber, clamp } from './src/utils.js';
 // HTTP protocol
-import { loginGuestUser, getUserInfo, getBoardsInfo, getBoardState } from './src/http_routes.js';
+import { loginGuestUser, loginCreateUser, getUserInfo, getBoardsInfo, getRoomsInfo } from './src/http_routes.js';
 // WS protocol
 import { socketConnection, boardConnect, boardDisconnect, sendCursor, presenceUpdate } from './src/socket_routes.js';
+
+// Fake user
+import { faker } from '@faker-js/faker';
 
 /**
  * Setup the command line argument parsing (commander module)
@@ -42,9 +45,10 @@ var args = process.argv;
 commander.program
   .version(version)
   .option('-b, --board <s>', 'board id (string))')
+  .option('-m, --room <s>', 'room id (string))')
   .option('-t, --timeout <n>', 'runtime in sec (number)', 10)
-  .option('-r, --rate <n>', 'framerate (number)', 10)
-  .option('-s, --server <s>', 'Server URL (string)', 'http://localhost:3333');
+  .option('-r, --rate <n>', 'framerate (number)', 20)
+  .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333');
 
 // Parse the arguments
 commander.program.parse(args);
@@ -57,49 +61,65 @@ let myID;
 var FPS = params.rate;
 var updateRate = 1000 / FPS;
 
+const colors = ['green', 'blue', 'gray', 'orange', 'purple', 'yellow', 'red', 'cyan', 'teal', 'pink'];
+
 async function start() {
   // Login through HTTP
-  const cookies = await loginGuestUser(params.server);
+  const cookies = await loginGuestUser('http://' + params.server);
   console.log('CLI> Logged in');
 
+  // Build a user
+  const randomName = faker.name.fullName();
+  const randomEmail = faker.internet.email();
+  const randomAvatar = faker.image.avatar();
+  const userData = {
+    name: randomName,
+    email: randomEmail,
+    color: colors[randomNumber(0, colors.length - 1)],
+    profilePicture: randomAvatar,
+    userRole: 'user',
+    userType: 'client',
+  };
+
+  const me = await loginCreateUser('http://' + params.server, userData);
+  myID = me._id;
+
   // Get my own info: uid, name, email, color, emailVerified, profilePicture
-  const userData = await getUserInfo();
-  console.log('CLI> user:', userData.name, userData.color, userData.id);
-  // save my ID for later
-  myID = userData.id;
+  // const userData = await getUserInfo();
 
   // board name from command argument (or board0)
   const boardId = params.board;
+  const roomId = params.room;
 
   const boardData = await getBoardsInfo();
   console.log('CLI> boards', boardData);
-
-  const state = await getBoardState(boardId);
-  console.log('CLI> board', boardId, state);
+  const roomData = await getRoomsInfo();
+  console.log('CLI> rooms', roomData);
 
   // Create a websocket with the auth cookies
-  const socket = socketConnection(params.server, cookies);
+  const socket = socketConnection('ws://' + params.server + '/api', cookies);
 
   // When socket connected
-  socket.on('connect', () => {
+  socket.on('open', () => {
     console.log('socket> connected');
 
     // Connect to a specific board
-    boardConnect(socket, boardId);
+    console.log('socket> connecting to board', roomId, boardId);
+    boardConnect(socket, myID, roomId, boardId);
 
     // Default size of the board
-    const totalWidth = 8192;
-    const totalHeight = 4608;
+    const totalWidth = 3000;
+    const totalHeight = 3000;
 
     // Random position within a safe margin
-    var px = randomNumber(100, totalWidth - 100);
-    var py = randomNumber(100, totalHeight - 100);
-    var incx = 1;
-    var incy = 1;
-    var sensitivity = 5;
+    var px = randomNumber(1500000, 1501000);
+    var py = randomNumber(1500000, 1501000);
+    var incx = randomNumber(1, 2) % 2 ? 1 : -1;
+    var incy = randomNumber(1, 2) % 2 ? 1 : -1;
+    var sensitivity = 2;
 
     // intial position
-    sendCursor(socket, px, py);
+    sendCursor(socket, myID, px, py);
 
     // Set a limit on runtime
     setTimeout(() => {
@@ -119,26 +139,26 @@ async function start() {
       const dx = Math.round(movementX * sensitivity);
       const dy = Math.round(movementY * sensitivity);
       // detect wall size limits and reverse course
-      if (px >= totalWidth) incx *= -1;
-      if (px <= 0) incx *= -1;
-      if (py >= totalHeight) incy *= -1;
-      if (py <= 0) incy *= -1;
+      if (px >= totalWidth + 1500000) incx *= -1;
+      if (px <= 1500000) incx *= -1;
+      if (py >= totalHeight + 1500000) incy *= -1;
+      if (py <= 1500000) incy *= -1;
       // update global position
-      px = clamp(px + incx * dx, 0, totalWidth);
-      py = clamp(py + incy * dy, 0, totalHeight);
+      px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
+      py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
 
       // Send message to server
-      sendCursor(socket, px, py);
+      sendCursor(socket, myID, px, py);
     }, updateRate);
 
     // Print my position from the server updates
-    presenceUpdate(socket, (data) => {
-      data.map((v, i, arr) => {
-        if (v.id === myID) {
-          console.log('User>', v.name, -v.cursor[0], -v.cursor[1]);
-        }
-      });
-    });
+    // presenceUpdate(socket, (data) => {
+    //   data.map((v, i, arr) => {
+    //     if (v.id === myID) {
+    //       console.log('User>', v.name, -v.cursor[0], -v.cursor[1]);
+    //     }
+    //   });
+    // });
   });
 }
 

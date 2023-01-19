@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { Tree, formatFiles, installPackagesTask, generateFiles } from '@nrwl/devkit';
@@ -78,13 +78,14 @@ async function updateApps(root: string) {
     const it = apps[i];
     output += `import ${it} from './apps/${it}/${it}';\n`;
   }
+  output += `import React from 'react';\n`;
 
   output += `\n`;
   output += `\n`;
   output += `export const Applications = {\n`;
   for (let i in apps) {
     const it = apps[i];
-    output += `  [${it}Name]: ${it},\n`;
+    output += `  [${it}Name]: { AppComponent: React.memo(${it}.AppComponent), ToolbarComponent: ${it}.ToolbarComponent },\n`;
   }
   output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;\n`;
 
@@ -149,14 +150,15 @@ async function updateTypes(root: string) {
   }
   output += `\n`;
   output += `\n`;
-  output += `export type AppState = `;
+  output += `export type AppState =\n`;
+  output += `  | {}\n`;
   for (let i in apps) {
     const it = apps[i];
     const idx = Number(i);
     if (idx == apps.length - 1) {
-      output += `${it}State;`;
+      output += `  | ${it}State;\n`;
     } else {
-      output += `${it}State | `;
+      output += `  | ${it}State\n`;
     }
   }
 

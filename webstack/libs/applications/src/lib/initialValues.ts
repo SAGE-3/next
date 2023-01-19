@@ -2,9 +2,9 @@
 
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as ChartMakerName, init as defaultChartMaker } from './apps/ChartMaker';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
-import { name as CodeCellName, init as defaultCodeCell } from './apps/CodeCell';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
@@ -16,9 +16,11 @@ import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
+import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
+import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -29,9 +31,9 @@ import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
   [CSVViewerName]: defaultCSVViewer,
+  [ChartMakerName]: defaultChartMaker,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
-  [CodeCellName]: defaultCodeCell,
   [CounterName]: defaultCounter,
   [DataTableName]: defaultDataTable,
   [DeepZoomImageName]: defaultDeepZoomImage,
@@ -43,9 +45,11 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [NotepadName]: defaultNotepad,
+  [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
+  [SeerName]: defaultSeer,
   [StickieName]: defaultStickie,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
@@ -53,3 +57,4 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
 };
+

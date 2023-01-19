@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import React, { useEffect, useState } from 'react';
@@ -127,6 +127,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           color: color,
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
+	  executeInfo: { executeFunc: '', params: {} },
         });
         props.onClose();
       }
@@ -161,7 +162,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <InputGroup mt={4}>
+          <InputGroup my={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               type="text"

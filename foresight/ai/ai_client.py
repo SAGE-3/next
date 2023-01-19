@@ -1,3 +1,11 @@
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+#-----------------------------------------------------------------------------
+
 from funcx.sdk.client import FuncXClient
 # from config import funcx
 import time
@@ -25,8 +33,9 @@ class AIClient(Borg):
 
         # TODO reformat this as dict[app_id: str, set ]
         self.running_jobs = set()
-
-        self.fxc = FuncXClient()
+        if 'fxc' not in self.__dict__:
+            print("Instantiating a FuncX client")
+            self.fxc = FuncXClient()
 
         self.stop_thread = False  # keep on checking until this changes to false
         self.msg_checker = threading.Thread(target=self.process_response,

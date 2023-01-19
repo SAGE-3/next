@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
 import { SBDocumentMessage, SBJSON } from '@sage3/sagebase';
 import { genId } from '@sage3/shared';
 import { APIClientWSMessage } from '@sage3/shared/types';
@@ -36,9 +44,9 @@ class SocketAPISingleton {
   private sendMessage(message: string): void {
     if (this._socket && this._socket.readyState === WebSocket.OPEN) {
       this._socket.send(message);
-    } else {
-      this.printWarn('Socket still connecting...');
-      setTimeout(() => this.sendMessage(message), 1000);
+      // } else {
+      // this.printWarn('Socket still connecting...');
+      // setTimeout(() => this.sendMessage(message), 1000);
     }
   }
 

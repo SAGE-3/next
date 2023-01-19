@@ -1,3 +1,11 @@
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+#-----------------------------------------------------------------------------
+
 import uuid
 
 import httpx
@@ -24,7 +32,7 @@ class SageCommunication(Borg):
         if conf is None:
             raise Exception("confifuration not found")
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-        self.httpx_client = httpx.Client()
+        self.httpx_client = httpx.Client(timeout=None)
 
         # TODO: laod this from config file
         self.routes = {
@@ -45,9 +53,12 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        print("app update data is")
-        print(data)
-        print("------------")
+        if 'state.online' in data:
+            pass
+        else:
+            print("\n\napp update data is")
+            print(data)
+            print("------------\n\n")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
                                    json=data)
@@ -86,7 +97,6 @@ class SageCommunication(Borg):
 
     def get_assets(self, room_id=None, board_id=None, asset_id=None):
         url = self.conf[self.prod_type]['web_server']+self.routes["get_assets"]
-
         if asset_id:
             url += asset_id
         r = self.httpx_client.get(url, headers=self.__headers)

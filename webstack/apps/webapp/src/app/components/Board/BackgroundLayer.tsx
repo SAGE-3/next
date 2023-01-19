@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useState } from 'react';
@@ -18,6 +18,8 @@ import { Apps } from './Background/Apps';
 import { Cursors } from './Background/Cursors';
 import { Viewports } from './Background/Viewports';
 import { Whiteboard } from './Background/Whiteboard/Whiteboard';
+import { UserPresenceUpdate } from './Background/UserPresenceUpdate';
+import { Lasso } from './Background/Lasso/Lasso';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -34,6 +36,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -78,6 +81,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     // If it was a drag, then don't deselect the app.
     if (!boardDrag) {
       setSelectedApp('');
+      clearSelectedApps();
     }
     setBoardDrag(false);
   }
@@ -105,12 +109,16 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/*Whiteboard */}
         <Whiteboard boardId={props.boardId} />
+        {/*Lasso */}
+        <Lasso boardId={props.boardId} />
         {/* The board's apps */}
         <Apps />
         {/* User Cursors */}
         <Cursors boardId={props.boardId} />
         {/* User Viewports */}
         <Viewports boardId={props.boardId} />
+        {/* This user updating prensence */}
+        <UserPresenceUpdate />
 
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />

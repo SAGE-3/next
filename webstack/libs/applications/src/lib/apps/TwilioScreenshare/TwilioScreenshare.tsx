@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Chakra and React imports
@@ -22,14 +22,14 @@ import {
   Image,
   ButtonGroup,
 } from '@chakra-ui/react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody } from '@chakra-ui/react';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
-import { useAppStore, useUser, useTwilioStore, useUsersStore, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUser, useTwilioStore, useHexColor, isElectron } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Twilio Imports
@@ -80,6 +80,41 @@ function AppComponent(props: App): JSX.Element {
   const [serverTimeDifference, setServerTimeDifference] = useState(0);
   const [expirationTime, setExpirationTime] = useState<string>('Checking Time...');
 
+  // The user that is sharing only sets the selTrack
+  const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
+
+  useEffect(() => {
+    // If the user changes the dimensions of the shared window, resize the app
+    const updateDimensions = (track: any) => {
+      if (track.dimensions.width && track.dimensions.height) {
+        const aspect = track.dimensions.width / track.dimensions.height;
+        let w = props.data.size.width;
+        let h = props.data.size.height;
+        aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+        updateState(props._id, { aspectRatio: aspect });
+        update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
+      }
+    };
+    if (selTrack) {
+      const width = selTrack.dimensions.width;
+      const height = selTrack.dimensions.height;
+      if (width && height) {
+        const aspect = width / height;
+        let w = props.data.size.width;
+        let h = props.data.size.height;
+        aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+        updateState(props._id, { aspectRatio: aspect });
+        update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
+      }
+      selTrack.addListener('dimensionsChanged', updateDimensions);
+    }
+    return () => {
+      if (selTrack) {
+        selTrack.removeListener('dimensionsChanged', updateDimensions);
+      }
+    };
+  }, [selTrack, props.data.size.width, props.data.size.height]);
+
   // Get server time
   useEffect(() => {
     async function getServerTime() {
@@ -114,10 +149,8 @@ function AppComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       if (isElectron()) {
         try {
-          const electron = window.require('electron');
-          const ipcRenderer = electron.ipcRenderer;
           // Get sources from the main process
-          ipcRenderer.on('set-source', async (evt: any, sources: any) => {
+          window.electron.on('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
             const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
             for (const source of sources) {
@@ -126,7 +159,7 @@ function AppComponent(props: App): JSX.Element {
             setElectronSources(allSources);
             onOpen();
           });
-          ipcRenderer.send('request-sources');
+          window.electron.send('request-sources');
         } catch (err) {
           deleteApp(props._id);
         }
@@ -138,8 +171,10 @@ function AppComponent(props: App): JSX.Element {
           videoRef.current.play();
           const videoId = genId();
           const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
+
           room.localParticipant.publishTrack(screenTrack);
           await updateState(props._id, { videoId });
+          setSelTrack(screenTrack);
         } catch (err) {
           deleteApp(props._id);
         }
@@ -218,12 +253,13 @@ function AppComponent(props: App): JSX.Element {
       const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
       room.localParticipant.publishTrack(screenTrack);
       await updateState(props._id, { videoId });
+      setSelTrack(screenTrack);
       onClose();
     }
   };
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} lockAspectRatio={s.aspectRatio}>
       <>
         <Box backgroundColor="black" width="100%" height="100%">
           <video ref={videoRef} className="video-container" width="100%" height="100%"></video>
@@ -317,17 +353,6 @@ function AppComponent(props: App): JSX.Element {
       </>
     </AppWindow>
   );
-}
-
-/**
- * Check if browser is Electron based on the userAgent.
- * NOTE: this does a require check, UNLIKE web view app.
- *
- * @returns true or false.
- */
-function isElectron() {
-  const w = window as any; // eslint-disable-line
-  return typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.includes('Electron') && w.require;
 }
 
 /* App toolbar component for the app Twilio */

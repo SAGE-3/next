@@ -1,10 +1,11 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue } from '@chakra-ui/react';
 
@@ -57,7 +58,6 @@ function AppComponent(props: App): JSX.Element {
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
   const saveMap = useStore((state: any) => state.saveMap);
-
   // Convert ID to asset
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.assetid);
@@ -322,8 +322,12 @@ function ToolbarComponent(props: App): JSX.Element {
       const res = results.results[0];
       if (res && res.latlng) {
         const value: [number, number] = [res.latlng.lat, res.latlng.lng];
-        updateState(props._id, { location: value });
+
         map.fitBounds([res.bounds._southWest, res.bounds._northEast]);
+        // Sync zoom after fitting bounds
+        const newZoom = map.getZoom();
+        updateState(props._id, { location: value, zoom: newZoom });
+
         // Update the app title
         update(props._id, { title: res.text });
       }

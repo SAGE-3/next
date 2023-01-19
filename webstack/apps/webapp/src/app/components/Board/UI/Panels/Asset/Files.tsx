@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -368,8 +368,9 @@ export function Files(props: FilesProps): JSX.Element {
 
   // Select the file when clicked
   const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
       setList((prev) => {
         if (e.key === 'ArrowDown') {
           const first = filesList.findIndex((k) => k.selected);

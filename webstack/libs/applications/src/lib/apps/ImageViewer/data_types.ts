@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import {z} from 'zod';
 
 export interface dimensions {
   xmin: number;
@@ -7,11 +7,27 @@ export interface dimensions {
   ymax: number;
 }
 
+// export const bboxType = z.record(
+//   z.record(
+//     z.object({
+//       xmin: z.number(),
+//       ymin: z.number(),
+//       xmax: z.number(),
+//       ymax: z.number(),
+//     })
+//   )
+// );
+
 export const bboxType = z.record(
   z.object({
-    xmin: z.number(),
-    ymin: z.number(),
-    xmax: z.number(),
-    ymax: z.number(),
-  })
-);
+      score: z.number(),
+      label: z.string(),
+      box: z.object({
+        xmin: z.number(),
+        ymin: z.number(),
+        xmax: z.number(),
+        ymax: z.number(),
+      })
+    }
+  )
+)

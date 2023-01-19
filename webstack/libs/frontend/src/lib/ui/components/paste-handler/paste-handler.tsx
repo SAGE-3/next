@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -13,7 +13,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
-import { useUser, useUIStore, useAppStore } from '@sage3/frontend';
+import { useUser, useAuth, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
 import { processContentURL } from '@sage3/frontend';
 
 type PasteProps = {
@@ -29,10 +29,10 @@ type PasteProps = {
 export const PasteHandler = (props: PasteProps): JSX.Element => {
   // show some notifications
   const toast = useToast();
+  // User information
   const { user } = useUser();
-  // UI Store
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const { auth } = useAuth();
+  const { position: cursorPosition } = useCursorBoardPosition();
   // App Store
   const createApp = useAppStore((state) => state.create);
 
@@ -43,6 +43,17 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // get the target element and make sure it is the background board
       const elt = event.target as HTMLElement;
       if (elt.id !== 'board') return;
+
+      // Block guests from uploading assets
+      if (auth?.provider === 'guest') {
+        toast({
+          title: 'Guests cannot upload assets',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
 
       // Open webview if url, otherwise, open a sticky
       if (event.clipboardData?.files) {
@@ -61,14 +72,14 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Get content of clipboard
       const pastedText = event.clipboardData?.getData('Text');
 
-      // Get around the center of the board
-      const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-      const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+      // Get the user cursor position
+      const xDrop = cursorPosition.x;
+      const yDrop = cursorPosition.y;
 
       // if there's content
       if (pastedText) {
         // check and validate the URL
-        const isValid = isValidURL(pastedText);
+        const isValid = isValidURL(pastedText.trim());
         // If the start of pasted text is http, can assume is a url
         if (isValid) {
           let w = 800;
@@ -84,7 +95,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             title: final_url,
             roomId: props.roomId,
             boardId: props.boardId,
-            position: { x: xDrop - w / 2, y: yDrop - h / 2, z: 0 },
+            position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: w, height: h, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Webview',
@@ -97,11 +108,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             title: user.data.name,
             roomId: props.roomId,
             boardId: props.boardId,
-            position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
+            position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
-            state: { text: pastedText, fontSize: 42, color: '#F6E05E' },
+            state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
             raised: true,
           });
         }
@@ -115,7 +126,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Remove function during cleanup to prevent multiple additions
       document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
     };
-  }, [boardPosition.x, boardPosition.y, props.boardId, props.roomId]);
+  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user]);
 
   return <></>;
 };
@@ -167,6 +178,11 @@ function isValidURL(value: string): string | undefined {
 
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
   if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return;
+
+  // Disable some protocols: chrome sage3
+  if (scheme === 'sage3' || scheme === 'chrome') {
+    return;
+  }
 
   // re-assemble the URL per section 5.3 in RFC 3986
   out += scheme + ':';

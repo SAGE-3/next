@@ -1,18 +1,19 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Box, useColorModeValue, Text, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
-import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
-import { Applications } from '@sage3/applications/apps';
+import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react';
 
 import { ErrorBoundary } from 'react-error-boundary';
-import { MdClose, MdOpenInFull, MdOutlineCloseFullscreen } from 'react-icons/md';
+import { MdClose, MdZoomOutMap } from 'react-icons/md';
+
+import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
 
@@ -27,7 +28,6 @@ export function AppToolbar(props: AppToolbarProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
-  const updateApp = useAppStore((state) => state.update);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -48,6 +48,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const scale = useUIStore((state) => state.scale);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const setScale = useUIStore((state) => state.setScale);
 
   // Position state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -130,16 +132,61 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth, boardDragging]);
 
+  function moveToApp() {
+    if (app) {
+      // Scale
+      const aW = app.data.size.width + 60; // Border Buffer
+      const aH = app.data.size.height + 100; // Border Buffer
+      const wW = window.innerWidth;
+      const wH = window.innerHeight;
+      const sX = wW / aW;
+      const sY = wH / aH;
+      const zoom = Math.min(sX, sY);
+
+      // Position
+      let aX = -app.data.position.x + 20;
+      let aY = -app.data.position.y + 20;
+      const w = app.data.size.width;
+      const h = app.data.size.height;
+      if (sX >= sY) {
+        aX = aX - w / 2 + wW / 2 / zoom;
+      } else {
+        aY = aY - h / 2 + wH / 2 / zoom;
+      }
+      const x = aX;
+      const y = aY;
+
+      setBoardPosition({ x, y });
+      setScale(zoom);
+    }
+  }
+
   function getAppToolbar() {
     if (app) {
       const Component = Applications[app.data.type].ToolbarComponent;
       return (
-        <ErrorBoundary fallbackRender={({ error, resetErrorBoundary }) => <Text>An error has occured.</Text>}>
+        <ErrorBoundary
+          fallbackRender={({ error, resetErrorBoundary }) => (
+            <>
+              <Text whiteSpace="nowrap">An error has occured.</Text>
+              <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">
+                <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1">
+                  <MdClose color={buttonTextColor} />
+                </Button>
+              </Tooltip>
+            </>
+          )}
+        >
           <>
             <Component key={app._id} {...app}></Component>
-            <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400}>
-              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1">
-                <MdClose color={buttonTextColor} />
+            <Tooltip placement="top" hasArrow={true} label={'Zoom to App'} openDelay={400} ml="1">
+              <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+                <MdZoomOutMap size="14px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">
+              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+                <MdClose size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
           </>

@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -149,7 +149,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             <Input
               ref={initialRef}
               type="text"
-              placeholder={'Name'}
+              placeholder={'Room Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={name}
@@ -158,11 +158,11 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <InputGroup mt={4}>
+          <InputGroup my={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
             <Input
               type="text"
-              placeholder={'Description'}
+              placeholder={'Room Description'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={description}

@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -18,9 +18,9 @@ import * as express from 'express';
 // Mime type definitions
 import * as mime from 'mime';
 import * as fs from 'fs';
+import { decode as decode8 } from 'utf8';
 import { v4 as getUUID } from 'uuid';
 import { createClient } from 'redis';
-
 // HTTPS requests
 import axios from 'axios';
 import * as https from 'https';
@@ -33,12 +33,8 @@ import { uploadMiddleware } from '../../../connectors/upload-connector';
 // Asset model
 import { AssetsCollection, AppsCollection, MessageCollection, UsersCollection } from '../../collections';
 
-// External Imports
-import { WebSocket } from 'ws';
-
 // Lib Imports
-import { SubscriptionCache } from '@sage3/backend';
-import { APIClientWSMessage, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
 import {
   isCSV,
@@ -60,47 +56,7 @@ import { initialValues } from '@sage3/applications/initialValues';
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
 
-/**
- * App route/api express middleware.
- * @returns {express.Router} returns the express router object
- */
-export function assetExpressRouter(): express.Router {
-  const router = express.Router();
-
-  // Upload files: POST /api/assets/upload
-  router.post('/upload', uploadHandler);
-
-  // CRUD routes
-
-  // Get all the assets: GET /api/assets
-  router.get('/', async (req, res) => {
-    const docs = await AssetsCollection.getAllAssets();
-    if (docs) res.status(200).send({ success: true, data: docs });
-    else res.status(500).send({ success: false });
-  });
-
-  // Get one asset: GET /api/assets/:id
-  router.get('/:id', async ({ params }, res) => {
-    const data = await AssetsCollection.getAsset(params.id);
-    if (data) res.status(200).send({ success: true, data: [data] });
-    else res.status(500).send({ success: false });
-  });
-
-  // Delete one asset: DEL /api/assets/:id
-  router.delete('/:id', async ({ params }, res) => {
-    const data = await AssetsCollection.delAsset(params.id);
-    if (data) res.status(200).send({ success: true, data });
-    else res.status(500).send({ success: false });
-  });
-
-  // Access to uploaded files: GET /api/assets/static/:filename
-  const assetFolder = config.public;
-  router.use('/static', express.static(assetFolder));
-
-  return router;
-}
-
-function uploadHandler(req: express.Request, res: express.Response): void {
+export function uploadHandler(req: express.Request, res: express.Response): void {
   uploadMiddleware('files')(req, res, (err) => {
     // multerGoogleMiddleware("files")(req, res, (err) => {
     // multerS3Middleware("files")(req, res, (err) => {
@@ -143,6 +99,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
 
     // Do something with the files
     files.forEach(async (elt) => {
+      elt.originalname = decode8(elt.originalname);
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Normalize mime types using the mime package
       elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
@@ -153,7 +110,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       // Send message to clients
       MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}` }, user.id);
       // Add the new file to the collection
-      const assetID = await AssetsCollection.addAsset(
+      const newAsset = await AssetsCollection.add(
         {
           file: elt.filename,
           owner: user.id || '-',
@@ -171,7 +128,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
       );
 
       // If we need to open the file, do it
-      if (openFIles && assetID) {
+      if (openFIles && newAsset) {
         // Send message to clients
         if (isText(elt.mimetype)) {
           MessageCollection.add({ type: 'warning', payload: `No application to open ${elt.originalname}` }, user.id);
@@ -215,7 +172,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
                 size: { width, height, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'ImageViewer',
-                state: { ...initialValues['ImageViewer'], assetid: assetID },
+                state: { ...initialValues['ImageViewer'], assetid: newAsset._id },
                 raised: false,
               },
               user.id
@@ -238,7 +195,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'PDFViewer',
-              state: { ...initialValues['PDFViewer'], assetid: assetID },
+              state: { ...initialValues['PDFViewer'], assetid: newAsset._id },
               raised: false,
             },
             user.id
@@ -256,7 +213,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'CSVViewer',
-              state: { ...initialValues['CSVViewer'], assetid: assetID },
+              state: { ...initialValues['CSVViewer'], assetid: newAsset._id },
               raised: false,
             },
             user.id
@@ -275,7 +232,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'VideoViewer',
-              state: { ...initialValues['VideoViewer'], assetid: assetID },
+              state: { ...initialValues['VideoViewer'], assetid: newAsset._id },
               raised: false,
             },
             user.id
@@ -294,7 +251,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'DeepZoomImage',
-              state: { assetid: assetID, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
+              state: { assetid: newAsset._id, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
               raised: false,
             },
             user.id
@@ -313,7 +270,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'GLTFViewer',
-              state: { assetid: assetID },
+              state: { assetid: newAsset._id },
               raised: false,
             },
             user.id
@@ -332,7 +289,7 @@ function uploadHandler(req: express.Request, res: express.Response): void {
               size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'LeafLet',
-              state: { assetid: assetID, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
+              state: { assetid: newAsset._id, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
               raised: false,
             },
             user.id
@@ -479,67 +436,6 @@ function uploadHandler(req: express.Request, res: express.Response): void {
     // Return success with the information
     res.status(200).send(files);
   });
-}
-
-/**
- *
- * @param socket
- * @param request
- * @param message
- * @param cache
- */
-export async function assetWSRouter(
-  socket: WebSocket,
-  message: APIClientWSMessage,
-  user: SBAuthSchema,
-  cache: SubscriptionCache
-): Promise<void> {
-  // const auth = request.session.passport.user;
-  switch (message.method) {
-    case 'GET': {
-      // READ ALL
-      if (message.route === '/api/assets') {
-        const assets = await AssetsCollection.getAllAssets();
-        if (assets) socket.send(JSON.stringify({ id: message.id, success: true, data: assets }));
-        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get assets.' }));
-      }
-      // READ ONE
-      else if (message.route.startsWith('/api/assets/')) {
-        const id = message.route.split('/').at(-1) as string;
-        const asset = await AssetsCollection.getAsset(id);
-        if (asset) socket.send(JSON.stringify({ id: message.id, success: true, data: asset }));
-        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get asset.' }));
-      }
-      break;
-    }
-    // DELETE
-    case 'DELETE': {
-      const id = message.route.split('/').at(-1) as string;
-      const del = await AssetsCollection.delAsset(id);
-      if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
-      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete asset.' }));
-      break;
-    }
-    case 'SUB': {
-      // Subscribe to all
-      if (message.route === '/api/assets') {
-        const sub = await AssetsCollection.subscribeAll((doc) => {
-          const msg = { id: message.id, event: doc };
-          socket.send(JSON.stringify(msg));
-        });
-        if (sub) cache.add(message.id, [sub]);
-      }
-      break;
-    }
-    case 'UNSUB': {
-      // Unsubscribe Message
-      cache.delete(message.id);
-      break;
-    }
-    default: {
-      socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method.' }));
-    }
-  }
 }
 
 //
