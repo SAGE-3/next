@@ -35,7 +35,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
 
   return (
     <Box w="100%">
-      {props.title ?
+      {props.title ? (
         <Button
           {...props}
           w="100%"
@@ -52,7 +52,12 @@ export function ButtonPanel(props: ButtonPanelProps) {
         >
           {props.title}
         </Button>
-        : <Box my={1}> <hr /> </Box>}
+      ) : (
+        <Box my={1}>
+          {' '}
+          <hr />{' '}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -359,7 +364,8 @@ export function Panel(props: PanelProps) {
               </Box>
             </Box>
 
-            {showActions ? <>{props.children}</> : null}
+            {/* {showActions ? <>{props.children}</> : null} */}
+            <div style={{ display: showActions ? 'initial' : 'none' }}>{props.children}</div>
           </Box>
         </Box>
       </Rnd>

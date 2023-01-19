@@ -6,16 +6,19 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
+// React
+import { useEffect, useState } from 'react';
 
+// Sage
 import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
 import { Presence, User } from '@sage3/shared/types';
-import { useEffect, useState } from 'react';
+
+// Theme and icons
+import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
 import { GiArrowCursor } from 'react-icons/gi';
 import { IoMdSquareOutline } from 'react-icons/io';
 import { HiOutlineChevronDoubleRight } from 'react-icons/hi';
-
-import { MdArrowForward, MdOutlineFollowTheSigns, MdRemoveRedEye } from 'react-icons/md';
+import { MdRemoveRedEye } from 'react-icons/md';
 
 type AvatarGroupProps = {
   boardId: string;
