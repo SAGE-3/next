@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useToast, HStack, Textarea, VStack, IconButton, useColorModeValue, Spinner, Box, Tooltip, Input } from '@chakra-ui/react';
+import { useToast, HStack, Textarea, VStack, IconButton, useColorModeValue, Spinner, Box, Tooltip, Input, Button } from '@chakra-ui/react';
 import { App } from '@sage3/applications/schema';
 import { useAppStore, useUser } from '@sage3/frontend';
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, ChangeEventHandler } from 'react';
 import { MdPlayArrow, MdClearAll } from 'react-icons/md';
 import { state as AppState } from '../index';
 import { v4 as getUUID } from 'uuid';
@@ -48,14 +48,13 @@ export const InputBox = (props: InputBoxProps): JSX.Element => {
     console.log('New value aftere clearn is: ' + code);
   };
 
-  const updateInput = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    console.log(event);
-  };
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => setCode(event.target.value);
 
   return (
     <Box>
       <HStack p="2">
-        <Input placeholder="Basic usage" size="md" />
+        <Input placeholder="Basic usage" size="md" onChange={(ev) => handleChange(ev)} />
+        <Button onClick={handleExecute}>Ask</Button>
       </HStack>
     </Box>
   );

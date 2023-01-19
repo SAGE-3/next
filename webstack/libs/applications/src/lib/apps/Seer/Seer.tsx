@@ -29,7 +29,7 @@ function AppComponent(props: App): JSX.Element {
       <Box
         w={'100%'}
         h={'100%'}
-        p={2}
+        p={3}
         bg={bgColor}
         overflowY={'scroll'}
         css={{
@@ -45,14 +45,21 @@ function AppComponent(props: App): JSX.Element {
           },
         }}
       >
-        <h2>Input</h2>
-        <InputBox app={props} />
+        <Box display="flex" flexDir="row" width="100%" height="100%">
+          <Box display="flex" flexDir="column" width="100%" height="100%" borderRight="dotted 2px black" pr="3">
+            <h2 style={{ fontWeight: 'bold' }}>Input</h2>
+            <InputBox app={props} />
+            <h2 style={{ fontWeight: 'bold' }}>Response</h2>
+            <OutputBox app={props} />
+            <Button colorScheme="teal">Copy to Code</Button>
+          </Box>
 
-        <h2>Code</h2>
-        <CodeBox app={props} />
-
-        <h2>Output</h2>
-        <OutputBox app={props} />
+          <Box display="flex" flexDir="column" width="100%" height="100%" pl="3">
+            <h2 style={{ fontWeight: 'bold' }}>Generated Code </h2>
+            <CodeBox app={props} />
+            <Button colorScheme="teal">Generate SAGECell </Button>
+          </Box>
+        </Box>
       </Box>
     </AppWindow>
   );

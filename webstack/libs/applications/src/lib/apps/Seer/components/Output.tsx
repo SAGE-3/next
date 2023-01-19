@@ -26,7 +26,7 @@ export const OutputBox = (props: OutputBoxProps): JSX.Element => {
   const updateState = useAppStore((state) => state.updateState);
 
   // Parsed Output
-  if (!isObject(s.output)) return <>Empty Output</>;
+  if (!isObject(s.output)) return <textarea style={{ height: '100%', resize: 'none' }}>ChatGPT discussion will go here</textarea>;
   const parsedJSON = JSON.parse(s.output);
 
   console.log(parsedJSON);

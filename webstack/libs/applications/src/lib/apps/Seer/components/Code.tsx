@@ -54,7 +54,7 @@ export function CodeBox(props: CodeBoxProps) {
         onMount={handleEditorDidMount}
         defaultValue={code}
         onChange={updateCode}
-        height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
+        height={props.app.data.size.height + 'px'}
         language={'python'}
         theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
         options={{
