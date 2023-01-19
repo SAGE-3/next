@@ -9,7 +9,6 @@
 import { useEffect, useState } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
-import { keyframes } from '@emotion/react';
 
 import { App } from '../schema';
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
