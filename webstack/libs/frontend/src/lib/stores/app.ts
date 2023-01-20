@@ -133,15 +133,13 @@ const AppStore = createVanilla<Applications>((set, get) => {
         }
       });
     },
-    fetchBoardApps(boardId: AppSchema['boardId']) {
-      return new Promise<App[] | undefined>(async (resolve, reject) => {
-        const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
-        if (apps.success) {
-          resolve(apps.data);
-        } else {
-          reject();
-        }
-      });
+    async fetchBoardApps(boardId: AppSchema['boardId']) {
+      const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
+      if (apps.success) {
+        return apps.data;
+      } else {
+        return undefined;
+      }
     },
   };
 });
