@@ -42,7 +42,6 @@ export const schema = z.object({
   }),
 });
 
-
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 

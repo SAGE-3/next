@@ -101,7 +101,6 @@ interface UIState {
   controller: PanelUI;
   assetsPanel: PanelUI;
   whiteboardPanel: PanelUI;
-  lassoPanel: PanelUI;
   panelZ: string[];
   bringPanelForward: (panel: PanelNames) => void;
 
@@ -171,9 +170,9 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   controller: {
-    position: { x: 5, y: 5 },
+    position: { x: 5, y: 30 },
     name: 'controller',
-    stuck: StuckTypes.TopLeft,
+    stuck: StuckTypes.Left,
     setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, controller: { ...state.controller, position: pos } })),
     setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, controller: { ...state.controller, stuck: stuck } })),
     setOpened: (opened: boolean) => set((state) => ({ ...state, controller: { ...state.controller, opened: opened } })),
@@ -225,17 +224,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     setOpened: (opened: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, opened: opened } })),
     opened: true,
     setShow: (show: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, show: show } })),
-    show: false,
-  },
-  lassoPanel: {
-    position: { x: 20, y: 400 },
-    stuck: StuckTypes.Controller,
-    name: 'lasso',
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, show: show } })),
     show: false,
   },
   whiteboardPanel: {
