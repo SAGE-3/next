@@ -35,7 +35,7 @@ import httpx
 from websocketlistener import WebSocketListener
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
-
+from smartbits.genericsmartbit import GenericSmartBit
 # from utils import logging_config
 # logger = logging_config.get_console_logger()
 
@@ -216,6 +216,11 @@ class SAGEProxy:
             board_id = doc['data']["boardId"]
             print(f"\n\n\n\n in apps and app_id = {app_id} and updates is: {updates}")
             sb = self.room.boards[board_id].smartbits[app_id]
+
+            if type(sb) is GenericSmartBit:
+                print("not handling generic smartbit update")
+                return
+
 
             # Note that set_data_form_update clear touched field
             sb.refresh_data_form_update(doc, updates)
