@@ -51,7 +51,7 @@ def hadle_docker_compose_action(prefix, action):
     """
     if action not in ["UP", "DOWN"]: raise Exception("unrecognized action {action}")
 
-    with open(".env") as env_file:
+    with open(".env", "w") as env_file:
         # .env is exporter by docker compose so the proxy script will have access
         # ROOM_ID below
         env_file.write(f"ROOM_ID={room_id}")
