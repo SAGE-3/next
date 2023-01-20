@@ -23,34 +23,6 @@ const StepZoom = 0.1;
 // When using mouse wheel, repeated events
 const WheelStepZoom = 0.008;
 
-export enum StuckTypes {
-  Controller, // 0
-  None, // 1
-  Top, // 2
-  Bottom, // 3
-  Left, // 4
-  Right, // 5
-  TopRight, // 6
-  TopLeft, // 7
-  BottomRight, // 8
-  BottomLeft, // 9
-}
-
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'whiteboard' | 'lasso';
-
-// Typescript interface defining the store
-interface PanelUI {
-  position: { x: number; y: number };
-  setPosition: (pos: { x: number; y: number }) => void;
-  opened: boolean; // whether the actions are open (otherwise, just title)
-  setOpened: (opened: boolean) => void;
-  show: boolean; // whether the panel is visible
-  setShow: (show: boolean) => void;
-  stuck: StuckTypes; // if the panel is stuck, says direction, otherwise, None or Controller
-  setStuck: (show: StuckTypes) => void;
-  name: PanelNames;
-}
-
 interface UIState {
   scale: number;
   boardWidth: number;
@@ -93,17 +65,6 @@ interface UIState {
   setLassoMode: (enable: boolean) => void;
   setClearLassos: (clear: boolean) => void;
   setClearAllLassos: (clear: boolean) => void;
-
-  // Panels & Context Menu
-  applicationsPanel: PanelUI;
-  navigationPanel: PanelUI;
-  usersPanel: PanelUI;
-  controller: PanelUI;
-  assetsPanel: PanelUI;
-  whiteboardPanel: PanelUI;
-  lassoPanel: PanelUI;
-  panelZ: string[];
-  bringPanelForward: (panel: PanelNames) => void;
 
   appToolbarPanelPosition: { x: number; y: number };
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
@@ -160,96 +121,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   boardLocked: false,
-  panelZ: ['assets', 'applications', 'navigation', 'users', 'whiteboard', 'lasso'], // List of panels that have zordering
-  bringPanelForward: (panel: string) => {
-    const z = get().panelZ;
-    const i = z.indexOf(panel);
-    if (i >= 0) {
-      z.splice(i, 1);
-      z.push(panel);
-      set((state) => ({ ...state, panelZ: z }));
-    }
-  },
-  controller: {
-    position: { x: 5, y: 5 },
-    name: 'controller',
-    stuck: StuckTypes.TopLeft,
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, controller: { ...state.controller, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, controller: { ...state.controller, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, controller: { ...state.controller, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, controller: { ...state.controller, show: show } })),
-    show: true,
-  },
-  assetsPanel: {
-    position: { x: 220, y: 130 },
-    name: 'assets',
-    stuck: StuckTypes.Controller,
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, show: show } })),
-    show: false,
-  },
-  applicationsPanel: {
-    position: { x: 20, y: 325 },
-    stuck: StuckTypes.Controller,
-    name: 'applications',
-    setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, stuck: stuck } })),
-    opened: true,
-    setOpened: (op: boolean) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, opened: op } })),
-    show: false,
-    setShow: (show: boolean) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, show: show } })),
-  },
-  navigationPanel: {
-    position: { x: 20, y: 690 },
-    stuck: StuckTypes.Controller,
-    name: 'navigation',
-    setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, show: show } })),
-    show: false,
-  },
-  usersPanel: {
-    position: { x: 20, y: 20 },
-    stuck: StuckTypes.Controller,
-    name: 'users',
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, show: show } })),
-    show: false,
-  },
-  lassoPanel: {
-    position: { x: 20, y: 400 },
-    stuck: StuckTypes.Controller,
-    name: 'lasso',
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, lassoPanel: { ...state.lassoPanel, show: show } })),
-    show: false,
-  },
-  whiteboardPanel: {
-    position: { x: 20, y: 400 },
-    stuck: StuckTypes.Controller,
-    name: 'whiteboard',
-    setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, show: show } })),
-    show: false,
-  },
+
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
       return;

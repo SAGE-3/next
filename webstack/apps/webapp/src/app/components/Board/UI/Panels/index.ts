@@ -6,9 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './Controller';
+export * from './Controller/Controller';
 export * from './Applications/ApplicationsPanel';
 export * from './Asset/AssetsPanel';
 export * from './Navigation/NavigationPanel';
 export * from './Users/UsersPanel';
-export * from './Whiteboard/WhiteboardPanel';
+export * from './Annotations/AnnotationsPanel';
