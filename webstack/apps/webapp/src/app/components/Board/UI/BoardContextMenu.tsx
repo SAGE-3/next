@@ -176,7 +176,7 @@ export function BoardContextMenu(props: ContextProps) {
             justifyContent="flex-start"
             onClick={() => updatePanel('controller', { position: { x: contextMenuPosition.x, y: contextMenuPosition.y } })}
           >
-            Bring Menu
+            Bring Controller
           </Button>
           <Button
             w="100%"

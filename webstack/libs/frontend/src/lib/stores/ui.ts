@@ -121,7 +121,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
   boardLocked: false,
-
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
       return;
