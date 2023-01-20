@@ -4,10 +4,10 @@ import { App } from '../schema';
 
 type caslApp = App & { modelName: 'App' };
 
-// What are the actions
-export type AuthAction = 'manage' | 'manipulation' | 'delete' | 'create' | 'modify';
-// What are the subjects
-export type AuthSubject = caslApp | 'App' | 'asset' | 'room' | 'board' | 'all';
+// What are the actions: manage is a builtin alias
+export type AuthAction = 'manage' | 'move' | 'resize' | 'delete' | 'create' | 'modify';
+// What are the subjects: all is a builtin alias
+export type AuthSubject = 'all' | caslApp | 'App' | 'asset' | 'room' | 'board';
 type AppAbility = PureAbility<[AuthAction, AuthSubject]>;
 
 // Seems necessary to define when using types
@@ -35,10 +35,10 @@ export function defineAbilityFor(role: string, userId: string | undefined) {
     // create apps and modify/manipulate own apps
     can(['create'], ['App']);
     // operations on own apps
-    can(['modify', 'delete', 'manipulation'], 'App', (app: App) => app._createdBy === userId);
+    can(['modify', 'delete', 'move', 'resize'], 'App', (app: App) => app._createdBy === userId);
   } else if (role === 'viewer') {
     // sit back and watch
-    cannot(['create', 'modify', 'delete', 'manipulation'], 'all');
+    cannot(['create', 'modify', 'delete', 'move', 'resize'], 'all');
   }
 
   return build({

@@ -25,12 +25,12 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
-  // Guest mode disabled for now
-  // const { auth } = useAuth();
-  const isGuest = false; // auth?.provider === 'guest';
+  // User information
+  const { auth } = useAuth();
   const { user } = useUser();
 
-  const ability = defineAbilityFor('guest', user?._id);
+  // Permissions
+  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -56,7 +56,7 @@ export function AppWindow(props: WindowProps) {
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [myZ, setMyZ] = useState(zindex);
   const [appWasDragged, setAppWasDragged] = useState(false);
-  const [dragStatePos, setDragStartPosition] = useState(props.app.data.position);
+  // const [dragStatePos, setDragStartPosition] = useState(props.app.data.position);
 
   // Colors
   const bg = useColorModeValue('gray.100', 'gray.700');
@@ -64,7 +64,7 @@ export function AppWindow(props: WindowProps) {
 
   const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
-  const borderColorGroupSelect = useHexColor('gray');
+  // const borderColorGroupSelect = useHexColor('gray');
 
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
@@ -122,59 +122,53 @@ export function AppWindow(props: WindowProps) {
 
   // Handle when the window starts to drag
   function handleDragStart() {
-    if (ability.can('manipulation', { ...props.app, modelName: 'App' })) {
-      setAppDragging(true);
-      bringForward();
-      setDragStartPosition(props.app.data.position);
-      setDeltaPosition({ x: 0, y: 0, z: 0 }, props.app._id);
-    }
+    setAppDragging(true);
+    bringForward();
+    // setDragStartPosition(props.app.data.position);
+    setDeltaPosition({ x: 0, y: 0, z: 0 }, props.app._id);
   }
 
   // When the window is being dragged
   function handleDrag(_e: RndDragEvent, data: DraggableData) {
-    if (ability.can('manipulation', { ...props.app, modelName: 'App' })) {
-      setAppWasDragged(true);
-      if (isGrouped) {
-        const dx = data.x - props.app.data.position.x;
-        const dy = data.y - props.app.data.position.y;
-        setDeltaPosition({ x: dx, y: dy, z: 0 }, props.app._id);
-      }
+    setAppWasDragged(true);
+    if (isGrouped) {
+      const dx = data.x - props.app.data.position.x;
+      const dy = data.y - props.app.data.position.y;
+      setDeltaPosition({ x: dx, y: dy, z: 0 }, props.app._id);
     }
   }
 
   // Handle when the app is finished being dragged
   function handleDragStop(_e: RndDragEvent, data: DraggableData) {
-    if (ability.can('manipulation', { ...props.app, modelName: 'App' })) {
-      let x = data.x;
-      let y = data.y;
-      x = Math.round(x / gridSize) * gridSize;
-      y = Math.round(y / gridSize) * gridSize;
-      const dx = x - props.app.data.position.x;
-      const dy = y - props.app.data.position.y;
-      setPos({ x, y });
-      setAppDragging(false);
-      update(props.app._id, {
-        position: {
-          x,
-          y,
-          z: props.app.data.position.z,
-        },
-      });
-      if (isGrouped) {
-        selectedApps.forEach((appId) => {
-          if (appId === props.app._id) return;
-          const app = apps.find((el) => el._id == appId);
-          if (!app) return;
-          const p = app.data.position;
-          update(appId, {
-            position: {
-              x: p.x + dx,
-              y: p.y + dy,
-              z: p.z,
-            },
-          });
+    let x = data.x;
+    let y = data.y;
+    x = Math.round(x / gridSize) * gridSize;
+    y = Math.round(y / gridSize) * gridSize;
+    const dx = x - props.app.data.position.x;
+    const dy = y - props.app.data.position.y;
+    setPos({ x, y });
+    setAppDragging(false);
+    update(props.app._id, {
+      position: {
+        x,
+        y,
+        z: props.app.data.position.z,
+      },
+    });
+    if (isGrouped) {
+      selectedApps.forEach((appId) => {
+        if (appId === props.app._id) return;
+        const app = apps.find((el) => el._id == appId);
+        if (!app) return;
+        const p = app.data.position;
+        update(appId, {
+          position: {
+            x: p.x + dx,
+            y: p.y + dy,
+            z: p.z,
+          },
         });
-      }
+      });
     }
   }
 
@@ -274,8 +268,7 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        // pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', // Guest Blocker
-        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto', // Guest Blocker
+        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -295,11 +288,9 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      // TODO: Make this not required in the future with persmissions system
-      // Not ideal but right now we need this to prevent guests from moving apps.
-      // This happens locally before updating the server.
-      enableResizing={!isGuest}
-      disableDragging={isGuest}
+
+      enableResizing={ability.can('resize', { ...props.app, modelName: 'App' })}
+      disableDragging={!ability.can('move', { ...props.app, modelName: 'App' })}
     >
       {/* Title Above app */}
       {appTitles ? (

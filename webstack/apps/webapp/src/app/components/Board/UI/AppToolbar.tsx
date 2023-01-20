@@ -12,8 +12,10 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { ErrorBoundary } from 'react-error-boundary';
 import { MdClose, MdZoomOutMap } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore, useAuth, useUser } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
+
+import { defineAbilityFor } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
 
@@ -57,6 +59,13 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
+
+  // User information
+  const { auth } = useAuth();
+  const { user } = useUser();
+
+  // Permissions
+  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {
@@ -185,7 +194,10 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">
-              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+              <Button backgroundColor={commonButtonColors} size="xs" mx="1" p={0}
+                onClick={() => deleteApp(app._id)}
+                disabled={ability.cannot('delete', { ...app, modelName: 'App' })}
+              >
                 <MdClose size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
