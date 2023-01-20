@@ -6,9 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import {HStack, useToast} from '@chakra-ui/react';
-import {MdMap, MdGroups, MdFolder, MdApps, MdArrowBack, MdOutlineViewModule} from 'react-icons/md';
-import {BiPencil} from 'react-icons/bi';
+import { HStack, useToast } from '@chakra-ui/react';
+import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack, MdOutlineViewModule } from 'react-icons/md';
+import { BiPencil } from 'react-icons/bi';
 import {
   useUser,
   PanelNames,
@@ -20,7 +20,7 @@ import {
   useUsersStore,
   usePresenceStore
 } from '@sage3/frontend';
-import {Panel, IconButtonPanel} from './Panel';
+import { Panel, IconButtonPanel } from './Panel';
 
 
 export interface ControllerProps {
@@ -53,11 +53,11 @@ export function Controller(props: ControllerProps) {
   const presences = usePresenceStore((state) => state.presences);
 
 
-  const {user} = useUser();
+  const { user } = useUser();
 
 
   // Redirect the user back to the homepage when clicking the arrow button
-  const {toHome} = useRouteNav();
+  const { toHome } = useRouteNav();
 
   function handleHomeClick() {
     toHome(props.roomId);
@@ -74,8 +74,10 @@ export function Controller(props: ControllerProps) {
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'reorganize_layout',
-        params: { viewport_position: presence.data.viewport.position, viewport_size: presence.data.viewport.size,
-          by: "app_type", "mode": "tiles"}
+        params: {
+          viewport_position: presence.data.viewport.position, viewport_size: presence.data.viewport.size,
+          by: "app_type", "mode": "tiles"
+        }
       }
     });
     console.log("I am done");
@@ -129,41 +131,41 @@ export function Controller(props: ControllerProps) {
       zIndex={100}
     >
       <HStack w="100%">
-        <IconButtonPanel icon={<MdArrowBack/>} description={`Back to ${room?.data.name}`} isActive={false}
-                         onClick={handleHomeClick}/>
+        <IconButtonPanel icon={<MdArrowBack />} description={`Back to ${room?.data.name}`} isActive={false}
+          onClick={handleHomeClick} />
 
         <IconButtonPanel
-          icon={<MdGroups/>}
+          icon={<MdGroups />}
           description="Users"
           isActive={usersPanel.show}
           onClick={() => handleShowPanel(usersPanel.name)}
         />
         <IconButtonPanel
-          icon={<MdApps/>}
+          icon={<MdApps />}
           description={'Applications'}
           isActive={applicationsPanel.show}
           onClick={() => handleShowPanel(applicationsPanel.name)}
         />
         <IconButtonPanel
-          icon={<MdFolder/>}
+          icon={<MdFolder />}
           description="Assets"
           isActive={assetsPanel.show}
           onClick={() => handleShowPanel(assetsPanel.name)}
         />
         <IconButtonPanel
-          icon={<MdMap/>}
+          icon={<MdMap />}
           description="Navigation"
           isActive={navigationPanel.show}
           onClick={() => handleShowPanel(navigationPanel.name)}
         />
         <IconButtonPanel
-          icon={<BiPencil size="32px"/>}
+          icon={<BiPencil size="32px" />}
           description="Annotation"
           isActive={whiteboardPanel.show}
           onClick={() => handleShowPanel(whiteboardPanel.name)}
         />
         <IconButtonPanel
-          icon={< MdOutlineViewModule size="32px"/>}
+          icon={< MdOutlineViewModule size="32px" />}
           description="reorganize layout"
           onClick={() => reorganizeLayout()}
         />
