@@ -14,6 +14,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 import { SubscriptionCache } from '../utils/subscription-cache';
 import { SAGE3Collection } from './SAGECollection';
 import { checkPermissionsWS, AuthSubject } from './permissions';
+import { genId } from '@sage3/shared';
 
 export async function sageWSRouter<T extends SBJSON>(
   collection: SAGE3Collection<T>,
@@ -81,23 +82,23 @@ export async function sageWSRouter<T extends SBJSON>(
       // Subscribe to all docs
       if (message.route === path) {
         const sub = await collection.subscribeAll((doc) => {
-          const msg = { id: message.id, event: doc };
+          const msg = { id: genId(), subId: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
-        if (sub) cache.add(message.id, [sub]);
+        if (sub) cache.add(message.subId, [sub]);
       }
       // Subscribe to one doc
       else if (message.route.startsWith(path + '/')) {
         const id = message.route.split('/').at(-1);
         if (!id) {
-          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          socket.send(JSON.stringify({ id: genId(), subId: message.subId, success: false, message: 'No SubId provided' }));
           return;
         }
         const sub = await collection.subscribe(id, (doc) => {
-          const msg = { id: message.id, event: doc };
+          const msg = { id: genId(), subId: message.id, event: doc };
           socket.send(JSON.stringify(msg));
         });
-        if (sub) cache.add(message.id, [sub]);
+        if (sub) cache.add(message.subId, [sub]);
       }
       break;
     }

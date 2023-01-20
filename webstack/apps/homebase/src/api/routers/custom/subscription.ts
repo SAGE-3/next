@@ -28,6 +28,7 @@ import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collect
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
+import { genId } from '@sage3/shared';
 
 /**
  * This class is for CUSTOM SUBSCRIPTIONS
@@ -48,19 +49,19 @@ export async function subscriptionWSRouter(
       if (message.route.startsWith('/api/subscription/rooms/')) {
         const roomId = message.route.split('/').at(-1);
         if (!roomId) {
-          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          socket.send(JSON.stringify({ id: genId(), subId: message.subId, success: false, message: 'No id provided' }));
           return;
         }
         const roomSub = await RoomsCollection.subscribe(roomId, (doc) => {
-          const msg = { id: message.id, event: doc };
+          const msg = { id: genId(), subId: message.subId, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const boardsSub = await BoardsCollection.subscribeByQuery('roomId', roomId, (doc) => {
-          const msg = { id: message.id, event: doc };
+          const msg = { id: genId(), subId: message.subId, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const appsSub = await AppsCollection.subscribeByQuery('roomId', roomId, (doc) => {
-          const msg = { id: message.id, event: doc };
+          const msg = { id: genId(), subId: message.subId, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const subs = [];
@@ -74,15 +75,15 @@ export async function subscriptionWSRouter(
       else if (message.route.startsWith('/api/subscription/boards/')) {
         const boardId = message.route.split('/').at(-1);
         if (!boardId) {
-          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          socket.send(JSON.stringify({ id: genId(), subId: message.subId, success: false, message: 'No id provided' }));
           return;
         }
         const boardSub = await BoardsCollection.subscribe(boardId, (doc) => {
-          const msg = { id: message.id, event: doc };
+          const msg = { id: genId(), subId: message.subId, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const appsSub = await AppsCollection.subscribeByQuery('boardId', boardId, (doc) => {
-          const msg = { id: message.id, event: doc };
+          const msg = { id: genId(), subId: message.subId, event: doc };
           socket.send(JSON.stringify(msg));
         });
         const subs = [];
