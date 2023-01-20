@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useEffect, useRef, forwardRef, createRef } from 'react';
+import { useState, useEffect, createRef } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
@@ -35,29 +35,22 @@ export function ButtonPanel(props: ButtonPanelProps) {
 
   return (
     <Box w="100%">
-      {props.title ? (
-        <Button
-          {...props}
-          w="100%"
-          borderRadius="md"
-          h="auto"
-          p={1}
-          pl={2}
-          fontSize={smallFont}
-          color={props.textColor ? props.textColor : textColor}
-          justifyContent="flex-start"
-          // Drag and drop the button to create an app
-          onDragStart={onDragStart}
-          draggable={props.candrag === 'true' ? true : false}
-        >
-          {props.title}
-        </Button>
-      ) : (
-        <Box my={1}>
-          {' '}
-          <hr />{' '}
-        </Box>
-      )}
+      <Button
+        {...props}
+        w="100%"
+        borderRadius="md"
+        h="auto"
+        p={1}
+        pl={2}
+        fontSize={smallFont}
+        color={props.textColor ? props.textColor : textColor}
+        justifyContent="flex-start"
+        // Drag and drop the button to create an app
+        onDragStart={onDragStart}
+        draggable={props.candrag === 'true' ? true : false}
+      >
+        {props.title}
+      </Button>
     </Box>
   );
 }
@@ -383,8 +376,7 @@ export function Panel(props: PanelProps) {
                 ) : null}
               </Box>
             </Box>
-
-            {!panel.minimized ? <>{props.children}</> : null}
+            <div style={{ display: !panel.minimized ? 'initial' : 'none' }}>{props.children}</div>
           </Box>
         </Box>
       </Rnd>
