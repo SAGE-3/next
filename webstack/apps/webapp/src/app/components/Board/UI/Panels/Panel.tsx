@@ -51,7 +51,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
       >
         {props.title}
       </Button>
-    </Box >
+    </Box>
   );
 }
 
@@ -376,7 +376,7 @@ export function Panel(props: PanelProps) {
                 ) : null}
               </Box>
             </Box>
-            {!panel.minimized ? <>{props.children}</> : null}
+            <div style={{ display: !panel.minimized ? 'initial' : 'none' }}>{props.children}</div>
           </Box>
         </Box>
       </Rnd>
