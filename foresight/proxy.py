@@ -107,7 +107,8 @@ class SAGEProxy:
 
         apps_info = self.s3_comm.get_apps(self.room.room_id)
         for app_info in apps_info:
-            print(f"Creating {app_info['data']['state']}")
+            if self.prod_type != 'production':
+                print(f"Creating {app_info['data']['state']}")
             self.__handle_create("APPS", app_info)
 
     def handle_linked_app(self, app_id, msg):
@@ -173,11 +174,13 @@ class SAGEProxy:
         # we need state to be at the same level as data
 
         if collection == "BOARDS":
-            print("New board created")
+            if self.prod_type != 'production':
+                print("New board created")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            print("New app created")
+            if self.prod_type != 'production':
+                print("New app created")
             doc["state"] = doc["data"]["state"]
             del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
@@ -189,10 +192,12 @@ class SAGEProxy:
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
-        print("\n\n\n\n\n\nin Handle Update: ")
+        if self.prod_type != 'production':
+            print("\n\n\n\n\n\nin Handle Update: ")
         if collection == "BOARDS":
-            print("BOARD UPDATED: UNHANDLED")
-            print(f"\t\t updates is {updates}\n")
+            if self.prod_type != 'production':
+                print("BOARD UPDATED: UNHANDLED")
+                print(f"\t\t updates is {updates}\n")
             board_id = doc["_id"]
             # TODO: proceed to BOARD update with the updates field passed as param
             if "executeInfo" in updates and updates["executeInfo"]["executeFunc"]:
@@ -214,11 +219,13 @@ class SAGEProxy:
             # print(f"updating app {}")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
-            print(f"\n\n\n\n in apps and app_id = {app_id} and updates is: {updates}")
+            if self.prod_type != 'production':
+                print(f"\n\n\n\n in apps and app_id = {app_id} and updates is: {updates}")
             sb = self.room.boards[board_id].smartbits[app_id]
 
             if type(sb) is GenericSmartBit:
-                print("not handling generic smartbit update")
+                if self.prod_type != 'development':
+                    print("not handling generic smartbit update")
                 return
 
 
@@ -235,19 +242,21 @@ class SAGEProxy:
                         _params = getattr(exec_info, "params")
                         # TODO: validate the params are valid
                         # print(f"About to execute function --{func_name}-- with params --{_params}--")
-                        print(f"About to execute function --{func_name}-- with params --{_params}--")
+                        if self.prod_type != 'production':
+                            print(f"About to execute function --{func_name}-- with params --{_params}--")
 
                         _func(**_params)
                     except Exception as e:
                         print(f"Exception trying to execute sb function {func_name}. \n\t{e}")
 
     def __handle_delete(self, collection, doc):
-
-        print("deleting app")
+        if self.prod_type != 'production':
+            print("deleting app")
         if collection == "APPS":
             try:
                 del self.room.boards[doc["data"]["boardId"]].smartbits[doc["_id"]]
-                print(f"Successfully deleted app_id {doc['_id']}")
+                if self.prod_type != 'production':
+                    print(f"Successfully deleted app_id {doc['_id']}")
             except:
                 print(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
         if collection == "BOARDS":

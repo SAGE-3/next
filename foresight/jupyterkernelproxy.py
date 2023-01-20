@@ -55,8 +55,9 @@ class JupyterKernelProxy:
             super().__init__(address, headers=headers)
 
         def handshake_ok(self):
-            print("Opening %s" % format_addresses(self))
-            print("Done opening the connection")
+            if prod_type != 'production':
+                print("JupyterClient> Opening %s" % format_addresses(self))
+                print("Done opening the connection")
             self.parent_proxy_instance.conn_manager.add(self)
 
         def received_message(self, msg):
@@ -91,7 +92,8 @@ class JupyterKernelProxy:
                         result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
 
             if result:
-                print(f"result is {result}")
+                if prod_type != 'production':
+                    print(f"result is {result}")
                 self.pending_reponses[msg_id_uuid] = result
                 self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 

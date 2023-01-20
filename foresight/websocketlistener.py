@@ -47,7 +47,8 @@ class WebSocketListener:
         if True:
             self.message_queue.put(msg)
             self.received_msg_log[msg['id']] = (msg['event']['type'], msg['event']['doc']['_updatedAt'])
-            print(f"msg: {msg}")
+            if self.prod_type != 'production':
+                print(f"msg: {msg}")
         else:
             print(f"msg ignored: {msg}")
 

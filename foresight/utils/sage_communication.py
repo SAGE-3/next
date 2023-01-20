@@ -53,9 +53,10 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        print("app update data is")
-        print(data)
-        print("------------")
+        if self.prod_type != 'production':
+            print("app update data is")
+            print(data)
+            print("------------")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                    headers=self.__headers,
                                    json=data)
@@ -127,7 +128,8 @@ class SageCommunication(Borg):
             url += app_id
         r = self.httpx_client.get(url, headers=self.__headers)
         json_data = r.json()
-        print(f"json_data result is {json_data}")
+        if self.prod_type != 'production':
+            print(f"json_data result is {json_data}")
         data = json_data['data']
         if r.is_success:
             if room_id is not None:
