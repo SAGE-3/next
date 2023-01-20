@@ -127,7 +127,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           color: color,
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
-	  executeInfo: { executeFunc: '', params: {} },
+          executeInfo: { executeFunc: '', params: {} },
         });
         props.onClose();
       }
