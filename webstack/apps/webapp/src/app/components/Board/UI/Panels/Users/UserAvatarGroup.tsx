@@ -9,16 +9,17 @@
 // React
 import { useEffect, useState } from 'react';
 
-// Sage
-import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
-import { Presence, User } from '@sage3/shared/types';
-
 // Theme and icons
 import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
 import { GiArrowCursor } from 'react-icons/gi';
 import { IoMdSquareOutline } from 'react-icons/io';
 import { HiOutlineChevronDoubleRight } from 'react-icons/hi';
 import { MdRemoveRedEye } from 'react-icons/md';
+
+// Sage
+import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
+import { Presence, User } from '@sage3/shared/types';
+
 
 type AvatarGroupProps = {
   boardId: string;
@@ -190,14 +191,14 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                     )}
                   </MenuButton>
                   <MenuList>
-                    <MenuGroup title={el.user.data.name}>
-                      <MenuItem height="30px" icon={<GiArrowCursor />} onClick={() => goToCursor(el)}>
+                    <MenuGroup title={el.user.data.name} mt={0} mb={1} p={0} fontSize="md">
+                      <MenuItem fontSize="sm" height="2em" icon={<GiArrowCursor />} onClick={() => goToCursor(el)}>
                         Show Cursor
                       </MenuItem>
-                      <MenuItem height="30px" icon={<IoMdSquareOutline />} onClick={() => goToViewport(el)}>
+                      <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={() => goToViewport(el)}>
                         Show View
                       </MenuItem>
-                      <MenuItem height="30px" icon={<HiOutlineChevronDoubleRight />} onClick={() => followUser(el)}>
+                      <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleRight />} onClick={() => followUser(el)}>
                         {followingThisUser ? 'Unfollow' : 'Follow'}
                       </MenuItem>
                     </MenuGroup>
