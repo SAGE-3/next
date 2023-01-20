@@ -32,7 +32,7 @@ class SageCommunication(Borg):
         if conf is None:
             raise Exception("confifuration not found")
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-        self.httpx_client = httpx.Client()
+        self.httpx_client = httpx.Client(timeout=None)
 
         # TODO: laod this from config file
         self.routes = {
@@ -94,10 +94,9 @@ class SageCommunication(Borg):
 
     def get_assets(self, room_id=None, board_id=None, asset_id=None):
         url = self.conf[self.prod_type]['web_server']+self.routes["get_assets"]
-
         if asset_id:
             url += asset_id
-        r = self.httpx_client.get(url,headers=self.__headers)
+        r = self.httpx_client.get(url, headers=self.__headers)
         json_data = r.json()
         data = json_data['data']
         if r.is_success:

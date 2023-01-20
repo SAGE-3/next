@@ -7,8 +7,7 @@
  */
 
 import { HStack, useToast } from '@chakra-ui/react';
-
-import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack } from 'react-icons/md';
+import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack, MdOutlineViewModule } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 
 import { PanelNames, StuckTypes, useRoomStore, useRouteNav, useUIStore } from '@sage3/frontend';
@@ -41,6 +40,7 @@ export function Controller(props: ControllerProps) {
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome } = useRouteNav();
+
   function handleHomeClick() {
     toHome(props.roomId);
   }
@@ -77,7 +77,7 @@ export function Controller(props: ControllerProps) {
 
   return (
     <Panel
-      title={"Controller"}
+      title={'Controller'}
       name="controller"
       opened={opened}
       setOpened={setOpened}

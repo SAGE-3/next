@@ -7,12 +7,13 @@
 #-----------------------------------------------------------------------------
 
 from smartbitcollection import SmartBitsCollection
-from utils.generic_utils import import_cls
-from utils.wall_utils import Sage3Communication
+from utils.layout import Layout
+# from utils.generic_utils import import_cls
+# from utils.wall_utils import Sage3Communication
 
 
 class Board():
-    # cls_root = "smartbits"
+
 
     def __init__(self, doc):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
@@ -23,13 +24,51 @@ class Board():
         self.description = doc["data"]["description"]
         self.color = doc["data"]["color"]
         self.ownerId = doc["data"]["ownerId"]
-
+        self.layout = None
+        self.whiteboard_lines = None
         self.smartbits = SmartBitsCollection()
 
+        if "executeInfo" in doc["data"]:
+            self.executeInfo = doc["data"]["executeInfo"]
+        else:
+            self.executeInfo = {'executeFunc': '', 'params': {}}
 
-        # if data:
-        #     for app_uuid, app_data in data["state"]["apps"].items():
-        #         self.create_smartbit(app_uuid, app_data)
+    def reorganize_layout(self, viewport_position, viewport_size, buffer_size = 100, by="combined", mode="graphviz"):
+        if by not in ["app_type", "semantic"]:
+            print(f"{by} not a valid by option to organize layout. Not executing")
+            return
+        if mode not in ["tiles", "stacks"]:
+            print(f"{mode} not a valid mode to organize layout. Not executing")
+            return
+        viewport_position = (float(viewport_position["x"]), float(viewport_position["y"]))
+        viewport_size = (float(viewport_size["width"]), float(viewport_size["height"]))
+
+        print("Started executing organize_layout on the baord")
+        print(f"viewport position is {viewport_position}")
+        print(f"viewport size  is {viewport_size}")
+
+        app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size) for x in self.smartbits.smartbits_collection.values()}
+        app_to_type = {x:type(self.smartbits[x]).__name__ for x in app_dims.keys()}
+
+        self.layout = Layout(app_dims, viewport_position, viewport_size)
+        # self.layout = Layout(app_dims, viewport_position, viewport_size)
+        #self.layout.graphviz_layout()
+        self.layout.fdp_graphviz_layout(app_to_type)
+
+        for app_id, coords in self.layout._layout_dict.items():
+            sb = self.smartbits[app_id]
+            sb.data.position.x = coords[0]
+            sb.data.position.y = coords[1]
+            sb.send_updates()
+        print("Done executing organize_layout on the baord")
+
+        self.executeInfo = {'executeFunc': '', 'params': {}}
+
+
+
+
+
+
 
 
     # def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):

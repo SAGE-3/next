@@ -33,8 +33,9 @@ class AIClient(Borg):
 
         # TODO reformat this as dict[app_id: str, set ]
         self.running_jobs = set()
-
-        self.fxc = FuncXClient()
+        if 'fxc' not in self.__dict__:
+            print("Instantiating a FuncX client")
+            self.fxc = FuncXClient()
 
         self.stop_thread = False  # keep on checking until this changes to false
         self.msg_checker = threading.Thread(target=self.process_response,
