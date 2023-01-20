@@ -24,6 +24,10 @@ def test_create_imageviewer(imageviewer_instance):
 
 
 def test_set_bboxes(imageviewer_instance):
+    """
+    Tests that we can:
+    Set bounding boxes
+    """
     bboxes = {
         '0': {'score': 0.9997177720069884,
               'label': 'dog',
