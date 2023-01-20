@@ -9,7 +9,8 @@
 import { HStack, useToast } from '@chakra-ui/react';
 import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack, MdOutlineViewModule } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
-import { useUser, PanelNames, StuckTypes, useBoardStore, useRoomStore, useRouteNav, useUIStore, usePresenceStore } from '@sage3/frontend';
+
+import { PanelNames, StuckTypes, useRoomStore, useRouteNav, useUIStore } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from './Panel';
 
 export interface ControllerProps {
@@ -18,8 +19,6 @@ export interface ControllerProps {
 }
 
 export function Controller(props: ControllerProps) {
-  const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el._id === props.boardId);
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
 
@@ -78,7 +77,7 @@ export function Controller(props: ControllerProps) {
 
   return (
     <Panel
-      title={(room?.data.name ? room.data.name : '') + ': ' + (board?.data.name ? board.data.name : '')}
+      title={'Controller'}
       name="controller"
       opened={opened}
       setOpened={setOpened}
