@@ -1,10 +1,10 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 counter_doc = {
     '_id': '524c2a78-392c-43cd-936b-2aba6385822f',
@@ -126,18 +126,45 @@ aipane_doc = {
     '_createdBy': '34d7534e-f8ad-4cdf-ac8e-190a2dffe37d',
     '_updatedAt': 1668070041979,
     '_updatedBy': '34d7534e-f8ad-4cdf-ac8e-190a2dffe37d',
-    'data': {'title': '',
-             'roomId': 'c3f1af32-19db-4762-bc07-e3a6d1058fc9',
-             'boardId': 'cce4a498-0c2f-4b2d-afbf-b19d6b329171',
-             'position': {'x': 1502631, 'y': 1501231, 'z': 0},
-             'size': {'width': 400, 'height': 400, 'depth': 0},
-             'rotation': {'x': 0, 'y': 0, 'z': 0},
-             'type': 'AIPane',
-             'raised': True},
-    'state': {'executeInfo': {'executeFunc': '', 'params': {}},
-              'hostedApps': {},
-              'runStatus': False,
-              'supportedTasks': {},
-              'messages': {}
-              }
+    'data': {
+        'title': '',
+        'roomId': '55d27866-6d1c-441f-9718-dcdb4b6faeca',
+        'boardId': '2a8c2ed2-a093-40e4-820e-42bd8282a7f1',
+        'position': {'x': 1503638, 'y': 1497067, 'z': 0},
+        'size': {'width': 400, 'height': 400, 'depth': 0},
+        'rotation': {'x': 0, 'y': 0, 'z': 0},
+        'type': 'AIPane',
+        'raised': True
+    },
+    'state': {
+        'executeInfo': {'executeFunc': '', 'params': {}},
+        'hostedApps': {},
+        'runStatus': False,
+        'supportedTasks': {},
+        'messages': {}
+    }
+}
+
+imageviewer_doc = {
+    '_id': '3b4aa5ad-e175-47ff-bfb3-f4ffe3a42bcb',
+    '_createdAt': 1674256162592,
+    '_createdBy': '860229de-e8ca-421c-99d8-3c3a0108c02c',
+    '_updatedAt': 1674256172008,
+    '_updatedBy': '860229de-e8ca-421c-99d8-3c3a0108c02c',
+    'data': {
+        'title': 'yolo_2.jpeg',
+        'roomId': '55d27866-6d1c-441f-9718-dcdb4b6faeca',
+        'boardId': '2a8c2ed2-a093-40e4-820e-42bd8282a7f1',
+        'position': {'x': 1503707, 'y': 1497184, 'z': 0},
+        'size': {'width': 268, 'height': 200, 'depth': 0},
+        'rotation': {'x': 0, 'y': 0, 'z': 0},
+        'type': 'ImageViewer',
+        'raised': True
+    },
+    'state': {
+        'executeInfo': {'executeFunc': '', 'params': {}},
+        'assetid': 'b5c8eeae-f5f5-4365-b025-8503bda6ac9c',
+        'annotations': False,
+        'boxes': {}
+    }
 }

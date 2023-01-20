@@ -69,7 +69,7 @@ class AIPaneState(TrackedBaseModel):
     hostedApps: Optional[dict]
     supportedTasks: Optional[dict]
     runStatus: int
-    supportedTasks: Optional[dict]
+    # supportedTasks: Optional[dict]
 
 
 class AIPane(SmartBit):
