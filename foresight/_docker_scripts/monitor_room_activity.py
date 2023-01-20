@@ -16,7 +16,6 @@ docker run -t \
 """
 
 import sys
-sys.path.append('../')
 from python_on_whales import DockerClient
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
@@ -44,7 +43,7 @@ def get_prefix(_uuid, len=16):
     return uuid.UUID(_uuid).hex[:len]
 
 
-def hadle_docker_compose_action(room_id, prefix, action):
+def hadle_docker_compose_action(room_id, action):
     """
     :param prefix: the prefix of the room id to use
     :param action: `up` to start a docker image and `down` to stop it.
@@ -52,13 +51,14 @@ def hadle_docker_compose_action(room_id, prefix, action):
     """
     if action not in ["UP", "DOWN"]: raise Exception("unrecognized action {action}")
 
+    print(room_id)
     with open(".env", 'w') as env_file:
         # .env is exporter by docker compose so the proxy script will have access
         # ROOM_ID below
         env_file.write(f"ROOM_ID={room_id}")
 
     docker = DockerClient(host=host_URL, compose_files=["./docker-compose-proxy.yml"],
-                          compose_project_name=prefix)
+                          compose_project_name=get_prefix(room_id))
     if action.upper() == "UP":
         docker.compose.up()
     else:
@@ -73,12 +73,12 @@ if __name__ == "__main__":
 
     while True:
         current_rooms = sage_comm.get_rooms()
-        current_room_ids = [get_prefix(x["_id"]) for x in current_rooms]
+        current_room_ids = [x["_id"] for x in current_rooms]
 
         # handle inactive_room_ids here (down the docker images)
         inactive_room_ids = active_rooms - set(current_room_ids)
         for room_id in inactive_room_ids:
-            hadle_docker_compose_action(room_id, get_prefix(room_id), "DOWN")
+            hadle_docker_compose_action(room_id, "UP")
             active_rooms.remove(room_id)
             max_nb_supported_rooms -= 1
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
         for room_id in new_room_ids:
             if len(active_rooms) < max_nb_supported_rooms:
-                hadle_docker_compose_action(room_id, get_prefix(room_id), "UP")
+                hadle_docker_compose_action(room_id, "UP")
                 active_rooms.add(room_id)
                 max_nb_supported_rooms += 1
 
