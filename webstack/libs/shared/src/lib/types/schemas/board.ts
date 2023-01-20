@@ -29,6 +29,11 @@ const schema = z.object({
   privatePin: z.string(),
   // The lines on the board
   whiteboardLines: z.any(),
+  // function to execute on the baord
+  executeInfo: z.object({
+    executeFunc: z.string(),
+    params: z.record(z.any()),
+  }),
 });
 
 export type BoardSchema = z.infer<typeof schema>;

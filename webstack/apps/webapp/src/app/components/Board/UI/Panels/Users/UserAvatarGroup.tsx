@@ -86,7 +86,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     const aType = a?.user.data.userType === 'wall' ? 0 : 1;
     const bType = b?.user.data.userType === 'wall' ? 0 : 1;
     return aType - bType;
-  });
+  })
 
   // Go to the user's cursor
   function goToCursor(user: UserAndPresence) {

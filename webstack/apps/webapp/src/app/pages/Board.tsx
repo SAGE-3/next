@@ -8,7 +8,9 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, useColorModeValue, Text } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, HStack } from '@chakra-ui/react';
+
+import { MdCloudQueue } from 'react-icons/md';
 
 import {
   useAppStore,
@@ -38,6 +40,12 @@ export function BoardPage() {
   const { toHome } = useRouteNav();
   const config = useData('/api/configuration') as serverConfiguration;
   const textColor = useColorModeValue('gray.800', 'gray.100');
+
+  // Get the room and board
+  const boards = useBoardStore((state) => state.boards);
+  const board = boards.find((el) => el._id === boardId);
+  const rooms = useRoomStore((state) => state.rooms);
+  const room = rooms.find((el) => el._id === roomId);
 
   if (!roomId || !boardId) {
     toHome(roomId);
@@ -132,9 +140,13 @@ export function BoardPage() {
       </Box>
 
       {/* ServerName */}
-      <Text fontSize={'xl'} opacity={0.7} position="absolute" left="2" color={textColor} userSelect="none" whiteSpace="nowrap">
-        {config?.serverName}
-      </Text>
+      <HStack position="absolute" left="2">
+        <MdCloudQueue fontSize={"18px"} color={"darkgray"} />
+        <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
+          {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
+        </Text>
+      </HStack>
+
     </>
   );
 }
