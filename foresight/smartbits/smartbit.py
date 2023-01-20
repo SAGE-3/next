@@ -46,6 +46,9 @@ class TrackedBaseModel(BaseModel):
 
     def is_dotted_path_dict(self, dotted_path):
         partial_obj = self
+        if dotted_path.split(".")[0] != "state":
+            dotted_path = "data." + dotted_path
+
         for part in dotted_path.split(".")[:-1]:
             partial_obj = getattr(partial_obj, part)
         if type(getattr(partial_obj, dotted_path.split(".")[-1])) is dict:
@@ -101,7 +104,6 @@ class TrackedBaseModel(BaseModel):
                 dotted_path = ".".join(path)
                 yield (dotted_path, u_data)
 
-        # print(list(recursive_iter(update_data)))
         # what was updated?
         for updated_field_id, updated_field_val in updates.items():
             if len(updated_field_id.split(".")) > 1 and \

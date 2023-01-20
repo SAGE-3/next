@@ -91,6 +91,7 @@ class JupyterKernelProxy:
                         result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
 
             if result:
+                print(f"result is {result}")
                 self.pending_reponses[msg_id_uuid] = result
                 self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 

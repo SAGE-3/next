@@ -7,15 +7,20 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  Box, useColorModeValue, Tooltip, IconButton,
-  Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
-  useDisclosure
-} from '@chakra-ui/react';
+import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
 
 import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen } from 'react-icons/md';
 
-import { StuckTypes, useAppStore, useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import {
+  ConfirmModal,
+  useAppStore,
+  useBoardStore,
+  useHexColor,
+  usePresenceStore,
+  useUIStore,
+  useUser,
+  useUsersStore,
+} from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
@@ -31,19 +36,11 @@ export function NavigationPanel(props: NavProps) {
   const apps = useAppStore((state) => state.apps);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const updateApp = useAppStore((state) => state.update);
-  // UI store
-  const position = useUIStore((state) => state.navigationPanel.position);
-  const setPosition = useUIStore((state) => state.navigationPanel.setPosition);
-  const opened = useUIStore((state) => state.navigationPanel.opened);
-  const setOpened = useUIStore((state) => state.navigationPanel.setOpened);
-  const show = useUIStore((state) => state.navigationPanel.show);
-  const setShow = useUIStore((state) => state.navigationPanel.setShow);
-  const stuck = useUIStore((state) => state.navigationPanel.stuck);
-  const setStuck = useUIStore((state) => state.navigationPanel.setStuck);
-  const controllerPosition = useUIStore((state) => state.controller.position);
+
+  // UI Store
   const boardLocked = useUIStore((state) => state.boardLocked);
   const lockBoard = useUIStore((state) => state.lockBoard);
-  const zIndex = useUIStore((state) => state.panelZ).indexOf('navigation');
+  const updateBoard = useBoardStore((state) => state.update);
 
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -80,7 +77,6 @@ export function NavigationPanel(props: NavProps) {
 
       const width = Math.max(...appsRight) - Math.min(...appsLeft);
       const height = Math.max(...appsBottom) - Math.min(...appsTop);
-      const aspectRatio = width / height;
 
       const mapScale = Math.min(mapWidth / width, mapHeight / height) * 0.95;
       const x = Math.min(...appsLeft);
@@ -93,19 +89,6 @@ export function NavigationPanel(props: NavProps) {
       setMapScale(mapScale);
     }
   }, [apps]);
-
-  // if a menu is currently closed, make it "jump" to the controller
-  useEffect(() => {
-    if (!show) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
-      setStuck(StuckTypes.Controller);
-    }
-  }, [show]);
-  useEffect(() => {
-    if (stuck == StuckTypes.Controller) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
-    }
-  }, [controllerPosition]);
 
   const moveToApp = (app: App) => {
     // set the app as selected
@@ -137,46 +120,23 @@ export function NavigationPanel(props: NavProps) {
     setScale(zoom);
   };
 
-  // Organize the apps to the current user's screen
-  const organizeApps = () => {
-    if (apps.length > 0) {
-      const buffer = 100 / scale;
-      const winWidth = window.innerWidth / scale - buffer;
-      const winHeight = window.innerHeight / scale - buffer;
-
-      const bX = -boardPosition.x + buffer / 2;
-      const bY = -boardPosition.y + buffer / 2;
-
-      const xSpacing = 20;
-      const ySpacing = 40;
-      const numCols = Math.max(1, Math.ceil(Math.sqrt(apps.length)));
-      const numRows = Math.ceil(Math.sqrt(apps.length));
-
-      const colWidth = (winWidth - xSpacing * numCols) / numCols;
-      const rowHeight = (winHeight - ySpacing * numRows) / numRows;
-      let currentCol = 0;
-      let currentRow = 0;
-      apps.forEach((el) => {
-        const aspect = el.data.size.width / el.data.size.height;
-        let width = Math.floor(Math.min(colWidth, rowHeight * aspect));
-        let height = Math.floor(Math.min(rowHeight, colWidth / aspect));
-        width = Math.max(200, width);
-        height = Math.max(100, height);
-
-        let x = Math.floor(bX + currentCol * xSpacing + currentCol * colWidth + (colWidth - width) / 2);
-        let y = Math.floor(bY + currentRow * ySpacing + currentRow * rowHeight + (rowHeight - height) / 2);
-
-        if (currentCol >= numCols - 1) {
-          currentCol = 0;
-          currentRow++;
-        } else {
-          currentCol++;
-        }
-
-        updateApp(el._id, { position: { x, y, z: el.data.position.z }, size: { width, height, depth: el.data.size.depth } });
-      });
-    }
-  };
+  // Organize board using python function
+  function organizeApps() {
+    // get presence of current user for its viewport
+    const presence = presences.filter((el) => el.data.boardId === props.boardId).filter((el) => el.data.userId === user?._id)[0];
+    // Trigger the smart function
+    updateBoard(props.boardId, {
+      executeInfo: {
+        executeFunc: 'reorganize_layout',
+        params: {
+          viewport_position: presence.data.viewport.position,
+          viewport_size: presence.data.viewport.size,
+          by: 'app_type',
+          mode: 'tiles',
+        },
+      },
+    });
+  }
 
   // Result the confirmation modal
   const onOrganizeConfirm = () => {
@@ -187,25 +147,16 @@ export function NavigationPanel(props: NavProps) {
   return (
     <>
       {/* Organize board dialog */}
-      <Modal isCentered isOpen={organizeIsOpen} onClose={organizeOnClose}>
-        <OrganizeBoardModal onClick={onOrganizeConfirm} onClose={organizeOnClose} isOpen={organizeIsOpen}></OrganizeBoardModal>
-      </Modal>
 
-      <Panel
-        title={'Navigation'}
-        name="navigation"
-        opened={opened}
-        setOpened={setOpened}
-        setPosition={setPosition}
-        position={position}
-        width={400}
-        showClose={true}
-        show={show}
-        setShow={setShow}
-        stuck={stuck}
-        setStuck={setStuck}
-        zIndex={zIndex}
-      >
+      <ConfirmModal
+        title="Organize the Board"
+        message="Are you sure you want to automatically organize the applications?"
+        onConfirm={onOrganizeConfirm}
+        onClose={organizeOnClose}
+        isOpen={organizeIsOpen}
+      />
+
+      <Panel title={'Navigation'} name="navigation" width={400} showClose={false} zIndex={100}>
         <Box alignItems="center" display="flex">
           <Box
             width={mapWidth}
@@ -318,30 +269,3 @@ const NavMapCursor = (props: NavMapCusorProps) => {
     ></Box>
   );
 };
-
-
-type OrganizeBoardProps = {
-  onClick: () => void;
-  onClose: () => void;
-  isOpen: boolean;
-};
-
-export function OrganizeBoardModal(props: OrganizeBoardProps) {
-  return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Organize the Board</ModalHeader>
-        <ModalBody>Are you sure you want to automatically organize the applications?</ModalBody>
-        <ModalFooter>
-          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
-            Cancel
-          </Button>
-          <Button colorScheme="red" size="sm" onClick={props.onClick}>
-            Yes, Organize the Board
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
-}
