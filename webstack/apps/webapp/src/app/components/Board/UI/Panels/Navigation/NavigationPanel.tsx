@@ -147,11 +147,11 @@ export function NavigationPanel(props: NavProps) {
     setScale(zoom);
   };
 
-  // NEEDS TO BE REVIEWED by RYAN OR LUC
+  // Organize board using python function
   function organizeApps() {
+    // get presence of current user for its viewport
     const presence = presences.filter((el) => el.data.boardId === props.boardId).filter((el) => el.data.userId === user?._id)[0];
-
-    console.log('Sending request to reorganize layout');
+    // Trigger the smart function
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'reorganize_layout',
