@@ -42,12 +42,13 @@ def test_new_app_added(aipane_instance):
     """
     pass
     # imageviewer_instance
-    # aipane_instance.new_app_added('ImageViewer')
-    # assert len(set(aipane_instance.state.hostedApps.values())) == 1
-    # assert aipane_instance.state.supportedTasks == {'vision': {'Object Detection': ['facebook/detr-resnet-50',
-    #                                                                                 'lai_lab/fertilized_egg_detect'],
-    #                                                            'Classification': ['image_c_model_1',
-    #                                                                               'image_c_model_2']}}
+    aipane_instance.state.hostedApps = {'3b4aa5ad-e175-47ff-bfb3-f4ffe3a42bcb': 'yolo_2.jpeg'}
+    aipane_instance.new_app_added('ImageViewer')
+    assert len(set(aipane_instance.state.hostedApps.values())) == 1
+    assert aipane_instance.state.supportedTasks == {'vision': {'Object Detection': ['facebook/detr-resnet-50',
+                                                                                    'lai_lab/fertilized_egg_detect'],
+                                                               'Classification': ['image_c_model_1',
+                                                                                  'image_c_model_2']}}
 
 
 def test_get_sharing_url(aipane_instance):
@@ -61,7 +62,7 @@ def test_get_sharing_url(aipane_instance):
 def test_execute_model(aipane_instance):
     """
     Tests that we can:
-    
+
     """
     pass
 
