@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import {useAppStore, useUser} from '@sage3/frontend';
+import { useAppStore, useUser } from '@sage3/frontend';
 import {
   Alert, AlertIcon,
   Box,
@@ -21,20 +21,20 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import {App} from '../../schema';
+import { App } from '../../schema';
 
-import {state as AppState, fieldT} from './index';
-import {AppWindow} from '../../components';
+import { state as AppState, fieldT } from './index';
+import { AppWindow } from '../../components';
 
 
 // Styling
 import './styling.css';
-import {MdClearAll, MdPlayArrow} from "react-icons/md";
-import {useEffect, useRef, useState} from "react";
+import { MdClearAll, MdPlayArrow } from "react-icons/md";
+import { useEffect, useRef, useState } from "react";
 
 // import AceEditor from "react-ace";
-import {v4 as getUUID} from "uuid";
-import {User} from "@sage3/shared/types";
+import { v4 as getUUID } from "uuid";
+import { User } from "@sage3/shared/types";
 import Ansi from "ansi-to-react";
 
 /* App component for Seer */
@@ -72,14 +72,14 @@ function AppComponent(props: App): JSX.Element {
         }}
       >
         <InputBox app={props}
-                  fieldType={fieldType}
-                  setFieldType={setFieldType}/>
+          fieldType={fieldType}
+          setFieldType={setFieldType} />
 
 
         {
           !s.output ?
             null :
-            <OutputBox output={s.output} app={props} fieldType={fieldType}/>
+            <OutputBox output={s.output} app={props} fieldType={fieldType} />
         }
       </Box>
     </AppWindow>
@@ -95,14 +95,14 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       {/*NTS: Ask how to add a space in the ToolbarComponent between the label*/}
       {/*and the actual buttons. Michael did this in SageCell.*/}
-      <div style={{marginTop: '4px'}}>
+      <div style={{ marginTop: '4px' }}>
         <Button colorScheme="green" disabled={true}> <MdPlayArrow size={'1.5em'} color='#808080'></MdPlayArrow> Execute</Button>
       </div>
     </>
   );
 }
 
-export default {AppComponent, ToolbarComponent};
+export default { AppComponent, ToolbarComponent };
 
 type InputBoxProps = {
   app: App;
@@ -116,7 +116,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const [code, setCode] = useState<string>(s.code);
-  const {user} = useUser();
+  const { user } = useUser();
   const [fontSize, setFontSize] = useState(s.fontSize);
   const toast = useToast();
   const fieldType = props.fieldType;
@@ -128,7 +128,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       updateState(props.app._id, {
         code: code,
         output: '',
-        executeInfo: {executeFunc: 'execute', params: {_uuid: getUUID()}},
+        executeInfo: { executeFunc: 'execute', params: { _uuid: getUUID() } },
       });
     }
   };
@@ -138,7 +138,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     updateState(props.app._id, {
       code: '',
       output: '',
-      executeInfo: {executeFunc: '', params: {}},
+      executeInfo: { executeFunc: '', params: {} },
     });
     setCode("")
     console.log("New value aftere clearn is: " + code)
@@ -184,9 +184,9 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               variant="ghost"
               icon={
                 s.executeInfo?.executeFunc === 'execute' ? (
-                  <Spinner size="sm" color="teal.500"/>
+                  <Spinner size="sm" color="teal.500" />
                 ) : (
-                  <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')}/>
+                  <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
                 )
               }
             />
@@ -199,13 +199,13 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               aria-label={''}
               bg={useColorModeValue('#FFFFFF', '#000000')}
               variant="ghost"
-              icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')}/>}
+              icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
             />
           </Tooltip>
         </VStack>
 
       </HStack>
-      <div style={{border: "1px solid black"}}>
+      <div style={{ border: "1px solid black" }}>
         <p>CODE IS: {code}</p>
         <p>FIELD TYPE IS: {fieldType}</p>
       </div>
@@ -275,7 +275,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
         <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
       ) : (
         <Alert status="error" variant="left-accent">
-          <AlertIcon/>
+          <AlertIcon />
           <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
         </Alert>
       )}
@@ -301,13 +301,13 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                     </Text>
                   );
                 case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.display_data.data[key]}}/>;
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
                 case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`}/>;
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
                 case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`}/>;
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
                 case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.display_data.data[key]}}/>;
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
                 default:
                   return MapJSONObject(parsedJSON.display_data[key]);
               }
@@ -330,13 +330,13 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                     </Text>
                   );
                 case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.execute_result.data[key]}}/>;
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
                 case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`}/>;
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
                 case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`}/>;
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
                 case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.execute_result.data[key]}}/>;
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
                 default:
                   return null;
               }
