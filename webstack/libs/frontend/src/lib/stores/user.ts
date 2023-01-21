@@ -12,7 +12,7 @@ import createVanilla from 'zustand/vanilla';
 // The React Version of Zustand
 import createReact from 'zustand';
 
-// Application specific schema
+// User specific schema
 import { User, UserSchema } from '@sage3/shared/types';
 
 // Dev Tools

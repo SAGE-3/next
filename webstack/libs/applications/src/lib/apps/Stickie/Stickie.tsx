@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
 
-import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { ColorPicker, useAppStore, useHexColor, useUser, useUsersStore, useAuthorizationStore } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './';
@@ -40,9 +40,12 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   // Update functions from the store
-  const updateState = useAppStore((state) => state.updateState);
-  const update = useAppStore((state) => state.update);
-  const createApp = useAppStore((state) => state.create);
+  // const updateState = useAppStore((state) => state.updateState);
+  // const update = useAppStore((state) => state.update);
+  // const createApp = useAppStore((state) => state.create);
+
+  const { createApp, updateApp, updateStateApp, deleteApp } = useAuthorizationStore();
+
   const { user } = useUser();
   const { boardId, roomId } = useParams();
 
@@ -79,14 +82,14 @@ function AppComponent(props: App): JSX.Element {
         // change local number of rows
         setRows(numlines);
         // update size of the window
-        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        updateApp(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
       }
     }
   }, [s.fontSize]);
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(100, (val) => {
-    updateState(props._id, { text: val });
+    updateStateApp(props._id, { text: val });
   });
   // Keep a copy of the function
   const debounceFunc = useRef(debounceSave);
@@ -106,7 +109,7 @@ function AppComponent(props: App): JSX.Element {
         // change local number of rows
         setRows(numlines);
         // update size of the window
-        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        updateApp(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
       }
     }
   }
@@ -138,7 +141,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const unlock = () => {
-    updateState(props._id, { lock: false });
+    updateStateApp(props._id, { lock: false });
   };
 
   // React component
@@ -186,7 +189,8 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Update functions from the store
-  const updateState = useAppStore((state) => state.updateState);
+  // const updateState = useAppStore((state) => state.updateState);
+  const { createApp, updateApp, updateStateApp, deleteApp } = useAuthorizationStore();
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
@@ -197,13 +201,13 @@ function ToolbarComponent(props: App): JSX.Element {
   // Larger font size
   function handleIncreaseFont() {
     const fs = s.fontSize + 8;
-    updateState(props._id, { fontSize: fs });
+    updateStateApp(props._id, { fontSize: fs });
   }
 
   // Smaller font size
   function handleDecreaseFont() {
     const fs = s.fontSize - 8;
-    updateState(props._id, { fontSize: fs });
+    updateStateApp(props._id, { fontSize: fs });
   }
 
   // Download the stickie as a text file
@@ -237,11 +241,11 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   const handleColorChange = (color: string) => {
-    updateState(props._id, { color: color });
+    updateStateApp(props._id, { color: color });
   };
 
   const lockUnlock = () => {
-    updateState(props._id, { lock: !locked });
+    updateStateApp(props._id, { lock: !locked });
   };
   return (
     <>

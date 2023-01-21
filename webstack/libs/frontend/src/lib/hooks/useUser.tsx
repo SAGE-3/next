@@ -15,7 +15,7 @@
 
 import { User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { APIHttp, SocketAPI } from '../api';
+import { APIHttp } from '../api';
 import { useAuth } from './useAuth';
 
 const UserContext = createContext({

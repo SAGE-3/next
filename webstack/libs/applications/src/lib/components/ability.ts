@@ -14,7 +14,8 @@ type AppAbility = PureAbility<[AuthAction, AuthSubject]>;
 const lambdaMatcher = (matchConditions: MatchConditions) => matchConditions;
 
 /**
- * Main function to define the abilities
+ * Define the ability of a user to perform an action on a resource
+ * The ability is based on the user's role and on the resource type
  *
  * @export
  * @param {string} role
