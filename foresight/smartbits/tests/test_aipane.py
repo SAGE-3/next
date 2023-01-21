@@ -11,6 +11,9 @@ from smartbits.imageviewer import ImageViewer
 import pytest
 from smartbits.tests.sample_sb_docs import aipane_doc, imageviewer_doc
 
+import uuid
+import requests
+
 
 @pytest.fixture()
 def aipane_instance():
@@ -37,8 +40,7 @@ def test_create_aipane(aipane_instance):
 def test_new_app_added(aipane_instance):
     """
     Tests that we can:
-    1. Register the addition of a valid hosted app
-    2. supportedTasks are set properly
+    Set supportedApps that correspond to images
     """
     pass
     # imageviewer_instance
@@ -51,12 +53,21 @@ def test_new_app_added(aipane_instance):
                                                                                   'image_c_model_2']}}
 
 
+#
 def test_get_sharing_url(aipane_instance):
     """
     Tests that we can:
     Generate the public url of assets sent to DropBox
+
+    Don't know how to test function residing outside of AIPane class
     """
     pass
+    # public_url = 'http://localhost:3333/api/files/b5c8eeae-f5f5-4365-b025-8503bda6ac9c/84578765-116d-5ccf-8e82-a3ba7a84ad5d'
+    # _ = aipane_instance.get_sharing_url(public_url)
+    # response = requests.get(_)
+    # assert response.status_code == 200
+
+
 
 
 def test_execute_model(aipane_instance):
@@ -65,5 +76,16 @@ def test_execute_model(aipane_instance):
 
     """
     pass
+    # exec_uuid = str(uuid.uuid4())
+    # model = 'facebook/detr-resnet-50'
+    # aipane_instance.execute_model(exec_uuid, model)
 
-# TODO add test that uplod the the yolo image to a server and test it.
+def test_handle_image_exec_result(aipane_instance):
+    """
+    Tests that we can:
+
+    """
+    pass
+
+
+    # TODO add test that uplod the the yolo image to a server and test it.
