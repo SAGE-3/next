@@ -25,6 +25,7 @@ import time
 
 
 host_URL = os.environ.get("DOCKER_HOST")
+
 if not host_URL:
     print(" the DOCKER_HOST env variable is not set")
     sys.exit(1)
