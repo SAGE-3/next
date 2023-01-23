@@ -11,9 +11,7 @@ import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'reac
 import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
-
-import { defineAbilityFor } from './ability';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuthorizationStore } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -25,12 +23,8 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
-  // User information
-  const { auth } = useAuth();
-  const { user } = useUser();
-
-  // Permissions
-  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
+  // Permissions on apps
+  const { canApp } = useAuthorizationStore(props.app);
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -289,8 +283,8 @@ export function AppWindow(props: WindowProps) {
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
 
-      enableResizing={ability.can('resize', { ...props.app, modelName: 'App' })}
-      disableDragging={!ability.can('move', { ...props.app, modelName: 'App' })}
+      enableResizing={canApp('resize')}
+      disableDragging={!canApp('move')}
     >
       {/* Title Above app */}
       {appTitles ? (

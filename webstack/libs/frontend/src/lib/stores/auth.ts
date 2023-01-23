@@ -6,26 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-
-// The React Version of Zustand
-import createReact from 'zustand';
-
 // Application specific schema
 import { AppState, AppSchema, App } from '@sage3/applications/schema';
-// User specific schema
-import { User, UserSchema } from '@sage3/shared/types';
 
-// Other stores
+// Hooks and stores
 import { useAppStore } from './app';
 import { useAuth, useUser } from '../hooks';
 
 // CASL
-import { PureAbility, AbilityBuilder } from '@casl/ability';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
+import { PureAbility, AbilityBuilder, MatchConditions } from '@casl/ability';
 
 /*
 1- useApplicationStore (React Hook)
@@ -35,58 +24,69 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 4- Inside applications call useApplicationStore
 */
 
-export function useAuthorizationStore() {
+/**
+ * Hook to use the application store with authorization
+ *
+ * @export
+ * @param {App} app
+ * @returns createApp, updateApp, updateStateApp, deleteApp, canApp
+ */
+export function useAuthorizationStore(app: App | undefined) {
   const create = useAppStore((state) => state.create);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const deletion = useAppStore((state) => state.delete);
 
-  // const { user } = useUser();
+  const { user } = useUser();
   const { auth } = useAuth();
 
   // Permissions
-  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user');
+  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
 
   function updateApp(id: string, updates: Partial<AppSchema>) {
-    console.log('CASL> updateApp');
-    if (ability.can('modify', 'App')) {
+    if (!app) return;
+    if (ability.can('modify', { ...app, modelName: 'App' })) {
       update(id, updates);
-    } else {
-      console.log('CASL> You are not authorized to modify this app');
     }
   }
+
+  function canApp(operation: AuthAction = 'modify') {
+    if (!app) return false;
+    return ability.can(operation, { ...app, modelName: 'App' });
+  }
+
   function updateStateApp(id: string, state: Partial<AppState>) {
-    console.log('CASL> updateStateApp');
-    if (ability.can('modify', 'App')) {
+    if (!app) return;
+    if (ability.can('modify', { ...app, modelName: 'App' })) {
       updateState(id, state);
-    } else {
-      console.log('CASL> You are not authorized to updateState this app');
     }
   }
   function createApp(newApp: AppSchema) {
-    console.log('CASL> createApp');
-    if (ability.can('create', 'App')) {
+    if (!app) return;
+    if (ability.can('create', { ...app, modelName: 'App' })) {
       create(newApp);
-    } else {
-      console.log('CASL> You are not authorized to create an app');
     }
   }
   function deleteApp(id: string) {
-    console.log('CASL> deleteApp');
-    if (ability.can('delete', 'App')) {
+    if (!app) return;
+    if (ability.can('delete', { ...app, modelName: 'App' })) {
       deletion(id);
-    } else {
-      console.log('CASL> You are not authorized to modify this app');
     }
   }
 
-  return { createApp, updateApp, updateStateApp, deleteApp };
+  return { createApp, updateApp, updateStateApp, deleteApp, canApp };
 }
+
+// Seems necessary to define when using types
+const lambdaMatcher = (matchConditions: MatchConditions) => matchConditions;
+
+// Type to add a type for CASL
+type caslApp = App & { modelName: 'App' };
 
 // What are the actions: manage is a builtin alias
 type AuthAction = 'manage' | 'move' | 'resize' | 'delete' | 'create' | 'modify';
 // What are the subjects: all is a builtin alias
-type AuthSubject = 'all' | 'App' | 'asset' | 'room' | 'board';
+type AuthSubject = 'all' | caslApp | 'App' | 'asset' | 'room' | 'board';
 type AppAbility = PureAbility<[AuthAction, AuthSubject]>;
 
 /**
@@ -97,7 +97,7 @@ type AppAbility = PureAbility<[AuthAction, AuthSubject]>;
  * @param {(string | undefined)} userId
  * @returns
  */
-function defineAbilityFor(role: string) {
+function defineAbilityFor(role: string, userId: string | undefined) {
   const { can, cannot, build } = new AbilityBuilder<AppAbility>(PureAbility);
 
   // Limit the guest accounts
@@ -111,12 +111,18 @@ function defineAbilityFor(role: string) {
     // create apps and modify/manipulate own apps
     can(['create'], ['App']);
     // operations on apps
-    can(['delete', 'move', 'resize'], 'App');
-    cannot(['modify'], 'App');
+    can(['modify', 'delete', 'move', 'resize'], 'App', (app: App) => app._createdBy === userId);
   } else if (role === 'viewer') {
     // sit back and watch
     cannot(['create', 'modify', 'delete', 'move', 'resize'], 'all');
   }
 
-  return build();
+  return build({
+    detectSubjectType: (object: any) => {
+      // use the modelName field to determine the subject type
+      return typeof object === 'string' ? object : object.modelName;
+    },
+    // @ts-ignore
+    conditionsMatcher: lambdaMatcher,
+  });
 }

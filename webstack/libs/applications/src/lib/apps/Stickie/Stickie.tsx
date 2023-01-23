@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
 
-import { ColorPicker, useAppStore, useHexColor, useUser, useUsersStore, useAuthorizationStore } from '@sage3/frontend';
+import { ColorPicker, useHexColor, useUser, useUsersStore, useAuthorizationStore } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './';
@@ -39,12 +39,8 @@ function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
 
-  // Update functions from the store
-  // const updateState = useAppStore((state) => state.updateState);
-  // const update = useAppStore((state) => state.update);
-  // const createApp = useAppStore((state) => state.create);
-
-  const { createApp, updateApp, updateStateApp, deleteApp } = useAuthorizationStore();
+  // Update functions from the store with authorization
+  const { createApp, updateApp, updateStateApp, canApp } = useAuthorizationStore(props);
 
   const { user } = useUser();
   const { boardId, roomId } = useParams();
@@ -167,7 +163,7 @@ function AppComponent(props: App): JSX.Element {
           value={note}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          readOnly={locked} // Only the creator can edit
+          readOnly={locked || !canApp('modify')}
           zIndex={1}
         />
         {locked && (
@@ -189,8 +185,7 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Update functions from the store
-  // const updateState = useAppStore((state) => state.updateState);
-  const { createApp, updateApp, updateStateApp, deleteApp } = useAuthorizationStore();
+  const { updateStateApp, canApp } = useAuthorizationStore(props);
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
@@ -256,7 +251,7 @@ function ToolbarComponent(props: App): JSX.Element {
               isDisabled={s.fontSize > 128}
               onClick={() => handleIncreaseFont()}
               _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              disabled={locked}
+              disabled={locked || !canApp('modify')}
             >
               <MdAdd />
             </Button>
@@ -267,7 +262,7 @@ function ToolbarComponent(props: App): JSX.Element {
               isDisabled={s.fontSize <= 8}
               onClick={() => handleDecreaseFont()}
               _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              disabled={locked}
+              disabled={locked || !canApp('modify')}
             >
               <MdRemove />
             </Button>
@@ -275,12 +270,12 @@ function ToolbarComponent(props: App): JSX.Element {
         </ButtonGroup>
         {yours && (
           <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
-            <Button onClick={lockUnlock} colorScheme="teal" size="xs" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button onClick={lockUnlock} colorScheme="teal" size="xs" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} disabled={!canApp('modify')}>
               {locked ? <MdLock /> : <MdLockOpen />}
             </Button>
           </Tooltip>
         )}
-        <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
+        <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked || !canApp('modify')} />
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
