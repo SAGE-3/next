@@ -851,7 +851,7 @@ function AppComponent(props: App): JSX.Element {
             <Box
               fontWeight='bold'
             >
-              Message Center
+              {/*Message Center*/}
             </Box>
             <Alert status='info' variant='top-accent' colorScheme='telegram'>
               <AlertIcon/>

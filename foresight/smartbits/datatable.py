@@ -111,7 +111,7 @@ class DataTable(SmartBit):
     # I think this gets the filetype?
     def get_ext(self, url):
         parsed = urlparse(url)
-        root, ext = splitext(parsed.path)
+        root, ext = os.path.splitext(parsed.path)
         return ext[1:]
 
     # TODO, add a decorator to automatically set executeFunc

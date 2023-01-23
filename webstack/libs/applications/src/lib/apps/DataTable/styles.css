@@ -44,8 +44,9 @@
 .indexTd {
   position: relative;
   justify-content: center;
-  width: 5%;
-  color: black;
+  font-size: 1rem;
+  /*width: 100%;*/
+  /*color: black;*/
   /*font-weight: bold;*/
 }
 
@@ -73,7 +74,7 @@ tbody td:hover {
   font-size: 1rem;
   font-weight: bold;
   border-bottom: 1px solid;
-  background-color: purple;
+  background-color: darkolivegreen;
 }
 
 .originalChakra {
