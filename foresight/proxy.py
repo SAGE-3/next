@@ -37,21 +37,14 @@ from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 
-# from utils import logging_config
-# logger = logging_config.get_console_logger(prod_type)
-
+logging.basicConfig(stream=sys.stdout, format= ' %(asctime)s | %(module)s | %(levelname)s | %(message)s')
 logger = logging.getLogger(__name__)
-c_handler = logging.StreamHandler()
-c_format = logging.Formatter(' %(asctime)s | %(module)s | %(levelname)s | %(message)s')
-c_handler.setFormatter(c_format)
-logger.addHandler(c_handler)
+
 if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
     print("DEBUG level logging")
     logger.setLevel(logging.DEBUG)
 else:
     logger.setLevel(logging.INFO)
-
-
 
 
 
@@ -64,7 +57,7 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    print(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
+    logger.info(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -188,11 +181,11 @@ class SAGEProxy:
         # we need state to be at the same level as data
 
         if collection == "BOARDS":
-            print("New board created")
+            logger.debug("New board created")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            print("New app created")
+            logger.debug("New app created")
             doc["state"] = doc["data"]["state"]
             del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
@@ -204,24 +197,21 @@ class SAGEProxy:
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
-        print("\n\n\n\n\n\nin Handle Update: ")
         if collection == "BOARDS":
-            print("BOARD UPDATED: UNHANDLED")
-            print(f"\t\t updates is {updates}\n")
+            logger.debug("BOARD UPDATED: UNHANDLED")
+            logger.debug(f"\tupdates is {updates}")
             board_id = doc["_id"]
             # TODO: proceed to BOARD update with the updates field passed as param
             if "executeInfo" in updates and updates["executeInfo"]["executeFunc"]:
                 func_name = updates["executeInfo"]["executeFunc"]
-                print(f"executing function {func_name}")
+                logger.debug(f"executing function {func_name}")
                 try:
                     board = self.room.boards[board_id]
                     _func = getattr(board, func_name)
                     _params = updates["executeInfo"]["params"]
-
-                    print(f"About to execute board function --{func_name}-- with params --{_params}--")
                     _func(**_params)
                 except Exception as e:
-                    print(f"Exception trying to execute board function {func_name}. \n\t{e}")
+                    logger.error(f"Exception trying to execute board function {func_name}. \n\t{e}")
 
 
 
@@ -359,6 +349,6 @@ if __name__ == "__main__":
         if not os.getenv("DROPBOX_TOKEN"):
             print("Dropbox upload token not defined, AI won't be supported in development mode")
 
-    print(f"Starting proxy with room {room_id}:")
+    logger.info(f"Starting proxy with room {room_id}:")
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
     sage_proxy.start_threads()
