@@ -1,10 +1,10 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 # TODO: checking messages that are created at the same time and only executing the first
 #  one keeping info in received_msg_log for now. These seems to be related to raised=True
@@ -32,7 +32,6 @@ from multiprocessing import Queue
 import requests
 from smartbitfactory import SmartBitFactory
 import httpx
-from websocketlistener import WebSocketListener
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
@@ -49,7 +48,8 @@ class Room:
 async def subscribe(sock, room_id):
     subscription_id = str(uuid.uuid4())
     # message_id = str(uuid.uuid4())
-    print(f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
+    print(
+        f"Subscribing to room: {room_id} with subscriptionId: {subscription_id}")
     msg_sub = {
         'route': f'/api/subscription/rooms/{room_id}',
         'id': subscription_id, 'method': 'SUB'
@@ -79,7 +79,7 @@ class SAGEProxy:
         self.conf = conf
         self.prod_type = prod_type
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-        self.__message_queue = Queue()
+
         self.__MSG_METHODS = {
             "CREATE": self.__handle_create,
             "UPDATE": self.__handle_update,
@@ -89,7 +89,11 @@ class SAGEProxy:
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.callbacks = {}  # for linked apps
         self.received_msg_log = {}
-        self.listening_process = WebSocketListener(self.__message_queue, room_id)
+
+        boards_sub = self.s3_comm.subscribe('/api/boards')
+        apps_sub = self.s3_comm.subscribe('/api/apps')
+        self.sub_list = [apps_sub, boards_sub]
+
         self.worker_process = threading.Thread(target=self.process_messages)
         self.stop_worker = False
 
@@ -97,7 +101,6 @@ class SAGEProxy:
         self.populate_existing()
 
     def start_threads(self):
-        self.listening_process.run()
         self.worker_process.start()
 
     def populate_existing(self):
@@ -131,7 +134,8 @@ class SAGEProxy:
                         dest_app = self.room.boards[board_id].smartbits[dest_id]
                         linked_info.callback(src_val, dest_app, dest_field)
                     except Exception as e:
-                        print(f"Error happened during callback for linked app {e}")
+                        print(
+                            f"Error happened during callback for linked app {e}")
                         print(f"app_id: {app_id}")
 
     def process_messages(self):
@@ -142,54 +146,50 @@ class SAGEProxy:
         """
 
         while not self.stop_worker:
-            try:
-                msg = self.__message_queue.get()
-            except EOFError as e:
-                print(f"Message queue was closed")
-                return
+            for sub in self.sub_list:
+                try:
+                    msg = sub.get()
 
-            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                pass
+                except EOFError as e:
+                    print(f"Message queue was closed")
+                    return
 
-            # logger.debug(f"Getting ready to process: {msg}")
+                if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                    pass
 
+                # logger.debug(f"Getting ready to process: {msg}")
 
-            collection = msg["event"]['col']
-            doc = msg['event']['doc']
+                collection = msg["event"]['col']
+                doc = msg['event']['doc']
 
-            msg_type = msg["event"]["type"]
-            if msg_type == "UPDATE":
-                app_id = msg["event"]["doc"]["_id"]
-                if app_id in self.callbacks:
-                    self.handle_linked_app(app_id, msg)
+                msg_type = msg["event"]["type"]
+                if msg_type == "UPDATE":
+                    app_id = msg["event"]["doc"]["_id"]
+                    if app_id in self.callbacks:
+                        self.handle_linked_app(app_id, msg)
 
-                updates = msg['event']['updates']
-                self.__MSG_METHODS[msg_type](collection, doc, updates)
-            else:
-                self.__MSG_METHODS[msg_type](collection, doc)
-
+                    updates = msg['event']['updates']
+                    self.__MSG_METHODS[msg_type](collection, doc, updates)
+                else:
+                    self.__MSG_METHODS[msg_type](collection, doc)
 
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
-
+        print("Create Event", collection, doc)
         if collection == "BOARDS":
-            print("New board created")
             new_board = Board(doc)
             self.room.boards[new_board.id] = new_board
         elif collection == "APPS":
-            print("New app created")
             doc["state"] = doc["data"]["state"]
             del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
-            self.room.boards[doc["data"]["boardId"]].smartbits[smartbit.app_id] = smartbit
-
-    def handle_exec_function(self):
-        pass
+            self.room.boards[doc["data"]["boardId"]
+                             ].smartbits[smartbit.app_id] = smartbit
 
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
-        print("\n\n\n\n\n\nin Handle Update: ")
+        print("Update Event", collection, doc, updates)
         if collection == "BOARDS":
             print("BOARD UPDATED: UNHANDLED")
             print(f"\t\t updates is {updates}\n")
@@ -203,24 +203,24 @@ class SAGEProxy:
                     _func = getattr(board, func_name)
                     _params = updates["executeInfo"]["params"]
 
-                    print(f"About to execute board function --{func_name}-- with params --{_params}--")
+                    print(
+                        f"About to execute board function --{func_name}-- with params --{_params}--")
                     _func(**_params)
                 except Exception as e:
-                    print(f"Exception trying to execute board function {func_name}. \n\t{e}")
-
-
+                    print(
+                        f"Exception trying to execute board function {func_name}. \n\t{e}")
 
         elif collection == "APPS":
             # print(f"updating app {}")
             app_id = doc["_id"]
             board_id = doc['data']["boardId"]
-            print(f"\n\n\n\n in apps and app_id = {app_id} and updates is: {updates}")
+            print(
+                f"\n\n\n\n in apps and app_id = {app_id} and updates is: {updates}")
             sb = self.room.boards[board_id].smartbits[app_id]
 
             if type(sb) is GenericSmartBit:
                 print("not handling generic smartbit update")
                 return
-
 
             # Note that set_data_form_update clear touched field
             sb.refresh_data_form_update(doc, updates)
@@ -235,26 +235,33 @@ class SAGEProxy:
                         _params = getattr(exec_info, "params")
                         # TODO: validate the params are valid
                         # print(f"About to execute function --{func_name}-- with params --{_params}--")
-                        print(f"About to execute function --{func_name}-- with params --{_params}--")
+                        print(
+                            f"About to execute function --{func_name}-- with params --{_params}--")
 
                         _func(**_params)
                     except Exception as e:
-                        print(f"Exception trying to execute sb function {func_name}. \n\t{e}")
+                        print(
+                            f"Exception trying to execute sb function {func_name}. \n\t{e}")
 
     def __handle_delete(self, collection, doc):
-
-        print("deleting app")
+        print("Delete Event", collection, doc)
         if collection == "APPS":
             try:
-                del self.room.boards[doc["data"]["boardId"]].smartbits[doc["_id"]]
+                del self.room.boards[doc["data"]
+                                     ["boardId"]].smartbits[doc["_id"]]
                 print(f"Successfully deleted app_id {doc['_id']}")
             except:
-                print(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+                print(
+                    f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
         if collection == "BOARDS":
             try:
                 del self.room.boards[doc["_id"]]
             except:
-                print(f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+                print(
+                    f"Couldn't delete app_id, value is not valid app_id {doc['_id']}")
+
+    def handle_exec_function(self):
+        pass
 
     def clean_up(self):
         self.listening_process.clean_up()
@@ -274,16 +281,16 @@ class SAGEProxy:
         if src_app not in self.callbacks:
             self.callbacks[src_app] = {}
         self.callbacks[src_app] = {f"{src_app}:{dest_app}:{src_field}:{dest_field}":
-                                       LinkedInfo(board_id=board_id,
-                                                  src_app=src_app,
-                                                  dest_app=dest_app,
-                                                  src_field=src_field,
-                                                  dest_field=dest_field,
-                                                  callback=callback)}
-
+                                   LinkedInfo(board_id=board_id,
+                                              src_app=src_app,
+                                              dest_app=dest_app,
+                                              src_field=src_field,
+                                              dest_field=dest_field,
+                                              callback=callback)}
 
     def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
-        del (self.callbacks[src_app][f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
+        del (self.callbacks[src_app]
+             [f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
 
 # def get_cmdline_parser():
@@ -296,7 +303,6 @@ class SAGEProxy:
 def clean_up_terminate(signum, frame):
     print("Cleaning up before terminating")
     sage_proxy.clean_up()
-
 
 
 if __name__ == "__main__":
@@ -342,7 +348,8 @@ if __name__ == "__main__":
                 'data'][0][
                 '_id']
         if not os.getenv("DROPBOX_TOKEN"):
-            print("Dropbox upload token not defined, AI won't be supported in development mode")
+            print(
+                "Dropbox upload token not defined, AI won't be supported in development mode")
 
     print(f"Starting proxy with room {room_id}:")
     sage_proxy = SAGEProxy(room_id, conf, prod_type)
