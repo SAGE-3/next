@@ -9,7 +9,7 @@
 import { HStack, useToast } from '@chakra-ui/react';
 
 import { MdMap, MdGroups, MdFolder, MdApps, MdArrowBack } from 'react-icons/md';
-import { BiPencil } from 'react-icons/bi';
+import { BiData, BiPencil } from 'react-icons/bi';
 
 import { PanelUI, StuckTypes, useBoardStore, usePanelStore, useRoomStore, useRouteNav } from '@sage3/frontend';
 import { Panel, IconButtonPanel } from '../Panel';
@@ -37,7 +37,7 @@ export function Controller(props: ControllerProps) {
   const assets = getPanel('assets');
   const navigation = getPanel('navigation');
   const users = getPanel('users');
-  const controller = getPanel('controller');
+  const kernel = getPanel('kernel');
   const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
 
   // Redirect the user back to the homepage when clicking the arrow button
@@ -114,6 +114,12 @@ export function Controller(props: ControllerProps) {
           description="Annotation"
           isActive={annotations?.show}
           onClick={() => handleShowPanel(annotations)}
+        />
+        <IconButtonPanel
+          icon={<BiData size="32px" />}
+          description="Kernel"
+          isActive={kernel?.show}
+          onClick={() => handleShowPanel(kernel)}
         />
       </HStack>
     </Panel>
