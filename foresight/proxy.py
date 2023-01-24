@@ -26,7 +26,7 @@ from typing import Callable
 from pydantic import BaseModel
 import json
 import threading
-# import argparse
+import logging
 from board import Board
 from room import Room
 import uuid
@@ -37,8 +37,21 @@ import httpx
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
+
 # from utils import logging_config
-# logger = logging_config.get_console_logger()
+# logger = logging_config.get_console_logger(prod_type)
+
+logger = logging.getLogger(__name__)
+c_handler = logging.StreamHandler()
+c_format = logging.Formatter(
+    ' %(asctime)s | %(module)s | %(levelname)s | %(message)s')
+c_handler.setFormatter(c_format)
+logger.addHandler(c_handler)
+if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
+    print("DEBUG level logging")
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 
 class LinkedInfo(BaseModel):

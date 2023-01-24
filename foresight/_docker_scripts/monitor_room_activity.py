@@ -1,10 +1,10 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 """
 The host_url is expoerted from start-head.sh. Right now, using Unix sock of Docker Deamon.
@@ -25,6 +25,7 @@ import time
 
 
 host_URL = os.environ.get("DOCKER_HOST")
+
 if not host_URL:
     print(" the DOCKER_HOST env variable is not set")
     sys.exit(1)
@@ -49,10 +50,10 @@ def hadle_docker_compose_action(room_id, action):
     :param action: `up` to start a docker image and `down` to stop it.
     :return:
     """
-    if action not in ["UP", "DOWN"]: raise Exception("unrecognized action {action}")
+    if action not in ["UP", "DOWN"]:
+        raise Exception("unrecognized action {action}")
 
-    print(room_id)
-    with open(".env", 'w') as env_file:
+    with open(".env", "w") as env_file:
         # .env is exporter by docker compose so the proxy script will have access
         # ROOM_ID below
         env_file.write(f"ROOM_ID={room_id}")
