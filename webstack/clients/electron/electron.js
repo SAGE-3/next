@@ -45,11 +45,11 @@ var version = require('./package.json').version;
 var firstRun = true;
 
 // Store
-const sageStore = require('./src/store');
-const windowState = sageStore.getWindow();
+const windowStore = require('./src/windowstore');
+const windowState = windowStore.getWindow();
+const serverStore = require('./src/serverstore');
 
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
-const store = require('./src/store');
 
 //
 // handle install/update for Windows
@@ -134,7 +134,8 @@ if (commander.disableHardware) {
 
 if (commander.clear) {
   console.log('Preferences> clear all');
-  sageStore.clear();
+  windowStore.clear();
+  serverStore.clear();
 }
 
 if (process.platform === 'win32') {
@@ -437,7 +438,7 @@ function createWindow() {
   };
 
   // Function to get values back from the store
-  const restore = () => sageStore.getWindow();
+  const restore = () => windowStore.getWindow();
   // Function to get the current position and size
   const getCurrentPosition = () => {
     const position = mainWindow.getPosition();
@@ -485,10 +486,10 @@ function createWindow() {
     }
     state.fullscreen = mainWindow.isFullScreen();
     state.server = mainWindow.webContents.getURL();
-    sageStore.setWindow(state);
+    windowStore.setWindow(state);
     if (commander.clear) {
       console.log('Preferences> clear all');
-      sageStore.clear();
+      windowStore.clear();
     }
   };
   // Restore the state
@@ -954,7 +955,7 @@ function buildMenu() {
         },
         {
           label: 'Go to server...',
-          submenu: sageStore.getServerList().map((el) => {
+          submenu: serverStore.getServerList().map((el) => {
             return {
               label: el.name,
               click() {

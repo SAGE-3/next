@@ -6,8 +6,9 @@ const genId = uuid.v4;
 // Persistent data store to store window postion/size
 // stored by default in app.getPath('userData')
 // Create a store
-const store = new Store({ name: 'sage3' });
-// Store values in a key called 'window-state'
+const store = new Store({ name: 'sage3-server-list' });
+
+// Default Window State
 const defaultWindowState = {
   server: 'https://sage3.app',
   fullscreen: false,
@@ -17,6 +18,7 @@ const defaultWindowState = {
   height: 720,
 };
 
+// Default ServerList
 const defaultServerList = [
   {
     name: 'Chicago',
@@ -36,27 +38,21 @@ const defaultServerList = [
 ];
 
 module.exports = {
-  getWindow: function () {
-    return store.get('window-state', defaultWindowState);
-  },
-  setWindow: function (value) {
-    return store.set('window-state', value);
-  },
   getServerList: function () {
-    return store.get('server-list', defaultServerList);
+    return store.get('servers', defaultServerList);
   },
   addServer: function (name, url) {
-    const currentList = store.get('server-list', defaultServerList);
+    const currentList = store.get('servers', defaultServerList);
     currentList.push({ name, url, id: genId() });
-    return store.set('server-list', currentList);
+    return store.set('servers', currentList);
   },
   removeServer: function (id) {
-    const currentList = store.get('server-list', defaultServerList);
+    const currentList = store.get('servers', defaultServerList);
     const idx = currentList.findIndex((el) => el.id == id);
     if (idx) {
       currentList.splice(idx, 1);
     }
-    return store.set('server-list', currentList);
+    return store.set('servers', currentList);
   },
   clear: function () {
     return store.clear();
