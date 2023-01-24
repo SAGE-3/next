@@ -27,8 +27,7 @@ const { platform, homedir } = os;
 
 // NPM modules
 const electron = require('electron');
-// Persistent storage for electron app: used for window position
-const Store = require('electron-store');
+
 // parsing command-line arguments
 var program = require('commander');
 
@@ -45,6 +44,12 @@ var version = require('./package.json').version;
 // First run
 var firstRun = true;
 
+// Store
+const sageStore = require('./src/store');
+const windowState = sageStore.getWindow();
+
+const { handleSquirrelEvent } = require('./src/squirrelEvent');
+
 //
 // handle install/update for Windows
 //
@@ -55,54 +60,6 @@ if (require('electron-squirrel-startup')) {
 if (handleSquirrelEvent()) {
   // squirrel event handled and app will exit in 1000ms, so don't do anything else
   return;
-}
-
-function handleSquirrelEvent() {
-  if (process.argv.length === 1) {
-    return false;
-  }
-
-  const ChildProcess = require('child_process');
-  const path = require('path');
-
-  const appFolder = path.resolve(process.execPath, '..');
-  const rootAtomFolder = path.resolve(appFolder, '..');
-  const updateDotExe = path.resolve(path.join(rootAtomFolder, 'Update.exe'));
-  const exeName = path.basename(process.execPath);
-
-  const spawn = function (command, args) {
-    let spawnedProcess;
-
-    try {
-      spawnedProcess = ChildProcess.spawn(command, args, { detached: true });
-    } catch (error) {
-      // pass
-    }
-
-    return spawnedProcess;
-  };
-
-  const spawnUpdate = function (args) {
-    return spawn(updateDotExe, args);
-  };
-
-  const squirrelEvent = process.argv[1];
-  switch (squirrelEvent) {
-    case '--squirrel-install':
-    case '--squirrel-updated':
-      // Install desktop and start menu shortcuts
-      spawnUpdate(['--createShortcut', exeName]);
-      setTimeout(app.quit, 1000);
-      return true;
-    case '--squirrel-uninstall':
-      // Remove desktop and start menu shortcuts
-      spawnUpdate(['--removeShortcut', exeName]);
-      setTimeout(app.quit, 1000);
-      return true;
-    case '--squirrel-obsolete':
-      app.quit();
-      return true;
-  }
 }
 
 // Module to control application life.
@@ -130,20 +87,6 @@ var currentDomain;
 var currentServer;
 var isAtBoard = false;
 
-// Persistent data store to store window postion/size
-// stored by default in app.getPath('userData')
-// Create a store
-const store = new Store({ name: 'sage3' });
-// Store values in a key called 'window-state'
-const defaults = store.get('window-state', {
-  server: 'https://sage3.app',
-  fullscreen: false,
-  x: 0,
-  y: 0,
-  width: 1280,
-  height: 720,
-});
-
 /**
  * Setup the command line argument parsing (commander module)
  */
@@ -153,12 +96,12 @@ var args = process.argv;
 program
   .version(version)
   .option('-d, --display <n>', 'Display client ID number (int)', parseInt, 0)
-  .option('-f, --fullscreen', 'Fullscreen (boolean)', defaults.fullscreen)
+  .option('-f, --fullscreen', 'Fullscreen (boolean)', windowState.fullscreen)
   .option('-m, --monitor <n>', 'Select a monitor (int)', myParseInt, null)
   .option('-n, --no_decoration', 'Remove window decoration (boolean)', false)
-  .option('-s, --server <s>', 'Server URL (string)', defaults.server || 'https://sage3.app')
-  .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, defaults.x)
-  .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, defaults.y)
+  .option('-s, --server <s>', 'Server URL (string)', windowState.server || 'https://sage3.app')
+  .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, windowState.x)
+  .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, windowState.y)
   .option('-c, --clear', 'Clear window preferences', false)
   .option('--allowDisplayingInsecure', 'Allow displaying of insecure content (http on https)', true)
   .option('--allowRunningInsecure', 'Allow running insecure content (scripts accessed on http vs https)', true)
@@ -166,11 +109,11 @@ program
   .option('--console', 'Open the devtools console', false)
   .option('--debug', 'Open the port debug protocol (port number is 9222 + clientID)', false)
   .option('--experimentalFeatures', 'Enable experimental features', false)
-  .option('--height <n>', 'Window height (int)', myParseInt, defaults.height)
+  .option('--height <n>', 'Window height (int)', myParseInt, windowState.height)
   .option('--disable-hardware', 'Disable hardware acceleration', false)
   .option('--show-fps', 'Display the Chrome FPS counter', false)
   .option('--profile <s>', 'Create a profile (string)')
-  .option('--width <n>', 'Window width (int)', myParseInt, defaults.width);
+  .option('--width <n>', 'Window width (int)', myParseInt, windowState.width);
 // Parse the arguments
 program.parse(args);
 // Get the results
@@ -190,7 +133,7 @@ if (commander.disableHardware) {
 
 if (commander.clear) {
   console.log('Preferences> clear all');
-  store.clear();
+  sageStore.clear();
 }
 
 if (process.platform === 'win32') {
@@ -214,10 +157,6 @@ if (process.platform === 'win32') {
 //   const screenAccess = electron.systemPreferences.getMediaAccessStatus('screen');
 //   console.log('Screen access', screenAccess);
 // }
-
-// SAGE2 Google maps APIKEY
-// needed for user geo-location service
-process.env.GOOGLE_API_KEY = 'AIzaSyANE6rJqcfc7jH-bDOwhXQZK_oYq9BWRDY';
 
 // As of 2019, video elements with sound will no longer autoplay unless user interacted with page.
 // switch found from: https://github.com/electron/electron/issues/13525/
@@ -497,7 +436,7 @@ function createWindow() {
   };
 
   // Function to get values back from the store
-  const restore = () => store.get('window-state', defaultSize);
+  const restore = () => sageStore.getWindow();
   // Function to get the current position and size
   const getCurrentPosition = () => {
     const position = mainWindow.getPosition();
@@ -545,10 +484,10 @@ function createWindow() {
     }
     state.fullscreen = mainWindow.isFullScreen();
     state.server = mainWindow.webContents.getURL();
-    store.set('window-state', state);
+    sageStore.setWindow(state);
     if (commander.clear) {
       console.log('Preferences> clear all');
-      store.clear();
+      sageStore.clear();
     }
   };
   // Restore the state
@@ -577,13 +516,6 @@ function createWindow() {
 
   // Create the browser window with state and options mixed in
   mainWindow = new BrowserWindow({ ...state, ...options });
-
-  // Build a warning view in case of load failing
-  let warningView = new electron.BrowserView({
-    webPreferences: { nodeIntegration: false },
-  });
-  warningView.setAutoResize({ width: true, height: true });
-  warningView.webContents.loadFile('./warning.html');
 
   if (commander.cache) {
     // clear the caches, useful to remove password cookies
@@ -694,28 +626,11 @@ function createWindow() {
   // If the window opens before the server is ready,
   // wait 1 sec. and try again 4 times
   // Finally, redirect to the main server
-  let tries = 4;
   mainWindow.webContents.on('did-fail-load', function () {
     // Get the current window size
     const [width, height] = mainWindow.getContentSize();
     // Show the warning view
-    mainWindow.setBrowserView(warningView);
-    warningView.setBounds({ x: 0, y: 0, width, height });
-
-    // Since the window has buttons, I don't think we should try to reload the page anymore. People get stuck in a infiinite loop
-    // // Retry to load the original URL
-    // if (tries) {
-    //   setTimeout(function () {
-    //     tries--;
-    //     mainWindow.reload();
-    //   }, 1000);
-    // } else {
-    //   // When failed to load, redirect to the main server
-    //   mainWindow.loadURL('https://sage3.app/');
-    //   mainWindow.setBrowserView(null);
-    //   // Reset the counter
-    //   tries = 4;
-    // }
+    mainWindow.loadFile('./html/warning.html');
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
@@ -803,12 +718,6 @@ function createWindow() {
   // i.e. pinch-to-zoom events now scale the board like a scroll event
   mainWindow.webContents.setVisualZoomLevelLimits(1, 1);
 
-  // Catch the close connection page event
-  ipcMain.on('close-connect-page', (e, value) => {
-    // remoteSiteInputWindow.close();
-    // remoteSiteInputWindow = undefined;
-  });
-
   // Request from the renderer process
   ipcMain.on('asynchronous-message', (event, arg) => {
     if (arg === 'version') event.reply('version', version);
@@ -822,11 +731,7 @@ function createWindow() {
     currentServer = parsedURL.host;
     // Update current domain
     currentDomain = parsedURL.hostname;
-    // Close input window
-    // if (remoteSiteInputWindow) {
-    //   remoteSiteInputWindow.close();
-    //   remoteSiteInputWindow = undefined;
-    // }
+
     if (mainWindow) {
       mainWindow.loadURL(location);
     }
@@ -1031,39 +936,6 @@ function myParseInt(str, defaultValue) {
     return int;
   }
   return defaultValue;
-}
-
-/**
- * Opens a SAGE2 interface in browser.
- *
- * @method     openInterfaceInBrowser
- */
-function openInterfaceInBrowser() {
-  // function to start a process
-  var exec = require('child_process').exec;
-  // build the URL
-  let uiURL = 'https://' + currentServer + '/index.html';
-  // How to open an URL on each platform
-  let opener;
-
-  switch (process.platform) {
-    case 'darwin':
-      opener = 'open -a "Google Chrome"';
-      break;
-    case 'win32':
-      opener = 'start "" "Chrome"';
-      break;
-    default:
-      opener = 'xdg-open';
-      break;
-  }
-  // Lets go
-  exec(opener + ' "' + uiURL + '"', (error, stdout, stderr) => {
-    if (error) {
-      // In case of error, use the OS default app
-      electron.shell.openExternal(uiURL);
-    }
-  });
 }
 
 function buildMenu() {
