@@ -320,45 +320,45 @@ if __name__ == "__main__":
 
     # For development purposes only.
     token = os.getenv("TOKEN")
-    if prod_type == "production" or prod_type == "backend":
-        room_name = os.environ.get("ROOM_NAME")
-        room_id = os.environ.get("ROOM_ID")
-        # if name specified, try to find room or create it
-        if room_name:
-            jsondata = requests.get(conf[prod_type]['web_server'] + '/api/rooms',
-                                    headers={'Authorization': 'Bearer ' + token}).json()
-            rooms = jsondata['data']
-            for r in rooms:
-                room = r['data']
-                if room['name'] == room_name:
-                    room_id = r['_id']
-                    break
-            if not room_id:
-                payload = {
-                    'name': room_name,
-                    'description': 'Room for ' + room_name,
-                    'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
-                }
-                req = requests.post(conf[prod_type]['web_server'] + '/api/rooms',
-                                    headers={'Authorization': 'Bearer ' + token}, json=payload)
-                res = req.json()
-                if res['success']:
-                    room_id = res['data'][0]['_id']
-                else:
-                    print("ROOM_NAME option, failed to create room")
-                    sys.exit(1)
-        elif not room_id:
-            print("ROOM_ID not defined")
-            sys.exit(1)
-    else:
-        room_id = \
-            requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()[
-                'data'][0][
-                '_id']
-        if not os.getenv("DROPBOX_TOKEN"):
-            print(
-                "Dropbox upload token not defined, AI won't be supported in development mode")
+    # if prod_type == "production" or prod_type == "backend":
+    #     room_name = os.environ.get("ROOM_NAME")
+    #     room_id = os.environ.get("ROOM_ID")
+    #     # if name specified, try to find room or create it
+    #     if room_name:
+    #         jsondata = requests.get(conf[prod_type]['web_server'] + '/api/rooms',
+    #                                 headers={'Authorization': 'Bearer ' + token}).json()
+    #         rooms = jsondata['data']
+    #         for r in rooms:
+    #             room = r['data']
+    #             if room['name'] == room_name:
+    #                 room_id = r['_id']
+    #                 break
+    #         if not room_id:
+    #             payload = {
+    #                 'name': room_name,
+    #                 'description': 'Room for ' + room_name,
+    #                 'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
+    #             }
+    #             req = requests.post(conf[prod_type]['web_server'] + '/api/rooms',
+    #                                 headers={'Authorization': 'Bearer ' + token}, json=payload)
+    #             res = req.json()
+    #             if res['success']:
+    #                 room_id = res['data'][0]['_id']
+    #             else:
+    #                 print("ROOM_NAME option, failed to create room")
+    #                 sys.exit(1)
+    #     elif not room_id:
+    #         print("ROOM_ID not defined")
+    #         sys.exit(1)
+    # else:
+    #     room_id = \
+    #         requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()[
+    #             'data'][0][
+    #             '_id']
+    #     if not os.getenv("DROPBOX_TOKEN"):
+    #         print(
+    #             "Dropbox upload token not defined, AI won't be supported in development mode")
 
-    print(f"Starting proxy with room {room_id}:")
+    print(f"Starting proxy")
     sage_proxy = SAGEProxy(conf, prod_type)
     sage_proxy.start_threads()
