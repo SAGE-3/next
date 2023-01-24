@@ -772,6 +772,10 @@ function createWindow() {
     });
   });
 
+  ipcMain.on('load-landing', () => {
+    mainWindow.loadFile('./html/landing.html');
+  });
+
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     TakeScreenshot();

@@ -20,6 +20,7 @@ const validChannels = [
   'take-screenshot',
   'streamview',
   'paint',
+  'load-landing',
 ];
 
 contextBridge.exposeInMainWorld('electron', {
