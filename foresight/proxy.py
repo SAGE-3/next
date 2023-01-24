@@ -164,8 +164,8 @@ class SAGEProxy:
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
-        print("Update Event", collection)
         id = doc["_id"]
+        print("Update Event", collection, id)
         if collection == "ROOMS":
             self.rooms[id].handleUpdate(doc)
         elif collection == "BOARDS":
@@ -220,8 +220,8 @@ class SAGEProxy:
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
-        print("Delete Event", collection)
         id = doc['_id']
+        print("Delete Event", collection, id)
         if collection == "ROOMS":
             try:
                 del self.rooms[id]

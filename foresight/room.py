@@ -8,7 +8,6 @@
 
 from smartbitcollection import SmartBitsCollection
 from utils.layout import Layout
-from board import Board
 
 
 class Room():
@@ -28,5 +27,10 @@ class Room():
         self.boards = {}
 
     def handleUpdate(self, doc):
-        # TODO
-        print('handle room update', doc)
+        data = doc["data"]
+        self.name = data["name"]
+        self.description = data["description"]
+        self.color = data["color"]
+        self.ownerId = data["ownerId"]
+        self.isPrivate = data["isPrivate"]
+        self.isListed = data["isListed"]
