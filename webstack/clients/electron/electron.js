@@ -49,6 +49,7 @@ const sageStore = require('./src/store');
 const windowState = sageStore.getWindow();
 
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
+const store = require('./src/store');
 
 //
 // handle install/update for Windows
@@ -944,28 +945,25 @@ function buildMenu() {
       label: 'File',
       submenu: [
         {
-          label: 'Go to Chicago server',
+          label: 'Return to Home',
           click() {
             if (mainWindow) {
-              mainWindow.loadURL('https://sage3.app/');
+              mainWindow.loadFile('./html/landing.html');
             }
           },
         },
         {
-          label: 'Go to Hawaii server',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadURL('https://manoa.sage3.app');
-            }
-          },
-        },
-        {
-          label: 'Go to Development server',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadURL('https://mini.sage3.app');
-            }
-          },
+          label: 'Go to server...',
+          submenu: sageStore.getServerList().map((el) => {
+            return {
+              label: el.name,
+              click() {
+                if (mainWindow) {
+                  mainWindow.loadURL(el.url);
+                }
+              },
+            };
+          }),
         },
         {
           type: 'separator',
