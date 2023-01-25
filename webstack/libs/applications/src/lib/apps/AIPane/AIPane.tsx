@@ -191,7 +191,8 @@ function AppComponent(props: App): JSX.Element {
       // updateState(props._id, {supportedTasks: {}});
     } else {
       if (supportedApps.includes([...hostedTypes][0]) || Object.keys(s.hostedApps).length === 0) {
-        updateState(props._id, {runStatus: 0, executeInfo: {executeFunc: 'new_app_added', params: {app_type: [...hostedTypes][0]}}})
+        updateState(props._id, {runStatus: 0})
+        // updateState(props._id, {runStatus: 0, executeInfo: {executeFunc: 'new_app_added', params: {app_type: [...hostedTypes][0]}}})
       } else {
         updateState(props._id, {runStatus: 3})
 
