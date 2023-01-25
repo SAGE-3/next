@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUIStore, useUser, useRouteNav, useData, useCursorBoardPosition } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, useRouteNav, useData, useCursorBoardPosition, usePanelStore } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
 type ContextProps = {
@@ -48,7 +48,7 @@ export function BoardContextMenu(props: ContextProps) {
   const { uiToBoard } = useCursorBoardPosition();
 
   // UI Menu position setters
-  const setControllerPosition = useUIStore((state) => state.controller.setPosition);
+  const updatePanel = usePanelStore((state) => state.updatePanel);
 
   // State of the checkboxes in context menu: grid ui
   const [radios, setRadios] = useState(savedRadios);
@@ -174,7 +174,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => setControllerPosition({ x: contextMenuPosition.x, y: contextMenuPosition.y })}
+            onClick={() => updatePanel('controller', { position: { x: contextMenuPosition.x, y: contextMenuPosition.y } })}
           >
             Bring Controller
           </Button>
@@ -309,7 +309,6 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Webview
           </Button>
-
         </VStack>
 
         <VStack w={'100%'}>
