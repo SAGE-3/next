@@ -14,8 +14,8 @@ import { SBAuthSchema } from '@sage3/sagebase';
 
 import { PureAbility, AbilityBuilder } from '@casl/ability';
 
-export type AuthAction = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
-export type AuthSubject = 'USERS' | 'ASSETS' | 'APPS' | 'BOARDS' | 'ROOMS' | 'PRESENCE' | 'MESSAGE';
+export type AuthAction = 'manage' | 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
+export type AuthSubject = 'all' | 'USERS' | 'ASSETS' | 'APPS' | 'BOARDS' | 'ROOMS' | 'PRESENCE' | 'MESSAGE';
 type AppAbility = PureAbility<[AuthAction, AuthSubject]>;
 
 type Middleware = (req: express.Request, res: express.Response, next: express.NextFunction) => void;
@@ -55,21 +55,23 @@ export function checkPermissionsWS(user: SBAuthSchema, act: AuthAction, subj: Au
 export function defineAbilityFor(user: SBAuthSchema) {
   const { can, build } = new AbilityBuilder<AppAbility>(PureAbility);
 
-  // Limit the guest accounts
-  if (user.provider === 'guest') {
-    // Can read and subscribe to everything
-    can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
-    // login and update presence
-    can(['POST', 'PUT'], ['USERS', 'PRESENCE']);
+  // // Limit the guest accounts
+  // if (user.provider === 'guest') {
+  //   // Can read and subscribe to everything
+  //   can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
+  //   // login and update presence
+  //   can(['POST', 'PUT'], ['USERS', 'PRESENCE']);
 
-    // apps
-    can(['POST', 'PUT', 'DELETE'], ['APPS']);
-    // modify apps, not create or delete
-    // can(['PUT'], ['APPS']);
-  } else {
-    // everybody else can do anything
-    can(['GET', 'POST', 'PUT', 'DELETE', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
-  }
+  //   // apps
+  //   can(['POST', 'PUT', 'DELETE'], ['APPS']);
+  //   // modify apps, not create or delete
+  //   // can(['PUT'], ['APPS']);
+  // } else {
+  //   // everybody else can do anything
+  //   can(['GET', 'POST', 'PUT', 'DELETE', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
+  // }
+
+  can('manage', 'all');
 
   return build();
 }
