@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
 
-import { ColorPicker, useHexColor, useUser, useUsersStore, useAuthorizationStore } from '@sage3/frontend';
+import { ColorPicker, useHexColor, useUser, useUsersStore, useAuthorizationAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 
 import { state as AppState } from './';
@@ -40,7 +40,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   // Update functions from the store with authorization
-  const { createApp, updateApp, updateStateApp, canApp } = useAuthorizationStore(props);
+  const { createApp, updateApp, updateStateApp, canApp } = useAuthorizationAppStore(props);
 
   const { user } = useUser();
   const { boardId, roomId } = useParams();
@@ -185,7 +185,7 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Update functions from the store
-  const { updateStateApp, canApp } = useAuthorizationStore(props);
+  const { updateStateApp, canApp } = useAuthorizationAppStore(props);
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();

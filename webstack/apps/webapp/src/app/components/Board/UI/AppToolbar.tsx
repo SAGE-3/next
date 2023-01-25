@@ -12,7 +12,7 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { ErrorBoundary } from 'react-error-boundary';
 import { MdClose, MdZoomOutMap } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUIStore, useAuthorizationStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore, useAuthorizationAppStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
@@ -59,7 +59,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const app = apps.find((app) => app._id === selectedApp);
 
   // Update functions from the store with authorization
-  const { canApp } = useAuthorizationStore(app);
+  const { canApp } = useAuthorizationAppStore(app);
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {

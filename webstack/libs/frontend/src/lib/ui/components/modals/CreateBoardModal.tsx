@@ -32,7 +32,7 @@ import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { BoardSchema } from '@sage3/shared/types';
 import { SAGEColors, randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
-import { useBoardStore } from '../../../stores';
+import { useBoardStore, useAuthorizationBoardStore } from '../../../stores';
 import { ColorPicker } from '../general';
 
 interface CreateBoardModalProps {
@@ -48,7 +48,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const { user } = useUser();
   const toast = useToast();
 
-  const createBoard = useBoardStore((state) => state.create);
+  const { createBoard } = useAuthorizationBoardStore(undefined);
   const boards = useBoardStore((state) => state.boards);
 
   const [name, setName] = useState<BoardSchema['name']>('');

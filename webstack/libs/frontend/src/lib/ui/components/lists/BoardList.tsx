@@ -23,7 +23,7 @@ import {
 
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
 type BoardListProps = {
@@ -52,8 +52,6 @@ export function BoardList(props: BoardListProps) {
 
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
-  const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');
@@ -137,7 +135,9 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" disabled={isGuest} onClick={onOpen}>
+                <Button borderRadius="md" fontSize="3xl"
+                  //  disabled={isGuest}
+                  onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>

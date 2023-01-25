@@ -11,10 +11,11 @@ import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-
 
 import { SBDocument } from '@sage3/sagebase';
 import { BoardSchema, Board } from '@sage3/shared/types';
+import { useAuthorizationBoardStore, copyBoardUrlToClipboard } from '@sage3/frontend';
+
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { EditBoardModal } from '../modals/EditBoardModal';
-import { useHexColor, useUser, useAuth } from '../../../hooks';
-import { copyBoardUrlToClipboard } from '@sage3/frontend';
+import { useHexColor } from '../../../hooks';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
@@ -30,13 +31,7 @@ export type BoardCardProps = {
  * @returns
  */
 export function BoardCard(props: BoardCardProps) {
-  const { user } = useUser();
-  const { auth } = useAuth();
-  // Guest mode disabled for now
-  const isGuest = false; // auth?.provider === 'guest';
-
-  // Is it my board?
-  const yours = user?._id === props.board.data.ownerId;
+  const { canBoard } = useAuthorizationBoardStore(props.board);
 
   // Custom color
   const boardColor = useHexColor(props.board.data.color);
@@ -147,7 +142,7 @@ export function BoardCard(props: BoardCardProps) {
             openDelay={400}
             placement="top-start"
             hasArrow
-            label={isGuest ? 'Guests cannot copy sharable link' : 'Copy sharable link'}
+            label={'Copy sharable link'}
           >
             <IconButton
               aria-label="Board link copy"
@@ -155,18 +150,17 @@ export function BoardCard(props: BoardCardProps) {
               variant="unstlyed"
               ml="-3"
               onClick={handleCopyLink}
-              disabled={isGuest}
               icon={<MdLink />}
             />
           </Tooltip>
 
-          <Tooltip label={yours ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
+          <Tooltip label={canBoard('modify') ? 'Edit board' : "Only the board's owner can edit"} openDelay={400} placement="top-start" hasArrow>
             <IconButton
               onClick={handleOpenSettings}
               aria-label="Board Edit"
               fontSize="2xl"
               variant="unstlyed"
-              disabled={!yours}
+              // disabled={!yours}
               marginLeft={-3} // Weird margin on the icon
               icon={<MdSettings />}
             />

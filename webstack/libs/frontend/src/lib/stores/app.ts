@@ -18,6 +18,11 @@ import { APIHttp, SocketAPI } from '../api';
 import { AppState, AppSchema, App } from '@sage3/applications/schema';
 import { BoardSchema } from '@sage3/shared/types';
 
+// SAGE3 Authorization
+import { defineAbilityFor, subject, AuthAction } from './auth-model';
+// Hooks and stores
+import { useAuth, useUser } from '../hooks';
+
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -146,6 +151,60 @@ const AppStore = createVanilla<Applications>((set, get) => {
 
 // Convert the Zustand JS store to Zustand React Store
 export const useAppStore = createReact(AppStore);
+
+/**
+ * Hook to use the application store with authorization
+ *
+ * @export
+ * @param {App} app
+ * @returns createApp, updateApp, updateStateApp, deleteApp, canApp
+ */
+export function useAuthorizationAppStore(app: App | undefined) {
+  const create = useAppStore((state) => state.create);
+  const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
+  const deletion = useAppStore((state) => state.delete);
+
+  const { user } = useUser();
+  const { auth } = useAuth();
+
+  // Permissions
+  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
+
+  function createApp(newApp: AppSchema) {
+    if (ability.can('create', 'app')) {
+      create(newApp);
+    }
+  }
+
+  function updateApp(id: string, updates: Partial<AppSchema>) {
+    if (!app) return;
+    if (ability.can('modify', subject('app', { ownerId: app._createdBy }))) {
+      update(id, updates);
+    }
+  }
+
+  function updateStateApp(id: string, state: Partial<AppState>) {
+    if (!app) return;
+    if (ability.can('modify', subject('app', { ownerId: app._createdBy }))) {
+      updateState(id, state);
+    }
+  }
+  function deleteApp(id: string) {
+    if (!app) return;
+    if (ability.can('delete', subject('app', { ownerId: app._createdBy }))) {
+      deletion(id);
+    }
+  }
+
+  function canApp(operation: AuthAction) {
+    if (operation === 'create') return ability.can(operation, 'app');
+    if (!app) return false;
+    return ability.can(operation, subject('app', { ownerId: app._createdBy }));
+  }
+
+  return { createApp, updateApp, updateStateApp, deleteApp, canApp };
+}
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('AppStore', useAppStore);

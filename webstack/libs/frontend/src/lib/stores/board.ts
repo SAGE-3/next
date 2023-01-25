@@ -19,6 +19,11 @@ import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
 import { APIHttp, SocketAPI } from '../api';
 import { AppSchema } from '@sage3/applications/schema';
 
+// SAGE3 Authorization
+import { defineAbilityFor, subject, AuthAction } from './auth-model';
+// Hooks and stores
+import { useAuth, useUser } from '../hooks';
+
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -117,6 +122,53 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
 
 // Convert the Zustand JS store to Zustand React Store
 export const useBoardStore = createReact(BoardStore);
+
+/**
+ * Hook to use the board store with authorization
+ *
+ * @export
+ * @param {Board} board
+ * @returns createBoard, updateBoard, deleteBoard, canBoard
+ */
+export function useAuthorizationBoardStore(board: Board | undefined) {
+  const create = useBoardStore((state) => state.create);
+  const update = useBoardStore((state) => state.update);
+  const deletion = useBoardStore((state) => state.delete);
+
+  const { user } = useUser();
+  const { auth } = useAuth();
+
+  // Permissions
+  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
+
+  function createBoard(newBoard: BoardSchema) {
+    if (ability.can('create', 'board')) {
+      create(newBoard);
+    }
+  }
+
+  function updateBoard(id: string, updates: Partial<BoardSchema>) {
+    if (!board) return;
+    if (ability.can('modify', subject('board', { ownerId: board._createdBy }))) {
+      update(id, updates);
+    }
+  }
+
+  function deleteBoard(id: string) {
+    if (!board) return;
+    if (ability.can('delete', subject('board', { ownerId: board._createdBy }))) {
+      deletion(id);
+    }
+  }
+
+  function canBoard(operation: AuthAction) {
+    if (operation === 'create') return ability.can(operation, 'board');
+    if (!board) return false;
+    return ability.can(operation, subject('board', { ownerId: board._createdBy }));
+  }
+
+  return { createBoard, updateBoard, deleteBoard, canBoard };
+}
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('BoardStore', useBoardStore);

@@ -27,7 +27,7 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
-import { useBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
+import { useAuthorizationBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { useData } from 'libs/frontend/src/lib/hooks';
@@ -52,8 +52,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (color: string) => setColor(color);
 
-  const deleteBoard = useBoardStore((state) => state.delete);
-  const updateBoard = useBoardStore((state) => state.update);
+  const { deleteBoard, updateBoard, canBoard } = useAuthorizationBoardStore(props.board);
 
   // Apps
   const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
@@ -127,14 +126,20 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
    */
   const handleDeleteBoard = () => {
     delConfirmOnClose();
-    fetchBoardApps(props.board._id)
-      .then((apps) => {
-        // delete all apps in the board
-        if (apps) apps.forEach((a) => deleteApp(a._id));
-      })
-      .finally(() => {
-        deleteBoard(props.board._id);
-      });
+    // test permission before deleting
+    if (canBoard('delete')) {
+      fetchBoardApps(props.board._id)
+        .then((apps) => {
+          // delete all apps in the board
+          if (apps) apps.forEach((a) => deleteApp(a._id));
+        })
+        .finally(() => {
+          deleteBoard(props.board._id);
+        });
+    } else {
+      // otherwise close the modal
+      props.onClose();
+    }
   };
 
   // To enable/disable

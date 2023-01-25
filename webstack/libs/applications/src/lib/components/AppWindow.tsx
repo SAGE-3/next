@@ -11,7 +11,7 @@ import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'reac
 import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
 
 import { App } from '../schema';
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuthorizationStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuthorizationAppStore } from '@sage3/frontend';
 
 type WindowProps = {
   app: App;
@@ -24,7 +24,7 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Permissions on apps
-  const { canApp } = useAuthorizationStore(props.app);
+  const { canApp } = useAuthorizationAppStore(props.app);
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
