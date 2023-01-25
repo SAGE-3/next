@@ -609,7 +609,7 @@ function createWindow() {
     if (firstRun) {
       const currentURL = mainWindow.webContents.getURL();
       const parsedURL = new URL(currentURL);
-      updater.checkForUpdates(parsedURL.origin, false);
+      // updater.checkForUpdates(parsedURL.origin, false);
       firstRun = false;
     }
   });
@@ -778,6 +778,7 @@ function createWindow() {
 
   ipcMain.on('serverlist', (event, args) => {
     const request = args.request;
+    console.log('hwat');
     switch (request) {
       case 'add-server':
         serverStore.addServer(args.server);
@@ -786,7 +787,7 @@ function createWindow() {
         serverStore.removeServer(args.id);
         break;
       case 'get-servers':
-        const list = serverStore.getServerList();
+        serverStore.getServerList();
         break;
     }
   });
