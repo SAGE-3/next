@@ -12,7 +12,7 @@ import JSZip from 'jszip';
 
 import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
 
-import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, WhiteboardPanel } from './UI/Panels';
+import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, AnnotationsPanel } from './UI/Panels';
 import { BoardContextMenu } from './UI/BoardContextMenu';
 import { ClearBoardModal } from './UI/ClearBoardModal';
 import { AppToolbar } from './UI/AppToolbar';
@@ -140,7 +140,7 @@ export function UILayer(props: UILayerProps) {
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <WhiteboardPanel boardId={props.boardId} roomId={props.roomId} />
+      <AnnotationsPanel boardId={props.boardId} roomId={props.roomId} />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>

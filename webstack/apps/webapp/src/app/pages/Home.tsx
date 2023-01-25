@@ -62,11 +62,11 @@ export function HomePage() {
     if (room) {
       setSelectedRoom(room);
       setSelectedBoard(undefined);
-      if (user) updatePresence(user._id, { roomId: room._id, boardId: '' });
+      if (user) updatePresence(user._id, { roomId: room._id, boardId: '', following: '' });
     } else {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
-      if (user) updatePresence(user._id, { roomId: '', boardId: '' });
+      if (user) updatePresence(user._id, { roomId: '', boardId: '', following: '' });
     }
   }
 
