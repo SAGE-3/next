@@ -105,9 +105,7 @@ function AppComponent(props: App): JSX.Element {
           // TODO Make messages more informative rather than simply names of apps being hosted
           // Maybe show results in message? Objects detected and scores?
           updateState(props._id, {messages: messages});
-          console.log('Before new app added useEffect')
           newAppAdded(app.data.type);
-          console.log('After new  app added useEffect')
         }
       } else {
         // This code is necessary to remove hosted apps and messages once apps are no longer being hosted
@@ -189,12 +187,11 @@ function AppComponent(props: App): JSX.Element {
     const hostedTypes = new Set(Object.values(s.hostedApps));
 
     if (Array.from(hostedTypes).length > 1) {
-      updateState(props._id, {runStatus: 2})
-      updateState(props._id, {supportedTasks: {}});
+      updateState(props._id, {runStatus: 2, supportedTasks: {}})
+      // updateState(props._id, {supportedTasks: {}});
     } else {
       if (supportedApps.includes([...hostedTypes][0]) || Object.keys(s.hostedApps).length === 0) {
-        updateState(props._id, {runStatus: 0})
-
+        updateState(props._id, {runStatus: 0, executeInfo: {executeFunc: 'new_app_added', params: {app_type: [...hostedTypes][0]}}})
       } else {
         updateState(props._id, {runStatus: 3})
 
@@ -209,11 +206,9 @@ function AppComponent(props: App): JSX.Element {
    * @param appType
    */
   function newAppAdded(appType: string) {
-    console.log('Hey a new app added')
     updateState(props._id, {
       executeInfo: {executeFunc: 'new_app_added', params: {app_type: appType}},
     });
-    console.log('Hey, after new_app_added call to python')
   }
 
   /**
