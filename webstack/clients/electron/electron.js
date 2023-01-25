@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -473,14 +473,14 @@ function createWindow() {
       // nodeIntegration: true,
       // contextIsolation: false,
       nodeIntegration: true,
-      contextIsolation: false,
+      contextIsolation: true,
       webSecurity: true,
       backgroundThrottling: false,
       allowDisplayingInsecureContent: commander.allowDisplayingInsecure,
       allowRunningInsecureContent: commander.allowRunningInsecure,
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
-      // Hack to preload jquery for broken sites
+      // Hack to preload some js
       preload: path.resolve(path.join(__dirname, 'preload.js')),
     },
   };
@@ -739,34 +739,31 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
-    const sender = event.sender;
-    sender.on('ipc-message', function (evt, channel, args) {
-      console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
+    ipcMain.on('streamview', (e, args) => {
+      // console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
       // console.log('Webview>    message', channel, args);
       // Message for the webview pixel streaming
-      if (channel === 'streamview') {
-        const viewContent = electron.webContents.fromId(args.id);
-        viewContent.beginFrameSubscription(true, (image, dirty) => {
-          let dataenc;
-          let neww, newh;
-          const devicePixelRatio = 2;
-          const quality = 50;
-          if (devicePixelRatio > 1) {
-            neww = dirty.width / devicePixelRatio;
-            newh = dirty.height / devicePixelRatio;
-            const resizedimage = image.resize({ width: neww, height: newh });
-            dataenc = resizedimage.toJPEG(quality);
-          } else {
-            dataenc = image.toJPEG(quality);
-            neww = dirty.width;
-            newh = dirty.height;
-          }
-          evt.reply('paint', {
-            buf: dataenc.toString('base64'),
-            dirty: { ...dirty, width: neww, height: newh },
-          });
+      const viewContent = electron.webContents.fromId(args.id);
+      viewContent.beginFrameSubscription(true, (image, dirty) => {
+        let dataenc;
+        let neww, newh;
+        const devicePixelRatio = 2;
+        const quality = 50;
+        if (devicePixelRatio > 1) {
+          neww = dirty.width / devicePixelRatio;
+          newh = dirty.height / devicePixelRatio;
+          const resizedimage = image.resize({ width: neww, height: newh });
+          dataenc = resizedimage.toJPEG(quality);
+        } else {
+          dataenc = image.toJPEG(quality);
+          neww = dirty.width;
+          newh = dirty.height;
+        }
+        mainWindow.webContents.send('paint', {
+          buf: dataenc.toString('base64'),
+          dirty: { ...dirty, width: neww, height: newh },
         });
-      }
+      });
     });
 
     // Override the UserAgent variable: make websites behave better
@@ -775,13 +772,26 @@ function createWindow() {
     //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36';
   });
 
+  // Probably not used anymore
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
       contents.on('new-window', function (newWindowEvent, url) {
-        console.log('block');
         newWindowEvent.preventDefault();
       });
+
+      // Block automatic download from webviews
+      contents.session.on('will-download', (event, item, webContents) => {
+        event.preventDefault();
+      });
     }
+  });
+
+  // Handle the new window event now
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    if (details.frameName === 'sage3') {
+      shell.openExternal(details.url);
+    }
+    return { action: 'deny' };
   });
 
   // New webview added
@@ -858,6 +868,21 @@ function createWindow() {
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     TakeScreenshot();
+  });
+
+  // Request from user for Client Info
+  ipcMain.on('client-info-request', () => {
+    const info = {
+      version: version,
+    };
+    mainWindow.webContents.send('client-info-response', info);
+  });
+
+  // Request from user to check for updates to the client
+  ipcMain.on('client-update-check', () => {
+    const currentURL = mainWindow.webContents.getURL();
+    const parsedURL = new URL(currentURL);
+    updater.checkForUpdates(parsedURL.origin, true);
   });
 
   // Request from the renderer process

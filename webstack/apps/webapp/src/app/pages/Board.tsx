@@ -1,14 +1,16 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, useColorModeValue, Text } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, HStack } from '@chakra-ui/react';
+
+import { MdCloudQueue } from 'react-icons/md';
 
 import {
   useAppStore,
@@ -39,6 +41,12 @@ export function BoardPage() {
   const config = useData('/api/configuration') as serverConfiguration;
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
+  // Get the room and board
+  const boards = useBoardStore((state) => state.boards);
+  const board = boards.find((el) => el._id === boardId);
+  const rooms = useRoomStore((state) => state.rooms);
+  const room = rooms.find((el) => el._id === roomId);
+
   if (!roomId || !boardId) {
     toHome(roomId);
     return null;
@@ -61,6 +69,19 @@ export function BoardPage() {
 
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
+  function handleDragOver(event: DragEvent) {
+    const elt = event.target as HTMLElement;
+    if (elt.id !== 'board') {
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'none';
+      }
+      event.preventDefault();
+    }
+  }
+  function handleDrop(event: DragEvent) {
+    event.preventDefault();
+  }
+
   // Handle joining and leave a board
   useEffect(() => {
     // This is if someone is joining a board by a link
@@ -78,6 +99,10 @@ export function BoardPage() {
     // Set Selected app to empty
     setSelectedApp('');
 
+    // Prevent drag/drop when not on the board
+    document.addEventListener("dragover", handleDragOver);
+    document.addEventListener("drop", handleDrop);
+
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
@@ -86,6 +111,9 @@ export function BoardPage() {
       if (user) updatePresence(user._id, { boardId: '', roomId: '' });
       // Set Selected app to empty
       setSelectedApp('');
+      // Remove event listeners
+      document.removeEventListener("dragover", handleDragOver);
+      document.removeEventListener("drop", handleDrop);
     };
   }, []);
 
@@ -112,9 +140,13 @@ export function BoardPage() {
       </Box>
 
       {/* ServerName */}
-      <Text fontSize={'xl'} opacity={0.7} position="absolute" left="2" color={textColor} userSelect="none" whiteSpace="nowrap">
-        {config?.serverName}
-      </Text>
+      <HStack position="absolute" left="2">
+        <MdCloudQueue fontSize={"18px"} color={"darkgray"} />
+        <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
+          {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
+        </Text>
+      </HStack>
+
     </>
   );
 }

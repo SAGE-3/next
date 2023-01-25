@@ -16,7 +16,7 @@
     "target": "es2015",
     "module": "esnext",
     "typeRoots": ["node_modules/@types", "libs/shared/src/lib/types"],
-    "lib": ["es2017", "dom", "es2018", "es2019", "es2020"],
+    "lib": ["es2017", "dom", "es2018", "es2019", "es2020", "es2021"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",

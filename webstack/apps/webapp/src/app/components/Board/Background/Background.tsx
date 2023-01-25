@@ -1,13 +1,15 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useRef } from 'react';
 import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
+
+import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
 
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
@@ -23,6 +25,8 @@ import {
   processContentURL,
   useHotkeys,
   useCursorBoardPosition,
+  useKeyPress,
+  useAuth,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
 
@@ -46,6 +50,35 @@ import {
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { setupApp } from './Drops';
 
+import imageHelp from './sage3-help.jpg';
+
+
+type HelpProps = {
+  onClose: () => void;
+  isOpen: boolean;
+};
+
+export function HelpModal(props: HelpProps) {
+  return (
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}
+      size="5xl">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>SAGE3 Help</ModalHeader>
+        <ModalBody>
+          <img src={imageHelp} alt="SAGE3 Help" />
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+
 type BackgroundProps = {
   roomId: string;
   boardId: string;
@@ -56,6 +89,8 @@ export function Background(props: BackgroundProps) {
   const toast = useToast();
   // Handle to a toast
   const toastIdRef = useRef<ToastId>();
+  // Help modal
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -68,7 +103,8 @@ export function Background(props: BackgroundProps) {
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
-  const { position: cursorPosition } = useCursorBoardPosition();
+  const { auth } = useAuth();
+  const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -77,10 +113,14 @@ export function Background(props: BackgroundProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
+  const setLassoMode = useUIStore((state) => state.setLassoMode);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
   const gridColor = useHexColor(gc);
+
+  // For Lasso
+  const isShiftPressed = useKeyPress('Shift');
 
   // Perform the actual upload
   const uploadFunction = (input: File[], dx: number, dy: number) => {
@@ -209,7 +249,7 @@ export function Background(props: BackgroundProps) {
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = 'copy';
   }
 
   const newApp = (type: AppName, x: number, y: number) => {
@@ -434,6 +474,7 @@ export function Background(props: BackgroundProps) {
   // Drop event
   function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
+
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -441,6 +482,18 @@ export function Background(props: BackgroundProps) {
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
+
+      // Block guests from uploading assets
+      if (auth?.provider === 'guest') {
+        toast({
+          title: 'Guests cannot upload assets',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer).then((files) => {
         // do the actual upload
@@ -451,6 +504,18 @@ export function Background(props: BackgroundProps) {
       if (event.dataTransfer.types.includes('text/uri-list')) {
         event.preventDefault();
         event.stopPropagation();
+
+        // Block guests from uploading assets
+        if (auth?.provider === 'guest') {
+          toast({
+            title: 'Guests cannot upload assets',
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+          return;
+        }
+
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
           if (pastedText.startsWith('data:image/png;base64')) {
@@ -491,65 +556,85 @@ export function Background(props: BackgroundProps) {
     }
   }
 
-  // question mark character
-  useHotkeys(
-    'shift+/',
-    (event: KeyboardEvent): void | boolean => {
-      if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
+  // Question mark character for help
+  useHotkeys('shift+/', (event: KeyboardEvent): void | boolean => {
+    if (!user) return;
+    const x = cursorPosition.x;
+    const y = cursorPosition.y;
 
-      console.log('Shortcut> SHOW HELP', x, y);
-      // show image or open doc
-      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
-      // window.open(doc, '_blank');
+    helpOnOpen();
 
-      // Returning false stops the event and prevents default browser events
-      return false;
-    },
+    // show image or open doc
+    // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
+    // window.open(doc, '_blank');
+
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
 
   // Move the board with the arrow keys
-  useHotkeys(
-    'up, down, left, right',
-    (event: KeyboardEvent): void | boolean => {
-      if (selectedAppId !== '') return;
-      const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
-      if (event.key === 'ArrowUp') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
-      } else if (event.key === 'ArrowDown') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
-      } else if (event.key === 'ArrowLeft') {
-        setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
-      } else if (event.key === 'ArrowRight') {
-        setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
-      }
-      // Returning false stops the event and prevents default browser events
-      return false;
-    },
+  useHotkeys('up, down, left, right', (event: KeyboardEvent): void | boolean => {
+    if (selectedAppId !== '') return;
+    const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
+    if (event.key === 'ArrowUp') {
+      setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
+    } else if (event.key === 'ArrowDown') {
+      setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
+    } else if (event.key === 'ArrowLeft') {
+      setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
+    } else if (event.key === 'ArrowRight') {
+      setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
+    }
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
   );
 
-  // Stickies Shortcut
-  useHotkeys(
-    'shift+s',
-    (event: KeyboardEvent): void | boolean => {
-      if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
-      createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
-      );
+  // Zoom in/out of the board with the -/+ keys
+  useHotkeys('-, =', (event: KeyboardEvent): void | boolean => {
+    if (selectedAppId !== '') return;
+    if (event.key === '-') {
+      zoomOutDelta(-10, mousePosition);
+    } else if (event.key === '=') {
+      zoomInDelta(10, mousePosition);
+    }
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
+    // Depends on the cursor to get the correct position
+    { dependencies: [mousePosition.x, mousePosition.y, selectedAppId] }
+  );
 
-      // Returning false stops the event and prevents default browser events
-      return false;
-    },
+  // Stickies Shortcut
+  useHotkeys('shift+s', (event: KeyboardEvent): void | boolean => {
+    if (!user) return;
+    const x = cursorPosition.x;
+    const y = cursorPosition.y;
+    createApp(
+      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+    );
+
+    // Returning false stops the event and prevents default browser events
+    return false;
+  },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
+
+  useEffect(() => {
+    if (isShiftPressed) {
+      document.onselectstart = function () {
+        return false;
+      };
+    }
+
+    setLassoMode(isShiftPressed);
+  }, [isShiftPressed]);
 
   return (
     <Box
@@ -564,11 +649,9 @@ export function Background(props: BackgroundProps) {
       onDrop={OnDrop}
       onDragOver={OnDragOver}
       onScroll={(evt) => {
-        // console.log('onScroll> event', evt);
         evt.stopPropagation();
       }}
       onWheel={(evt: any) => {
-        // console.log('onWheel> event', evt);
         evt.stopPropagation();
         const cursor = { x: evt.clientX, y: evt.clientY };
         if (evt.deltaY < 0) {
@@ -577,7 +660,11 @@ export function Background(props: BackgroundProps) {
           zoomOutDelta(evt.deltaY, cursor);
         }
       }}
-    />
+    >
+      <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
+        <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
+      </Modal>
+    </Box>
   );
 }
 

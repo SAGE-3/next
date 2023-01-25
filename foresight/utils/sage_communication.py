@@ -1,3 +1,11 @@
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+#-----------------------------------------------------------------------------
+
 import uuid
 
 import httpx
@@ -86,10 +94,9 @@ class SageCommunication(Borg):
 
     def get_assets(self, room_id=None, board_id=None, asset_id=None):
         url = self.conf[self.prod_type]['web_server']+self.routes["get_assets"]
-
         if asset_id:
             url += asset_id
-        r = self.httpx_client.get(url,headers=self.__headers)
+        r = self.httpx_client.get(url, headers=self.__headers)
         json_data = r.json()
         data = json_data['data']
         if r.is_success:

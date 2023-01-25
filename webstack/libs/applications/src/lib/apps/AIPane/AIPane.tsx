@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import {
@@ -89,8 +89,10 @@ function AppComponent(props: App): JSX.Element {
           updateState(props._id, { hostedApps: hosted });
           // TODO Make messages more informative rather than simply types of apps being hosted
           updateState(props._id, { messages: hosted });
-          console.log('app ' + app._id + ' added');
+          // console.log('app ' + app._id + ' added');
           newAppAdded(app.data.type);
+        } else {
+          // console.log('app ' + app._id + ' already in hostedApps');
         }
       } else {
         if (Object.keys(s.hostedApps).includes(app._id)) {
@@ -216,8 +218,8 @@ function AppComponent(props: App): JSX.Element {
               {checkAppType() === 0
                 ? 'Error. Unsupported file type'
                 : checkAppType() === 1
-                ? 'File type accepted'
-                : 'Error. More than 1 app type on board'}
+                  ? 'File type accepted'
+                  : 'Error. More than 1 app type on board'}
             </PopoverBody>
 
             {Object.keys(s.messages)?.map((message: string) => (

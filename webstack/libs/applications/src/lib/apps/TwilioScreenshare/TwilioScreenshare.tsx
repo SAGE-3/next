@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Chakra and React imports
@@ -22,14 +22,14 @@ import {
   Image,
   ButtonGroup,
 } from '@chakra-ui/react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody } from '@chakra-ui/react';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
-import { useAppStore, useUser, useTwilioStore, useUsersStore, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUser, useTwilioStore, useHexColor, isElectron } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Twilio Imports
@@ -149,10 +149,8 @@ function AppComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       if (isElectron()) {
         try {
-          const electron = window.require('electron');
-          const ipcRenderer = electron.ipcRenderer;
           // Get sources from the main process
-          ipcRenderer.on('set-source', async (evt: any, sources: any) => {
+          window.electron.on('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
             const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
             for (const source of sources) {
@@ -161,7 +159,7 @@ function AppComponent(props: App): JSX.Element {
             setElectronSources(allSources);
             onOpen();
           });
-          ipcRenderer.send('request-sources');
+          window.electron.send('request-sources');
         } catch (err) {
           deleteApp(props._id);
         }
@@ -355,17 +353,6 @@ function AppComponent(props: App): JSX.Element {
       </>
     </AppWindow>
   );
-}
-
-/**
- * Check if browser is Electron based on the userAgent.
- * NOTE: this does a require check, UNLIKE web view app.
- *
- * @returns true or false.
- */
-function isElectron() {
-  const w = window as any; // eslint-disable-line
-  return typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.includes('Electron') && w.require;
 }
 
 /* App toolbar component for the app Twilio */

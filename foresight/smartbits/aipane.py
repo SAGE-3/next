@@ -1,9 +1,11 @@
-# -----------------------------------------------------------------------------
-#  Copyright (c) SAGE3 Development Team
+#-----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-# -----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+
 import time
 from enum import Enum
 
@@ -117,12 +119,12 @@ class AIPane(SmartBit):
         Callback function that handles the output produced by AI model. Produces a payload of bounding boxes and labels.
         Sends output to ImageViewer
         """
-        print("I am handling the execution results")
         print(f"the apps involved are {self._pending_executions[msg_uuid]}")
         if msg["output"] != '':
             for i, hosted_app_id in enumerate(self._pending_executions[msg_uuid]):
-                d = {x["label"]: x["box"] for x in msg["output"][i]}
-                payload = {"state.boxes": d, "state.annotations": True}
+                d = {i: x for i, x in enumerate(msg["output"][i])}
+                # d = {x["label"]: x["box"] for x in msg["output"][i]}
+                payload = {"state.objects": d, "state.annotations": True}
                 print(f"updating the boxes on image {hosted_app_id}")
                 response = self._s3_comm.send_app_update(hosted_app_id, payload)
 

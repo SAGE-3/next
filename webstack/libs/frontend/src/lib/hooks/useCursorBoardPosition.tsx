@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -17,8 +17,10 @@ import { useUIStore } from '../stores';
 export function useCursorBoardPosition(): {
   position: { x: number; y: number };
   uiToBoard: (x: number, y: number) => { x: number; y: number };
+  mouse: { x: number; y: number };
 } {
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [mouse, setMouse] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
 
@@ -32,6 +34,7 @@ export function useCursorBoardPosition(): {
   // Oberver for window resize
   useEffect(() => {
     const updateCursorPosition = (event: MouseEvent) => {
+      setMouse({ x: event.clientX, y: event.clientY });
       setPosition({
         x: Math.floor(event.clientX / scale - boardPosition.x),
         y: Math.floor(event.clientY / scale - boardPosition.y),
@@ -41,5 +44,5 @@ export function useCursorBoardPosition(): {
     return () => window.removeEventListener('mousemove', updateCursorPosition);
   }, [boardPosition.x, boardPosition.y, scale]);
 
-  return { position, uiToBoard };
+  return { position, uiToBoard, mouse };
 }

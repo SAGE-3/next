@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Import the React library
@@ -25,7 +25,7 @@ import dateFormat from 'date-fns/format';
 
 // Styling for the placeholder text
 import './styling.css';
-import { MdRemove, MdAdd, MdFileDownload, MdOutlineBlock } from 'react-icons/md';
+import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen } from 'react-icons/md';
 import { useParams } from 'react-router';
 import { SAGEColors } from '@sage3/shared';
 
@@ -45,13 +45,12 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const { boardId, roomId } = useParams();
-  const selectedAppId = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
 
   const yours = user?._id === props._createdBy;
   const updatedByYou = user?._id === props._updatedBy;
-  const selected = selectedAppId === props._id;
+  const locked = s.lock;
 
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
@@ -115,21 +114,31 @@ function AppComponent(props: App): JSX.Element {
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!user) return;
-    if (e.shiftKey && e.code === 'Tab') {
-      // Create a new stickie
-      createApp({
-        title: user.data.name,
-        roomId: roomId!,
-        boardId: boardId!,
-        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-        size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'Stickie',
-        // keep the same color, like a clone operation except for the text
-        state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
-        raised: true,
-      });
+    if (e.repeat) { return }
+    if (e.code === 'Tab') {
+      if (e.shiftKey) {
+        // Create a new stickie
+        createApp({
+          title: user.data.name,
+          roomId: roomId!,
+          boardId: boardId!,
+          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'Stickie',
+          // keep the same color, like a clone operation except for the text
+          state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
+          raised: true,
+        });
+      } else {
+        e.preventDefault();
+        return;
+      }
     }
+  };
+
+  const unlock = () => {
+    updateState(props._id, { lock: false });
   };
 
   // React component
@@ -155,13 +164,17 @@ function AppComponent(props: App): JSX.Element {
           value={note}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          readOnly={!yours} // Only the creator can edit
+          readOnly={locked} // Only the creator can edit
           zIndex={1}
         />
-        {!yours && selected && (
+        {locked && (
           <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
-            <Tooltip label="Not your Stickie" shouldWrapChildren placement="top" hasArrow>
-              <MdOutlineBlock color="red" fontSize="32px" />
+            <Tooltip label={`Locked by ${yours ? 'you' : props.data.title}`} shouldWrapChildren placement="top" hasArrow>
+              {yours ? (
+                <MdLock color="red" fontSize="32px" onClick={unlock} style={{ cursor: 'pointer' }} />
+              ) : (
+                <MdLock color="red" fontSize="32px" />
+              )}
             </Tooltip>
           </Box>
         )}
@@ -179,6 +192,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const { user } = useUser();
 
   const yours = user?._id === props._createdBy;
+  const locked = s.lock;
 
   // Larger font size
   function handleIncreaseFont() {
@@ -226,35 +240,43 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { color: color });
   };
 
+  const lockUnlock = () => {
+    updateState(props._id, { lock: !locked });
+  };
   return (
     <>
       <HStack>
-        {yours && (
-          <>
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize > 128}
-                  onClick={() => handleIncreaseFont()}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdAdd />
-                </Button>
-              </Tooltip>
+        <ButtonGroup isAttached size="xs" colorScheme="teal">
+          <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+            <Button
+              isDisabled={s.fontSize > 128}
+              onClick={() => handleIncreaseFont()}
+              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              disabled={locked}
+            >
+              <MdAdd />
+            </Button>
+          </Tooltip>
 
-              <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize <= 8}
-                  onClick={() => handleDecreaseFont()}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
-            <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" />
-          </>
+          <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+            <Button
+              isDisabled={s.fontSize <= 8}
+              onClick={() => handleDecreaseFont()}
+              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              disabled={locked}
+            >
+              <MdRemove />
+            </Button>
+          </Tooltip>
+        </ButtonGroup>
+        {yours && (
+          <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
+            <Button onClick={lockUnlock} colorScheme="teal" size="xs" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+              {locked ? <MdLock /> : <MdLockOpen />}
+            </Button>
+          </Tooltip>
         )}
+        <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>

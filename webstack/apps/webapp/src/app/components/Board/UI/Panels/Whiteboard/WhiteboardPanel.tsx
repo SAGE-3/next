@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { MouseEventHandler, useEffect } from 'react';
@@ -12,12 +12,11 @@ import { Box, Button, useToast, Tooltip } from '@chakra-ui/react';
 import { BsPencilFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera } from 'react-icons/fa';
 
-import { useUIStore, StuckTypes, useAppStore } from '@sage3/frontend';
+import { useUIStore, StuckTypes, useAppStore, isElectron } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
-import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 
 export interface WhiteboardPanelProps {
   boardId: string;
@@ -55,6 +54,9 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
     if (!show) {
       setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
       setStuck(StuckTypes.Controller);
+      setWhiteboardMode(false);
+    } else {
+      setWhiteboardMode(true);
     }
   }, [show]);
 
@@ -78,12 +80,10 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
     }
     // Ask electron to take a screenshot
     if (isElectron()) {
-      const electron = window.require('electron');
-      const ipcRenderer = electron.ipcRenderer;
       setTimeout(() => {
         // send the message to the main process
         // small delay to make sure the board is rendered
-        ipcRenderer.send('take-screenshot');
+        window.electron.send('take-screenshot', {});
       }, 100);
       // Restore the UI
       setTimeout(() => {
@@ -136,8 +136,7 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
             <FaCamera />
           </Button>
         </Tooltip>
-
       </Box>
-    </Panel >
+    </Panel>
   );
 }

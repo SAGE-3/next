@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Node modules
@@ -20,7 +20,8 @@ const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
 const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
 const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
-import { Canvas } from 'skia-canvas';
+// import { Canvas } from 'skia-canvas';
+import { createCanvas } from 'canvas';
 
 import { getStaticAssetUrl } from '@sage3/backend';
 import { ExtraPDFType } from '@sage3/shared/types';
@@ -36,14 +37,16 @@ function NodeCanvasFactory() {
 NodeCanvasFactory.prototype = {
   create: function NodeCanvasFactory_create(width: number, height: number) {
     assert(width > 0 && height > 0, 'Invalid canvas size');
-    const canvas = new Canvas(width, height);
+    // const canvas = new Canvas(width, height);
+    const canvas = createCanvas(width, height);
+
     const context = canvas.getContext('2d');
 
     // Rendering quality settings
-    // context.patternQuality = 'fast';
-    // context.quality = 'fast';
-    context.imageSmoothingEnabled = false;
-    context.imageSmoothingQuality = 'low';
+    context.patternQuality = 'fast';
+    context.quality = 'fast';
+    // context.imageSmoothingEnabled = false;
+    // context.imageSmoothingQuality = 'low';
 
     return { canvas, context };
   },

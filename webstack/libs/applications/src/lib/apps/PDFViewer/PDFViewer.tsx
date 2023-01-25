@@ -1,22 +1,16 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams } from 'react-router';
+
+// Chakra UI
 import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
-
-import { App } from '../../schema';
-import { Asset, ExtraPDFType } from '@sage3/shared/types';
-
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { useAssetStore, useAppStore } from '@sage3/frontend';
-
-// Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
 // Icons
 import {
   MdFileDownload,
@@ -29,7 +23,18 @@ import {
   MdSkipNext,
   MdNavigateNext,
   MdNavigateBefore,
+  MdTipsAndUpdates
 } from 'react-icons/md';
+
+// Utility functions from SAGE3
+import { useAssetStore, useAppStore, useUser, downloadFile } from '@sage3/frontend';
+import { Asset, ExtraPDFType } from '@sage3/shared/types';
+
+// App components
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+
 
 function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
@@ -39,6 +44,13 @@ function AppComponent(props: App): JSX.Element {
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
+  // App functions
+  const createApp = useAppStore((state) => state.create);
+  // User information
+  const { user } = useUser();
+  const { boardId, roomId } = useParams();
+  // Set the processing UI state
+  const [processing, setProcessing] = useState(false);
 
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
@@ -65,7 +77,6 @@ function AppComponent(props: App): JSX.Element {
     if (file) {
       const pages = file.data.derived as ExtraPDFType;
       if (pages) {
-        // setAllPagesInfo(pages);
         const allurls = pages.map((page) => {
           // find the largest image for this page (multi-resolution)
           const res = page.reduce(function (p, v) {
@@ -92,6 +103,40 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   }, [s.currentPage]);
+
+  // Display the processing UI
+  useEffect(() => {
+    // Only show the processing UI if the user is the one who clicked the button
+    if (s.executeInfo.executeFunc && s.client === user?._id)
+      setProcessing(true);
+    else
+      setProcessing(false);
+  }, [s.executeInfo.executeFunc, s.client]);
+
+  // Return from the remote python function
+  useEffect(() => {
+    if (!user) return;
+    if (s.analyzed && s.client === user._id) {
+      // Clear the client id after a response
+      updateState(props._id, { client: '' });
+      // Parse the result we got back
+      const result = JSON.parse(s.analyzed);
+      // Create a new stickie to show resuls (temporary, should be a new app for this purpose)
+      createApp({
+        title: 'Analysis - ' + file?.data.originalfilename,
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: 700, height: props.data.size.height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'PDFResult',
+        state: {
+          result: JSON.stringify(result, null, 4),
+        },
+        raised: true,
+      });
+    }
+  }, [s.analyzed]);
 
   // Event handler
   const handleUserKeyPress = useCallback(
@@ -188,7 +233,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} processing={processing}>
       <HStack
         roundedBottom="md"
         bg="whiteAlpha.700"
@@ -217,6 +262,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
+  // User information
+  const { user } = useUser();
 
   useEffect(() => {
     const asset = assets.find((a) => a._id === s.assetid);
@@ -291,6 +338,16 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }
 
+  // Analyze the PDF
+  function analyzePDF() {
+    if (file && user) {
+      updateState(props._id, {
+        client: user._id,
+        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id }, }
+      });
+    }
+  }
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -343,6 +400,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
@@ -372,6 +430,23 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
+
+      {/* Remote Action in Python */}
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+              <MdMenu />
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px">
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF} isDisabled={true}>
+              Analyze
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
     </>
   );
 }
