@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useColorModeValue, VStack } from '@chakra-ui/react';
 
-import { StuckTypes, useAppStore, useUIStore, useUser, useData } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, useData } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName } from '@sage3/applications/schema';
@@ -38,20 +38,10 @@ export function ApplicationsPanel(props: ApplicationProps) {
 
   // App Store
   const createApp = useAppStore((state) => state.create);
+
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
-
-  const position = useUIStore((state) => state.applicationsPanel.position);
-  const setPosition = useUIStore((state) => state.applicationsPanel.setPosition);
-  const opened = useUIStore((state) => state.applicationsPanel.opened);
-  const setOpened = useUIStore((state) => state.applicationsPanel.setOpened);
-  const show = useUIStore((state) => state.applicationsPanel.show);
-  const setShow = useUIStore((state) => state.applicationsPanel.setShow);
-  const stuck = useUIStore((state) => state.applicationsPanel.stuck);
-  const setStuck = useUIStore((state) => state.applicationsPanel.setStuck);
-  const zIndex = useUIStore((state) => state.panelZ).indexOf('applications');
-  const controllerPosition = useUIStore((state) => state.controller.position);
 
   useEffect(() => {
     if (data) {
@@ -79,19 +69,6 @@ export function ApplicationsPanel(props: ApplicationProps) {
       });
     }
   }, [data]);
-
-  // if a menu is currently closed, make it "jump" to the controller
-  useEffect(() => {
-    if (!show) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
-      setStuck(StuckTypes.Controller);
-    }
-  }, [show]);
-  useEffect(() => {
-    if (stuck == StuckTypes.Controller) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
-    }
-  }, [controllerPosition]);
 
   // Theme
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
@@ -130,21 +107,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
   };
 
   return (
-    <Panel
-      title="Applications"
-      name="applications"
-      opened={opened}
-      setOpened={setOpened}
-      setPosition={setPosition}
-      position={position}
-      width={300}
-      showClose={true}
-      show={show}
-      setShow={setShow}
-      stuck={stuck}
-      setStuck={setStuck}
-      zIndex={zIndex}
-    >
+    <Panel title="Applications" name="applications" width={300} showClose={false} zIndex={100}>
       <VStack
         maxH={300}
         w={'100%'}

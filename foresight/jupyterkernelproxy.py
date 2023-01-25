@@ -17,7 +17,8 @@ from ws4py.manager import WebSocketManager
 from ws4py import format_addresses, configure_logger
 from config import config as conf, prod_type
 
-logger = configure_logger()
+import logging
+logger = logging.getLogger(__name__)
 
 # TODO : CONVERT JupyterKernelProxy INTO singleton (use BORG)
 def format_execute_request_msg(exec_uuid, code):
@@ -40,12 +41,12 @@ class TestiongJupyterClient(WebSocketBaseClient):
         super().__init__(address, headers=headers)
 
     def handshake_ok(self):
-        print("Done opening the connection")
+        logger.debug("Testing: done opening the connection to the Jupyter Kernel client")
 
     def received_message(self, msg):
         # check if the message
         msg = json.loads(msg.data.decode("utf-8"))
-        print(msg)
+        logger.debug(f"Testing: received msg {msg}")
 
 class JupyterKernelProxy:
     class JupyterClient(WebSocketBaseClient):
@@ -55,8 +56,7 @@ class JupyterKernelProxy:
             super().__init__(address, headers=headers)
 
         def handshake_ok(self):
-            print("Opening %s" % format_addresses(self))
-            print("Done opening the connection")
+            logger.debug("Opening %s" % format_addresses(self))
             self.parent_proxy_instance.conn_manager.add(self)
 
         def received_message(self, msg):
@@ -91,7 +91,7 @@ class JupyterKernelProxy:
                         result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
 
             if result:
-                print(f"result is {result}")
+                logger.debug(f"jupyter kernel result is {result}")
                 self.pending_reponses[msg_id_uuid] = result
                 self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 
@@ -133,7 +133,7 @@ class JupyterKernelProxy:
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
         except Exception as e:
             # something happen, do no track this results
-            print(f"Something happened here, {e}")
+            logger.error(f"Error occurred duirng execution of command, {e}")
             del self.results[user_passed_uuid]
             # TODO something happened and code couldn't be run
             #  send error back to the user
