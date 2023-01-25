@@ -350,7 +350,7 @@ function AppComponent(props: App): JSX.Element {
       }
       )
     })
-    console.log("TWO ARRAYS selectedCols useEffect")
+    // console.log("TWO ARRAYS selectedCols useEffect")
   }, [JSON.stringify(s.selectedCols), indices.length])
 
   //Highlighting for row selection
@@ -371,7 +371,7 @@ function AppComponent(props: App): JSX.Element {
       }
       )
     })
-    console.log("TWO ARRAYS selectedRows useEffect")
+    // console.log("TWO ARRAYS selectedRows useEffect")
   }, [JSON.stringify(s.selectedRows)])
 
   //TODO Warning: A component is changing an uncontrolled input to be controlled.

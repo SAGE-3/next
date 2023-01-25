@@ -133,7 +133,7 @@ class JupyterKernelProxy:
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
         except Exception as e:
             # something happen, do no track this results
-            print(f"Somethign Happened here, {e}")
+            print(f"Something happened here, {e}")
             del self.results[user_passed_uuid]
             # TODO something happened and code couldn't be run
             #  send error back to the user
