@@ -1,10 +1,10 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 """
 The host_url is expoerted from start-head.sh. Right now, using Unix sock of Docker Deamon.
@@ -25,6 +25,7 @@ import time
 
 
 host_URL = os.environ.get("DOCKER_HOST")
+
 if not host_URL:
     print(" the DOCKER_HOST env variable is not set")
     sys.exit(1)
@@ -43,13 +44,14 @@ def get_prefix(_uuid, len=16):
     return uuid.UUID(_uuid).hex[:len]
 
 
-def hadle_docker_compose_action(prefix, action):
+def hadle_docker_compose_action(room_id, action):
     """
     :param prefix: the prefix of the room id to use
     :param action: `up` to start a docker image and `down` to stop it.
     :return:
     """
-    if action not in ["UP", "DOWN"]: raise Exception("unrecognized action {action}")
+    if action not in ["UP", "DOWN"]:
+        raise Exception("unrecognized action {action}")
 
     with open(".env", "w") as env_file:
         # .env is exporter by docker compose so the proxy script will have access
@@ -57,7 +59,7 @@ def hadle_docker_compose_action(prefix, action):
         env_file.write(f"ROOM_ID={room_id}")
 
     docker = DockerClient(host=host_URL, compose_files=["./docker-compose-proxy.yml"],
-                          compose_project_name=prefix)
+                          compose_project_name=get_prefix(room_id))
     if action.upper() == "UP":
         docker.compose.up()
     else:
@@ -72,12 +74,12 @@ if __name__ == "__main__":
 
     while True:
         current_rooms = sage_comm.get_rooms()
-        current_room_ids = [get_prefix(x["_id"]) for x in current_rooms]
+        current_room_ids = [x["_id"] for x in current_rooms]
 
         # handle inactive_room_ids here (down the docker images)
         inactive_room_ids = active_rooms - set(current_room_ids)
         for room_id in inactive_room_ids:
-            hadle_docker_compose_action(room_id, "DOWN")
+            hadle_docker_compose_action(room_id, "UP")
             active_rooms.remove(room_id)
             max_nb_supported_rooms -= 1
 
