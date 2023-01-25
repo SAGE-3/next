@@ -21,6 +21,7 @@ const validChannels = [
   'streamview',
   'paint',
   'load-landing',
+  'serverlist',
 ];
 
 contextBridge.exposeInMainWorld('electron', {

@@ -776,6 +776,21 @@ function createWindow() {
     mainWindow.loadFile('./html/landing.html');
   });
 
+  ipcMain.on('serverlist', (event, args) => {
+    const request = args.request;
+    switch (request) {
+      case 'add-server':
+        serverStore.addServer(args.server);
+        break;
+      case 'remove-server':
+        serverStore.removeServer(args.id);
+        break;
+      case 'get-servers':
+        const list = serverStore.getServerList();
+        break;
+    }
+  });
+
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     TakeScreenshot();
