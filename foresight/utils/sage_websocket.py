@@ -24,6 +24,7 @@ from config import config as conf, prod_type
 class SageWebsocket:
 
     def __init__(self):
+        self.connected = False
         self.ws = websocket.WebSocketApp(conf[prod_type]["ws_server"]+"/api",
                                          header={
                                              "Authorization": "Bearer " + os.getenv('TOKEN')},
@@ -32,11 +33,14 @@ class SageWebsocket:
                                          on_error=lambda ws, msg: self.on_error(
                                              ws, msg),
                                          # on_close=lambda ws: self.on_close(ws),
-                                         #  on_open=lambda ws: self.on_open(ws)
+                                         on_open=lambda ws: self.on_open(ws)
                                          )
         self.wst = None
         self.received_msg_log = {}
         self.queue_list = {}
+
+    def on_open(self, ws):
+        self.connected = True
 
     def on_message(self, ws, message):
         msg = json.loads(message)
@@ -52,8 +56,26 @@ class SageWebsocket:
     def on_error(self, ws, error):
         print(f"error in webserver websocket connection {error}")
 
+    # Check if the ws has connected
+    # attempts (number of times to attempt) 1 attempt per second default 10
+    def check_connection(self, attempts=10):
+        if self.connected == True:
+            return True
+        count = 0
+        while self.connected == False:
+            print('Websocket still not connected')
+            count = count + 1
+            if count > attempts:
+                print(
+                    'Could not establish a connection to the server after {attempts} attempts')
+                return False
+            time.sleep(1)
+        return True
+
     # Subscribe to a route
     def setup_sub_queue(self, route):
+        if not self.check_connection():
+            return
         # Generate id for subscription
         subscription_id = str(uuid.uuid4())
         # Setup queue

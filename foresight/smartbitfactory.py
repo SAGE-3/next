@@ -1,10 +1,10 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 from utils.generic_utils import import_cls
 import sys
@@ -15,12 +15,12 @@ class SmartBitFactory:
     cls_root = "smartbits"
 
     # TODO: read these names from some conf file; not hardcoded here
+    # REMOVED "Stickie": "stickie",
     class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note",
                    "DataTable": "data_table", "CodeCell": "codecell",
                    "KernelDashboard": "kerneldashboard", "SageCell": "sagecell",
-                   "Slider": "slider", "Stickie": "stickie", "VegaLite": "vegalite",
+                   "Slider": "slider", "VegaLite": "vegalite",
                    "VegaLiteViewer": "vegaliteviewer", "ImageViewer": "imageviewer", "Seer": "seer"}
-
 
     @classmethod
     def create_smartbit(cls, doc):
@@ -40,4 +40,5 @@ class SmartBitFactory:
                 return smartbit_instance
         except:
             e = sys.exc_info()[0]
-            raise Exception(f"Couldn't create the class in the SmartbitFactory {e}")
+            raise Exception(
+                f"Couldn't create the class in the SmartbitFactory {e}")

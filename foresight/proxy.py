@@ -164,14 +164,17 @@ class SAGEProxy:
             self.rooms[new_room.id] = new_room
         elif collection == "BOARDS":
             new_board = Board(doc)
-            self.rooms[new_board.roomId].boards[new_board.id] = new_board
+            if new_board.roomId in self.rooms:
+                self.rooms[new_board.roomId].boards[new_board.id] = new_board
         elif collection == "APPS":
             doc["state"] = doc["data"]["state"]
             del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
             roomId = doc["data"]["roomId"]
             boardId = doc["data"]["boardId"]
-            self.rooms[roomId].boards[boardId].smartbits[smartbit.app_id] = smartbit
+            if roomId in self.rooms:
+                if boardId in self.rooms[roomId].boards:
+                    self.rooms[roomId].boards[boardId].smartbits[smartbit.app_id] = smartbit
 
     # Handle Update Messages
     def __handle_update(self, collection, doc, updates):
