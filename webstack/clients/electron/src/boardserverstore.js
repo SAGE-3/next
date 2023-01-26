@@ -6,17 +6,7 @@ const genId = uuid.v4;
 // Persistent data store to store window postion/size
 // stored by default in app.getPath('userData')
 // Create a store
-const store = new Store({ name: 'sage3-server-list' });
-
-// Default Window State
-const defaultWindowState = {
-  server: 'https://sage3.app',
-  fullscreen: false,
-  x: 0,
-  y: 0,
-  width: 1280,
-  height: 720,
-};
+const store = new Store({ name: 'board-server-store' });
 
 // Default ServerList
 const defaultServerList = [
@@ -37,18 +27,23 @@ const defaultServerList = [
   },
 ];
 
+const defaultBoardList = [];
+
 store.get('servers', defaultServerList);
+store.get('boards', defaultBoardList);
 
 module.exports = {
   getServerList: function () {
     const list = store.get('servers', defaultServerList);
     return list;
   },
+
   addServer: function (name, url) {
     const currentList = store.get('servers', defaultServerList);
     currentList.push({ name, url, id: genId() });
     return store.set('servers', currentList);
   },
+
   removeServer: function (id) {
     const currentList = store.get('servers', defaultServerList);
     const idx = currentList.findIndex((el) => el.id == id);
@@ -57,6 +52,27 @@ module.exports = {
     }
     return store.set('servers', currentList);
   },
+
+  getBoardList: function () {
+    const list = store.get('boards', defaultBoardList);
+    return list;
+  },
+
+  addBoard: function (name, url) {
+    const currentList = store.get('boards', defaultBoardList);
+    currentList.push({ name, url, id: genId() });
+    return store.set('boards', currentList);
+  },
+
+  removeBoard: function (id) {
+    const currentList = store.get('boards', defaultBoardList);
+    const idx = currentList.findIndex((el) => el.id == id);
+    if (idx > -1) {
+      currentList.splice(idx, 1);
+    }
+    return store.set('boards', currentList);
+  },
+
   clear: function () {
     return store.clear();
   },

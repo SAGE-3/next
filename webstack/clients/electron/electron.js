@@ -47,7 +47,7 @@ var firstRun = true;
 // Store
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
-const serverStore = require('./src/serverstore');
+const boardserverStore = require('./src/boardserverstore');
 
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
 
@@ -135,7 +135,7 @@ if (commander.disableHardware) {
 if (commander.clear) {
   console.log('Preferences> clear all');
   windowStore.clear();
-  serverStore.clear();
+  boardserverStore.clear();
 }
 
 if (process.platform === 'win32') {
@@ -773,20 +773,30 @@ function createWindow() {
     mainWindow.loadFile('./html/landing.html');
   });
 
-  ipcMain.on('serverlist', (event, args) => {
+  ipcMain.on('store-interface', (event, args) => {
     const request = args.request;
     switch (request) {
       case 'add-server':
-        serverStore.addServer(args.server.name, args.server.url);
+        boardserverStore.addServer(args.server.name, args.server.url);
         rebuildMenu();
         break;
       case 'remove-server':
-        serverStore.removeServer(args.id);
+        boardserverStore.removeServer(args.id);
         rebuildMenu();
         break;
-      case 'get-servers':
-        const list = serverStore.getServerList();
-        mainWindow.webContents.send('serverlist', { request: 'list', servers: list });
+      case 'add-board':
+        boardserverStore.addBoard(args.board.name, args.board.url);
+        rebuildMenu();
+        break;
+      case 'remove-board':
+        boardserverStore.removeBoard(args.id);
+        rebuildMenu();
+        break;
+      case 'get-lists':
+        const servers = boardserverStore.getServerList();
+        const boards = boardserverStore.getBoardList();
+        mainWindow.webContents.send('store-interface', { response: 'servers', servers });
+        mainWindow.webContents.send('store-interface', { response: 'boards', boards });
         break;
       case 'redirect':
         const url = args.url;
@@ -983,7 +993,20 @@ function buildMenu() {
         },
         {
           label: 'Go to server...',
-          submenu: serverStore.getServerList().map((el) => {
+          submenu: boardserverStore.getServerList().map((el) => {
+            return {
+              label: el.name,
+              click() {
+                if (mainWindow) {
+                  mainWindow.loadURL(el.url);
+                }
+              },
+            };
+          }),
+        },
+        {
+          label: 'Go to board...',
+          submenu: boardserverStore.getBoardList().map((el) => {
             return {
               label: el.name,
               click() {
