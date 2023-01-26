@@ -21,7 +21,7 @@ const lambdaMatcher = (matchConditions: MatchConditions) => matchConditions;
 // Type to add a type for CASL
 type Property = { ownerId: string };
 // What are the actions: manage is a builtin alias
-export type AuthAction = 'manage' | 'move' | 'resize' | 'delete' | 'create' | 'modify' | 'download' | 'upload';
+export type AuthAction = 'manage' | 'resize' | 'delete' | 'create' | 'modify' | 'download' | 'upload';
 // What are the subjects: all is a builtin alias
 type AuthSubject = 'all' | 'app' | 'asset' | 'board' | 'room' | Property;
 type AppAbility = PureAbility<[AuthAction, AuthSubject]>;
@@ -44,13 +44,17 @@ export function defineAbilityFor(role: UserRole, userId: string | undefined) {
     can('manage', ['app', 'asset']);
     can('create', ['room', 'board']);
     can(['delete', 'modify'], ['room', 'board'], (b: Property) => b.ownerId === userId);
+
+    // delete board inside room that I own
+    // delete board with users inside
+    // cannot('delete', 'board', (b: Property) => b.users.length > 0);
   } else if (role === 'guest') {
     can('create', 'app');
     can(['upload', 'download'], 'asset');
-    can(['modify', 'delete', 'move', 'resize'], 'app', (sub: Property) => sub.ownerId === userId);
+    can(['modify', 'delete', 'resize'], 'app', (sub: Property) => sub.ownerId === userId);
   } else if (role === 'viewer') {
     // sit back and watch
-    cannot(['move', 'resize', 'delete', 'create', 'modify', 'download', 'upload'], 'all');
+    cannot(['resize', 'delete', 'create', 'modify', 'download', 'upload'], 'all');
   }
 
   return build({

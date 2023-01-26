@@ -284,7 +284,7 @@ export function AppWindow(props: WindowProps) {
       dragGrid={[gridSize, gridSize]}
 
       enableResizing={canApp('resize')}
-      disableDragging={!canApp('move')}
+      disableDragging={!canApp('resize')}
     >
       {/* Title Above app */}
       {appTitles ? (
