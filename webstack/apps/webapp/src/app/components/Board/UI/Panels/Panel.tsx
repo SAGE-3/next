@@ -258,6 +258,7 @@ export function Panel(props: PanelProps) {
         } else if (data.y > winHeight - (he + 10)) {
           // bottom left
           update({ stuck: StuckTypes.BottomLeft, position: { x: 5, y: winHeight - he - 5 } });
+        } else {
           // middle left
           update({ stuck: StuckTypes.Left, position: { x: 5, y: data.y } });
         }

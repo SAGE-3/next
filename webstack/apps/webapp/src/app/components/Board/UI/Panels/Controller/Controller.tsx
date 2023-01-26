@@ -37,7 +37,6 @@ export function Controller(props: ControllerProps) {
   const assets = getPanel('assets');
   const navigation = getPanel('navigation');
   const users = getPanel('users');
-  const controller = getPanel('controller');
   const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
 
   // Redirect the user back to the homepage when clicking the arrow button
@@ -85,7 +84,8 @@ export function Controller(props: ControllerProps) {
 
   return (
     <Panel
-      title={(room?.data.name ? room.data.name : '') + ': ' + (board?.data.name ? board.data.name : '')}
+      // title={(room?.data.name ? room.data.name : '') + ': ' + (board?.data.name ? board.data.name : '')}
+      title={('Controller' + ': ' + (board?.data.name ? board.data.name : ''))}
       name="controller"
       width={400}
       showClose={false}

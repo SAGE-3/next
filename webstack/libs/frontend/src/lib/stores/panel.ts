@@ -85,9 +85,9 @@ export const usePanelStore = create<UIState>((set, get) => ({
       show: false,
     },
     {
-      position: { x: 5, y: 5 },
+      position: { x: 5, y: 25 },
       name: 'controller',
-      stuck: StuckTypes.TopLeft,
+      stuck: StuckTypes.Left,
       minimized: false,
       show: true,
     },
