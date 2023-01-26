@@ -88,12 +88,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      {/* <Text fontFamily="mono" fontSize={"xs"} >
-        <pre style={{ overflowX: "clip", overflowY: "scroll", height: props.data.size.height + 'px' }} >
-          {s.result}
-        </pre>
-      </Text> */}
-      <Box>
+      <Box overflowX="clip" overflowY="scroll" height={props.data.size.height + 'px'}>
         <Text fontSize='4xl' fontWeight="bold" m='3'>PDF Metadata</Text>
         <UnorderedList ml={10}>
           {title && <ListItem> <b>Title</b>: {title} </ListItem>}
