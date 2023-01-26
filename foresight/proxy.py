@@ -9,13 +9,9 @@
 # TODO: checking messages that are created at the same time and only executing the first
 #  one keeping info in received_msg_log for now. These seems to be related to raised=True
 
-
-# TODO: CRITICAL, I am a proxy -- ignore my own messages.
-
 # TODO: add a new validator function that takes a message received on a
 #  channel and makes sure it's structurally valid, i.e., has all the required fields
 #  and no unknown fields
-
 
 # TODO prevent apps updates on fields that were touched?
 from queue import Empty
@@ -38,20 +34,14 @@ from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 
-# from utils import logging_config
-# logger = logging_config.get_console_logger(prod_type)
-
+logging.basicConfig(stream=sys.stdout, format= ' %(asctime)s | %(module)s | %(levelname)s | %(message)s')
 logger = logging.getLogger(__name__)
-c_handler = logging.StreamHandler()
-c_format = logging.Formatter(
-    ' %(asctime)s | %(module)s | %(levelname)s | %(message)s')
-c_handler.setFormatter(c_format)
-logger.addHandler(c_handler)
+
 if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
-    print("DEBUG level logging")
-    logger.setLevel(logging.DEBUG)
+    logger.root.setLevel(logging.DEBUG)
+    logger.debug("DEBUG level logging")
 else:
-    logger.setLevel(logging.INFO)
+    logger.root.setLevel(logging.INFO)
 
 
 class LinkedInfo(BaseModel):
@@ -158,7 +148,6 @@ class SAGEProxy:
     # Handle Create Messages
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
-        print("Create Event", collection)
         if collection == "ROOMS":
             new_room = Room(doc)
             self.rooms[new_room.id] = new_room
@@ -181,7 +170,6 @@ class SAGEProxy:
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
         id = doc["_id"]
-        print("Update Event", collection, id)
         if collection == "ROOMS":
             self.rooms[id].handleUpdate(doc)
         elif collection == "BOARDS":
@@ -189,14 +177,13 @@ class SAGEProxy:
             # TODO: proceed to BOARD update with the updates field passed as param
             if "executeInfo" in updates and updates["executeInfo"]["executeFunc"]:
                 func_name = updates["executeInfo"]["executeFunc"]
-                print(f"executing function {func_name}")
+                logger.debug(f"executing function {func_name}")
                 try:
                     board = self.rooms[room_id].boards[id]
                     _func = getattr(board, func_name)
                     _params = updates["executeInfo"]["params"]
 
-                    print(
-                        f"About to execute board function --{func_name}-- with params --{_params}--")
+                    logger.debug(f"About to execute board function --{func_name}-- with params --{_params}--")
                     _func(**_params)
                 except Exception as e:
                     print(
@@ -205,12 +192,10 @@ class SAGEProxy:
         elif collection == "APPS":
             board_id = doc['data']["boardId"]
             room_id = doc['data']['roomId']
-            print(
-                f"\n\n\n\n in apps and app_id = {id} and updates is: {updates}")
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
 
             if type(sb) is GenericSmartBit:
-                print("not handling generic smartbit update")
+                logger.debug("not handling generic smartbit update")
                 return
 
             # Note that set_data_form_update clear touched field
@@ -226,13 +211,10 @@ class SAGEProxy:
                         _params = getattr(exec_info, "params")
                         # TODO: validate the params are valid
                         # print(f"About to execute function --{func_name}-- with params --{_params}--")
-                        print(
-                            f"About to execute function --{func_name}-- with params --{_params}--")
 
                         _func(**_params)
                     except Exception as e:
-                        print(
-                            f"Exception trying to execute sb function {func_name}. \n\t{e}")
+                        logger.error(f"Exception trying to execute function {func_name} on sb {sb}. \n{e}")
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
@@ -242,7 +224,7 @@ class SAGEProxy:
             try:
                 del self.rooms[id]
             except:
-                print(f"Couldn't delete room_id: {id}")
+                logger.debug(f"Couldn't delete room_id: {id}")
         elif collection == "BOARDS":
             room_id = doc['data']['roomId']
             try:
@@ -256,16 +238,13 @@ class SAGEProxy:
             try:
                 del self.rooms[room_id].boards[board_id].smartbits[id]
             except:
-                print(
-                    f"Couldn't delete app_id: {id}")
+                logger.error(f"Couldn't delete app_id: {id}")
 
     def handle_linked_app(self, app_id, msg):
         if app_id in self.callbacks:
             # handle callback
-            # print("this app is being tracked for updates")
-            # print(f"tracked field is {self.callbacks[app_id].src_field}")
+
             for linked_info in self.callbacks[app_id].values():
-                print(f"Linked Info {linked_info}")
                 if f"state.{linked_info.src_field}" in msg['event']['updates']:
                     # print("Yes, the tracked fields was updated")
                     # TODO 4: make callback function optional. In which case, jsut update dest with src
@@ -280,9 +259,7 @@ class SAGEProxy:
                         dest_app = self.room.boards[board_id].smartbits[dest_id]
                         linked_info.callback(src_val, dest_app, dest_field)
                     except Exception as e:
-                        print(
-                            f"Error happened during callback for linked app {e}")
-                        print(f"app_id: {app_id}")
+                        logger.error(f"Error happened during callback for linked app {app_id}.\n {e}")
 
     def handle_exec_function(self):
         pass
@@ -325,56 +302,17 @@ class SAGEProxy:
 
 
 def clean_up_terminate(signum, frame):
-    print("Cleaning up before terminating")
+    logger.debug("Cleaning up before terminating")
     sage_proxy.clean_up()
 
 
 if __name__ == "__main__":
+
+
+    logger.info(f"Starting proxy")
+    sage_proxy = SAGEProxy(conf, prod_type)
+    sage_proxy.start_threads()
+
     signal.signal(signal.SIGINT, clean_up_terminate)
     signal.signal(signal.SIGTERM, clean_up_terminate)
     signal.signal(signal.SIGHUP, clean_up_terminate)
-
-    # For development purposes only.
-    token = os.getenv("TOKEN")
-    # if prod_type == "production" or prod_type == "backend":
-    #     room_name = os.environ.get("ROOM_NAME")
-    #     room_id = os.environ.get("ROOM_ID")
-    #     # if name specified, try to find room or create it
-    #     if room_name:
-    #         jsondata = requests.get(conf[prod_type]['web_server'] + '/api/rooms',
-    #                                 headers={'Authorization': 'Bearer ' + token}).json()
-    #         rooms = jsondata['data']
-    #         for r in rooms:
-    #             room = r['data']
-    #             if room['name'] == room_name:
-    #                 room_id = r['_id']
-    #                 break
-    #         if not room_id:
-    #             payload = {
-    #                 'name': room_name,
-    #                 'description': 'Room for ' + room_name,
-    #                 'color': 'red', 'ownerId': '-', 'isPrivate': False, 'privatePin': '', 'isListed': True,
-    #             }
-    #             req = requests.post(conf[prod_type]['web_server'] + '/api/rooms',
-    #                                 headers={'Authorization': 'Bearer ' + token}, json=payload)
-    #             res = req.json()
-    #             if res['success']:
-    #                 room_id = res['data'][0]['_id']
-    #             else:
-    #                 print("ROOM_NAME option, failed to create room")
-    #                 sys.exit(1)
-    #     elif not room_id:
-    #         print("ROOM_ID not defined")
-    #         sys.exit(1)
-    # else:
-    #     room_id = \
-    #         requests.get('http://localhost:3333/api/rooms', headers={'Authorization': 'Bearer ' + token}).json()[
-    #             'data'][0][
-    #             '_id']
-    #     if not os.getenv("DROPBOX_TOKEN"):
-    #         print(
-    #             "Dropbox upload token not defined, AI won't be supported in development mode")
-
-    print(f"Starting proxy")
-    sage_proxy = SAGEProxy(conf, prod_type)
-    sage_proxy.start_threads()
