@@ -629,10 +629,7 @@ function createWindow() {
   // wait 1 sec. and try again 4 times
   // Finally, redirect to the main server
   mainWindow.webContents.on('did-fail-load', function () {
-    // Get the current window size
-    const [width, height] = mainWindow.getContentSize();
-    // Show the warning view
-    mainWindow.loadFile('./html/warning.html');
+    mainWindow.loadFile('./html/landing.html');
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
@@ -778,16 +775,22 @@ function createWindow() {
 
   ipcMain.on('serverlist', (event, args) => {
     const request = args.request;
-    console.log('hwat');
     switch (request) {
       case 'add-server':
-        serverStore.addServer(args.server);
+        serverStore.addServer(args.server.name, args.server.url);
+        rebuildMenu();
         break;
       case 'remove-server':
         serverStore.removeServer(args.id);
+        rebuildMenu();
         break;
       case 'get-servers':
-        serverStore.getServerList();
+        const list = serverStore.getServerList();
+        mainWindow.webContents.send('serverlist', { request: 'list', servers: list });
+        break;
+      case 'redirect':
+        const url = args.url;
+        mainWindow.loadURL(url);
         break;
     }
   });
@@ -960,13 +963,18 @@ function myParseInt(str, defaultValue) {
   return defaultValue;
 }
 
+function rebuildMenu() {
+  const menu = buildMenu();
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+}
+
 function buildMenu() {
   const template = [
     {
       label: 'File',
       submenu: [
         {
-          label: 'Return to Home',
+          label: 'Return to Server List',
           click() {
             if (mainWindow) {
               mainWindow.loadFile('./html/landing.html');

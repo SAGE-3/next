@@ -16,6 +16,7 @@ const defaultWindowState = {
   width: 1280,
   height: 720,
 };
+store.get('window-state', defaultWindowState);
 
 module.exports = {
   getWindow: function () {

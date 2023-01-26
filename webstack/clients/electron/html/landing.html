@@ -9,48 +9,159 @@
     <style>
       body {
         overflow: hidden;
-        background-color: #171717;
+        background-color: #212121;
         font-family: Arial, Helvetica, sans-serif;
         color: white;
       }
 
-   
-    </style>
-    <script>
-      function redirectTo(url) { 
-        window.location = url;
-      }
-      function addServer() {
-        window.electron.send('serverlist', {request: 'add-server', server: {name: "hello", url: "http://localhost:4200"}});
+      .container {
+        display: flex;
+        height: 100vh;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
       }
 
-      function removeServer() {
-        window.electron.send('serverlist', {request: 'remove-server', id: '1234'});
+      .column {
+        display: flex;
+        height: 100vh;
+        width: 100%;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      input {
+        width: 100%;
+        border-radius: 8px;
+        border: none;
+        font-size: 18px;
+      }
+      .serveritem {
+        margin: 8px;
+      }
+
+      button {
+        background-color: teal;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 10px;
+        color: white;
+        border: none;
+        padding: 5px 8px 5px 8px;
+      }
+
+      button:hover {
+        cursor: pointer;
+        transition: all 0.2s;
+        transform: scale(1.1);
+      }
+
+      .delete-button {
+        background-color: rgb(196, 96, 96);
+        margin: 0 5px 0 5px;
+      }
+
+      .go-to-button {
+        background-color: rgb(85, 165, 85);
+        margin: 0 5px 0 5px;
+      }
+
+      .submit-button {
+        background-color: teal;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 10px;
+        color: white;
+        border: none;
+        padding: 5px 8px 5px 8px;
+        margin: 16px 0px 8px 0px;
+      }
+      .submit-button:hover {
+        cursor: pointer;
+        transition: all 0.2s;
+        transform: scale(1.1);
+      }
+    </style>
+    <script>
+      function addServerItemToList(server) {
+        var linode = document.createElement('div');
+        linode.className = 'serveritem';
+        var text = document.createTextNode(server.name + ':' + server.url);
+        var gotoButton = document.createElement('BUTTON');
+        gotoButton.className = 'go-to-button';
+        var goToText = document.createTextNode('Go To');
+
+        gotoButton.addEventListener('click', () => redirectTo(server.url));
+        gotoButton.appendChild(goToText);
+        var deleteButton = document.createElement('BUTTON');
+        deleteButton.className = 'delete-button';
+        var deleteText = document.createTextNode('Delete');
+        deleteButton.addEventListener('click', () => removeServer(server.id));
+        deleteButton.appendChild(deleteText);
+        linode.appendChild(text);
+        linode.appendChild(gotoButton);
+        linode.appendChild(deleteButton);
+        document.getElementById('serverlist').appendChild(linode);
+      }
+
+      function redirectTo(url) {
+        window.electron.send('serverlist', { request: 'redirect', url });
+        return false;
+      }
+
+      function removeServer(id) {
+        window.electron.send('serverlist', { request: 'remove-server', id });
+        refreshServerList();
+        return false;
       }
 
       function refreshServerList() {
-        window.electron.send('serverlist', {request: 'get-servers'});
+        window.electron.send('serverlist', { request: 'get-servers' });
+
+        return false;
       }
 
-      window.electron.on('serverlist', (event, args) => {
-        console.log(event, args)
-      })
+      window.electron.on('serverlist', (args) => {
+        const servers = args.servers;
+        document.getElementById('serverlist').innerHTML = '';
+        servers.forEach((server) => addServerItemToList(server));
+      });
+
+      function addServer(form) {
+        // var inputValue = form.inputbox.value;
+        const name = form.servername.value;
+        const url = form.serverurl.value;
+        if ((name == '') | (url == '')) return false;
+        console.log('You typed: ', name, url);
+        window.electron.send('serverlist', { request: 'add-server', server: { name, url } });
+        refreshServerList();
+        return false;
+      }
+      refreshServerList();
     </script>
 
-    <div class="container" >
-    
-      <img src="../images/SAGE3DarkMode.png" alt="" width="540px">
-      <hr>
-      <h1>Landing Page</h1>
-      <div style="display: flex; text-align: center">
-      <button class="sage-button" onclick="addServer()" >Add Server</button>
-      <div class="sage-button" onclick="removeServer()" >Remove Server</button>
-      <div class="sage-button" onclick="refreshServerList()" >Get Servers</button>
-      <ul id="serverlist">
-        
+    <div class="container">
+      <div class="column">
+        <img src="../images/SAGE3DarkMode.png" alt="" width="540px" />
 
-        
-      </ul>
+        <div style="height: 50px; width: 100%"></div>
+
+        <div>
+          <div id="serverlist"></div>
+        </div>
+        <button class="sage-button" onclick="refreshServerList()">Refresh</button>
+
+        <form name="myForm" action="" onsubmit="addServer(this); return false;" width="540px">
+          <label>Name</label>
+          <input type="text" name="servername" value="" />
+          <br />
+          <label>URL</label>
+          <input type="url" name="serverurl" value="" />
+          <input class="submit-button" type="submit" value="Add Server" />
+        </form>
+        <br />
       </div>
+    </div>
   </body>
 </html>

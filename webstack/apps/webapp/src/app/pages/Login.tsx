@@ -42,6 +42,10 @@ export function LoginPage() {
     window.electron.send('load-landing');
   };
 
+  const goToClientDownload = () => {
+    window.open('https://sage3.sagecommons.org/', '_blank');
+  };
+
   const authNavCheck = useCallback(() => {
     if (auth) {
       toHome();
@@ -91,10 +95,16 @@ export function LoginPage() {
         </Text>
       </Box>
 
-      {isElec && (
+      {isElec ? (
         <Box left="2" bottom="2" position="absolute">
           <Button colorScheme="teal" size="sm" onClick={goToLanding}>
             Server List
+          </Button>
+        </Box>
+      ) : (
+        <Box left="2" bottom="2" position="absolute">
+          <Button colorScheme="teal" size="sm" onClick={goToClientDownload}>
+            Download Client
           </Button>
         </Box>
       )}

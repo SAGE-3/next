@@ -37,9 +37,12 @@ const defaultServerList = [
   },
 ];
 
+store.get('servers', defaultServerList);
+
 module.exports = {
   getServerList: function () {
-    return store.get('servers', defaultServerList);
+    const list = store.get('servers', defaultServerList);
+    return list;
   },
   addServer: function (name, url) {
     const currentList = store.get('servers', defaultServerList);
@@ -49,7 +52,7 @@ module.exports = {
   removeServer: function (id) {
     const currentList = store.get('servers', defaultServerList);
     const idx = currentList.findIndex((el) => el.id == id);
-    if (idx) {
+    if (idx > -1) {
       currentList.splice(idx, 1);
     }
     return store.set('servers', currentList);
