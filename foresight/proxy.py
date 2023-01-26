@@ -34,8 +34,18 @@ from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 
-logging.basicConfig(stream=sys.stdout, format= ' %(asctime)s | %(module)s | %(levelname)s | %(message)s')
+
+
+logging.basicConfig(stream=sys.stdout, format= '%(module)s | %(pathname)s | %(filename)s |  %(asctime)s | %(module)s | %(levelname)s | %(message)s')
+
+
+
 logger = logging.getLogger(__name__)
+
+print("logger handlers")
+root = logging.getLogger()
+print(root.handlers)
+
 
 if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
     logger.root.setLevel(logging.DEBUG)
@@ -195,7 +205,9 @@ class SAGEProxy:
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
 
             if type(sb) is GenericSmartBit:
+
                 logger.debug("not handling generic smartbit update")
+                logged.debug(f"\t\tmessage was {doc}")
                 return
 
             # Note that set_data_form_update clear touched field
