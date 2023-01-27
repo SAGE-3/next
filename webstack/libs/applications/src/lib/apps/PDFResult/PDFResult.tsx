@@ -88,12 +88,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      {/* <Text fontFamily="mono" fontSize={"xs"} >
-        <pre style={{ overflowX: "clip", overflowY: "scroll", height: props.data.size.height + 'px' }} >
-          {s.result}
-        </pre>
-      </Text> */}
-      <Box>
+      <Box overflowX="clip" overflowY="scroll" height={props.data.size.height + 'px'}>
         <Text fontSize='4xl' fontWeight="bold" m='3'>PDF Metadata</Text>
         <UnorderedList ml={10}>
           {title && <ListItem> <b>Title</b>: {title} </ListItem>}
@@ -107,17 +102,17 @@ function AppComponent(props: App): JSX.Element {
           {references &&
             <ListItem> <b>References</b>:
               <UnorderedList>
-                {references.map((r) => (<ListItem><Link href={r} isExternal onClick={handleLink}>{r}</Link></ListItem>))}
+                {references.map((r, i) => (<ListItem key={i}><Link href={r} isExternal onClick={handleLink}>{r}</Link></ListItem>))}
               </UnorderedList>
             </ListItem>}
 
           {toc &&
             <ListItem> <b>Table of Content</b>:
               <UnorderedList>
-                {toc.children.map((r: TocItem) => (<ListItem>
+                {toc.children.map((r: TocItem, i) => (<ListItem key={i}>
                   {r.name}
                   {r.children.length > 0 && <UnorderedList>
-                    {r.children.map((c: TocItem) => (<ListItem>{c.name}</ListItem>))}
+                    {r.children.map((c: TocItem, j) => (<ListItem key={j}>{c.name}</ListItem>))}
                   </UnorderedList>}
                 </ListItem>))}
               </UnorderedList>
