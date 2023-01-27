@@ -6,12 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect } from 'react';
 import { Box, Button, useToast, Tooltip } from '@chakra-ui/react';
 
 import { BsPencilFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera } from 'react-icons/fa';
 
-import { useUIStore, useAppStore, isElectron } from '@sage3/frontend';
+import { useUIStore, useAppStore, usePanelStore, isElectron } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
@@ -37,6 +38,17 @@ export function AnnotationsPanel(props: AnnotationsPanelProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const markerColor = useUIStore((state) => state.markerColor);
   const setMarkerColor = useUIStore((state) => state.setMarkerColor);
+
+  // Get the annotation panel
+  const panel = usePanelStore((state) => state.getPanel('annotations'));
+
+  // Track the panel state to enable/disable the pen
+  useEffect(() => {
+    if (panel) {
+      if (panel.show) setWhiteboardMode(true);
+      else setWhiteboardMode(false);
+    }
+  }, [panel, panel?.show]);
 
   const handleColorChange = (color: SAGEColors) => {
     setWhiteboardMode(true);
