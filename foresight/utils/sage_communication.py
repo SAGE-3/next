@@ -65,8 +65,6 @@ class SageCommunication(Borg):
         # TODO temp fix for this: https://github.com/ipython/ipython/issues/13904
         #  I assume it's an issue with the logging library since we're logging from a thread
         #  will need to replace the print with a better solution
-        print("\r")
-
         return r
 
     def create_app(self, data):
