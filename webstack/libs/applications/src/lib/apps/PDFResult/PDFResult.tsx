@@ -102,17 +102,17 @@ function AppComponent(props: App): JSX.Element {
           {references &&
             <ListItem> <b>References</b>:
               <UnorderedList>
-                {references.map((r) => (<ListItem><Link href={r} isExternal onClick={handleLink}>{r}</Link></ListItem>))}
+                {references.map((r, i) => (<ListItem key={i}><Link href={r} isExternal onClick={handleLink}>{r}</Link></ListItem>))}
               </UnorderedList>
             </ListItem>}
 
           {toc &&
             <ListItem> <b>Table of Content</b>:
               <UnorderedList>
-                {toc.children.map((r: TocItem) => (<ListItem>
+                {toc.children.map((r: TocItem, i) => (<ListItem key={i}>
                   {r.name}
                   {r.children.length > 0 && <UnorderedList>
-                    {r.children.map((c: TocItem) => (<ListItem>{c.name}</ListItem>))}
+                    {r.children.map((c: TocItem, j) => (<ListItem key={j}>{c.name}</ListItem>))}
                   </UnorderedList>}
                 </ListItem>))}
               </UnorderedList>
