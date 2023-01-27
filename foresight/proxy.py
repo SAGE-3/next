@@ -35,23 +35,23 @@ from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 
 
-
-logging.basicConfig(filename='proxy.log', format= '%(module)s | %(pathname)s | %(filename)s |  %(asctime)s | %(module)s | %(levelname)s | %(message)s')
-
+debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
+devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
+logging.basicConfig(filename='proxy.log')
+formatter = None
 
 
 logger = logging.getLogger(__name__)
 
-print("logger handlers")
-root = logging.getLogger()
-print(root.handlers)
-
 
 if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
+    formatter = logging.Formatter(debug_fmt)
     logger.root.setLevel(logging.DEBUG)
-    logger.debug("DEBUG level logging")
 else:
+    formatter = logging.Formatter(devel_fmt)
     logger.root.setLevel(logging.INFO)
+# print(logger.handlers)
+logger.root.handlers[0].setFormatter(formatter)
 
 
 class LinkedInfo(BaseModel):
