@@ -529,20 +529,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           ) : null}
 
           {props.access ? (
-            <Tooltip hasArrow label="Clear All" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleClear}
-                aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-              />
-            </Tooltip>
-          ) : null}
-
-          {props.access ? (
             <Tooltip hasArrow label="Stop" placement="right-start">
               <IconButton
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
@@ -552,6 +538,20 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
                 icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+              />
+            </Tooltip>
+          ) : null}
+
+          {props.access ? (
+            <Tooltip hasArrow label="Clear All" placement="right-start">
+              <IconButton
+                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
+                onClick={handleClear}
+                aria-label={''}
+                disabled={user?._id !== s.kernel ? false : true}
+                bg={useColorModeValue('#FFFFFF', '#000000')}
+                variant="ghost"
+                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
               />
             </Tooltip>
           ) : null}
