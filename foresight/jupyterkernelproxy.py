@@ -41,12 +41,12 @@ class TestiongJupyterClient(WebSocketBaseClient):
         super().__init__(address, headers=headers)
 
     def handshake_ok(self):
-        logger.debug("Testing: done opening the connection to the Jupyter Kernel client")
+        print("Testing: done opening the connection to the Jupyter Kernel client")
 
     def received_message(self, msg):
         # check if the message
         msg = json.loads(msg.data.decode("utf-8"))
-        logger.debug(f"Testing: received msg {msg}")
+        print(f"Testing: received msg {msg}")
 
 class JupyterKernelProxy:
     class JupyterClient(WebSocketBaseClient):
@@ -61,7 +61,7 @@ class JupyterKernelProxy:
 
         def received_message(self, msg):
             # check if the message
-            #print("processing a message")
+            print(f"processing a message {msg}")
             msg = json.loads(msg.data.decode("utf-8"))
             msg_id_uuid = str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0]))
             result = {}
@@ -109,7 +109,8 @@ class JupyterKernelProxy:
         self.results = {}
 
     def add_client(self, kernel_id):
-        if kernel_id not in self.connections:
+        # do we need the test below or are we testing for it aready in the execute and interrupt?
+        if kernel_id not in self.connections or self.connections[kernel_id].stream is None:
             socket_url = f"{self.base_ws}/api/kernels/{kernel_id}/channels"
             session_id = uuid.uuid4().hex
             socket_url = f"{socket_url}?session_id={session_id}"
@@ -125,8 +126,9 @@ class JupyterKernelProxy:
         kernel_id = command_info['kernel']
         callback_fn = command_info["call_fn"]
 
-        if kernel_id not in self.connections:
+        if kernel_id not in self.connections or self.connections[kernel_id].stream is None:
             self.add_client(kernel_id)
+
         try:
             self.connections[kernel_id].pending_reponses[user_passed_uuid] = None
             self.callback_info[user_passed_uuid] = callback_fn
@@ -139,31 +141,18 @@ class JupyterKernelProxy:
             #  send error back to the user
             del self.callback_info[user_passed_uuid]
 
-    def interrup(self, command_info):
+
+    def interrupt(self, command_info):
         """
         Send an interrupt to the kernel defined in the command info
-
         """
         kernel_id = command_info['kernel']
-        callback_fn = command_info["call_fn"]
-        if kernel_id not in self.connections:
-            # @Michael, is this the right thing to do here?
-            # If we're interrupting, does that mean the kernel_id
-            # should already be in the connections?
-            self.add_client(kernel_id)
-        else:
-            try:
-                self.connections[kernel_id].pending_reponses[user_passed_uuid] = None
-                self.callback_info[user_passed_uuid] = callback_fn
-                msg = format_execute_request_msg(user_passed_uuid, "", "interrupt_mode")
-                self.connections[kernel_id].send(json.dumps(msg), binary=False)
-            except Exception as e:
-                # something happen
-                logger.error(f"Error occurred duirng execution of command, {e}")
-                del self.results[user_passed_uuid]
-                # TODO something happened and code couldn't be run
-                #  send error back to the user
-                del self.callback_info[user_passed_uuid]
+        if kernel_id in self.connections:
+            j_url = f"{conf[prod_type]['jupyter_server']}/api/kernels/{kernel_id}/interrupt"
+            headers_dict = dict(self.headers)
+            response = requests.post(j_url, headers=headers_dict)
+            if response.status_code != 204:
+                logger.error("Couldn't interrupt running job. code was")
 
 
 
