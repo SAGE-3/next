@@ -25,3 +25,6 @@ webstack/package-lock.json
 
 # AI
 *.nlp
+
+# logs
+*.log

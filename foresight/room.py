@@ -27,6 +27,9 @@ class Room():
         self.boards = {}
 
     def handleUpdate(self, doc):
+        # Todo: why not just (test)
+        #  self.__dict__.update(doc["data"])
+
         data = doc["data"]
         self.name = data["name"]
         self.description = data["description"]

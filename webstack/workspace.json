@@ -169,7 +169,7 @@
           "options": {
             "outputPath": "dist/apps/webapp",
             "index": "apps/webapp/src/index.html",
-            "baseHref": "/",
+            "baseHref": "",
             "main": "apps/webapp/src/main.tsx",
             "polyfills": "apps/webapp/src/polyfills.ts",
             "tsConfig": "apps/webapp/tsconfig.app.json",

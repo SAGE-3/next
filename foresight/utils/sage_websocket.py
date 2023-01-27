@@ -12,11 +12,12 @@ import threading
 import json
 import uuid
 import time
-from utils import _logging_config
 import sys
 from multiprocessing import Queue
 
-# logger = logging_config.get_console_logger()
+import logging
+logger = logging.getLogger(__name__)
+
 
 from config import config as conf, prod_type
 
@@ -54,7 +55,7 @@ class SageWebsocket:
                 msg['event']['type'], msg['event']['doc']['_updatedAt'])
 
     def on_error(self, ws, error):
-        print(f"error in webserver websocket connection {error}")
+        logger.error(f"error in webserver websocket connection {error}")
 
     # Check if the ws has connected
     # attempts (number of times to attempt) 1 attempt per second default 10
@@ -63,11 +64,10 @@ class SageWebsocket:
             return True
         count = 0
         while self.connected == False:
-            print('Websocket still not connected')
+            logger.info('Websocket still not connected')
             count = count + 1
             if count > attempts:
-                print(
-                    'Could not establish a connection to the server after {attempts} attempts')
+                logger.error('Could not establish a connection to the server after {attempts} attempts')
                 return False
             time.sleep(1)
         return True
@@ -106,5 +106,5 @@ class SageWebsocket:
                 self.wst.join()
                 break
         else:
-            print("Couldn't cleanly terminate the program")
+            logger.error("Couldn't cleanly terminate the websocket")
             sys.exit(1)

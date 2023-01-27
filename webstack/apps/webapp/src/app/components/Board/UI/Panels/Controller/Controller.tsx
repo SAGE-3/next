@@ -20,10 +20,6 @@ export interface ControllerProps {
 }
 
 export function Controller(props: ControllerProps) {
-  //  Board Store
-  const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el._id === props.boardId);
-
   // Rooms Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
@@ -37,7 +33,6 @@ export function Controller(props: ControllerProps) {
   const assets = getPanel('assets');
   const navigation = getPanel('navigation');
   const users = getPanel('users');
-  const controller = getPanel('controller');
   const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
 
   // Redirect the user back to the homepage when clicking the arrow button
@@ -62,6 +57,7 @@ export function Controller(props: ControllerProps) {
   // Show the various panels
   const handleShowPanel = (panelToShow: PanelUI | undefined) => {
     if (!panelToShow) return;
+    const controller = panels.find((el) => el.name === 'controller');
     panels
       .filter((el) => el.name !== 'controller')
       .forEach((panel) => {
@@ -75,7 +71,6 @@ export function Controller(props: ControllerProps) {
         } else {
           if (panel.stuck === StuckTypes.Controller) updatePanel(panel.name, { show: false });
         }
-        const controller = panels.find((el) => el.name === 'controller');
         if (controller) {
           const position = { x: controller?.position.x, y: controller?.position.y + 100 };
           updatePanel(panel.name, { position });
@@ -84,13 +79,8 @@ export function Controller(props: ControllerProps) {
   };
 
   return (
-    <Panel
-      title={(room?.data.name ? room.data.name : '') + ': ' + (board?.data.name ? board.data.name : '')}
-      name="controller"
-      width={400}
-      showClose={false}
-      titleDblClick={handleCopyId}
-      zIndex={100}
+    <Panel name="controller" title={'Main Menu'} width={400}
+      showClose={false} titleDblClick={handleCopyId} zIndex={100}
     >
       <HStack w="100%">
         <IconButtonPanel icon={<MdArrowBack />} description={`Back to ${room?.data.name}`} isActive={false} onClick={handleHomeClick} />
