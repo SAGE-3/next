@@ -72,7 +72,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
         <IconButton
           borderRadius="md"
           h="auto"
-          p={1}
+          p={0} m={0}
           fontSize="4xl"
           justifyContent="flex-center"
           aria-label={props.description}
@@ -304,7 +304,7 @@ export function Panel(props: PanelProps) {
           display="flex"
           transition="all .2s "
           bg={panelBackground}
-          p="2"
+          pt={1} pr={2} pb={2} pl={1}
           borderRadius={'md'}
           ref={ref}
           width="100%"
@@ -319,13 +319,13 @@ export function Panel(props: PanelProps) {
             backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
             backgroundPosition="0 0"
             backgroundSize="8px 8px"
-            mr="3"
+            mr="2"
             cursor="move"
             className="dragHandle"
           />
 
           <Box bg={panelBackground} cursor="auto" maxWidth={w - 45 + 'px'}>
-            <Box mb={2} display="flex" justifyContent="space-between" flexWrap={'nowrap'} width="100%">
+            <Box mb={1} display="flex" justifyContent="space-between" flexWrap={'nowrap'} width="100%">
               <Box flexGrow={1} maxWidth={w - 80 + 'px'} className="dragHandle">
                 <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
                   <Text
@@ -333,7 +333,6 @@ export function Panel(props: PanelProps) {
                     overflow={'hidden'}
                     textOverflow={'ellipsis'}
                     textAlign="left"
-                    mr="1"
                     color={textColor}
                     fontSize={bigFont}
                     fontWeight="bold"
