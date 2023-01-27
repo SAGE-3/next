@@ -19,6 +19,7 @@ import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
+import { state as PlotlyViewerState, name as PlotlyViewerName } from './apps/PlotlyViewer';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as SageCellState, name as SageCellName } from './apps/SageCell';
 import { state as SeerState, name as SeerName } from './apps/Seer';
@@ -51,6 +52,7 @@ export type AppState =
   | NotepadState
   | PDFResultState
   | PDFViewerState
+  | PlotlyViewerState
   | RTCChatState
   | SageCellState
   | SeerState
@@ -62,4 +64,4 @@ export type AppState =
   | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
+export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PlotlyViewerName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;

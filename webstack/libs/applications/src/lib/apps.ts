@@ -19,6 +19,7 @@ import { name as LinkerName } from './apps/Linker';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
+import { name as PlotlyViewerName } from './apps/PlotlyViewer';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
@@ -28,7 +29,6 @@ import { name as VegaLiteName } from './apps/VegaLite';
 import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
-
 
 import AIPane from './apps/AIPane/AIPane';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
@@ -49,6 +49,7 @@ import Linker from './apps/Linker/Linker';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
+import PlotlyViewer from './apps/PlotlyViewer/PlotlyViewer';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
@@ -59,7 +60,6 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import React from 'react';
-
 
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
@@ -81,15 +81,19 @@ export const Applications = {
   [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent },
   [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent },
+  [PlotlyViewerName]: { AppComponent: React.memo(PlotlyViewer.AppComponent), ToolbarComponent: PlotlyViewer.ToolbarComponent },
   [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent },
   [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent },
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent },
-  [TwilioScreenshareName]: { AppComponent: React.memo(TwilioScreenshare.AppComponent), ToolbarComponent: TwilioScreenshare.ToolbarComponent },
+  [TwilioScreenshareName]: {
+    AppComponent: React.memo(TwilioScreenshare.AppComponent),
+    ToolbarComponent: TwilioScreenshare.ToolbarComponent,
+  },
   [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent },
   [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent },
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';

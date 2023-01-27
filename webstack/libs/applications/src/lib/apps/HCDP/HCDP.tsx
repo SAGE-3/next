@@ -41,23 +41,23 @@ export function getStaticAssetUrl(filename: string): string {
 const maxZoom = 18;
 const minZoom = 1;
 
-const stationPositions = [
-  { lat: 20.8415, lon: -156.2948, id: '017HI' },
-  { lat: 20.7067, lon: -156.3554, id: '016HI' },
-  { lat: 20.7579, lon: -156.32, id: '001HI' },
-  { lat: 20.7598, lon: -156.2482, id: '002HI' },
-  { lat: 20.7382, lon: -156.2458, id: '013HI' },
-  { lat: 20.7104, lon: -156.2567, id: '003HI' },
-  { lat: 19.6974, lon: -155.0954, id: '005HI' },
-  { lat: 19.964, lon: -155.25, id: '006HI' },
-  { lat: 19.932, lon: -155.291, id: '007HI' },
-  { lat: 19.748, lon: -155.996, id: '008HI' },
-  { lat: 19.803, lon: -155.851, id: '009HI' },
-  { lat: 19.73, lon: -155.87, id: '010HI' },
-  { lat: 21.333, lon: -157.8025, id: '011HI' },
-  { lat: 21.3391, lon: -157.8369, id: '012HI' },
-  { lat: 22.2026, lon: -159.5188, id: '014HI' },
-  { lat: 22.1975, lon: -159.421, id: '015HI' },
+const stationData = [
+  { lat: 20.8415, lon: -156.2948, name: '017HI' },
+  { lat: 20.7067, lon: -156.3554, name: '016HI' },
+  { lat: 20.7579, lon: -156.32, name: '001HI' },
+  { lat: 20.7598, lon: -156.2482, name: '002HI' },
+  { lat: 20.7382, lon: -156.2458, name: '013HI' },
+  { lat: 20.7104, lon: -156.2567, name: '003HI' },
+  { lat: 19.6974, lon: -155.0954, name: '005HI' },
+  { lat: 19.964, lon: -155.25, name: '006HI' },
+  { lat: 19.932, lon: -155.291, name: '007HI' },
+  { lat: 19.748, lon: -155.996, name: '008HI' },
+  { lat: 19.803, lon: -155.851, name: '009HI' },
+  { lat: 19.73, lon: -155.87, name: '010HI' },
+  { lat: 21.333, lon: -157.8025, name: '011HI' },
+  { lat: 21.3391, lon: -157.8369, name: '012HI' },
+  { lat: 22.2026, lon: -159.5188, name: '014HI' },
+  { lat: 22.1975, lon: -159.421, name: '015HI' },
 ];
 
 // Leaflet App
@@ -282,56 +282,88 @@ function AppComponent(props: App): JSX.Element {
   useHotkeys('=', incZoom, { dependencies: [selected, s.zoom] });
   useHotkeys('-', decZoom, { dependencies: [selected, s.zoom] });
 
-  // useEffect(() => {
-  //   fetch('https://www2.hawaii.edu/~thomas/Browser_Home/NWS_HI_Mes_Pages.html', {
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       Accept: 'application/json',
-  //     },
-  //     mode: 'no-cors',
-  //   })
-  //     .then((response) => console.log(response))
-  //     .then((data) => console.log(data));
-  // }, []);
-
-  const createCharts = () => {
-    const createAppAtPos = (whereToCreateApp: string): void => {
+  const createCharts = (data: { lat: number; lon: number; name: string }) => {
+    const createAppAtPos = (whereToCreateApp: string, traces: any[]): void => {
       let appPos = { x: 0, y: 0, z: 0 };
-      switch (whereToCreateApp) {
-        case 'top':
-          appPos = { x: props.data.position.x, y: props.data.position.y - props.data.size.height, z: 0 };
-          break;
-        case 'right':
-          appPos = { x: props.data.position.x + props.data.size.height, y: props.data.position.y, z: 0 };
-          break;
-        case 'left':
-          appPos = { x: props.data.position.x - props.data.size.height, y: props.data.position.y, z: 0 };
-          break;
-        case 'bottom':
-          appPos = { x: props.data.position.x, y: props.data.position.y + props.data.size.height, z: 0 };
-          break;
-        default:
-          appPos = { x: 0, y: 0, z: 0 };
+      // switch (whereToCreateApp) {
+      //   case 'top':
+      //     appPos = { x: props.data.position.x, y: props.data.position.y - props.data.size.height, z: 0 };
+      //     break;
+      //   case 'right':
+      //     appPos = { x: props.data.position.x + props.data.size.height, y: props.data.position.y, z: 0 };
+      //     break;
+      //   case 'left':
+      //     appPos = { x: props.data.position.x - props.data.size.height, y: props.data.position.y, z: 0 };
+      //     break;
+      //   case 'bottom':
+      //     appPos = { x: props.data.position.x, y: props.data.position.y + props.data.size.height, z: 0 };
+      //     break;
+      //   default:
+      //     appPos = { x: 0, y: 0, z: 0 };
+      // }
+      let newLineMultiplier = 0;
+
+      for (let i = 0; i < traces.length; i++) {
+        if (i % 4 == 0) {
+          newLineMultiplier++;
+        }
+        appPos = {
+          x: props.data.position.x + props.data.size.width * (i % 4),
+          y: props.data.position.y + props.data.size.height * newLineMultiplier,
+          z: 0,
+        };
+        createApp({
+          title: '',
+          roomId: props.data.roomId!,
+          boardId: props.data.boardId!,
+          position: appPos,
+          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'PlotlyViewer',
+          state: {
+            traces: traces[i],
+            layout: { width: props.data.size.width, height: props.data.size.height, title: 'A HCDP ' + i },
+          },
+          raised: true,
+        });
       }
-      createApp({
-        title: '',
-        roomId: props.data.roomId!,
-        boardId: props.data.boardId!,
-        position: appPos,
-        size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'VegaLiteViewer',
-        state: {
-          spec: '{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "description": "A simple bar chart with embedded data.","data": {"values": [{"a": "A", "b": 28}, {"a": "B", "b": 55}, {"a": "C", "b": 43},{"a": "D", "b": 91}, {"a": "E", "b": 81}, {"a": "F", "b": 53}, {"a": "G", "b": 19}, {"a": "H", "b": 87}, {"a": "I", "b": 52}]},"mark": "bar","encoding": {"x": {"field": "a", "type": "nominal", "axis": {"labelAngle": 0}},"y": {"field": "b", "type": "quantitative"}}}',
-        },
-        raised: true,
-      });
     };
 
-    createAppAtPos('top');
-    createAppAtPos('left');
-    createAppAtPos('right');
-    createAppAtPos('bottom');
+    // createAppAtPos('top');
+    // createAppAtPos('left');
+    let climateData: any[] = [];
+
+    fetch(
+      'https://api.mesowest.net/v2/stations/timeseries?STID=017HI&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local'
+    ).then((response) => {
+      response.json().then((station) => {
+        climateData = station['STATION'][0]['OBSERVATIONS'];
+        console.log(climateData);
+        const climateProps = Object.keys(climateData);
+        let traces = [];
+        // for (let i = 0; i < climateProps.length; i++) {
+        for (let i = 0; i < climateProps.length; i++) {
+          // @ts-ignore
+          if (climateProps[i] !== 'date_time' && climateProps[i] !== 'wind_cardinal_direction_set_1d') {
+            traces.push([
+              {
+                // @ts-ignore
+                x: climateData['date_time'],
+                // @ts-ignore
+                y: climateData[climateProps[i]],
+                type: 'scatter',
+                mode: 'lines+markers',
+              },
+            ]);
+          }
+        }
+        console.log(traces);
+        createAppAtPos('right', traces);
+
+        // createAppAtPos('right', traces);
+      });
+    });
+    // createAppAtPos('bottom');
   };
 
   return (
@@ -354,19 +386,19 @@ function AppComponent(props: App): JSX.Element {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {stationPositions.map((pos, index) => {
+            {stationData.map((data, index) => {
               return (
                 <Marker
-                  eventHandlers={{
-                    click: (e) => {
-                      createCharts();
-                    },
-                  }}
+                  // eventHandlers={{
+                  //   click: (e) => {
+                  //     createCharts(data);
+                  //   },
+                  // }}
                   key={index}
-                  position={[pos.lat, pos.lon]}
+                  position={[data.lat, data.lon]}
                 >
                   <Popup>
-                    A pretty CSS3 popup. <br /> Easily customizable.
+                    <Button onClick={() => createCharts(data)}>All Data</Button>
                   </Popup>
                 </Marker>
               );
