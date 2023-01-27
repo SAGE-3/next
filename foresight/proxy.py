@@ -207,7 +207,7 @@ class SAGEProxy:
             if type(sb) is GenericSmartBit:
 
                 logger.debug("not handling generic smartbit update")
-                logged.debug(f"\t\tmessage was {doc}")
+                logger.debug(f"\t\tmessage was {doc}")
                 return
 
             # Note that set_data_form_update clear touched field

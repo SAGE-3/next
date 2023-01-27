@@ -21,12 +21,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 # TODO : CONVERT JupyterKernelProxy INTO singleton (use BORG)
-def format_execute_request_msg(exec_uuid, code):
+def format_execute_request_msg(exec_uuid, code, msg_type='execute_request'):
     content = {'code': code, 'silent': False}
     hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
            'username': 'tests',
            'data': datetime.datetime.now().isoformat(),
-           'msg_type': 'execute_request',
+           'msg_type': msg_type,
            'version': '5.0'}
     msg = {'header': hdr,
            'parent_header': hdr,
@@ -138,6 +138,32 @@ class JupyterKernelProxy:
             # TODO something happened and code couldn't be run
             #  send error back to the user
             del self.callback_info[user_passed_uuid]
+
+    def interrup(self, command_info):
+        """
+        Send an interrupt to the kernel defined in the command info
+
+        """
+        kernel_id = command_info['kernel']
+        callback_fn = command_info["call_fn"]
+        if kernel_id not in self.connections:
+            # @Michael, is this the right thing to do here?
+            # If we're interrupting, does that mean the kernel_id
+            # should already be in the connections?
+            self.add_client(kernel_id)
+        else:
+            try:
+                self.connections[kernel_id].pending_reponses[user_passed_uuid] = None
+                self.callback_info[user_passed_uuid] = callback_fn
+                msg = format_execute_request_msg(user_passed_uuid, "", "interrupt_mode")
+                self.connections[kernel_id].send(json.dumps(msg), binary=False)
+            except Exception as e:
+                # something happen
+                logger.error(f"Error occurred duirng execution of command, {e}")
+                del self.results[user_passed_uuid]
+                # TODO something happened and code couldn't be run
+                #  send error back to the user
+                del self.callback_info[user_passed_uuid]
 
 
 
