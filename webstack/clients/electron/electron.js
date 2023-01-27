@@ -43,11 +43,13 @@ const updater = require('./src/updater');
 var version = require('./package.json').version;
 // First run
 var firstRun = true;
+// Prompt  tools
+const prompt = require('electron-prompt');
 
 // Store
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
-const boardserverStore = require('./src/boardserverstore');
+const bookmarkStore = require('./src/bookmarkStore');
 
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
 
@@ -135,7 +137,7 @@ if (commander.disableHardware) {
 if (commander.clear) {
   console.log('Preferences> clear all');
   windowStore.clear();
-  boardserverStore.clear();
+  bookmarkStore.clear();
 }
 
 if (process.platform === 'win32') {
@@ -575,6 +577,19 @@ function createWindow() {
     });
   });
 
+  ipcMain.on('store-interface', (event, args) => {
+    const request = args.request;
+    switch (request) {
+      case 'redirect':
+        const url = args.url;
+        mainWindow.loadURL(url);
+        break;
+      case 'get-list':
+        updateLandingPage();
+        break;
+    }
+  });
+
   // Mute the audio (just in case)
   // var playAudio = commander.audio || commander.display === 0;
   // mainWindow.webContents.audioMuted = !playAudio;
@@ -773,38 +788,6 @@ function createWindow() {
     mainWindow.loadFile('./html/landing.html');
   });
 
-  ipcMain.on('store-interface', (event, args) => {
-    const request = args.request;
-    switch (request) {
-      case 'add-server':
-        boardserverStore.addServer(args.server.name, args.server.url);
-        rebuildMenu();
-        break;
-      case 'remove-server':
-        boardserverStore.removeServer(args.id);
-        rebuildMenu();
-        break;
-      case 'add-board':
-        boardserverStore.addBoard(args.board.name, args.board.url);
-        rebuildMenu();
-        break;
-      case 'remove-board':
-        boardserverStore.removeBoard(args.id);
-        rebuildMenu();
-        break;
-      case 'get-lists':
-        const servers = boardserverStore.getServerList();
-        const boards = boardserverStore.getBoardList();
-        mainWindow.webContents.send('store-interface', { response: 'servers', servers });
-        mainWindow.webContents.send('store-interface', { response: 'boards', boards });
-        break;
-      case 'redirect':
-        const url = args.url;
-        mainWindow.loadURL(url);
-        break;
-    }
-  });
-
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     TakeScreenshot();
@@ -978,44 +961,81 @@ function rebuildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 }
 
+function updateLandingPage() {
+  const bookmarks = bookmarkStore.getBookmarks();
+  mainWindow.webContents.send('store-interface', { response: 'bookmarks-list', bookmarks });
+}
+
 function buildMenu() {
+  const clearBookmarks = {
+    label: 'Restore Original Bookmarks',
+    click: () => {
+      bookmarkStore.clear();
+      rebuildMenu();
+      updateLandingPage();
+    },
+  };
+
+  const addBookmark = {
+    label: 'Bookmark This Page',
+    click: () => {
+      const url = mainWindow.webContents.getURL();
+      const parsedURL = new URL(url);
+      prompt({
+        title: 'Enter Bookmark Name',
+        label: 'Name:',
+        value: parsedURL.host,
+        inputAttrs: {
+          type: 'text',
+        },
+        type: 'input',
+      })
+        .then((r) => {
+          if (r === '' || r === null) {
+            console.log('user cancelled');
+          } else {
+            const name = r;
+            bookmarkStore.addBookmark(name, parsedURL);
+            rebuildMenu();
+            updateLandingPage();
+          }
+        })
+        .catch(console.error);
+    },
+  };
+  const bookmarks = bookmarkStore.getBookmarks().map((el) => {
+    return {
+      label: `${el.name}`,
+      click() {
+        if (mainWindow) {
+          mainWindow.loadURL(el.url);
+        }
+      },
+    };
+  });
+
+  const removeBookmarks = bookmarkStore.getBookmarks().map((el) => {
+    return {
+      label: `${el.name}`,
+      click() {
+        bookmarkStore.removeBookmark(el.id);
+        rebuildMenu();
+        const bookmarks = bookmarkStore.getBookmarks();
+        updateLandingPage();
+      },
+    };
+  });
   const template = [
     {
       label: 'File',
       submenu: [
         {
-          label: 'Return to Server List',
+          label: 'Return Home',
           click() {
             if (mainWindow) {
               mainWindow.loadFile('./html/landing.html');
             }
           },
-        },
-        {
-          label: 'Go to server...',
-          submenu: boardserverStore.getServerList().map((el) => {
-            return {
-              label: el.name,
-              click() {
-                if (mainWindow) {
-                  mainWindow.loadURL(el.url);
-                }
-              },
-            };
-          }),
-        },
-        {
-          label: 'Go to board...',
-          submenu: boardserverStore.getBoardList().map((el) => {
-            return {
-              label: el.name,
-              click() {
-                if (mainWindow) {
-                  mainWindow.loadURL(el.url);
-                }
-              },
-            };
-          }),
         },
         {
           type: 'separator',
@@ -1194,6 +1214,25 @@ function buildMenu() {
             }
           },
         },
+      ],
+    },
+    {
+      label: 'Bookmarks',
+      role: 'bookmarks',
+      submenu: [
+        ...bookmarks,
+        {
+          type: 'separator',
+        },
+        addBookmark,
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Remove Bookmark',
+          submenu: removeBookmarks,
+        },
+        clearBookmarks,
       ],
     },
     {

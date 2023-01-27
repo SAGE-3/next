@@ -1,403 +1,239 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>SAGE3</title>
-  </head>
 
-  <body>
-    <style>
-      body {
-        overflow: hidden;
-        background-color: #212121;
-        font-family: Helvetica, Arial, sans-serif;
-        color: white;
+<head>
+  <meta charset="utf-8" />
+  <title>SAGE3</title>
+</head>
+
+<body>
+  <style>
+    body {
+      overflow: hidden;
+      background-color: #212121;
+      font-family: Helvetica, Arial, sans-serif;
+      color: white;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .column {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .submit-button {
+      border: none;
+      border-radius: .325rem;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    input[type=url],
+    select {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      display: inline-block;
+      border: none;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 18px;
+      width: 500px;
+    }
+
+    input[type=url],
+    textarea {
+      background: white;
+    }
+
+    input[type=url],
+    textarea:focus {
+      outline-color: #4ba798;
+    }
+
+    input[type=submit] {
+      width: 100%;
+      background-color: #4ba798;
+      color: white;
+      padding: 8px;
+      font-size: 18px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transform: scale(1);
+      transition: all ease-in-out 0.15s;
+      font-weight: bold;
+      width: 500px;
+    }
+
+    input[type=submit]:hover {
+      transform: scale(1.05);
+      transition: all ease-in-out 0.15s;
+      box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.292);
+    }
+
+    .dropbtn {
+      background-color: rgb(125, 120, 180);
+      color: white;
+      padding: 8px;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      width: 500px;
+      font-weight: bold;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #e8e8e8;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+      z-index: 1;
+      width: 100%;
+    }
+
+    .dropdown-content a {
+      color: black;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #d9d8d8
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
+    .dropdown:hover .dropbtn {
+      border-radius: 4px 4px 0px 0px;
+
+    }
+  </style>
+  <script>
+
+    function ping(ip, callback) {
+      console.log(ip)
+      if (!this.inUse) {
+        this.status = 'unchecked';
+        this.inUse = true;
+        this.callback = callback;
+        this.ip = ip;
+        var _that = this;
+        this.img = new Image();
+        this.img.onload = function () {
+          _that.inUse = false;
+          _that.callback('responded');
+
+        };
+        this.img.onerror = function (e) {
+          if (_that.inUse) {
+            _that.inUse = false;
+            console.log(e)
+            _that.callback('responded', e);
+          }
+
+        };
+        this.start = new Date().getTime();
+        this.img.src = ip;
+        this.timer = setTimeout(function () {
+          if (_that.inUse) {
+            _that.inUse = false;
+            _that.callback('timeout');
+          }
+        }, 5000);
       }
+    }
 
-      .container {
-        display: flex;
-        height: 100vh;
-        width: 100%;
-        justify-content: center;
-        align-items: center;
+    function rebuildBookmarksList(bookmarks) {
+      const list = document.getElementById('bookmarks-content');
+      list.innerHTML = '';
+      bookmarks.forEach((bookmark) => addServerItemToTable(bookmark));
+    }
+
+    function addServerItemToTable(bookmark) {
+      const list = document.getElementById('bookmarks-content');
+      const a_bookmark = document.createElement('a');
+      a_bookmark.href = bookmark.url;
+      const a_text = document.createTextNode(bookmark.name);
+      new ping(bookmark.url, (s) => {
+       if (s==='responded') {
+        a_bookmark.style.color="rgb(96, 204, 141)"
+       } else if (s ==='timeout') {
+        a_bookmark.style.color="rgb(234, 99, 67)"
+       }
+      })
+      a_bookmark.appendChild(a_text);
+      list.appendChild(a_bookmark);
+    }
+
+    function redirectTo(form) {
+      const url = form.serverurl.value;
+      window.electron.send('store-interface', { request: 'redirect', url });
+      return false;
+    }
+
+    window.electron.on('store-interface', (args) => {
+      const response = args.response;
+      if (response == 'bookmarks-list') {
+        const bookmarks = args.bookmarks;
+        rebuildBookmarksList(bookmarks);
       }
+    });
+    window.electron.send('store-interface', { request: 'get-list' });
 
-      .column {
-        display: flex;
-        height: 100vh;
-        width: 100%;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-      }
 
-      input {
-        width: 100%;
-        border-radius: 8px;
-        border: none;
-        font-size: 18px;
-      }
-      .serveritem {
-        margin: 8px;
-      }
+  </script>
 
-      .delete-button {
-        color: rgb(196, 99, 99);
-        font-size: 18px;
-        font-weight: bold;
-        background-color: transparent;
-        border: none;
-        margin: 0 5px 0 5px;
-        cursor: pointer;
-      }
-      .delete-button:hover {
-        cursor: pointer;
-        transition: all 0.2s;
-        color: rgb(223, 131, 131);
-        transform: scale(1.3);
-      }
-      .go-to-button {
-        background-color: rgb(85, 165, 85);
-        margin: 0 5px 0 5px;
-      }
+  <div class="container">
+    <div class="column">
+      <img src="../images/SAGE3DarkMode.png" alt="" width="500px" />
 
-      .submit-button {
-        background-color: #13a89e;
-        font-size: 14px;
-        font-weight: bold;
-        border-radius: 10px;
-        color: white;
-        border: none;
-        padding: 5px 8px 5px 8px;
-        margin: 16px 0px 8px 0px;
-        width: 150px;
-      }
-      .submit-button:hover {
-        cursor: pointer;
-        transition: all 0.2s;
-        transform: scale(1.1);
-        box-shadow: 5px 3px 5px #00000030;
-      }
-      .close-button {
-        background-color: #13a89e;
-        font-size: 14px;
-        font-weight: bold;
-        border-radius: 10px;
-        color: white;
-        border: none;
-        padding: 5px 8px 5px 8px;
-        margin: 16px 0px 8px 0px;
-        width: 150px;
-        background-color: rgb(196, 99, 99);
-        margin-right: 8px;
-      }
+      <div style="height: 50px; width: 100%"></div>
 
-      .close-button:hover {
-        cursor: pointer;
-        transition: all 0.2s;
-        transform: scale(1.1);
-        box-shadow: 5px 3px 5px #00000030;
-      }
-      table {
-        font-family: arial, sans-serif;
-        border-collapse: collapse;
-        width: 900px;
-      }
-
-      td,
-      th {
-        text-align: left;
-        padding: 8px;
-        font-size: 18px;
-
-        width: 300px;
-      }
-
-      tr:hover {
-        cursor: pointer;
-        transition: all 0.2s;
-        transform: scale(1.01);
-      }
-
-      tr:nth-child(even) {
-        background-color: #595858;
-      }
-      tr:nth-child(odd) {
-        background-color: #2f2f2f;
-      }
-      .modal {
-        height: 100vh;
-        width: 100vw;
-        position: absolute;
-        background: rgba(0, 0, 0, 0.507);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition: all ease-in-out 0.25s;
-      }
-
-      .modalcard {
-        width: 500px;
-        height: 200px;
-        background: #4d4d4d;
-        border-radius: 0.375rem;
-        padding: 16px;
-        box-shadow: 10px 5px 5px #00000030;
-        position: absolute;
-      }
-
-      #addBoardModal {
-        visibility: hidden;
-        opacity: 0;
-      }
-
-      #addServerModal {
-        visibility: hidden;
-        opacity: 0;
-      }
-
-      .addButton {
-        border: none;
-        background: transparent;
-        border-radius: 100%;
-        margin-left: 3px;
-        color: white;
-        font-size: 36px;
-        transform: translateY(4px);
-        font-weight: bold;
-        color: #13a89e;
-      }
-
-      .addButton:hover {
-        cursor: pointer;
-        transition: all 0.2s;
-        color: #1cd8cb;
-        transform: translateY(4px) scale(1.3);
-      }
-      textarea:focus,
-      input:focus {
-        outline-color: #13a89e;
-      }
-
-      .t-label {
-        margin: 4px 0px 8px 0px;
-        display: inline-block;
-      }
-    </style>
-    <script>
-      function rebuildServerTable(servers) {
-        const table = document.getElementById('servertable');
-        table.innerHTML = '';
-        servers.forEach((server) => addServerItemToTable(server));
-      }
-
-      function addServerItemToTable(server) {
-        const table = document.getElementById('servertable');
-        const trow = document.createElement('tr');
-        trow.addEventListener('click', () => redirectTo(server.url));
-        const td_name = document.createElement('td');
-        const td_url = document.createElement('td');
-        const td_actions = document.createElement('td');
-        td_actions.style.textAlign = 'right';
-
-        const text_name = document.createTextNode(server.name);
-        const text_url = document.createTextNode(server.url);
-
-        var deleteButton = document.createElement('BUTTON');
-        deleteButton.className = 'delete-button';
-        var deleteText = document.createTextNode('X');
-        deleteButton.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          removeServer(server.id);
-        });
-        deleteButton.appendChild(deleteText);
-
-        td_name.appendChild(text_name);
-        td_url.appendChild(text_url);
-        td_actions.appendChild(deleteButton);
-        trow.appendChild(td_name);
-        trow.appendChild(td_url);
-        trow.appendChild(td_actions);
-        table.appendChild(trow);
-      }
-
-      function rebuildBoardList(boards) {
-        const table = document.getElementById('boardtable');
-        table.innerHTML = '';
-        boards.forEach((board) => addBoardItemToTable(board));
-      }
-      function addBoardItemToTable(board) {
-        const table = document.getElementById('boardtable');
-        const trow = document.createElement('tr');
-        trow.addEventListener('click', () => redirectTo(board.url));
-        const td_name = document.createElement('td');
-        const td_url = document.createElement('td');
-        const td_actions = document.createElement('td');
-        td_actions.style.textAlign = 'right';
-
-        const text_name = document.createTextNode(board.name);
-        const text_url = document.createTextNode(board.url);
-
-        var deleteButton = document.createElement('BUTTON');
-        deleteButton.className = 'delete-button';
-        var deleteText = document.createTextNode('X');
-
-        deleteButton.addEventListener('click', (ev) => {
-          removeBoard(board.id);
-          ev.stopPropagation();
-        });
-        deleteButton.appendChild(deleteText);
-        td_name.appendChild(text_name);
-        td_url.appendChild(text_url);
-        td_actions.appendChild(deleteButton);
-        trow.appendChild(td_name);
-        trow.appendChild(td_url);
-        trow.appendChild(td_actions);
-        table.appendChild(trow);
-      }
-
-      function addServer(form) {
-        console.log('here');
-        const name = form.servername.value;
-        const url = form.serverurl.value;
-        closeAddServerCard(form);
-        if ((name == '') | (url == '')) return false;
-        window.electron.send('store-interface', { request: 'add-server', server: { name, url } });
-        refreshLists();
-        return false;
-      }
-
-      function removeServer(id) {
-        window.electron.send('store-interface', { request: 'remove-server', id });
-        refreshLists();
-        return false;
-      }
-
-      function addBoard(form) {
-        const name = form.boardname.value;
-        const url = form.boardurl.value;
-        closeAddBoardCard(form);
-        if ((name == '') | (url == '')) return false;
-        window.electron.send('store-interface', { request: 'add-board', board: { name, url } });
-        refreshLists();
-        return false;
-      }
-
-      function removeBoard(id) {
-        window.electron.send('store-interface', { request: 'remove-board', id });
-        refreshLists();
-        return false;
-      }
-
-      function refreshLists() {
-        window.electron.send('store-interface', { request: 'get-lists' });
-        return false;
-      }
-
-      window.electron.on('store-interface', (args) => {
-        const response = args.response;
-        if (response == 'servers') {
-          const servers = args.servers;
-          rebuildServerTable(servers);
-        } else if (response == 'boards') {
-          const boards = args.boards;
-          rebuildBoardList(boards);
-        }
-      });
-
-      function redirectTo(url) {
-        window.electron.send('store-interface', { request: 'redirect', url });
-        return false;
-      }
-
-      function openAddServerCard() {
-        document.getElementById('addServerModal').style.opacity = '0.0';
-        document.getElementById('addServerModal').style.visibility = 'visible';
-        document.getElementById('addServerModal').style.opacity = '1.0';
-        document.getElementById('serverform_name').focus();
-        document.getElementById('serverform_name').select();
-
-        return false;
-      }
-
-      function closeAddServerCard(form) {
-        form.servername.value = '';
-        form.serverurl.value = '';
-        document.getElementById('addServerModal').style.opacity = '0.0';
-        setTimeout(() => (document.getElementById('addServerModal').style.visibility = 'hidden'), 250);
-        return false;
-      }
-
-      function openAddBoardCard() {
-        document.getElementById('addBoardModal').style.opacity = '0.0';
-        document.getElementById('addBoardModal').style.visibility = 'visible';
-        document.getElementById('addBoardModal').style.opacity = '1.0';
-        document.getElementById('boardform').focus();
-        return false;
-      }
-
-      function closeAddBoardCard(form) {
-        form.boardname.value = '';
-        form.boardurl.value = '';
-        document.getElementById('addBoardModal').style.opacity = '0.0';
-        setTimeout(() => (document.getElementById('addBoardModal').style.visibility = 'hidden'), 250);
-        return false;
-      }
-
-      refreshLists();
-    </script>
-
-    <div class="container">
-      <div class="column">
-        <img src="../images/SAGE3DarkMode.png" alt="" width="540px" />
-
-        <div style="height: 50px; width: 100%"></div>
-
-        <div style="display: flex; flex-direction: column; justify-content: center; text-align: center">
-          <h2>Server List <button onclick="openAddServerCard()" class="addButton">+</button></h2>
-          <table id="servertable"></table>
+      <div class="dropdown">
+        <button class="dropbtn">Bookmarks</button>
+        <div class="dropdown-content" id="bookmarks-content">
+          <a href="#">Link 1</a>
         </div>
-
-        <div style="display: flex; flex-direction: column; justify-content: center; text-align: center">
-          <h2>Board List <button onclick="openAddBoardCard()" class="addButton">+</button></h2>
-          <table id="boardtable"></table>
-        </div>
-
-        <div id="addServerModal" class="modal">
-          <div class="modalcard">
-            <h2 style="margin-top: 0px">Add Server</h2>
-            <form id="serverform" name="myForm" action="" onsubmit="addServer(this); return false;" width="540px">
-              <label class="t-label" style="margin-top: 0px">Name</label>
-              <input id="serverform_name" type="text" name="servername" value="" />
-              <br />
-              <label class="t-label">URL</label>
-              <input type="url" name="serverurl" value="" />
-              <div style="position: absolute; right: 16px; bottom: 8px">
-                <button onclick="closeAddServerCard(this.form)" class="close-button" type="button">Cancel</button>
-                <input class="submit-button" type="submit" value="Add Server" />
-              </div>
-            </form>
-          </div>
-        </div>
-        <div id="addBoardModal" class="modal">
-          <div class="modalcard">
-            <h2 style="margin-top: 0px">Add Board</h2>
-
-            <form id="boardform" name="myForm" action="" onsubmit="addBoard(this); return false;">
-              <label class="t-label" style="margin-top: 0px">Name</label>
-              <input type="text" name="boardname" value="" />
-              <br />
-              <label class="t-label">URL</label>
-              <input type="url" name="boardurl" value="" />
-              <div style="position: absolute; right: 16px; bottom: 8px">
-                <button onclick="closeAddBoardCard(this.form)" class="close-button" type="button">Cancel</button>
-                <input class="submit-button" type="submit" value="Add Board" />
-              </div>
-            </form>
-          </div>
-        </div>
-        <br />
       </div>
+      <div style="height: 40px; width: 100%"></div>
+      <hr width="500px">
+      <div style="height: 40px; width: 100%"></div>
+      <h2 style="margin:5px;">Enter SAGE3 URL</h2>
+
+
+      <form id="boardform" name="myForm" action="" onsubmit="redirectTo(this); return false;">
+        <input id="input-url" type="url" name="serverurl" value="" />
+        </br>
+        <input type="submit" value="Enter" />
+      </form>
     </div>
-  </body>
+  </div>
+  <br />
+  </div>
+  </div>
+</body>
+
 </html>

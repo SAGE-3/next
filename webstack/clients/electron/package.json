@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "commander": "^7",
+    "electron-prompt": "^1.7.0",
     "electron-store": "^8",
     "node-fetch": "^2",
     "semver": "^7"
