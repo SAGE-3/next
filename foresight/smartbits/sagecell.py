@@ -12,9 +12,11 @@ from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from jupyterkernelproxy import JupyterKernelProxy
 
+import logging
 
 import json
 
+logger = logging.getLogger(__name__)
 
 class SageCellState(TrackedBaseModel):
     code: str = ""
@@ -75,7 +77,7 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def execute(self, uuid):
+    def execute(self, user_uuid):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
         and to call a call_back function which know how to handle the results message
@@ -84,7 +86,7 @@ class SageCell(SmartBit):
         :return:
         """
         command_info = {
-            "uuid": uuid,
+            "uuid": user_uuid,
             "call_fn": self.handle_exec_result,
             "code": self.state.code,
             "kernel": self.state.kernel,
@@ -92,6 +94,25 @@ class SageCell(SmartBit):
         }
         if self.state.kernel:
             self._jupyter_client.execute(command_info)
+        else:
+            # TODO: MLR fix to solve issue #339
+            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+            self.send_updates()
+
+    def interrupt(self, user_uuid):
+
+        command_info = {
+            "uuid": user_uuid,
+            "call_fn": self.handle_exec_result,
+            "code": "",
+            "kernel": self.state.kernel,
+            "token": ""
+        }
+        if self.state.kernel:
+            logger.debug(f"Sending interrupt request to  kernel {command_info['kernel']}")
+            self._jupyter_client.interrupt(command_info)
         else:
             # TODO: MLR fix to solve issue #339
             # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")

@@ -36,7 +36,7 @@ from smartbits.genericsmartbit import GenericSmartBit
 
 
 
-logging.basicConfig(stream=sys.stdout, format= '%(module)s | %(pathname)s | %(filename)s |  %(asctime)s | %(module)s | %(levelname)s | %(message)s')
+logging.basicConfig(filename='proxy.log', format= '%(module)s | %(pathname)s | %(filename)s |  %(asctime)s | %(module)s | %(levelname)s | %(message)s')
 
 
 
@@ -207,7 +207,7 @@ class SAGEProxy:
             if type(sb) is GenericSmartBit:
 
                 logger.debug("not handling generic smartbit update")
-                logged.debug(f"\t\tmessage was {doc}")
+                logger.debug(f"\t\tmessage was {doc}")
                 return
 
             # Note that set_data_form_update clear touched field
@@ -226,7 +226,7 @@ class SAGEProxy:
 
                         _func(**_params)
                     except Exception as e:
-                        logger.error(f"Exception trying to execute function {func_name} on sb {sb}. \n{e}")
+                        logger.error(f"Exception trying to execute function `{func_name}` on sb `{sb}`. \n{e}")
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
