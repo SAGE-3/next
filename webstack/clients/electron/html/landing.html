@@ -178,11 +178,11 @@
       a_bookmark.href = bookmark.url;
       const a_text = document.createTextNode(bookmark.name);
       new ping(bookmark.url, (s) => {
-       if (s==='responded') {
-        a_bookmark.style.color="rgb(96, 204, 141)"
-       } else if (s ==='timeout') {
-        a_bookmark.style.color="rgb(234, 99, 67)"
-       }
+      //  if (s==='responded') {
+      //   a_bookmark.style.color="rgb(96, 204, 141)"
+      //  } else if (s ==='timeout') {
+      //   a_bookmark.style.color="rgb(234, 99, 67)"
+      //  }
       })
       a_bookmark.appendChild(a_text);
       list.appendChild(a_bookmark);
@@ -202,7 +202,6 @@
       }
     });
     window.electron.send('store-interface', { request: 'get-list' });
-
 
   </script>
 

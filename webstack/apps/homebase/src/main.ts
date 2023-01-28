@@ -27,7 +27,6 @@ import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // YJS
-import * as Y from 'yjs';
 const YUtils = require('y-websocket/bin/utils');
 
 // Create the web server with Express
@@ -94,6 +93,10 @@ async function startServer() {
     },
   };
   await SAGEBase.init(sbConfig, app);
+
+  app.get('/checkifsage', (req, res) => {
+    res.send({ isSage: true, serverName: config.serverName });
+  });
 
   // init AI models
   await SAGEnlp.init();

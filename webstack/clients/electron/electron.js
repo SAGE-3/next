@@ -45,6 +45,11 @@ var version = require('./package.json').version;
 var firstRun = true;
 // Prompt  tools
 const prompt = require('electron-prompt');
+// Dialog
+const { dialog } = require('electron');
+
+// Node-Fetch
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // Store
 const windowStore = require('./src/windowstore');
@@ -966,6 +971,40 @@ function updateLandingPage() {
   mainWindow.webContents.send('store-interface', { response: 'bookmarks-list', bookmarks });
 }
 
+async function showDialog() {
+  const options = {
+    type: 'error',
+    buttons: ['Ok'],
+    defaultId: 0,
+    title: 'Not a SAGE Server',
+    message: 'This webiste is not a SAGE3 server.',
+  };
+
+  return dialog.showMessageBox(null, options, (response, checkboxChecked) => {
+    console.log(response);
+    console.log(checkboxChecked);
+  });
+}
+async function checkServerIsSage(url) {
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+  const fetchUrl = `https://${url}/api/info`;
+  try {
+    const response = await fetch(fetchUrl, {
+      method: 'GET', // *GET, POST, PUT, DELETE, etc.
+      mode: 'cors',
+    }); // no-cors, *cors, same-origin)
+    const response_json = await response.json();
+    console.log(response_json);
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
+    return response_json.production;
+  } catch (e) {
+    console.log(e);
+    await showDialog();
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
+    return false;
+  }
+}
+
 function buildMenu() {
   const clearBookmarks = {
     label: 'Restore Original Bookmarks',
@@ -978,9 +1017,11 @@ function buildMenu() {
 
   const addBookmark = {
     label: 'Bookmark This Page',
-    click: () => {
+    click: async () => {
       const url = mainWindow.webContents.getURL();
       const parsedURL = new URL(url);
+      const isSage = await checkServerIsSage(parsedURL.host);
+      if (!isSage) return;
       prompt({
         title: 'Enter Bookmark Name',
         label: 'Name:',
