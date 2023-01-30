@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 
 // Theme and icons
-import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
+import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast, IconButton, Image } from '@chakra-ui/react';
 import { GiArrowCursor } from 'react-icons/gi';
 import { IoMdSquareOutline } from 'react-icons/io';
 import { HiOutlineChevronDoubleRight } from 'react-icons/hi';
@@ -187,7 +187,15 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                         }}
                       />
                     ) : (
-                      initials(el.user.data.name)
+                      el.user.data.profilePicture ?
+                        <Image
+                          borderRadius='full'
+                          background={color}
+                          border={0}
+                          src={el.user.data.profilePicture}
+                          alt={el.user.data.name}
+                        /> : initials(el.user.data.name)
+
                     )}
                   </MenuButton>
                   <MenuList>
