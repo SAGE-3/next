@@ -8,6 +8,7 @@
 
 import { UserSchema } from '@sage3/shared/types';
 import { SAGE3Collection, sageRouter } from '@sage3/backend';
+import { config } from '../../config';
 
 class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
   constructor() {
@@ -21,6 +22,10 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
     router.post('/create', async ({ body, user }, res) => {
       let doc = null;
       const id = (user as any).id;
+
+      // Check if user email is in admin list
+      if (config.auth.admins.includes(body.email)) body.userRole = 'admin';
+
       if (user) {
         doc = await this.add(body, id, id);
       }
