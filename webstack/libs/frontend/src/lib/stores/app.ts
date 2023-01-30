@@ -21,7 +21,7 @@ import { BoardSchema } from '@sage3/shared/types';
 // SAGE3 Authorization
 import { defineAbilityFor, subject, AuthAction } from './auth-model';
 // Hooks and stores
-import { useAuth, useUser } from '../hooks';
+import { useUser } from '../hooks';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -164,12 +164,11 @@ export function useAuthorizationAppStore(app: App | undefined) {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const deletion = useAppStore((state) => state.delete);
-
+  // Get the user information
   const { user } = useUser();
-  const { auth } = useAuth();
 
   // Permissions
-  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
+  const ability = defineAbilityFor(user ? user.data.userRole : 'guest', user?._id);
 
   function createApp(newApp: AppSchema) {
     if (ability.can('create', 'app')) {

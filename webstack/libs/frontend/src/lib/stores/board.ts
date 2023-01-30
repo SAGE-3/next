@@ -22,7 +22,7 @@ import { AppSchema } from '@sage3/applications/schema';
 // SAGE3 Authorization
 import { defineAbilityFor, subject, AuthAction } from './auth-model';
 // Hooks and stores
-import { useAuth, useUser } from '../hooks';
+import { useUser } from '../hooks';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -134,12 +134,11 @@ export function useAuthorizationBoardStore(board: Board | undefined) {
   const create = useBoardStore((state) => state.create);
   const update = useBoardStore((state) => state.update);
   const deletion = useBoardStore((state) => state.delete);
-
+  // Get the user information
   const { user } = useUser();
-  const { auth } = useAuth();
 
   // Permissions
-  const ability = defineAbilityFor(auth?.provider === 'guest' ? 'guest' : 'user', user?._id);
+  const ability = defineAbilityFor(user ? user.data.userRole : 'guest', user?._id);
 
   function createBoard(newBoard: BoardSchema) {
     if (ability.can('create', 'board')) {

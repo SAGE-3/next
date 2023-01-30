@@ -193,7 +193,6 @@ export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
 
 export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const { user, loading } = useUser();
-  const { auth } = useAuth();
   const data = useData('/api/configuration');
 
   if (!user || loading || !data) {
@@ -205,7 +204,7 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
       return <> {props.children}</>;
     } else {
       // in production, checking that the user is logged with google and in the list
-      return auth?.provider === 'google' && config.admins.includes(user?.data.email) ? (
+      return user.data.userRole === 'admin' ? (
         <> {props.children}</>
       ) : (
         <Navigate to="/#/home" replace />
