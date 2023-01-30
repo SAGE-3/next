@@ -66,13 +66,14 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
 
   function createAccount() {
     if (name) {
+      const isGuest = auth?.provider === 'guest';
       const newUser = {
         name,
         email: auth?.email ? auth.email : '',
         color: color,
-        userRole: 'user',
+        userRole: isGuest ? 'guest' : 'user',
         userType: type,
-        profilePicture: '',
+        profilePicture: auth?.picture || '',
       } as UserSchema;
       props.createUser(newUser);
     }
