@@ -66,38 +66,93 @@ function AppComponent(props: App): JSX.Element {
 
   const createApp = useAppStore((state) => state.create);
 
-  const createCharts = (data: { lat: number; lon: number; name: string }) => {
-    const createAppAtPos = (whereToCreateApp: string, traces: any[]): void => {
-      let appPos = { x: 0, y: 0, z: 0 };
-      let newLineMultiplier = 0;
-
-      for (let i = 0; i < traces.length; i++) {
-        if (i % 4 == 0) {
-          newLineMultiplier++;
-        }
-        appPos = {
-          x: props.data.position.x + props.data.size.width * (i % 4),
-          y: props.data.position.y + props.data.size.height * newLineMultiplier,
-          z: 0,
-        };
-        createApp({
-          title: '',
-          roomId: props.data.roomId!,
-          boardId: props.data.boardId!,
-          position: appPos,
-          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'PlotlyViewer',
-          state: {
-            traces: traces[i],
-            layout: { width: props.data.size.width, height: props.data.size.height, title: 'A HCDP ' + i },
-          },
-          raised: true,
-        });
-      }
-    };
+  const createAllCharts = (data: { lat: number; lon: number; name: string }) => {
+    const stationName = data.name;
 
     let climateData: any[] = [];
+    let appPos = { x: props.data.position.x, y: props.data.position.y, z: 0 };
+
+    fetch(
+      `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+    ).then((response) => {
+      response.json().then((station) => {
+        climateData = station['STATION'][0]['OBSERVATIONS'];
+        console.log(climateData);
+        const climateProps = Object.keys(climateData);
+        let newLineMultiplier = 0;
+
+        for (let i = 0; i < climateProps.length; i++) {
+          console.log(climateProps[i]);
+
+          if (i % 4 == 0) {
+            newLineMultiplier++;
+          }
+          appPos = {
+            x: props.data.position.x + props.data.size.width * (i % 4),
+            y: props.data.position.y + props.data.size.height * newLineMultiplier,
+            z: 0,
+          };
+          createApp({
+            title: '',
+            roomId: props.data.roomId!,
+            boardId: props.data.boardId!,
+            position: appPos,
+            size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'ChartGenerator',
+            state: {
+              layout: { width: props.data.size.width, height: props.data.size.height, title: `HCDP data for ${stationName}` },
+              axis: { y: [climateProps[i]], x: ['date_time'], type: ['scatter'], mode: [''] },
+              url: `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`,
+            },
+            raised: true,
+          });
+        }
+      });
+    });
+  };
+
+  const createAppAtPos = (whereToCreateApp: string, traces: any[], stationName: string): void => {
+    let appPos = { x: props.data.position.x, y: props.data.position.y, z: 0 };
+    console.log(appPos, whereToCreateApp);
+
+    switch (whereToCreateApp) {
+      case 'top':
+        appPos.y -= props.data.size.height;
+        break;
+      case 'right':
+        appPos.x += props.data.size.width;
+        break;
+      case 'left':
+        appPos.x -= props.data.size.width;
+        break;
+      case 'bottom':
+        appPos.y += props.data.size.height;
+        break;
+      default:
+        appPos = { x: 0, y: 0, z: 0 };
+    }
+    console.log(appPos);
+    createApp({
+      title: '',
+      roomId: props.data.roomId!,
+      boardId: props.data.boardId!,
+      position: appPos,
+      size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'ChartGenerator',
+      state: {
+        traces: [],
+        layout: { width: props.data.size.width, height: props.data.size.height, title: `HCDP data for ${stationName}` },
+        axis: { y: [''], x: [''], type: ['scatter'], mode: [''] },
+        url: `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`,
+      },
+      raised: true,
+    });
+  };
+  const createChartTemplate = (data: { lat: number; lon: number; name: string }) => {
+    let climateData: any[] = [];
+    const stationName = data.name;
 
     fetch(
       'https://api.mesowest.net/v2/stations/timeseries?STID=017HI&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local'
@@ -124,7 +179,7 @@ function AppComponent(props: App): JSX.Element {
           }
         }
         console.log(traces);
-        createAppAtPos('right', traces);
+        createAppAtPos('right', traces, stationName);
       });
     });
   };
@@ -138,17 +193,14 @@ function AppComponent(props: App): JSX.Element {
         />
         {stationData.map((data, index) => {
           return (
-            <Marker
-              // eventHandlers={{
-              //   click: (e) => {
-              //     createCharts(data);
-              //   },
-              // }}
-              key={index}
-              position={[data.lat, data.lon]}
-            >
+            <Marker key={index} position={[data.lat, data.lon]}>
               <Popup>
-                <Button onClick={() => createCharts(data)}>All Data</Button>
+                <Button onClick={() => createAllCharts(data)} bg="red">
+                  All Data
+                </Button>
+                <Button onClick={() => createChartTemplate(data)} bg="blue">
+                  Chart Template
+                </Button>
               </Popup>
             </Marker>
           );
@@ -268,20 +320,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-// switch (whereToCreateApp) {
-//   case 'top':
-//     appPos = { x: props.data.position.x, y: props.data.position.y - props.data.size.height, z: 0 };
-//     break;
-//   case 'right':
-//     appPos = { x: props.data.position.x + props.data.size.height, y: props.data.position.y, z: 0 };
-//     break;
-//   case 'left':
-//     appPos = { x: props.data.position.x - props.data.size.height, y: props.data.position.y, z: 0 };
-//     break;
-//   case 'bottom':
-//     appPos = { x: props.data.position.x, y: props.data.position.y + props.data.size.height, z: 0 };
-//     break;
-//   default:
-//     appPos = { x: 0, y: 0, z: 0 };
-// }
 export default { AppComponent, ToolbarComponent };

@@ -9,32 +9,30 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: PlotlyViewer
+ * SAGE3 application: ChartGenerator
  * created by: RJ
  */
 
 export const schema = z.object({
-  traces: z.any(),
   layout: z.object({
     width: z.number(),
     height: z.number(),
     title: z.string(),
   }),
+  url: z.string(),
+  axis: z.object({
+    x: z.string().array(),
+    y: z.string().array(),
+    type: z.string().array(),
+    mode: z.string().array(),
+  }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  traces: [
-    {
-      x: [1, 2, 3],
-      y: [2, 6, 3],
-      type: 'scatter',
-      mode: 'lines+markers',
-      marker: { color: 'red' },
-    },
-    { type: 'bar', x: [1, 2, 3], y: [2, 5, 3] },
-  ],
   layout: { width: 200, height: 200, title: 'A Fancy Plot' },
+  url: '',
+  axis: { x: [''], y: [''], type: [''], mode: [''] },
 };
 
-export const name = 'PlotlyViewer';
+export const name = 'ChartGenerator';

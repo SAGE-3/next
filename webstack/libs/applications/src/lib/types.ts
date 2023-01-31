@@ -2,6 +2,7 @@
 
 import { state as AIPaneState, name as AIPaneName } from './apps/AIPane';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
+import { state as ChartGeneratorState, name as ChartGeneratorName } from './apps/ChartGenerator';
 import { state as ChartMakerState, name as ChartMakerName } from './apps/ChartMaker';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
@@ -35,6 +36,7 @@ export type AppState =
   | {}
   | AIPaneState
   | CSVViewerState
+  | ChartGeneratorState
   | ChartMakerState
   | ClockState
   | CobrowseState
@@ -64,4 +66,4 @@ export type AppState =
   | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PlotlyViewerName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
+export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PlotlyViewerName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;

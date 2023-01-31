@@ -29,7 +29,7 @@ function AppComponent(props: App): JSX.Element {
       <>
         <Plot
           data={s.traces}
-          layout={{ width: props.data.size.width, height: props.data.size.height, title: 'A Fancy Plot' }}
+          layout={{ width: props.data.size.width, height: props.data.size.height, title: s.layout.title }}
           config={{ autosizable: true }}
         />
       </>
