@@ -107,7 +107,7 @@ function AppComponent(props: App): JSX.Element {
     const value = e.target.value;
     updateState(props._id, { axis: { x: s.axis.x, y: [value] } });
   };
-  console.log(traces);
+
   return (
     <AppWindow app={props}>
       <>
@@ -215,7 +215,7 @@ function AppComponent(props: App): JSX.Element {
             />
           </div>
         </div>
-        <Button position="absolute" backgroundColor={commonButtonColors} size="sm" left="0" top="0" m="5px" onClick={() => setOpen(true)}>
+        <Button position="absolute" backgroundColor={commonButtonColors} size="sm" left="0" top="0" onClick={() => setOpen(true)}>
           <FaBars color={buttonTextColor} />
         </Button>
       </>

@@ -80,24 +80,24 @@ function AppComponent(props: App): JSX.Element {
         console.log(climateData);
         const climateProps = Object.keys(climateData);
         let newLineMultiplier = 0;
+        let indexToRemove = climateProps.indexOf('date_time');
+        if (indexToRemove !== -1) {
+          climateProps.splice(indexToRemove, 1);
+        }
 
         for (let i = 0; i < climateProps.length; i++) {
-          console.log(climateProps[i]);
-
-          if (i % 4 == 0) {
-            newLineMultiplier++;
-          }
           appPos = {
-            x: props.data.position.x + props.data.size.width * (i % 4),
-            y: props.data.position.y + props.data.size.height * newLineMultiplier,
+            x: props.data.position.x,
+            y: props.data.position.y + props.data.size.height * (i + 1),
             z: 0,
           };
+          //(Hack for HCDP data)
           createApp({
             title: '',
             roomId: props.data.roomId!,
             boardId: props.data.boardId!,
             position: appPos,
-            size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+            size: { width: 7000, height: props.data.size.height, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'ChartGenerator',
             state: {
@@ -155,7 +155,7 @@ function AppComponent(props: App): JSX.Element {
     const stationName = data.name;
 
     fetch(
-      'https://api.mesowest.net/v2/stations/timeseries?STID=017HI&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local'
+      `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
     ).then((response) => {
       response.json().then((station) => {
         climateData = station['STATION'][0]['OBSERVATIONS'];
@@ -195,10 +195,10 @@ function AppComponent(props: App): JSX.Element {
           return (
             <Marker key={index} position={[data.lat, data.lon]}>
               <Popup>
-                <Button onClick={() => createAllCharts(data)} bg="red">
+                <Button onClick={() => createAllCharts(data)} color="gray.700" colorScheme="blue" mx="1">
                   All Data
                 </Button>
-                <Button onClick={() => createChartTemplate(data)} bg="blue">
+                <Button onClick={() => createChartTemplate(data)} color="gray.700" colorScheme="blue">
                   Chart Template
                 </Button>
               </Popup>
