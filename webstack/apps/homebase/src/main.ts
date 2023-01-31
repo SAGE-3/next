@@ -95,10 +95,6 @@ async function startServer() {
   };
   await SAGEBase.init(sbConfig, app);
 
-  app.get('/checkifsage', (req, res) => {
-    res.send({ isSage: true, serverName: config.serverName });
-  });
-
   // init AI models
   await SAGEnlp.init();
 
