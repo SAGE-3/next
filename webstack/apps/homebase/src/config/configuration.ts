@@ -50,6 +50,7 @@ async function loadConfig(): Promise<serverConfiguration> {
   config = conf;
   // adding the version information
   config.version = version;
+  config.isSage3 = true;
 
   // Return the typed value
   return conf as serverConfiguration;

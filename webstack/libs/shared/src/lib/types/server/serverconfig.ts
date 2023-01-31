@@ -54,6 +54,9 @@ export interface serverConfiguration {
   twilio: TwilioConfiguration;
   // Namespace for signing uuid v5 keys
   namespace: string;
+
+  //Flag to check if server is sage3
+  isSage3: true;
 }
 
 /**

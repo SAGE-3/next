@@ -18,12 +18,9 @@
 
 // Node modules
 const path = require('path');
-const { join } = path;
-const fs = require('fs');
-const url = require('url');
+
 // Get platform and hostname
 var os = require('os');
-const { platform, homedir } = os;
 
 // NPM modules
 const electron = require('electron');
@@ -34,33 +31,34 @@ var program = require('commander');
 // URL received from protocol sage3://
 var gotoURL = '';
 
-// Application modules in 'src'
-// Hashing function
-var md5 = require('./src/md5');
 // update system
 const updater = require('./src/updater');
 // Get the version from the package file
 var version = require('./package.json').version;
 // First run
 var firstRun = true;
-// Prompt  tools
-const prompt = require('electron-prompt');
-// Dialog
-const { dialog } = require('electron');
 
-// Node-Fetch
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+// Utilities
+const {
+  dialogShowErrorMessage,
+  dialogUserTextInput,
+  checkServerIsSage,
+  myParseInt,
+  takeScreenshot,
+  getAppDataPath,
+  updateLandingPage,
+} = require('./src/utils');
+
+// MenuBuilder
+const { buildMenu } = require('./src/menuBuilder');
 
 // Store
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkStore');
 
-const { handleSquirrelEvent } = require('./src/squirrelEvent');
-
-//
 // handle install/update for Windows
-//
+const { handleSquirrelEvent } = require('./src/squirrelEvent');
 if (require('electron-squirrel-startup')) {
   return;
 }
@@ -214,23 +212,15 @@ if (commander.debug) {
 app.setAboutPanelOptions({
   applicationName: 'SAGE3',
   applicationVersion: version,
-  copyright: 'Copyright © 2021 Project SAGE3',
+  copyright: 'Copyright © 2022 Project SAGE3',
   website: 'https://www.sage3.app/',
 });
-
-// Filename of favorite sites file
-const favorites_file_name = 'sage3_favorite_sites.json';
-// Object containing list of favorites sites
-var favorites = {
-  list: [],
-};
 
 /**
  * Keep a global reference of the window object, if you don't, the window will
  * be closed automatically when the JavaScript object is garbage collected.
  */
 var mainWindow;
-var remoteSiteInputWindow;
 
 /**
  * Opens a window.
@@ -264,74 +254,6 @@ function openWindow() {
 }
 
 /**
- * Gets the windows path to a temporary folder to store data
- *
- * @return {String} the path
- */
-function getWindowPath() {
-  return join(homedir(), 'AppData');
-}
-
-/**
- * Gets the Mac path to a temporary folder to store data (/tmp)
- *
- * @return {String} the path
- */
-function getMacPath() {
-  return '/tmp';
-}
-
-/**
- * Gets the Linux path to a temporary folder to store data
- *
- * @return {String} the path
- */
-function getLinuxPath() {
-  return join(homedir(), '.config');
-}
-
-/**
- * In case the platform is among the known ones (for the potential
- * future os platforms)
- *
- * @return {String} the path
- */
-function getFallback() {
-  if (platform().startsWith('win')) {
-    return getWindowPath();
-  }
-  return getLinuxPath();
-}
-
-/**
- * Creates the path to the file in a platform-independent way
- *
- * @param  {String} file_name the name of the file
- * @return the path to the file
- */
-function getAppDataPath(file_name) {
-  let appDataPath = '';
-  switch (platform()) {
-    case 'win32':
-      appDataPath = getWindowPath();
-      break;
-    case 'darwin':
-      appDataPath = getMacPath();
-      break;
-    case 'linux':
-      appDataPath = getLinuxPath();
-      break;
-    default:
-      appDataPath = getFallback();
-  }
-  if (file_name === undefined) {
-    return appDataPath;
-  } else {
-    return join(appDataPath, file_name);
-  }
-}
-
-/**
  * Disable geolocation because of Electron v13 bug
  * @param {any} session
  */
@@ -355,49 +277,11 @@ function disableGeolocation(session) {
 }
 
 /**
- * Take a Screenshot of the visible part of the window
- */
-function TakeScreenshot() {
-  if (mainWindow) {
-    // Capture the Electron window
-    mainWindow.capturePage().then(function (img) {
-      // convert to JPEG
-      const imageData = img.toJPEG(90);
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1;
-      const day = now.getDate();
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      const second = now.getSeconds();
-      const dt = `-${year}-${month}-${day}-${hour}-${minute}-${second}`;
-      // dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-      const options = {
-        title: 'Save current board as a JPEG file',
-        defaultPath: app.getPath('downloads') + '/screenshot' + dt + '.jpg',
-      };
-      // Open the save dialog
-      electron.dialog.showSaveDialog(mainWindow, options).then((obj) => {
-        if (!obj.canceled) {
-          // write the file
-          fs.writeFile(obj.filePath.toString(), imageData, 'base64', function (err) {
-            if (err) throw err;
-          });
-        }
-      });
-    });
-  }
-}
-/**
  * Creates an electron window.
  *
  * @method     createWindow
  */
 function createWindow() {
-  // Build a menu
-  var menu = buildMenu();
-  Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
-
   // Create option data structure
   var options = {
     width: commander.width,
@@ -526,6 +410,9 @@ function createWindow() {
   // Create the browser window with state and options mixed in
   mainWindow = new BrowserWindow({ ...state, ...options });
 
+  // Build a menu
+  buildMenu(mainWindow);
+
   if (commander.cache) {
     // clear the caches, useful to remove password cookies
     const session = electron.session.defaultSession;
@@ -587,10 +474,11 @@ function createWindow() {
     switch (request) {
       case 'redirect':
         const url = args.url;
+        if (!checkServerIsSage(url)) return;
         mainWindow.loadURL(url);
         break;
       case 'get-list':
-        updateLandingPage();
+        updateLandingPage(mainWindow);
         break;
     }
   });
@@ -629,7 +517,7 @@ function createWindow() {
     if (firstRun) {
       const currentURL = mainWindow.webContents.getURL();
       const parsedURL = new URL(currentURL);
-      // updater.checkForUpdates(parsedURL.origin, false);
+      updater.checkForUpdates(parsedURL.origin, false);
       firstRun = false;
     }
   });
@@ -795,7 +683,7 @@ function createWindow() {
 
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
-    TakeScreenshot();
+    TakeScreenshot(mainWindow);
   });
 
   // Request from user for Client Info
@@ -821,16 +709,6 @@ function createWindow() {
   //   //   console.log('web>', web.id, web);
   //   // });
   // });
-}
-
-/**
- * Writes favorites in a persistent way on local machine
- *
- * @method writeFavoritesOnFile
- * @param {Object} favorites_obj the object containing the list of favorites
- */
-function writeFavoritesOnFile(favorites_obj) {
-  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => {});
 }
 
 /**
@@ -944,429 +822,3 @@ app.on('activate', function () {
  * initialization and is ready to create a browser window.
  */
 app.on('ready', createWindow);
-
-/**
- * Utiltiy function to parse command line arguments as number
- *
- * @method     myParseInt
- * @param      {String}    str           the argument
- * @param      {Number}    defaultValue  The default value
- * @return     {Number}    return an numerical value
- */
-function myParseInt(str, defaultValue) {
-  var int = parseInt(str, 10);
-  if (typeof int == 'number') {
-    return int;
-  }
-  return defaultValue;
-}
-
-function rebuildMenu() {
-  const menu = buildMenu();
-  Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
-}
-
-function updateLandingPage() {
-  const bookmarks = bookmarkStore.getBookmarks();
-  mainWindow.webContents.send('store-interface', { response: 'bookmarks-list', bookmarks });
-}
-
-async function showDialog() {
-  const options = {
-    type: 'error',
-    buttons: ['Ok'],
-    defaultId: 0,
-    title: 'Not a SAGE Server',
-    message: 'This webiste is not a SAGE3 server.',
-  };
-
-  return dialog.showMessageBox(null, options, (response, checkboxChecked) => {
-    console.log(response);
-    console.log(checkboxChecked);
-  });
-}
-async function checkServerIsSage(url) {
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
-  const fetchUrl = `https://${url}/api/info`;
-  try {
-    const response = await fetch(fetchUrl, {
-      method: 'GET', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors',
-    }); // no-cors, *cors, same-origin)
-    const response_json = await response.json();
-    console.log(response_json);
-    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
-    return response_json.production;
-  } catch (e) {
-    console.log(e);
-    await showDialog();
-    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
-    return false;
-  }
-}
-
-function buildMenu() {
-  const clearBookmarks = {
-    label: 'Restore Original Bookmarks',
-    click: () => {
-      bookmarkStore.clear();
-      rebuildMenu();
-      updateLandingPage();
-    },
-  };
-
-  const addBookmark = {
-    label: 'Bookmark This Page',
-    click: async () => {
-      const url = mainWindow.webContents.getURL();
-      const parsedURL = new URL(url);
-      const isSage = await checkServerIsSage(parsedURL.host);
-      if (!isSage) return;
-      prompt({
-        title: 'Enter Bookmark Name',
-        label: 'Name:',
-        value: parsedURL.host,
-        inputAttrs: {
-          type: 'text',
-        },
-        type: 'input',
-      })
-        .then((r) => {
-          if (r === '' || r === null) {
-            console.log('user cancelled');
-          } else {
-            const name = r;
-            bookmarkStore.addBookmark(name, parsedURL);
-            rebuildMenu();
-            updateLandingPage();
-          }
-        })
-        .catch(console.error);
-    },
-  };
-  const bookmarks = bookmarkStore.getBookmarks().map((el) => {
-    return {
-      label: `${el.name}`,
-      click() {
-        if (mainWindow) {
-          mainWindow.loadURL(el.url);
-        }
-      },
-    };
-  });
-
-  const removeBookmarks = bookmarkStore.getBookmarks().map((el) => {
-    return {
-      label: `${el.name}`,
-      click() {
-        bookmarkStore.removeBookmark(el.id);
-        rebuildMenu();
-        const bookmarks = bookmarkStore.getBookmarks();
-        updateLandingPage();
-      },
-    };
-  });
-  const template = [
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'Return Home',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadFile('./html/landing.html');
-            }
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Check for Updates...',
-          // accelerator: 'CommandOrControl+U',
-          click() {
-            if (mainWindow) {
-              const currentURL = mainWindow.webContents.getURL();
-              const parsedURL = new URL(currentURL);
-              updater.checkForUpdates(parsedURL.origin, true);
-            }
-          },
-        },
-        {
-          label: 'Clear Preferences',
-          click: function () {
-            // clear on quit
-            commander.clear = true;
-          },
-        },
-        {
-          label: 'Take Screenshot',
-          click() {
-            TakeScreenshot();
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Quit',
-          accelerator: 'CommandOrControl+Q',
-          click: function () {
-            app.quit();
-          },
-        },
-      ],
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        {
-          label: 'Undo',
-          accelerator: 'CommandOrControl+Z',
-          role: 'undo',
-        },
-        {
-          label: 'Redo',
-          accelerator: 'Shift+CommandOrControl+Z',
-          role: 'redo',
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Cut',
-          accelerator: 'CommandOrControl+X',
-          role: 'cut',
-        },
-        {
-          label: 'Copy',
-          accelerator: 'CommandOrControl+C',
-          role: 'copy',
-        },
-        {
-          label: 'Paste',
-          accelerator: 'CommandOrControl+V',
-          role: 'paste',
-        },
-        {
-          label: 'Select All',
-          accelerator: 'CommandOrControl+A',
-          role: 'selectall',
-        },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        {
-          label: 'Reload Site',
-          accelerator: 'CommandOrControl+R',
-          click: function (item, focusedWindow) {
-            if (focusedWindow) {
-              focusedWindow.reload();
-            }
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Actual Size',
-          accelerator: 'CommandOrControl+0',
-          // role: 'resetZoom',
-          click() {
-            if (mainWindow) {
-              mainWindow.webContents.setZoomLevel(0);
-            }
-          },
-        },
-        {
-          label: 'Zoom In',
-          accelerator: 'CommandOrControl+=',
-          // role: 'zoomIn',
-          click() {
-            if (mainWindow) {
-              const zl = mainWindow.webContents.getZoomLevel();
-              if (zl < 10) {
-                mainWindow.webContents.setZoomLevel(zl + 1);
-              }
-            }
-          },
-        },
-        {
-          label: 'Zoom Out',
-          accelerator: 'CommandOrControl+-',
-          // role: 'zoomOut',
-          click() {
-            if (mainWindow) {
-              const zl = mainWindow.webContents.getZoomLevel();
-              if (zl > -8) {
-                mainWindow.webContents.setZoomLevel(zl - 1);
-              }
-            }
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Toggle Full Screen',
-          accelerator: (function () {
-            if (process.platform === 'darwin') {
-              return 'Ctrl+Command+F';
-            } else {
-              return 'F11';
-            }
-          })(),
-          click: function (item, focusedWindow) {
-            if (focusedWindow) {
-              // focusedWindow.fullScreenable = !focusedWindow.isFullScreen();
-              focusedWindow.fullScreenable = true;
-              if (focusedWindow.isFullScreen()) {
-                focusedWindow.setFullScreen(false);
-                mainWindow.setMenuBarVisibility(true);
-              } else {
-                focusedWindow.setFullScreen(true);
-                mainWindow.setMenuBarVisibility(false);
-              }
-            }
-          },
-        },
-        {
-          label: 'Toggle Developer Tools',
-          accelerator: (function () {
-            if (process.platform === 'darwin') {
-              return 'Alt+Command+I';
-            } else {
-              return 'Ctrl+Shift+I';
-            }
-          })(),
-          click: function (item, focusedWindow) {
-            if (focusedWindow) {
-              focusedWindow.toggleDevTools();
-            }
-          },
-        },
-        {
-          label: 'Open local server (http://localhost:4200)',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadURL('http://localhost:4200/');
-            }
-          },
-        },
-      ],
-    },
-    {
-      label: 'Bookmarks',
-      role: 'bookmarks',
-      submenu: [
-        ...bookmarks,
-        {
-          type: 'separator',
-        },
-        addBookmark,
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Remove Bookmark',
-          submenu: removeBookmarks,
-        },
-        clearBookmarks,
-      ],
-    },
-    {
-      label: 'Window',
-      role: 'window',
-      submenu: [
-        {
-          label: 'Minimize',
-          accelerator: 'CommandOrControl+M',
-          role: 'minimize',
-        },
-        {
-          label: 'Close',
-          accelerator: 'CommandOrControl+W',
-          role: 'close',
-        },
-      ],
-    },
-    {
-      label: 'Help',
-      role: 'help',
-      submenu: [
-        {
-          label: 'Learn More',
-          click: function () {
-            shell.openExternal('http://sage3.sagecommons.org/');
-          },
-        },
-      ],
-    },
-  ];
-
-  if (process.platform === 'darwin') {
-    const name = app.name;
-    template.unshift({
-      label: name,
-      submenu: [
-        {
-          label: 'About ' + name,
-          role: 'about',
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Services',
-          role: 'services',
-          submenu: [],
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Hide ' + name,
-          accelerator: 'Command+H',
-          role: 'hide',
-        },
-        {
-          label: 'Hide Others',
-          accelerator: 'Command+Shift+H',
-          role: 'hideothers',
-        },
-        {
-          label: 'Show All',
-          role: 'unhide',
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Quit',
-          accelerator: 'Command+Q',
-          click: function () {
-            app.quit();
-          },
-        },
-      ],
-    });
-    const windowMenu = template.find(function (m) {
-      return m.role === 'window';
-    });
-    if (windowMenu) {
-      windowMenu.submenu.push(
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Bring All to Front',
-          role: 'front',
-        }
-      );
-    }
-  }
-
-  return template;
-}

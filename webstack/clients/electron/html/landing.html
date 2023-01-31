@@ -39,7 +39,7 @@
       cursor: pointer;
     }
 
-    input[type=url],
+    input[type=text],
     select {
       width: 100%;
       padding: 8px;
@@ -133,38 +133,6 @@
   </style>
   <script>
 
-    function ping(ip, callback) {
-      console.log(ip)
-      if (!this.inUse) {
-        this.status = 'unchecked';
-        this.inUse = true;
-        this.callback = callback;
-        this.ip = ip;
-        var _that = this;
-        this.img = new Image();
-        this.img.onload = function () {
-          _that.inUse = false;
-          _that.callback('responded');
-
-        };
-        this.img.onerror = function (e) {
-          if (_that.inUse) {
-            _that.inUse = false;
-            console.log(e)
-            _that.callback('responded', e);
-          }
-
-        };
-        this.start = new Date().getTime();
-        this.img.src = ip;
-        this.timer = setTimeout(function () {
-          if (_that.inUse) {
-            _that.inUse = false;
-            _that.callback('timeout');
-          }
-        }, 5000);
-      }
-    }
 
     function rebuildBookmarksList(bookmarks) {
       const list = document.getElementById('bookmarks-content');
@@ -177,13 +145,6 @@
       const a_bookmark = document.createElement('a');
       a_bookmark.href = bookmark.url;
       const a_text = document.createTextNode(bookmark.name);
-      new ping(bookmark.url, (s) => {
-      //  if (s==='responded') {
-      //   a_bookmark.style.color="rgb(96, 204, 141)"
-      //  } else if (s ==='timeout') {
-      //   a_bookmark.style.color="rgb(234, 99, 67)"
-      //  }
-      })
       a_bookmark.appendChild(a_text);
       list.appendChild(a_bookmark);
     }
@@ -224,7 +185,7 @@
 
 
       <form id="boardform" name="myForm" action="" onsubmit="redirectTo(this); return false;">
-        <input id="input-url" type="url" name="serverurl" value="" />
+        <input id="input-url" type="text" name="serverurl" value="" />
         </br>
         <input type="submit" value="Enter" />
       </form>

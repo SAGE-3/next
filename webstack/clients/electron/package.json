@@ -8,6 +8,7 @@
     "url": "https://github.com/SAGE-3"
   },
   "dependencies": {
+    "@braintree/sanitize-url": "^6.0.2",
     "commander": "^7",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8",
