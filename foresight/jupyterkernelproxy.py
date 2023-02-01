@@ -17,15 +17,16 @@ from ws4py.manager import WebSocketManager
 from ws4py import format_addresses, configure_logger
 from config import config as conf, prod_type
 
-logger = configure_logger()
+import logging
+logger = logging.getLogger(__name__)
 
 # TODO : CONVERT JupyterKernelProxy INTO singleton (use BORG)
-def format_execute_request_msg(exec_uuid, code):
+def format_execute_request_msg(exec_uuid, code, msg_type='execute_request'):
     content = {'code': code, 'silent': False}
     hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
            'username': 'tests',
            'data': datetime.datetime.now().isoformat(),
-           'msg_type': 'execute_request',
+           'msg_type': msg_type,
            'version': '5.0'}
     msg = {'header': hdr,
            'parent_header': hdr,
@@ -40,12 +41,12 @@ class TestiongJupyterClient(WebSocketBaseClient):
         super().__init__(address, headers=headers)
 
     def handshake_ok(self):
-        print("Done opening the connection")
+        print("Testing: done opening the connection to the Jupyter Kernel client")
 
     def received_message(self, msg):
         # check if the message
         msg = json.loads(msg.data.decode("utf-8"))
-        print(msg)
+        print(f"Testing: received msg {msg}")
 
 class JupyterKernelProxy:
     class JupyterClient(WebSocketBaseClient):
@@ -55,13 +56,12 @@ class JupyterKernelProxy:
             super().__init__(address, headers=headers)
 
         def handshake_ok(self):
-            print("Opening %s" % format_addresses(self))
-            print("Done opening the connection")
+            logger.debug("Opening %s" % format_addresses(self))
             self.parent_proxy_instance.conn_manager.add(self)
 
         def received_message(self, msg):
             # check if the message
-            #print("processing a message")
+            print(f"processing a message {msg}")
             msg = json.loads(msg.data.decode("utf-8"))
             msg_id_uuid = str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0]))
             result = {}
@@ -91,7 +91,7 @@ class JupyterKernelProxy:
                         result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
 
             if result:
-                print(f"result is {result}")
+                logger.debug(f"jupyter kernel result is {result}")
                 self.pending_reponses[msg_id_uuid] = result
                 self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 
@@ -109,7 +109,8 @@ class JupyterKernelProxy:
         self.results = {}
 
     def add_client(self, kernel_id):
-        if kernel_id not in self.connections:
+        # do we need the test below or are we testing for it aready in the execute and interrupt?
+        if kernel_id not in self.connections or self.connections[kernel_id].stream is None:
             socket_url = f"{self.base_ws}/api/kernels/{kernel_id}/channels"
             session_id = uuid.uuid4().hex
             socket_url = f"{socket_url}?session_id={session_id}"
@@ -125,19 +126,33 @@ class JupyterKernelProxy:
         kernel_id = command_info['kernel']
         callback_fn = command_info["call_fn"]
 
-        if kernel_id not in self.connections:
+        if kernel_id not in self.connections or self.connections[kernel_id].stream is None:
             self.add_client(kernel_id)
+
         try:
             self.connections[kernel_id].pending_reponses[user_passed_uuid] = None
             self.callback_info[user_passed_uuid] = callback_fn
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
         except Exception as e:
             # something happen, do no track this results
-            print(f"Something happened here, {e}")
+            logger.error(f"Error occurred duirng execution of command, {e}")
             del self.results[user_passed_uuid]
             # TODO something happened and code couldn't be run
             #  send error back to the user
             del self.callback_info[user_passed_uuid]
+
+
+    def interrupt(self, command_info):
+        """
+        Send an interrupt to the kernel defined in the command info
+        """
+        kernel_id = command_info['kernel']
+        if kernel_id in self.connections:
+            j_url = f"{conf[prod_type]['jupyter_server']}/api/kernels/{kernel_id}/interrupt"
+            headers_dict = dict(self.headers)
+            response = requests.post(j_url, headers=headers_dict)
+            if response.status_code != 204:
+                logger.error("Couldn't interrupt running job. code was")
 
 
 
