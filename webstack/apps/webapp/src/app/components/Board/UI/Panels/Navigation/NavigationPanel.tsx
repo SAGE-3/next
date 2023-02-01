@@ -35,15 +35,12 @@ export function NavigationPanel(props: NavProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const updateApp = useAppStore((state) => state.update);
 
   // UI Store
   const boardLocked = useUIStore((state) => state.boardLocked);
   const lockBoard = useUIStore((state) => state.lockBoard);
   const updateBoard = useBoardStore((state) => state.update);
 
-  const scale = useUIStore((state) => state.scale);
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
 
@@ -156,7 +153,7 @@ export function NavigationPanel(props: NavProps) {
         isOpen={organizeIsOpen}
       />
 
-      <Panel title={'Navigation'} name="navigation" width={400} showClose={false} zIndex={100}>
+      <Panel title={'Navigation'} name="navigation" width={400} showClose={false}>
         <Box alignItems="center" display="flex">
           <Box
             width={mapWidth}
