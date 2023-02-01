@@ -34,14 +34,24 @@ from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 
-logging.basicConfig(stream=sys.stdout, format= ' %(asctime)s | %(module)s | %(levelname)s | %(message)s')
+
+debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
+devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
+logging.basicConfig(filename='proxy.log')
+formatter = None
+
+
 logger = logging.getLogger(__name__)
 
+
 if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
+    formatter = logging.Formatter(debug_fmt)
     logger.root.setLevel(logging.DEBUG)
-    logger.debug("DEBUG level logging")
 else:
+    formatter = logging.Formatter(devel_fmt)
     logger.root.setLevel(logging.INFO)
+# print(logger.handlers)
+logger.root.handlers[0].setFormatter(formatter)
 
 
 class LinkedInfo(BaseModel):
@@ -195,7 +205,9 @@ class SAGEProxy:
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
 
             if type(sb) is GenericSmartBit:
+
                 logger.debug("not handling generic smartbit update")
+                logger.debug(f"\t\tmessage was {doc}")
                 return
 
             # Note that set_data_form_update clear touched field
@@ -214,7 +226,7 @@ class SAGEProxy:
 
                         _func(**_params)
                     except Exception as e:
-                        logger.error(f"Exception trying to execute function {func_name} on sb {sb}. \n{e}")
+                        logger.error(f"Exception trying to execute function `{func_name}` on sb `{sb}`. \n{e}")
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):

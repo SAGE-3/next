@@ -57,10 +57,14 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        logger.debug(f"sendign following update: {data}")
+        #print(logging.getLogger().handlers)
+        logger.info(f"sendign following update: {data}")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                   headers=self.__headers,
                                   json=data)
+        # TODO temp fix for this: https://github.com/ipython/ipython/issues/13904
+        #  I assume it's an issue with the logging library since we're logging from a thread
+        #  will need to replace the print with a better solution
         return r
 
     def create_app(self, data):
