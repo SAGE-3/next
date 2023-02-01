@@ -33,7 +33,6 @@ module.exports = {
     const list = store.get('bookmarks', defaultBookmarks);
     return list;
   },
-
   addBookmark: function (name, url) {
     const currentList = store.get('bookmarks', defaultBookmarks);
     const idx = currentList.findIndex((el) => el.url == url);
@@ -43,7 +42,6 @@ module.exports = {
     currentList.push({ name, url, id: genId() });
     return store.set('bookmarks', currentList);
   },
-
   removeBookmark: function (id) {
     const currentList = store.get('bookmarks', defaultBookmarks);
     const idx = currentList.findIndex((el) => el.id == id);
@@ -52,7 +50,6 @@ module.exports = {
     }
     return store.set('bookmarks', currentList);
   },
-
   clear: function () {
     store.set('bookmarks', defaultBookmarks);
   },
