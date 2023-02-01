@@ -18,12 +18,8 @@ import { SAGEColors } from '@sage3/shared';
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
 
-export interface AnnotationsPanelProps {
-  boardId: string;
-  roomId: string;
-}
 
-export function AnnotationsPanel(props: AnnotationsPanelProps) {
+export function AnnotationsPanel() {
   // UI Store
   const hideUI = useUIStore((state) => state.hideUI);
   const showUI = useUIStore((state) => state.displayUI);
@@ -79,7 +75,7 @@ export function AnnotationsPanel(props: AnnotationsPanelProps) {
   };
 
   return (
-    <Panel title="Annotations" name="annotations" width={600} showClose={false} zIndex={100}>
+    <Panel title="Annotations" name="annotations" width={600} showClose={false}>
       <Box alignItems="center" pb="1" width="100%" display="flex">
         <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
           <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
