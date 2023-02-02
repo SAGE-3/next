@@ -17,7 +17,7 @@ import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
 
 // Utility functions from SAGE3
-import { downloadFile, useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
@@ -68,7 +68,7 @@ function AppComponent(props: App): JSX.Element {
     if (quillRef.current && toolbarRef.current) {
       const quill = new Quill(quillRef.current, {
         modules: {
-          cursors: false,
+          cursors: true,
           toolbar: toolbarRef.current,
           history: {
             userOnly: true,
@@ -76,7 +76,8 @@ function AppComponent(props: App): JSX.Element {
         },
         scrollingContainer: '#scrolling-container',
         placeholder: 'Start collaborating...',
-        theme: 'snow', // 'bubble' is also great
+        theme: 'snow',
+
       });
       // Save the instance for the toolbar
       setEditor(props._id, quill);
@@ -95,7 +96,7 @@ function AppComponent(props: App): JSX.Element {
       quill.on('text-change', (delta, oldDelta, source) => {
         if (source == 'user') {
           const content = quill.getContents();
-          updateState(props._id, { content });
+          updateState(props._id, { content }).then(() => {});
         }
       });
 
@@ -134,7 +135,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
-        <div ref={toolbarRef} hidden></div>
+        <div ref={toolbarRef} hidden style={{pointerEvents:'none'}}></div>
         <div ref={quillRef}></div>
       </Box>
     </AppWindow>
@@ -329,18 +330,18 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Align Center'} openDelay={400}>
-          <Button onClick={(e) => formatLineAlign('center')}>
+          <Button onClick={() => formatLineAlign('center')}>
             <MdFormatAlignCenter />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Align Right'} openDelay={400}>
-          <Button onClick={(e) => formatLineAlign('right')}>
+          <Button onClick={() => formatLineAlign('right')}>
             <MdFormatAlignRight />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Justify'} openDelay={400}>
-          <Button onClick={(e) => formatLineAlign('justify')}>
+          <Button onClick={() => formatLineAlign('justify')}>
             <MdFormatAlignJustify />
           </Button>
         </Tooltip>
@@ -354,7 +355,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Numbered List'} openDelay={400}>
-          <Button onClick={(e) => formatLineList('ordered')}>
+          <Button onClick={() => formatLineList('ordered')}>
             <MdOutlineFormatListNumbered />
           </Button>
         </Tooltip>
