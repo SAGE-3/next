@@ -14,7 +14,6 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
 import Quill from 'quill';
-import QuillCursors from 'quill-cursors';
 
 // Utility functions from SAGE3
 import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
@@ -26,7 +25,6 @@ import 'quill/dist/quill.snow.css';
 import './styles.css';
 
 // SAGE Imports
-import { useUser } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '@sage3/applications/schema';
@@ -53,7 +51,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const quillRef = useRef(null);
   const toolbarRef = useRef(null);
-  const { user } = useUser();
   const setEditor = useStore((s: any) => s.setEditor);
   const updateState = useAppStore((state) => state.updateState);
 
@@ -65,7 +62,6 @@ function AppComponent(props: App): JSX.Element {
     if (quillRef.current && toolbarRef.current) {
       const quill = new Quill(quillRef.current, {
         modules: {
-          cursors: false,
           toolbar: toolbarRef.current,
           history: {
             userOnly: true,
