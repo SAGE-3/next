@@ -41,9 +41,6 @@ import {
   MdOutlineList,
 } from 'react-icons/md';
 
-// Have to register the module before using it
-Quill.register('modules/cursors', QuillCursors);
-
 // Store between the app and the toolbar
 import create from 'zustand';
 
@@ -68,7 +65,7 @@ function AppComponent(props: App): JSX.Element {
     if (quillRef.current && toolbarRef.current) {
       const quill = new Quill(quillRef.current, {
         modules: {
-          cursors: true,
+          cursors: false,
           toolbar: toolbarRef.current,
           history: {
             userOnly: true,
@@ -90,7 +87,7 @@ function AppComponent(props: App): JSX.Element {
       provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
 
       // Define a shared text type on the document
-      const ytext = ydoc.getText('quill');
+      ydoc.getText('quill');
 
       // Observe changes on the text, if user is source of the change, update sage
       quill.on('text-change', (delta, oldDelta, source) => {
@@ -99,16 +96,6 @@ function AppComponent(props: App): JSX.Element {
           updateState(props._id, { content }).then(() => {});
         }
       });
-
-      // "Bind" the quill editor to a Yjs text type.
-      // Uses SAGE3 information to set the color of the cursor
-      binding = new QuillBinding(ytext, quill, provider.awareness);
-      if (user) {
-        provider.awareness.setLocalStateField('user', {
-          name: user.data.name,
-          color: user.data.color, // should be a hex color
-        });
-      }
 
       // Sync state with sage when a user connects and is the only one present
       provider.on('sync', () => {
