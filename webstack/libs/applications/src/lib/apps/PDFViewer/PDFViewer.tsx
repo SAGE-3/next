@@ -440,7 +440,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuButton>
           </Tooltip>
           <MenuList minWidth="150px">
-            <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF} isDisabled={true}>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF}>
               Analyze
             </MenuItem>
           </MenuList>

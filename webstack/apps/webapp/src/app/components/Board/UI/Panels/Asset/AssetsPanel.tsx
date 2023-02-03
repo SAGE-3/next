@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer, Tooltip } from '@chakra-ui/react';
 
-import { StuckTypes, UploadModal, useAssetStore, useRoomStore, useUIStore, useUsersStore, useAuth } from '@sage3/frontend';
+import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAuth } from '@sage3/frontend';
 
 import { Panel } from '../Panel';
 import { Files } from './Files';
@@ -28,20 +28,13 @@ type AssetsPanelProps = {
  * @returns {JSX.Element}
  */
 export function AssetsPanel(props: AssetsPanelProps) {
-  const position = useUIStore((state) => state.assetsPanel.position);
-  const setPosition = useUIStore((state) => state.assetsPanel.setPosition);
-  const opened = useUIStore((state) => state.assetsPanel.opened);
-  const setOpened = useUIStore((state) => state.assetsPanel.setOpened);
-  const show = useUIStore((state) => state.assetsPanel.show);
-  const setShow = useUIStore((state) => state.assetsPanel.setShow);
-  const stuck = useUIStore((state) => state.assetsPanel.stuck);
-  const setStuck = useUIStore((state) => state.assetsPanel.setStuck);
-  const zIndex = useUIStore((state) => state.panelZ).indexOf('assets');
+  // Room Store
   const rooms = useRoomStore((state) => state.rooms);
-  const controllerPosition = useUIStore((state) => state.controller.position);
   const [roomName, setRoomName] = useState('');
+
   // Clear board modal
   const { isOpen, onOpen, onClose } = useDisclosure();
+
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   const { auth } = useAuth();
@@ -50,20 +43,6 @@ export function AssetsPanel(props: AssetsPanelProps) {
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
   const assets = useAssetStore((state) => state.assets);
   const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
-
-  // if a menu is currently closed, make it "jump" to the controller
-  useEffect(() => {
-    if (!show) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
-      setStuck(StuckTypes.Controller);
-    }
-  }, [show]);
-
-  useEffect(() => {
-    if (stuck == StuckTypes.Controller) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
-    }
-  }, [controllerPosition]);
 
   // subscribe to the asset store
   useEffect(() => {
@@ -78,7 +57,6 @@ export function AssetsPanel(props: AssetsPanelProps) {
     setRoomName(rooms.find((el) => el._id === props.roomId)?.data.name ?? 'Main Room');
     // Filter the asset keys for this room
     const filterbyRoom = assets.filter((k) => k.data.room === props.roomId);
-    const keys = Object.keys(filterbyRoom);
     // Create entries
     setAssetsList(
       filterbyRoom.map((item) => {
@@ -105,21 +83,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
 
   return (
     <>
-      <Panel
-        title={`Assets available in Room "${roomName}"`}
-        name="assets"
-        opened={opened}
-        setOpened={setOpened}
-        setPosition={setPosition}
-        position={position}
-        width={817}
-        showClose={true}
-        show={show}
-        setShow={setShow}
-        stuck={stuck}
-        setStuck={setStuck}
-        zIndex={zIndex}
-      >
+      <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={false}>
         <Box display="flex" flexDirection="column">
           <Box alignItems="center" p="1" width={'3xl'} display="flex">
             <Files files={assetsList} />
@@ -129,14 +93,23 @@ export function AssetsPanel(props: AssetsPanelProps) {
             <Text fontSize={'xs'}>To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder</Text>
             <Spacer />
 
-            <Tooltip placement="top-start" label={auth?.provider === 'guest' ? "Guests cannot upload assets" : "Upload assets"} openDelay={500} hasArrow>
-              <Button colorScheme="green" width="100px" size={'xs'} onClick={onOpen}
+            <Tooltip
+              placement="top-start"
+              label={auth?.provider === 'guest' ? 'Guests cannot upload assets' : 'Upload assets'}
+              openDelay={500}
+              hasArrow
+            >
+              <Button
+                colorScheme="green"
+                width="100px"
+                size={'xs'}
+                onClick={onOpen}
                 // Block guests from uploading assets
-                disabled={auth?.provider === 'guest'}>
+                disabled={auth?.provider === 'guest'}
+              >
                 Upload
               </Button>
             </Tooltip>
-
           </Flex>
         </Box>
       </Panel>

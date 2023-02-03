@@ -6,35 +6,21 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { MouseEventHandler, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Box, Button, useToast, Tooltip } from '@chakra-ui/react';
 
 import { BsPencilFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera } from 'react-icons/fa';
 
-import { useUIStore, StuckTypes, useAppStore, isElectron } from '@sage3/frontend';
+import { useUIStore, useAppStore, usePanelStore, isElectron } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
 
-export interface WhiteboardPanelProps {
-  boardId: string;
-  roomId: string;
-}
 
-export function WhiteboardPanel(props: WhiteboardPanelProps) {
-  const position = useUIStore((state) => state.whiteboardPanel.position);
-  const setPosition = useUIStore((state) => state.whiteboardPanel.setPosition);
-  const opened = useUIStore((state) => state.whiteboardPanel.opened);
-  const setOpened = useUIStore((state) => state.whiteboardPanel.setOpened);
-  const show = useUIStore((state) => state.whiteboardPanel.show);
-  const setShow = useUIStore((state) => state.whiteboardPanel.setShow);
-  const stuck = useUIStore((state) => state.whiteboardPanel.stuck);
-  const setStuck = useUIStore((state) => state.whiteboardPanel.setStuck);
-  const zIndex = useUIStore((state) => state.panelZ).indexOf('whiteboard');
-  const controllerPosition = useUIStore((state) => state.controller.position);
-  // Apps
+export function AnnotationsPanel() {
+  // UI Store
   const hideUI = useUIStore((state) => state.hideUI);
   const showUI = useUIStore((state) => state.displayUI);
   const fitApps = useUIStore((state) => state.fitApps);
@@ -49,22 +35,16 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
   const markerColor = useUIStore((state) => state.markerColor);
   const setMarkerColor = useUIStore((state) => state.setMarkerColor);
 
-  // if a menu is currently closed, make it "jump" to the controller
-  useEffect(() => {
-    if (!show) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
-      setStuck(StuckTypes.Controller);
-      setWhiteboardMode(false);
-    } else {
-      setWhiteboardMode(true);
-    }
-  }, [show]);
+  // Get the annotation panel
+  const panel = usePanelStore((state) => state.getPanel('annotations'));
 
+  // Track the panel state to enable/disable the pen
   useEffect(() => {
-    if (stuck == StuckTypes.Controller) {
-      setPosition({ x: controllerPosition.x + 40, y: controllerPosition.y + 95 });
+    if (panel) {
+      if (panel.show) setWhiteboardMode(true);
+      else setWhiteboardMode(false);
     }
-  }, [controllerPosition]);
+  }, [panel, panel?.show]);
 
   const handleColorChange = (color: SAGEColors) => {
     setWhiteboardMode(true);
@@ -95,21 +75,7 @@ export function WhiteboardPanel(props: WhiteboardPanelProps) {
   };
 
   return (
-    <Panel
-      title={'Annotation'}
-      name="whiteboard"
-      opened={opened}
-      setOpened={setOpened}
-      setPosition={setPosition}
-      position={position}
-      width={600}
-      showClose={true}
-      show={show}
-      setShow={setShow}
-      stuck={stuck}
-      setStuck={setStuck}
-      zIndex={zIndex}
-    >
+    <Panel title="Annotations" name="annotations" width={600} showClose={false}>
       <Box alignItems="center" pb="1" width="100%" display="flex">
         <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
           <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>

@@ -14,10 +14,9 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
 import Quill from 'quill';
-import QuillCursors from 'quill-cursors';
 
 // Utility functions from SAGE3
-import { downloadFile, useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
@@ -26,7 +25,6 @@ import 'quill/dist/quill.snow.css';
 import './styles.css';
 
 // SAGE Imports
-import { useUser } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '@sage3/applications/schema';
@@ -41,9 +39,6 @@ import {
   MdOutlineList,
 } from 'react-icons/md';
 
-// Have to register the module before using it
-Quill.register('modules/cursors', QuillCursors);
-
 // Store between the app and the toolbar
 import create from 'zustand';
 
@@ -56,7 +51,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const quillRef = useRef(null);
   const toolbarRef = useRef(null);
-  const { user } = useUser();
   const setEditor = useStore((s: any) => s.setEditor);
   const updateState = useAppStore((state) => state.updateState);
 
@@ -68,7 +62,6 @@ function AppComponent(props: App): JSX.Element {
     if (quillRef.current && toolbarRef.current) {
       const quill = new Quill(quillRef.current, {
         modules: {
-          cursors: false,
           toolbar: toolbarRef.current,
           history: {
             userOnly: true,
@@ -76,7 +69,8 @@ function AppComponent(props: App): JSX.Element {
         },
         scrollingContainer: '#scrolling-container',
         placeholder: 'Start collaborating...',
-        theme: 'snow', // 'bubble' is also great
+        theme: 'snow',
+
       });
       // Save the instance for the toolbar
       setEditor(props._id, quill);
@@ -89,25 +83,15 @@ function AppComponent(props: App): JSX.Element {
       provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
 
       // Define a shared text type on the document
-      const ytext = ydoc.getText('quill');
+      ydoc.getText('quill');
 
       // Observe changes on the text, if user is source of the change, update sage
       quill.on('text-change', (delta, oldDelta, source) => {
         if (source == 'user') {
           const content = quill.getContents();
-          updateState(props._id, { content });
+          updateState(props._id, { content }).then(() => {});
         }
       });
-
-      // "Bind" the quill editor to a Yjs text type.
-      // Uses SAGE3 information to set the color of the cursor
-      binding = new QuillBinding(ytext, quill, provider.awareness);
-      if (user) {
-        provider.awareness.setLocalStateField('user', {
-          name: user.data.name,
-          color: user.data.color, // should be a hex color
-        });
-      }
 
       // Sync state with sage when a user connects and is the only one present
       provider.on('sync', () => {
@@ -134,7 +118,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
-        <div ref={toolbarRef} hidden></div>
+        <div ref={toolbarRef} hidden style={{pointerEvents:'none'}}></div>
         <div ref={quillRef}></div>
       </Box>
     </AppWindow>
@@ -329,18 +313,18 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Align Center'} openDelay={400}>
-          <Button onClick={(e) => formatLineAlign('center')}>
+          <Button onClick={() => formatLineAlign('center')}>
             <MdFormatAlignCenter />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Align Right'} openDelay={400}>
-          <Button onClick={(e) => formatLineAlign('right')}>
+          <Button onClick={() => formatLineAlign('right')}>
             <MdFormatAlignRight />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Justify'} openDelay={400}>
-          <Button onClick={(e) => formatLineAlign('justify')}>
+          <Button onClick={() => formatLineAlign('justify')}>
             <MdFormatAlignJustify />
           </Button>
         </Tooltip>
@@ -354,7 +338,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Numbered List'} openDelay={400}>
-          <Button onClick={(e) => formatLineList('ordered')}>
+          <Button onClick={() => formatLineList('ordered')}>
             <MdOutlineFormatListNumbered />
           </Button>
         </Tooltip>
