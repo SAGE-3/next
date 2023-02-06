@@ -47,7 +47,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
         justifyContent="flex-start"
         // Drag and drop the button to create an app
         onDragStart={onDragStart}
-        draggable={props.candrag === 'true' ? true : false}
+        draggable={props.candrag == 'true'}
       >
         {props.title}
       </Button>
@@ -77,7 +77,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           justifyContent="flex-center"
           aria-label={props.description}
           icon={props.icon}
-          background="transparent"
+          background={"transparent"}
           color={props.isActive ? iconHoverColor : iconColor}
           transition={'all 0.2s'}
           variant="ghost"
@@ -95,7 +95,6 @@ export type PanelProps = {
   name: PanelNames;
   height?: number;
   width: number;
-  zIndex: number;
   children?: JSX.Element;
   showClose: boolean;
   titleDblClick?: () => void;
@@ -104,7 +103,7 @@ export type PanelProps = {
 /**
  * Panel component
  * @export
- * @param {HeaderProps} props
+ * @param {PanelProps} props
  * @returns
  */
 export function Panel(props: PanelProps) {
@@ -114,10 +113,11 @@ export function Panel(props: PanelProps) {
   if (!panel) return null;
   const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
+  const zIndex = panels.findIndex(el => el.name == panel.name);
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);
 
   // Track the size of the panel
-  const [w, setW] = useState(props.width);
+  const [w,] = useState(props.width);
 
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
@@ -136,13 +136,6 @@ export function Panel(props: PanelProps) {
 
   // Panel Store
   const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
-
-  // if a menu is currently closed, make it "jump" to the controller
-  useEffect(() => {
-    if (!panel.show && panel.name !== 'controller') {
-      update({ stuck: StuckTypes.Controller });
-    }
-  }, [panel.show]);
 
   // Update the window size
   const updateDimensions = () => {
@@ -212,13 +205,7 @@ export function Panel(props: PanelProps) {
 
   const handleCloseClick = (e: any) => {
     e.stopPropagation();
-    const controller = panels.find((el) => el.name === 'controller');
-    if (controller) {
-      const position = { x: controller?.position.x, y: controller?.position.y + 100 };
-      update({ show: false, stuck: StuckTypes.Controller, position });
-    } else {
-      update({ show: false, stuck: StuckTypes.Controller });
-    }
+    update({show: false})
   };
 
   const handleMinimizeClick = (e: any) => {
@@ -227,22 +214,9 @@ export function Panel(props: PanelProps) {
   };
 
   // Handle a drag start of the panel
-  const handleDragStart = (event: any, data: DraggableData) => {
+  const handleDragStart = () => {
     bringPanelForward(props.name);
-  };
-
-  // Handle the drag of the panel
-  const handleDrag = (event: any, data: DraggableData) => {
-    if (panel.name === 'controller') {
-      panels
-        .filter((el) => el.name !== 'controller')
-        .forEach((el) => {
-          if (el.stuck === StuckTypes.Controller) {
-            updatePanel(el.name, { position: { x: data.x, y: data.y + 100 } });
-          }
-        });
-    }
-  };
+  }
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
@@ -295,10 +269,9 @@ export function Panel(props: PanelProps) {
         onClick={() => bringPanelForward(props.name)}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
-        onDrag={handleDrag}
         enableResizing={false}
         width="100%"
-        style={{ maxWidth: w + 'px', zIndex: props.zIndex }}
+        style={{ maxWidth: w + 'px', zIndex: 100 + zIndex }}
       >
         <Box
           display="flex"

@@ -107,7 +107,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
   };
 
   return (
-    <Panel title="Applications" name="applications" width={300} showClose={false} zIndex={100}>
+    <Panel title="Applications" name="applications" width={300} showClose={false}>
       <VStack
         maxH={300}
         w={'100%'}
@@ -135,14 +135,14 @@ export function ApplicationsPanel(props: ApplicationProps) {
             .map((appName) => {
               const isAi = aiApps.includes(appName);
               return !isAi ? (
-                <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+                <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={() => newApplication(appName as AppName)} />
               ) : null;
             })}
           <>AI Apps</>
           {/* <Box > */}
           {aiApps.map((appName) => {
             return appsList.includes(appName) ? (
-              <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={(e) => newApplication(appName as AppName)} />
+              <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={() => newApplication(appName as AppName)} />
             ) : null;
           })}
         </>

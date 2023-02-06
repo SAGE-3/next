@@ -57,7 +57,6 @@ export function AssetsPanel(props: AssetsPanelProps) {
     setRoomName(rooms.find((el) => el._id === props.roomId)?.data.name ?? 'Main Room');
     // Filter the asset keys for this room
     const filterbyRoom = assets.filter((k) => k.data.room === props.roomId);
-    const keys = Object.keys(filterbyRoom);
     // Create entries
     setAssetsList(
       filterbyRoom.map((item) => {
@@ -84,7 +83,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
 
   return (
     <>
-      <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={false} zIndex={100}>
+      <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={false}>
         <Box display="flex" flexDirection="column">
           <Box alignItems="center" p="1" width={'3xl'} display="flex">
             <Files files={assetsList} />

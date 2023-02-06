@@ -11939,6 +11939,11 @@ path-type@^4.0.0:
   resolved "https://registry.yarnpkg.com/path-type/-/path-type-4.0.0.tgz#84ed01c0a7ba380afe09d90a8c180dcd9d03043b"
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
 
+path2d-polyfill@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/path2d-polyfill/-/path2d-polyfill-2.0.1.tgz#24c554a738f42700d6961992bf5f1049672f2391"
+  integrity sha512-ad/3bsalbbWhmBo0D6FZ4RNMwsLsPpL6gnvhuSaU5Vm7b06Kr5ubSltQQ0T7YKsiJQO+g22zJ4dJKNTXIyOXtA==
+
 pause@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/pause/-/pause-0.0.1.tgz#1d408b3fdb76923b9543d96fb4c9dfd535d9cb5d"
@@ -11955,11 +11960,12 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-pdfjs-dist@^3.2.146:
-  version "3.2.146"
-  resolved "https://registry.yarnpkg.com/pdfjs-dist/-/pdfjs-dist-3.2.146.tgz#fffbd26e2da94a03adb43e8324d1c252ed7d46f5"
-  integrity sha512-wy1OB/v75usRD1LqgxBUWC+ZOiKTmG5J8c2z9XVFrVSSWiVbSuseNojmvFa/TT0pYtcFmkL4zn6KaxvqfPYMRg==
+pdfjs-dist@^3.3.122:
+  version "3.3.122"
+  resolved "https://registry.yarnpkg.com/pdfjs-dist/-/pdfjs-dist-3.3.122.tgz#750047cb347a8124092180fc4399d4f31f1de37b"
+  integrity sha512-98WC09jOq3OuqrmF5+LZfcyzTlGA0sY9ocMBbWZ/H6Pwni7deptxwkNZVLieOz+4nSoTEW25PsfnfOj3ELrHdA==
   dependencies:
+    path2d-polyfill "^2.0.1"
     web-streams-polyfill "^3.2.1"
   optionalDependencies:
     canvas "^2.11.0"
