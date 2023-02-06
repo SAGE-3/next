@@ -29,29 +29,92 @@ const bookmarkStore = require('./bookmarkstore');
  * Check to see if the provided url is a SAGE 3 server
  * The server must be running for this to return true
  * @param {string} check_url
- * @returns {Promise<boolean>} true if it is a sage3 server
+ * @returns {Promise<boolean | string>} false if not a sage3, a parsed url if it is a sage3 server
  */
 async function checkServerIsSage(input_url) {
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
-  let url = sanitizeUrl(input_url);
-  console.log(url);
-  const fetchUrl = `http://${url}/api/info`;
-  console.log(fetchUrl);
-  try {
-    const response = await fetch(fetchUrl, { method: 'GET', mode: 'cors' });
-    const response_json = await response.json();
-    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
-    if (response_json.isSage3) {
-      return true;
-    } else {
-      await dialogShowErrorMessage('Error', 'Not a SAGE3 server.');
-      return false;
-    }
-  } catch (e) {
-    await dialogShowErrorMessage('Error', 'Not a SAGE3 server.');
-    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
+  // Sanitize the URL
+  const sanitzedUrl = sanitizeUrl(input_url);
+  if (sanitzedUrl === 'about:blank') {
+    console.log('URL failed sanitizsation test');
     return false;
   }
+  // Parse the URL
+  const parsedUrls = updateUrl(sanitzedUrl);
+  console.log(parsedUrls);
+  const checkSecure = await verifySage3Server(parsedUrls.secured);
+  // Check https
+  if (checkSecure) {
+    console.log('This is a SAGE3 server.', parsedUrls.secured);
+    return parsedUrls.secured;
+  } else {
+    // Check http
+    const chceckUnsecure = await verifySage3Server(parsedUrls.unsecured);
+    if (chceckUnsecure) {
+      console.log('This is a SAGE3 server.', parsedUrls.unsecured);
+      return parsedUrls.unsecured;
+    } else {
+      // Not a sage3 server
+      await dialogShowErrorMessage('Error', 'This is not a valid SAGE3 URL.');
+      return false;
+    }
+  }
+}
+/**
+ * Verify a url is a sage3 server
+ * @param {*} url
+ * @returns {Promise<boolean>} TRUE is a sage 3 server
+ */
+async function verifySage3Server(url) {
+  try {
+    // First test the secure url
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+    const response = await fetch(url, { method: 'GET', mode: 'cors' });
+    const response_json = await response.json();
+    return response_json.isSage3;
+  } catch (e) {
+    console.log('Error Validating SAGE3 URL', e);
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
+    return false;
+  } finally {
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
+  }
+}
+
+/**
+ * Update the url to match:
+ * https://url/api/info
+ * http://url/api/info
+ * @param {*} url
+ * @returns {{secured: string, unsecured: string}}
+ */
+function updateUrl(url) {
+  let secured = '';
+  let unsecured = '';
+
+  if (!/^https?:\/\//i.test(url)) {
+    secured = 'https://' + url;
+    unsecured = 'http://' + url;
+  } else if (/^https:\/\//i.test(url)) {
+    secured = url;
+    unsecured = url.replace(/^https:\/\//i, 'http://');
+  } else {
+    unsecured = url;
+    secured = url.replace(/^http:\/\//i, 'https://');
+  }
+
+  const securedParsed = new URL(secured);
+  securedParsed.pathname = '/api/info';
+  securedParsed.search = '';
+  securedParsed.hash = '';
+  secured = securedParsed.toString();
+
+  const unsecuredParsed = new URL(unsecured);
+  unsecuredParsed.pathname = '/api/info';
+  unsecuredParsed.search = '';
+  unsecuredParsed.hash = '';
+  unsecured = unsecuredParsed.toString();
+
+  return { secured, unsecured };
 }
 
 /**

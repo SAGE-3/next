@@ -39,15 +39,7 @@ var version = require('./package.json').version;
 var firstRun = true;
 
 // Utilities
-const {
-  dialogShowErrorMessage,
-  dialogUserTextInput,
-  checkServerIsSage,
-  myParseInt,
-  takeScreenshot,
-  getAppDataPath,
-  updateLandingPage,
-} = require('./src/utils');
+const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = require('./src/utils');
 
 // MenuBuilder
 const { buildMenu } = require('./src/menuBuilder');
@@ -683,7 +675,7 @@ function createWindow() {
 
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
-    TakeScreenshot(mainWindow);
+    takeScreenshot(mainWindow);
   });
 
   // Request from user for Client Info

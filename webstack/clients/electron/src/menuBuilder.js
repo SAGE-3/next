@@ -13,7 +13,8 @@ const electron = require('electron');
 const bookmarkStore = require('./bookmarkstore');
 
 // Utils
-const { updateLandingPage, dialogUserTextInput } = require('./utils');
+const { updateLandingPage, dialogUserTextInput, checkServerIsSage } = require('./utils');
+const updater = require('./updater');
 
 /**
  * Build a menu template for a window
