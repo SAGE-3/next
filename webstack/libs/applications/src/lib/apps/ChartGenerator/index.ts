@@ -6,7 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { z } from 'zod';
+import { TypeOf, z } from 'zod';
+import { ChartTypeRegistry } from 'chart.js';
 
 /**
  * SAGE3 application: ChartGenerator
@@ -18,21 +19,27 @@ export const schema = z.object({
     width: z.number(),
     height: z.number(),
     title: z.string(),
+    xaxis: z.any(),
+    yaxis: z.any(),
   }),
   url: z.string(),
-  axis: z.object({
-    x: z.string().array(),
-    y: z.string().array(),
-    type: z.string().array(),
-    mode: z.string().array(),
-  }),
+  labelName: z.string(),
+  datasets: z
+    .object({
+      yDataName: z.string(),
+      chartType: z.any(),
+    })
+    .array(),
+  fontSizeMultiplier: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  layout: { width: 200, height: 200, title: 'A Fancy Plot' },
+  layout: { width: 200, height: 200, title: 'A Fancy Plot', xaxis: {}, yaxis: {} },
   url: '',
-  axis: { x: [''], y: [''], type: [''], mode: [''] },
+  datasets: [],
+  labelName: '',
+  fontSizeMultiplier: 15,
 };
 
 export const name = 'ChartGenerator';

@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore } from '@sage3/frontend';
-import { Box, Button, Container, Grid, HStack, IconButton, Select, useColorModeValue } from '@chakra-ui/react';
+import { useAppStore, useUIStore } from '@sage3/frontend';
+import { Box, Button, ButtonGroup, Container, Grid, HStack, IconButton, Select, useColorModeValue, Tooltip } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -16,50 +16,195 @@ import Plot from 'react-plotly.js';
 
 // Styling
 import './styling.css';
-import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
+import { ChangeEvent, SetStateAction, useEffect, useRef, useState } from 'react';
 import { FaBars } from 'react-icons/fa';
-import { MdAddCircle, MdClose } from 'react-icons/md';
+import { MdAdd, MdAddCircle, MdClose, MdRemove } from 'react-icons/md';
+import Plotly from 'plotly.js-dist-min';
+import { enUS } from 'date-fns/locale';
+import 'chartjs-adapter-date-fns';
 
-/* App component for PlotlyViewer */
+import {
+  Chart as ChartJS,
+  LinearScale,
+  CategoryScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Legend,
+  Tooltip as ChartJSTooltip,
+  LineController,
+  BarController,
+  TimeScale,
+  Title,
+} from 'chart.js';
+import { Chart, Line } from 'react-chartjs-2';
+import { debounce } from 'throttle-debounce';
+
+ChartJS.register(
+  LinearScale,
+  CategoryScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Legend,
+  ChartJSTooltip,
+  LineController,
+  BarController,
+  TimeScale,
+  Title
+);
+
 export const typeOptions = [
   {
     name: 'Bar Graph',
     value: 'bar',
   },
   {
-    name: 'Scatter Graph',
-    value: 'scatter',
+    name: 'Line Graph',
+    value: 'line',
   },
 ];
+
+const maxFontSize = 100;
+const minFontSize = 15;
+
+/* App component for PlotlyViewer */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const [open, setOpen] = useState(false);
   const [attributeNames, setAttributeNames] = useState<string[]>([]);
-  const [data, setData] = useState<never[]>([]);
+  const [data, setData] = useState<any[]>([]);
 
   const commonButtonColors = useColorModeValue('gray.300', 'gray.300');
   const buttonTextColor = useColorModeValue('white', 'black');
 
-  const [traces, setTraces] = useState<any[]>([
-    {
-      x: [1, 2, 3],
-      y: [2, 6, 3],
-      type: 'scatter',
-      mode: 'lines+markers',
-    },
-  ]);
+  const ref = useRef<HTMLDivElement>(null);
+  const scale = useUIStore((state) => state.scale);
 
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    let newTraces = traces;
-    for (let i = 0; i < newTraces.length; i++) {
-      newTraces[i].type = value;
+  const [labels, setLabels] = useState<string[]>([]);
+  const [chartData, setChartData] = useState<any>({
+    labels,
+    datasets: [
+      {
+        label: 'Dataset 1',
+        data: [1, 2, 3, 4],
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      },
+    ],
+  });
+  const [options, setOptions] = useState({
+    maintainAspectRatio: false,
+    responsive: true,
+    scales: {
+      y: {
+        ticks: {
+          font: {
+            size: 20 * (1 / scale),
+          },
+        },
+      },
+      x: {
+        type: 'time' as const,
+
+        adapters: {
+          date: {
+            locale: enUS,
+          },
+        },
+        ticks: {
+          font: {
+            size: 20 * (1 / scale),
+          },
+        },
+      },
+    },
+
+    plugins: {
+      title: {
+        display: true,
+        text: 'Line Chart',
+        font: { size: 20 * (1 / scale) },
+      },
+      legend: {
+        labels: {
+          // This more specific font property overrides the global property
+          font: {
+            size: 20 * (1 / scale),
+          },
+        },
+      },
+    },
+  });
+
+  // Saving the text after 1sec of inactivity
+  const debounceSave = debounce(500, (scale, fontSizeMultiplier) => {
+    let fontSize = fontSizeMultiplier * (1 / scale);
+    // let fontSize = 15 * (1 / val);
+    if (fontSize > maxFontSize) {
+      fontSize = maxFontSize;
     }
-    setTraces(newTraces);
-    console.log(value, newTraces);
-  };
+    if (fontSize < minFontSize) {
+      fontSize = minFontSize;
+    }
+    setOptions({
+      ...options,
+      scales: { y: { ticks: { font: { size: fontSize } } }, x: { ...options.scales.x, ticks: { font: { size: fontSize } } } },
+      plugins: {
+        title: {
+          display: true,
+          text: 'Line Chart',
+          font: { size: fontSize },
+        },
+        legend: {
+          labels: {
+            // This more specific font property overrides the global property
+            font: {
+              size: fontSize,
+            },
+          },
+        },
+      },
+    });
+  });
+  // Keep a copy of the function
+  const debounceFunc = useRef(debounceSave);
+
+  useEffect(() => {
+    debounceFunc.current(scale, s.fontSizeMultiplier);
+  }, [scale]);
+
+  useEffect(() => {
+    let fontSize = s.fontSizeMultiplier * (1 / scale);
+    // let fontSize = 15 * (1 / val);
+    if (fontSize > maxFontSize) {
+      fontSize = maxFontSize;
+    }
+    if (fontSize < minFontSize) {
+      fontSize = minFontSize;
+    }
+    setOptions({
+      ...options,
+      scales: { y: { ticks: { font: { size: fontSize } } }, x: { ...options.scales.x, ticks: { font: { size: fontSize } } } },
+      plugins: {
+        title: {
+          display: true,
+          text: 'Line Chart',
+          font: { size: fontSize },
+        },
+        legend: {
+          labels: {
+            // This more specific font property overrides the global property
+            font: {
+              size: fontSize,
+            },
+          },
+        },
+      },
+    });
+  }, [s.fontSizeMultiplier]);
 
   useEffect(() => {
     let climateData: never[] = [];
@@ -70,48 +215,70 @@ function AppComponent(props: App): JSX.Element {
         const attributeProps = Object.keys(climateData);
 
         setData(climateData);
-
         setAttributeNames(attributeProps);
       });
     });
   }, [s.url]);
-
   useEffect(() => {
-    let tmpTraces: SetStateAction<any[]> = [];
-    let xData = '';
-    let yData = '';
-
-    for (let i = 0; i < s.axis.x.length; i++) {
-      for (let j = 0; j < s.axis.y.length; j++) {
-        xData = s.axis.x[i];
-        yData = s.axis.y[j];
-        tmpTraces.push({
-          // @ts-ignore
-          x: data[xData],
-          // @ts-ignore
-          y: data[yData],
-          type: 'scatter',
-          mode: 'lines',
-        });
-      }
+    let tmpTraces: any[] = [];
+    let chartType = '';
+    let yDataName = '';
+    //Setting labels for X axis
+    for (let i = 0; i < s.datasets.length; i++) {
+      yDataName = s.datasets[i].yDataName;
+      chartType = s.datasets[i].chartType;
+      tmpTraces.push({
+        // @ts-ignore
+        type: chartType as const,
+        label: yDataName,
+        // @ts-ignore
+        data: data[yDataName],
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      });
     }
+    setChartData({
+      // @ts-ignore
+      labels: data[s.labelName],
+      datasets: [...tmpTraces],
+    });
+    // setRevCount(Math.floor(Math.random() * 1000000));
+  }, [JSON.stringify(data), JSON.stringify(s.datasets)]);
 
-    setTraces(tmpTraces);
-  }, [JSON.stringify(data), JSON.stringify(s.axis)]);
-
-  const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    updateState(props._id, { axis: { x: [value], y: s.axis.y } });
-  };
+  // const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  //   const value = e.target.value;
+  //   let tmpAxis = s.axis;
+  //   tmpAxis[0].x = value;
+  //   updateState(props._id, { datasets: tmpAxis });
+  // };
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    updateState(props._id, { axis: { x: s.axis.x, y: [value] } });
+    let newDatasets = [...s.datasets];
+    newDatasets[0].yDataName = value;
+    updateState(props._id, { datasets: newDatasets });
+  };
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    let newDatasets = [...s.datasets];
+    for (let i = 0; i < newDatasets.length; i++) {
+      newDatasets[i].chartType = value;
+    }
+    updateState(props._id, { datasets: newDatasets });
   };
 
   return (
     <AppWindow app={props}>
       <>
-        <div style={{ position: 'absolute', overflow: 'hidden', width: '400px', maxWidth: props.data.size.width, height: '100%' }}>
+        <div
+          style={{
+            position: 'absolute',
+            overflow: 'hidden',
+            width: '400px',
+            maxWidth: props.data.size.width,
+            height: '100%',
+            pointerEvents: open ? 'all' : 'none',
+          }}
+        >
           <div className="sideMenu" style={{ left: open ? 0 : '-100%', opacity: open ? 1.0 : 0.0 }}>
             <Button className="closeButton" onClick={() => setOpen(false)} backgroundColor={commonButtonColors} size="sm" mx="1">
               <MdClose color={buttonTextColor} />
@@ -121,24 +288,12 @@ function AppComponent(props: App): JSX.Element {
               <h1>Graph Type</h1>
               <Container>
                 <Box borderColor="black" maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
-                  <Select
-                    placeholder={
-                      traces.length > 0 ? typeOptions.find((typeOption) => typeOption.value == traces[0].type)?.name : 'Pick a chart type'
-                    }
-                    onChange={handleTypeChange}
-                  >
-                    {typeOptions.map((value, index) => {
-                      if (value.value == traces[0].type) {
-                        //do nothing
-                        return null;
-                      } else {
-                        return (
-                          <option value={value.value} key={index}>
-                            {value.name}
-                          </option>
-                        );
-                      }
-                    })}
+                  <Select placeholder={'Chart Type'} onChange={handleTypeChange}>
+                    {typeOptions.map((value, index) => (
+                      <option value={value.value} key={index}>
+                        {value.name}
+                      </option>
+                    ))}
                   </Select>
                 </Box>
               </Container>
@@ -146,7 +301,7 @@ function AppComponent(props: App): JSX.Element {
               <Container>
                 <Box maxW="sm" overflow="hidden">
                   <HStack>
-                    <Select
+                    {/* <Select
                       borderColor="black"
                       borderWidth="1px"
                       borderRadius="lg"
@@ -156,7 +311,7 @@ function AppComponent(props: App): JSX.Element {
                     >
                       {attributeNames.map((attributeName, index) => {
                         return (
-                          <option value={attributeName} key={index}>
+                          <option data-key={index} value={attributeName} key={index}>
                             {attributeName}
                           </option>
                         );
@@ -168,7 +323,7 @@ function AppComponent(props: App): JSX.Element {
                       borderWidth="1px"
                       borderRadius="lg"
                       icon={<MdAddCircle />}
-                    ></IconButton>
+                    ></IconButton> */}
                   </HStack>
                 </Box>
               </Container>
@@ -186,7 +341,7 @@ function AppComponent(props: App): JSX.Element {
                     >
                       {attributeNames.map((attributeName, index) => {
                         return (
-                          <option value={attributeName} key={index}>
+                          <option data-key={index} value={attributeName} key={index}>
                             {attributeName}
                           </option>
                         );
@@ -207,15 +362,22 @@ function AppComponent(props: App): JSX.Element {
         </div>
 
         <div className={open ? 'dimBackground' : undefined}>
-          <div onClick={() => setOpen(false)}>
-            <Plot
-              data={traces}
-              layout={{ width: props.data.size.width, height: props.data.size.height, title: s.layout.title }}
-              config={{ autosizable: true }}
-            />
+          <div onClick={() => setOpen(false)} style={{ width: props.data.size.width, height: props.data.size.height }}>
+            <Chart style={{ backgroundColor: 'white' }} options={options} data={chartData} type={'bar'} />;
           </div>
         </div>
-        <Button position="absolute" backgroundColor={commonButtonColors} size="sm" left="0" top="0" onClick={() => setOpen(true)}>
+
+        <Button
+          position="absolute"
+          backgroundColor={commonButtonColors}
+          size="sm"
+          left="0"
+          top="0"
+          onClick={(e: any) => {
+            e.preventDefault();
+            setOpen(true);
+          }}
+        >
           <FaBars color={buttonTextColor} />
         </Button>
       </>
@@ -229,9 +391,27 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
+  const increaseFontSize = () => {
+    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
+  };
+  const decreaseFontSize = () => {
+    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
+  };
+  console.log(s.fontSizeMultiplier);
   return (
     <>
-      <Button colorScheme="green">Action</Button>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+          <Button isDisabled={s.fontSizeMultiplier >= 30} onClick={increaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdAdd fontSize="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+          <Button isDisabled={s.fontSizeMultiplier <= 1} onClick={decreaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdRemove fontSize="16px" />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   );
 }

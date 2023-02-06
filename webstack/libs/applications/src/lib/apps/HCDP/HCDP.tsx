@@ -66,6 +66,25 @@ function AppComponent(props: App): JSX.Element {
 
   const createApp = useAppStore((state) => state.create);
 
+  const createChart = (appPos: { x: number; y: number; z: number }, stationName: string, axisTitle: string, climateProp: string) => {
+    createApp({
+      title: '',
+      roomId: props.data.roomId!,
+      boardId: props.data.boardId!,
+      position: appPos,
+      size: { width: 4000, height: 600, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'ChartGenerator',
+      state: {
+        labelName: 'date_time',
+        fontSizeMultiplier: 15,
+        datasets: [{ yDataName: climateProp, chartType: 'line' }],
+        url: `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`,
+      },
+      raised: true,
+    });
+  };
+
   const createAllCharts = (data: { lat: number; lon: number; name: string }) => {
     const stationName = data.name;
 
@@ -77,7 +96,6 @@ function AppComponent(props: App): JSX.Element {
     ).then((response) => {
       response.json().then((station) => {
         climateData = station['STATION'][0]['OBSERVATIONS'];
-        console.log(climateData);
         const climateProps = Object.keys(climateData);
         let newLineMultiplier = 0;
         let indexToRemove = climateProps.indexOf('date_time');
@@ -86,35 +104,32 @@ function AppComponent(props: App): JSX.Element {
         }
 
         for (let i = 0; i < climateProps.length; i++) {
+          let axisTitle = climateProps[i];
+          let words = axisTitle.split('_');
+          const removeTheseWords = (wordsToRemove: string[], words: string[]) => {
+            for (let i = 0; i < wordsToRemove.length; i++) {
+              const indexOfWord = words.indexOf(wordsToRemove[i]);
+              if (indexOfWord > -1) {
+                words.splice(indexOfWord, 1);
+              }
+            }
+          };
+          removeTheseWords(['set', '1', '2', '3'], words);
+          axisTitle = words.join(' ');
           appPos = {
             x: props.data.position.x,
-            y: props.data.position.y + props.data.size.height * (i + 1),
+            y: i == 0 ? props.data.position.y + props.data.size.height : props.data.position.y + 600 * (i + 1),
             z: 0,
           };
           //(Hack for HCDP data)
-          createApp({
-            title: '',
-            roomId: props.data.roomId!,
-            boardId: props.data.boardId!,
-            position: appPos,
-            size: { width: 7000, height: props.data.size.height, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'ChartGenerator',
-            state: {
-              layout: { width: props.data.size.width, height: props.data.size.height, title: `HCDP data for ${stationName}` },
-              axis: { y: [climateProps[i]], x: ['date_time'], type: ['scatter'], mode: [''] },
-              url: `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`,
-            },
-            raised: true,
-          });
+          createChart(appPos, stationName, axisTitle, climateProps[i]);
         }
       });
     });
   };
 
-  const createAppAtPos = (whereToCreateApp: string, traces: any[], stationName: string): void => {
+  const createAppAtPos = (whereToCreateApp: string, stationName: string): void => {
     let appPos = { x: props.data.position.x, y: props.data.position.y, z: 0 };
-    console.log(appPos, whereToCreateApp);
 
     switch (whereToCreateApp) {
       case 'top':
@@ -132,23 +147,7 @@ function AppComponent(props: App): JSX.Element {
       default:
         appPos = { x: 0, y: 0, z: 0 };
     }
-    console.log(appPos);
-    createApp({
-      title: '',
-      roomId: props.data.roomId!,
-      boardId: props.data.boardId!,
-      position: appPos,
-      size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'ChartGenerator',
-      state: {
-        traces: [],
-        layout: { width: props.data.size.width, height: props.data.size.height, title: `HCDP data for ${stationName}` },
-        axis: { y: [''], x: [''], type: ['scatter'], mode: [''] },
-        url: `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`,
-      },
-      raised: true,
-    });
+    createChart(appPos, stationName, '', '');
   };
   const createChartTemplate = (data: { lat: number; lon: number; name: string }) => {
     let climateData: any[] = [];
@@ -159,27 +158,8 @@ function AppComponent(props: App): JSX.Element {
     ).then((response) => {
       response.json().then((station) => {
         climateData = station['STATION'][0]['OBSERVATIONS'];
-        console.log(climateData);
-        const climateProps = Object.keys(climateData);
-        let traces = [];
-        // for (let i = 0; i < climateProps.length; i++) {
-        for (let i = 0; i < climateProps.length; i++) {
-          // @ts-ignore
-          if (climateProps[i] !== 'date_time' && climateProps[i] !== 'wind_cardinal_direction_set_1d') {
-            traces.push([
-              {
-                // @ts-ignore
-                x: climateData['date_time'],
-                // @ts-ignore
-                y: climateData[climateProps[i]],
-                type: 'scatter',
-                mode: 'lines+markers',
-              },
-            ]);
-          }
-        }
-        console.log(traces);
-        createAppAtPos('right', traces, stationName);
+
+        createAppAtPos('right', stationName);
       });
     });
   };

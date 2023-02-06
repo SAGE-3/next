@@ -114,7 +114,9 @@ function AppComponent(props: App): JSX.Element {
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!user) return;
-    if (e.repeat) { return }
+    if (e.repeat) {
+      return;
+    }
     if (e.code === 'Tab') {
       if (e.shiftKey) {
         // Create a new stickie
