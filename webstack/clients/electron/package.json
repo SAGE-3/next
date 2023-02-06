@@ -13,7 +13,8 @@
     "electron-prompt": "^1.7.0",
     "electron-store": "^8",
     "node-fetch": "^2.6.8",
-    "semver": "^7"
+    "semver": "^7",
+    "uuid": "8.3.0"
   },
   "devDependencies": {
     "electron": "21.3.3",
