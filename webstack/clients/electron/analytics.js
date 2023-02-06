@@ -1,8 +1,11 @@
 const { app, screen } = require('electron');
 const os = require('os');
 const fetch = require('node-fetch');
+const { v4 } = require('uuid');
 
 app.whenReady().then(async () => {
+  const userId = genUserId();
+
   // Get the screen sizes
   const displays = screen.getAllDisplays();
   const screens = [];
@@ -28,32 +31,12 @@ app.whenReady().then(async () => {
   const ip = getMachineIP();
   // console.log('IP>', ip);
 
-  // Geo location
-  const apikey = 'e4f8364b415048fc85f3c48e0669e08e';
-  const server = 'https://api.ipgeolocation.io/ipgeo';
-  const req_url = server + '?apiKey=' + apikey; // + '&ip=' + ip;
-  const response = await fetch(req_url);
-  const data = await response.json();
-  const geo_data = {
-    ip: data.ip,
-    continent_name: data.continent_name,
-    country_name: data.country_name,
-    state_prov: data.state_prov,
-    district: data.district,
-    city: data.city,
-    zipcode: data.zipcode,
-    latitude: data.latitude,
-    longitude: data.longitude,
-    is_eu: data.is_eu,
-    isp: data.isp,
-    organization: data.organization,
-  };
-  // console.log('Geo>', geo_data);
-
   const dateObj = new Date();
   const options = Intl.DateTimeFormat().resolvedOptions();
 
-  console.log({
+  const event_start = {
+    event: 'start',
+    userId,
     version,
     os: osInfo,
     cpu: cpuInfo,
@@ -62,11 +45,49 @@ app.whenReady().then(async () => {
     locale: options.locale,
     timezone: options.timeZone,
     ip,
-    geo: geo_data,
+  };
+  console.log(event_start);
+
+  // const server_url = 'http://localhost:3000/events';
+  const server_url = 'https://sage3.evl.uic.edu/events';
+
+  const p1 = await fetch(server_url, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(event_start),
   });
+  const p1data = await p1.json();
+  console.log('Return>', p1data);
+
+  const dateEnd = new Date();
+  const event_stop = {
+    event: 'stop',
+    date: dateEnd.toISOString(),
+    userId,
+  };
+
+  const p2 = await fetch(server_url, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(event_stop),
+  });
+  const p2_data = await p2.json();
+  console.log('Return>', p2_data);
+
+  console.log(event_stop);
 
   process.exit(0);
 });
+
+function genUserId() {
+  return v4();
+}
 
 function getMachineIP() {
   var os = require('os');
