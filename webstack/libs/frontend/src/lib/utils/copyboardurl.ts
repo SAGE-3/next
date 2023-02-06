@@ -10,3 +10,8 @@ export function copyBoardUrlToClipboard(roomId: string, boardId: string): void {
   const link = `sage3://${window.location.host}/#/enter/${roomId}/${boardId}`;
   navigator.clipboard.writeText(link);
 }
+
+export function generateSaveBoardURL(roomId: string, boardId: string): string {
+  const link = `http://${window.location.host}/#/enter/${roomId}/${boardId}`;
+  return link;
+}
