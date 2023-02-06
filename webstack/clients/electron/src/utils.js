@@ -35,22 +35,21 @@ async function checkServerIsSage(input_url) {
   // Sanitize the URL
   const sanitzedUrl = sanitizeUrl(input_url);
   if (sanitzedUrl === 'about:blank') {
-    console.log('URL failed sanitizsation test');
+    console.log('SAGE3> URL failed sanitizsation test');
     return false;
   }
   // Parse the URL
   const parsedUrls = updateUrl(sanitzedUrl);
-  console.log(parsedUrls);
   const checkSecure = await verifySage3Server(parsedUrls.secured);
   // Check https
   if (checkSecure) {
-    console.log('This is a SAGE3 server.', parsedUrls.secured);
+    console.log('SAGE3> This is a SAGE3 server.', parsedUrls.secured);
     return parsedUrls.secured;
   } else {
     // Check http
     const chceckUnsecure = await verifySage3Server(parsedUrls.unsecured);
     if (chceckUnsecure) {
-      console.log('This is a SAGE3 server.', parsedUrls.unsecured);
+      console.log('SAGE3> This is a SAGE3 server.', parsedUrls.unsecured);
       return parsedUrls.unsecured;
     } else {
       // Not a sage3 server
@@ -72,7 +71,7 @@ async function verifySage3Server(url) {
     const response_json = await response.json();
     return response_json.isSage3;
   } catch (e) {
-    console.log('Error Validating SAGE3 URL', e);
+    console.log('SAGE3> Error Validating SAGE3 URL', url);
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
     return false;
   } finally {
@@ -157,7 +156,7 @@ async function dialogUserTextInput(title, label, value) {
       return input;
     }
   } catch (e) {
-    console.log(e);
+    console.log('UserTextInput> error', e);
     return false;
   }
 }
