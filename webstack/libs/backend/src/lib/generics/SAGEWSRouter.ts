@@ -85,6 +85,21 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify(msg));
         });
         if (sub) cache.add(message.id, [sub]);
+      } else if (message.route.includes('?') && message.route.includes('=')) {
+        console.log(message.route);
+        const parsedQuery = message.route.split('?')[1].split('=');
+        if (parsedQuery.length != 2) {
+          socket.send(JSON.stringify({ id: message.id, success: false, message: 'Improper query format.' }));
+          return;
+        } else {
+          const prop = parsedQuery[0];
+          const query = parsedQuery[1];
+          const sub = await collection.subscribeByQuery(prop, query, (doc) => {
+            const msg = { id: message.id, event: doc };
+            socket.send(JSON.stringify(msg));
+          });
+          if (sub) cache.add(message.id, [sub]);
+        }
       }
       // Subscribe to one doc
       else if (message.route.startsWith(path + '/')) {
