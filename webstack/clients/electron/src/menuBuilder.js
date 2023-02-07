@@ -1,0 +1,392 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
+// Electorn
+const electron = require('electron');
+
+// Store
+const bookmarkStore = require('./bookmarkstore');
+
+// Utils
+const { updateLandingPage, dialogUserTextInput, checkServerIsSage } = require('./utils');
+const updater = require('./updater');
+
+/**
+ * Build a menu template for a window
+ * @param {*} window
+ * @returns
+ */
+function buildSageMenu(window) {
+  // Clear Bookmarks button
+  const clearBookmarks = {
+    label: 'Restore Original Bookmarks',
+    click: () => {
+      bookmarkStore.clear();
+      buildMenu(window);
+      updateLandingPage(window);
+    },
+  };
+
+  // Add the current location to the bookmarks
+  const addBookmark = {
+    label: 'Bookmark This Server',
+    click: async () => {
+      const url = window.webContents.getURL();
+      const isSage = await checkServerIsSage(url);
+      if (!isSage) return;
+      const name = await dialogUserTextInput('Name of Bookmark', 'Name', '');
+      if (name) {
+        bookmarkStore.addBookmark(name, url);
+        buildMenu(window);
+        updateLandingPage(window);
+      }
+    },
+  };
+
+  // Create bookmarks submenu
+  const bookmarks = bookmarkStore.getBookmarks().map((el) => {
+    return {
+      label: `${el.name}`,
+      click() {
+        if (window) {
+          window.loadURL(el.url);
+        }
+      },
+    };
+  });
+
+  // Remove a bookmark submenu
+  const removeBookmarks = bookmarkStore.getBookmarks().map((el) => {
+    return {
+      label: `${el.name}`,
+      click() {
+        bookmarkStore.removeBookmark(el.id);
+        buildMenu(window);
+        updateLandingPage(window);
+      },
+    };
+  });
+
+  // Menu template
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Return To Server List',
+          click() {
+            if (window) {
+              window.loadFile('./html/landing.html');
+            }
+          },
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Check for Updates...',
+          // accelerator: 'CommandOrControl+U',
+          click() {
+            if (window) {
+              const currentURL = window.webContents.getURL();
+              const parsedURL = new URL(currentURL);
+              updater.checkForUpdates(parsedURL.origin, true);
+            }
+          },
+        },
+        {
+          label: 'Clear Preferences',
+          click: function () {
+            // clear on quit
+            commander.clear = true;
+          },
+        },
+        {
+          label: 'Take Screenshot',
+          click() {
+            TakeScreenshot();
+          },
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Quit',
+          accelerator: 'CommandOrControl+Q',
+          click: function () {
+            electron.app.quit();
+          },
+        },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        {
+          label: 'Undo',
+          accelerator: 'CommandOrControl+Z',
+          role: 'undo',
+        },
+        {
+          label: 'Redo',
+          accelerator: 'Shift+CommandOrControl+Z',
+          role: 'redo',
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Cut',
+          accelerator: 'CommandOrControl+X',
+          role: 'cut',
+        },
+        {
+          label: 'Copy',
+          accelerator: 'CommandOrControl+C',
+          role: 'copy',
+        },
+        {
+          label: 'Paste',
+          accelerator: 'CommandOrControl+V',
+          role: 'paste',
+        },
+        {
+          label: 'Select All',
+          accelerator: 'CommandOrControl+A',
+          role: 'selectall',
+        },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Reload Site',
+          accelerator: 'CommandOrControl+R',
+          click: function (item, focusedWindow) {
+            if (focusedWindow) {
+              focusedWindow.reload();
+            }
+          },
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Actual Size',
+          accelerator: 'CommandOrControl+0',
+          // role: 'resetZoom',
+          click() {
+            if (window) {
+              window.webContents.setZoomLevel(0);
+            }
+          },
+        },
+        {
+          label: 'Zoom In',
+          accelerator: 'CommandOrControl+=',
+          // role: 'zoomIn',
+          click() {
+            if (window) {
+              const zl = window.webContents.getZoomLevel();
+              if (zl < 10) {
+                window.webContents.setZoomLevel(zl + 1);
+              }
+            }
+          },
+        },
+        {
+          label: 'Zoom Out',
+          accelerator: 'CommandOrControl+-',
+          // role: 'zoomOut',
+          click() {
+            if (window) {
+              const zl = window.webContents.getZoomLevel();
+              if (zl > -8) {
+                window.webContents.setZoomLevel(zl - 1);
+              }
+            }
+          },
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Toggle Full Screen',
+          accelerator: (function () {
+            if (process.platform === 'darwin') {
+              return 'Ctrl+Command+F';
+            } else {
+              return 'F11';
+            }
+          })(),
+          click: function (item, focusedWindow) {
+            if (focusedWindow) {
+              // focusedWindow.fullScreenable = !focusedWindow.isFullScreen();
+              focusedWindow.fullScreenable = true;
+              if (focusedWindow.isFullScreen()) {
+                focusedWindow.setFullScreen(false);
+                window.setMenuBarVisibility(true);
+              } else {
+                focusedWindow.setFullScreen(true);
+                window.setMenuBarVisibility(false);
+              }
+            }
+          },
+        },
+        {
+          label: 'Toggle Developer Tools',
+          accelerator: (function () {
+            if (process.platform === 'darwin') {
+              return 'Alt+Command+I';
+            } else {
+              return 'Ctrl+Shift+I';
+            }
+          })(),
+          click: function (item, focusedWindow) {
+            if (focusedWindow) {
+              focusedWindow.toggleDevTools();
+            }
+          },
+        },
+        {
+          label: 'Open local server (http://localhost:4200)',
+          click() {
+            if (window) {
+              window.loadURL('http://localhost:4200/');
+            }
+          },
+        },
+      ],
+    },
+    {
+      label: 'Bookmarks',
+      role: 'bookmarks',
+      submenu: [
+        ...bookmarks,
+        {
+          type: 'separator',
+        },
+        addBookmark,
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Remove Bookmark',
+          submenu: removeBookmarks,
+        },
+        clearBookmarks,
+      ],
+    },
+    {
+      label: 'Window',
+      role: 'window',
+      submenu: [
+        {
+          label: 'Minimize',
+          accelerator: 'CommandOrControl+M',
+          role: 'minimize',
+        },
+        {
+          label: 'Close',
+          accelerator: 'CommandOrControl+W',
+          role: 'close',
+        },
+      ],
+    },
+    {
+      label: 'Help',
+      role: 'help',
+      submenu: [
+        {
+          label: 'Learn More',
+          click: function () {
+            shell.openExternal('http://sage3.sagecommons.org/');
+          },
+        },
+      ],
+    },
+  ];
+
+  if (process.platform === 'darwin') {
+    const name = electron.app.name;
+    template.unshift({
+      label: name,
+      submenu: [
+        {
+          label: 'About ' + name,
+          role: 'about',
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Services',
+          role: 'services',
+          submenu: [],
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Hide ' + name,
+          accelerator: 'Command+H',
+          role: 'hide',
+        },
+        {
+          label: 'Hide Others',
+          accelerator: 'Command+Shift+H',
+          role: 'hideothers',
+        },
+        {
+          label: 'Show All',
+          role: 'unhide',
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Quit',
+          accelerator: 'Command+Q',
+          click: function () {
+            electron.app.quit();
+          },
+        },
+      ],
+    });
+    const windowMenu = template.find(function (m) {
+      return m.role === 'window';
+    });
+    if (windowMenu) {
+      windowMenu.submenu.push(
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Bring All to Front',
+          role: 'front',
+        }
+      );
+    }
+  }
+
+  return template;
+}
+
+/**
+ * Build the electron Menu system
+ * @param {Electron.BrowserWindow} The electron browser window menu to build
+ */
+function buildMenu(window) {
+  const menu = buildSageMenu(window);
+  electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(menu));
+}
+
+module.exports = {
+  buildMenu,
+};

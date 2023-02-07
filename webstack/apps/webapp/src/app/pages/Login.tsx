@@ -12,7 +12,7 @@ import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Center, Text
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
 
-import { useAuth, useRouteNav } from '@sage3/frontend';
+import { isElectron, useAuth, useRouteNav } from '@sage3/frontend';
 import { GetServerInfo } from '@sage3/frontend';
 
 // Logos
@@ -25,33 +25,25 @@ export function LoginPage() {
   const { toHome } = useRouteNav();
   // Server name and list
   const [serverName, setServerName] = useState<string>('');
-  const [serverList, setServerList] = useState<{ name: string; url: string }[]>();
   // state to disable login buttons during server switch: default is enabled
   const [shouldDisable, setShouldDisable] = useState(false);
+
+  const isElec = isElectron();
 
   // Retrieve the name of the server to display in the page
   useEffect(() => {
     GetServerInfo().then((conf) => {
       if (conf.serverName) setServerName(conf.serverName);
-      const servers = conf.servers;
-      setServerList(servers);
     });
   }, []);
 
-  // Callback when selection os done
-  const redirectHost = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    // Disable the login buttons
-    setShouldDisable(true);
-    // value selected
-    const host = e.target.value;
-    if (serverList) {
-      // find the matching name
-      const idx = serverList.findIndex((s) => s.name === host);
-      if (idx !== -1) {
-        // do the navigation
-        window.location.href = serverList[idx].url;
-      }
-    }
+  // Sending user back to the electron landing page
+  const goToLanding = () => {
+    window.electron.send('load-landing');
+  };
+
+  const goToClientDownload = () => {
+    window.open('https://sage3.sagecommons.org/', '_blank');
   };
 
   const authNavCheck = useCallback(() => {
@@ -86,21 +78,36 @@ export function LoginPage() {
         />
       </Box>
 
-      <Center>
-        <Text fontSize={'lg'}>Current Server: {serverName || '-'}</Text>
-      </Center>
-      <Center my="1rem" fontSize="lg">
-        <InputGroup width="17rem">
-          {/* Display the list of servers in a selectable list */}
-          <Select placeholder="Switch to server" value={serverName} onChange={redirectHost}>
-            {serverList?.map((s, idx) => (
-              <option key={idx} value={s.name}>
-                {s.name}
-              </option>
-            ))}
-          </Select>
-        </InputGroup>
-      </Center>
+      {/* Server Name */}
+      <Box left="2" top="1" position="absolute">
+        <Text
+          fontSize="xl"
+          flex="1 1 0px"
+          textOverflow={'ellipsis'}
+          overflow={'hidden'}
+          justifyContent="left"
+          display="flex"
+          width="100%"
+          userSelect="none"
+          whiteSpace={'nowrap'}
+        >
+          {serverName}
+        </Text>
+      </Box>
+
+      {isElec ? (
+        <Box left="2" bottom="2" position="absolute">
+          <Button colorScheme="teal" size="sm" onClick={goToLanding}>
+            Server List
+          </Button>
+        </Box>
+      ) : (
+        <Box left="2" bottom="2" position="absolute">
+          <Button colorScheme="teal" size="sm" onClick={goToClientDownload}>
+            Download Client
+          </Button>
+        </Box>
+      )}
 
       <Box width="300px">
         <VStack spacing={4}>

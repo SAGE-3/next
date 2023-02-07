@@ -414,7 +414,6 @@ function createWindow() {
   buildMenu(mainWindow);
 
   // analytics on start
-  console.log('State', commander.server);
   if (!commander.server.includes('localhost') && analytics_enabled) {
     analyticsOnStart(userId, state.server);
   } else {
