@@ -32,4 +32,4 @@ export const init: Partial<state> = {
   overlay: true,
 };
 
-export const name = 'HCDP';
+export const name = 'Hawaii Mesonet';
