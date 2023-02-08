@@ -103,7 +103,7 @@ async function startServer() {
 
   // Twilio Setup
   const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
-  const twilio = new SAGETwilio(config.twilio, AppsCollection, 10000, screenShareTimeLimit);
+  const twilio = new SAGETwilio(config.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
   app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
     if (authId === undefined) {

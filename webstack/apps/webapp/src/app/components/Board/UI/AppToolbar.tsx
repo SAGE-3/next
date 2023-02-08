@@ -10,12 +10,14 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react';
 
 import { ErrorBoundary } from 'react-error-boundary';
-import { MdClose, MdZoomOutMap, MdFullscreen } from 'react-icons/md';
+import { MdClose, MdZoomOutMap, MdFullscreen, MdCopyAll } from 'react-icons/md';
 
 import { useAppStore, useHexColor, useUIStore, usePresenceStore, useUsersStore } from '@sage3/frontend';
-// import {  useCursorBoardPosition } from '@sage3/frontend';
 
 import { Applications } from '@sage3/applications/apps';
+import { duplicate } from 'vega-lite';
+import { BsTrash } from 'react-icons/bs';
+import { HiOutlineTrash } from 'react-icons/hi';
 
 type AppToolbarProps = {
   boardId: string;
@@ -34,6 +36,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
   const update = useAppStore((state) => state.update);
+  const duplicate = useAppStore((state) => state.duplicateApps);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -220,15 +223,6 @@ export function AppToolbar(props: AppToolbarProps) {
           }
         }
       });
-      // if no viewport is overlapping, scale to window: I dont like it
-      // if (!done) {
-      //   let newsize = { width: 0.9 * window.innerWidth / scale, height: 0.9 * window.innerHeight / scale, depth: 0 };
-      //   const origin = uiToBoard(0, 0);
-      //   const newpos = { x: 0, y: 0, z: 0 };
-      //   newpos.x = origin.x + (window.innerWidth / scale - newsize.width) / 2;
-      //   newpos.y = origin.y + (window.innerHeight / scale - newsize.height) / 2;
-      //   update(app._id, { position: newpos, size: newsize });
-      // }
     }
   }
 
@@ -260,9 +254,14 @@ export function AppToolbar(props: AppToolbarProps) {
                 <MdFullscreen size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
-            <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">
-              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
-                <MdClose size="14px" color={buttonTextColor} />
+            <Tooltip placement="top" hasArrow={true} label={'Duplicate App'} openDelay={400} ml="1">
+              <Button onClick={() => duplicate([app._id])} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+                <MdCopyAll size="14px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
+                <HiOutlineTrash size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>
           </>

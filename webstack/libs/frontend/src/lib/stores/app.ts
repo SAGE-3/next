@@ -30,16 +30,17 @@ interface Applications {
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
   delete: (id: string) => Promise<void>;
-  unsubToBoard: () => void;
+  unsubToBoard: (uid: string) => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
   fetchBoardApps: (boardId: AppSchema['boardId']) => Promise<App[] | undefined>;
+  duplicateApps: (appIds: string[]) => void;
 }
 
 /**
  * The AppStore.
  */
 const AppStore = createVanilla<Applications>((set, get) => {
-  let boardSub: (() => void) | null = null;
+  let appsSub: (() => void) | null = null;
   return {
     apps: [],
     error: null,
@@ -79,13 +80,45 @@ const AppStore = createVanilla<Applications>((set, get) => {
         set({ error: { id, msg: res.message } });
       }
     },
-    unsubToBoard: () => {
+    unsubToBoard: (uid: string) => {
       // Unsubscribe old subscription
-      if (boardSub) {
-        boardSub();
-        boardSub = null;
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
       }
+      // Delete all your sreenshares when leaving board
+      get()
+        .apps.filter((a) => a._createdBy === uid && a.data.type === 'Screenshare')
+        .forEach((a) => get().delete(a._id));
       set({ apps: [] });
+    },
+    duplicateApps: (appIds: string[]) => {
+      // Get the current apps
+      const apps = get().apps;
+      // Find the apps to copy
+      const appsToCopy = apps.filter((a) => appIds.includes(a._id));
+      // One Way to Copy. Can come up with other ways
+      // This copies the apps to the right. Of all the selected apps.
+      // Caluclate the amount to shift the new apps to the right.
+      let xShift = 0;
+      let xmin = Number.POSITIVE_INFINITY;
+      let xmax = Number.NEGATIVE_INFINITY;
+      appsToCopy.forEach((a) => {
+        const s = a.data.size;
+        const p = a.data.position;
+        const right = p.x + s.width;
+        xmin = Math.min(xmin, p.x);
+        xmax = Math.max(xmax, right);
+      });
+      xShift = xmax - xmin + 40;
+      // Duplicate all the apps
+      appsToCopy.forEach((app) => {
+        // Deep Copy
+
+        const state = structuredClone(app.data);
+        state.position.x += xShift;
+        get().create(state);
+      });
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
       set({ apps: [], fetched: false });
@@ -98,14 +131,15 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
 
       // Unsubscribe old subscription
-      if (boardSub) {
-        boardSub();
-        boardSub = null;
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
       }
 
-      const route = `/subscription/boards/${boardId}`;
+      // const route = `/subscription/boards/${boardId}`;
+      const route = `/apps?boardId=${boardId}`;
       // Socket Listenting to updates from server about the current user
-      boardSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
+      appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
         const doc = message.doc as App;
         switch (message.type) {

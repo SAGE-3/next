@@ -8,7 +8,7 @@
 
 import { jwt } from 'twilio';
 
-import { TwilioConfiguration } from '@sage3/shared/types';
+import { PresenceSchema, TwilioConfiguration } from '@sage3/shared/types';
 import { SAGE3Collection } from '../generics';
 import { AppSchema } from '@sage3/applications/schema';
 
@@ -28,9 +28,15 @@ export class SAGETwilio {
    * @param clearAppsInterval How often to check the apps collection for twilio apps that have expired (ms)
    * @param expiration How long can twilio apps live before they expire (ms)
    */
-  constructor(config: TwilioConfiguration, appCollection: SAGE3Collection<AppSchema>, clearAppsInterval: number, expiration: number) {
+  constructor(
+    config: TwilioConfiguration,
+    appCollection: SAGE3Collection<AppSchema>,
+    presCollection: SAGE3Collection<PresenceSchema>,
+    clearAppsInterval: number,
+    expiration: number
+  ) {
     this.config = config;
-    this.clearTwilioApps(appCollection, clearAppsInterval, expiration);
+    this.clearTwilioApps(appCollection, presCollection, clearAppsInterval, expiration);
   }
 
   /**
@@ -57,17 +63,37 @@ export class SAGETwilio {
   }
 
   /**
-   * Clear twilio apps that have expired
+   * Clear twilio apps that have expired or the user has left the board
    */
-  private clearTwilioApps(appCollection: SAGE3Collection<AppSchema>, interval: number, expiration: number) {
+  private clearTwilioApps(
+    appCollection: SAGE3Collection<AppSchema>,
+    presCollection: SAGE3Collection<PresenceSchema>,
+    interval: number,
+    expiration: number
+  ) {
     setInterval(async () => {
       const apps = await appCollection.getAll(); // NOT IDEAL
-      if (apps) {
+      const pres = await presCollection.getAll();
+      if (apps && pres) {
         const screenshareApps = apps.filter((app) => app.data.type === 'Screenshare');
         const now = Date.now();
         screenshareApps.forEach((screenshare) => {
+          // If it has expired, deleted it.
           if (now - screenshare._createdAt > expiration) {
             appCollection.delete(screenshare._id);
+            return;
+          }
+          // If the user is no longer on this board or connected to server. Delete it.
+          // Is user still connected to sage 3
+          const user = pres.find((p) => p._id === screenshare._createdBy);
+          if (!user) {
+            appCollection.delete(screenshare._id);
+            return;
+          }
+          // User still on the board?
+          if (user.data.boardId !== screenshare.data.boardId) {
+            appCollection.delete(screenshare._id);
+            return;
           }
         });
       }
