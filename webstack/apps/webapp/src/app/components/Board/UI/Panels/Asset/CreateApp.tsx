@@ -217,6 +217,21 @@ export async function setupAppForFile(
           return response.json();
         })
         .then(function (spec) {
+          spec["cells"].forEach((cell: any) => {
+            if (cell["cell_type"] == "code") {
+            resolve({
+              title: file.originalfilename,
+              roomId: roomId,
+              boardId: boardId,
+              position: {x: xDrop, y: yDrop, z: 0},
+              size: {width: 400, height: 400, depth: 0},
+              rotation: {x: 0, y: 0, z: 0},
+              type: 'SageCell',
+              state: {...(initialValues['SageCell'] as AppState), code: cell["source"].toString()},
+              raised: true,
+            });
+            }
+          })
           // Create a notebook file in Jupyter with the content of the file
           GetConfiguration().then((conf) => {
             if (conf.token) {
