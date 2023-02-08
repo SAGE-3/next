@@ -52,7 +52,6 @@ import { setupApp } from './Drops';
 
 import imageHelp from './sage3-help.jpg';
 
-
 type HelpProps = {
   onClose: () => void;
   isOpen: boolean;
@@ -60,8 +59,7 @@ type HelpProps = {
 
 export function HelpModal(props: HelpProps) {
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}
-      size="5xl">
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="5xl">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>SAGE3 Help</ModalHeader>
@@ -77,7 +75,6 @@ export function HelpModal(props: HelpProps) {
     </Modal>
   );
 }
-
 
 type BackgroundProps = {
   roomId: string;
@@ -374,51 +371,125 @@ export function Background(props: BackgroundProps) {
               return response.json();
             })
             .then(async function (json) {
-              // Create a notebook file in Jupyter with the content of the file
-              GetConfiguration().then((conf) => {
-                if (conf.token) {
-                  // Create a new notebook
-                  let base: string;
-                  if (conf.production) {
-                    base = `https://${window.location.hostname}:4443`;
-                  } else {
-                    base = `http://${window.location.hostname}`;
-                  }
-                  // Talk to the jupyter server API
-                  const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
-                  const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-                  // Create a new notebook
-                  fetch(j_url, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Token ' + conf.token,
-                    },
-                    body: JSON.stringify(payload),
-                  })
-                    .then((response) => response.json())
-                    .then((res) => {
-                      console.log('Jupyter> notebook created', res);
-                      // Create a note from the json
-                      createApp(
-                        setupApp(
-                          '',
-                          'JupyterLab',
-                          xDrop,
-                          yDrop,
-                          props.roomId,
-                          props.boardId,
+              // create a sagecell app for each cell in the cells array
+              const cells = json.cells;
+              // const sourceCodeArray = cells.map((el: any) => {
+              //   if (el.cell_type === 'code') {
+              //     return el.source;
+              //   }
+              // });
+              // const sourceCode = sourceCodeArray.join(' ');
+              // createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 500, h: 1000 }, { code: sourceCode }));
 
-                          { w: 700, h: 700 },
-                          { notebook: a.data.originalfilename }
-                        )
-                      );
-                    });
+              // console.log(cells);
+              let y = yDrop;
+              let columnCount = 0;
+              const columnHeight = 5;
+              let x = xDrop;
+              const height = 400;
+              const width = 500;
+              const spacing = 40;
+              cells.forEach((cell: any) => {
+                if (cell.cell_type === 'code') {
+                  const sourceCode = (cell.source as []).join(' ');
+                  createApp(setupApp('', 'SageCell', x, y, props.roomId, props.boardId, { w: width, h: height }, { code: sourceCode }));
+                }
+                if (cell.cell_type === 'markdown') {
+                  createApp(
+                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: width, h: height }, { text: `markdown ${cell.source}` })
+                  );
+                }
+                if (cell.cell_type === 'raw') {
+                  createApp(
+                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: width, h: height }, { text: `markdown ${cell.source}` })
+                  );
+                }
+                if (cell.cell_type === 'display_data') {
+                  createApp(
+                    setupApp(
+                      '',
+                      'SageCell',
+                      x,
+                      y,
+                      props.roomId,
+                      props.boardId,
+                      { w: width, h: height },
+                      { output: JSON.stringify(cell.data) }
+                    )
+                  );
+                }
+                y = y + height + spacing;
+                columnCount++;
+                if (columnCount >= columnHeight) {
+                  columnCount = 0;
+                  x = x + width + spacing;
+                  y = yDrop;
                 }
               });
             });
         }
       });
+      // } else if (isPythonNotebook(fileType)) {
+      //   // Look for the file in the asset store
+      //   assets.forEach((a) => {
+      //     if (a._id === fileID) {
+      //       const localurl = '/api/assets/static/' + a.data.file;
+      //       // Get the content of the file
+      //       fetch(localurl, {
+      //         headers: {
+      //           'Content-Type': 'application/json',
+      //           Accept: 'application/json',
+      //         },
+      //       })
+      //         .then(function (response) {
+      //           return response.json();
+      //         })
+      //         .then(async function (json) {
+      //           // Create a notebook file in Jupyter with the content of the file
+      //           GetConfiguration().then((conf) => {
+      //             if (conf.token) {
+      //               // Create a new notebook
+      //               let base: string;
+      //               if (conf.production) {
+      //                 base = `https://${window.location.hostname}:4443`;
+      //               } else {
+      //                 base = `http://${window.location.hostname}`;
+      //               }
+      //               // Talk to the jupyter server API
+      //               const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+      //               const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
+      //               // Create a new notebook
+      //               fetch(j_url, {
+      //                 method: 'PUT',
+      //                 headers: {
+      //                   'Content-Type': 'application/json',
+      //                   Authorization: 'Token ' + conf.token,
+      //                 },
+      //                 body: JSON.stringify(payload),
+      //               })
+      //                 .then((response) => response.json())
+      //                 .then((res) => {
+      //                   console.log('Jupyter> notebook created', res);
+      //                   // Create a note from the json
+      //                   createApp(
+      //                     setupApp(
+      //                       '',
+      //                       'JupyterLab',
+      //                       xDrop,
+      //                       yDrop,
+      //                       props.roomId,
+      //                       props.boardId,
+
+      //                       { w: 700, h: 700 },
+      //                       { notebook: a.data.originalfilename }
+      //                     )
+      //                   );
+      //                 });
+      //             }
+      //           });
+      //         });
+      //     }
+      //   });
     } else if (isJSON(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
@@ -557,71 +628,79 @@ export function Background(props: BackgroundProps) {
   }
 
   // Question mark character for help
-  useHotkeys('shift+/', (event: KeyboardEvent): void | boolean => {
-    if (!user) return;
-    const x = cursorPosition.x;
-    const y = cursorPosition.y;
+  useHotkeys(
+    'shift+/',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
 
-    helpOnOpen();
+      helpOnOpen();
 
-    // show image or open doc
-    // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
-    // window.open(doc, '_blank');
+      // show image or open doc
+      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
+      // window.open(doc, '_blank');
 
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
 
   // Move the board with the arrow keys
-  useHotkeys('up, down, left, right', (event: KeyboardEvent): void | boolean => {
-    if (selectedAppId !== '') return;
-    const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
-    if (event.key === 'ArrowUp') {
-      setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
-    } else if (event.key === 'ArrowDown') {
-      setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
-    } else if (event.key === 'ArrowLeft') {
-      setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
-    } else if (event.key === 'ArrowRight') {
-      setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
-    }
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+  useHotkeys(
+    'up, down, left, right',
+    (event: KeyboardEvent): void | boolean => {
+      if (selectedAppId !== '') return;
+      const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
+      if (event.key === 'ArrowUp') {
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
+      } else if (event.key === 'ArrowDown') {
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
+      } else if (event.key === 'ArrowLeft') {
+        setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
+      } else if (event.key === 'ArrowRight') {
+        setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
+      }
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
   );
 
   // Zoom in/out of the board with the -/+ keys
-  useHotkeys('-, =', (event: KeyboardEvent): void | boolean => {
-    if (selectedAppId !== '') return;
-    if (event.key === '-') {
-      zoomOutDelta(-10, mousePosition);
-    } else if (event.key === '=') {
-      zoomInDelta(10, mousePosition);
-    }
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+  useHotkeys(
+    '-, =',
+    (event: KeyboardEvent): void | boolean => {
+      if (selectedAppId !== '') return;
+      if (event.key === '-') {
+        zoomOutDelta(-10, mousePosition);
+      } else if (event.key === '=') {
+        zoomInDelta(10, mousePosition);
+      }
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [mousePosition.x, mousePosition.y, selectedAppId] }
   );
 
   // Stickies Shortcut
-  useHotkeys('shift+s', (event: KeyboardEvent): void | boolean => {
-    if (!user) return;
-    const x = cursorPosition.x;
-    const y = cursorPosition.y;
-    createApp(
-      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
-    );
+  useHotkeys(
+    'shift+s',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
+      createApp(
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+      );
 
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
