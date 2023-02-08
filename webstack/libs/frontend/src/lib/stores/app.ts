@@ -30,7 +30,7 @@ interface Applications {
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
   delete: (id: string) => Promise<void>;
-  unsubToBoard: () => void;
+  unsubToBoard: (uid: string) => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
   fetchBoardApps: (boardId: AppSchema['boardId']) => Promise<App[] | undefined>;
 }
@@ -79,12 +79,16 @@ const AppStore = createVanilla<Applications>((set, get) => {
         set({ error: { id, msg: res.message } });
       }
     },
-    unsubToBoard: () => {
+    unsubToBoard: (uid: string) => {
       // Unsubscribe old subscription
       if (boardSub) {
         boardSub();
         boardSub = null;
       }
+      // Delete all your sreenshares when leaving board
+      get()
+        .apps.filter((a) => a._createdBy === uid && a.data.type === 'Screenshare')
+        .forEach((a) => get().delete(a._id));
       set({ apps: [] });
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
