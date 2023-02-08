@@ -12,14 +12,12 @@ import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import Plot from 'react-plotly.js';
 
 // Styling
 import './styling.css';
 import { ChangeEvent, SetStateAction, useEffect, useRef, useState } from 'react';
 import { FaBars } from 'react-icons/fa';
 import { MdAdd, MdAddCircle, MdClose, MdRemove } from 'react-icons/md';
-import Plotly from 'plotly.js-dist-min';
 import { enUS } from 'date-fns/locale';
 import 'chartjs-adapter-date-fns';
 
@@ -70,7 +68,7 @@ export const typeOptions = [
 const maxFontSize = 100;
 const minFontSize = 25;
 
-/* App component for PlotlyViewer */
+/* App component for ChartJSViewer */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -119,7 +117,7 @@ function AppComponent(props: App): JSX.Element {
           },
         },
         ticks: {
-          color: 'red',
+          color: 'white',
           font: {
             size: 20 * (1 / scale),
           },
@@ -274,8 +272,6 @@ function AppComponent(props: App): JSX.Element {
     const chart = chartRef.current;
     if (chart) {
       chart.options.color = 'white';
-      // @ts-ignore
-      if (chart.config.options) chart.scales.x.ticks.color = 'red';
     }
   }, []);
 

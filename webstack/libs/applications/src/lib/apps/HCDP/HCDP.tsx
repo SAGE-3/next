@@ -112,9 +112,17 @@ function AppComponent(props: App): JSX.Element {
         climateData = station['STATION'][0]['OBSERVATIONS'];
         const climateProps = Object.keys(climateData);
         let newLineMultiplier = 0;
-        let indexToRemove = climateProps.indexOf('date_time');
-        if (indexToRemove !== -1) {
-          climateProps.splice(indexToRemove, 1);
+        let indexOfDate_Time = climateProps.indexOf('date_time');
+        if (indexOfDate_Time !== -1) {
+          climateProps.splice(indexOfDate_Time, 1);
+        }
+        let indexOfWind_Direction_set_1 = climateProps.indexOf('wind_cardinal_direction_set_1');
+        if (indexOfWind_Direction_set_1 !== -1) {
+          climateProps.splice(indexOfWind_Direction_set_1, 1);
+        }
+        let indexOfWind_Direction_set_1d = climateProps.indexOf('wind_cardinal_direction_set_1d');
+        if (indexOfWind_Direction_set_1d !== -1) {
+          climateProps.splice(indexOfWind_Direction_set_1d, 1);
         }
 
         for (let i = 0; i < climateProps.length; i++) {
@@ -132,7 +140,7 @@ function AppComponent(props: App): JSX.Element {
           axisTitle = words.join(' ');
           appPos = {
             x: props.data.position.x,
-            y: i == 0 ? props.data.position.y + props.data.size.height : props.data.position.y + 600 * (i + 1),
+            y: i == 0 ? props.data.position.y + props.data.size.height : props.data.size.height + props.data.position.y + 600 * i,
             z: 0,
           };
           //(Hack for HCDP data)
@@ -206,7 +214,7 @@ function AppComponent(props: App): JSX.Element {
               // weight={100}
               // fill={true}
               fillOpacity={0.5}
-              radius={(3 / s.zoom) * 200}
+              radius={(3 / s.zoom) * 50}
               eventHandlers={{
                 mouseover: (e) => {
                   e.target.openPopup();
@@ -214,25 +222,27 @@ function AppComponent(props: App): JSX.Element {
               }}
             >
               <Popup className="leaflet-content">
-                <Box textAlign={'center'} height="500px" marginTop={'30px'}>
+                <Box textAlign={'center'} mb="1rem" height="250px">
                   <Center>
                     <VStack>
-                      <Text fontSize={'45px'}>Station: {data.name}</Text>
+                      <Text fontSize={'30px'} fontWeight="bold">
+                        Station: {data.name}
+                      </Text>
                       <Button
                         onClick={() => createAllCharts(data)}
                         color="gray.700"
                         colorScheme="blue"
-                        w={'60'}
-                        h={'20'}
-                        fontSize={'5xl'}
+                        w={'40'}
+                        h={'10'}
+                        fontSize={'3xl'}
                         mx="1"
                       >
                         All Data
                       </Button>
                       <Button
-                        w={'60'}
-                        h={'20'}
-                        fontSize={'5xl'}
+                        w={'40'}
+                        h={'10'}
+                        fontSize={'3xl'}
                         onClick={() => createChartTemplate(data)}
                         color="gray.700"
                         colorScheme="blue"

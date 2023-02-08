@@ -6,8 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { TypeOf, z } from 'zod';
-import { ChartTypeRegistry } from 'chart.js';
+import { z } from 'zod';
 
 /**
  * SAGE3 application: ChartGenerator

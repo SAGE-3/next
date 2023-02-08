@@ -27,7 +27,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   location: [21.297, -157.816],
-  zoom: 6,
+  zoom: 8,
   baseLayer: 'OpenStreetMap',
   overlay: true,
 };

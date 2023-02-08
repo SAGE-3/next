@@ -7263,11 +7263,6 @@ d3-collection@1, d3-collection@^1.0.4:
   resolved "https://registry.yarnpkg.com/d3-collection/-/d3-collection-1.0.7.tgz#349bd2aa9977db071091c13144d5e4f16b5b310e"
   integrity sha512-ii0/r5f4sjKNTfh84Di+DpztYwqKhEyUlKoPrzUFfeSkWxjW49xU2QzO9qrPrNkpdI0XJkfzvmTu8V2Zylln6A==
 
-d3-color@1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/d3-color/-/d3-color-1.4.1.tgz#c52002bf8846ada4424d55d97982fef26eb3bc8a"
-  integrity sha512-p2sTHSLCJI2QKunbGb7ocOh7DgTAn8IrLx21QRc/BSnodXM4sv6aLQlnfpvehFMLZEfBc6g9pH9SWQccFYfJ9Q==
-
 "d3-color@1 - 3", d3-color@3, d3-color@^3.0.1:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/d3-color/-/d3-color-3.1.0.tgz#395b2833dfac71507f12ac2f7af23bf819de24e2"
@@ -7404,13 +7399,6 @@ d3-hierarchy@^1.1.9:
   integrity sha512-3bYs1rOD33uo8aqJfKP3JWPAibgw8Zm2+L9vBKEHJ2Rg+viTR7o5Mmv5mZcieN+FRYaAOWX5SJATX6k1PWz72g==
   dependencies:
     d3-color "1 - 3"
-
-d3-interpolate@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/d3-interpolate/-/d3-interpolate-1.4.0.tgz#526e79e2d80daa383f9e0c1c1c7dcc0f0583e987"
-  integrity sha512-V9znK0zc3jOPV4VD2zZn0sDhZU3WAE2bmlxdIwwQPPzPjvyLkd8B3JUVdS1IDUFDkWZ72c9qnv1GK2ZagTZ8EA==
-  dependencies:
-    d3-color "1"
 
 d3-path@1:
   version "1.0.9"
@@ -13165,10 +13153,10 @@ plotly.js-dist-min@^2.18.1:
   resolved "https://registry.yarnpkg.com/plotly.js-dist-min/-/plotly.js-dist-min-2.18.1.tgz#50af31f0d672ab3a15193a9c2c8dc310c390a18f"
   integrity sha512-5JTifJvteLydAyYoFA1pqpI/c3jNuBJZmZuxWvIm6X+fEmIk/8KMfuJcBqMlHsG8Pz5SsapDHWxG5q+zndezEg==
 
-plotly.js@^2.18.0:
-  version "2.18.0"
-  resolved "https://registry.yarnpkg.com/plotly.js/-/plotly.js-2.18.0.tgz#b935aa5d87a08a579a5e713babac1d94a97a9152"
-  integrity sha512-EauUKlr03yI7v2K2BA0NobvJb1Na+uid0ZFKbLehpiR/WSnGO7tf5/cKnXl4TEqGYKnytj07Poek6JlXZC3jbg==
+plotly.js@^2.18.1:
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/plotly.js/-/plotly.js-2.18.1.tgz#f85919699bc6f1908107e34fd63486356be6cac0"
+  integrity sha512-ZOOWAI4X8vYPrlhKnO27+NdA99GIYvj0+DHFmPXMZCkfxMT8YWUb6th0og6HKCve727tH+7vWAkb+Hg+2KgtUA==
   dependencies:
     "@plotly/d3" "3.8.0"
     "@plotly/d3-sankey" "0.7.2"
@@ -13187,7 +13175,7 @@ plotly.js@^2.18.0:
     d3-geo "^1.12.1"
     d3-geo-projection "^2.9.0"
     d3-hierarchy "^1.1.9"
-    d3-interpolate "^1.4.0"
+    d3-interpolate "^3.0.1"
     d3-time "^1.1.0"
     d3-time-format "^2.2.3"
     fast-isnumeric "^1.1.4"
@@ -13952,6 +13940,11 @@ react-plotly.js@^2.6.0:
   integrity sha512-g93xcyhAVCSt9kV1svqG1clAEdL6k3U+jjuSzfTV7owaSU9Go6Ph8bl25J+jKfKvIGAEYpe4qj++WHJuc9IaeA==
   dependencies:
     prop-types "^15.8.1"
+
+react-plotly@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/react-plotly/-/react-plotly-1.0.0.tgz#addff804d47abe4e2abc49ad96f8a038cfe7f498"
+  integrity sha512-vVwqUePJ9gIdezCrT3dQDT4r6sL5bDGwdkhy/yR3cuXt9BWlwwyQ5wst5ouTdK6xCGSBB324Ok+EjcWTRo9qQQ==
 
 react-reconciler@^0.27.0:
   version "0.27.0"
@@ -15636,9 +15629,9 @@ tiny-invariant@^1.0.6:
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
 tinycolor2@^1.4.2:
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.5.2.tgz#7d30b4584d8b7d62b9a94dacc505614a6516a95f"
-  integrity sha512-h80m9GPFGbcLzZByXlNSEhp1gf8Dy+VX/2JCGUZsWLo7lV1mnE/XlxGYgRBoMLJh1lIDXP0EMC4RPTjlRaV+Bg==
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.6.0.tgz#f98007460169b0263b97072c5ae92484ce02d09e"
+  integrity sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==
 
 tinyqueue@^2.0.3:
   version "2.0.3"
