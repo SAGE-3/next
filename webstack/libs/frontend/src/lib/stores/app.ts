@@ -33,6 +33,7 @@ interface Applications {
   unsubToBoard: () => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
   fetchBoardApps: (boardId: AppSchema['boardId']) => Promise<App[] | undefined>;
+  duplicateApps: (appIds: string[]) => void;
 }
 
 /**
@@ -86,6 +87,33 @@ const AppStore = createVanilla<Applications>((set, get) => {
         boardSub = null;
       }
       set({ apps: [] });
+    },
+    duplicateApps: (appIds: string[]) => {
+      // Get the current apps
+      const apps = get().apps;
+      // Find the apps to copy
+      const appsToCopy = apps.filter((a) => appIds.includes(a._id));
+      // One Way to Copy. Can come up with other ways
+      // This copies the apps to the right. Of all the selected apps.
+      // Caluclate the amount to shift the new apps to the right.
+      let xShift = 0;
+      let xmin = Number.POSITIVE_INFINITY;
+      let xmax = Number.NEGATIVE_INFINITY;
+      appsToCopy.forEach((a) => {
+        const s = a.data.size;
+        const p = a.data.position;
+        const right = p.x + s.width;
+        xmin = Math.min(xmin, p.x);
+        xmax = Math.max(xmax, right);
+      });
+      xShift = xmax - xmin + 40;
+      // Duplicate all the apps
+      appsToCopy.forEach((app) => {
+        // Deep Copy
+        const state = JSON.parse(JSON.stringify(app.data)) as AppSchema;
+        state.position.x += xShift;
+        get().create(state);
+      });
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
       set({ apps: [], fetched: false });
