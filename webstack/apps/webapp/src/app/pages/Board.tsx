@@ -106,7 +106,7 @@ export function BoardPage() {
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
-      unsubBoard();
+      unsubBoard(user ? user._id : '');
       // Update the user's presence information
       if (user) updatePresence(user._id, { boardId: '', roomId: '', following: '' });
       // Set Selected app to empty
@@ -141,12 +141,11 @@ export function BoardPage() {
 
       {/* ServerName */}
       <HStack position="absolute" left="2">
-        <MdCloudQueue fontSize={"18px"} color={"darkgray"} />
+        <MdCloudQueue fontSize={'18px'} color={'darkgray'} />
         <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
           {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
         </Text>
       </HStack>
-
     </>
   );
 }
