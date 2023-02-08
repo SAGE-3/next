@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, usePresenceStore, useTwilioStore, useUser } from '@sage3/frontend';
+import { useTwilioStore, useUser } from '@sage3/frontend';
 import { useEffect } from 'react';
 
 export function Twilio(props: { roomName: string; connect: boolean }) {
