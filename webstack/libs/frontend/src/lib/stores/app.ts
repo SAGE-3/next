@@ -110,7 +110,8 @@ const AppStore = createVanilla<Applications>((set, get) => {
       // Duplicate all the apps
       appsToCopy.forEach((app) => {
         // Deep Copy
-        const state = JSON.parse(JSON.stringify(app.data)) as AppSchema;
+
+        const state = structuredClone(app.data);
         state.position.x += xShift;
         get().create(state);
       });
