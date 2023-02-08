@@ -39,7 +39,7 @@ interface Applications {
  * The AppStore.
  */
 const AppStore = createVanilla<Applications>((set, get) => {
-  let boardSub: (() => void) | null = null;
+  let appsSub: (() => void) | null = null;
   return {
     apps: [],
     error: null,
@@ -81,9 +81,9 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     unsubToBoard: () => {
       // Unsubscribe old subscription
-      if (boardSub) {
-        boardSub();
-        boardSub = null;
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
       }
       set({ apps: [] });
     },
@@ -98,16 +98,15 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
 
       // Unsubscribe old subscription
-      if (boardSub) {
-        boardSub();
-        boardSub = null;
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
       }
 
       // const route = `/subscription/boards/${boardId}`;
       const route = `/apps/?boardId=${boardId}`;
       // Socket Listenting to updates from server about the current user
-      boardSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
-        console.log(message);
+      appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
         const doc = message.doc as App;
         switch (message.type) {
