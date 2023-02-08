@@ -40,7 +40,7 @@ interface Applications {
  * The AppStore.
  */
 const AppStore = createVanilla<Applications>((set, get) => {
-  let boardSub: (() => void) | null = null;
+  let appsSub: (() => void) | null = null;
   return {
     apps: [],
     error: null,
@@ -82,9 +82,9 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     unsubToBoard: (uid: string) => {
       // Unsubscribe old subscription
-      if (boardSub) {
-        boardSub();
-        boardSub = null;
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
       }
       // Delete all your sreenshares when leaving board
       get()
@@ -131,14 +131,15 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
 
       // Unsubscribe old subscription
-      if (boardSub) {
-        boardSub();
-        boardSub = null;
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
       }
 
-      const route = `/subscription/boards/${boardId}`;
+      // const route = `/subscription/boards/${boardId}`;
+      const route = `/apps?boardId=${boardId}`;
       // Socket Listenting to updates from server about the current user
-      boardSub = await SocketAPI.subscribe<AppSchema | BoardSchema>(route, (message) => {
+      appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
         const doc = message.doc as App;
         switch (message.type) {
