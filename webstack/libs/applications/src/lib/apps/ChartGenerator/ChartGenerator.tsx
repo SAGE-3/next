@@ -6,21 +6,28 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// SAGE3 imports
 import { useAppStore, useUIStore } from '@sage3/frontend';
-import { Box, Button, ButtonGroup, Container, Grid, HStack, IconButton, Select, useColorModeValue, Tooltip } from '@chakra-ui/react';
 import { App } from '../../schema';
-
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
+// Chakra Imports styling
+import { Box, Button, ButtonGroup, Container, Grid, HStack, IconButton, Select, useColorModeValue, Tooltip } from '@chakra-ui/react';
+
+//Icon imports
+import { MdAdd, MdAddCircle, MdClose, MdRemove } from 'react-icons/md';
+import { FaBars } from 'react-icons/fa';
+
 // Styling
 import './styling.css';
-import { ChangeEvent, SetStateAction, useEffect, useRef, useState } from 'react';
-import { FaBars } from 'react-icons/fa';
-import { MdAdd, MdAddCircle, MdClose, MdRemove } from 'react-icons/md';
-import { enUS } from 'date-fns/locale';
-import 'chartjs-adapter-date-fns';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
+import { debounce } from 'throttle-debounce';
+
+// ChartJS imports
+import 'chartjs-adapter-date-fns';
+import { enUS } from 'date-fns/locale';
 import {
   Chart as ChartJS,
   LinearScale,
@@ -37,8 +44,8 @@ import {
   Colors,
 } from 'chart.js';
 import { Chart, Line } from 'react-chartjs-2';
-import { debounce } from 'throttle-debounce';
 
+// ChartJS register
 ChartJS.register(
   LinearScale,
   CategoryScale,
@@ -54,6 +61,7 @@ ChartJS.register(
   Colors
 );
 
+// Supported chart types
 export const typeOptions = [
   {
     name: 'Bar Graph',
@@ -65,25 +73,26 @@ export const typeOptions = [
   },
 ];
 
+// For scaling apps when zooming in and out of board
 const maxFontSize = 100;
 const minFontSize = 25;
 
 /* App component for ChartJSViewer */
 
 function AppComponent(props: App): JSX.Element {
+  //App State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.300');
+  const buttonTextColor = useColorModeValue('white', 'black');
+  const scale = useUIStore((state) => state.scale);
+
+  const chartRef = useRef<ChartJS>(null);
+
+  //Local State
   const [open, setOpen] = useState(false);
   const [attributeNames, setAttributeNames] = useState<string[]>([]);
   const [data, setData] = useState<any[]>([]);
-
-  const commonButtonColors = useColorModeValue('gray.300', 'gray.300');
-  const buttonTextColor = useColorModeValue('white', 'black');
-
-  const ref = useRef<HTMLDivElement>(null);
-  const scale = useUIStore((state) => state.scale);
-  const chartRef = useRef<ChartJS>(null);
-
   const [labels, setLabels] = useState<string[]>([]);
   const [chartData, setChartData] = useState<any>({
     labels,
@@ -133,6 +142,7 @@ function AppComponent(props: App): JSX.Element {
       },
       legend: {
         labels: {
+          color: 'white',
           // This more specific font property overrides the global property
           font: {
             size: 20 * (1 / scale),
@@ -142,16 +152,20 @@ function AppComponent(props: App): JSX.Element {
     },
   });
 
-  // Saving the text after 1sec of inactivity
+  // Updating the font sizes of the charts based on the zoom level
+  // Only update after 500 ms
   const debounceSave = debounce(500, (scale, fontSizeMultiplier) => {
     let fontSize = fontSizeMultiplier * (1 / scale);
-    // let fontSize = 15 * (1 / val);
+
+    // Just in case user's text gets too big or too small
     if (fontSize > maxFontSize) {
       fontSize = maxFontSize;
     }
     if (fontSize < minFontSize) {
       fontSize = minFontSize;
     }
+
+    // Update ChartJS options
     setOptions({
       ...options,
       scales: {
@@ -166,6 +180,7 @@ function AppComponent(props: App): JSX.Element {
         },
         legend: {
           labels: {
+            color: 'white',
             // This more specific font property overrides the global property
             font: {
               size: fontSize,
@@ -182,39 +197,41 @@ function AppComponent(props: App): JSX.Element {
     debounceFunc.current(scale, s.fontSizeMultiplier);
   }, [scale]);
 
-  // useEffect(() => {
-  //   let fontSize = s.fontSizeMultiplier * (1 / scale);
-  //   // let fontSize = 15 * (1 / val);
-  //   if (fontSize > maxFontSize) {
-  //     fontSize = maxFontSize;
-  //   }
-  //   if (fontSize < minFontSize) {
-  //     fontSize = minFontSize;
-  //   }
-  //   setOptions({
-  //     ...options,
-  //     scales: {
-  //       y: { ticks: { font: { size: fontSize } } },
-  //       x: { ...options.scales.x, ticks: { font: { size: fontSize } } },
-  //     },
-  //     plugins: {
-  //       title: {
-  //         display: false,
-  //         text: 'Line Chart',
-  //         font: { size: fontSize, color: 'red' },
-  //       },
-  //       legend: {
-  //         labels: {
-  //           // This more specific font property overrides the global property
-  //           font: {
-  //             size: fontSize,
-  //           },
-  //         },
-  //       },
-  //     },
-  //   });
-  // }, [s.fontSizeMultiplier]);
+  // Used to update font sizes in the toolbar +/-
+  useEffect(() => {
+    let fontSize = s.fontSizeMultiplier * (1 / scale);
+    if (fontSize > maxFontSize) {
+      fontSize = maxFontSize;
+    }
+    if (fontSize < minFontSize) {
+      fontSize = minFontSize;
+    }
+    setOptions({
+      ...options,
+      scales: {
+        y: { ticks: { font: { size: fontSize }, color: 'white' } },
+        x: { ...options.scales.x, ticks: { font: { size: fontSize }, color: 'white' } },
+      },
+      plugins: {
+        title: {
+          display: false,
+          text: 'Line Chart',
+          font: { size: fontSize },
+        },
+        legend: {
+          labels: {
+            color: 'white',
+            // This more specific font property overrides the global property
+            font: {
+              size: fontSize,
+            },
+          },
+        },
+      },
+    });
+  }, [s.fontSizeMultiplier]);
 
+  // Fetching HCDP datafrom state.url
   useEffect(() => {
     let climateData: never[] = [];
 
@@ -228,6 +245,8 @@ function AppComponent(props: App): JSX.Element {
       });
     });
   }, [s.url]);
+
+  // Update the chart if axis or data changes
   useEffect(() => {
     let tmpTraces: any[] = [];
     let chartType = '';
@@ -254,12 +273,15 @@ function AppComponent(props: App): JSX.Element {
     // setRevCount(Math.floor(Math.random() * 1000000));
   }, [JSON.stringify(data), JSON.stringify(s.datasets)]);
 
+  // Change y axis
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     let newDatasets = [...s.datasets];
     newDatasets[0].yDataName = value;
     updateState(props._id, { datasets: newDatasets });
   };
+
+  // Change chart type
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     let newDatasets = [...s.datasets];
@@ -268,12 +290,6 @@ function AppComponent(props: App): JSX.Element {
     }
     updateState(props._id, { datasets: newDatasets });
   };
-  useEffect(() => {
-    const chart = chartRef.current;
-    if (chart) {
-      chart.options.color = 'white';
-    }
-  }, []);
 
   return (
     <AppWindow app={props}>
@@ -306,11 +322,12 @@ function AppComponent(props: App): JSX.Element {
                   </Select>
                 </Box>
               </Container>
-              <h1>X values</h1>
-              <Container>
+              {/**TODO: May need to delete later? Will find out later if this makes sense with the HCDP data */}
+              {/* <h1>X values</h1> */}
+              {/* <Container>
                 <Box maxW="sm" overflow="hidden">
                   <HStack>
-                    {/* <Select
+                    <Select
                       borderColor="black"
                       borderWidth="1px"
                       borderRadius="lg"
@@ -332,10 +349,10 @@ function AppComponent(props: App): JSX.Element {
                       borderWidth="1px"
                       borderRadius="lg"
                       icon={<MdAddCircle />}
-                    ></IconButton> */}
+                    ></IconButton>
                   </HStack>
                 </Box>
-              </Container>
+              </Container> */}
               <h1>Y values</h1>
               <Container>
                 <Box maxW="sm" overflow="hidden">
@@ -356,13 +373,14 @@ function AppComponent(props: App): JSX.Element {
                         );
                       })}
                     </Select>
-                    <IconButton
+                    {/**TODO: Create a way to add more attributes on a single chart */}
+                    {/* <IconButton
                       aria-label="Add Field"
                       borderColor="black"
                       borderWidth="1px"
                       borderRadius="lg"
                       icon={<MdAddCircle />}
-                    ></IconButton>
+                    ></IconButton> */}
                   </HStack>
                 </Box>
               </Container>
@@ -400,13 +418,13 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
+  // Functions to increase/decrease font size for chart titles
   const increaseFontSize = () => {
     updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
   };
   const decreaseFontSize = () => {
     updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
   };
-  console.log(s.fontSizeMultiplier);
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">

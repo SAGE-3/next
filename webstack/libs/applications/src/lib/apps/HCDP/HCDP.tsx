@@ -7,6 +7,8 @@
  */
 
 import { useState } from 'react';
+
+// Chakra Imports
 import {
   HStack,
   InputGroup,
@@ -22,22 +24,24 @@ import {
   Box,
 } from '@chakra-ui/react';
 
+// SAGE3 imports
 import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 import { App } from '../../schema';
-
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
 
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { MapContainer, TileLayer, LayersControl, Marker, Popup, Circle, CircleMarker } from 'react-leaflet';
+import { TileLayer, LayersControl, Popup, CircleMarker } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
+// Store imports
 import create from 'zustand';
+
+// Icon imports
 import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
 
 // Zustand store to communicate with toolbar
@@ -51,9 +55,11 @@ export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
 
+// Max and min zoom for leaflet app
 const maxZoom = 18;
 const minZoom = 1;
 
+// For now, this is hard-coded. Will change when HCDP is ready.
 const stationData = [
   { lat: 20.8415, lon: -156.2948, name: '017HI' },
   { lat: 20.7067, lon: -156.3554, name: '016HI' },
@@ -73,13 +79,13 @@ const stationData = [
   { lat: 22.1975, lon: -159.421, name: '015HI' },
 ];
 
-// Leaflet App
+// HCDP app
 function AppComponent(props: App): JSX.Element {
+  // State and Store
   const s = props.data.state as AppState;
-
   const createApp = useAppStore((state) => state.create);
-  const scale = useUIStore((state) => state.scale);
 
+  // Function to generate charts either for createAllCharts, or createChartTemplate
   const createChart = (appPos: { x: number; y: number; z: number }, stationName: string, axisTitle: string, climateProp: string) => {
     createApp({
       title: '',
@@ -99,19 +105,21 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  // This function will fetch the HCDP data and create a chart for each property available
   const createAllCharts = (data: { lat: number; lon: number; name: string }) => {
     const stationName = data.name;
-
-    let climateData: any[] = [];
+    let climateData: any[] = []; // TODO, change to climate schema when HCDP is ready
     let appPos = { x: props.data.position.x, y: props.data.position.y, z: 0 };
 
+    // Fetch from the Mesonet website. Will change to HCDP database when website is ready
     fetch(
       `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
     ).then((response) => {
       response.json().then((station) => {
         climateData = station['STATION'][0]['OBSERVATIONS'];
-        const climateProps = Object.keys(climateData);
-        let newLineMultiplier = 0;
+        const climateProps = Object.keys(climateData); // Create an array will all properties
+
+        // Remove indices that are NOT quantiative, date_time, wind_cardinal_direction_set_1, and wind_cardinal_direction_set_1d
         let indexOfDate_Time = climateProps.indexOf('date_time');
         if (indexOfDate_Time !== -1) {
           climateProps.splice(indexOfDate_Time, 1);
@@ -125,8 +133,11 @@ function AppComponent(props: App): JSX.Element {
           climateProps.splice(indexOfWind_Direction_set_1d, 1);
         }
 
+        // Loop through climate properties and create a chart for each property
         for (let i = 0; i < climateProps.length; i++) {
           let axisTitle = climateProps[i];
+
+          // Used for creating title of axis
           let words = axisTitle.split('_');
           const removeTheseWords = (wordsToRemove: string[], words: string[]) => {
             for (let i = 0; i < wordsToRemove.length; i++) {
@@ -137,19 +148,22 @@ function AppComponent(props: App): JSX.Element {
             }
           };
           removeTheseWords(['set', '1', '2', '3'], words);
-          axisTitle = words.join(' ');
+          axisTitle = words.join(' '); // Axis title created
+
+          // Layout the apps in a Stacked Position
           appPos = {
             x: props.data.position.x,
-            y: i == 0 ? props.data.position.y + props.data.size.height : props.data.size.height + props.data.position.y + 600 * i,
+            y: props.data.size.height + props.data.position.y + 600 * i,
             z: 0,
           };
-          //(Hack for HCDP data)
+
           createChart(appPos, stationName, axisTitle, climateProps[i]);
         }
       });
     });
   };
 
+  // TODO: Can delete? Fow now, only used to create app to the right of HCDP app
   const createAppAtPos = (whereToCreateApp: string, stationName: string): void => {
     let appPos = { x: props.data.position.x, y: props.data.position.y, z: 0 };
 
@@ -171,6 +185,8 @@ function AppComponent(props: App): JSX.Element {
     }
     createChart(appPos, stationName, '', '');
   };
+
+  // Create a blank customizable chart
   const createChartTemplate = (data: { lat: number; lon: number; name: string }) => {
     let climateData: any[] = [];
     const stationName = data.name;
@@ -197,17 +213,6 @@ function AppComponent(props: App): JSX.Element {
           const height = 1;
           const width = height * 0.73;
           return (
-            // <Marker
-            //   key={index}
-            //   position={[data.lat, data.lon]}
-            //   icon={
-            //     new Leaflet.Icon({
-            //       iconUrl: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
-            //       iconSize: [width, height],
-            //       iconAnchor: [width / 2, height],
-            //     })
-            //   }
-            // >
             <CircleMarker
               center={{ lat: data.lat, lng: data.lon }}
               fillColor="rgb(244, 187, 68)"
@@ -254,7 +259,6 @@ function AppComponent(props: App): JSX.Element {
                 </Box>
               </Popup>
             </CircleMarker>
-            // </Marker>
           );
         })}
       </LayersControl.BaseLayer>
