@@ -29,10 +29,9 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
+import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh, MdStop } from 'react-icons/md';
 
 import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
-// import * as MEditor from 'monaco-editor';
 
 // UUID generation
 import { v4 as getUUID } from 'uuid';
@@ -368,7 +367,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       updateState(props.app._id, {
         code: code,
         output: '',
-        executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
+        executeInfo: { executeFunc: 'execute', params: { user_uuid: getUUID() } },
       });
     }
   };
@@ -382,11 +381,19 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     editor.current?.setValue('');
   };
 
-  // useEffect(() => {
-  //   if (s.code !== code) {
-  //     setCode(s.code);
-  //   }
-  // }, [s.code]);
+  useEffect(() => {
+    if (s.code !== code) {
+      setCode(s.code);
+    }
+  }, [s.code]);
+
+  // handle interrupt
+  const handleInterrupt = () => {
+    if (!user) return;
+    updateState(props.app._id, {
+      executeInfo: { executeFunc: 'interrupt', params: { user_uuid: user._id } },
+    });
+  };
 
   // Update from Monaco Editor
   function updateCode(value: string | undefined) {
@@ -404,7 +411,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   }, [s.fontSize]);
 
   // Get the reference to the Monaco Editor after it mounts
-  function handleEditorDidMount(ed: typeof Editor) {
+  function handleEditorDidMount(ed: Monaco) {
     editor.current = ed;
     editor.current.onDidChangeCursorPosition((ev: any) => {
       setPosition({ r: ev.position.lineNumber, c: ev.position.column });
@@ -427,24 +434,23 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             overflow: 'hidden',
             backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-            borderRadius: '4px',
           }}
         >
           <Editor
             onMount={handleEditorDidMount}
-            defaultValue={code}
+            value={code}
             onChange={updateCode}
             height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
             language={s.language}
             theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
             options={{
-              fontSize: `${fontSize}px`,
+              fontSize: fontSize,
               minimap: { enabled: false },
               lineNumbersMinChars: 4,
               acceptSuggestionOnCommitCharacter: true,
               acceptSuggestionOnEnter: 'on',
               accessibilitySupport: 'auto',
-              autoIndent: false,
+              autoIndent: "full",
               automaticLayout: true,
               codeLens: true,
               colorDecorators: true,
@@ -462,7 +468,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               formatOnPaste: false,
               formatOnType: false,
               hideCursorInOverviewRuler: false,
-              highlightActiveIndentGuide: true,
               links: true,
               mouseWheelZoom: false,
               multiCursorMergeOverlapping: true,
@@ -474,7 +479,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               readOnly: false,
               renderControlCharacters: false,
               renderFinalNewline: true,
-              renderIndentGuides: true,
               renderLineHighlight: 'all',
               renderWhitespace: 'none',
               revealHorizontalRightPadding: 30,
@@ -489,13 +493,8 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               smoothScrolling: false,
               suggestOnTriggerCharacters: true,
               wordBasedSuggestions: true,
-              wordSeparators: '~!@#$%^&*()-=+[{]}|;:\'",.<>/?',
               wordWrap: 'off',
-              wordWrapBreakAfterCharacters: '\t})]?|&,;',
-              wordWrapBreakBeforeCharacters: '{([+',
-              wordWrapBreakObtrusiveCharacters: '.',
               wordWrapColumn: 80,
-              wordWrapMinified: true,
               wrappingIndent: 'none',
             }}
           />
@@ -516,6 +515,20 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                     <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
                   )
                 }
+              />
+            </Tooltip>
+          ) : null}
+
+          {props.access ? (
+            <Tooltip hasArrow label="Stop" placement="right-start">
+              <IconButton
+                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
+                onClick={handleInterrupt}
+                aria-label={''}
+                disabled={user?._id !== s.kernel ? false : true}
+                bg={useColorModeValue('#FFFFFF', '#000000')}
+                variant="ghost"
+                icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
               />
             </Tooltip>
           ) : null}

@@ -22,7 +22,6 @@ class GenericSmartBit(SmartBit):
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(GenericSmartBit, self).__init__(**kwargs)
-        # self._some_private_info = {1: 2}
 
     def clean_up(self):
         pass

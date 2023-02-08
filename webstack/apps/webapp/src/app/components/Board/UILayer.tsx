@@ -140,7 +140,7 @@ export function UILayer(props: UILayerProps) {
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <AnnotationsPanel boardId={props.boardId} roomId={props.roomId} />
+      <AnnotationsPanel/>
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>

@@ -47,7 +47,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
         justifyContent="flex-start"
         // Drag and drop the button to create an app
         onDragStart={onDragStart}
-        draggable={props.candrag === 'true' ? true : false}
+        draggable={props.candrag == 'true'}
       >
         {props.title}
       </Button>
@@ -72,12 +72,12 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
         <IconButton
           borderRadius="md"
           h="auto"
-          p={1}
+          p={0} m={0}
           fontSize="4xl"
           justifyContent="flex-center"
           aria-label={props.description}
           icon={props.icon}
-          background="transparent"
+          background={"transparent"}
           color={props.isActive ? iconHoverColor : iconColor}
           transition={'all 0.2s'}
           variant="ghost"
@@ -95,7 +95,6 @@ export type PanelProps = {
   name: PanelNames;
   height?: number;
   width: number;
-  zIndex: number;
   children?: JSX.Element;
   showClose: boolean;
   titleDblClick?: () => void;
@@ -104,7 +103,7 @@ export type PanelProps = {
 /**
  * Panel component
  * @export
- * @param {HeaderProps} props
+ * @param {PanelProps} props
  * @returns
  */
 export function Panel(props: PanelProps) {
@@ -114,10 +113,11 @@ export function Panel(props: PanelProps) {
   if (!panel) return null;
   const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
+  const zIndex = panels.findIndex(el => el.name == panel.name);
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);
 
   // Track the size of the panel
-  const [w, setW] = useState(props.width);
+  const [w,] = useState(props.width);
 
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
@@ -136,13 +136,6 @@ export function Panel(props: PanelProps) {
 
   // Panel Store
   const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
-
-  // if a menu is currently closed, make it "jump" to the controller
-  useEffect(() => {
-    if (!panel.show && panel.name !== 'controller') {
-      update({ stuck: StuckTypes.Controller });
-    }
-  }, [panel.show]);
 
   // Update the window size
   const updateDimensions = () => {
@@ -212,13 +205,7 @@ export function Panel(props: PanelProps) {
 
   const handleCloseClick = (e: any) => {
     e.stopPropagation();
-    const controller = panels.find((el) => el.name === 'controller');
-    if (controller) {
-      const position = { x: controller?.position.x, y: controller?.position.y + 100 };
-      update({ show: false, stuck: StuckTypes.Controller, position });
-    } else {
-      update({ show: false, stuck: StuckTypes.Controller });
-    }
+    update({show: false})
   };
 
   const handleMinimizeClick = (e: any) => {
@@ -227,22 +214,9 @@ export function Panel(props: PanelProps) {
   };
 
   // Handle a drag start of the panel
-  const handleDragStart = (event: any, data: DraggableData) => {
+  const handleDragStart = () => {
     bringPanelForward(props.name);
-  };
-
-  // Handle the drag of the panel
-  const handleDrag = (event: any, data: DraggableData) => {
-    if (panel.name === 'controller') {
-      panels
-        .filter((el) => el.name !== 'controller')
-        .forEach((el) => {
-          if (el.stuck === StuckTypes.Controller) {
-            updatePanel(el.name, { position: { x: data.x, y: data.y + 100 } });
-          }
-        });
-    }
-  };
+  }
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
@@ -258,6 +232,7 @@ export function Panel(props: PanelProps) {
         } else if (data.y > winHeight - (he + 10)) {
           // bottom left
           update({ stuck: StuckTypes.BottomLeft, position: { x: 5, y: winHeight - he - 5 } });
+        } else {
           // middle left
           update({ stuck: StuckTypes.Left, position: { x: 5, y: data.y } });
         }
@@ -294,16 +269,15 @@ export function Panel(props: PanelProps) {
         onClick={() => bringPanelForward(props.name)}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
-        onDrag={handleDrag}
         enableResizing={false}
         width="100%"
-        style={{ maxWidth: w + 'px', zIndex: props.zIndex }}
+        style={{ maxWidth: w + 'px', zIndex: 100 + zIndex }}
       >
         <Box
           display="flex"
           transition="all .2s "
           bg={panelBackground}
-          p="2"
+          pt={1} pr={2} pb={2} pl={1}
           borderRadius={'md'}
           ref={ref}
           width="100%"
@@ -318,13 +292,13 @@ export function Panel(props: PanelProps) {
             backgroundImage={`radial-gradient(${gripColor} 2px, transparent 0)`}
             backgroundPosition="0 0"
             backgroundSize="8px 8px"
-            mr="3"
+            mr="2"
             cursor="move"
             className="dragHandle"
           />
 
           <Box bg={panelBackground} cursor="auto" maxWidth={w - 45 + 'px'}>
-            <Box mb={2} display="flex" justifyContent="space-between" flexWrap={'nowrap'} width="100%">
+            <Box mb={1} display="flex" justifyContent="space-between" flexWrap={'nowrap'} width="100%">
               <Box flexGrow={1} maxWidth={w - 80 + 'px'} className="dragHandle">
                 <Tooltip label={props.title} openDelay={500} placement="top" hasArrow={true}>
                   <Text
@@ -332,7 +306,6 @@ export function Panel(props: PanelProps) {
                     overflow={'hidden'}
                     textOverflow={'ellipsis'}
                     textAlign="left"
-                    mr="1"
                     color={textColor}
                     fontSize={bigFont}
                     fontWeight="bold"

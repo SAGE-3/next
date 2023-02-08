@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { App } from '@sage3/applications/schema';
@@ -22,6 +22,10 @@ export function Apps() {
   const resetZIndex = useUIStore((state) => state.resetZIndex);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+  // Save the previous location and scale when zoming to an application
+  const scale = useUIStore((state) => state.scale);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false })
 
   const { position } = useCursorBoardPosition();
 
@@ -89,8 +93,11 @@ export function Apps() {
       const x = aX;
       const y = aY;
 
-      setBoardPosition({ x, y });
-      setScale(zoom);
+      if (x !== boardPosition.x || y !== boardPosition.y || zoom !== scale) {
+        setPreviousLocation({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true });
+        setBoardPosition({ x, y });
+        setScale(zoom);
+      }
     }
   }
 
@@ -121,6 +128,16 @@ export function Apps() {
     { dependencies: [position.x, position.y, JSON.stringify(apps)] }
   );
 
+  // Un-Zoom with shift+z
+  useHotkeys('shift+z', () => {
+    if (previousLocation.set) {
+      setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
+      setScale(previousLocation.s);
+      setPreviousLocation((prev) => ({ ...prev, set: false }));
+    }
+  },
+    { dependencies: [previousLocation.set] }
+  );
 
   return (
     <>

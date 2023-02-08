@@ -27,7 +27,7 @@ import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // YJS
-import * as Y from 'yjs';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const YUtils = require('y-websocket/bin/utils');
 
 // Create the web server with Express
