@@ -10,12 +10,17 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react';
 
 import { ErrorBoundary } from 'react-error-boundary';
-import { MdClose, MdZoomOutMap } from 'react-icons/md';
+import { MdClose, MdZoomOutMap, MdFullscreen } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore, usePresenceStore, useUsersStore } from '@sage3/frontend';
+// import {  useCursorBoardPosition } from '@sage3/frontend';
+
 import { Applications } from '@sage3/applications/apps';
 
-type AppToolbarProps = {};
+type AppToolbarProps = {
+  boardId: string;
+  roomId: string;
+};
 
 /**
  * AppToolbar Component
@@ -28,6 +33,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
+  const update = useAppStore((state) => state.update);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -50,6 +56,10 @@ export function AppToolbar(props: AppToolbarProps) {
   const appDragging = useUIStore((state) => state.appDragging);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+  // Presence Information
+  const presences = usePresenceStore((state) => state.presences);
+  const users = useUsersStore((state) => state.users);
+  // const { uiToBoard } = useCursorBoardPosition();
 
   // Position state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -161,6 +171,67 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }
 
+  function isRectangleOverlap(rec1: number[], rec2: number[]) {
+    return (
+      Math.min(rec1[2], rec2[2]) - Math.max(rec1[0], rec2[0]) > 0 &&
+      Math.min(rec1[3], rec2[3]) - Math.max(rec1[1], rec2[1]) > 0
+    );
+  };
+
+  function scaleApp() {
+    if (app) {
+      const res = presences
+        .filter((el) => el.data.boardId === props.boardId)
+        .map((presence) => {
+          const u = users.find((el) => el._id === presence.data.userId);
+          if (!u) return null;
+          const viewport = presence.data.viewport;
+          const isWall = u.data.userType === 'wall';
+          return isWall ? viewport : null;
+        });
+      const r1 = [app.data.position.x, app.data.position.y, app.data.position.x + app.data.size.width, app.data.position.y + app.data.size.height];
+      let done = false;
+      res.forEach(v => {
+        // first true result will be used
+        if (v) {
+          const x = v.position.x;
+          const y = v.position.y;
+          const w = v.size.width;
+          const h = v.size.height;
+          const r2 = [x, y, x + w, y + h];
+          const overlapping = isRectangleOverlap(r1, r2);
+          if (overlapping) {
+            const appRatio = app.data.size.width / app.data.size.height;
+            const viewportRatio = w / h;
+            let newsize = structuredClone(v.size);
+            let newpos = structuredClone(v.position);
+            if (viewportRatio > appRatio) {
+              newsize.width = h * 0.9 * appRatio;
+              newsize.height = h * 0.9;
+            } else {
+              newsize.width = w * 0.9;
+              newsize.height = w * 0.9 / appRatio;
+            }
+            newpos.x = x + (w - newsize.width) / 2;
+            newpos.y = y + (h - newsize.height) / 2;
+            update(app._id, { size: newsize, position: newpos });
+            done = true;
+            return;
+          }
+        }
+      });
+      // if no viewport is overlapping, scale to window: I dont like it
+      // if (!done) {
+      //   let newsize = { width: 0.9 * window.innerWidth / scale, height: 0.9 * window.innerHeight / scale, depth: 0 };
+      //   const origin = uiToBoard(0, 0);
+      //   const newpos = { x: 0, y: 0, z: 0 };
+      //   newpos.x = origin.x + (window.innerWidth / scale - newsize.width) / 2;
+      //   newpos.y = origin.y + (window.innerHeight / scale - newsize.height) / 2;
+      //   update(app._id, { position: newpos, size: newsize });
+      // }
+    }
+  }
+
   function getAppToolbar() {
     if (app) {
       const Component = Applications[app.data.type].ToolbarComponent;
@@ -182,6 +253,11 @@ export function AppToolbar(props: AppToolbarProps) {
             <Tooltip placement="top" hasArrow={true} label={'Zoom to App'} openDelay={400} ml="1">
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" hasArrow={true} label={'Present inside Viewport'} openDelay={400} ml="1">
+              <Button onClick={() => scaleApp()} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+                <MdFullscreen size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">

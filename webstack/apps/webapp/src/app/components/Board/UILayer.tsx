@@ -120,7 +120,10 @@ export function UILayer(props: UILayerProps) {
 
   return (
     <Box display="flex" flexDirection="column" height="100vh" id="uilayer" position={'absolute'}>
-      <AppToolbar></AppToolbar>
+      <AppToolbar
+        boardId={props.boardId}
+        roomId={props.roomId}
+      ></AppToolbar>
 
       <ContextMenu divId="board">
         <BoardContextMenu
@@ -140,7 +143,7 @@ export function UILayer(props: UILayerProps) {
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <AnnotationsPanel/>
+      <AnnotationsPanel />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
