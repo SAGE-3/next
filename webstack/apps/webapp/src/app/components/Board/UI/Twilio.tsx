@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useTwilioStore, useUser } from '@sage3/frontend';
+import { useAppStore, usePresenceStore, useTwilioStore, useUser } from '@sage3/frontend';
 import { useEffect } from 'react';
 
 export function Twilio(props: { roomName: string; connect: boolean }) {
@@ -14,28 +14,27 @@ export function Twilio(props: { roomName: string; connect: boolean }) {
   const { user } = useUser();
 
   // Twilio Store to join and leave room when joining board
-  const joinTwilioRoom = useTwilioStore((state) => state.joinRoom);
-  const leaveTwilioRoom = useTwilioStore((state) => state.leaveRoom);
+  const { joinRoom, leaveRoom } = useTwilioStore((state) => state);
 
   // Handle joining and leaving twilio room when entering board
   useEffect(() => {
     // Join Twilio room
     if (user && props.connect) {
-      joinTwilioRoom(user?._id, props.roomName);
+      joinRoom(user._id, props.roomName);
     }
     // Uncmounting
     return () => {
       // Leave twilio room
-      leaveTwilioRoom();
+      leaveRoom();
     };
   }, []);
 
   // Handle joining and leaving twilio room when props.connect changes
   useEffect(() => {
     if (user && props.connect) {
-      joinTwilioRoom(user?._id, props.roomName);
+      joinRoom(user?._id, props.roomName);
     } else {
-      leaveTwilioRoom();
+      leaveRoom();
     }
   }, [props.connect]);
 
