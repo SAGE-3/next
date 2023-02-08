@@ -81,20 +81,17 @@ export class SAGETwilio {
           // If it has expired, deleted it.
           if (now - screenshare._createdAt > expiration) {
             appCollection.delete(screenshare._id);
-            console.log('Screenshare time limit reached. Deleting app.');
             return;
           }
           // If the user is no longer on this board or connected to server. Delete it.
           // Is user still connected to sage 3
           const user = pres.find((p) => p._id === screenshare._createdBy);
           if (!user) {
-            console.log("User is no longer connected to sage3. Deleting user's screenshare.");
             appCollection.delete(screenshare._id);
             return;
           }
           // User still on the board?
           if (user.data.boardId !== screenshare.data.boardId) {
-            console.log("User is no longer on the board where he screenshared. Deleting user's screenshare.");
             appCollection.delete(screenshare._id);
             return;
           }
