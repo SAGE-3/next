@@ -104,7 +104,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
 
       // const route = `/subscription/boards/${boardId}`;
-      const route = `/apps/?boardId=${boardId}`;
+      const route = `/apps?boardId=${boardId}`;
       // Socket Listenting to updates from server about the current user
       appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
