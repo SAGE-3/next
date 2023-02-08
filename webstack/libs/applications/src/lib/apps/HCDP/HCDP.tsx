@@ -7,7 +7,20 @@
  */
 
 import { useState } from 'react';
-import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue, propNames } from '@chakra-ui/react';
+import {
+  HStack,
+  InputGroup,
+  Input,
+  ButtonGroup,
+  Tooltip,
+  Button,
+  useColorModeValue,
+  propNames,
+  Text,
+  Center,
+  VStack,
+  Box,
+} from '@chakra-ui/react';
 
 import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 import { App } from '../../schema';
@@ -18,7 +31,7 @@ import { AppWindow } from '../../components';
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { MapContainer, TileLayer, LayersControl, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, LayersControl, Marker, Popup, Circle, CircleMarker } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
 
 // Import the CSS style sheet from the node_modules folder
@@ -65,6 +78,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const createApp = useAppStore((state) => state.create);
+  const scale = useUIStore((state) => state.scale);
 
   const createChart = (appPos: { x: number; y: number; z: number }, stationName: string, axisTitle: string, climateProp: string) => {
     createApp({
@@ -169,20 +183,68 @@ function AppComponent(props: App): JSX.Element {
       <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
         />
         {stationData.map((data, index) => {
+          const height = 1;
+          const width = height * 0.73;
           return (
-            <Marker key={index} position={[data.lat, data.lon]}>
-              <Popup>
-                <Button onClick={() => createAllCharts(data)} color="gray.700" colorScheme="blue" mx="1">
-                  All Data
-                </Button>
-                <Button onClick={() => createChartTemplate(data)} color="gray.700" colorScheme="blue">
-                  Chart Template
-                </Button>
+            // <Marker
+            //   key={index}
+            //   position={[data.lat, data.lon]}
+            //   icon={
+            //     new Leaflet.Icon({
+            //       iconUrl: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
+            //       iconSize: [width, height],
+            //       iconAnchor: [width / 2, height],
+            //     })
+            //   }
+            // >
+            <CircleMarker
+              center={{ lat: data.lat, lng: data.lon }}
+              fillColor="rgb(244, 187, 68)"
+              // weight={100}
+              // fill={true}
+              fillOpacity={0.5}
+              radius={(3 / s.zoom) * 200}
+              eventHandlers={{
+                mouseover: (e) => {
+                  e.target.openPopup();
+                },
+              }}
+            >
+              <Popup className="leaflet-content">
+                <Box textAlign={'center'} height="500px" marginTop={'30px'}>
+                  <Center>
+                    <VStack>
+                      <Text fontSize={'45px'}>Station: {data.name}</Text>
+                      <Button
+                        onClick={() => createAllCharts(data)}
+                        color="gray.700"
+                        colorScheme="blue"
+                        w={'60'}
+                        h={'20'}
+                        fontSize={'5xl'}
+                        mx="1"
+                      >
+                        All Data
+                      </Button>
+                      <Button
+                        w={'60'}
+                        h={'20'}
+                        fontSize={'5xl'}
+                        onClick={() => createChartTemplate(data)}
+                        color="gray.700"
+                        colorScheme="blue"
+                      >
+                        Template
+                      </Button>
+                    </VStack>
+                  </Center>
+                </Box>
               </Popup>
-            </Marker>
+            </CircleMarker>
+            // </Marker>
           );
         })}
       </LayersControl.BaseLayer>

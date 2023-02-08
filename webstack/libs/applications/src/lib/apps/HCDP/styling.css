@@ -7,3 +7,6 @@
  */
 
 /* CSS definitions for the app HCDP */
+.leaflet-content {
+  border-radius: 0px;
+}

@@ -36,6 +36,7 @@ import {
   BarController,
   TimeScale,
   Title,
+  Colors,
 } from 'chart.js';
 import { Chart, Line } from 'react-chartjs-2';
 import { debounce } from 'throttle-debounce';
@@ -51,7 +52,8 @@ ChartJS.register(
   LineController,
   BarController,
   TimeScale,
-  Title
+  Title,
+  Colors
 );
 
 export const typeOptions = [
@@ -66,7 +68,7 @@ export const typeOptions = [
 ];
 
 const maxFontSize = 100;
-const minFontSize = 15;
+const minFontSize = 25;
 
 /* App component for PlotlyViewer */
 
@@ -82,6 +84,7 @@ function AppComponent(props: App): JSX.Element {
 
   const ref = useRef<HTMLDivElement>(null);
   const scale = useUIStore((state) => state.scale);
+  const chartRef = useRef<ChartJS>(null);
 
   const [labels, setLabels] = useState<string[]>([]);
   const [chartData, setChartData] = useState<any>({
@@ -101,6 +104,7 @@ function AppComponent(props: App): JSX.Element {
     scales: {
       y: {
         ticks: {
+          color: 'white',
           font: {
             size: 20 * (1 / scale),
           },
@@ -115,6 +119,7 @@ function AppComponent(props: App): JSX.Element {
           },
         },
         ticks: {
+          color: 'red',
           font: {
             size: 20 * (1 / scale),
           },
@@ -125,7 +130,7 @@ function AppComponent(props: App): JSX.Element {
     plugins: {
       title: {
         display: true,
-        text: 'Line Chart',
+        text: '',
         font: { size: 20 * (1 / scale) },
       },
       legend: {
@@ -151,11 +156,14 @@ function AppComponent(props: App): JSX.Element {
     }
     setOptions({
       ...options,
-      scales: { y: { ticks: { font: { size: fontSize } } }, x: { ...options.scales.x, ticks: { font: { size: fontSize } } } },
+      scales: {
+        y: { ticks: { font: { size: fontSize }, color: 'white' } },
+        x: { ...options.scales.x, ticks: { font: { size: fontSize }, color: 'white' } },
+      },
       plugins: {
         title: {
-          display: true,
-          text: 'Line Chart',
+          display: false,
+          text: '',
           font: { size: fontSize },
         },
         legend: {
@@ -176,35 +184,38 @@ function AppComponent(props: App): JSX.Element {
     debounceFunc.current(scale, s.fontSizeMultiplier);
   }, [scale]);
 
-  useEffect(() => {
-    let fontSize = s.fontSizeMultiplier * (1 / scale);
-    // let fontSize = 15 * (1 / val);
-    if (fontSize > maxFontSize) {
-      fontSize = maxFontSize;
-    }
-    if (fontSize < minFontSize) {
-      fontSize = minFontSize;
-    }
-    setOptions({
-      ...options,
-      scales: { y: { ticks: { font: { size: fontSize } } }, x: { ...options.scales.x, ticks: { font: { size: fontSize } } } },
-      plugins: {
-        title: {
-          display: true,
-          text: 'Line Chart',
-          font: { size: fontSize },
-        },
-        legend: {
-          labels: {
-            // This more specific font property overrides the global property
-            font: {
-              size: fontSize,
-            },
-          },
-        },
-      },
-    });
-  }, [s.fontSizeMultiplier]);
+  // useEffect(() => {
+  //   let fontSize = s.fontSizeMultiplier * (1 / scale);
+  //   // let fontSize = 15 * (1 / val);
+  //   if (fontSize > maxFontSize) {
+  //     fontSize = maxFontSize;
+  //   }
+  //   if (fontSize < minFontSize) {
+  //     fontSize = minFontSize;
+  //   }
+  //   setOptions({
+  //     ...options,
+  //     scales: {
+  //       y: { ticks: { font: { size: fontSize } } },
+  //       x: { ...options.scales.x, ticks: { font: { size: fontSize } } },
+  //     },
+  //     plugins: {
+  //       title: {
+  //         display: false,
+  //         text: 'Line Chart',
+  //         font: { size: fontSize, color: 'red' },
+  //       },
+  //       legend: {
+  //         labels: {
+  //           // This more specific font property overrides the global property
+  //           font: {
+  //             size: fontSize,
+  //           },
+  //         },
+  //       },
+  //     },
+  //   });
+  // }, [s.fontSizeMultiplier]);
 
   useEffect(() => {
     let climateData: never[] = [];
@@ -233,8 +244,8 @@ function AppComponent(props: App): JSX.Element {
         label: yDataName,
         // @ts-ignore
         data: data[yDataName],
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        borderColor: 'rgb(255, 255, 255)',
+        backgroundColor: 'rgb(244, 187, 68)',
       });
     }
     setChartData({
@@ -245,12 +256,6 @@ function AppComponent(props: App): JSX.Element {
     // setRevCount(Math.floor(Math.random() * 1000000));
   }, [JSON.stringify(data), JSON.stringify(s.datasets)]);
 
-  // const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
-  //   const value = e.target.value;
-  //   let tmpAxis = s.axis;
-  //   tmpAxis[0].x = value;
-  //   updateState(props._id, { datasets: tmpAxis });
-  // };
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     let newDatasets = [...s.datasets];
@@ -265,6 +270,14 @@ function AppComponent(props: App): JSX.Element {
     }
     updateState(props._id, { datasets: newDatasets });
   };
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (chart) {
+      chart.options.color = 'white';
+      // @ts-ignore
+      if (chart.config.options) chart.scales.x.ticks.color = 'red';
+    }
+  }, []);
 
   return (
     <AppWindow app={props}>
@@ -363,7 +376,7 @@ function AppComponent(props: App): JSX.Element {
 
         <div className={open ? 'dimBackground' : undefined}>
           <div onClick={() => setOpen(false)} style={{ width: props.data.size.width, height: props.data.size.height }}>
-            <Chart style={{ backgroundColor: 'white' }} options={options} data={chartData} type={'bar'} />;
+            <Chart ref={chartRef} style={{ backgroundColor: 'black', color: 'white' }} options={options} data={chartData} type={'bar'} />;
           </div>
         </div>
 
