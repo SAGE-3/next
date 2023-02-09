@@ -1,0 +1,36 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
+/* CSS definitions for the app ChartGenerator */
+/* CSS definitions for the app vegaLiteViewer */
+.sideMenu {
+  left: 0;
+  height: 100%;
+  position: absolute;
+  z-index: 1;
+  color: black;
+  background-color: #ffffff;
+  border: 2px outset black;
+  border-left: none;
+  overflow: hidden;
+  top: 0;
+  bottom: 0;
+  transition: all ease-in-out 0.5s;
+  border-radius: 8px 8px 8px 8px;
+}
+
+.dimBackground {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.closeButton {
+  float: right;
+  margin-right: 5px;
+  margin-top: 5px;
+}
