@@ -248,7 +248,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Update the chart if axis or data changes
   useEffect(() => {
-    let tmpTraces: any[] = [];
+    const tmpTraces: any[] = [];
     let chartType = '';
     let yDataName = '';
     //Setting labels for X axis
@@ -276,7 +276,7 @@ function AppComponent(props: App): JSX.Element {
   // Change y axis
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    let newDatasets = [...s.datasets];
+    const newDatasets = [...s.datasets];
     newDatasets[0].yDataName = value;
     updateState(props._id, { datasets: newDatasets });
   };
@@ -284,7 +284,7 @@ function AppComponent(props: App): JSX.Element {
   // Change chart type
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    let newDatasets = [...s.datasets];
+    const newDatasets = [...s.datasets];
     for (let i = 0; i < newDatasets.length; i++) {
       newDatasets[i].chartType = value;
     }

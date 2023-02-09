@@ -9,23 +9,10 @@
 import { useState } from 'react';
 
 // Chakra Imports
-import {
-  HStack,
-  InputGroup,
-  Input,
-  ButtonGroup,
-  Tooltip,
-  Button,
-  useColorModeValue,
-  propNames,
-  Text,
-  Center,
-  VStack,
-  Box,
-} from '@chakra-ui/react';
+import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue, Text, Center, VStack, Box } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useAppStore, useHexColor } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 
@@ -120,15 +107,15 @@ function AppComponent(props: App): JSX.Element {
         const climateProps = Object.keys(climateData); // Create an array will all properties
 
         // Remove indices that are NOT quantiative, date_time, wind_cardinal_direction_set_1, and wind_cardinal_direction_set_1d
-        let indexOfDate_Time = climateProps.indexOf('date_time');
+        const indexOfDate_Time = climateProps.indexOf('date_time');
         if (indexOfDate_Time !== -1) {
           climateProps.splice(indexOfDate_Time, 1);
         }
-        let indexOfWind_Direction_set_1 = climateProps.indexOf('wind_cardinal_direction_set_1');
+        const indexOfWind_Direction_set_1 = climateProps.indexOf('wind_cardinal_direction_set_1');
         if (indexOfWind_Direction_set_1 !== -1) {
           climateProps.splice(indexOfWind_Direction_set_1, 1);
         }
-        let indexOfWind_Direction_set_1d = climateProps.indexOf('wind_cardinal_direction_set_1d');
+        const indexOfWind_Direction_set_1d = climateProps.indexOf('wind_cardinal_direction_set_1d');
         if (indexOfWind_Direction_set_1d !== -1) {
           climateProps.splice(indexOfWind_Direction_set_1d, 1);
         }
@@ -138,7 +125,7 @@ function AppComponent(props: App): JSX.Element {
           let axisTitle = climateProps[i];
 
           // Used for creating title of axis
-          let words = axisTitle.split('_');
+          const words = axisTitle.split('_');
           const removeTheseWords = (wordsToRemove: string[], words: string[]) => {
             for (let i = 0; i < wordsToRemove.length; i++) {
               const indexOfWord = words.indexOf(wordsToRemove[i]);
@@ -214,6 +201,7 @@ function AppComponent(props: App): JSX.Element {
           const width = height * 0.73;
           return (
             <CircleMarker
+              key={index}
               center={{ lat: data.lat, lng: data.lon }}
               fillColor="rgb(244, 187, 68)"
               // weight={100}
