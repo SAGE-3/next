@@ -93,7 +93,7 @@ function AppComponent(props: App): JSX.Element {
   const [open, setOpen] = useState(false);
   const [attributeNames, setAttributeNames] = useState<string[]>([]);
   const [data, setData] = useState<any[]>([]);
-  const [labels, setLabels] = useState<string[]>([]);
+  const [labels] = useState<string[]>([]);
   const [chartData, setChartData] = useState<any>({
     labels,
     datasets: [
@@ -101,7 +101,7 @@ function AppComponent(props: App): JSX.Element {
         label: 'Dataset 1',
         data: [1, 2, 3, 4],
         borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
       },
     ],
   });
@@ -256,9 +256,11 @@ function AppComponent(props: App): JSX.Element {
       yDataName = s.datasets[i].yDataName;
       chartType = s.datasets[i].chartType;
       tmpTraces.push({
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         type: chartType as const,
         label: yDataName,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         data: data[yDataName],
         borderColor: 'rgb(255, 255, 255)',
@@ -266,6 +268,7 @@ function AppComponent(props: App): JSX.Element {
       });
     }
     setChartData({
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       labels: data[s.labelName],
       datasets: [...tmpTraces],

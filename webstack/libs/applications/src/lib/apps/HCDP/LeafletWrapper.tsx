@@ -270,7 +270,7 @@ function LeafletWrapper(props: App & { children: any }) {
         doubleClickZoom={false}
         keyboard={false}
         preferCanvas={true}
-        style={{ height: `100%`, width: `100%` }}
+        style={{ height: `100%`, width: `100%`, zIndex: 0 }}
         ref={setMap}
         attributionControl={false}
         zoomControl={false}
