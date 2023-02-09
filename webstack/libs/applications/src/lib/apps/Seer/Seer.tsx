@@ -65,6 +65,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [access, setAccess] = useState<boolean>(true);
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const [code, setCode] = useState<string>(s.code);
 
@@ -73,7 +74,6 @@ function AppComponent(props: App): JSX.Element {
       prompt: e.target.value,
     });
   };
-
   // useEffect(() => {
   //   console.log('Seer useEffect called');
   //   console.log('Seer useEffect called: ' + s.executeInfo?.executeFunc);
@@ -142,6 +142,30 @@ function AppComponent(props: App): JSX.Element {
       executeInfo: { executeFunc: '', params: {} },
     });
   };
+
+  useEffect(() => {
+    update(props._id, {
+      // update the size of the app window
+      size: {
+        width: 800,
+        height: 170,
+        depth: 1,
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    // calculate the height of the monaco editor based on the number of lines
+    const lines = s.code.split('\n').length;
+    update(props._id, {
+      // update the size of the app window
+      size: {
+        width: 800,
+        height: 165 + lines * 20,
+        depth: 1,
+      },
+    });
+  }, [s.code]);
 
   return (
     <AppWindow app={props}>
@@ -243,7 +267,11 @@ function AppComponent(props: App): JSX.Element {
               ) : null}
             </VStack>
           </HStack>
-          {!s.code ? null : <InputBox app={props} access={true} />}
+          {
+            // If there is no code, don't show the input box
+            // if there is, resize the window to fit the input box
+            !s.code ? null : <InputBox app={props} access={true} />
+          }
         </Stack>
         {!s.output ? null : <OutputBox output={s.output} app={props} />}
       </Box>

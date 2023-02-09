@@ -7,7 +7,6 @@
  */
 
 import { z } from 'zod';
-import { executeInfoType } from '../SageCell';
 
 /**
  * SAGE3 application: Seer
