@@ -70,7 +70,6 @@ function AppComponent(props: App): JSX.Element {
         scrollingContainer: '#scrolling-container',
         placeholder: 'Start collaborating...',
         theme: 'snow',
-
       });
       // Save the instance for the toolbar
       setEditor(props._id, quill);
@@ -118,7 +117,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
-        <div ref={toolbarRef} hidden style={{pointerEvents:'none'}}></div>
+        <div ref={toolbarRef} hidden style={{ pointerEvents: 'none' }}></div>
         <div ref={quillRef}></div>
       </Box>
     </AppWindow>
@@ -344,7 +343,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
       <Tooltip placement="top" hasArrow={true} label={'Download as HTML'} openDelay={400}>
-        <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" mx="1">
+        <Button onClick={downloadHTML} size="xs" colorScheme="teal" mx="1">
           <MdFileDownload />
         </Button>
       </Tooltip>
