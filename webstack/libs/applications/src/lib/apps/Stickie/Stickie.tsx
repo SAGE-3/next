@@ -250,30 +250,20 @@ function ToolbarComponent(props: App): JSX.Element {
       <HStack>
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button
-              isDisabled={s.fontSize > 128}
-              onClick={() => handleIncreaseFont()}
-              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              disabled={locked}
-            >
+            <Button isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()} disabled={locked}>
               <MdAdd />
             </Button>
           </Tooltip>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button
-              isDisabled={s.fontSize <= 8}
-              onClick={() => handleDecreaseFont()}
-              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              disabled={locked}
-            >
+            <Button isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()} disabled={locked}>
               <MdRemove />
             </Button>
           </Tooltip>
         </ButtonGroup>
         {yours && (
           <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
-            <Button onClick={lockUnlock} colorScheme="teal" size="xs" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button onClick={lockUnlock} colorScheme="teal" size="xs">
               {locked ? <MdLock /> : <MdLockOpen />}
             </Button>
           </Tooltip>
@@ -282,12 +272,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
-            <Button onClick={downloadTxt} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button onClick={downloadTxt}>
               <MdFileDownload />
             </Button>
           </Tooltip>
           <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
-            <Button onClick={downloadMd} colorScheme="pink" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button onClick={downloadMd} colorScheme="pink">
               <MdFileDownload />
             </Button>
           </Tooltip>

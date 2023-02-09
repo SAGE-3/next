@@ -8,9 +8,10 @@
 
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure } from '@chakra-ui/react';
-import { MdClose, MdZoomOutMap } from 'react-icons/md';
+import { MdCopyAll, MdZoomOutMap } from 'react-icons/md';
 
 import { ConfirmModal, useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { HiOutlineTrash } from 'react-icons/hi';
 
 /**
  * Lasso Toolbar Component
@@ -23,11 +24,12 @@ export function LassoToolbar() {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
+  const duplicate = useAppStore((state) => state.duplicateApps);
 
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedApps);
   const fitApps = useUIStore((state) => state.fitApps);
-  const [showLasso, setShowLasso] = useState(lassoApps.length > 0)
+  const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
@@ -87,19 +89,18 @@ export function LassoToolbar() {
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
               <Tooltip placement="top" hasArrow={true} label={'Zoom To Selected Apps'} openDelay={400}>
-                <Button
-                  onClick={fitSelectedApps}
-                  size="xs"
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  mr="2px"
-                  colorScheme={'teal'}
-                >
+                <Button onClick={fitSelectedApps} size="xs" p="0" _hover={{ opacity: 0.7 }} mr="2px" colorScheme={'teal'}>
                   <MdZoomOutMap />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Close Selected Apps'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} mx="2px" colorScheme={'red'}>
-                  <MdClose />
+              <Tooltip placement="top" hasArrow={true} label={'Duplicate the Selected Apps'} openDelay={400}>
+                <Button onClick={() => duplicate(lassoApps)} size="xs" p="0" _hover={{ opacity: 0.7 }} mx="2px" colorScheme={'teal'}>
+                  <MdCopyAll />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Close the Selected Apps'} openDelay={400}>
+                <Button onClick={deleteOnOpen} size="xs" p="0" _hover={{ opacity: 0.7 }} mx="2px" colorScheme={'red'}>
+                  <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
             </Box>
