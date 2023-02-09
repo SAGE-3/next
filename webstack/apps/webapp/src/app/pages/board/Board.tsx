@@ -28,8 +28,8 @@ import {
 } from '@sage3/frontend';
 
 // Board Layers
-import { BackgroundLayer, UILayer } from '../components/Board';
-import { Clock } from '../components/Board/UI/Clock';
+import { BackgroundLayer, UILayer } from './components/Board';
+import { Clock } from './components/Board/ui/Clock';
 
 /**
  * The board page which displays the board and its apps.

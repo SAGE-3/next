@@ -11,7 +11,7 @@ import { Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabList, Tab
 
 import { JoinBoardCheck, serverConfiguration, useData, MainButton } from '@sage3/frontend';
 
-import { Clock } from '../components/Board/UI/Clock';
+import { Clock } from '../board/components/Board/ui/Clock';
 import { Link } from 'react-router-dom';
 
 import './adminStyle.css';

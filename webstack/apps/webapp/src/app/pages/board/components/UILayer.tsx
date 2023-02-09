@@ -12,13 +12,13 @@ import JSZip from 'jszip';
 
 import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
 
-import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, AnnotationsPanel } from './UI/Panels';
-import { BoardContextMenu } from './UI/BoardContextMenu';
-import { ClearBoardModal } from './UI/ClearBoardModal';
-import { AppToolbar } from './UI/AppToolbar';
-import { Twilio } from './UI/Twilio';
-import { Alfred } from './UI/Alfred';
-import { LassoToolbar } from './UI/LassoToolbar';
+import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, AnnotationsPanel } from './ui/Panels';
+import { BoardContextMenu } from './ui/BoardContextMenu';
+import { ClearBoardModal } from './ui/ClearBoardModal';
+import { AppToolbar } from './ui/AppToolbar';
+import { Twilio } from './ui/Twilio';
+import { Alfred } from './ui/Alfred';
+import { LassoToolbar } from './ui/LassoToolbar';
 
 type UILayerProps = {
   boardId: string;
@@ -140,7 +140,7 @@ export function UILayer(props: UILayerProps) {
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <AnnotationsPanel/>
+      <AnnotationsPanel />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>

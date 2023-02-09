@@ -24,7 +24,7 @@ import {
 import { Board, Room } from '@sage3/shared/types';
 
 import { useParams } from 'react-router-dom';
-import { Clock } from '../components/Board/UI/Clock';
+import { Clock } from '../board/components/Board/ui/Clock';
 
 export function HomePage() {
   // URL Params
