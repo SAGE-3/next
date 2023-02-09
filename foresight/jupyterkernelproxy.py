@@ -61,7 +61,7 @@ class JupyterKernelProxy:
 
         def received_message(self, msg):
             # check if the message
-            print(f"processing a message {msg}")
+            # print(f"processing a message {msg}")
             msg = json.loads(msg.data.decode("utf-8"))
             msg_id_uuid = str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0]))
             result = {}
