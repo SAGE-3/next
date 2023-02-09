@@ -87,3 +87,74 @@ tbody tr:hover {
 .highlight {
   background-color: #ffffff;
 }
+
+.editor {
+  display: inline-flex;
+  gap: 10px;
+  font-family: monospace;
+  line-height: 21px;
+  background: #282a3a;
+  border-radius: 2px;
+  padding: 20px 10px;
+}
+
+.line-numbers {
+  width: 20px;
+  text-align: right;
+}
+
+.line-numbers span {
+  counter-increment: linenumber;
+}
+
+.line-numbers span::before {
+  content: counter(linenumber);
+  display: block;
+  color: #506882;
+}
+
+textarea {
+  line-height: 21px;
+  overflow-y: hidden;
+  padding: 0;
+  border: 0;
+  background: #282a3a;
+  color: #fff;
+  min-width: 500px;
+  outline: none;
+  resize: none;
+}
+
+.textarea-with-line-numbers {
+  display: flex;
+  position: relative;
+}
+
+.line-numbers {
+  background-color: #f5f5f5;
+  color: #999;
+  font-size: 14px;
+  text-align: right;
+  width: 50px;
+  padding: 10px;
+  user-select: none;
+}
+
+.line-numbers span {
+  display: block;
+  padding: 2px 0;
+}
+
+textarea {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  height: 300px;
+  padding: 10px;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 50px;
+  bottom: 0;
+  right: 0;
+}

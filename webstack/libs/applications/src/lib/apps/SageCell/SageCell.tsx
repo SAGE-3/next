@@ -27,6 +27,7 @@ import {
   VStack,
   Flex,
   Spinner,
+  Textarea,
 } from '@chakra-ui/react';
 
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh, MdStop } from 'react-icons/md';
@@ -312,6 +313,59 @@ function ToolbarComponent(props: App): JSX.Element {
 
 export default { AppComponent, ToolbarComponent };
 
+// interface Props {
+//   className?: string;
+// }
+
+// const TextAreaWithLineNumbers: React.FC<Props> = ({ className }) => {
+//   const [numberOfLines, setNumberOfLines] = useState(1);
+//   const textareaRef = useRef<HTMLTextAreaElement>(null);
+//   const lineNumbersRef = useRef<HTMLDivElement>(null);
+
+//   useEffect(() => {
+//     const textarea = textareaRef.current;
+//     const lineNumbers = lineNumbersRef.current;
+
+//     if (!textarea || !lineNumbers) return;
+
+//     const handleKeyUp = (event: KeyboardEvent) => {
+//       const numberOfLines = (event.target as HTMLTextAreaElement).value.split('\n').length;
+
+//       setNumberOfLines(numberOfLines);
+//     };
+
+//     const handleKeyDown = (event: KeyboardEvent) => {
+//       if (event.key === 'Tab') {
+//         const start = textarea.selectionStart;
+//         const end = textarea.selectionEnd;
+
+//         textarea.value = textarea.value.substring(0, start) + '\t' + textarea.value.substring(end);
+
+//         event.preventDefault();
+//       }
+//     };
+
+//     textarea.addEventListener('keyup', handleKeyUp);
+//     textarea.addEventListener('keydown', handleKeyDown);
+
+//     return () => {
+//       textarea.removeEventListener('keyup', handleKeyUp);
+//       textarea.removeEventListener('keydown', handleKeyDown);
+//     };
+//   }, []);
+
+//   return (
+//     <div className={className}>
+//       <div className="line-numbers" ref={lineNumbersRef}>
+//         {Array.from({ length: numberOfLines }, (_, i) => (
+//           <span key={i + 1}>{i + 1}</span>
+//         ))}
+//       </div>
+//       <textarea ref={textareaRef} />
+//     </div>
+//   );
+// };
+
 type InputBoxProps = {
   app: App;
   access: boolean; //Does this user have access to the sagecell's selected kernel
@@ -418,6 +472,42 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     });
   }
 
+  const [numberOfLines, setNumberOfLines] = useState(1);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    const lineNumbers = lineNumbersRef.current;
+
+    if (!textarea || !lineNumbers) return;
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const numberOfLines = (event.target as HTMLTextAreaElement).value.split('\n').length;
+
+      setNumberOfLines(numberOfLines);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        textarea.value = textarea.value.substring(0, start) + '\t' + textarea.value.substring(end);
+
+        event.preventDefault();
+      }
+    };
+
+    textarea.addEventListener('keyup', handleKeyUp);
+    textarea.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      textarea.removeEventListener('keyup', handleKeyUp);
+      textarea.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <Box>
       <HStack>
@@ -436,7 +526,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
           }}
         >
-          <Editor
+          {/* <Editor
             onMount={handleEditorDidMount}
             value={code}
             onChange={updateCode}
@@ -496,6 +586,54 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               wordWrap: 'off',
               wordWrapColumn: 80,
               wrappingIndent: 'none',
+            }}
+          /> */}
+          {/* <div className="line-numbers" ref={lineNumbersRef}>
+            {Array.from({ length: numberOfLines }, (_, i) => (
+              <span key={i + 1}>{i + 1}</span>
+            ))}
+          </div> */}
+          {/* <div className="textarea-with-line-numbers">
+            <div className="line-numbers" ref={lineNumbersRef}>
+              {Array.from({ length: numberOfLines }, (_, i) => (
+                <span key={i + 1}>{i + 1}</span>
+              ))}
+            </div>
+            <textarea ref={textareaRef} value={code} onChange={(e) => updateCode(e.target.value)}></textarea>
+          </div> */}
+          <Textarea
+            value={code}
+            onChange={(e) => updateCode(e.target.value)}
+            height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
+            fontSize={fontSize}
+            color={useColorModeValue('#000000', '#FFFFFF')}
+            backgroundColor={useColorModeValue('#F0F2F6', '#111111')}
+            boxShadow="none"
+            resize="none"
+            overflow="hidden"
+            padding={0}
+            margin={0}
+            border="none"
+            outline="none"
+            _focus={{
+              outline: 'none',
+              border: 'none',
+            }}
+            // make it look like a code editor
+            _placeholder={{
+              color: useColorModeValue('#000000', '#FFFFFF'),
+              opacity: 0.5,
+            }}
+            placeholder="Write your code here..."
+            // add line numbers to the textarea
+            // https://stackoverflow.com/questions/454202/creating-a-textarea-with-line-numbers
+            style={{
+              fontFamily: 'monospace',
+              overflow: 'hidden',
+              whiteSpace: 'pre',
+              wordWrap: 'normal',
+              tabSize: 2,
+              MozTabSize: 2,
             }}
           />
         </Box>
@@ -629,78 +767,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.display_data.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.display_data.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  default:
+                    return MapJSONObject(parsedJSON.display_data[key]);
+                }
+              });
+            }
+            return null;
+          })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.execute_result.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                default:
-                  return null;
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.execute_result.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  default:
+                    return null;
+                }
+              });
+            }
+            return null;
+          })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-          // find the user name that matches the userId
-          if (userId !== props.user._id) {
-            return null;
-          }
-          return (
-            <Toast
-              status="error"
-              position="bottom"
-              description={message + ', ' + props.user.data.name}
-              duration={4000}
-              isClosable
-              onClose={() => updateState(props.app._id, { privateMessage: [] })}
-              hidden={userId !== props.user._id}
-            />
-          );
-        })}
+            // find the user name that matches the userId
+            if (userId !== props.user._id) {
+              return null;
+            }
+            return (
+              <Toast
+                status="error"
+                position="bottom"
+                description={message + ', ' + props.user.data.name}
+                duration={4000}
+                isClosable
+                onClose={() => updateState(props.app._id, { privateMessage: [] })}
+                hidden={userId !== props.user._id}
+              />
+            );
+          })}
     </Box>
   );
 };
@@ -726,30 +864,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-          if (typeof obj[key] === 'object') {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
+            if (typeof obj[key] === 'object') {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {MapJSONObject(obj[key])}
+                  </Box>
                 </Box>
-                <Box as="span" ml={2}>
-                  {MapJSONObject(obj[key])}
+              );
+            } else {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {obj[key]}
+                  </Box>
                 </Box>
-              </Box>
-            );
-          } else {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
-                </Box>
-                <Box as="span" ml={2}>
-                  {obj[key]}
-                </Box>
-              </Box>
-            );
-          }
-        })
+              );
+            }
+          })
         : null}
     </Box>
   );
