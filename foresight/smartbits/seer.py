@@ -13,6 +13,11 @@ from jupyterkernelproxy import JupyterKernelProxy
 import httpx
 import json
 import os
+import logging
+
+#TODO: Add 127.0.0.1:5000 Seer Server to config file
+
+logger = logging.getLogger(__name__)
 
 
 class SeerState(TrackedBaseModel):
@@ -111,49 +116,33 @@ class Seer(SmartBit):
 
         if self._kernel:
             self._jupyter_client.execute(command_info)
+        else:
+            logger.log("")
 
     def generate(self, _uuid):
         print("I am in seer's execute.")
         # TODO: handle the posts as async instead
-        intent = None
-        if self.state.code:
+        if self.state.prompt:
             payload = {"query": self.state.prompt}
             headers = {'Content-Type': 'application/json'}
-            resp = httpx.post('http://127.0.0.1:5000/predict_intent', headers=headers, json=payload)
-            if resp.status_code == 200:
-                intent = resp.json()["intent"]
-
-            if intent is None or intent == "?":
-                # TODO return an error saying that we cannot find the intent.
+            resp = httpx.post('https://19f4-168-105-232-23.jp.ngrok.io/nlp-to-code', headers=headers, json=payload)
+            if resp.status_code == 200 and resp.json()["status"] == "success":
+                code = resp.json()["code"]
+                print(f"GOT CODE FROM SEER SERVER AND IT's {code}")
+                self.exec_python(_uuid, code)
+            else:
                 msg = {"request_id": _uuid,
                        "error": {
-                           'ename': "IntentNotFound",  # Exception name, as a string
-                           'evalue': "Errot detection instruction intent",  # Exception value, as a string
+                           'ename': "SeerPromptError",  # Exception name, as a string
+                           'evalue': "Error converting prompt to code.",  # Exception value, as a string
                            'traceback': [self.state.prompt],
                        }
-                }
+                    }
                 self.handle_exec_result(msg)
+        else: # UI won't allow you to exec with an empty prompt
+            logger.error("Seer Generate func called but state.prompt was empty")
 
-            else:
-                if intent.upper() == "LOAD":
-                    print("\n\n\n\nI AM HERE\n\n\n\n")
-                    resp = httpx.post('http://127.0.0.1:5000/load_dataset', headers=headers, json=payload, timeout=10.0)
-                    if resp.status_code == 200 and resp.json()["status"] == "success":
-                        code = resp.json()["code"]
-                    # headers = f"storage_params = {self._token}"
-                    # code = headers + "\n\n" + code
-                    print(f"\n\n\ncode is:\n {code}\n\n\n")
-                    self.exec_python(_uuid, code)
-                elif intent.upper() == "QUERY" or intent.upper() == "VISUAL":
-                    resp = httpx.post('http://127.0.0.1:5000/handle_query', headers=headers, json=payload, timeout=10.0)
-                    if resp.status_code == 200 and resp.json()["status"] == "success":
-                        code = resp.json()["code"]
-                        print(f"\n\n\ncode is: {code}\n\n\n")
-                        self.exec_python(_uuid, code)
-                else:
-                    self.exec_python(_uuid, "print('Not yet supported')")
-        else:
-            self.exec_python(_uuid, self.state.code)
+
 
     def clean_up(self):
         pass
