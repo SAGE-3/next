@@ -153,7 +153,7 @@ function AppComponent(props: App): JSX.Element {
   });
 
   // Updating the font sizes of the charts based on the zoom level
-  // Only update after 500 ms
+  // Only update after 1 s
   const debounceSave = debounce(1000, (scale, fontSizeMultiplier) => {
     let fontSize = fontSizeMultiplier * (1 / scale);
 
