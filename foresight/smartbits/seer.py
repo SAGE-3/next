@@ -14,9 +14,13 @@ import httpx
 import json
 import os
 
+
 class SeerState(TrackedBaseModel):
-    code: str = ""
-    output: str = ""
+    prompt: str = "" # prompt to generate the code
+    code: str = "" # code to execute
+    output: str = "" # reserved for the output of the code
+    kernel: str = "" # selected kernel
+    kernels: list = [] # list of all available kernels
     executeInfo: ExecuteInfo
 
 
@@ -38,6 +42,8 @@ class Seer(SmartBit):
         if valid_kernel_list:
             self._kernel =  valid_kernel_list[0]
         self._token = {'Authorization': 'Bearer ' + os.getenv("TOKEN")}
+        if self._jupyter_client.redis_server.json().get('JUPYTER:KERNELS') is None:
+            self._jupyter_client.redis_server.json().set('JUPYTER:KERNELS', '.', {})
 
     def handle_exec_result(self, msg):
         print(f"\n\n\nreceived exec result: {msg}\n\n\n\n")
@@ -46,6 +52,27 @@ class Seer(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
+    def get_available_kernels(self, user_uuid=None):
+        """
+        This function will get the kernels from the redis server
+        """
+        # get all valid kernel ids from jupyter server
+        valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        # get all kernels from redis server
+        kernels = self._jupyter_client.redis_server.json().get('JUPYTER:KERNELS')
+        # remove kernels the list of available kernels that are not in jupyter server
+        [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
+        available_kernels = []
+        for kernel in kernels.keys():
+            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
+                continue
+            if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
+                kernels[kernel]['kernel_alias'] = kernel[:8]
+            available_kernels.append({"key": kernel, "value": kernels[kernel]})
+        self.state.kernels = available_kernels
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
 
     def exec_python(self, uuid, code):
         """
@@ -66,12 +93,31 @@ class Seer(SmartBit):
         if self._kernel:
             self._jupyter_client.execute(command_info)
 
-    def execute(self, _uuid):
+    def execute(self, uuid):
+        """
+        Non blocking function to execute code. The proxy has the responsibility to execute the code
+        and to call a call_back function which know how to handle the results message
+        :param uuid:
+        :param code:
+        :return:
+        """
+        command_info = {
+            "uuid": uuid,
+            "call_fn": self.handle_exec_result,
+            "code": self.state.code,
+            "kernel": self.state.kernel,
+            "token": ""
+        }
+
+        if self._kernel:
+            self._jupyter_client.execute(command_info)
+
+    def generate(self, _uuid):
         print("I am in seer's execute.")
         # TODO: handle the posts as async instead
         intent = None
-        if self.state.code.startswith("!# "):
-            payload = {"query": self.state.code[3:]}
+        if self.state.code:
+            payload = {"query": self.state.prompt}
             headers = {'Content-Type': 'application/json'}
             resp = httpx.post('http://127.0.0.1:5000/predict_intent', headers=headers, json=payload)
             if resp.status_code == 200:
@@ -83,7 +129,7 @@ class Seer(SmartBit):
                        "error": {
                            'ename': "IntentNotFound",  # Exception name, as a string
                            'evalue': "Errot detection instruction intent",  # Exception value, as a string
-                           'traceback': [self.state.code[3:]],
+                           'traceback': [self.state.prompt],
                        }
                 }
                 self.handle_exec_result(msg)

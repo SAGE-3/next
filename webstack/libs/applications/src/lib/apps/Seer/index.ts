@@ -14,19 +14,19 @@ import { executeInfoType } from '../SageCell';
  * created by: Mahdi
  */
 
-const executeInfoSchema = z.object({
-  executeFunc: z.string(),
-  params: z.record(z.any()),
-});
-const fieldTypes = z.enum(['code', 'text']);
-export type fieldT = z.infer<typeof fieldTypes>;
-
 export const schema = z.object({
   fontSize: z.number(),
-  fieldType: fieldTypes,
   execCount: z.number(),
+  prompt: z.string(),
   code: z.string(),
   output: z.string(),
+  kernel: z.string(),
+  kernels: z.array(
+    z.object({
+      key: z.string(),
+      value: z.record(z.string(), z.any()),
+    })
+  ),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -37,10 +37,12 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  fieldType: 'code',
+  prompt: '',
   code: '',
   output: '',
-  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
+  kernel: '',
+  kernels: [],
+  executeInfo: { executeFunc: '', params: {} },
   fontSize: 24,
 };
 
