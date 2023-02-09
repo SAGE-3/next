@@ -2,6 +2,7 @@
 
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChartMakerName, init as defaultChartMaker } from './apps/ChartMaker';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
@@ -9,6 +10,7 @@ import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
+import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as KernelDashboardName, init as defaultKernelDashboard } from './apps/KernelDashboard';
@@ -31,6 +33,7 @@ import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
   [CSVViewerName]: defaultCSVViewer,
+  [ChartGeneratorName]: defaultChartGenerator,
   [ChartMakerName]: defaultChartMaker,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
@@ -38,6 +41,7 @@ export const initialValues = {
   [DataTableName]: defaultDataTable,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [GLTFViewerName]: defaultGLTFViewer,
+  [HCDPName]: defaultHCDP,
   [ImageViewerName]: defaultImageViewer,
   [JupyterLabName]: defaultJupyterLab,
   [KernelDashboardName]: defaultKernelDashboard,
@@ -57,4 +61,3 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
 };
-
