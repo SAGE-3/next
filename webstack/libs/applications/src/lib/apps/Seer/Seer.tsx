@@ -147,25 +147,25 @@ function AppComponent(props: App): JSX.Element {
     update(props._id, {
       // update the size of the app window
       size: {
-        width: 800,
-        height: 170,
+        width: 1000,
+        height: 170 + 180,
         depth: 1,
       },
     });
   }, []);
 
-  useEffect(() => {
-    // calculate the height of the monaco editor based on the number of lines
-    const lines = s.code.split('\n').length;
-    update(props._id, {
-      // update the size of the app window
-      size: {
-        width: 800,
-        height: 165 + lines * 20,
-        depth: 1,
-      },
-    });
-  }, [s.code]);
+  // useEffect(() => {
+  //   // calculate the height of the monaco editor based on the number of lines
+  //   const lines = s.code.split('\n').length;
+  //   update(props._id, {
+  //     // update the size of the app window
+  //     size: {
+  //       width: 800,
+  //       height: 165 + lines * 20,
+  //       depth: 1,
+  //     },
+  //   });
+  // }, [s.code]);
 
   return (
     <AppWindow app={props}>
@@ -269,8 +269,8 @@ function AppComponent(props: App): JSX.Element {
           </HStack>
           {
             // If there is no code, don't show the input box
-            // if there is, resize the window to fit the input box
-            !s.code ? null : <InputBox app={props} access={true} />
+            // !s.code ? null : <InputBox app={props} access={true} />
+            <InputBox app={props} access={true} />
           }
         </Stack>
         {!s.output ? null : <OutputBox output={s.output} app={props} />}
