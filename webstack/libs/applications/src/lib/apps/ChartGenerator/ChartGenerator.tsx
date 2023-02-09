@@ -154,7 +154,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Updating the font sizes of the charts based on the zoom level
   // Only update after 500 ms
-  const debounceSave = debounce(500, (scale, fontSizeMultiplier) => {
+  const debounceSave = debounce(1000, (scale, fontSizeMultiplier) => {
     let fontSize = fontSizeMultiplier * (1 / scale);
 
     // Just in case user's text gets too big or too small
