@@ -2,6 +2,7 @@
 
 import { state as AIPaneState, name as AIPaneName } from './apps/AIPane';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
+import { state as ChartGeneratorState, name as ChartGeneratorName } from './apps/ChartGenerator';
 import { state as ChartMakerState, name as ChartMakerName } from './apps/ChartMaker';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
@@ -9,6 +10,7 @@ import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as DataTableState, name as DataTableName } from './apps/DataTable';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFViewer';
+import { state as HCDPState, name as HCDPName } from './apps/HCDP';
 import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
 import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
 import { state as KernelDashboardState, name as KernelDashboardName } from './apps/KernelDashboard';
@@ -32,6 +34,7 @@ export type AppState =
   | {}
   | AIPaneState
   | CSVViewerState
+  | ChartGeneratorState
   | ChartMakerState
   | ClockState
   | CobrowseState
@@ -39,6 +42,7 @@ export type AppState =
   | DataTableState
   | DeepZoomImageState
   | GLTFViewerState
+  | HCDPState
   | ImageViewerState
   | JupyterLabState
   | KernelDashboardState
@@ -61,6 +65,7 @@ export type AppState =
 export type AppName =
   | typeof AIPaneName
   | typeof CSVViewerName
+  | typeof ChartGeneratorName
   | typeof ChartMakerName
   | typeof ClockName
   | typeof CobrowseName
@@ -68,6 +73,7 @@ export type AppName =
   | typeof DataTableName
   | typeof DeepZoomImageName
   | typeof GLTFViewerName
+  | typeof HCDPName
   | typeof ImageViewerName
   | typeof JupyterLabName
   | typeof KernelDashboardName
@@ -79,6 +85,7 @@ export type AppName =
   | typeof PDFViewerName
   | typeof RTCChatName
   | typeof SageCellName
+  | typeof SeerName
   | typeof StickieName
   | typeof TwilioScreenshareName
   | typeof VegaLiteName

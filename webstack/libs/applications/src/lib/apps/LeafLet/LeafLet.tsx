@@ -368,33 +368,25 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button isDisabled={s.zoom >= 18} onClick={incZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.zoom >= 18} onClick={incZoom}>
             <MdAdd fontSize="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= 1} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.zoom <= 1} onClick={decZoom}>
             <MdRemove fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Street Map'} openDelay={400}>
-          <Button
-            border={s.baseLayer !== 'OpenStreetMap' ? `solid ${panelBackground} 2px` : 'teal'}
-            onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}>
             <MdMap fontSize="20px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Satellite Map'} openDelay={400}>
-          <Button
-            border={s.baseLayer !== 'World Imagery' ? `solid ${panelBackground} 2px` : ''}
-            onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}>
             <MdTerrain fontSize="20px" />
           </Button>
         </Tooltip>

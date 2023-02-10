@@ -87,7 +87,8 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
 
       // Socket Subscribe Message
       // Subscribe to the boards with property 'roomId' matching the given id
-      const route = `/subscription/rooms/${roomId}`;
+      // const route = `/subscription/rooms/${roomId}`;
+      const route = `/boards?roomId=${roomId}`;
       // Socket Listenting to updates from server about the current user
       boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema>(route, (message) => {
         if (message.col !== 'BOARDS') return;

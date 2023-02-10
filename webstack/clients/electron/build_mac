@@ -21,4 +21,4 @@ npx electron-osx-sign --type=development --signature-flags=library --hardened-ru
 
 node notarize.js
 
-npx electron-installer-dmg SAGE3-darwin-x64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-x64/SAGE3-darwin-x64.dmg --icon=s3.icns --background=background.png --overwrite --iconSize=100 --title="SAGE3 Installer"
+npx electron-installer-dmg SAGE3-darwin-x64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-x64/SAGE3-darwin-x64.dmg --icon=s3.icns --background=images/background.png --overwrite --iconSize=100 --title="SAGE3 Installer"

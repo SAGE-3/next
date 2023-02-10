@@ -27,7 +27,7 @@ import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // YJS
-import * as Y from 'yjs';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const YUtils = require('y-websocket/bin/utils');
 
 // Create the web server with Express
@@ -103,7 +103,7 @@ async function startServer() {
 
   // Twilio Setup
   const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
-  const twilio = new SAGETwilio(config.twilio, AppsCollection, 10000, screenShareTimeLimit);
+  const twilio = new SAGETwilio(config.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
   app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
     if (authId === undefined) {

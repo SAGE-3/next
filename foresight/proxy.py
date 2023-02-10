@@ -37,12 +37,10 @@ from smartbits.genericsmartbit import GenericSmartBit
 
 debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
 devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
-logging.basicConfig(filename='proxy.log')
+logging.basicConfig(handlers=[ logging.FileHandler("proxy.log"), logging.StreamHandler() ])
 formatter = None
 
-
 logger = logging.getLogger(__name__)
-
 
 if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
     formatter = logging.Formatter(debug_fmt)
@@ -50,8 +48,9 @@ if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
 else:
     formatter = logging.Formatter(devel_fmt)
     logger.root.setLevel(logging.INFO)
-# print(logger.handlers)
+
 logger.root.handlers[0].setFormatter(formatter)
+logger.root.handlers[1].setFormatter(formatter)
 
 
 class LinkedInfo(BaseModel):

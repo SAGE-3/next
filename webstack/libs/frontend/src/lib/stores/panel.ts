@@ -13,7 +13,6 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 export enum StuckTypes {
-  Controller, // 0
   None, // 1
   Top, // 2
   Bottom, // 3
@@ -52,35 +51,35 @@ export const usePanelStore = create<UIState>((set, get) => ({
     {
       position: { x: 5, y: 105 },
       name: 'applications',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'assets',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'navigation',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'annotations',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'users',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
@@ -109,7 +108,7 @@ export const usePanelStore = create<UIState>((set, get) => ({
       z.push(panel[0]);
       set((state) => ({ ...state, panelZ: z }));
     }
-  },
+  }
 }));
 
 // Add Dev tools
