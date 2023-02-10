@@ -47,8 +47,8 @@ export function useCursorBoardPosition(): {
   // Oberver for window resize
   useEffect(() => {
     const updateCursorPosition = (event: MouseEvent) => {
-      const x = event.clientX / scale - boardPosition.x;
-      const y = event.clientY / scale - boardPosition.y;
+      const x = Math.floor(event.clientX / scale - boardPosition.x);
+      const y = Math.floor(event.clientY / scale - boardPosition.y);
       throttleUpdateFunc(event.clientX, event.clientY, x, y);
     };
     window.addEventListener('mousemove', updateCursorPosition);
