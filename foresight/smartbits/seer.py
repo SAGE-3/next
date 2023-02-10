@@ -116,8 +116,6 @@ class Seer(SmartBit):
 
         if self._kernel:
             self._jupyter_client.execute(command_info)
-        else:
-            logger.log("")
 
     def generate(self, _uuid):
         print("I am in seer's execute.")
@@ -144,6 +142,9 @@ class Seer(SmartBit):
         else: # UI won't allow you to exec with an empty prompt
             logger.error("Seer Generate func called but state.prompt was empty")
 
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
+        self.send_updates()
 
 
     def clean_up(self):
