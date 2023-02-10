@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useUIStore } from '../stores';
+import { throttle } from 'throttle-debounce';
 
 /**
  * Hook to oberve the user's cursor position on the board
@@ -24,6 +25,18 @@ export function useCursorBoardPosition(): {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
 
+  // Throttle the Update
+  const throttleUpdate = throttle(30, (mx: number, my: number, cx: number, cy: number) => {
+    setMouse({ x: mx, y: my });
+    setPosition({
+      x: cx,
+      y: cy,
+    });
+  });
+
+  // Keep the throttlefunc reference
+  const throttleUpdateFunc = useCallback(throttleUpdate, []);
+
   const uiToBoard = useCallback(
     (x: number, y: number) => {
       return { x: Math.floor(x / scale - boardPosition.x), y: Math.floor(y / scale - boardPosition.y) };
@@ -34,15 +47,13 @@ export function useCursorBoardPosition(): {
   // Oberver for window resize
   useEffect(() => {
     const updateCursorPosition = (event: MouseEvent) => {
-      setMouse({ x: event.clientX, y: event.clientY });
-      setPosition({
-        x: Math.floor(event.clientX / scale - boardPosition.x),
-        y: Math.floor(event.clientY / scale - boardPosition.y),
-      });
+      const x = event.clientX / scale - boardPosition.x;
+      const y = event.clientY / scale - boardPosition.y;
+      throttleUpdateFunc(event.clientX, event.clientY, x, y);
     };
     window.addEventListener('mousemove', updateCursorPosition);
     return () => window.removeEventListener('mousemove', updateCursorPosition);
-  }, [boardPosition.x, boardPosition.y, scale]);
+  }, [boardPosition.x, boardPosition.y, scale, throttleUpdateFunc]);
 
   return { position, uiToBoard, mouse };
 }
