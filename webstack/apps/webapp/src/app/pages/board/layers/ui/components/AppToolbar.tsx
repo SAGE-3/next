@@ -15,8 +15,6 @@ import { MdClose, MdZoomOutMap, MdFullscreen, MdCopyAll } from 'react-icons/md';
 import { useAppStore, useHexColor, useUIStore, usePresenceStore, useUsersStore } from '@sage3/frontend';
 
 import { Applications } from '@sage3/applications/apps';
-import { duplicate } from 'vega-lite';
-import { BsTrash } from 'react-icons/bs';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 type AppToolbarProps = {
