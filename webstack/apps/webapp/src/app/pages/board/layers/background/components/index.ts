@@ -6,6 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './ColorPicker';
-export * from './MainButton';
-export * from './Clock';
+export * from './Apps';
+export * from './Background';
+export * from './Cursors';
+export * from './Drops';
+export * from './Lasso';
+export * from './UserPresenceUpdate';
+export * from './Viewports';
+export * from './Whiteboard';

@@ -8,9 +8,7 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, useColorModeValue, Text, HStack } from '@chakra-ui/react';
-
-import { MdCloudQueue } from 'react-icons/md';
+import { useColorModeValue } from '@chakra-ui/react';
 
 import {
   useAppStore,
@@ -20,7 +18,6 @@ import {
   usePresenceStore,
   useUsersStore,
   PasteHandler,
-  MainButton,
   useUIStore,
   useData,
   serverConfiguration,
@@ -28,8 +25,7 @@ import {
 } from '@sage3/frontend';
 
 // Board Layers
-import { BackgroundLayer, UILayer } from './components/Board';
-import { Clock } from './components/Board/ui/Clock';
+import { BackgroundLayer, UILayer } from './layers';
 
 /**
  * The board page which displays the board and its apps.
@@ -38,14 +34,6 @@ export function BoardPage() {
   // Navigation and routing
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
-  const config = useData('/api/configuration') as serverConfiguration;
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-
-  // Get the room and board
-  const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el._id === boardId);
-  const rooms = useRoomStore((state) => state.rooms);
-  const room = rooms.find((el) => el._id === roomId);
 
   if (!roomId || !boardId) {
     toHome(roomId);
@@ -66,8 +54,6 @@ export function BoardPage() {
 
   // UI Store
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-
-  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   function handleDragOver(event: DragEvent) {
     const elt = event.target as HTMLElement;
@@ -122,30 +108,11 @@ export function BoardPage() {
       {/* The apps live here */}
       <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer>
 
-      {/* The Corner SAGE3 Image */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
-        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
-      </Box>
-
-      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
-
       {/* Upper layer for local UI stuff */}
       <UILayer boardId={boardId} roomId={roomId}></UILayer>
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />
-
-      <Box position="absolute" left="2" bottom="2" zIndex={101}>
-        <MainButton buttonStyle="solid" backToRoom={() => toHome(roomId)} boardInfo={{ boardId, roomId }} />
-      </Box>
-
-      {/* ServerName */}
-      <HStack position="absolute" left="2">
-        <MdCloudQueue fontSize={'18px'} color={'darkgray'} />
-        <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
-          {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
-        </Text>
-      </HStack>
     </>
   );
 }

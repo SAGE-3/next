@@ -20,11 +20,11 @@ import {
   useUsersStore,
   MainButton,
   useUser,
+  Clock,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
 import { useParams } from 'react-router-dom';
-import { Clock } from '../board/components/Board/ui/Clock';
 
 export function HomePage() {
   // URL Params
