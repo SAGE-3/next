@@ -46,7 +46,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const panelBackground = useHexColor(background);
 
   const textColor = useColorModeValue('gray.800', 'gray.100');
-  const commonButtonColors = useColorModeValue('gray.300', 'gray.300');
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
   const buttonTextColor = useColorModeValue('white', 'black');
   const selectColor = useHexColor('teal');
 

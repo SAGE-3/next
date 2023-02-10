@@ -8,7 +8,20 @@
 
 import { useEffect, useCallback, useState } from 'react';
 
-import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Center, Text, VStack, Select, InputGroup } from '@chakra-ui/react';
+import {
+  Button,
+  ButtonGroup,
+  IconButton,
+  Box,
+  useColorMode,
+  Image,
+  Center,
+  Text,
+  VStack,
+  Select,
+  InputGroup,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
 
@@ -16,9 +29,7 @@ import { isElectron, useAuth, useRouteNav } from '@sage3/frontend';
 import { GetServerInfo } from '@sage3/frontend';
 
 // Logos
-import sage3DarkMode from '../../assets/SAGE3DarkMode.png';
-import sage3LightMode from '../../assets/SAGE3LightMode.png';
-import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
+import cilogonLogo from '../../../assets/cilogon-logo-32x32.png';
 
 export function LoginPage() {
   const { auth, googleLogin, ciLogin, guestLogin } = useAuth();
@@ -27,6 +38,9 @@ export function LoginPage() {
   const [serverName, setServerName] = useState<string>('');
   // state to disable login buttons during server switch: default is enabled
   const [shouldDisable, setShouldDisable] = useState(false);
+
+  // Logo URL
+  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   const isElec = isElectron();
 
@@ -68,14 +82,7 @@ export function LoginPage() {
   return (
     <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" width="100%" height="100%">
       <Box pb={'2rem'} alignItems="center">
-        <Image
-          width="20vw"
-          minWidth="400px"
-          maxWidth="35rem"
-          src={colorMode === 'light' ? sage3LightMode : sage3DarkMode}
-          alt="SAGE3 Logo"
-          fit="contain"
-        />
+        <Image width="20vw" minWidth="400px" maxWidth="35rem" src={logoUrl} alt="SAGE3 Logo" fit="contain" />
       </Box>
 
       {/* Server Name */}

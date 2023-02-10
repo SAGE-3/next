@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './ColorPicker';
-export * from './MainButton';
-export * from './Clock';
+/* CSS definitions for the app HCDP */
+.leaflet-content {
+  border-radius: 0px;
+}
