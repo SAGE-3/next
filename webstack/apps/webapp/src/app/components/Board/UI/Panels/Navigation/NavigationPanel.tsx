@@ -7,9 +7,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
+import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure, Text, ButtonGroup } from '@chakra-ui/react';
 
-import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen } from 'react-icons/md';
+import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore } from 'react-icons/md';
 
 import {
   ConfirmModal,
@@ -35,15 +35,11 @@ export function NavigationPanel(props: NavProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-
-  // UI Store
-  const boardLocked = useUIStore((state) => state.boardLocked);
-  const lockBoard = useUIStore((state) => state.lockBoard);
+  // Board Store
   const updateBoard = useBoardStore((state) => state.update);
-
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const setScale = useUIStore((state) => state.setScale);
-
+  // UI Store
+  const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom, scale } = useUIStore((state) => state);
+  const formattedScale = `${Math.floor(scale * 100)}%`;
   // Users and Presecnes for cursors
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
@@ -175,7 +171,7 @@ export function NavigationPanel(props: NavProps) {
                 .sort((a, b) => a._updatedAt - b._updatedAt)
                 .map((app) => {
                   return (
-                    <Tooltip key={app._id} placement="top-start" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
+                    <Tooltip key={app._id} placement="top" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
                       <Box
                         backgroundColor={borderColor}
                         position="absolute"
@@ -207,26 +203,60 @@ export function NavigationPanel(props: NavProps) {
                 })}
             </Box>
           </Box>
+
+          {/* Organize Apps and Fit View */}
           <Box display="flex" flexDir={'column'} ml="2" alignContent={'flexStart'}>
-            <Tooltip label={boardLocked ? 'Unlock board' : 'Lock board'} placement="top-start" hasArrow openDelay={500}>
-              <IconButton
-                icon={boardLocked ? <MdLock /> : <MdLockOpen />}
-                colorScheme="teal"
-                size="sm"
-                aria-label="for board"
-                mb="1"
-                onClick={() => lockBoard(!boardLocked)}
-              />
-            </Tooltip>
-            <Tooltip label="Fit Apps" placement="top-start" hasArrow openDelay={500}>
-              <IconButton icon={<MdFitScreen />} colorScheme="teal" mb="1" size="sm" aria-label="fit apps" onClick={props.fitApps} />
-            </Tooltip>
-            <Tooltip label="Organize Apps" placement="top-start" hasArrow openDelay={500}>
-              <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mb="1" size="sm" aria-label="clear" />
-            </Tooltip>
-            <Tooltip label="Clear Board" placement="top-start" hasArrow openDelay={500}>
-              <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
-            </Tooltip>
+            <Box display="flex" mb="2">
+              <Tooltip label="Organize Apps" placement="top" hasArrow openDelay={500}>
+                <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mr="2" size="sm" aria-label="clear" />
+              </Tooltip>
+              <Tooltip label="Show All Apps" placement="top" hasArrow openDelay={500}>
+                <IconButton icon={<MdFitScreen />} colorScheme="teal" size="sm" aria-label="fit apps" onClick={props.fitApps} />
+              </Tooltip>
+            </Box>
+
+            {/* Board Actions */}
+            <Box display="flex" mb="2">
+              <Tooltip label={boardLocked ? 'Unlock View' : 'Lock View'} placement="top" hasArrow openDelay={500}>
+                <IconButton
+                  icon={boardLocked ? <MdLock /> : <MdLockOpen />}
+                  colorScheme="teal"
+                  size="sm"
+                  aria-label="for board"
+                  mr="2"
+                  onClick={() => lockBoard(!boardLocked)}
+                />
+              </Tooltip>
+              <Tooltip label="Clear Board" placement="top" hasArrow openDelay={500}>
+                <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
+              </Tooltip>
+            </Box>
+
+            {/* Zoom Buttons */}
+            <Box display="flex" mb="1">
+              <ButtonGroup isAttached size="xs" colorScheme="teal">
+                <Tooltip label="Zoom Out" placement="top" hasArrow openDelay={500}>
+                  <IconButton icon={<MdRemove />} onClick={zoomOut} colorScheme="teal" aria-label="clear" />
+                </Tooltip>
+                <Tooltip label="Reset Zoom Level" placement="top" hasArrow openDelay={500}>
+                  <IconButton
+                    icon={<MdRestore />}
+                    onClick={resetZoom}
+                    colorScheme="teal"
+                    borderX="solid 2px transparent"
+                    aria-label="clear"
+                  />
+                </Tooltip>
+                <Tooltip label="Zoom In" placement="top" hasArrow openDelay={500}>
+                  <IconButton icon={<MdAdd />} colorScheme="teal" aria-label="clear" onClick={zoomIn} />
+                </Tooltip>
+              </ButtonGroup>
+            </Box>
+            <Box display="flex" mb="1" justifyContent={'center'}>
+              <Text fontWeight="bold" fontSize="18">
+                {formattedScale}
+              </Text>
+            </Box>
           </Box>
         </Box>
       </Panel>
