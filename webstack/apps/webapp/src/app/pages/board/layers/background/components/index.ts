@@ -6,5 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './BackgroundLayer';
-export * from './UILayer';
+export * from './Apps';
+export * from './Background';
+export * from './Cursors';
+export * from './Drops';
+export * from './Lasso';
+export * from './UserPresenceUpdate';
+export * from './Viewports';
+export * from './Whiteboard';
