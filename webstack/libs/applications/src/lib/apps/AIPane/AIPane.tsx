@@ -218,8 +218,8 @@ function AppComponent(props: App): JSX.Element {
               {checkAppType() === 0
                 ? 'Error. Unsupported file type'
                 : checkAppType() === 1
-                  ? 'File type accepted'
-                  : 'Error. More than 1 app type on board'}
+                ? 'File type accepted'
+                : 'Error. More than 1 app type on board'}
             </PopoverBody>
 
             {Object.keys(s.messages)?.map((message: string) => (
@@ -320,7 +320,6 @@ function ToolbarComponent(props: App): JSX.Element {
           <IconButton
             aria-label="Run AI"
             icon={s.runStatus === 0 ? <FaPlay /> : s.runStatus === 1 ? <BiRun /> : <BiErrorCircle />}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
             isDisabled={aiModel === 'Models' || s.runStatus !== 0 ? true : false}
             onClick={() => {
               runFunction(aiModel);

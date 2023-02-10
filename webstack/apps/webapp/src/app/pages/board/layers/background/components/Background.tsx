@@ -52,7 +52,6 @@ import { setupApp } from './Drops';
 
 import imageHelp from './sage3-help.jpg';
 
-
 type HelpProps = {
   onClose: () => void;
   isOpen: boolean;
@@ -60,8 +59,7 @@ type HelpProps = {
 
 export function HelpModal(props: HelpProps) {
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}
-      size="5xl">
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="5xl">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>SAGE3 Help</ModalHeader>
@@ -77,7 +75,6 @@ export function HelpModal(props: HelpProps) {
     </Modal>
   );
 }
-
 
 type BackgroundProps = {
   roomId: string;
@@ -557,71 +554,79 @@ export function Background(props: BackgroundProps) {
   }
 
   // Question mark character for help
-  useHotkeys('shift+/', (event: KeyboardEvent): void | boolean => {
-    if (!user) return;
-    const x = cursorPosition.x;
-    const y = cursorPosition.y;
+  useHotkeys(
+    'shift+/',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
 
-    helpOnOpen();
+      helpOnOpen();
 
-    // show image or open doc
-    // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
-    // window.open(doc, '_blank');
+      // show image or open doc
+      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
+      // window.open(doc, '_blank');
 
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );
 
   // Move the board with the arrow keys
-  useHotkeys('up, down, left, right', (event: KeyboardEvent): void | boolean => {
-    if (selectedAppId !== '') return;
-    const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
-    if (event.key === 'ArrowUp') {
-      setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
-    } else if (event.key === 'ArrowDown') {
-      setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
-    } else if (event.key === 'ArrowLeft') {
-      setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
-    } else if (event.key === 'ArrowRight') {
-      setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
-    }
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+  useHotkeys(
+    'up, down, left, right',
+    (event: KeyboardEvent): void | boolean => {
+      if (selectedAppId !== '') return;
+      const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
+      if (event.key === 'ArrowUp') {
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
+      } else if (event.key === 'ArrowDown') {
+        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
+      } else if (event.key === 'ArrowLeft') {
+        setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
+      } else if (event.key === 'ArrowRight') {
+        setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
+      }
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
   );
 
   // Zoom in/out of the board with the -/+ keys
-  useHotkeys('-, =', (event: KeyboardEvent): void | boolean => {
-    if (selectedAppId !== '') return;
-    if (event.key === '-') {
-      zoomOutDelta(-10, mousePosition);
-    } else if (event.key === '=') {
-      zoomInDelta(10, mousePosition);
-    }
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+  useHotkeys(
+    '-, =',
+    (event: KeyboardEvent): void | boolean => {
+      if (selectedAppId !== '') return;
+      if (event.key === '-') {
+        zoomOutDelta(-10, mousePosition);
+      } else if (event.key === '=') {
+        zoomInDelta(10, mousePosition);
+      }
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [mousePosition.x, mousePosition.y, selectedAppId] }
   );
 
   // Stickies Shortcut
-  useHotkeys('shift+s', (event: KeyboardEvent): void | boolean => {
-    if (!user) return;
-    const x = cursorPosition.x;
-    const y = cursorPosition.y;
-    createApp(
-      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
-    );
+  useHotkeys(
+    'shift+s',
+    (event: KeyboardEvent): void | boolean => {
+      if (!user) return;
+      const x = cursorPosition.x;
+      const y = cursorPosition.y;
+      createApp(
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+      );
 
-    // Returning false stops the event and prevents default browser events
-    return false;
-  },
+      // Returning false stops the event and prevents default browser events
+      return false;
+    },
     // Depends on the cursor to get the correct position
     { dependencies: [cursorPosition.x, cursorPosition.y] }
   );

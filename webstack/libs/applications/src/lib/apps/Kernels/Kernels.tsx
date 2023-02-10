@@ -385,12 +385,12 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Delete Selected Kernel(s)'} openDelay={400}>
-          <Button isDisabled={!selected || selected.length === 0} onClick={() => handleDeleteKernel()} _hover={{ opacity: 0.7 }}>
+          <Button isDisabled={!selected || selected.length === 0} onClick={() => handleDeleteKernel()}>
             <MdRemove />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'New Kernel'} openDelay={400}>
-          <Button isDisabled={!name || !kernelType} onClick={() => handleNewKernel()} _hover={{ opacity: 0.7 }}>
+          <Button isDisabled={!name || !kernelType} onClick={() => handleNewKernel()}>
             <MdAdd />
           </Button>
         </Tooltip>

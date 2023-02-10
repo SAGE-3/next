@@ -13,13 +13,7 @@ import { DraggableData, Rnd } from 'react-rnd';
 
 import { useAppStore, useUIStore } from '@sage3/frontend';
 
-import { Background } from './Background/Background';
-import { Apps } from './Background/Apps';
-import { Cursors } from './Background/Cursors';
-import { Viewports } from './Background/Viewports';
-import { Whiteboard } from './Background/Whiteboard/Whiteboard';
-import { UserPresenceUpdate } from './Background/UserPresenceUpdate';
-import { Lasso } from './Background/Lasso/Lasso';
+import { Background, Apps, Cursors, Viewports, Whiteboard, UserPresenceUpdate, Lasso } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;

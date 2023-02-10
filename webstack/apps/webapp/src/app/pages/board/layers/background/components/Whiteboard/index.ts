@@ -6,6 +6,4 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './ColorPicker';
-export * from './MainButton';
-export * from './Clock';
+export * from './Whiteboard';

@@ -23,7 +23,7 @@ import {
   MdSkipNext,
   MdNavigateNext,
   MdNavigateBefore,
-  MdTipsAndUpdates
+  MdTipsAndUpdates,
 } from 'react-icons/md';
 
 // Utility functions from SAGE3
@@ -34,7 +34,6 @@ import { Asset, ExtraPDFType } from '@sage3/shared/types';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-
 
 function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
@@ -107,10 +106,8 @@ function AppComponent(props: App): JSX.Element {
   // Display the processing UI
   useEffect(() => {
     // Only show the processing UI if the user is the one who clicked the button
-    if (s.executeInfo.executeFunc && s.client === user?._id)
-      setProcessing(true);
-    else
-      setProcessing(false);
+    if (s.executeInfo.executeFunc && s.client === user?._id) setProcessing(true);
+    else setProcessing(false);
   }, [s.executeInfo.executeFunc, s.client]);
 
   // Return from the remote python function
@@ -343,7 +340,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (file && user) {
       updateState(props._id, {
         client: user._id,
-        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id }, }
+        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id } },
       });
     }
   }
@@ -352,50 +349,38 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Remove Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()}>
             <MdRemove />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button
-            isDisabled={s.displayPages >= s.numPages}
-            onClick={() => handleAddPage()}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()}>
             <MdAdd />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top-start" hasArrow={true} label={'1st Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()}>
             <MdSkipPrevious />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Previous Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()}>
             <MdNavigateBefore />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button
-            isDisabled={s.currentPage === length - 1}
-            onClick={() => handleNext()}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()}>
             <MdNavigateNext />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button
-            isDisabled={s.currentPage === length - 1}
-            onClick={() => handleLast()}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()}>
             <MdSkipNext />
           </Button>
         </Tooltip>
@@ -404,7 +389,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="teal" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MenuButton as={Button} colorScheme="teal" aria-label="layout">
               <MdMenu />
             </MenuButton>
           </Tooltip>
@@ -435,7 +420,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="orange" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
               <MdMenu />
             </MenuButton>
           </Tooltip>
@@ -446,7 +431,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
-
     </>
   );
 }
