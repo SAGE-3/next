@@ -204,17 +204,7 @@ export function NavigationPanel(props: NavProps) {
             </Box>
           </Box>
 
-          {/* Organize Apps and Fit View */}
           <Box display="flex" flexDir={'column'} ml="2" alignContent={'flexStart'}>
-            <Box display="flex" mb="2">
-              <Tooltip label="Organize Apps" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mr="2" size="sm" aria-label="clear" />
-              </Tooltip>
-              <Tooltip label="Show All Apps" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdFitScreen />} colorScheme="teal" size="sm" aria-label="fit apps" onClick={props.fitApps} />
-              </Tooltip>
-            </Box>
-
             {/* Board Actions */}
             <Box display="flex" mb="2">
               <Tooltip label={boardLocked ? 'Unlock View' : 'Lock View'} placement="top" hasArrow openDelay={500}>
@@ -229,6 +219,16 @@ export function NavigationPanel(props: NavProps) {
               </Tooltip>
               <Tooltip label="Clear Board" placement="top" hasArrow openDelay={500}>
                 <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
+              </Tooltip>
+            </Box>
+
+            {/* Organize Apps and Fit View */}
+            <Box display="flex" mb="2">
+              <Tooltip label="Organize Apps" placement="top" hasArrow openDelay={500}>
+                <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mr="2" size="sm" aria-label="clear" />
+              </Tooltip>
+              <Tooltip label="Show All Apps" placement="top" hasArrow openDelay={500}>
+                <IconButton icon={<MdFitScreen />} colorScheme="teal" size="sm" aria-label="fit apps" onClick={props.fitApps} />
               </Tooltip>
             </Box>
 
