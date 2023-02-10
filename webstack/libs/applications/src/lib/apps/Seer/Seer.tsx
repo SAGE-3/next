@@ -14,6 +14,7 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Divider,
   Flex,
   HStack,
   IconButton,
@@ -50,7 +51,7 @@ import Ansi from 'ansi-to-react';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import Editor, { loader, Monaco, useMonaco } from '@monaco-editor/react';
+import Editor, { DiffEditor, loader, Monaco, useMonaco } from '@monaco-editor/react';
 
 /* App component for Seer */
 const MARGIN = 2;
@@ -123,7 +124,7 @@ function AppComponent(props: App): JSX.Element {
       updateState(props._id, {
         prompt: prompt,
         output: '',
-        executeInfo: { executeFunc: 'generate', params: { user_uuid: getUUID() } },
+        executeInfo: { executeFunc: 'generate', params: { _uuid: getUUID() } },
       });
     }
   };
@@ -148,7 +149,7 @@ function AppComponent(props: App): JSX.Element {
       // update the size of the app window
       size: {
         width: 1000,
-        height: 170 + 180,
+        height: 170 + 180 + 200,
         depth: 1,
       },
     });
@@ -199,8 +200,9 @@ function AppComponent(props: App): JSX.Element {
                 minHeight: '150px',
               }}
               // when I press shift + enter, it will run the code
+              // if I have the textarea in focus and I have access to the kernel
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.shiftKey) {
+                if (e.key === 'Enter' && e.shiftKey && access && s.kernel) {
                   handleGenerate(s.kernel);
                 }
               }}
@@ -208,19 +210,24 @@ function AppComponent(props: App): JSX.Element {
               onChange={updatePrompt}
               placeholder="Enter prompt..."
               size="lg"
-              _placeholder={{ color: 'gray.100' }}
+              _placeholder={{ color: useColorModeValue('gray.900', 'gray.100') }}
               bg={bgColor}
-              color="white"
+              color={useColorModeValue('black', 'white')}
               border="1px"
-              borderColor="gray.100"
+              borderColor="teal.500"
               _focus={{
                 borderColor: 'teal.500',
                 boxShadow: '0 0 0 1px teal.500',
               }}
+              _hover={{
+                borderColor: 'teal.500',
+                boxShadow: '0 0 0 1px teal.500',
+              }}
+              disabled={!access || !s.kernel}
             />
             <VStack>
               {access ? (
-                <Tooltip hasArrow label="Execute" placement="right-start">
+                <Tooltip hasArrow label="Generate" placement="right-start">
                   <IconButton
                     boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
                     onClick={() => handleGenerate(s.kernel)}
@@ -228,7 +235,7 @@ function AppComponent(props: App): JSX.Element {
                     bg={useColorModeValue('#FFFFFF', '#000000')}
                     variant="ghost"
                     icon={
-                      s.executeInfo?.executeFunc === 'execute' ? (
+                      s.executeInfo?.executeFunc === 'generate' ? (
                         <Spinner size="sm" color="teal.500" />
                       ) : (
                         <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
@@ -273,7 +280,42 @@ function AppComponent(props: App): JSX.Element {
             <InputBox app={props} access={true} />
           }
         </Stack>
-        {!s.output ? null : <OutputBox output={s.output} app={props} />}
+        <Divider />
+        {!s.output ? (
+          <>
+            <Box
+              bg={bgColor}
+              style={{
+                fontFamily: 'monospace',
+                width: '100%',
+                height: '100%',
+                fontSize: s.fontSize,
+                minHeight: '150px',
+                border: '2px solid #008080',
+                borderRadius: '5px',
+                padding: '10px',
+              }}
+
+              // overflowY={'scroll'}
+              // css={{
+              //   '&::-webkit-scrollbar': {
+              //     width: '.1em',
+              //   },
+              //   '&::-webkit-scrollbar-track': {
+              //     '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+              //   },
+              //   '&::-webkit-scrollbar-thumb': {
+              //     backgroundColor: 'teal',
+              //     outline: '2px solid teal',
+              //   },
+              // }}
+            >
+              Output
+            </Box>
+          </>
+        ) : (
+          <OutputBox output={s.output} app={props} />
+        )}
       </Box>
     </AppWindow>
   );
@@ -313,12 +355,16 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   // Register a new command to evaluate the code
   useEffect(() => {
     if (editor.current) {
-      editor.current.addAction({
-        id: 'execute',
-        label: 'Execute',
-        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-        run: () => handleExecute(s.kernel),
-      });
+      // only allow shift + enter to execute code if the user has access and
+      // the textarea is in focus
+      if (props.access && editor.current.hasTextFocus()) {
+        editor.current.addAction({
+          id: 'execute',
+          label: 'Execute',
+          keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+          run: () => handleExecute(s.kernel),
+        });
+      }
     }
   }, [s.kernel, editor.current]);
 
@@ -339,7 +385,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       updateState(props.app._id, {
         code: code,
         output: '',
-        executeInfo: { executeFunc: 'execute', params: { user_uuid: getUUID() } },
+        executeInfo: { executeFunc: 'execute', params: { _uuid: getUUID() } },
       });
     }
   };
@@ -574,7 +620,10 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
         </Text>
       )}
       {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
-        <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
+        <>
+          <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
+          <Ansi>{parsedJSON.error.traceback.join('\n')}</Ansi>
+        </>
       ) : (
         <Alert status="error" variant="left-accent">
           <AlertIcon />

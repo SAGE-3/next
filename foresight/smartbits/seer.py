@@ -41,11 +41,11 @@ class Seer(SmartBit):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(Seer, self).__init__(**kwargs)
         self._jupyter_client = JupyterKernelProxy()
-        self._kernel = None
+        self._kernel = self.state.kernel
         self._inferred_code  = None
-        valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
-        if valid_kernel_list:
-            self._kernel =  valid_kernel_list[0]
+        # valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        # if valid_kernel_list:
+        #     self._kernel =  valid_kernel_list[0]
         self._token = {'Authorization': 'Bearer ' + os.getenv("TOKEN")}
         if self._jupyter_client.redis_server.json().get('JUPYTER:KERNELS') is None:
             self._jupyter_client.redis_server.json().set('JUPYTER:KERNELS', '.', {})
@@ -79,7 +79,7 @@ class Seer(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def exec_python(self, uuid, code):
+    def exec_python(self, _uuid, code):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
         and to call a call_back function which know how to handle the results message
@@ -88,7 +88,7 @@ class Seer(SmartBit):
         :return:
         """
         command_info = {
-            "uuid": uuid,
+            "uuid": _uuid,
             "call_fn": self.handle_exec_result,
             "code": code,
             "kernel": self._kernel,
@@ -98,7 +98,7 @@ class Seer(SmartBit):
         if self._kernel:
             self._jupyter_client.execute(command_info)
 
-    def execute(self, uuid):
+    def execute(self, _uuid):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
         and to call a call_back function which know how to handle the results message
@@ -107,7 +107,7 @@ class Seer(SmartBit):
         :return:
         """
         command_info = {
-            "uuid": uuid,
+            "uuid": _uuid,
             "call_fn": self.handle_exec_result,
             "code": self.state.code,
             "kernel": self.state.kernel,
@@ -125,17 +125,19 @@ class Seer(SmartBit):
         if self.state.prompt:
             payload = {"query": self.state.prompt}
             headers = {'Content-Type': 'application/json'}
-            resp = httpx.post('https://19f4-168-105-232-23.jp.ngrok.io/nlp-to-code', headers=headers, json=payload)
+            resp = httpx.post('https://ebfe-168-105-232-23.jp.ngrok.io/nlp-to-code', headers=headers, json=payload, timeout=15.0)
             if resp.status_code == 200 and resp.json()["status"] == "success":
                 code = resp.json()["code"]
                 print(f"GOT CODE FROM SEER SERVER AND IT's {code}")
-                self.exec_python(_uuid, code)
+                # self.exec_python(_uuid, code)
+                self.state.code = code
+                self.execute(_uuid)
             else:
                 msg = {"request_id": _uuid,
                        "error": {
                            'ename': "SeerPromptError",  # Exception name, as a string
                            'evalue': "Error converting prompt to code.",  # Exception value, as a string
-                           'traceback': [self.state.prompt],
+                           'traceback': [self.state.prompt]  # Traceback frames, as a list of strings
                        }
                     }
                 self.handle_exec_result(msg)
