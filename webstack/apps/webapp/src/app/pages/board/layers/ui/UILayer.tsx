@@ -6,19 +6,40 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, Text } from '@chakra-ui/react';
+import { MdCloudQueue } from 'react-icons/md';
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
-import { ContextMenu, downloadFile, useAssetStore, useAppStore, useUIStore, useBoardStore } from '@sage3/frontend';
+import {
+  ContextMenu,
+  downloadFile,
+  useAssetStore,
+  useAppStore,
+  useUIStore,
+  useBoardStore,
+  MainButton,
+  useRouteNav,
+  useData,
+  serverConfiguration,
+  useRoomStore,
+  Clock,
+} from '@sage3/frontend';
 
-import { Controller, AssetsPanel, ApplicationsPanel, NavigationPanel, UsersPanel, AnnotationsPanel } from './UI/Panels';
-import { BoardContextMenu } from './UI/BoardContextMenu';
-import { ClearBoardModal } from './UI/ClearBoardModal';
-import { AppToolbar } from './UI/AppToolbar';
-import { Twilio } from './UI/Twilio';
-import { Alfred } from './UI/Alfred';
-import { LassoToolbar } from './UI/LassoToolbar';
+import {
+  BoardContextMenu,
+  ClearBoardModal,
+  AppToolbar,
+  Twilio,
+  Alfred,
+  LassoToolbar,
+  Controller,
+  AssetsPanel,
+  ApplicationsPanel,
+  NavigationPanel,
+  UsersPanel,
+  AnnotationsPanel,
+} from './components';
 
 type UILayerProps = {
   boardId: string;
@@ -33,10 +54,25 @@ export function UILayer(props: UILayerProps) {
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
+
   const boards = useBoardStore((state) => state.boards);
+  const board = boards.find((el) => el._id === props.boardId);
+
+  // Room Store
+  const rooms = useRoomStore((state) => state.rooms);
+  const room = rooms.find((el) => el._id === props.roomId);
+
   // Apps
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
+
+  // Logo
+  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+
+  // Navigation
+  const { toHome } = useRouteNav();
+  const config = useData('/api/configuration') as serverConfiguration;
+  const textColor = useColorModeValue('gray.800', 'gray.100');
 
   // Toast
   const toast = useToast();
@@ -119,7 +155,32 @@ export function UILayer(props: UILayerProps) {
   };
 
   return (
-    <Box display="flex" flexDirection="column" height="100vh" id="uilayer" position={'absolute'}>
+    <>
+      {/* The Corner SAGE3 Image Bottom Right */}
+      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
+        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
+      </Box>
+
+      {/* The clock Top Right */}
+      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
+
+      {/* Main Button Bottom Left */}
+      <Box position="absolute" left="2" bottom="2" zIndex={101}>
+        <MainButton
+          buttonStyle="solid"
+          backToRoom={() => toHome(props.roomId)}
+          boardInfo={{ boardId: props.boardId, roomId: props.roomId }}
+        />
+      </Box>
+
+      {/* ServerName Top Left */}
+      <HStack position="absolute" left="2">
+        <MdCloudQueue fontSize={'18px'} color={'darkgray'} />
+        <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
+          {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
+        </Text>
+      </HStack>
+
       <AppToolbar></AppToolbar>
 
       <ContextMenu divId="board">
@@ -140,7 +201,7 @@ export function UILayer(props: UILayerProps) {
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
-      <AnnotationsPanel/>
+      <AnnotationsPanel />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
@@ -156,6 +217,6 @@ export function UILayer(props: UILayerProps) {
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />
-    </Box>
+    </>
   );
 }
