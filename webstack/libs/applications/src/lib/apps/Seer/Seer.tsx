@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { downloadFile, truncateWithEllipsis, useAppStore, useUser } from '@sage3/frontend';
+import { downloadFile, useAppStore, useUser } from '@sage3/frontend';
 import {
   Alert,
   AlertIcon,
@@ -15,14 +15,9 @@ import {
   Button,
   ButtonGroup,
   Divider,
-  Flex,
   HStack,
   IconButton,
   Image,
-  Input,
-  InputGroup,
-  InputLeftAddon,
-  InputRightAddon,
   Select,
   Spinner,
   Stack,
@@ -32,7 +27,6 @@ import {
   useColorMode,
   useColorModeValue,
   useToast,
-  VStack,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -54,31 +48,36 @@ import dateFormat from 'date-fns/format';
 import Editor, { DiffEditor, loader, Monaco, useMonaco } from '@monaco-editor/react';
 
 /* App component for Seer */
-const MARGIN = 2;
 
 function AppComponent(props: App): JSX.Element {
   // Make a toast to show errors
   const toast = useToast();
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const [myKernels, setMyKernels] = useState(s.kernels);
 
   const [access, setAccess] = useState<boolean>(true);
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
-  const [code, setCode] = useState<string>(s.code);
+  // const BACKGROUND = useColorModeValue('#F0F2F6', '#111111');
+
+  // Set the initial size of the window
+  useEffect(() => {
+    update(props._id, {
+      size: {
+        width: 995,
+        height: 555,
+        depth: 1,
+      },
+    });
+  }, []);
 
   const updatePrompt = (e: any) => {
     updateState(props._id, {
       prompt: e.target.value,
     });
   };
-  // useEffect(() => {
-  //   console.log('Seer useEffect called');
-  //   console.log('Seer useEffect called: ' + s.executeInfo?.executeFunc);
-  // }, [s.executeInfo]);
 
   useEffect(() => {
     setPrompt(s.prompt);
@@ -144,178 +143,147 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  useEffect(() => {
-    update(props._id, {
-      // update the size of the app window
-      size: {
-        width: 1000,
-        height: 170 + 180 + 200,
-        depth: 1,
-      },
-    });
-  }, []);
-
-  // useEffect(() => {
-  //   // calculate the height of the monaco editor based on the number of lines
-  //   const lines = s.code.split('\n').length;
-  //   update(props._id, {
-  //     // update the size of the app window
-  //     size: {
-  //       width: 800,
-  //       height: 165 + lines * 20,
-  //       depth: 1,
-  //     },
-  //   });
-  // }, [s.code]);
-
   return (
     <AppWindow app={props}>
-      <Box
-        id="sc-container"
+      <Box // main container
         w={'100%'}
         h={'100%'}
-        bg={bgColor}
+        bg={useColorModeValue('#F0F2F6', '#141414')}
         overflowY={'scroll'}
         css={{
           '&::-webkit-scrollbar': {
-            width: '.1em',
-          },
-          '&::-webkit-scrollbar-track': {
-            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+            width: '.5em',
           },
           '&::-webkit-scrollbar-thumb': {
             backgroundColor: 'teal',
-            outline: '2px solid teal',
+            borderRadius: '10px',
           },
         }}
       >
-        <Stack>
-          <HStack m={MARGIN}>
-            <Textarea
-              style={{
-                fontFamily: 'monospace',
-                width: '100%',
-                height: '100%',
-                fontSize: s.fontSize,
-                minHeight: '150px',
-              }}
-              // when I press shift + enter, it will run the code
-              // if I have the textarea in focus and I have access to the kernel
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.shiftKey && access && s.kernel) {
-                  handleGenerate(s.kernel);
-                }
-              }}
-              value={s.prompt}
-              onChange={updatePrompt}
-              placeholder="Enter prompt..."
-              size="lg"
-              _placeholder={{ color: useColorModeValue('gray.900', 'gray.100') }}
-              bg={bgColor}
-              color={useColorModeValue('black', 'white')}
-              border="1px"
-              borderColor="teal.500"
-              _focus={{
-                borderColor: 'teal.500',
-                boxShadow: '0 0 0 1px teal.500',
-              }}
-              _hover={{
-                borderColor: 'teal.500',
-                boxShadow: '0 0 0 1px teal.500',
-              }}
-              disabled={!access || !s.kernel}
-            />
-            <VStack>
-              {access ? (
-                <Tooltip hasArrow label="Generate" placement="right-start">
-                  <IconButton
-                    boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                    onClick={() => handleGenerate(s.kernel)}
-                    aria-label={''}
-                    bg={useColorModeValue('#FFFFFF', '#000000')}
-                    variant="ghost"
-                    icon={
-                      s.executeInfo?.executeFunc === 'generate' ? (
-                        <Spinner size="sm" color="teal.500" />
-                      ) : (
-                        <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
-                      )
-                    }
-                  />
-                </Tooltip>
-              ) : null}
-
-              {access ? (
-                <Tooltip hasArrow label="Stop" placement="right-start">
-                  <IconButton
-                    boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                    onClick={handleInterrupt}
-                    aria-label={''}
-                    disabled={user?._id !== s.kernel ? false : true}
-                    bg={useColorModeValue('#FFFFFF', '#000000')}
-                    variant="ghost"
-                    icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-                  />
-                </Tooltip>
-              ) : null}
-
-              {access ? (
-                <Tooltip hasArrow label="Clear All" placement="right-start">
-                  <IconButton
-                    boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                    onClick={handleClear}
-                    aria-label={''}
-                    disabled={user?._id !== s.kernel ? false : true}
-                    bg={useColorModeValue('#FFFFFF', '#000000')}
-                    variant="ghost"
-                    icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-                  />
-                </Tooltip>
-              ) : null}
-            </VStack>
-          </HStack>
-          {
-            // If there is no code, don't show the input box
-            // !s.code ? null : <InputBox app={props} access={true} />
-            <InputBox app={props} access={true} />
-          }
+        <Stack m={2}>
+          <Box // generation section container
+            h={'100%'}
+            border={'2px solid'}
+            borderColor={'#008080'}
+            borderRadius={'md'}
+            style={{
+              backgroundColor: useColorModeValue('#FFFFFF', '#141414'),
+              fontFamily: 'monospace',
+              fontSize: s.fontSize + 'px',
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              minHeight: '150px',
+            }}
+          >
+            <HStack m={2}>
+              <Textarea
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.shiftKey && access && s.kernel) {
+                    handleGenerate(s.kernel);
+                  }
+                }}
+                value={s.prompt}
+                onChange={updatePrompt}
+                placeholder="Enter prompt..."
+                _placeholder={{ color: useColorModeValue('gray.900', 'gray.100') }}
+                bg={useColorModeValue('white', 'gray.900')}
+                color={useColorModeValue('black', 'white')}
+                _focus={{
+                  border: 'transparent',
+                  boxShadow: 'none',
+                }}
+                w={'100%'}
+                h={'100%'}
+                fontSize={s.fontSize}
+                fontFamily={'monospace'}
+                minH={'150px'}
+                border={'none'}
+                resize={'none'}
+                disabled={!access || !s.kernel}
+              />
+              <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+                {access ? (
+                  <Tooltip hasArrow label="Generate" placement="right-start">
+                    <IconButton
+                      onClick={() => handleGenerate(s.kernel)}
+                      aria-label={''}
+                      icon={
+                        s.executeInfo?.executeFunc === 'generate' ? (
+                          <Spinner size="sm" color="teal.500" />
+                        ) : (
+                          <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
+                        )
+                      }
+                    />
+                  </Tooltip>
+                ) : null}
+                {access ? (
+                  <Tooltip hasArrow label="Stop" placement="right-start">
+                    <IconButton
+                      onClick={handleInterrupt}
+                      aria-label={''}
+                      disabled={user?._id !== s.kernel ? false : true}
+                      icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                    />
+                  </Tooltip>
+                ) : null}
+                {access ? (
+                  <Tooltip hasArrow label="Clear All" placement="right-start">
+                    <IconButton
+                      onClick={handleClear}
+                      aria-label={''}
+                      disabled={user?._id !== s.kernel ? false : true}
+                      icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                    />
+                  </Tooltip>
+                ) : null}
+              </ButtonGroup>
+            </HStack>
+          </Box>
         </Stack>
-        <Divider />
-        {!s.output ? (
-          <>
-            <Box
-              bg={bgColor}
-              style={{
-                fontFamily: 'monospace',
-                width: '100%',
-                height: '100%',
-                fontSize: s.fontSize,
-                minHeight: '150px',
-                border: '2px solid #008080',
-                borderRadius: '5px',
-                padding: '10px',
-              }}
-
-              // overflowY={'scroll'}
-              // css={{
-              //   '&::-webkit-scrollbar': {
-              //     width: '.1em',
-              //   },
-              //   '&::-webkit-scrollbar-track': {
-              //     '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-              //   },
-              //   '&::-webkit-scrollbar-thumb': {
-              //     backgroundColor: 'teal',
-              //     outline: '2px solid teal',
-              //   },
-              // }}
-            >
-              Output
-            </Box>
-          </>
-        ) : (
-          <OutputBox output={s.output} app={props} />
-        )}
+        <Divider mt={2} />
+        <Stack m={2}>
+          <Box // input section container
+            h={'100%'}
+            w={'100%'}
+            bgColor={useColorModeValue('#FFFFFE', '#111111')}
+            style={{
+              fontFamily: 'monospace',
+              fontSize: s.fontSize + 'px',
+              color: useColorModeValue('#000000', '#FFFFFF'),
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              minHeight: '150px',
+              border: '2px solid',
+              borderColor: '#008080',
+              borderRadius: '6px',
+            }}
+          >
+            <HStack m={2}>{<InputBox app={props} access={true} />}</HStack>
+          </Box>
+          <Divider />
+          <Box // output section container
+            border="2px solid"
+            borderColor="#008080"
+            bg={useColorModeValue('#F0F2F6', '#111111')}
+            fontFamily="monospace"
+            whiteSpace="pre-wrap"
+            overflowWrap="break-word"
+            style={{
+              overflow: 'auto',
+              fontFamily: 'monospace',
+              fontSize: s.fontSize + 'px',
+              color: useColorModeValue('#000000', '#FFFFFF'),
+              minHeight: '150px',
+              padding: '10px',
+              borderRadius: '6px',
+            }}
+          >
+            {!s.output ? <></> : <OutputBox output={s.output} app={props} />}
+          </Box>
+        </Stack>
       </Box>
     </AppWindow>
   );
@@ -345,8 +313,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const { user } = useUser();
   const { colorMode } = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
-  const [lines, setLines] = useState(s.code.split('\n').length);
-  const [position, setPosition] = useState({ r: 1, c: 1 });
   // Make a toast to show errors
   const toast = useToast();
   // Handle to the Monoco API
@@ -418,8 +384,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     if (value) {
       // Store the code in the state
       setCode(value);
-      // Update the number of lines
-      setLines(value.split('\n').length);
     }
   }
 
@@ -431,145 +395,65 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   // Get the reference to the Monaco Editor after it mounts
   function handleEditorDidMount(ed: Monaco) {
     editor.current = ed;
-    editor.current.onDidChangeCursorPosition((ev: any) => {
-      setPosition({ r: ev.position.lineNumber, c: ev.position.column });
-    });
   }
 
   return (
-    <Box>
-      <HStack>
-        <Box
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            marginTop: '0.5rem',
-            marginLeft: '0.5rem',
-            marginRight: '0rem',
-            marginBottom: 10,
-            padding: 0,
-            overflow: 'hidden',
-            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-            boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-          }}
-        >
-          <Editor
-            onMount={handleEditorDidMount}
-            value={code}
-            onChange={updateCode}
-            height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
-            language={'python'}
-            theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
-            options={{
-              fontSize: fontSize,
-              minimap: { enabled: false },
-              lineNumbersMinChars: 4,
-              acceptSuggestionOnCommitCharacter: true,
-              acceptSuggestionOnEnter: 'on',
-              accessibilitySupport: 'auto',
-              autoIndent: 'full',
-              automaticLayout: true,
-              codeLens: true,
-              colorDecorators: true,
-              contextmenu: false,
-              cursorBlinking: 'blink',
-              cursorSmoothCaretAnimation: false,
-              cursorStyle: 'line',
-              disableLayerHinting: false,
-              disableMonospaceOptimizations: false,
-              dragAndDrop: false,
-              fixedOverflowWidgets: false,
-              folding: true,
-              foldingStrategy: 'auto',
-              fontLigatures: false,
-              formatOnPaste: false,
-              formatOnType: false,
-              hideCursorInOverviewRuler: false,
-              links: true,
-              mouseWheelZoom: false,
-              multiCursorMergeOverlapping: true,
-              multiCursorModifier: 'alt',
-              overviewRulerBorder: false,
-              overviewRulerLanes: 0,
-              quickSuggestions: false,
-              quickSuggestionsDelay: 100,
-              readOnly: false,
-              renderControlCharacters: false,
-              renderFinalNewline: true,
-              renderLineHighlight: 'all',
-              renderWhitespace: 'none',
-              revealHorizontalRightPadding: 30,
-              roundedSelection: true,
-              rulers: [],
-              scrollBeyondLastColumn: 5,
-              scrollBeyondLastLine: true,
-              selectOnLineNumbers: true,
-              selectionClipboard: true,
-              selectionHighlight: true,
-              showFoldingControls: 'mouseover',
-              smoothScrolling: false,
-              suggestOnTriggerCharacters: true,
-              wordBasedSuggestions: true,
-              wordWrap: 'off',
-              wordWrapColumn: 80,
-              wrappingIndent: 'none',
-            }}
-          />
-        </Box>
-        <VStack pr={2}>
-          {props.access ? (
-            <Tooltip hasArrow label="Execute" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={() => handleExecute(s.kernel)}
-                aria-label={''}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={
-                  s.executeInfo?.executeFunc === 'execute' ? (
-                    <Spinner size="sm" color="teal.500" />
-                  ) : (
-                    <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
-                  )
-                }
-              />
-            </Tooltip>
-          ) : null}
+    <>
+      <Editor
+        onMount={handleEditorDidMount}
+        value={code}
+        onChange={updateCode}
+        defaultLanguage="python"
+        height={'15vh'}
+        language={'python'}
+        theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
+        options={{
+          fontSize: fontSize,
+          minimap: { enabled: false },
+          lineNumbersMinChars: 4,
+          automaticLayout: true,
+          quickSuggestions: false,
+        }}
+      />
+      <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+        {props.access ? (
+          <Tooltip hasArrow label="Execute" placement="right-start">
+            <IconButton
+              onClick={() => handleExecute(s.kernel)}
+              aria-label={''}
+              icon={
+                s.executeInfo?.executeFunc === 'execute' ? (
+                  <Spinner size="sm" color="teal.500" />
+                ) : (
+                  <MdPlayArrow size={'1.5em'} color="#008080" />
+                )
+              }
+            />
+          </Tooltip>
+        ) : null}
+        {props.access ? (
+          <Tooltip hasArrow label="Stop" placement="right-start">
+            <IconButton
+              onClick={handleInterrupt}
+              aria-label={''}
+              disabled={user?._id !== s.kernel ? false : true}
+              icon={<MdStop size={'1.5em'} color="#008080" />}
+            />
+          </Tooltip>
+        ) : null}
 
-          {props.access ? (
-            <Tooltip hasArrow label="Stop" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleInterrupt}
-                aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-              />
-            </Tooltip>
-          ) : null}
-
-          {props.access ? (
-            <Tooltip hasArrow label="Clear All" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleClear}
-                aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-              />
-            </Tooltip>
-          ) : null}
-        </VStack>
-      </HStack>
-      <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {position.r}, Col: {position.c}
-      </Flex>
-    </Box>
+        {props.access ? (
+          <Tooltip hasArrow label="Clear All" placement="right-start">
+            <IconButton
+              onClick={handleClear}
+              aria-label={''}
+              disabled={user?._id !== s.kernel ? false : true}
+              icon={<MdClearAll size={'1.5em'} color="#008080" />}
+            />
+          </Tooltip>
+        ) : null}
+      </ButtonGroup>
+    </>
   );
 };
 
@@ -586,28 +470,10 @@ type OutputBoxProps = {
 const OutputBox = (props: OutputBoxProps): JSX.Element => {
   const parsedJSON = JSON.parse(props.output);
   const s = props.app.data.state as AppState;
-  let data;
   if (!props.output) return <></>;
   if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
   return (
-    <Box
-      p={MARGIN}
-      m={MARGIN}
-      hidden={!parsedJSON ? true : false}
-      className="sc-output"
-      style={{
-        overflow: 'auto',
-        backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-        boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-        borderRadius: '4px',
-        fontFamily: 'monospace',
-        fontSize: s.fontSize + 'px',
-        color: useColorModeValue('#000000', '#FFFFFF'),
-        whiteSpace: 'pre-wrap',
-        wordWrap: 'break-word',
-        overflowWrap: 'break-word',
-      }}
-    >
+    <>
       {!parsedJSON.execute_result || !parsedJSON.execute_result.execution_count ? null : (
         <Text
           fontSize="xs"
@@ -695,7 +561,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
             }
             return null;
           })}
-    </Box>
+    </>
   );
 };
 

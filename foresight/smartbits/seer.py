@@ -146,6 +146,24 @@ class Seer(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
+    def interrupt(self, user_uuid):
+
+        command_info = {
+            "uuid": user_uuid,
+            "call_fn": self.handle_exec_result,
+            "code": "",
+            "kernel": self.state.kernel,
+            "token": ""
+        }
+        if self.state.kernel:
+            logger.debug(f"Sending interrupt request to  kernel {command_info['kernel']}")
+            self._jupyter_client.interrupt(command_info)
+        else:
+            # TODO: MLR fix to solve issue #339
+            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
+            self.send_updates()
 
     def clean_up(self):
         pass
