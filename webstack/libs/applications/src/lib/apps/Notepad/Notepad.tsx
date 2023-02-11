@@ -78,17 +78,20 @@ function AppComponent(props: App): JSX.Element {
       ydoc = new Y.Doc();
 
       // WS Provider
+
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
       provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
 
       // Define a shared text type on the document
-      ydoc.getText('quill');
+      const ytext = ydoc.getText('quill');
 
+      // Bind The ydoc and quidd
+      binding = new QuillBinding(ytext, quill, provider.awareness);
       // Observe changes on the text, if user is source of the change, update sage
       quill.on('text-change', (delta, oldDelta, source) => {
         if (source == 'user') {
           const content = quill.getContents();
-          updateState(props._id, { content }).then(() => {});
+          updateState(props._id, { content });
         }
       });
 
@@ -116,10 +119,10 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
+      <>
         <div ref={toolbarRef} hidden style={{ pointerEvents: 'none' }}></div>
-        <div ref={quillRef}></div>
-      </Box>
+        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5' }}></div>
+      </>
     </AppWindow>
   );
 }
