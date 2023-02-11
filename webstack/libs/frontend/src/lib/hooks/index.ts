@@ -17,3 +17,4 @@ export * from './useHexColor';
 export * from './useRouteNav';
 export * from './useWindowResize';
 export * from './useCursorBoardPosition';
+export * from './usePluginListener';

@@ -34,6 +34,7 @@ import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
 import { NLPRouter } from './custom/nlp';
+import { PluginRouter } from './custom/app-plugins';
 
 /**
  * API Loader function
@@ -55,6 +56,9 @@ export function expressAPIRouter(): express.Router {
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
+
+  // Plugin Apps Upload and Manager
+  router.use('/plugins', PluginRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());

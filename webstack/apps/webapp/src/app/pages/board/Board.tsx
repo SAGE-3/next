@@ -22,6 +22,7 @@ import {
   useData,
   serverConfiguration,
   useUser,
+  usePluginListener,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -54,6 +55,10 @@ export function BoardPage() {
 
   // UI Store
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+
+  // Plugin Listener
+  // Listens to updates from plugin apps and sends them to the AppStore
+  usePluginListener();
 
   function handleDragOver(event: DragEvent) {
     const elt = event.target as HTMLElement;
