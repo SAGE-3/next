@@ -13,7 +13,7 @@ import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
-import Quill from 'quill';
+import Quill, { Sources } from 'quill';
 
 // Utility functions from SAGE3
 import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
@@ -41,6 +41,7 @@ import {
 
 // Store between the app and the toolbar
 import create from 'zustand';
+import { debounce, throttle } from 'throttle-debounce';
 
 export const useStore = create((set: any) => ({
   editor: {} as { [key: string]: Quill },
@@ -87,12 +88,16 @@ function AppComponent(props: App): JSX.Element {
 
       // Bind The ydoc and quidd
       binding = new QuillBinding(ytext, quill, provider.awareness);
-      // Observe changes on the text, if user is source of the change, update sage
-      quill.on('text-change', (delta, oldDelta, source) => {
+
+      const throttleUpdate = debounce(1000, (source: Sources) => {
         if (source == 'user') {
           const content = quill.getContents();
           updateState(props._id, { content });
         }
+      });
+      // Observe changes on the text, if user is source of the change, update sage
+      quill.on('text-change', (delta, oldDelta, source) => {
+        throttleUpdate(source);
       });
 
       // Sync state with sage when a user connects and is the only one present
