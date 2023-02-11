@@ -62,17 +62,17 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Count'} openDelay={400}>
-          <Button onClick={handleSubClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="red">
+          <Button onClick={handleSubClick} colorScheme="red">
             <MdRemove />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Increase Count'} openDelay={400}>
-          <Button onClick={handleAddClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button onClick={handleAddClick}>
             <MdAdd />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Reset to Zero'} openDelay={400}>
-          <Button onClick={handleReset} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="blue">
+          <Button onClick={handleReset} colorScheme="blue">
             <MdRefresh />
           </Button>
         </Tooltip>

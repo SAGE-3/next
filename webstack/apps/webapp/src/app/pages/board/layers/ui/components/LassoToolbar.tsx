@@ -7,10 +7,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure } from '@chakra-ui/react';
-import { MdClose, MdZoomOutMap } from 'react-icons/md';
+import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
+import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
 
-import { ConfirmModal, useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { HiOutlineTrash } from 'react-icons/hi';
 
 /**
  * Lasso Toolbar Component
@@ -23,11 +24,15 @@ export function LassoToolbar() {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
+  const duplicate = useAppStore((state) => state.duplicateApps);
 
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedApps);
   const fitApps = useUIStore((state) => state.fitApps);
-  const [showLasso, setShowLasso] = useState(lassoApps.length > 0)
+  const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
+
+  // Boards
+  const boards = useBoardStore((state) => state.boards);
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
@@ -86,20 +91,37 @@ export function LassoToolbar() {
               {'Actions'}
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
-              <Tooltip placement="top" hasArrow={true} label={'Zoom To Selected Apps'} openDelay={400}>
-                <Button
-                  onClick={fitSelectedApps}
-                  size="xs"
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                  mr="2px"
-                  colorScheme={'teal'}
-                >
+              <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
+                <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
                   <MdZoomOutMap />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Close Selected Apps'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} mx="2px" colorScheme={'red'}>
-                  <MdClose />
+              <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps'} openDelay={400}>
+                <Button onClick={() => duplicate(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                  <MdCopyAll />
+                </Button>
+              </Tooltip>
+
+              <Menu>
+                <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps to a different Board'} openDelay={400}>
+                  <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'}>
+                    <MdSend />
+                  </MenuButton>
+                </Tooltip>
+                <MenuList>
+                  {boards.map((b) => {
+                    return (
+                      <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)}>
+                        {b.data.name}
+                      </MenuItem>
+                    );
+                  })}
+                </MenuList>
+              </Menu>
+
+              <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
+                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'}>
+                  <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
             </Box>

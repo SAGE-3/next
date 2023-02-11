@@ -84,6 +84,7 @@ interface UIState {
   incZ: () => void;
   resetZIndex: () => void;
   setScale: (z: number) => void;
+  resetZoom: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
@@ -219,11 +220,39 @@ export const useUIStore = create<UIState>((set, get) => ({
   setScale: (z: number) => {
     if (!get().boardLocked) set((state) => ({ ...state, scale: z }));
   },
+  resetZoom: () => {
+    const zoomVal = 1;
+    if (!get().boardLocked) {
+      const b = get().boardPosition;
+      const s = get().scale;
+      const wx = window.innerWidth / 2;
+      const wy = window.innerHeight / 2;
+      const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomVal);
+      set((state) => ({ ...state, boardPosition: pos, scale: zoomVal }));
+    }
+  },
   zoomIn: () => {
-    if (!get().boardLocked) set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) }));
+    const zoomInVal = Math.min(get().scale + 0.1 * get().scale, MaxZoom);
+    if (!get().boardLocked) {
+      const b = get().boardPosition;
+      const s = get().scale;
+      const wx = window.innerWidth / 2;
+      const wy = window.innerHeight / 2;
+      const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomInVal);
+      set((state) => ({ ...state, boardPosition: pos, scale: zoomInVal }));
+    }
   },
   zoomOut: () => {
-    if (!get().boardLocked) set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) }));
+    const zoomOutVal = Math.max(get().scale - 0.1 * get().scale, MinZoom);
+    if (!get().boardLocked) {
+      const b = get().boardPosition;
+      const s = get().scale;
+      const wx = window.innerWidth / 2;
+      const wy = window.innerHeight / 2;
+      const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomOutVal);
+
+      set((state) => ({ ...state, boardPosition: pos, scale: zoomOutVal }));
+    }
   },
   zoomInDelta: (d, cursor) => {
     if (!get().boardLocked)
@@ -233,15 +262,8 @@ export const useUIStore = create<UIState>((set, get) => ({
         if (cursor) {
           const b = get().boardPosition;
           const s = get().scale;
-          const x1 = b.x - cursor.x / s;
-          const y1 = b.y - cursor.y / s;
-          const x2 = b.x - cursor.x / zoomInVal;
-          const y2 = b.y - cursor.y / zoomInVal;
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const newX = b.x - dx;
-          const newY = b.y - dy;
-          return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomInVal };
+          const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomInVal);
+          return { ...state, boardPosition: pos, scale: zoomInVal };
         } else {
           return { ...state, scale: zoomInVal };
         }
@@ -255,21 +277,39 @@ export const useUIStore = create<UIState>((set, get) => ({
         if (cursor) {
           const b = get().boardPosition;
           const s = get().scale;
-          const x1 = b.x - cursor.x / s;
-          const y1 = b.y - cursor.y / s;
-          const x2 = b.x - cursor.x / zoomOutVal;
-          const y2 = b.y - cursor.y / zoomOutVal;
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const newX = b.x - dx;
-          const newY = b.y - dy;
-          return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomOutVal };
+          const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomOutVal);
+          return { ...state, boardPosition: pos, scale: zoomOutVal };
         } else {
           return { ...state, scale: zoomOutVal };
         }
       });
   },
 }));
+
+/**
+ * Used to get the new position of the board when zooming towards a new position.
+ * @param fromPosition The position you currently are
+ * @param towardsPos Toward what position. (Cursor, center of screen)
+ * @param currentZoom (current zoom level)
+ * @param newZoom (new zoom level)
+ * @returns New Position
+ */
+function zoomOnLocationNewPosition(
+  fromPosition: { x: number; y: number },
+  towardsPos: { x: number; y: number },
+  currentZoom: number,
+  newZoom: number
+): { x: number; y: number } {
+  const x1 = fromPosition.x - towardsPos.x / currentZoom;
+  const y1 = fromPosition.y - towardsPos.y / currentZoom;
+  const x2 = fromPosition.x - towardsPos.x / newZoom;
+  const y2 = fromPosition.y - towardsPos.y / newZoom;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const x = fromPosition.x - dx;
+  const y = fromPosition.y - dy;
+  return { x, y };
+}
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('UIStore', useUIStore);

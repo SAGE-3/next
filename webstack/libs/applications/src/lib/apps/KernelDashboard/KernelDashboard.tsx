@@ -84,7 +84,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Set the title on start
   useEffect(() => {
-    update(props._id, { title: "Kernel Dashboard" });
+    update(props._id, { title: 'Kernel Dashboard' });
   }, []);
 
   useEffect(() => {
@@ -290,10 +290,10 @@ function AppComponent(props: App): JSX.Element {
                         kernel.value.kernel_name === 'ir'
                           ? 'R'
                           : kernel.value.kernel_name === 'python3'
-                            ? 'Python'
-                            : kernel.value.kernel_name === 'julia-1.8'
-                              ? 'Julia'
-                              : kernel.value.kernel_name
+                          ? 'Python'
+                          : kernel.value.kernel_name === 'julia-1.8'
+                          ? 'Julia'
+                          : kernel.value.kernel_name
                       }
                     </Text>
                   </Box>
@@ -432,7 +432,6 @@ function ToolbarComponent(props: App): JSX.Element {
                 },
               })
             }
-            _hover={{ opacity: 0.7 }}
           >
             <MdRefresh />
           </Button>

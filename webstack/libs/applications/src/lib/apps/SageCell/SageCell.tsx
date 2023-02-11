@@ -272,34 +272,26 @@ function ToolbarComponent(props: App): JSX.Element {
           </Select>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
-            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+            <Button onClick={getKernels} size="xs" mx="1" colorScheme="teal">
               <MdRefresh />
             </Button>
           </Tooltip>
 
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize <= 8}
-                onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
+              <Button isDisabled={s.fontSize <= 8} onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}>
                 <MdRemove />
               </Button>
             </Tooltip>
             <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize > 42}
-                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
+              <Button isDisabled={s.fontSize > 42} onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}>
                 <MdAdd />
               </Button>
             </Tooltip>
           </ButtonGroup>
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+              <Button onClick={downloadPy}>
                 <MdFileDownload />
               </Button>
             </Tooltip>
@@ -450,7 +442,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               acceptSuggestionOnCommitCharacter: true,
               acceptSuggestionOnEnter: 'on',
               accessibilitySupport: 'auto',
-              autoIndent: "full",
+              autoIndent: 'full',
               automaticLayout: true,
               codeLens: true,
               colorDecorators: true,
@@ -629,78 +621,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.display_data.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.display_data.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  default:
+                    return MapJSONObject(parsedJSON.display_data[key]);
+                }
+              });
+            }
+            return null;
+          })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.execute_result.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                default:
-                  return null;
-              }
-            });
-          }
-          return null;
-        })}
+            if (key === 'data') {
+              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+                switch (key) {
+                  case 'text/plain':
+                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                    return (
+                      <Text key={i} id="sc-stdout">
+                        {parsedJSON.execute_result.data[key]}
+                      </Text>
+                    );
+                  case 'text/html':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  case 'image/png':
+                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/jpeg':
+                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                  case 'image/svg+xml':
+                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                  default:
+                    return null;
+                }
+              });
+            }
+            return null;
+          })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-          // find the user name that matches the userId
-          if (userId !== props.user._id) {
-            return null;
-          }
-          return (
-            <Toast
-              status="error"
-              position="bottom"
-              description={message + ', ' + props.user.data.name}
-              duration={4000}
-              isClosable
-              onClose={() => updateState(props.app._id, { privateMessage: [] })}
-              hidden={userId !== props.user._id}
-            />
-          );
-        })}
+            // find the user name that matches the userId
+            if (userId !== props.user._id) {
+              return null;
+            }
+            return (
+              <Toast
+                status="error"
+                position="bottom"
+                description={message + ', ' + props.user.data.name}
+                duration={4000}
+                isClosable
+                onClose={() => updateState(props.app._id, { privateMessage: [] })}
+                hidden={userId !== props.user._id}
+              />
+            );
+          })}
     </Box>
   );
 };
@@ -726,30 +718,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-          if (typeof obj[key] === 'object') {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
+            if (typeof obj[key] === 'object') {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {MapJSONObject(obj[key])}
+                  </Box>
                 </Box>
-                <Box as="span" ml={2}>
-                  {MapJSONObject(obj[key])}
+              );
+            } else {
+              return (
+                <Box key={key}>
+                  <Box as="span" fontWeight="bold">
+                    {key}:
+                  </Box>
+                  <Box as="span" ml={2}>
+                    {obj[key]}
+                  </Box>
                 </Box>
-              </Box>
-            );
-          } else {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
-                </Box>
-                <Box as="span" ml={2}>
-                  {obj[key]}
-                </Box>
-              </Box>
-            );
-          }
-        })
+              );
+            }
+          })
         : null}
     </Box>
   );
