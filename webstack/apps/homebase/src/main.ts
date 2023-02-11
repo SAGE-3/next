@@ -27,6 +27,8 @@ import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // YJS
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as Y from 'yjs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const YUtils = require('y-websocket/bin/utils');
 
