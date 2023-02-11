@@ -41,7 +41,7 @@ import {
 
 // Store between the app and the toolbar
 import create from 'zustand';
-import { debounce, throttle } from 'throttle-debounce';
+import { debounce } from 'throttle-debounce';
 
 export const useStore = create((set: any) => ({
   editor: {} as { [key: string]: Quill },
