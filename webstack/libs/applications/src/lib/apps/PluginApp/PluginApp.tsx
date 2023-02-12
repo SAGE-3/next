@@ -53,7 +53,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <iframe ref={iRef} src={`/plugins/apps/test_app`} style={{ width: '100%', height: '100%' }}></iframe>
+        <iframe ref={iRef} src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
       </>
     </AppWindow>
   );

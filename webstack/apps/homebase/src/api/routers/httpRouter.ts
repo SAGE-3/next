@@ -28,13 +28,13 @@ import {
   RoomsCollection,
   UsersCollection,
   MessageCollection,
+  PluginsCollection,
 } from '../collections';
 import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
 import { NLPRouter } from './custom/nlp';
-import { PluginRouter } from './custom/app-plugins';
 
 /**
  * API Loader function
@@ -57,9 +57,6 @@ export function expressAPIRouter(): express.Router {
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
-  // Plugin Apps Upload and Manager
-  router.use('/plugins', PluginRouter());
-
   // Collections
   router.use('/users', UsersCollection.router());
   router.use('/assets', AssetsCollection.router());
@@ -68,6 +65,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/rooms', RoomsCollection.router());
   router.use('/presence', PresenceCollection.router());
   router.use('/message', MessageCollection.router());
+  router.use('/plugins', PluginsCollection.router());
 
   router.use('/configuration', ConfigRouter());
   router.use('/nlp', NLPRouter());

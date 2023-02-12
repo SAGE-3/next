@@ -23,6 +23,7 @@ import {
   serverConfiguration,
   useUser,
   usePluginListener,
+  usePluginStore,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -46,6 +47,8 @@ export function BoardPage() {
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
+
+  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
   // Presence Information
   const { user } = useUser();
@@ -84,6 +87,9 @@ export function BoardPage() {
     // Sub to users and presence
     subscribeToPresence();
     subscribeToUsers();
+
+    // plugins
+    subPlugins();
     // Update the user's presence information
     if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId, following: '' });
 

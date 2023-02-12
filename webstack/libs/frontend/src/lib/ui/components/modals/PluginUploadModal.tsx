@@ -61,8 +61,8 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
         })
         .finally(() => {
           // Close the modal UI
-          props.onClose();
         });
+      props.onClose();
     }
   };
 

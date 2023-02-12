@@ -51,6 +51,7 @@ import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
 import { SAGETwilio } from '@sage3/backend';
+import * as express from 'express';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -306,6 +307,7 @@ async function startServer() {
 
   // Serves the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
+  app.use('/plugins', express.static(path.join(__dirname, 'plugins')));
 
   // Handle termination
   function exitHandler() {

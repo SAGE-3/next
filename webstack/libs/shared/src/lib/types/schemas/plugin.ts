@@ -9,12 +9,9 @@
 import { z } from 'zod';
 import { SBDoc } from './SBSchema';
 
-const Status = z.enum(['online', 'away', 'offline']);
-export type Status = z.infer<typeof Status>;
-
 /**
  * SAGE3 PluginApp Schema
- * @interface PluginApp
+ * @interface Plugin
  */
 const schema = z.object({
   // Id of the user who uploads the app.
@@ -25,6 +22,6 @@ const schema = z.object({
   name: z.string(),
 });
 
-export type PluginAppSchema = z.infer<typeof schema>;
+export type PluginSchema = z.infer<typeof schema>;
 
-export type PluginApp = SBDoc & { data: PluginAppSchema };
+export type Plugin = SBDoc & { data: PluginSchema };
