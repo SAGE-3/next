@@ -7,11 +7,11 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue } from '@chakra-ui/react';
+import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue, propNames } from '@chakra-ui/react';
 
 import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
-import { App } from '../../schema';
+import { App, AppSchema } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -19,13 +19,14 @@ import { AppWindow } from '../../components';
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { MapContainer, TileLayer, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, LayersControl, Marker, Popup } from 'react-leaflet';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
 import create from 'zustand';
 import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
+import React from 'react';
 
 // Zustand store to communicate with toolbar
 export const useStore = create((set: any) => ({
@@ -41,8 +42,7 @@ export function getStaticAssetUrl(filename: string): string {
 const maxZoom = 18;
 const minZoom = 1;
 
-// Leaflet App
-function AppComponent(props: App): JSX.Element {
+function LeafletWrapper(props: App & { children: any }) {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
@@ -58,6 +58,7 @@ function AppComponent(props: App): JSX.Element {
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
   const saveMap = useStore((state: any) => state.saveMap);
+
   // Convert ID to asset
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.assetid);
@@ -269,130 +270,23 @@ function AppComponent(props: App): JSX.Element {
         doubleClickZoom={false}
         keyboard={false}
         preferCanvas={true}
-        style={{ height: `100%`, width: `100%` }}
+        style={{ height: `100%`, width: `100%`, zIndex: 0 }}
         ref={setMap}
         attributionControl={false}
         zoomControl={false}
       >
         <LayersControl>
-          <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
-            <TileLayer
-              attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer checked={s.baseLayer === 'World Imagery'} name="World Imagery">
+          {props.children}
+          {/* <LayersControl.BaseLayer checked={s.baseLayer === 'World Imagery'} name="World Imagery">
             <TileLayer
               attribution="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
-          </LayersControl.BaseLayer>
+          </LayersControl.BaseLayer> */}
         </LayersControl>
       </MapContainer>
     </AppWindow>
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const [addrValue, setAddrValue] = useState('');
-  const map = useStore((state: any) => state.map[props._id]);
-  const update = useAppStore((state) => state.update);
-
-  const background = useColorModeValue('gray.50', 'gray.700');
-  const panelBackground = useHexColor(background);
-
-  const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
-  // @ts-expect-error
-  const geocoder = new esriLeafletGeocoder.geocode({
-    apikey: apiKey,
-  });
-
-  // from the UI to the react state
-  const handleAddrChange = (event: any) => setAddrValue(event.target.value);
-  const changeAddr = (evt: any) => {
-    evt.preventDefault();
-
-    geocoder.text(addrValue).run(function (err: any, results: any, response: any) {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      const res = results.results[0];
-      if (res && res.latlng) {
-        const value: [number, number] = [res.latlng.lat, res.latlng.lng];
-
-        map.fitBounds([res.bounds._southWest, res.bounds._northEast]);
-        // Sync zoom after fitting bounds
-        const newZoom = map.getZoom();
-        updateState(props._id, { location: value, zoom: newZoom });
-
-        // Update the app title
-        update(props._id, { title: res.text });
-      }
-    });
-  };
-
-  // Zoom in on the map
-  const incZoom = () => {
-    const zoom = s.zoom + 1;
-    const limitZoom = Math.min(zoom, maxZoom);
-    updateState(props._id, { zoom: limitZoom });
-  };
-
-  // Zoom out on the map
-  const decZoom = () => {
-    const zoom = s.zoom - 1;
-    const limitZoom = Math.max(zoom, minZoom);
-    updateState(props._id, { zoom: limitZoom });
-  };
-
-  return (
-    <HStack>
-      <ButtonGroup>
-        <form onSubmit={changeAddr}>
-          <InputGroup size="xs" minWidth="200px">
-            <Input
-              defaultValue={addrValue}
-              onChange={handleAddrChange}
-              onPaste={(event) => {
-                event.stopPropagation();
-              }}
-              backgroundColor="whiteAlpha.300"
-              placeholder="Type a place or address"
-              _placeholder={{ opacity: 1, color: 'gray.400' }}
-            />
-          </InputGroup>
-        </form>
-      </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button isDisabled={s.zoom >= 18} onClick={incZoom}>
-            <MdAdd fontSize="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= 1} onClick={decZoom}>
-            <MdRemove fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Street Map'} openDelay={400}>
-          <Button onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}>
-            <MdMap fontSize="20px" />
-          </Button>
-        </Tooltip>
-
-        <Tooltip placement="top-start" hasArrow={true} label={'Satellite Map'} openDelay={400}>
-          <Button onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}>
-            <MdTerrain fontSize="20px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-    </HStack>
-  );
-}
-
-export default { AppComponent, ToolbarComponent };
+export default LeafletWrapper;

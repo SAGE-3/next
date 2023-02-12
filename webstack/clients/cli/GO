@@ -2,10 +2,10 @@
 
 # URL
 #server="traoumad.evl.uic.edu"
-server="localhost:4200"
+server="127.0.0.1:3333"
 
 # runtime in sec
-length=60
+length=120
 
 # which board
 room="7c49fabf-74f2-40e1-88e4-5728f55770f0"
@@ -16,7 +16,7 @@ pointers=10
 
 for i in $(seq 1 ${pointers})
 do
-	node pointer.js -r 10 -s $server -b $board -m $room-m $room -t $length &
+	node pointer.js -r 10 -s $server -b $board -m $room -t $length &
 done
 
 

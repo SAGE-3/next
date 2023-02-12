@@ -273,34 +273,26 @@ function ToolbarComponent(props: App): JSX.Element {
           </Select>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
-            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+            <Button onClick={getKernels} size="xs" mx="1" colorScheme="teal">
               <MdRefresh />
             </Button>
           </Tooltip>
 
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize <= 8}
-                onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
+              <Button isDisabled={s.fontSize <= 8} onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}>
                 <MdRemove />
               </Button>
             </Tooltip>
             <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize > 42}
-                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
+              <Button isDisabled={s.fontSize > 42} onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}>
                 <MdAdd />
               </Button>
             </Tooltip>
           </ButtonGroup>
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+              <Button onClick={downloadPy}>
                 <MdFileDownload />
               </Button>
             </Tooltip>
@@ -540,7 +532,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               acceptSuggestionOnCommitCharacter: true,
               acceptSuggestionOnEnter: 'on',
               accessibilitySupport: 'auto',
-              autoIndent: "full",
+              autoIndent: 'full',
               automaticLayout: true,
               codeLens: true,
               colorDecorators: true,

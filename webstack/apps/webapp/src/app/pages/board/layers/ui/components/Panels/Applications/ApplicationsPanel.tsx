@@ -23,7 +23,19 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 // or all apps if in development mode
 const appListed = development
   ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
-  : ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'LeafLet', 'Notepad', 'SageCell', 'Screenshare', 'Stickie', 'Webview'];
+  : [
+      'AIPane',
+      'ChartMaker',
+      'KernelDashboard',
+      'JupyterLab',
+      'LeafLet',
+      'Notepad',
+      'SageCell',
+      'Screenshare',
+      'Stickie',
+      'Webview',
+      'Hawaii Mesonet',
+    ];
 
 const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell'].sort((a, b) => a.localeCompare(b));
 

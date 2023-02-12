@@ -13,7 +13,7 @@ import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
-import Quill from 'quill';
+import Quill, { Sources } from 'quill';
 
 // Utility functions from SAGE3
 import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
@@ -41,6 +41,7 @@ import {
 
 // Store between the app and the toolbar
 import create from 'zustand';
+import { debounce } from 'throttle-debounce';
 
 export const useStore = create((set: any) => ({
   editor: {} as { [key: string]: Quill },
@@ -70,7 +71,6 @@ function AppComponent(props: App): JSX.Element {
         scrollingContainer: '#scrolling-container',
         placeholder: 'Start collaborating...',
         theme: 'snow',
-
       });
       // Save the instance for the toolbar
       setEditor(props._id, quill);
@@ -79,18 +79,25 @@ function AppComponent(props: App): JSX.Element {
       ydoc = new Y.Doc();
 
       // WS Provider
+
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
       provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
 
       // Define a shared text type on the document
-      ydoc.getText('quill');
+      const ytext = ydoc.getText('quill');
 
-      // Observe changes on the text, if user is source of the change, update sage
-      quill.on('text-change', (delta, oldDelta, source) => {
+      // Bind The ydoc and quidd
+      binding = new QuillBinding(ytext, quill, provider.awareness);
+
+      const throttleUpdate = debounce(1000, (source: Sources) => {
         if (source == 'user') {
           const content = quill.getContents();
-          updateState(props._id, { content }).then(() => {});
+          updateState(props._id, { content });
         }
+      });
+      // Observe changes on the text, if user is source of the change, update sage
+      quill.on('text-change', (delta, oldDelta, source) => {
+        throttleUpdate(source);
       });
 
       // Sync state with sage when a user connects and is the only one present
@@ -117,10 +124,10 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
-        <div ref={toolbarRef} hidden style={{pointerEvents:'none'}}></div>
-        <div ref={quillRef}></div>
-      </Box>
+      <>
+        <div ref={toolbarRef} hidden style={{ pointerEvents: 'none' }}></div>
+        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5' }}></div>
+      </>
     </AppWindow>
   );
 }
@@ -344,7 +351,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
       <Tooltip placement="top" hasArrow={true} label={'Download as HTML'} openDelay={400}>
-        <Button onClick={downloadHTML} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" mx="1">
+        <Button onClick={downloadHTML} size="xs" colorScheme="teal" mx="1">
           <MdFileDownload />
         </Button>
       </Tooltip>

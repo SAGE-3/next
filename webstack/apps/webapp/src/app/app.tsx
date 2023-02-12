@@ -14,11 +14,7 @@ import { theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId
 
 import { serverConfiguration } from '@sage3/frontend';
 
-import { LoginPage } from './pages/Login';
-import { HomePage } from './pages/Home';
-import { BoardPage } from './pages/Board';
-import { AccountPage } from './pages/Account';
-import { AdminPage } from './pages/Admin';
+import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage } from './pages';
 
 /**
  * Tries to connect for a length of time, then gives up.
