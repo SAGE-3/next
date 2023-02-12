@@ -11,20 +11,22 @@ import { useEffect } from 'react';
 
 /**
  * Listens for updates from plugin apps
- * @param url the url to send the request to
- * @returns
  */
 export function usePluginListener() {
   const updateState = useAppStore((state) => state.updateState);
-
+  const update = useAppStore((state) => state.update);
   useEffect(() => {
     function updateAppState(event: any) {
       const message = event.data as { id: string; type: string; state: any };
-      console.log(message);
-      if (message.type === 'update') {
+      // if (event.source !== 's3plugin') return;
+      console.log('INcoming message', message);
+      if (message.type === 'updateState') {
         updateState(message.id, message.state);
+      } else if (message.type === 'update') {
+        update(message.id, message.state);
       }
     }
+
     window.addEventListener('message', updateAppState);
     return () => window.removeEventListener('message', updateAppState);
   }, []);

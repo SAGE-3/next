@@ -28,7 +28,6 @@ function AppComponent(props: App): JSX.Element {
       const win = iRef.current.contentWindow;
       if (win) {
         win.postMessage({
-          id: props._id,
           type: 'init',
           state: props,
         });
@@ -41,8 +40,8 @@ function AppComponent(props: App): JSX.Element {
     if (iRef.current) {
       const win = iRef.current.contentWindow;
       if (win) {
+        console.log(props);
         win.postMessage({
-          id: props._id,
           type: 'update',
           state: props,
         });

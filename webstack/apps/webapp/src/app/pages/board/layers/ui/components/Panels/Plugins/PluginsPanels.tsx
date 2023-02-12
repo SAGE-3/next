@@ -17,7 +17,6 @@ export interface PluginProps {
 
 export function PluginsPanel(props: PluginProps) {
   const plugins = usePluginStore((state) => state.plugins);
-  console.log(plugins);
   // App Store
   const createApp = useAppStore((state) => state.create);
   // User
