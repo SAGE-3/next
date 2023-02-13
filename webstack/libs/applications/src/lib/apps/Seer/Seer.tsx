@@ -10,6 +10,7 @@ import { downloadFile, useAppStore, useUser } from '@sage3/frontend';
 import {
   Alert,
   AlertIcon,
+  AspectRatio,
   Badge,
   Box,
   Button,
@@ -34,7 +35,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
-import './styling.css';
+import './styles.css';
 import { MdAdd, MdArrowDropDown, MdClearAll, MdFileDownload, MdPlayArrow, MdRefresh, MdRemove, MdStop } from 'react-icons/md';
 import { useEffect, useRef, useState } from 'react';
 
@@ -55,12 +56,10 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const s = props.data.state as AppState;
   const [myKernels, setMyKernels] = useState(s.kernels);
-
   const [access, setAccess] = useState<boolean>(true);
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
-  // const BACKGROUND = useColorModeValue('#F0F2F6', '#111111');
 
   // Set the initial size of the window
   useEffect(() => {
@@ -86,26 +85,27 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     // Get all kernels that I'm available to see
     const kernels: any[] = [];
-    s.kernels.forEach((kernel) => {
-      if (kernel.value.is_private) {
-        if (kernel.value.owner_uuid == user?._id) {
-          kernels.push(kernel);
+    s.kernels
+      .filter((el) => el.value.room === props.data.roomId)
+      .filter((el) => el.value.board === props.data.boardId)
+      .map((el) => {
+        if (el.value.is_private) {
+          if (el.value.owner_uuid == user?._id) {
+            kernels.push(el);
+          }
+        } else {
+          kernels.push(el);
         }
-      } else {
-        kernels.push(kernel);
-      }
-    });
+      });
     setMyKernels(kernels);
   }, [JSON.stringify(s.kernels)]);
 
+  // Update the state when the kernel changes
   useEffect(() => {
-    if (s.kernel == '') {
-      setAccess(true);
-    } else {
-      const access = myKernels.find((kernel) => kernel.key === s.kernel);
-      setAccess(access ? true : false);
-    }
-  }, [s.kernel, myKernels]);
+    updateState(props._id, {
+      kernel: s.kernel,
+    });
+  }, [s.kernel]);
 
   const handleGenerate = (kernel: string) => {
     if (!kernel) {
@@ -131,13 +131,12 @@ function AppComponent(props: App): JSX.Element {
   const handleInterrupt = () => {
     if (!user) return;
     updateState(props._id, {
-      executeInfo: { executeFunc: 'interrupt', params: { user_uuid: user._id } },
+      executeInfo: { executeFunc: 'interrupt', params: {} },
     });
   };
   const handleClear = () => {
     updateState(props._id, {
       prompt: '',
-      code: '',
       output: '',
       executeInfo: { executeFunc: '', params: {} },
     });
@@ -146,10 +145,18 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box // main container
-        w={'100%'}
-        h={'100%'}
-        bg={useColorModeValue('#F0F2F6', '#141414')}
-        overflowY={'scroll'}
+        style={{
+          backgroundColor: useColorModeValue('#F0F2F6', '#141414'),
+          color: useColorModeValue('#000000', '#FFFFFF'),
+          fontFamily: 'monospace',
+          fontSize: s.fontSize + 'px',
+          whiteSpace: 'pre-wrap',
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          width: '100%',
+          height: '100%',
+          overflowY: 'scroll',
+        }}
         css={{
           '&::-webkit-scrollbar': {
             width: '.5em',
@@ -162,18 +169,13 @@ function AppComponent(props: App): JSX.Element {
       >
         <Stack m={2}>
           <Box // generation section container
-            h={'100%'}
-            border={'2px solid'}
-            borderColor={'#008080'}
-            borderRadius={'md'}
             style={{
-              backgroundColor: useColorModeValue('#FFFFFF', '#141414'),
-              fontFamily: 'monospace',
-              fontSize: s.fontSize + 'px',
-              whiteSpace: 'pre-wrap',
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word',
+              height: '100%',
+              backgroundColor: useColorModeValue('#FFFFFE', '#111111'),
               minHeight: '150px',
+              border: '2px solid',
+              borderColor: '#008080',
+              borderRadius: 'md',
             }}
           >
             <HStack m={2}>
@@ -186,17 +188,20 @@ function AppComponent(props: App): JSX.Element {
                 value={s.prompt}
                 onChange={updatePrompt}
                 placeholder="Enter prompt..."
-                _placeholder={{ color: useColorModeValue('gray.900', 'gray.100') }}
-                bg={useColorModeValue('white', 'gray.900')}
-                color={useColorModeValue('black', 'white')}
+                _placeholder={{
+                  color: useColorModeValue('gray.900', 'gray.100'),
+                }}
+                style={{
+                  backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
+                  width: '100%',
+                  height: '100%',
+                  fontSize: s.fontSize + 'px',
+                  minHeight: '150px',
+                }}
                 _focus={{
                   border: 'transparent',
                   boxShadow: 'none',
                 }}
-                w={'100%'}
-                h={'100%'}
-                fontSize={s.fontSize}
-                fontFamily={'monospace'}
                 minH={'150px'}
                 border={'none'}
                 resize={'none'}
@@ -215,6 +220,7 @@ function AppComponent(props: App): JSX.Element {
                           <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
                         )
                       }
+                      disabled={!s.kernel}
                     />
                   </Tooltip>
                 ) : null}
@@ -223,8 +229,9 @@ function AppComponent(props: App): JSX.Element {
                     <IconButton
                       onClick={handleInterrupt}
                       aria-label={''}
-                      disabled={user?._id !== s.kernel ? false : true}
+                      disabled={!s.kernel}
                       icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                      hidden={s.executeInfo?.executeFunc === 'generate' ? false : true}
                     />
                   </Tooltip>
                 ) : null}
@@ -233,7 +240,7 @@ function AppComponent(props: App): JSX.Element {
                     <IconButton
                       onClick={handleClear}
                       aria-label={''}
-                      disabled={user?._id !== s.kernel ? false : true}
+                      disabled={!s.kernel}
                       icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
                     />
                   </Tooltip>
@@ -245,16 +252,10 @@ function AppComponent(props: App): JSX.Element {
         <Divider mt={2} />
         <Stack m={2}>
           <Box // input section container
-            h={'100%'}
-            w={'100%'}
-            bgColor={useColorModeValue('#FFFFFE', '#111111')}
             style={{
-              fontFamily: 'monospace',
-              fontSize: s.fontSize + 'px',
-              color: useColorModeValue('#000000', '#FFFFFF'),
-              whiteSpace: 'pre-wrap',
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word',
+              height: '100%',
+              width: '100%',
+              backgroundColor: useColorModeValue('#FFFFFE', '#111111'),
               minHeight: '150px',
               border: '2px solid',
               borderColor: '#008080',
@@ -265,20 +266,14 @@ function AppComponent(props: App): JSX.Element {
           </Box>
           <Divider />
           <Box // output section container
-            border="2px solid"
-            borderColor="#008080"
-            bg={useColorModeValue('#F0F2F6', '#111111')}
-            fontFamily="monospace"
-            whiteSpace="pre-wrap"
-            overflowWrap="break-word"
             style={{
-              overflow: 'auto',
-              fontFamily: 'monospace',
-              fontSize: s.fontSize + 'px',
-              color: useColorModeValue('#000000', '#FFFFFF'),
+              backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
               minHeight: '150px',
               padding: '10px',
+              border: '2px solid',
+              borderColor: '#008080',
               borderRadius: '6px',
+              overflow: 'auto',
             }}
           >
             {!s.output ? <></> : <OutputBox output={s.output} app={props} />}
@@ -321,16 +316,12 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   // Register a new command to evaluate the code
   useEffect(() => {
     if (editor.current) {
-      // only allow shift + enter to execute code if the user has access and
-      // the textarea is in focus
-      if (props.access && editor.current.hasTextFocus()) {
-        editor.current.addAction({
-          id: 'execute',
-          label: 'Execute',
-          keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-          run: () => handleExecute(s.kernel),
-        });
-      }
+      editor.current.addAction({
+        id: 'execute',
+        label: 'Execute',
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+        run: () => handleExecute(s.kernel),
+      });
     }
   }, [s.kernel, editor.current]);
 
@@ -375,7 +366,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const handleInterrupt = () => {
     if (!user) return;
     updateState(props.app._id, {
-      executeInfo: { executeFunc: 'interrupt', params: { user_uuid: user._id } },
+      executeInfo: { executeFunc: 'interrupt', params: {} },
     });
   };
 
@@ -400,11 +391,10 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   return (
     <>
       <Editor
-        onMount={handleEditorDidMount}
         value={code}
-        onChange={updateCode}
         defaultLanguage="python"
         height={'15vh'}
+        width={`calc(100% - ${props.access ? 50 : 0}px)`}
         language={'python'}
         theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
         options={{
@@ -414,6 +404,8 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           automaticLayout: true,
           quickSuggestions: false,
         }}
+        onChange={updateCode}
+        onMount={handleEditorDidMount}
       />
       <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
         {props.access ? (
@@ -428,6 +420,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                   <MdPlayArrow size={'1.5em'} color="#008080" />
                 )
               }
+              disabled={!s.kernel}
             />
           </Tooltip>
         ) : null}
@@ -435,8 +428,9 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           <Tooltip hasArrow label="Stop" placement="right-start">
             <IconButton
               onClick={handleInterrupt}
+              hidden={s.executeInfo?.executeFunc === 'execute' ? false : true}
               aria-label={''}
-              disabled={user?._id !== s.kernel ? false : true}
+              disabled={!s.kernel}
               icon={<MdStop size={'1.5em'} color="#008080" />}
             />
           </Tooltip>
@@ -444,12 +438,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
 
         {props.access ? (
           <Tooltip hasArrow label="Clear All" placement="right-start">
-            <IconButton
-              onClick={handleClear}
-              aria-label={''}
-              disabled={user?._id !== s.kernel ? false : true}
-              icon={<MdClearAll size={'1.5em'} color="#008080" />}
-            />
+            <IconButton onClick={handleClear} aria-label={''} disabled={!s.kernel} icon={<MdClearAll size={'1.5em'} color="#008080" />} />
           </Tooltip>
         ) : null}
       </ButtonGroup>
@@ -468,23 +457,40 @@ type OutputBoxProps = {
 };
 
 const OutputBox = (props: OutputBoxProps): JSX.Element => {
-  const parsedJSON = JSON.parse(props.output);
-  const s = props.app.data.state as AppState;
   if (!props.output) return <></>;
+  const parsedJSON = JSON.parse(props.output);
+  const [data, setData] = useState<any>(null);
+  const [executionCount, setExecutionCount] = useState<number>(0);
+  const s = props.app.data.state as AppState;
+
+  useEffect(() => {
+    if (parsedJSON.execute_result) {
+      setData(parsedJSON.execute_result.data);
+      if (parsedJSON.execute_result.execution_count) {
+        setExecutionCount(parsedJSON.execute_result.execution_count);
+      } else {
+        setExecutionCount(0);
+      }
+    }
+    if (parsedJSON.display_data) {
+      setData(parsedJSON.display_data.data);
+    }
+  }, [props.output]);
+
   if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
   return (
     <>
-      {!parsedJSON.execute_result || !parsedJSON.execute_result.execution_count ? null : (
+      {executionCount > 0 ? (
         <Text
-          fontSize="xs"
+          fontSize="sm"
           color="gray.500"
           style={{
             fontFamily: 'monospace',
           }}
         >
-          {`Out [${parsedJSON.execute_result.execution_count}]`}
+          {`Out [${executionCount}]`}
         </Text>
-      )}
+      ) : null}
       {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
         <>
           <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
@@ -498,68 +504,36 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       )}
 
       {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
-        <Text id="sc-stdout">{parsedJSON.stream.text}</Text>
+        <Text>{parsedJSON.stream.text}</Text>
       ) : (
-        <Text id="sc-stderr" color="red">
-          {parsedJSON.stream.text}
-        </Text>
+        <Text color="red">{parsedJSON.stream.text}</Text>
       )}
 
-      {!parsedJSON.display_data
+      {!data
         ? null
-        : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
+        : Object.keys(data).map((key, i) => {
+            if (key === 'metadata') {
+              // console.log('metadata', data[key]);
             }
-            return null;
-          })}
-
-      {!parsedJSON.execute_result
-        ? null
-        : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
+            switch (key) {
+              case 'text/plain':
+                return <Text key={i}>{data[key]}</Text>;
+              case 'text/html':
+                data['text/plain'] && null;
+                const html = data[key].replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return <div key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+              case 'image/png':
+                if (data.metadata && data.metadata[key].height && data.metadata[key].width) {
+                  <AspectRatio ratio={data[key].metadata.height / data[key].metadata.width}>
+                    <Image key={i} src={`data:image/png;base64,${data[key]}`} />
+                  </AspectRatio>;
                 }
-              });
+                return <Image key={i} src={`data:image/png;base64,${data[key]}`} />;
+              case 'image/svg+xml':
+                return <Image key={i} src={`data:image/svg+xml;base64,${data[key]}`} />;
+              default:
+                return <MapJSONObject key={i} data={data[key]} />;
             }
-            return null;
           })}
     </>
   );
@@ -571,10 +545,9 @@ const MapJSONObject = (obj: any): JSX.Element => {
   return (
     <Box
       pl={2}
-      ml={2}
       bg={useColorModeValue('#FFFFFF', '#000000')}
-      boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-      rounded={'md'}
+      // boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
+      // rounded={'md'}
       fontSize={'16px'}
       color={useColorModeValue('#000000', '#FFFFFF')}
     >

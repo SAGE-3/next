@@ -152,9 +152,9 @@ class JupyterKernelProxy:
             headers_dict = dict(self.headers)
             response = requests.post(j_url, headers=headers_dict)
             if response.status_code != 204:
-                logger.error("Couldn't interrupt running job. code was")
-
-
+                logger.error("Couldn't interrupt running job. Code was %s", response.status_code)
+        else:
+            logger.error("Couldn't interrupt running job. Kernel not found.")
 
     def remove_stale_tokens(self, gateway_kernels):
         kernels_ids = [k["id"] for k in gateway_kernels]

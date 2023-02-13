@@ -32,7 +32,7 @@ class SeerState(TrackedBaseModel):
 class Seer(SmartBit):
     # the key that is assigned to this in state is
     state: SeerState
-    _kernel = PrivateAttr()
+    # _kernel = PrivateAttr()
     _inferred_code = PrivateAttr()
     _jupyter_client = PrivateAttr()
     _token = PrivateAttr()
@@ -41,7 +41,7 @@ class Seer(SmartBit):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(Seer, self).__init__(**kwargs)
         self._jupyter_client = JupyterKernelProxy()
-        self._kernel = self.state.kernel
+        # self._kernel = self.state.kernel
         self._inferred_code  = None
         # valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
         # if valid_kernel_list:
@@ -79,25 +79,6 @@ class Seer(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def exec_python(self, _uuid, code):
-        """
-        Non blocking function to execute code. The proxy has the responsibility to execute the code
-        and to call a call_back function which know how to handle the results message
-        :param uuid:
-        :param code:
-        :return:
-        """
-        command_info = {
-            "uuid": _uuid,
-            "call_fn": self.handle_exec_result,
-            "code": code,
-            "kernel": self._kernel,
-            "token": ""
-        }
-
-        if self._kernel:
-            self._jupyter_client.execute(command_info)
-
     def execute(self, _uuid):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
@@ -114,7 +95,7 @@ class Seer(SmartBit):
             "token": ""
         }
 
-        if self._kernel:
+        if self.state.kernel:
             self._jupyter_client.execute(command_info)
 
     def generate(self, _uuid):
@@ -127,7 +108,6 @@ class Seer(SmartBit):
             if resp.status_code == 200 and resp.json()["status"] == "success":
                 code = resp.json()["code"]
                 print(f"GOT CODE FROM SEER SERVER AND IT's {code}")
-                # self.exec_python(_uuid, code)
                 self.state.code = code
                 self.execute(_uuid)
             else:
@@ -141,15 +121,18 @@ class Seer(SmartBit):
                 self.handle_exec_result(msg)
         else: # UI won't allow you to exec with an empty prompt
             logger.error("Seer Generate func called but state.prompt was empty")
+            msg = {"request_id": _uuid,
+                     "error": {
+                                'ename': "SeerPromptError",  # Exception name, as a string
+                                'evalue': "The prompt is empty.",  # Exception value, as a string
+                                'traceback': [self.state.prompt]  # Traceback frames, as a list of strings
+                            }
+                    }
+            self.handle_exec_result(msg)
 
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
-
-    def interrupt(self, user_uuid):
+    def interrupt(self):
 
         command_info = {
-            "uuid": user_uuid,
             "call_fn": self.handle_exec_result,
             "code": "",
             "kernel": self.state.kernel,
@@ -158,12 +141,6 @@ class Seer(SmartBit):
         if self.state.kernel:
             logger.debug(f"Sending interrupt request to  kernel {command_info['kernel']}")
             self._jupyter_client.interrupt(command_info)
-        else:
-            # TODO: MLR fix to solve issue #339
-            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
-            self.send_updates()
 
     def clean_up(self):
         pass
