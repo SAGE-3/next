@@ -25,7 +25,9 @@ interface PluginState {
   plugins: Plugin[];
   error: string | null;
   fetched: boolean;
+  upload: (file: File) => Promise<{ success: boolean; message: string }>;
   subscribeToPlugins: () => Promise<void>;
+  delete: (id: string) => Promise<void>;
 }
 
 /**
@@ -40,12 +42,24 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
     clearError: () => {
       set({ error: null });
     },
-
+    delete: async (id: string) => {
+      const res = await APIHttp.DELETE('/plugins/remove/' + id);
+    },
+    upload: async (file: File) => {
+      // Uploaded with a Form object
+      const fd = new FormData();
+      fd.append('plugin', file);
+      const res = await fetch('/api/plugins/upload', {
+        method: 'POST',
+        body: fd,
+      });
+      const resJson = await res.json();
+      return resJson;
+    },
     subscribeToPlugins: async () => {
       set({ ...get(), plugins: [], fetched: false });
 
       const plugins = await APIHttp.GET<PluginSchema, Plugin>('/plugins');
-      console.log(plugins);
       if (plugins.success) {
         set({ plugins: plugins.data, fetched: true });
       } else {

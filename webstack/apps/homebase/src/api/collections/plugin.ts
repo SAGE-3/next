@@ -35,22 +35,32 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     };
 
     // Upload a new Plugin App
-    router.post('/upload', upload.single('plugin'), async (req) => {
+    router.post('/upload', upload.single('plugin'), async (req, res) => {
       const file = req.file;
       const userId = req.user.id;
       if (file == undefined) return;
       const p = req.file?.path;
       if (p == undefined) return;
       let name: string | null = null;
+      let exists = false;
       try {
         fs.createReadStream(p)
           .pipe(Parse())
           .on('entry', (entry) => {
+            if (exists) return;
             const fileName = entry.path;
             if (name == null) {
               name = fileName.split('/')[0];
               if (name) {
-                createPluginDBRef(name, userId);
+                // Check if folder already exists. If so abort this some how
+                exists = fs.existsSync(path.join(appsPath, fileName));
+                if (exists) {
+                  res.status(500).send({ success: false, message: 'Plugin with that name already exists.' });
+                  return;
+                } else {
+                  createPluginDBRef(name, userId);
+                  res.status(200).send({ success: true, message: 'Plugin uploaded.' });
+                }
               }
             }
             const type = entry.type; // 'Directory' or 'File'
@@ -66,6 +76,25 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       } catch (e) {
         console.log('Plugins> upload error', e);
       }
+    });
+
+    // REMOVE: Remove the plugin db reference and the files locally.
+    router.delete('/remove/:id', async ({ params }, res) => {
+      const docRef = this.collection.docRef(params.id);
+      const doc = await docRef.read();
+      if (doc === undefined) {
+        res.status(500).send({ success: false, message: 'Could not delete the plugin.' });
+        return;
+      }
+
+      // Get Name of Plugin and remove directory
+      const name = doc.data.name;
+      fs.rmSync(path.join(appsPath, name), { recursive: true, force: true });
+
+      // TODO Delete the document and the files
+      const del = await this.delete(params.id);
+      if (del) res.status(200).send({ success: true });
+      else res.status(500).send({ success: false, message: 'Failed to delete document.' });
     });
 
     this.httpRouter = router;

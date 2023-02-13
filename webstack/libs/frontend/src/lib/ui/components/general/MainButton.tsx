@@ -17,8 +17,8 @@ import {
   MdOutlineLogout,
   MdOutlineVpnKey,
   MdHelp,
-  MdNewLabel,
 } from 'react-icons/md';
+import { HiPuzzle } from 'react-icons/hi';
 
 import {
   useAuth,
@@ -29,7 +29,7 @@ import {
   copyBoardUrlToClipboard,
   GetConfiguration,
   useRouteNav,
-  PluginUploadModal,
+  PluginModal,
 } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
 
@@ -127,8 +127,8 @@ export function MainButton(props: MainButtonProps) {
               Back to Room
             </MenuItem>
           )}
-          <MenuItem onClick={pluginOnOpen} icon={<MdNewLabel fontSize="24px" />}>
-            Upload Plugin App
+          <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
+            Plugins
           </MenuItem>
           <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
             About
@@ -141,7 +141,7 @@ export function MainButton(props: MainButtonProps) {
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
       <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
-      <PluginUploadModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
+      <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
     </>
   );
 }

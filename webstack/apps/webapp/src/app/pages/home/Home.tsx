@@ -21,6 +21,7 @@ import {
   MainButton,
   useUser,
   Clock,
+  usePluginStore,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
@@ -41,6 +42,9 @@ export function HomePage() {
   const boards = useBoardStore((state) => state.boards);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
 
+  // Plugins
+  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
+
   // Users and presence
   const { user } = useUser();
   const updatePresence = usePresenceStore((state) => state.update);
@@ -56,6 +60,7 @@ export function HomePage() {
     subscribeToPresence();
     subscribeToUsers();
     subToRooms();
+    subPlugins();
   }, []);
 
   function handleRoomClick(room: Room | undefined) {

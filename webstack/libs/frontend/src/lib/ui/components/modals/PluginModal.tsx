@@ -22,9 +22,20 @@ import {
   Input,
   InputLeftElement,
   FormHelperText,
+  Text,
+  HStack,
+  Tag,
+  TagLabel,
+  TagCloseButton,
+  Box,
+  VStack,
+  CardBody,
+  Card,
+  useToast,
 } from '@chakra-ui/react';
 
 import { MdAttachFile } from 'react-icons/md';
+import { useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
 interface PluginUploadModalProps {
   isOpen: boolean;
@@ -32,9 +43,22 @@ interface PluginUploadModalProps {
   onClose: () => void;
 }
 
-export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
+export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   // selected files
   const [input, setInput] = useState<File[]>([]);
+
+  // User
+  const { user } = useUser();
+
+  // List of user's plugins
+  const { plugins, delete: deletePlugin, upload } = usePluginStore((state) => state);
+  const userPlugins = plugins.filter((p) => p.data.creatorId === user?._id);
+
+  // UI
+  const borderColor = useHexColor('teal');
+
+  // Toast
+  const toast = useToast();
 
   // Files have been selected
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,23 +70,22 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
     }
   };
   // Perform the actual upload
-  const upload = () => {
+  const handleUpload = async () => {
     if (input) {
-      // Uploaded with a Form object
-      const fd = new FormData();
-      fd.append('plugin', input[0]);
       // Upload with a POST request
-      fetch('/api/plugins/upload', {
-        method: 'POST',
-        body: fd,
-      })
-        .catch((error: Error) => {
-          console.log('Upload> Error: ', error);
-        })
-        .finally(() => {
-          // Close the modal UI
+      const response = await upload(input[0]);
+      console.log(response);
+      if (response.success) {
+        toast({
+          title: 'Plugin Upload',
+          description: 'Plugin Successfully Uploaded.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
         });
-      props.onClose();
+      } else {
+        toast({ title: 'Plugin Upload', description: response.message, status: 'warning', duration: 3000, isClosable: true });
+      }
     }
   };
 
@@ -72,6 +95,27 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader>Plugin Upload</ModalHeader>
         <ModalBody>
+          <Box mb="4">
+            <Text>Your Plugins</Text>
+            <VStack spacing={4}>
+              {userPlugins
+                // create a button for each application
+                .map((plugin) => {
+                  const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
+                  return (
+                    <Card key={plugin._id} width="100%" background="gray" border="solid 2px" borderColor={borderColor} p="0" m="1">
+                      <CardBody p="1" display="flex" justifyContent="space-between" alignItems="center">
+                        <Text>{name}</Text>
+                        <Button colorScheme="red" size="xs" color="white" onClick={() => deletePlugin(plugin._id)}>
+                          X
+                        </Button>
+                      </CardBody>
+                    </Card>
+                  );
+                })}
+            </VStack>
+          </Box>
+
           <FormControl isRequired>
             <InputGroup>
               <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
@@ -91,7 +135,7 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
           </FormControl>
         </ModalBody>
         <ModalFooter>
-          <Button type="submit" colorScheme="green" mr={5} onClick={upload}>
+          <Button type="submit" colorScheme="green" mr={5} onClick={handleUpload}>
             Upload
           </Button>
           <Button mr={3} onClick={props.onClose}>
