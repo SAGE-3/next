@@ -46,16 +46,18 @@ export function PluginsPanel(props: PluginProps) {
       raised: true,
     });
   };
+
   return (
     <Panel title={'Plugins'} name="plugins" width={0} showClose={false}>
       <>
         {plugins
           // create a button for each application
           .map((plugin) => {
+            const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
             return (
               <ButtonPanel
-                key={plugin.data.name}
-                title={`PluginApp - ${plugin.data.name}`}
+                key={plugin._id}
+                title={name}
                 // disable dragging for now since it doesnt work for plugins
                 candrag={'false'}
                 onClick={() => newApplication(plugin.data.name)}

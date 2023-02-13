@@ -57,7 +57,7 @@ export function defineAbilityFor(user: SBAuthSchema) {
 
   // Limit the guest accounts
   if (user.provider === 'guest') {
-    can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE']);
+    can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE', 'PLUGINS']);
     // login and update presence
     can(['POST', 'PUT'], ['USERS', 'PRESENCE']);
     // apps

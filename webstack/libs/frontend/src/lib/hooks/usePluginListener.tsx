@@ -6,29 +6,48 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { AppSchema } from '@sage3/applications/schema';
 import { useAppStore } from '@sage3/frontend';
 import { useEffect } from 'react';
 
 /**
- * Listens for updates from plugin apps
+ * Listens for updates from plugin
  */
 export function usePluginListener() {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
+  // Use effecto attach a window message listener to listen to updates
   useEffect(() => {
-    function updateAppState(event: any) {
-      const message = event.data as { id: string; type: string; state: any };
-      // if (event.source !== 's3plugin') return;
-      console.log('INcoming message', message);
-      if (message.type === 'updateState') {
-        updateState(message.id, message.state);
-      } else if (message.type === 'update') {
-        update(message.id, message.state);
+    function pluginMessageProcess(event: any) {
+      // Is this message from the s3plugin?
+      if (event.data.source !== 's3plugin') return;
+      // Format message
+      const message = event.data as { source: string; type: 'update'; state: Partial<AppSchema>; id: string };
+
+      console.log('Incoming message', message);
+      // If this is an update
+      if (message.type === 'update') {
+        // Consolidated the Plugin update into one.
+        // The SAGE3 app store seperates updates to the App and the AppState.
+        // If the message has 'state' on it, then lets update both
+        if (Object.keys(message.state).includes('state')) {
+          const stateUpdate = structuredClone(message.state.state);
+          const appUpdate = structuredClone(message.state);
+          delete appUpdate.state;
+          update(message.id, appUpdate);
+          updateState(message.id, stateUpdate);
+        } else {
+          const appUpdate = structuredClone(message.state);
+          delete appUpdate.state;
+          update(message.id, appUpdate);
+        }
       }
     }
 
-    window.addEventListener('message', updateAppState);
-    return () => window.removeEventListener('message', updateAppState);
+    // Mount listener
+    window.addEventListener('message', pluginMessageProcess);
+    // Unmount listener
+    return () => window.removeEventListener('message', pluginMessageProcess);
   }, []);
 
   return null;

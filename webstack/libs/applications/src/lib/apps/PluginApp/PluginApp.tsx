@@ -21,7 +21,7 @@ import { useEffect, useRef } from 'react';
 
 function AppComponent(props: App): JSX.Element {
   const pluginName = (props.data.state as AppState).pluginName;
-  const iRef = useRef<HTMLIFrameElement & { S3API: any }>(null);
+  const iRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (iRef.current) {
@@ -29,6 +29,10 @@ function AppComponent(props: App): JSX.Element {
       if (win) {
         win.postMessage({
           type: 'init',
+          state: props,
+        });
+        win.postMessage({
+          type: 'update',
           state: props,
         });
       }
@@ -40,7 +44,6 @@ function AppComponent(props: App): JSX.Element {
     if (iRef.current) {
       const win = iRef.current.contentWindow;
       if (win) {
-        console.log(props);
         win.postMessage({
           type: 'update',
           state: props,
