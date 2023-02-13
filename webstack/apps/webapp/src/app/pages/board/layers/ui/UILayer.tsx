@@ -38,6 +38,7 @@ import {
   ApplicationsPanel,
   NavigationPanel,
   UsersPanel,
+  KernelsPanel,
   AnnotationsPanel,
 } from './components';
 
@@ -196,6 +197,8 @@ export function UILayer(props: UILayerProps) {
       <ApplicationsPanel boardId={props.boardId} roomId={props.roomId} />
 
       <UsersPanel boardId={props.boardId} roomId={props.roomId} />
+
+      <KernelsPanel roomId={props.roomId} />
 
       <NavigationPanel clearBoard={clearOnOpen} fitApps={showAllApps} boardId={props.boardId} />
 

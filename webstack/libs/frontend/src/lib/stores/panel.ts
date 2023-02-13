@@ -24,7 +24,7 @@ export enum StuckTypes {
   BottomLeft, // 9
 }
 
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'annotations';
+export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'annotations' | 'kernels';
 
 // Typescript interface defining the store
 export interface PanelUI {
@@ -84,6 +84,13 @@ export const usePanelStore = create<UIState>((set, get) => ({
       show: false,
     },
     {
+      position: { x: 5, y: 105 },
+      name: 'kernels',
+      stuck: StuckTypes.None,
+      minimized: false,
+      show: false,
+    },
+    {
       position: { x: 5, y: 25 },
       name: 'controller',
       stuck: StuckTypes.Left,
@@ -108,7 +115,7 @@ export const usePanelStore = create<UIState>((set, get) => ({
       z.push(panel[0]);
       set((state) => ({ ...state, panelZ: z }));
     }
-  }
+  },
 }));
 
 // Add Dev tools
