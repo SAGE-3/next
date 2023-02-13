@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { AppName } from '@sage3/applications/schema';
 import { useAppStore, usePluginStore, useUIStore, useUser } from '@sage3/frontend';
 import { ButtonPanel, Panel } from '../Panel';
 
@@ -57,7 +56,8 @@ export function PluginsPanel(props: PluginProps) {
               <ButtonPanel
                 key={plugin.data.name}
                 title={`PluginApp - ${plugin.data.name}`}
-                candrag={'true'}
+                // disable dragging for now since it doesnt work for plugins
+                candrag={'false'}
                 onClick={() => newApplication(plugin.data.name)}
               />
             );

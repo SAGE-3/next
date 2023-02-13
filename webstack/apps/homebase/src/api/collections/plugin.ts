@@ -17,9 +17,9 @@ import * as path from 'path';
 
 import { Parse } from 'unzipper';
 
-const pluginPath = `dist/apps/homebase/plugins/`;
-const uploadPath = `${pluginPath}uploads/`;
-const appsPath = `${pluginPath}apps/`;
+const pluginPath = path.join('dist', 'apps', 'homebase', 'plugins');
+const uploadPath = path.join(pluginPath, 'uploads');
+const appsPath = path.join(pluginPath, 'apps');
 const upload = multer({ dest: uploadPath });
 
 class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
@@ -57,16 +57,14 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
             const size = entry.vars.uncompressedSize; // There is also compressedSize;
             console.log(fileName, type, size);
             if (type == 'File') {
-              ensureDirectoryExistence(`${appsPath}${fileName}`);
-              entry.pipe(fs.createWriteStream(`${appsPath}${fileName}`));
+              const filename = path.join(appsPath, fileName);
+              ensureDirectoryExistence(filename);
+              entry.pipe(fs.createWriteStream(filename));
             }
           });
         // PluginsCollection.add({});
-        console.log('after');
       } catch (e) {
-        console.log(e);
-      } finally {
-        console.log('finally');
+        console.log('Plugins> upload error', e);
       }
     });
 
@@ -77,7 +75,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
 function ensureDirectoryExistence(filePath: string) {
   const dirname = path.dirname(filePath);
   if (fs.existsSync(dirname)) {
-    return true;
+    return;
   }
   ensureDirectoryExistence(dirname);
   fs.mkdirSync(dirname);
