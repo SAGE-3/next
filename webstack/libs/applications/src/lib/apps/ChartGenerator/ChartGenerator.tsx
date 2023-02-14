@@ -73,9 +73,9 @@ export const typeOptions = [
   },
 ];
 
-// For scaling apps when zooming in and out of board
-const maxFontSize = 100;
-const minFontSize = 25;
+// // For scaling apps when zooming in and out of board
+// const maxFontSize = 100;
+// const minFontSize = 25;
 
 /* App component for ChartJSViewer */
 
@@ -152,60 +152,13 @@ function AppComponent(props: App): JSX.Element {
     },
   });
 
-  // Updating the font sizes of the charts based on the zoom level
-  // Only update after 1 s
-  const debounceSave = debounce(1000, (scale, fontSizeMultiplier) => {
-    let fontSize = fontSizeMultiplier * (1 / scale);
-
-    // Just in case user's text gets too big or too small
-    if (fontSize > maxFontSize) {
-      fontSize = maxFontSize;
-    }
-    if (fontSize < minFontSize) {
-      fontSize = minFontSize;
-    }
-
-    // Update ChartJS options
-    setOptions({
-      ...options,
-      scales: {
-        y: { ticks: { font: { size: fontSize }, color: 'white' } },
-        x: { ...options.scales.x, ticks: { font: { size: fontSize }, color: 'white' } },
-      },
-      plugins: {
-        title: {
-          display: false,
-          text: '',
-          font: { size: fontSize },
-        },
-        legend: {
-          labels: {
-            color: 'white',
-            // This more specific font property overrides the global property
-            font: {
-              size: fontSize,
-            },
-          },
-        },
-      },
-    });
-  });
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
-
-  useEffect(() => {
-    debounceFunc.current(scale, s.fontSizeMultiplier);
-  }, [scale]);
+  //TODO: Temporary for all properties for station data
+  const [stationMetadata, setStationMetadata] = useState<any>({});
 
   // Used to update font sizes in the toolbar +/-
   useEffect(() => {
-    let fontSize = s.fontSizeMultiplier * (1 / scale);
-    if (fontSize > maxFontSize) {
-      fontSize = maxFontSize;
-    }
-    if (fontSize < minFontSize) {
-      fontSize = minFontSize;
-    }
+    const fontSize = s.fontSizeMultiplier * (1 / scale);
+
     setOptions({
       ...options,
       scales: {
@@ -237,7 +190,12 @@ function AppComponent(props: App): JSX.Element {
 
     fetch(s.url).then((response) => {
       response.json().then((station) => {
+        console.log(station);
+
         climateData = station['STATION'][0]['OBSERVATIONS'];
+        delete station['STATION'][0]['SENSOR_VARIABLES'];
+        delete station['STATION'][0]['OBSERVATIONS'];
+        setStationMetadata(station['STATION'][0]);
         const attributeProps = Object.keys(climateData);
 
         setData(climateData);
@@ -276,6 +234,14 @@ function AppComponent(props: App): JSX.Element {
     // setRevCount(Math.floor(Math.random() * 1000000));
   }, [JSON.stringify(data), JSON.stringify(s.datasets)]);
 
+  // // Change x axis
+  // const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  //   const value = e.target.value;
+  //   const newDatasets = [...s.datasets];
+  //   newDatasets[0].yDataName = value;
+  //   updateState(props._id, { datasets: newDatasets });
+  // };
+
   // Change y axis
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -293,7 +259,7 @@ function AppComponent(props: App): JSX.Element {
     }
     updateState(props._id, { datasets: newDatasets });
   };
-
+  console.log(stationMetadata);
   return (
     <AppWindow app={props}>
       <>
@@ -311,9 +277,19 @@ function AppComponent(props: App): JSX.Element {
             <Button className="closeButton" onClick={() => setOpen(false)} backgroundColor={commonButtonColors} size="sm" mx="1">
               <MdClose color={buttonTextColor} />
             </Button>
-            <Grid textAlign="center" templateColumns="repeat(1,1fr)" gap={2}>
+            <br />
+            <br />
+            <Grid templateColumns="repeat(1,1fr)" gap={2}>
+              {Object.keys(stationMetadata).map((property, index) => {
+                return (
+                  <h1 style={{ marginLeft: '1rem' }} key={index}>
+                    <b>{property.slice(0, 1) + property.replaceAll('_', ' ').slice(1).toLowerCase()}</b>:{' '}
+                    {typeof stationMetadata[property] === 'string' ? stationMetadata[property] : null}
+                  </h1>
+                );
+              })}
               <br />
-              <h1>Graph Type</h1>
+              <h1 style={{ textAlign: 'center' }}>Graph Type</h1>
               <Container>
                 <Box borderColor="black" maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
                   <Select placeholder={'Chart Type'} onChange={handleTypeChange}>
@@ -356,7 +332,7 @@ function AppComponent(props: App): JSX.Element {
                   </HStack>
                 </Box>
               </Container> */}
-              <h1>Y values</h1>
+              <h1 style={{ textAlign: 'center' }}>Y values</h1>
               <Container>
                 <Box maxW="sm" overflow="hidden">
                   <HStack>
@@ -387,6 +363,8 @@ function AppComponent(props: App): JSX.Element {
                   </HStack>
                 </Box>
               </Container>
+              <br />
+              <br />
             </Grid>
           </div>
         </div>
