@@ -14,8 +14,8 @@ import {
   AssetsCollection,
   PresenceCollection,
   MessageCollection,
+  PluginsCollection,
 } from '../collections';
-import { PluginsCollection } from './plugin';
 
 export * from './apps';
 export * from './boards';
@@ -24,7 +24,7 @@ export * from './users';
 export * from './assets';
 export * from './presence';
 export * from './message';
-export * from './plugin';
+export * from './plugins';
 
 /**
  * Load the various models at startup.
