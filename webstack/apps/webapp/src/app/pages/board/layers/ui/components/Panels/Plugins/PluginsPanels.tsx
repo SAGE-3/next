@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useColorModeValue, VStack } from '@chakra-ui/react';
 import { useAppStore, usePluginStore, useUIStore, useUser } from '@sage3/frontend';
 import { ButtonPanel, Panel } from '../Panel';
 
@@ -24,7 +25,7 @@ export function PluginsPanel(props: PluginProps) {
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
-
+  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   const newApplication = (pluginName: string) => {
     if (!user) return;
 
@@ -50,20 +51,41 @@ export function PluginsPanel(props: PluginProps) {
   return (
     <Panel title={'Plugins'} name="plugins" width={0} showClose={false}>
       <>
-        {plugins
-          // create a button for each application
-          .map((plugin) => {
-            const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
-            return (
-              <ButtonPanel
-                key={plugin._id}
-                title={name}
-                // disable dragging for now since it doesnt work for plugins
-                candrag={'false'}
-                onClick={() => newApplication(plugin.data.name)}
-              />
-            );
-          })}
+        <VStack
+          maxH={300}
+          w={'100%'}
+          m={0}
+          pr={2}
+          spacing={1}
+          overflow="auto"
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: gripColor,
+              borderRadius: 'md',
+            },
+          }}
+        >
+          {plugins
+            // create a button for each application
+            .map((plugin) => {
+              const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
+              return (
+                <ButtonPanel
+                  key={plugin._id}
+                  title={name}
+                  // disable dragging for now since it doesnt work for plugins
+                  candrag={'false'}
+                  onClick={() => newApplication(plugin.data.name)}
+                />
+              );
+            })}
+        </VStack>
       </>
     </Panel>
   );
