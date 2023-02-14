@@ -23,19 +23,16 @@ import {
   InputLeftElement,
   FormHelperText,
   Text,
-  HStack,
-  Tag,
-  TagLabel,
-  TagCloseButton,
   Box,
   VStack,
   CardBody,
   Card,
   useToast,
+  useDisclosure,
 } from '@chakra-ui/react';
 
-import { MdAttachFile } from 'react-icons/md';
-import { useHexColor, usePluginStore, useUser } from '@sage3/frontend';
+import { MdAttachFile, MdDescription } from 'react-icons/md';
+import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
 interface PluginUploadModalProps {
   isOpen: boolean;
@@ -44,21 +41,29 @@ interface PluginUploadModalProps {
 }
 
 export function PluginModal(props: PluginUploadModalProps): JSX.Element {
-  // selected files
+  // Form state
   const [input, setInput] = useState<File[]>([]);
+  const [description, setDescription] = useState<string>('');
+
+  // Delete Selected Plugin
+  const [deleteId, setDeleteId] = useState<string>('');
 
   // User
   const { user } = useUser();
 
   // List of user's plugins
   const { plugins, delete: deletePlugin, upload } = usePluginStore((state) => state);
-  const userPlugins = plugins.filter((p) => p.data.creatorId === user?._id);
+  const userPlugins = plugins.filter((p) => p.data.ownerId === user?._id);
 
   // UI
   const borderColor = useHexColor('teal');
 
   // Toast
   const toast = useToast();
+
+  // Confirm modal
+  // Delete Confirmation  Modal
+  const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
   // Files have been selected
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,9 +76,9 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   };
   // Perform the actual upload
   const handleUpload = async () => {
-    if (input) {
+    if (input && user && description) {
       // Upload with a POST request
-      const response = await upload(input[0]);
+      const response = await upload(input[0], description);
       console.log(response);
       if (response.success) {
         toast({
@@ -89,60 +94,98 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
     }
   };
 
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDescription(e.target.value);
+  };
+
+  const handleDeletePlugin = () => {
+    deletePlugin(deleteId);
+  };
+
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Plugin Upload</ModalHeader>
-        <ModalBody>
-          <Box mb="4">
-            <Text>Your Plugins</Text>
-            <VStack spacing={4}>
-              {userPlugins
-                // create a button for each application
-                .map((plugin) => {
-                  const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
-                  return (
-                    <Card key={plugin._id} width="100%" background="gray" border="solid 2px" borderColor={borderColor} p="0" m="1">
-                      <CardBody p="1" display="flex" justifyContent="space-between" alignItems="center">
-                        <Text>{name}</Text>
-                        <Button colorScheme="red" size="xs" color="white" onClick={() => deletePlugin(plugin._id)}>
-                          X
-                        </Button>
-                      </CardBody>
-                    </Card>
-                  );
-                })}
-            </VStack>
-          </Box>
+    <>
+      <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Plugins</ModalHeader>
+          <ModalBody>
+            <Text fontSize="lg">Your Plugins</Text>
+            <Box mb="8">
+              <VStack spacing={4} maxH="400px">
+                {userPlugins
+                  // create a button for each application
+                  .map((plugin) => {
+                    const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
+                    return (
+                      <Card key={plugin._id} width="100%" background="gray" border="solid 2px" borderColor={borderColor} p="0" m="1">
+                        <CardBody p="1" display="flex" justifyContent="space-between" alignItems="center">
+                          <Text>{name}</Text>
+                          <Button
+                            colorScheme="red"
+                            size="xs"
+                            color="white"
+                            onClick={() => {
+                              setDeleteId(plugin._id);
+                              delConfirmOnOpen();
+                            }}
+                          >
+                            X
+                          </Button>
+                        </CardBody>
+                      </Card>
+                    );
+                  })}
+              </VStack>
+            </Box>
+            <hr style={{ margin: '8px 0 8px 0' }} />
+            <Text fontSize="lg">Upload</Text>
 
-          <FormControl isRequired>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
+            <FormControl isRequired>
+              <FormHelperText mb="2">Select Zip file Container Plugin App</FormHelperText>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
 
-              <Input
-                variant="outline"
-                padding={'4px 35px'}
-                id="files"
-                type="file"
-                accept={'.zip'}
-                multiple
-                onChange={handleInputChange}
-                onClick={() => setInput([])}
-              />
-            </InputGroup>
-            <FormHelperText>Select Zip file Container Plugin App</FormHelperText>
-          </FormControl>
-        </ModalBody>
-        <ModalFooter>
-          <Button type="submit" colorScheme="green" mr={5} onClick={handleUpload}>
-            Upload
-          </Button>
-          <Button mr={3} onClick={props.onClose}>
-            Cancel
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+                <Input
+                  variant="outline"
+                  padding={'4px 35px'}
+                  id="files"
+                  type="file"
+                  accept={'.zip'}
+                  multiple
+                  onChange={handleInputChange}
+                  onClick={() => setInput([])}
+                />
+                <br />
+              </InputGroup>
+
+              <FormHelperText mb="2">Description</FormHelperText>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} />} />
+
+                <Input variant="outline" padding={'4px 35px'} id="description" type="text" onChange={handleDescriptionChange} />
+              </InputGroup>
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="submit" colorScheme="green" mr={5} onClick={handleUpload}>
+              Upload
+            </Button>
+            <Button mr={3} onClick={props.onClose}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <ConfirmModal
+        isOpen={delConfirmIsOpen}
+        onClose={delConfirmOnClose}
+        onConfirm={handleDeletePlugin}
+        title="Delete Board"
+        message="Are you sure you want to delete this board?"
+        cancelText="Cancel"
+        confirmText="Delete"
+        confirmColor="red"
+      ></ConfirmModal>
+    </>
   );
 }

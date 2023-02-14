@@ -15,8 +15,9 @@ import * as multer from 'multer';
 import * as path from 'path';
 // import { v4 as getUUID } from 'uuid';
 
-import { Parse } from 'unzipper';
+import * as jszip from 'jszip';
 
+// Plugin Paths
 const pluginPath = path.join('dist', 'apps', 'homebase', 'plugins');
 const uploadPath = path.join(pluginPath, 'uploads');
 const appsPath = path.join(pluginPath, 'apps');
@@ -26,55 +27,67 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
   constructor() {
     super('PLUGINS', {
       name: '',
+      ownerId: '',
     });
 
     const router = sageRouter<PluginSchema>(this);
 
-    const createPluginDBRef = (name: string, uid: string) => {
-      this.add({ name, creatorId: uid, dateCreated: Date.now().toString() }, uid);
-    };
+    // Check to see if the folders exists, If not create them
+    ensureDirectoryExistence(pluginPath);
+    ensureDirectoryExistence(uploadPath);
+    ensureDirectoryExistence(appsPath);
 
     // Upload a new Plugin App
     router.post('/upload', upload.single('plugin'), async (req, res) => {
+      // Check for file.
       const file = req.file;
-      const userId = req.user.id;
-      if (file == undefined) return;
+      if (file == undefined) res.status(400).send({ success: false, message: 'No file provided.' });
+
+      const description = req.body.description as string;
+      const username = req.user.displayName as string;
+      console.log(description, username);
+
+      if (!username || !description) res.status(400).send({ success: false, message: 'Description missing' });
+
       const p = req.file?.path;
       if (p == undefined) return;
-      let name: string | null = null;
-      let exists = false;
+
+      // Read the zip file
       try {
-        fs.createReadStream(p)
-          .pipe(Parse())
-          .on('entry', (entry) => {
-            if (exists) return;
-            const fileName = entry.path;
-            if (name == null) {
-              name = fileName.split('/')[0];
-              if (name) {
-                // Check if folder already exists. If so abort this some how
-                exists = fs.existsSync(path.join(appsPath, fileName));
-                if (exists) {
-                  res.status(500).send({ success: false, message: 'Plugin with that name already exists.' });
-                  return;
-                } else {
-                  createPluginDBRef(name, userId);
-                  res.status(200).send({ success: true, message: 'Plugin uploaded.' });
-                }
-              }
-            }
-            const type = entry.type; // 'Directory' or 'File'
-            const size = entry.vars.uncompressedSize; // There is also compressedSize;
-            console.log(fileName, type, size);
-            if (type == 'File') {
-              const filename = path.join(appsPath, fileName);
-              ensureDirectoryExistence(filename);
-              entry.pipe(fs.createWriteStream(filename));
+        fs.readFile(p, async (err, data) => {
+          if (err) throw err;
+          // Load the zip file
+          const result = await jszip.loadAsync(data);
+          // Extract keys
+          const keys = Object.keys(result.files);
+
+          // Get plugin name and make sure it doesn't already exist
+          const pluginName = keys[0].split('/')[0];
+          if (fs.existsSync(path.join(appsPath, pluginName))) {
+            res.status(500).send({ success: false, message: 'Plugin with that name already exists.' });
+            return;
+          } else {
+            ensureDirectoryExistence(appsPath);
+            ensureDirectoryExistence(path.join(appsPath, pluginName));
+          }
+          console.log(keys);
+          // Create the files
+          keys.forEach(async (key) => {
+            const item = result.files[key];
+            ensureDirectoryExistence(path.join(appsPath, key));
+            if (!item.dir) {
+              fs.writeFileSync(path.join(appsPath, key), Buffer.from(await item.async('arraybuffer')));
             }
           });
-        // PluginsCollection.add({});
+          // Update the database
+          this.add(
+            { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString() },
+            req.user.id
+          );
+          res.status(500).send({ success: true, message: 'Error reading zip file.' });
+        });
       } catch (e) {
-        console.log('Plugins> upload error', e);
+        res.status(500).send({ success: false, message: 'Plugin uploaded.' });
       }
     });
 

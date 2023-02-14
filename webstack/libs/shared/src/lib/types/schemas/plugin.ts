@@ -14,12 +14,16 @@ import { SBDoc } from './SBSchema';
  * @interface Plugin
  */
 const schema = z.object({
-  // Id of the user who uploads the app.
-  creatorId: z.string(),
+  // Id of the user who uploads the plugin.
+  ownerId: z.string(),
+  // Name of user who uploads the plugin.
+  ownerName: z.string(),
   // Uploaded At
   dateCreated: z.string(),
   // Name of the plugin app
   name: z.string(),
+  // Description of the plugin app
+  description: z.string(),
 });
 
 export type PluginSchema = z.infer<typeof schema>;
