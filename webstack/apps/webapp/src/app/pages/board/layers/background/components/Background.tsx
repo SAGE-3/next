@@ -6,13 +6,22 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef } from 'react';
-import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
+import {useEffect, useRef, useState} from 'react';
+import {Box, useColorModeValue, useToast, ToastId, ModalCloseButton} from '@chakra-ui/react';
 
-import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  useDisclosure
+} from '@chakra-ui/react';
 
 // To do upload with progress bar
-import axios, { AxiosProgressEvent } from 'axios';
+import axios, {AxiosProgressEvent} from 'axios';
 
 import {
   useUIStore,
@@ -26,9 +35,9 @@ import {
   useHotkeys,
   useCursorBoardPosition,
   useKeyPress,
-  useAuth,
+  useAuth, AssetHTTPService,
 } from '@sage3/frontend';
-import { AppName } from '@sage3/applications/schema';
+import {AppName} from '@sage3/applications/schema';
 
 // File information
 import {
@@ -47,8 +56,8 @@ import {
   isGIF,
   isPythonNotebook,
 } from '@sage3/shared';
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
-import { setupApp } from './Drops';
+import {ExtraImageType, ExtraPDFType} from '@sage3/shared/types';
+import {setupApp} from './Drops';
 
 import imageHelp from './sage3-help.jpg';
 
@@ -60,11 +69,11 @@ type HelpProps = {
 export function HelpModal(props: HelpProps) {
   return (
     <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="5xl">
-      <ModalOverlay />
+      <ModalOverlay/>
       <ModalContent>
         <ModalHeader>SAGE3 Help</ModalHeader>
         <ModalBody>
-          <img src={imageHelp} alt="SAGE3 Help" />
+          <img src={imageHelp} alt="SAGE3 Help"/>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
@@ -87,7 +96,12 @@ export function Background(props: BackgroundProps) {
   // Handle to a toast
   const toastIdRef = useRef<ToastId>();
   // Help modal
-  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose} = useDisclosure();
+  // Modal for choosing to open jupyter notebooks in jupyterlab or as sage cells
+  const { isOpen: isNotebookModalOpen, onOpen: onNotebookModalOpen, onClose: onNotebookModalClose } = useDisclosure({id: 'notebook'});
+
+  // Whether to open notebooks in JupyterLab or SageCells
+  const [explodeCells, setExplodeCells] = useState(true);
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -99,9 +113,9 @@ export function Background(props: BackgroundProps) {
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // User
-  const { user } = useUser();
-  const { auth } = useAuth();
-  const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
+  const {user} = useUser();
+  const {auth} = useAuth();
+  const {position: cursorPosition, mouse: mousePosition} = useCursorBoardPosition();
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -270,8 +284,8 @@ export function Background(props: BackgroundProps) {
               yDrop,
               props.roomId,
               props.boardId,
-              { w: w, h: w },
-              { assetid: '/api/assets/static/' + a.data.file }
+              {w: w, h: w},
+              {assetid: '/api/assets/static/' + a.data.file}
             )
           );
         }
@@ -289,8 +303,8 @@ export function Background(props: BackgroundProps) {
               yDrop,
               props.roomId,
               props.boardId,
-              { w: w, h: w / (extras.aspectRatio || 1) },
-              { assetid: fileID }
+              {w: w, h: w / (extras.aspectRatio || 1)},
+              {assetid: fileID}
             )
           );
         }
@@ -302,17 +316,32 @@ export function Background(props: BackgroundProps) {
           const extras = a.data.derived as ExtraImageType;
           const vw = 800;
           const vh = vw / (extras.aspectRatio || 1);
-          createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, { w: vw, h: vh }, { assetid: fileID }));
+          createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, {
+            w: vw,
+            h: vh
+          }, {assetid: fileID}));
         }
       });
     } else if (isCSV(fileType)) {
-      createApp(setupApp('', 'CSVViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'CSVViewer', xDrop, yDrop, props.roomId, props.boardId, {
+        w: 800,
+        h: 400
+      }, {assetid: fileID}));
     } else if (isDZI(fileType)) {
-      createApp(setupApp('', 'DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, {
+        w: 800,
+        h: 400
+      }, {assetid: fileID}));
     } else if (isGLTF(fileType)) {
-      createApp(setupApp('', 'GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 600, h: 600 }, { assetid: fileID }));
+      createApp(setupApp('', 'GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, {
+        w: 600,
+        h: 600
+      }, {assetid: fileID}));
     } else if (isGeoJSON(fileType)) {
-      createApp(setupApp('', 'LeafLet', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
+      createApp(setupApp('', 'LeafLet', xDrop, yDrop, props.roomId, props.boardId, {
+        w: 800,
+        h: 400
+      }, {assetid: fileID}));
     } else if (isMD(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
@@ -330,7 +359,10 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
+              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, {
+                w: 400,
+                h: 400
+              }, {text: text}));
             });
         }
       });
@@ -351,37 +383,33 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, {
+                w: 400,
+                h: 400
+              }, {code: text}));
             });
         }
       });
     } else if (isPythonNotebook(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
+      onNotebookModalOpen()
+          // Look for the file in the asset store
+    assets.forEach((a) => {
+      if (a._id === fileID) {
+        const localurl = '/api/assets/static/' + a.data.file;
+        // Get the content of the file
+        fetch(localurl, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        })
+          .then(function (response) {
+            return response.json();
           })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (json) {
+          .then(async function (json) {
+            if (explodeCells == true) {
               // create a sagecell app for each cell in the cells array
               const cells = json.cells;
-              // const sourceCodeArray = cells.map((el: any) => {
-              //   if (el.cell_type === 'code') {
-              //     return el.source;
-              //   }
-              // });
-              // const sourceCode = sourceCodeArray.join(' ');
-              // createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 500, h: 1000 }, { code: sourceCode }));
-
-              // console.log(cells);
               let y = yDrop;
               let columnCount = 0;
               const columnHeight = 5;
@@ -392,16 +420,25 @@ export function Background(props: BackgroundProps) {
               cells.forEach((cell: any) => {
                 if (cell.cell_type === 'code') {
                   const sourceCode = (cell.source as []).join(' ');
-                  createApp(setupApp('', 'SageCell', x, y, props.roomId, props.boardId, { w: width, h: height }, { code: sourceCode }));
+                  createApp(setupApp('', 'SageCell', x, y, props.roomId, props.boardId, {
+                    w: width,
+                    h: height
+                  }, {code: sourceCode}));
                 }
                 if (cell.cell_type === 'markdown') {
                   createApp(
-                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: width, h: height }, { text: `markdown ${cell.source}` })
+                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+                      w: width,
+                      h: height
+                    }, {text: `markdown ${cell.source}`})
                   );
                 }
                 if (cell.cell_type === 'raw') {
                   createApp(
-                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, { w: width, h: height }, { text: `markdown ${cell.source}` })
+                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+                      w: width,
+                      h: height
+                    }, {text: `markdown ${cell.source}`})
                   );
                 }
                 if (cell.cell_type === 'display_data') {
@@ -413,8 +450,8 @@ export function Background(props: BackgroundProps) {
                       y,
                       props.roomId,
                       props.boardId,
-                      { w: width, h: height },
-                      { output: JSON.stringify(cell.data) }
+                      {w: width, h: height},
+                      {output: JSON.stringify(cell.data)}
                     )
                   );
                 }
@@ -426,70 +463,55 @@ export function Background(props: BackgroundProps) {
                   y = yDrop;
                 }
               });
-            });
-        }
-      });
-      // } else if (isPythonNotebook(fileType)) {
-      //   // Look for the file in the asset store
-      //   assets.forEach((a) => {
-      //     if (a._id === fileID) {
-      //       const localurl = '/api/assets/static/' + a.data.file;
-      //       // Get the content of the file
-      //       fetch(localurl, {
-      //         headers: {
-      //           'Content-Type': 'application/json',
-      //           Accept: 'application/json',
-      //         },
-      //       })
-      //         .then(function (response) {
-      //           return response.json();
-      //         })
-      //         .then(async function (json) {
-      //           // Create a notebook file in Jupyter with the content of the file
-      //           GetConfiguration().then((conf) => {
-      //             if (conf.token) {
-      //               // Create a new notebook
-      //               let base: string;
-      //               if (conf.production) {
-      //                 base = `https://${window.location.hostname}:4443`;
-      //               } else {
-      //                 base = `http://${window.location.hostname}`;
-      //               }
-      //               // Talk to the jupyter server API
-      //               const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
-      //               const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-      //               // Create a new notebook
-      //               fetch(j_url, {
-      //                 method: 'PUT',
-      //                 headers: {
-      //                   'Content-Type': 'application/json',
-      //                   Authorization: 'Token ' + conf.token,
-      //                 },
-      //                 body: JSON.stringify(payload),
-      //               })
-      //                 .then((response) => response.json())
-      //                 .then((res) => {
-      //                   console.log('Jupyter> notebook created', res);
-      //                   // Create a note from the json
-      //                   createApp(
-      //                     setupApp(
-      //                       '',
-      //                       'JupyterLab',
-      //                       xDrop,
-      //                       yDrop,
-      //                       props.roomId,
-      //                       props.boardId,
+            } else {
+              // Create a notebook file in Jupyter with the content of the file
+              GetConfiguration().then((conf) => {
+                if (conf.token) {
+                  // Create a new notebook
+                  let base: string;
+                  if (conf.production) {
+                    base = `https://${window.location.hostname}:4443`;
+                  } else {
+                    base = `http://${window.location.hostname}`;
+                  }
+                  // Talk to the jupyter server API
+                  const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+                  const payload = {type: 'notebook', path: '/notebooks', format: 'json', content: json};
+                  // Create a new notebook
+                  fetch(j_url, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: 'Token ' + conf.token,
+                    },
+                    body: JSON.stringify(payload),
+                  })
+                    .then((response) => response.json())
+                    .then((res) => {
+                      console.log('Jupyter> notebook created', res);
+                      // Create a note from the json
+                      createApp(
+                        setupApp(
+                          '',
+                          'JupyterLab',
+                          xDrop,
+                          yDrop,
+                          props.roomId,
+                          props.boardId,
 
-      //                       { w: 700, h: 700 },
-      //                       { notebook: a.data.originalfilename }
-      //                     )
-      //                   );
-      //                 });
-      //             }
-      //           });
-      //         });
-      //     }
-      //   });
+                          {w: 700, h: 700},
+                          {notebook: a.data.originalfilename}
+                        )
+                      );
+                    });
+                }
+              });
+            }
+
+          });
+      }
+    });
+
     } else if (isJSON(fileType)) {
       // Look for the file in the asset store
       assets.forEach((a) => {
@@ -515,8 +537,8 @@ export function Background(props: BackgroundProps) {
                   yDrop,
                   props.roomId,
                   props.boardId,
-                  { w: 500, h: 600 },
-                  { spec: JSON.stringify(spec, null, 2) }
+                  {w: 500, h: 600},
+                  {spec: JSON.stringify(spec, null, 2)}
                 )
               );
             });
@@ -535,7 +557,10 @@ export function Background(props: BackgroundProps) {
             aspectRatio = page[0].width / page[0].height;
           }
           createApp(
-            setupApp('', 'PDFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
+            setupApp('', 'PDFViewer', xDrop, yDrop, props.roomId, props.boardId, {
+              w: 400,
+              h: 400 / aspectRatio
+            }, {assetid: fileID})
           );
         }
       });
@@ -591,7 +616,10 @@ export function Background(props: BackgroundProps) {
         if (pastedText) {
           if (pastedText.startsWith('data:image/png;base64')) {
             // it's a base64 image
-            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
+            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, {
+              w: 800,
+              h: 600
+            }, {assetid: pastedText}));
           } else {
             const final_url = processContentURL(pastedText);
             let w, h;
@@ -603,7 +631,10 @@ export function Background(props: BackgroundProps) {
               w = 800;
               h = 800;
             }
-            createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
+            createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, {
+              w,
+              h
+            }, {webviewurl: final_url}));
           }
         }
       } else {
@@ -645,7 +676,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y] }
+    {dependencies: [cursorPosition.x, cursorPosition.y]}
   );
 
   // Move the board with the arrow keys
@@ -655,19 +686,19 @@ export function Background(props: BackgroundProps) {
       if (selectedAppId !== '') return;
       const shiftAmount = 50 / scale; // Grid size adjusted for scale factor
       if (event.key === 'ArrowUp') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y + shiftAmount });
+        setBoardPosition({x: boardPosition.x, y: boardPosition.y + shiftAmount});
       } else if (event.key === 'ArrowDown') {
-        setBoardPosition({ x: boardPosition.x, y: boardPosition.y - shiftAmount });
+        setBoardPosition({x: boardPosition.x, y: boardPosition.y - shiftAmount});
       } else if (event.key === 'ArrowLeft') {
-        setBoardPosition({ x: boardPosition.x + shiftAmount, y: boardPosition.y });
+        setBoardPosition({x: boardPosition.x + shiftAmount, y: boardPosition.y});
       } else if (event.key === 'ArrowRight') {
-        setBoardPosition({ x: boardPosition.x - shiftAmount, y: boardPosition.y });
+        setBoardPosition({x: boardPosition.x - shiftAmount, y: boardPosition.y});
       }
       // Returning false stops the event and prevents default browser events
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
+    {dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y]}
   );
 
   // Zoom in/out of the board with the -/+ keys
@@ -684,7 +715,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [mousePosition.x, mousePosition.y, selectedAppId] }
+    {dependencies: [mousePosition.x, mousePosition.y, selectedAppId]}
   );
 
   // Stickies Shortcut
@@ -695,14 +726,17 @@ export function Background(props: BackgroundProps) {
       const x = cursorPosition.x;
       const y = cursorPosition.y;
       createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, {
+          w: 400,
+          h: 400
+        }, {color: user.data.color || 'yellow'})
       );
 
       // Returning false stops the event and prevents default browser events
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y] }
+    {dependencies: [cursorPosition.x, cursorPosition.y]}
   );
 
   useEffect(() => {
@@ -733,7 +767,7 @@ export function Background(props: BackgroundProps) {
       }}
       onWheel={(evt: any) => {
         evt.stopPropagation();
-        const cursor = { x: evt.clientX, y: evt.clientY };
+        const cursor = {x: evt.clientX, y: evt.clientY};
         if (evt.deltaY < 0) {
           zoomInDelta(evt.deltaY, cursor);
         } else if (evt.deltaY > 0) {
@@ -743,6 +777,31 @@ export function Background(props: BackgroundProps) {
     >
       <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
         <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
+      </Modal>
+
+      {/* Open a jupyternotebook in jupyterlab or as sage cells modal */}
+      <Modal isCentered isOpen={isNotebookModalOpen} onClose={onNotebookModalClose} size={'2xl'}
+             blockScrollOnMount={false}>
+        <ModalOverlay/>
+        <ModalContent>
+          <ModalHeader>Open a Jupyter Notebook</ModalHeader>
+          <ModalCloseButton/>
+          <ModalBody>Would you like to open your notebook in JupyterLab or as SageCells? ?</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="green" size="sm" onClick={() => {
+              setExplodeCells(false)
+              onNotebookModalClose()
+            }}>
+              JupyterLab
+            </Button>
+            <Button colorScheme="orange" size="sm" mr={3} onClick={() => {
+              setExplodeCells(true)
+              onNotebookModalClose()
+            }}>
+              SageCells
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </Box>
   );
