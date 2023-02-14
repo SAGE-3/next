@@ -83,7 +83,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
 
   return (
     <>
-      <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={false}>
+      <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={true}>
         <Box display="flex" flexDirection="column">
           <Box alignItems="center" p="1" width={'3xl'} display="flex">
             <Files files={assetsList} />

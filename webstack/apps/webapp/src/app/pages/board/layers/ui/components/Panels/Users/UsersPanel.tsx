@@ -16,7 +16,7 @@ export interface AvatarProps {
 
 export function UsersPanel(props: AvatarProps) {
   return (
-    <Panel title={'Users'} name="users" width={0} showClose={false} >
+    <Panel title={'Users'} name="users" width={0} showClose={true} >
       <UserAvatarGroup boardId={props.boardId} />
     </Panel>
   );

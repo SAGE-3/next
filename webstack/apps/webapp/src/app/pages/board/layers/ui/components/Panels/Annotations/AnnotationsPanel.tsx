@@ -75,7 +75,7 @@ export function AnnotationsPanel() {
   };
 
   return (
-    <Panel title="Annotations" name="annotations" width={600} showClose={false}>
+    <Panel title="Annotations" name="annotations" width={600} showClose={true}>
       <Box alignItems="center" pb="1" width="100%" display="flex">
         <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
           <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>

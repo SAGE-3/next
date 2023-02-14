@@ -149,7 +149,7 @@ export function NavigationPanel(props: NavProps) {
         isOpen={organizeIsOpen}
       />
 
-      <Panel title={'Navigation'} name="navigation" width={400} showClose={false}>
+      <Panel title={'Navigation'} name="navigation" width={400} showClose={true}>
         <Box alignItems="center" display="flex">
           <Box
             width={mapWidth}

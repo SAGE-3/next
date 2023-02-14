@@ -24,18 +24,18 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 const appListed = development
   ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
   : [
-      'AIPane',
-      'ChartMaker',
-      'KernelDashboard',
-      'JupyterLab',
-      'LeafLet',
-      'Notepad',
-      'SageCell',
-      'Screenshare',
-      'Stickie',
-      'Webview',
-      'Hawaii Mesonet',
-    ];
+    'AIPane',
+    'ChartMaker',
+    'KernelDashboard',
+    'JupyterLab',
+    'LeafLet',
+    'Notepad',
+    'SageCell',
+    'Screenshare',
+    'Stickie',
+    'Webview',
+    'Hawaii Mesonet',
+  ];
 
 const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell'].sort((a, b) => a.localeCompare(b));
 
@@ -119,7 +119,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
   };
 
   return (
-    <Panel title="Applications" name="applications" width={300} showClose={false}>
+    <Panel title="Applications" name="applications" width={300} showClose={true}>
       <VStack
         maxH={300}
         w={'100%'}
