@@ -29,6 +29,7 @@ import {
   Card,
   useToast,
   useDisclosure,
+  useColorModeValue,
 } from '@chakra-ui/react';
 
 import { MdAttachFile, MdDescription } from 'react-icons/md';
@@ -56,6 +57,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   const userPlugins = plugins.filter((p) => p.data.ownerId === user?._id);
 
   // UI
+  const backgroundColor = useColorModeValue('white', 'gray.600');
   const borderColor = useHexColor('teal');
 
   // Toast
@@ -79,7 +81,6 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
     if (input && user && description) {
       // Upload with a POST request
       const response = await upload(input[0], description);
-      console.log(response);
       if (response.success) {
         toast({
           title: 'Plugin Upload',
@@ -91,6 +92,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
       } else {
         toast({ title: 'Plugin Upload', description: response.message, status: 'warning', duration: 3000, isClosable: true });
       }
+      setDescription('');
+      setInput([]);
     }
   };
 
@@ -100,6 +103,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
 
   const handleDeletePlugin = () => {
     deletePlugin(deleteId);
+    delConfirmOnClose();
   };
 
   return (
@@ -111,15 +115,46 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
           <ModalBody>
             <Text fontSize="lg">Your Plugins</Text>
             <Box mb="8">
-              <VStack spacing={4} maxH="400px">
+              <VStack
+                spacing={4}
+                maxHeight="200px"
+                overflow="hidden"
+                overflowY="scroll"
+                pr="1"
+                css={{
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: 'gray',
+                    borderRadius: '4px',
+                  },
+                }}
+              >
                 {userPlugins
                   // create a button for each application
                   .map((plugin) => {
                     const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
                     return (
-                      <Card key={plugin._id} width="100%" background="gray" border="solid 2px" borderColor={borderColor} p="0" m="1">
+                      <Card
+                        key={plugin._id}
+                        width="100%"
+                        background={backgroundColor}
+                        border="solid 3px"
+                        borderColor={borderColor}
+                        p="0"
+                        m="1"
+                        boxShadow={'md'}
+                      >
                         <CardBody p="1" display="flex" justifyContent="space-between" alignItems="center">
-                          <Text>{name}</Text>
+                          <Box width="90%" overflow="none">
+                            <Text overflow="hidden" whiteSpace="nowrap">
+                              {name} - {plugin.data.description}
+                            </Text>
+                          </Box>
                           <Button
                             colorScheme="red"
                             size="xs"
@@ -141,7 +176,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
             <Text fontSize="lg">Upload</Text>
 
             <FormControl isRequired>
-              <FormHelperText mb="2">Select Zip file Container Plugin App</FormHelperText>
+              <FormHelperText mb="2">Select Zip file containing a Plugin</FormHelperText>
               <InputGroup>
                 <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
 
@@ -180,8 +215,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
         isOpen={delConfirmIsOpen}
         onClose={delConfirmOnClose}
         onConfirm={handleDeletePlugin}
-        title="Delete Board"
-        message="Are you sure you want to delete this board?"
+        title="Delete Plugin"
+        message="Are you sure you want to delete this plugin?"
         cancelText="Cancel"
         confirmText="Delete"
         confirmColor="red"
