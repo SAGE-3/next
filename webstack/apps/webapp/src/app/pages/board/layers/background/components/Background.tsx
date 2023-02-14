@@ -85,6 +85,195 @@ export function HelpModal(props: HelpProps) {
   );
 }
 
+// const [explodeCells, setExplodeCells] = useState(false)
+
+type NotebookModalProps = {
+  onNotebookModalClose: () => void;
+  isNotebookModalOpen: boolean;
+  roomId: string;
+  boardId: string;
+  // fileID: string;
+  // fileType: string;
+  // xDrop: number;
+  // yDrop: number;
+};
+
+export function NotebookModal(props: NotebookModalProps) {
+
+  // Assets
+  const assets = useAssetStore((state) => state.assets);
+  // How to create some applications
+  const createApp = useAppStore((state) => state.create);
+
+  function notebookAsCells(fileID: string, fileType: string, xDrop: number, yDrop: number) {
+    // Look for the file in the asset store
+    assets.forEach((a) => {
+      if (a._id === fileID) {
+        const localurl = '/api/assets/static/' + a.data.file;
+        // Get the content of the file
+        fetch(localurl, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(async function (json) {
+            // create a sagecell app for each cell in the cells array
+            const cells = json.cells;
+            let y = yDrop;
+            let columnCount = 0;
+            const columnHeight = 5;
+            let x = xDrop;
+            const height = 400;
+            const width = 500;
+            const spacing = 40;
+            cells.forEach((cell: any) => {
+              if (cell.cell_type === 'code') {
+                const sourceCode = (cell.source as []).join(' ');
+                createApp(setupApp('', 'SageCell', x, y, props.roomId, props.boardId, {
+                  w: width,
+                  h: height
+                }, {code: sourceCode}));
+              }
+              if (cell.cell_type === 'markdown') {
+                createApp(
+                  setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+                    w: width,
+                    h: height
+                  }, {text: `markdown ${cell.source}`})
+                );
+              }
+              if (cell.cell_type === 'raw') {
+                createApp(
+                  setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+                    w: width,
+                    h: height
+                  }, {text: `markdown ${cell.source}`})
+                );
+              }
+              if (cell.cell_type === 'display_data') {
+                createApp(
+                  setupApp(
+                    '',
+                    'SageCell',
+                    x,
+                    y,
+                    props.roomId,
+                    props.boardId,
+                    {w: width, h: height},
+                    {output: JSON.stringify(cell.data)}
+                  )
+                );
+              }
+              y = y + height + spacing;
+              columnCount++;
+              if (columnCount >= columnHeight) {
+                columnCount = 0;
+                x = x + width + spacing;
+                y = yDrop;
+              }
+            });
+          });
+      }
+    });
+  }
+
+  function notebookInLab(fileID: string, fileType: string, xDrop: number, yDrop: number) {
+    // Look for the file in the asset store
+    assets.forEach((a) => {
+      if (a._id === fileID) {
+        const localurl = '/api/assets/static/' + a.data.file;
+        // Get the content of the file
+        fetch(localurl, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(async function (json) {
+            // Create a notebook file in Jupyter with the content of the file
+            GetConfiguration().then((conf) => {
+              if (conf.token) {
+                // Create a new notebook
+                let base: string;
+                if (conf.production) {
+                  base = `https://${window.location.hostname}:4443`;
+                } else {
+                  base = `http://${window.location.hostname}`;
+                }
+                // Talk to the jupyter server API
+                const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+                const payload = {type: 'notebook', path: '/notebooks', format: 'json', content: json};
+                // Create a new notebook
+                fetch(j_url, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Token ' + conf.token,
+                  },
+                  body: JSON.stringify(payload),
+                })
+                  .then((response) => response.json())
+                  .then((res) => {
+                    console.log('Jupyter> notebook created', res);
+                    // Create a note from the json
+                    createApp(
+                      setupApp(
+                        '',
+                        'JupyterLab',
+                        xDrop,
+                        yDrop,
+                        props.roomId,
+                        props.boardId,
+
+                        {w: 700, h: 700},
+                        {notebook: a.data.originalfilename}
+                      )
+                    );
+                  });
+              }
+            });
+          });
+      }
+    });
+  }
+
+  return (
+    <Modal isCentered isOpen={props.isNotebookModalOpen} onClose={props.onNotebookModalClose} size={'2xl'}
+           blockScrollOnMount={false}>
+      <ModalOverlay/>
+      <ModalContent>
+        <ModalHeader>Open a Jupyter Notebook</ModalHeader>
+        <ModalCloseButton/>
+        <ModalBody>Would you like to open your notebook in JupyterLab or as SageCells? ?</ModalBody>
+        <ModalFooter>
+          <Button colorScheme="green" size="sm" onClick={() => {
+            // setExplodeCells(false)
+            // notebookInLab()
+            props.onNotebookModalClose()
+          }}>
+            JupyterLab
+          </Button>
+          <Button colorScheme="orange" size="sm" mr={3} onClick={() => {
+            // setExplodeCells(true)
+            // notebookAsCells()
+            props.onNotebookModalClose()
+          }}>
+            SageCells
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+
 type BackgroundProps = {
   roomId: string;
   boardId: string;
@@ -96,9 +285,13 @@ export function Background(props: BackgroundProps) {
   // Handle to a toast
   const toastIdRef = useRef<ToastId>();
   // Help modal
-  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose} = useDisclosure();
+  const {isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose} = useDisclosure();
   // Modal for choosing to open jupyter notebooks in jupyterlab or as sage cells
-  const { isOpen: isNotebookModalOpen, onOpen: onNotebookModalOpen, onClose: onNotebookModalClose } = useDisclosure({id: 'notebook'});
+  const {
+    isOpen: isNotebookModalOpen,
+    onOpen: onNotebookModalOpen,
+    onClose: onNotebookModalClose
+  } = useDisclosure({id: 'notebook'});
 
   // Whether to open notebooks in JupyterLab or SageCells
   const [explodeCells, setExplodeCells] = useState(true);
@@ -391,126 +584,7 @@ export function Background(props: BackgroundProps) {
         }
       });
     } else if (isPythonNotebook(fileType)) {
-      onNotebookModalOpen()
-          // Look for the file in the asset store
-    assets.forEach((a) => {
-      if (a._id === fileID) {
-        const localurl = '/api/assets/static/' + a.data.file;
-        // Get the content of the file
-        fetch(localurl, {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-        })
-          .then(function (response) {
-            return response.json();
-          })
-          .then(async function (json) {
-            if (explodeCells == true) {
-              // create a sagecell app for each cell in the cells array
-              const cells = json.cells;
-              let y = yDrop;
-              let columnCount = 0;
-              const columnHeight = 5;
-              let x = xDrop;
-              const height = 400;
-              const width = 500;
-              const spacing = 40;
-              cells.forEach((cell: any) => {
-                if (cell.cell_type === 'code') {
-                  const sourceCode = (cell.source as []).join(' ');
-                  createApp(setupApp('', 'SageCell', x, y, props.roomId, props.boardId, {
-                    w: width,
-                    h: height
-                  }, {code: sourceCode}));
-                }
-                if (cell.cell_type === 'markdown') {
-                  createApp(
-                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
-                      w: width,
-                      h: height
-                    }, {text: `markdown ${cell.source}`})
-                  );
-                }
-                if (cell.cell_type === 'raw') {
-                  createApp(
-                    setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
-                      w: width,
-                      h: height
-                    }, {text: `markdown ${cell.source}`})
-                  );
-                }
-                if (cell.cell_type === 'display_data') {
-                  createApp(
-                    setupApp(
-                      '',
-                      'SageCell',
-                      x,
-                      y,
-                      props.roomId,
-                      props.boardId,
-                      {w: width, h: height},
-                      {output: JSON.stringify(cell.data)}
-                    )
-                  );
-                }
-                y = y + height + spacing;
-                columnCount++;
-                if (columnCount >= columnHeight) {
-                  columnCount = 0;
-                  x = x + width + spacing;
-                  y = yDrop;
-                }
-              });
-            } else {
-              // Create a notebook file in Jupyter with the content of the file
-              GetConfiguration().then((conf) => {
-                if (conf.token) {
-                  // Create a new notebook
-                  let base: string;
-                  if (conf.production) {
-                    base = `https://${window.location.hostname}:4443`;
-                  } else {
-                    base = `http://${window.location.hostname}`;
-                  }
-                  // Talk to the jupyter server API
-                  const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
-                  const payload = {type: 'notebook', path: '/notebooks', format: 'json', content: json};
-                  // Create a new notebook
-                  fetch(j_url, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Token ' + conf.token,
-                    },
-                    body: JSON.stringify(payload),
-                  })
-                    .then((response) => response.json())
-                    .then((res) => {
-                      console.log('Jupyter> notebook created', res);
-                      // Create a note from the json
-                      createApp(
-                        setupApp(
-                          '',
-                          'JupyterLab',
-                          xDrop,
-                          yDrop,
-                          props.roomId,
-                          props.boardId,
-
-                          {w: 700, h: 700},
-                          {notebook: a.data.originalfilename}
-                        )
-                      );
-                    });
-                }
-              });
-            }
-
-          });
-      }
-    });
+      // onNotebookModalOpen();
 
     } else if (isJSON(fileType)) {
       // Look for the file in the asset store
@@ -651,12 +725,155 @@ export function Background(props: BackgroundProps) {
           // Open the file at the drop location
           const num = fileIDs.length;
           for (let i = 0; i < num; i++) {
-            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            // OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            if (isPythonNotebook(fileTypes[i])) {
+              onNotebookModalOpen();
+              // openNotebookFiles(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop)
+              // secondFunction(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            } else {
+              OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            }
           }
         }
       }
     }
   }
+
+  // async function handleNotebookModalOpen() {
+  //   return new Promise((resolve) => {
+  //     onNotebookModalOpen();
+  //     setTimeout(() => {
+  //       resolve('resolved');
+  //     }, 2000);
+  //   })
+  // }
+  //
+  // async function secondFunction(fileID: string, fileType: string, xDrop: number, yDrop: number) {
+  //
+  //   await handleNotebookModalOpen();
+  //   // Look for the file in the asset store
+  //   assets.forEach((a) => {
+  //     if (a._id === fileID) {
+  //       const localurl = '/api/assets/static/' + a.data.file;
+  //       // Get the content of the file
+  //       fetch(localurl, {
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Accept: 'application/json',
+  //         },
+  //       })
+  //         .then(function (response) {
+  //           return response.json();
+  //         })
+  //         .then(async function (json) {
+  //
+  //           if (explodeCells == true) {
+  //             // create a sagecell app for each cell in the cells array
+  //             const cells = json.cells;
+  //             let y = yDrop;
+  //             let columnCount = 0;
+  //             const columnHeight = 5;
+  //             let x = xDrop;
+  //             const height = 400;
+  //             const width = 500;
+  //             const spacing = 40;
+  //             cells.forEach((cell: any) => {
+  //               if (cell.cell_type === 'code') {
+  //                 const sourceCode = (cell.source as []).join(' ');
+  //                 createApp(setupApp('', 'SageCell', x, y, props.roomId, props.boardId, {
+  //                   w: width,
+  //                   h: height
+  //                 }, {code: sourceCode}));
+  //               }
+  //               if (cell.cell_type === 'markdown') {
+  //                 createApp(
+  //                   setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+  //                     w: width,
+  //                     h: height
+  //                   }, {text: `markdown ${cell.source}`})
+  //                 );
+  //               }
+  //               if (cell.cell_type === 'raw') {
+  //                 createApp(
+  //                   setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+  //                     w: width,
+  //                     h: height
+  //                   }, {text: `markdown ${cell.source}`})
+  //                 );
+  //               }
+  //               if (cell.cell_type === 'display_data') {
+  //                 createApp(
+  //                   setupApp(
+  //                     '',
+  //                     'SageCell',
+  //                     x,
+  //                     y,
+  //                     props.roomId,
+  //                     props.boardId,
+  //                     {w: width, h: height},
+  //                     {output: JSON.stringify(cell.data)}
+  //                   )
+  //                 );
+  //               }
+  //               y = y + height + spacing;
+  //               columnCount++;
+  //               if (columnCount >= columnHeight) {
+  //                 columnCount = 0;
+  //                 x = x + width + spacing;
+  //                 y = yDrop;
+  //               }
+  //             });
+  //           } else {
+  //             // Create a notebook file in Jupyter with the content of the file
+  //             GetConfiguration().then((conf) => {
+  //               if (conf.token) {
+  //                 // Create a new notebook
+  //                 let base: string;
+  //                 if (conf.production) {
+  //                   base = `https://${window.location.hostname}:4443`;
+  //                 } else {
+  //                   base = `http://${window.location.hostname}`;
+  //                 }
+  //                 // Talk to the jupyter server API
+  //                 const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+  //                 const payload = {type: 'notebook', path: '/notebooks', format: 'json', content: json};
+  //                 // Create a new notebook
+  //                 fetch(j_url, {
+  //                   method: 'PUT',
+  //                   headers: {
+  //                     'Content-Type': 'application/json',
+  //                     Authorization: 'Token ' + conf.token,
+  //                   },
+  //                   body: JSON.stringify(payload),
+  //                 })
+  //                   .then((response) => response.json())
+  //                   .then((res) => {
+  //                     console.log('Jupyter> notebook created', res);
+  //                     // Create a note from the json
+  //                     createApp(
+  //                       setupApp(
+  //                         '',
+  //                         'JupyterLab',
+  //                         xDrop,
+  //                         yDrop,
+  //                         props.roomId,
+  //                         props.boardId,
+  //
+  //                         {w: 700, h: 700},
+  //                         {notebook: a.data.originalfilename}
+  //                       )
+  //                     );
+  //                   });
+  //               }
+  //             });
+  //           }
+  //
+  //         });
+  //     }
+  //   });
+  //
+  // }
+
 
   // Question mark character for help
   useHotkeys(
@@ -779,30 +996,35 @@ export function Background(props: BackgroundProps) {
         <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       </Modal>
 
-      {/* Open a jupyternotebook in jupyterlab or as sage cells modal */}
-      <Modal isCentered isOpen={isNotebookModalOpen} onClose={onNotebookModalClose} size={'2xl'}
-             blockScrollOnMount={false}>
-        <ModalOverlay/>
-        <ModalContent>
-          <ModalHeader>Open a Jupyter Notebook</ModalHeader>
-          <ModalCloseButton/>
-          <ModalBody>Would you like to open your notebook in JupyterLab or as SageCells? ?</ModalBody>
-          <ModalFooter>
-            <Button colorScheme="green" size="sm" onClick={() => {
-              setExplodeCells(false)
-              onNotebookModalClose()
-            }}>
-              JupyterLab
-            </Button>
-            <Button colorScheme="orange" size="sm" mr={3} onClick={() => {
-              setExplodeCells(true)
-              onNotebookModalClose()
-            }}>
-              SageCells
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal isCentered isOpen={isNotebookModalOpen} onClose={onNotebookModalClose}>
+        <NotebookModal onNotebookModalClose={onNotebookModalClose} isNotebookModalOpen={isNotebookModalOpen} roomId={props.roomId} boardId={props.boardId}></NotebookModal>
       </Modal>
+
+
+      {/* Open a jupyternotebook in jupyterlab or as sage cells modal */}
+      {/*<Modal isCentered isOpen={isNotebookModalOpen} onClose={onNotebookModalClose} size={'2xl'}*/}
+      {/*       blockScrollOnMount={false}>*/}
+      {/*  <ModalOverlay/>*/}
+      {/*  <ModalContent>*/}
+      {/*    <ModalHeader>Open a Jupyter Notebook</ModalHeader>*/}
+      {/*    <ModalCloseButton/>*/}
+      {/*    <ModalBody>Would you like to open your notebook in JupyterLab or as SageCells? ?</ModalBody>*/}
+      {/*    <ModalFooter>*/}
+      {/*      <Button colorScheme="green" size="sm" onClick={() => {*/}
+      {/*        notebookInLab()*/}
+      {/*        onNotebookModalClose()*/}
+      {/*      }}>*/}
+      {/*        JupyterLab*/}
+      {/*      </Button>*/}
+      {/*      <Button colorScheme="orange" size="sm" mr={3} onClick={() => {*/}
+      {/*        notebookInCells()*/}
+      {/*        onNotebookModalClose()*/}
+      {/*      }}>*/}
+      {/*        SageCells*/}
+      {/*      </Button>*/}
+      {/*    </ModalFooter>*/}
+      {/*  </ModalContent>*/}
+      {/*</Modal>*/}
     </Box>
   );
 }
