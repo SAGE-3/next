@@ -60,6 +60,7 @@ import {ExtraImageType, ExtraPDFType} from '@sage3/shared/types';
 import {setupApp} from './Drops';
 
 import imageHelp from './sage3-help.jpg';
+import {setupAppForFile} from "../../ui/components/Panels/Asset/CreateApp";
 
 type HelpProps = {
   onClose: () => void;
@@ -85,10 +86,11 @@ export function HelpModal(props: HelpProps) {
   );
 }
 
-// const [explodeCells, setExplodeCells] = useState(false)
+const [modalData, setModalData] = useState(null);
 
 type NotebookModalProps = {
   onNotebookModalClose: () => void;
+  onNotebookModalOpen: (fileID: string, fileType: string, xDrop: number, yDrop: number) => void;
   isNotebookModalOpen: boolean;
   roomId: string;
   boardId: string;
@@ -254,14 +256,12 @@ export function NotebookModal(props: NotebookModalProps) {
         <ModalBody>Would you like to open your notebook in JupyterLab or as SageCells? ?</ModalBody>
         <ModalFooter>
           <Button colorScheme="green" size="sm" onClick={() => {
-            // setExplodeCells(false)
             // notebookInLab()
             props.onNotebookModalClose()
           }}>
             JupyterLab
           </Button>
           <Button colorScheme="orange" size="sm" mr={3} onClick={() => {
-            // setExplodeCells(true)
             // notebookAsCells()
             props.onNotebookModalClose()
           }}>
@@ -292,9 +292,6 @@ export function Background(props: BackgroundProps) {
     onOpen: onNotebookModalOpen,
     onClose: onNotebookModalClose
   } = useDisclosure({id: 'notebook'});
-
-  // Whether to open notebooks in JupyterLab or SageCells
-  const [explodeCells, setExplodeCells] = useState(true);
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -997,34 +994,9 @@ export function Background(props: BackgroundProps) {
       </Modal>
 
       <Modal isCentered isOpen={isNotebookModalOpen} onClose={onNotebookModalClose}>
-        <NotebookModal onNotebookModalClose={onNotebookModalClose} isNotebookModalOpen={isNotebookModalOpen} roomId={props.roomId} boardId={props.boardId}></NotebookModal>
+        <NotebookModal onNotebookModalOpen={onNotebookModalOpen} onNotebookModalClose={onNotebookModalClose} isNotebookModalOpen={isNotebookModalOpen}
+                       roomId={props.roomId} boardId={props.boardId}></NotebookModal>
       </Modal>
-
-
-      {/* Open a jupyternotebook in jupyterlab or as sage cells modal */}
-      {/*<Modal isCentered isOpen={isNotebookModalOpen} onClose={onNotebookModalClose} size={'2xl'}*/}
-      {/*       blockScrollOnMount={false}>*/}
-      {/*  <ModalOverlay/>*/}
-      {/*  <ModalContent>*/}
-      {/*    <ModalHeader>Open a Jupyter Notebook</ModalHeader>*/}
-      {/*    <ModalCloseButton/>*/}
-      {/*    <ModalBody>Would you like to open your notebook in JupyterLab or as SageCells? ?</ModalBody>*/}
-      {/*    <ModalFooter>*/}
-      {/*      <Button colorScheme="green" size="sm" onClick={() => {*/}
-      {/*        notebookInLab()*/}
-      {/*        onNotebookModalClose()*/}
-      {/*      }}>*/}
-      {/*        JupyterLab*/}
-      {/*      </Button>*/}
-      {/*      <Button colorScheme="orange" size="sm" mr={3} onClick={() => {*/}
-      {/*        notebookInCells()*/}
-      {/*        onNotebookModalClose()*/}
-      {/*      }}>*/}
-      {/*        SageCells*/}
-      {/*      </Button>*/}
-      {/*    </ModalFooter>*/}
-      {/*  </ModalContent>*/}
-      {/*</Modal>*/}
     </Box>
   );
 }
