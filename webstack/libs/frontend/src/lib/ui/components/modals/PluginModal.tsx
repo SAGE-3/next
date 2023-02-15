@@ -32,7 +32,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 
-import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline, MdTextFields } from 'react-icons/md';
+import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 'react-icons/md';
 import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
 interface PluginUploadModalProps {
@@ -48,6 +48,11 @@ function sanitizeFilename(filename: string) {
   return sanitizedFilename;
 }
 
+/**
+ * Modal to show the user's plugins and allow them to upload new ones
+ * @param props
+ * @returns
+ */
 export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   // Form state
   const [input, setInput] = useState<File[]>([]);
@@ -71,19 +76,9 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   // Toast
   const toast = useToast();
 
-  // Confirm modal
   // Delete Confirmation  Modal
   const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
-  // Files have been selected
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Object.values(e.target.files) as File[];
-      // Ignore .DS_Store and empty files
-      const filteredList = files.filter((f: File) => f.name !== '.DS_Store' || f.size === 0);
-      setInput(filteredList);
-    }
-  };
   // Perform the actual upload
   const handleUpload = async () => {
     console.log(input, user, name, description);
@@ -107,18 +102,31 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
     }
   };
 
+  // Files have been selected
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Object.values(e.target.files) as File[];
+      // Ignore .DS_Store and empty files
+      const filteredList = files.filter((f: File) => f.name !== '.DS_Store' || f.size === 0);
+      setInput(filteredList);
+    }
+  };
+
+  // Handle the description change from the form
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value.length <= 40) {
       setDescription(e.target.value);
     }
   };
 
+  // Handle the name change from the form
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value.length <= 20) {
       setName(sanitizeFilename(e.target.value));
     }
   };
 
+  // Handle the delete button
   const handleDeletePlugin = () => {
     deletePlugin(deleteId);
     delConfirmOnClose();

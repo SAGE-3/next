@@ -15,9 +15,16 @@ export interface PluginProps {
   roomId: string;
 }
 
+/**
+ * Panel to show all the Server's plugins and allow the users to create new apps from them
+ * @param props
+ * @returns
+ */
 export function PluginsPanel(props: PluginProps) {
+  // Plugin store. Sort them by name.
   const plugins = usePluginStore((state) => state.plugins);
   plugins.sort((a, b) => a.data.name.localeCompare(b.data.name));
+
   // App Store
   const createApp = useAppStore((state) => state.create);
   // User
@@ -27,6 +34,8 @@ export function PluginsPanel(props: PluginProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+
+  // Create a new app from a plugin
   const newApplication = (pluginName: string) => {
     if (!user) return;
 
@@ -86,6 +95,7 @@ export function PluginsPanel(props: PluginProps) {
                 hasArrow={true}
                 p="2"
                 openDelay={500}
+                borderRadius="8px"
                 label={
                   <Box>
                     <Badge variant="solid" colorScheme="teal">
