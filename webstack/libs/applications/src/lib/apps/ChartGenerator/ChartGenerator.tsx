@@ -43,7 +43,7 @@ import {
   Title,
   Colors,
 } from 'chart.js';
-import { Chart, Line } from 'react-chartjs-2';
+import { Chart } from 'react-chartjs-2';
 
 // ChartJS register
 ChartJS.register(
@@ -110,6 +110,7 @@ function AppComponent(props: App): JSX.Element {
     responsive: true,
     scales: {
       y: {
+        min: 0,
         ticks: {
           color: 'white',
           font: {
@@ -138,7 +139,8 @@ function AppComponent(props: App): JSX.Element {
       title: {
         display: true,
         text: '',
-        font: { size: 20 * (1 / scale) },
+        font: { size: 30 * (1 / scale) },
+        color: 'white',
       },
       legend: {
         labels: {
@@ -162,13 +164,13 @@ function AppComponent(props: App): JSX.Element {
     setOptions({
       ...options,
       scales: {
-        y: { ticks: { font: { size: fontSize }, color: 'white' } },
-        x: { ...options.scales.x, ticks: { font: { size: fontSize }, color: 'white' } },
+        y: { ...options.scales.y, ticks: { ...options.scales.y.ticks, font: { size: fontSize } } },
+        x: { ...options.scales.x, ticks: { ...options.scales.x.ticks, font: { size: fontSize } } },
       },
       plugins: {
         title: {
-          display: false,
-          text: 'Line Chart',
+          ...options.plugins.title,
+
           font: { size: fontSize },
         },
         legend: {
@@ -184,21 +186,33 @@ function AppComponent(props: App): JSX.Element {
     });
   }, [s.fontSizeMultiplier]);
 
+  const setTitle = (chartTitle: string) => {
+    setOptions({ ...options, plugins: { ...options.plugins, title: { ...options.plugins.title, text: chartTitle } } });
+  };
+
+  const setMinimumYValue = (minYValue: number) => {
+    setOptions({ ...options, scales: { ...options.scales, y: { ...options.scales.y, min: minYValue } } });
+  };
+
   // Fetching HCDP datafrom state.url
   useEffect(() => {
     let climateData: never[] = [];
 
     fetch(s.url).then((response) => {
       response.json().then((station) => {
-        console.log(station);
-
         climateData = station['STATION'][0]['OBSERVATIONS'];
         delete station['STATION'][0]['SENSOR_VARIABLES'];
         delete station['STATION'][0]['OBSERVATIONS'];
         setStationMetadata(station['STATION'][0]);
         const attributeProps = Object.keys(climateData);
-
+        setTitle('Data for Station ' + station['STATION'][0]['NWSFIREZONE']);
         setData(climateData);
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
+        setMinimumYValue(minYValue);
+
         setAttributeNames(attributeProps);
       });
     });
@@ -259,7 +273,7 @@ function AppComponent(props: App): JSX.Element {
     }
     updateState(props._id, { datasets: newDatasets });
   };
-  console.log(stationMetadata);
+
   return (
     <AppWindow app={props}>
       <>
