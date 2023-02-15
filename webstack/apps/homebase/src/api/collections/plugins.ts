@@ -41,13 +41,30 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     router.post('/upload', upload.single('plugin'), async (req, res) => {
       // Check for file.
       const file = req.file;
-      if (file == undefined) res.status(400).send({ success: false, message: 'No file provided.' });
+      if (file == undefined) {
+        res.status(400).send({ success: false, message: 'No file provided.' });
+        return;
+      }
 
+      const pluginName = req.body.name as string;
       const description = req.body.description as string;
       const username = req.user.displayName as string;
-      console.log(description, username);
 
-      if (!username || !description) res.status(400).send({ success: false, message: 'Description missing' });
+      // Check if the request is valid
+      if (!username || !description || !pluginName) {
+        res.status(400).send({ success: false, message: 'Invalid request format.' });
+        return;
+      }
+
+      // Check to see if plugin with that name already exists
+      const check = await this.collection.query('name', pluginName);
+      if (check.length > 0) {
+        res.status(400).send({ success: false, message: 'Plugin with that name already exists.' });
+        return;
+      }
+
+      // Make the directory
+      ensureDirectoryExistence(path.join(appsPath, pluginName));
 
       const p = req.file?.path;
       if (p == undefined) return;
@@ -61,22 +78,16 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           // Extract keys
           const keys = Object.keys(result.files);
 
-          // Get plugin name and make sure it doesn't already exist
-          const pluginName = keys[0].split('/')[0];
-          if (fs.existsSync(path.join(appsPath, pluginName))) {
-            res.status(500).send({ success: false, message: 'Plugin with that name already exists.' });
-            return;
-          } else {
-            ensureDirectoryExistence(appsPath);
-            ensureDirectoryExistence(path.join(appsPath, pluginName));
-          }
-          console.log(keys);
           // Create the files
           keys.forEach(async (key) => {
             const item = result.files[key];
-            ensureDirectoryExistence(path.join(appsPath, key));
+            // Replace the first directory with the plugin name
+            const filePath = key.split('/');
+            filePath[0] = pluginName;
+            const truePAth = filePath.join('/');
+            ensureDirectoryExistence(path.join(appsPath, truePAth));
             if (!item.dir) {
-              fs.writeFileSync(path.join(appsPath, key), Buffer.from(await item.async('arraybuffer')));
+              fs.writeFileSync(path.join(appsPath, truePAth), Buffer.from(await item.async('arraybuffer')));
             }
           });
           // Update the database
@@ -84,10 +95,11 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
             { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString() },
             req.user.id
           );
-          res.status(500).send({ success: true, message: 'Error reading zip file.' });
+          res.status(200).send({ success: true, message: 'Plugin Uploaded' });
         });
       } catch (e) {
-        res.status(500).send({ success: false, message: 'Plugin uploaded.' });
+        console.log(e);
+        res.status(500).send({ success: false, message: 'Error reading zip file.' });
       }
     });
 

@@ -32,7 +32,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 
-import { MdAttachFile, MdDescription } from 'react-icons/md';
+import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline, MdTextFields } from 'react-icons/md';
 import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
 interface PluginUploadModalProps {
@@ -41,10 +41,18 @@ interface PluginUploadModalProps {
   onClose: () => void;
 }
 
+function sanitizeFilename(filename: string) {
+  const validChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  // Remove any invalid characters
+  const sanitizedFilename = [...filename].filter((char) => validChars.includes(char)).join('');
+  return sanitizedFilename;
+}
+
 export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   // Form state
   const [input, setInput] = useState<File[]>([]);
   const [description, setDescription] = useState<string>('');
+  const [name, setName] = useState<string>('');
 
   // Delete Selected Plugin
   const [deleteId, setDeleteId] = useState<string>('');
@@ -78,9 +86,10 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   };
   // Perform the actual upload
   const handleUpload = async () => {
-    if (input && user && description) {
+    console.log(input, user, name, description);
+    if (input && user && name && description) {
       // Upload with a POST request
-      const response = await upload(input[0], description);
+      const response = await upload(input[0], name, description);
       if (response.success) {
         toast({
           title: 'Plugin Upload',
@@ -92,13 +101,22 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
       } else {
         toast({ title: 'Plugin Upload', description: response.message, status: 'warning', duration: 3000, isClosable: true });
       }
+      setName('');
       setDescription('');
       setInput([]);
     }
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDescription(e.target.value);
+    if (e.target.value.length <= 40) {
+      setDescription(e.target.value);
+    }
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value.length <= 20) {
+      setName(sanitizeFilename(e.target.value));
+    }
   };
 
   const handleDeletePlugin = () => {
@@ -113,11 +131,13 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
         <ModalContent>
           <ModalHeader>Plugins</ModalHeader>
           <ModalBody>
-            <Text fontSize="lg">Your Plugins</Text>
+            <Text fontSize="lg" mb="2">
+              Your Plugins
+            </Text>
             <Box mb="8">
               <VStack
-                spacing={4}
-                maxHeight="200px"
+                spacing={2}
+                maxHeight="250px"
                 overflow="hidden"
                 overflowY="scroll"
                 pr="1"
@@ -138,6 +158,10 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                   // create a button for each application
                   .map((plugin) => {
                     const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
+                    const date = `${new Date(Number(plugin.data.dateCreated)).toLocaleDateString()} ${new Date().toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}`;
                     return (
                       <Card
                         key={plugin._id}
@@ -146,13 +170,18 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                         border="solid 3px"
                         borderColor={borderColor}
                         p="0"
-                        m="1"
                         boxShadow={'md'}
                       >
                         <CardBody p="1" display="flex" justifyContent="space-between" alignItems="center">
                           <Box width="90%" overflow="none">
-                            <Text overflow="hidden" whiteSpace="nowrap">
-                              {name} - {plugin.data.description}
+                            <Text overflow="hidden" whiteSpace="nowrap" fontWeight="bold" fontSize="14px">
+                              {name}
+                            </Text>
+                            <Text overflow="hidden" whiteSpace="nowrap" fontSize="12px">
+                              {plugin.data.description}
+                            </Text>
+                            <Text overflow="hidden" whiteSpace="nowrap" fontSize="12px">
+                              {date}
                             </Text>
                           </Box>
                           <Button
@@ -193,11 +222,34 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                 <br />
               </InputGroup>
 
-              <FormHelperText mb="2">Description</FormHelperText>
+              <FormHelperText mb="2">Plugin Name (Only letters and numbers. Max 20 characters.)</FormHelperText>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none" children={<Icon as={MdOutlineDriveFileRenameOutline} />} />
+
+                <Input
+                  variant="outline"
+                  padding={'4px 35px'}
+                  id="name"
+                  type="text"
+                  value={name}
+                  autoComplete="off"
+                  onChange={handleNameChange}
+                />
+              </InputGroup>
+
+              <FormHelperText mb="2">Plugin Description (Max 40 characters.)</FormHelperText>
               <InputGroup>
                 <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} />} />
 
-                <Input variant="outline" padding={'4px 35px'} id="description" type="text" onChange={handleDescriptionChange} />
+                <Input
+                  variant="outline"
+                  padding={'4px 35px'}
+                  id="description"
+                  type="text"
+                  value={description}
+                  autoComplete="off"
+                  onChange={handleDescriptionChange}
+                />
               </InputGroup>
             </FormControl>
           </ModalBody>
