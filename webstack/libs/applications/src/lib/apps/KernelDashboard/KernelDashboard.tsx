@@ -247,7 +247,6 @@ function AppComponent(props: App): JSX.Element {
             // If there are kernels, display them
             myKernels.map((kernel, idx) => (
               <Box key={kernel.key} w="100%">
-                <Box minHeight="2px" width="98%" backgroundColor={tableDividerColor} />
 
                 <Flex w="100%" fontFamily="mono" alignItems="center" justifyContent="center" userSelect={'none'} key={kernel.key + idx}>
                   {/* Status Icon */}
@@ -290,10 +289,10 @@ function AppComponent(props: App): JSX.Element {
                         kernel.value.kernel_name === 'ir'
                           ? 'R'
                           : kernel.value.kernel_name === 'python3'
-                          ? 'Python'
-                          : kernel.value.kernel_name === 'julia-1.8'
-                          ? 'Julia'
-                          : kernel.value.kernel_name
+                            ? 'Python'
+                            : kernel.value.kernel_name === 'julia-1.8'
+                              ? 'Julia'
+                              : kernel.value.kernel_name
                       }
                     </Text>
                   </Box>

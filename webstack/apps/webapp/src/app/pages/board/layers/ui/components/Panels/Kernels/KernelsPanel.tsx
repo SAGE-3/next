@@ -6,13 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-import { Box, Text, Tooltip, Flex, IconButton, VStack, Icon, useColorModeValue } from '@chakra-ui/react';
-import { MdRefresh, MdRestartAlt, MdCode, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
+import {
+  Box, Text, Tooltip, Flex, IconButton, VStack, HStack,
+  Icon, useColorModeValue, Button, ButtonGroup,
+} from '@chakra-ui/react';
+import { MdRestartAlt, MdCode, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
 
 import { Panel } from '../Panel';
-import { useHexColor, useUser, useAppStore, truncateWithEllipsis } from '@sage3/frontend';
+import { useHexColor, useUser, useAppStore, useBoardStore, truncateWithEllipsis } from '@sage3/frontend';
 
 import { z } from 'zod';
 
@@ -34,7 +37,7 @@ const Kschema = z.object({
 
 type Kstate = z.infer<typeof Kschema>;
 
-const initState: Partial<Kstate> = {
+const initState: Kstate = {
   kernelSpecs: [],
   availableKernels: [],
   executeInfo: { executeFunc: '', params: {} },
@@ -42,6 +45,11 @@ const initState: Partial<Kstate> = {
   lastHeartBeat: 0,
 };
 
+/**
+ * We check the status of the kernel every 15 seconds
+ * and if it has been over 20 seconds, we show a warning
+ */
+const heartBeatTimeCheck = 20; // seconds
 
 export interface KernelsProps {
   roomId: string;
@@ -49,9 +57,11 @@ export interface KernelsProps {
 }
 
 export function KernelsPanel(props: KernelsProps) {
-  const s = initState;
+  // Board Store
+  const updateBoard = useBoardStore((state) => state.update);
+  // State
+  const [s, update] = useState(initState);
   const createApp = useAppStore((state) => state.create);
-  const update = useAppStore((state) => state.update);
   // User
   const { user } = useUser();
   const [myKernels, setMyKernels] = useState(s.availableKernels);
@@ -66,6 +76,34 @@ export function KernelsPanel(props: KernelsProps) {
   const scrollColorFix = useHexColor(tableBackground);
   const teal = useHexColor('teal');
 
+  useEffect(() => {
+    const checkHeartBeat = setInterval(async () => {
+      const response = await fetch('/api/time');
+      const time = await response.json();
+      const delta = Math.round(Math.abs(time.epoch - s.lastHeartBeat) / 1000);
+      if (delta > heartBeatTimeCheck && s.online) {
+        update({ ...s, online: false });
+      }
+    }, 15000); // 15 Seconds
+    return () => clearInterval(checkHeartBeat);
+  }, [s.lastHeartBeat, s.online]);
+
+  const refreshList = () => {
+    console.log('refreshing list', user?._id);
+    updateBoard(props.boardId, {
+      executeInfo: {
+        executeFunc: 'get_available_kernels',
+        params: { user_uuid: user?._id },
+      },
+    });
+  };
+
+
+  useEffect(() => {
+    if (!user) return;
+    refreshList();
+  }, [user]);
+
   /**
    * Remove the kernel if the user confirms the action
    * @param kernelId the id of the kernel to remove
@@ -74,15 +112,16 @@ export function KernelsPanel(props: KernelsProps) {
    */
   const removeKernel = (kernelId: string) => {
     if (!user || !kernelId) return;
-    // updateState(props._id, {
-    //   executeInfo: {
-    //     executeFunc: 'delete_kernel',
-    //     params: {
-    //       kernel_id: kernelId,
-    //       user_uuid: user._id,
-    //     },
-    //   },
-    // });
+    update({
+      ...s,
+      executeInfo: {
+        executeFunc: 'delete_kernel',
+        params: {
+          kernel_id: kernelId,
+          user_uuid: user._id,
+        },
+      },
+    });
   };
 
   /**
@@ -93,7 +132,7 @@ export function KernelsPanel(props: KernelsProps) {
    */
   const restartKernel = (kernelId: string) => {
     if (!user || !kernelId) return;
-    // updateState(props._id, { executeInfo: { executeFunc: 'restart_kernel', params: { kernel_id: kernelId, user_uuid: user._id } } });
+    update({ ...s, executeInfo: { executeFunc: 'restart_kernel', params: { kernel_id: kernelId, user_uuid: user._id } } });
   };
 
   /**
@@ -197,12 +236,10 @@ export function KernelsPanel(props: KernelsProps) {
             }}
           >
 
-
             {
               // If there are kernels, display them
               myKernels?.map((kernel, idx) => (
                 <Box key={kernel.key} w="100%">
-                  <Box minHeight="2px" width="98%" backgroundColor={tableDividerColor} />
 
                   <Flex w="100%" fontFamily="mono" alignItems="center" justifyContent="center" userSelect={'none'} key={kernel.key + idx}>
                     {/* Status Icon */}
@@ -301,14 +338,34 @@ export function KernelsPanel(props: KernelsProps) {
             <Box
               width="20px"
               height="20px"
-              // position="absolute"
-              // right="3"
-              // top="1"
+              position="absolute"
+              right="4"
+              top="10"
               borderRadius="100%"
               zIndex={5}
               backgroundColor={s.online ? green : red}
             ></Box>
           </Tooltip>
+
+          <HStack>
+            <Button size="xs" colorScheme="teal"
+            // onClick={onOpen}
+            >
+              Create New Kernel
+            </Button>
+
+            <ButtonGroup isAttached size="xs" colorScheme="teal">
+              <Tooltip placement="top" hasArrow={true} label={'Refresh List of Kernels'} openDelay={400}>
+                <Button
+                  size="xs"
+                  onClick={() => refreshList()}
+                >
+                  Refresh Kernel List
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+          </HStack>
+
         </VStack>
       </Box>
     </Panel>
