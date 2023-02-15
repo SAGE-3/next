@@ -6,12 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, {useState, useRef, useEffect} from 'react';
+import {useParams} from 'react-router-dom';
 
 // Date manipulation functions for file manager
-import { format as formatDate, formatDistanceStrict } from 'date-fns';
-import { AssetHTTPService } from '@sage3/frontend';
+import {format as formatDate, formatDistanceStrict} from 'date-fns';
+import {AssetHTTPService} from '@sage3/frontend';
 
 import {
   Modal,
@@ -32,13 +32,28 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import {
+  MdOutlinePictureAsPdf,
+  MdOutlineImage,
+  MdOutlineFilePresent,
+  MdOndemandVideo,
+  MdOutlineStickyNote2
+} from 'react-icons/md';
 
-import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore, useCursorBoardPosition } from '@sage3/frontend';
-import { getExtension } from '@sage3/shared';
-import { FileEntry } from './types';
-import { setupAppForFile } from './CreateApp';
+import {
+  humanFileSize,
+  downloadFile,
+  useUser,
+  useAuth,
+  useAppStore,
+  useUIStore,
+  useCursorBoardPosition
+} from '@sage3/frontend';
+import {getExtension} from '@sage3/shared';
+import {FileEntry} from './types';
+import {setupAppForFile} from './CreateApp';
 import './menu.scss';
+import {setupApp} from "../../../../background/components";
 
 export type RowFileProps = {
   file: FileEntry;
@@ -53,32 +68,108 @@ export type RowFileProps = {
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
+export function RowFile({file, clickCB, dragCB}: RowFileProps) {
   // check if user is a guest
-  const { user } = useUser();
-  const { auth } = useAuth();
+  const {user} = useUser();
+  const {auth} = useAuth();
 
   const toast = useToast();
   // Store if the file is selected or not
   const [selected, setSelected] = useState(file.selected);
   const buttonRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
-  const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
+  const [anchorPoint, setAnchorPoint] = useState({x: 0, y: 0});
   // Modal for delete
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
+  const {isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose} = useDisclosure({id: 'delete'});
   // show the context menu
   const [showMenu, setShowMenu] = useState(false);
   const [dragImage, setDragImage] = useState<HTMLImageElement>();
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // Room and board
-  const { boardId, roomId } = useParams();
+  const {boardId, roomId} = useParams();
   if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const { position: cursorPosition } = useCursorBoardPosition();
+  const {position: cursorPosition} = useCursorBoardPosition();
 
   const scale = useUIStore((state) => state.scale);
+
+  //   function notebookAsCells(fileID: string, fileType: string, xDrop: number, yDrop: number) {
+  //   // Look for the file in the asset store
+  //   assets.forEach((a) => {
+  //     if (a._id === fileID) {
+  //       const localurl = '/api/assets/static/' + a.data.file;
+  //       // Get the content of the file
+  //       fetch(localurl, {
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Accept: 'application/json',
+  //         },
+  //       })
+  //         .then(function (response) {
+  //           return response.json();
+  //         })
+  //         .then(async function (json) {
+  //           // create a sagecell app for each cell in the cells array
+  //           const cells = json.cells;
+  //           let y = yDrop;
+  //           let columnCount = 0;
+  //           const columnHeight = 5;
+  //           let x = xDrop;
+  //           const height = 400;
+  //           const width = 500;
+  //           const spacing = 40;
+  //           cells.forEach((cell: any) => {
+  //             if (cell.cell_type === 'code') {
+  //               const sourceCode = (cell.source as []).join(' ');
+  //               createApp(setupApp('', 'SageCell', x, y, props.roomId, props.boardId, {
+  //                 w: width,
+  //                 h: height
+  //               }, {code: sourceCode}));
+  //             }
+  //             if (cell.cell_type === 'markdown') {
+  //               createApp(
+  //                 setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+  //                   w: width,
+  //                   h: height
+  //                 }, {text: `markdown ${cell.source}`})
+  //               );
+  //             }
+  //             if (cell.cell_type === 'raw') {
+  //               createApp(
+  //                 setupApp('', 'Stickie', x, y, props.roomId, props.boardId, {
+  //                   w: width,
+  //                   h: height
+  //                 }, {text: `markdown ${cell.source}`})
+  //               );
+  //             }
+  //             if (cell.cell_type === 'display_data') {
+  //               createApp(
+  //                 setupApp(
+  //                   '',
+  //                   'SageCell',
+  //                   x,
+  //                   y,
+  //                   props.roomId,
+  //                   props.boardId,
+  //                   {w: width, h: height},
+  //                   {output: JSON.stringify(cell.data)}
+  //                 )
+  //               );
+  //             }
+  //             y = y + height + spacing;
+  //             columnCount++;
+  //             if (columnCount >= columnHeight) {
+  //               columnCount = 0;
+  //               x = x + width + spacing;
+  //               y = yDrop;
+  //             }
+  //           });
+  //         });
+  //     }
+  //   });
+  // }
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -96,7 +187,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   }, [file]);
 
   // Context menu selection handler
-  const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
+  const actionClick = async (e: React.MouseEvent<HTMLLIElement>) => {
     const id = e.currentTarget.id;
     if (id === 'down') {
       // download a file
@@ -125,6 +216,84 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           isClosable: true,
         });
       }
+    } else if (id === 'cells') {
+      if (!user) return;
+      console.log("Open in cells")
+      const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+      const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+      // const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user);
+      // if (setup) createApp(setup);
+      // create a sagecell app for each cell in the cells array
+
+      // Look for the file in the asset store
+      const localurl = '/api/assets/static/' + file.filename;
+      // Get the content of the file
+      fetch(localurl, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (spec) {
+          const cells = spec.cells;
+          let y = yDrop;
+          let columnCount = 0;
+          const columnHeight = 5;
+          let x = xDrop;
+          const height = 400;
+          const width = 500;
+          const spacing = 40;
+          cells.forEach((cell: any) => {
+            if (cell.cell_type === 'code') {
+              const sourceCode = (cell.source as []).join(' ');
+              createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
+                w: width,
+                h: height
+              }, {code: sourceCode}));
+            }
+            if (cell.cell_type === 'markdown') {
+              createApp(
+                setupApp('', 'Stickie', x, y, roomId, boardId, {
+                  w: width,
+                  h: height
+                }, {text: `markdown ${cell.source}`})
+              );
+            }
+            if (cell.cell_type === 'raw') {
+              createApp(
+                setupApp('', 'Stickie', x, y, roomId, boardId, {
+                  w: width,
+                  h: height
+                }, {text: `markdown ${cell.source}`})
+              );
+            }
+            if (cell.cell_type === 'display_data') {
+              createApp(
+                setupApp(
+                  '',
+                  'SageCell',
+                  x,
+                  y,
+                  roomId,
+                  boardId,
+                  {w: width, h: height},
+                  {output: JSON.stringify(cell.data)}
+                )
+              );
+            }
+            y = y + height + spacing;
+            columnCount++;
+            if (columnCount >= columnHeight) {
+              columnCount = 0;
+              x = x + width + spacing;
+              y = yDrop;
+            }
+          });
+        })
+
     }
     // deselect file selection
     setSelected(false);
@@ -155,7 +324,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     setShowMenu(false);
     if (divRef.current?.contains(e.target as any)) {
       // capture the cursor position to show the menu
-      setAnchorPoint({ x: e.pageX, y: e.pageY });
+      setAnchorPoint({x: e.pageX, y: e.pageY});
       // show context menu
       setShowMenu(true);
       setSelected(true);
@@ -167,22 +336,22 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const whichIcon = (type: string) => {
     switch (type) {
       case 'pdf':
-        return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
+        return <MdOutlinePictureAsPdf style={{color: 'tomato'}} size={'20px'}/>;
       case 'jpeg':
-        return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
+        return <MdOutlineImage style={{color: 'lightblue'}} size={'20px'}/>;
       case 'mp4':
-        return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
+        return <MdOndemandVideo style={{color: 'lightgreen'}} size={'20px'}/>;
       case 'json':
-        return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
+        return <MdOutlineStickyNote2 style={{color: 'darkgray'}} size={'20px'}/>;
       default:
-        return <MdOutlineFilePresent size={'20px'} />;
+        return <MdOutlineFilePresent size={'20px'}/>;
     }
   };
 
   // Generate a human readable string from date
   const modif = formatDate(new Date(file.date), 'MM/dd/yyyy');
   // const added = formatDate(new Date(file.dateAdded), 'MM/dd/yyyy');
-  const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), { addSuffix: false });
+  const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), {addSuffix: false});
 
   // Select the color when item is selected
   const highlight = selected ? 'teal.600' : 'inherit';
@@ -218,7 +387,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     <div ref={divRef}>
       <Flex
         bg={highlight}
-        _hover={{ background: hover }}
+        _hover={{background: hover}}
         ref={buttonRef}
         fontFamily="mono"
         alignItems="center"
@@ -269,13 +438,17 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
               Delete
             </li>
+            <li style={{display: extension === "ipynb" ? 'block' : 'none'}} className="s3contextmenuitem" id={'cells'}
+                onClick={actionClick}>
+              Open in SageCells
+            </li>
           </ul>
         </Portal>
       ) : null}
 
       {/* Delete a file modal */}
       <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={'2xl'} blockScrollOnMount={false}>
-        <ModalOverlay />
+        <ModalOverlay/>
         <ModalContent>
           <ModalHeader>Delete an Asset</ModalHeader>
           <ModalBody>Are you sure you want to delete "{file.originalfilename}" ?</ModalBody>

@@ -7,13 +7,27 @@
  */
 
 // File information
-import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
+import {FileEntry} from './types';
+import {
+  isImage,
+  isPDF,
+  isCSV,
+  isMD,
+  isJSON,
+  isVideo,
+  isDZI,
+  isGeoJSON,
+  isPython,
+  isGLTF,
+  isGIF,
+  isPythonNotebook
+} from '@sage3/shared';
 
-import { GetConfiguration } from '@sage3/frontend';
-import { ExtraImageType, ExtraPDFType, User } from '@sage3/shared/types';
-import { initialValues } from '@sage3/applications/initialValues';
-import { AppState, AppSchema } from '@sage3/applications/schema';
+import {GetConfiguration} from '@sage3/frontend';
+import {ExtraImageType, ExtraPDFType, User} from '@sage3/shared/types';
+import {initialValues} from '@sage3/applications/initialValues';
+import {AppState, AppSchema} from '@sage3/applications/schema';
+import {setupApp} from "../../../../background/components";
 
 /**
  * Setup an application for a given file type
@@ -33,7 +47,7 @@ export async function setupAppForFile(
   yDrop: number,
   roomId: string,
   boardId: string,
-  user: User
+  user: User,
 ): Promise<AppSchema> {
   return new Promise((resolve) => {
     const w = 400;
@@ -42,11 +56,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: w, height: w, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: w, height: w, depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'ImageViewer',
-        state: { ...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename },
+        state: {...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename},
         raised: true,
       });
     } else if (isImage(file.type)) {
@@ -56,11 +70,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: w, height: w / (extras.aspectRatio || 1), depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'ImageViewer',
-        state: { ...initialValues['ImageViewer'], assetid: file.id },
+        state: {...initialValues['ImageViewer'], assetid: file.id},
         raised: true,
       });
     } else if (isVideo(file.type)) {
@@ -68,11 +82,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 450, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: 800, height: 450, depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'VideoViewer',
-        state: { ...(initialValues['VideoViewer'] as AppState), assetid: file.id },
+        state: {...(initialValues['VideoViewer'] as AppState), assetid: file.id},
         raised: true,
       });
     } else if (isCSV(file.type)) {
@@ -80,11 +94,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 400, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: 800, height: 400, depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'CSVViewer',
-        state: { ...initialValues['CSVViewer'], assetid: file.id },
+        state: {...initialValues['CSVViewer'], assetid: file.id},
         raised: true,
       });
     } else if (isGLTF(file.type)) {
@@ -92,11 +106,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 600, height: 600, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: 600, height: 600, depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'GLTFViewer',
-        state: { ...initialValues['GLTFViewer'], assetid: file.id },
+        state: {...initialValues['GLTFViewer'], assetid: file.id},
         raised: true,
       });
     } else if (isDZI(file.type)) {
@@ -104,11 +118,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 400, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: 800, height: 400, depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'DeepZoomImage',
-        state: { ...(initialValues['DeepZoomImage'] as AppState), assetid: file.id },
+        state: {...(initialValues['DeepZoomImage'] as AppState), assetid: file.id},
         raised: true,
       });
     } else if (isGeoJSON(file.type)) {
@@ -116,11 +130,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 400, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: 800, height: 400, depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'LeafLet',
-        state: { ...(initialValues['LeafLet'] as AppState), assetid: file.id },
+        state: {...(initialValues['LeafLet'] as AppState), assetid: file.id},
         raised: true,
       });
     } else if (isMD(file.type)) {
@@ -142,11 +156,11 @@ export async function setupAppForFile(
             title: user.data.name,
             roomId: roomId,
             boardId: boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 400, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
+            position: {x: xDrop, y: yDrop, z: 0},
+            size: {width: 400, height: 400, depth: 0},
+            rotation: {x: 0, y: 0, z: 0},
             type: 'Stickie',
-            state: { ...(initialValues['Stickie'] as AppState), text: text },
+            state: {...(initialValues['Stickie'] as AppState), text: text},
             raised: true,
           });
         });
@@ -168,11 +182,11 @@ export async function setupAppForFile(
             title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 400, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
+            position: {x: xDrop, y: yDrop, z: 0},
+            size: {width: 400, height: 400, depth: 0},
+            rotation: {x: 0, y: 0, z: 0},
             type: 'SageCell',
-            state: { ...(initialValues['SageCell'] as AppState), code: text },
+            state: {...(initialValues['SageCell'] as AppState), code: text},
             raised: true,
           });
         });
@@ -195,11 +209,11 @@ export async function setupAppForFile(
             title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 500, height: 600, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
+            position: {x: xDrop, y: yDrop, z: 0},
+            size: {width: 500, height: 600, depth: 0},
+            rotation: {x: 0, y: 0, z: 0},
             type: 'VegaLite',
-            state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
+            state: {...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2)},
             raised: true,
           });
         });
@@ -217,135 +231,47 @@ export async function setupAppForFile(
           return response.json();
         })
         .then(function (spec) {
-          // Create a SageCell from each cell within the notebook json
-          const cells = spec.cells;
-          cells.map((cell: any) => {
-            if (cell.cell_type === 'code') {
-              resolve({
-                title: file.originalfilename,
-                roomId: roomId,
-                boardId: boardId,
-                position: { x: xDrop, y: yDrop, z: 0 },
-                size: { width: 400, height: 400, depth: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                type: 'SageCell',
-                state: { ...(initialValues['SageCell'] as AppState), code: cell.source.join(' ') },
-                raised: true,
-              });
+          // Create a notebook file in Jupyter with the content of the file
+          GetConfiguration().then((conf) => {
+            if (conf.token) {
+              // Create a new notebook
+              let base: string;
+              if (conf.production) {
+                base = `https://${window.location.hostname}:4443`;
+              } else {
+                base = `http://${window.location.hostname}`;
+              }
+              // Talk to the jupyter server API
+              const j_url = base + '/api/contents/notebooks/' + file.originalfilename;
+              const payload = {type: 'notebook', path: '/notebooks', format: 'json', content: spec};
+              // Create a new notebook
+              fetch(j_url, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Token ' + conf.token,
+                },
+                body: JSON.stringify(payload),
+              })
+                .then((response) => response.json())
+                .then((res) => {
+                  console.log('Jupyter> notebook created', res);
+
+                  resolve({
+                    title: file.originalfilename,
+                    roomId: roomId,
+                    boardId: boardId,
+                    position: {x: xDrop, y: yDrop, z: 0},
+                    size: {width: 700, height: 700, depth: 0},
+                    rotation: {x: 0, y: 0, z: 0},
+                    type: 'JupyterLab',
+                    state: {...(initialValues['JupyterLab'] as any), notebook: file.originalfilename},
+                    raised: true,
+                  });
+                });
             }
           });
         });
-
-      // .then(function (spec) {
-      //   // Create a notebook file in Jupyter with the content of the file
-      //   GetConfiguration().then((conf) => {
-      //     if (conf.token) {
-      //       // Create a new notebook
-      //       let base: string;
-      //       if (conf.production) {
-      //         base = `https://${window.location.hostname}:4443`;
-      //       } else {
-      //         base = `http://${window.location.hostname}`;
-      //       }
-      // // Talk to the jupyter server API
-      // const j_url = base + '/api/contents/notebooks/' + file.originalfilename;
-      // const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };
-      // // Create a new notebook
-      // fetch(j_url, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     Authorization: 'Token ' + conf.token,
-      //   },
-      //   body: JSON.stringify(payload),
-      // })
-      //   .then((response) => response.json())
-      //   .then((res) => {
-      //     console.log('Jupyter> notebook created', res);
-
-      //   resolve({
-      //     title: file.originalfilename,
-      //     roomId: roomId,
-      //     boardId: boardId,
-      //     position: { x: xDrop, y: yDrop, z: 0 },
-      //     size: { width: 700, height: 700, depth: 0 },
-      //     rotation: { x: 0, y: 0, z: 0 },
-      //     type: 'JupyterLab',
-      //     state: { ...(initialValues['JupyterLab'] as any), notebook: file.originalfilename },
-      //     raised: true,
-      //   });
-      // });
-      // }
-      // });
-      // });
-      //     } else if (isPythonNotebook(fileType)) {
-      // // Look for the file in the asset store
-      // assets.forEach((a) => {
-      //   if (a._id === fileID) {
-      //     const localurl = '/api/assets/static/' + a.data.file;
-      //     // Get the content of the file
-      //     fetch(localurl, {
-      //       headers: {
-      //         'Content-Type': 'application/json',
-      //         Accept: 'application/json',
-      //       },
-      //     })
-      //       .then(function (response) {
-      //         return response.json();
-      //       })
-      //       .then(async function (json) {
-      //         // create a sagecell app for each cell in the cells array
-      //         const cells = json.cells;
-      //         cells.forEach((cell: any) => {
-      //           if (cell.cell_type === 'code') {
-      //             createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: cell.source }));
-      //           }
-      //           if (cell.cell_type === 'markdown') {
-      //             createApp(
-      //               setupApp(
-      //                 '',
-      //                 'Stickie',
-      //                 xDrop,
-      //                 yDrop,
-      //                 props.roomId,
-      //                 props.boardId,
-      //                 { w: 400, h: 400 },
-      //                 { text: `markdown ${cell.source}` }
-      //               )
-      //             );
-      //           }
-      //           if (cell.cell_type === 'raw') {
-      //             createApp(
-      //               setupApp(
-      //                 '',
-      //                 'Stickie',
-      //                 xDrop,
-      //                 yDrop,
-      //                 props.roomId,
-      //                 props.boardId,
-      //                 { w: 400, h: 400 },
-      //                 { text: `markdown ${cell.source}` }
-      //               )
-      //             );
-      //           }
-      //           if (cell.cell_type === 'display_data') {
-      //             createApp(
-      //               setupApp(
-      //                 '',
-      //                 'SageCell',
-      //                 xDrop,
-      //                 yDrop,
-      //                 props.roomId,
-      //                 props.boardId,
-      //                 { w: 400, h: 400 },
-      //                 { output: JSON.stringify(cell.data) }
-      //               )
-      //             );
-      //           }
-      //         });
-      //       });
-      //   }
-      // });
     } else if (isPDF(file.type)) {
       // Look for the file in the asset store
       const pages = file.derived as ExtraPDFType;
@@ -360,11 +286,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 400, height: 400 / aspectRatio, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: {x: xDrop, y: yDrop, z: 0},
+        size: {width: 400, height: 400 / aspectRatio, depth: 0},
+        rotation: {x: 0, y: 0, z: 0},
         type: 'PDFViewer',
-        state: { ...initialValues['PDFViewer'], assetid: file.id },
+        state: {...initialValues['PDFViewer'], assetid: file.id},
         raised: true,
       });
     }
