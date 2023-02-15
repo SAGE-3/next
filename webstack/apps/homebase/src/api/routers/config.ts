@@ -54,6 +54,7 @@ export function InfoRouter(): express.Router {
       servers: config.servers,
       version: config.version,
       features: config.features,
+      logins: config.auth.strategies,
       isSage3: true,
     };
     res.json(configuration);
