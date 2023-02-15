@@ -86,11 +86,9 @@ export function HelpModal(props: HelpProps) {
   );
 }
 
-const [modalData, setModalData] = useState(null);
-
 type NotebookModalProps = {
   onNotebookModalClose: () => void;
-  onNotebookModalOpen: (fileID: string, fileType: string, xDrop: number, yDrop: number) => void;
+  // onNotebookModalOpen: (fileID: string, fileType: string, xDrop: number, yDrop: number) => void;
   isNotebookModalOpen: boolean;
   roomId: string;
   boardId: string;
@@ -100,6 +98,7 @@ type NotebookModalProps = {
   // yDrop: number;
 };
 
+// TODO Figure out how to pass file information to NotebookModal
 export function NotebookModal(props: NotebookModalProps) {
 
   // Assets
@@ -256,12 +255,14 @@ export function NotebookModal(props: NotebookModalProps) {
         <ModalBody>Would you like to open your notebook in JupyterLab or as SageCells? ?</ModalBody>
         <ModalFooter>
           <Button colorScheme="green" size="sm" onClick={() => {
+            console.log("Open in Lab")
             // notebookInLab()
             props.onNotebookModalClose()
           }}>
             JupyterLab
           </Button>
           <Button colorScheme="orange" size="sm" mr={3} onClick={() => {
+            console.log("Open in cells")
             // notebookAsCells()
             props.onNotebookModalClose()
           }}>
@@ -287,15 +288,11 @@ export function Background(props: BackgroundProps) {
   // Help modal
   const {isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose} = useDisclosure();
   // Modal for choosing to open jupyter notebooks in jupyterlab or as sage cells
-  const {
-    isOpen: isNotebookModalOpen,
-    onOpen: onNotebookModalOpen,
-    onClose: onNotebookModalClose
-  } = useDisclosure({id: 'notebook'});
+  const {isOpen: isNotebookModalOpen, onOpen: onNotebookModalOpen, onClose: onNotebookModalClose} = useDisclosure({id: 'notebook'});
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
-  // Messsages
+  // Messages
   const subMessage = useMessageStore((state) => state.subscribe);
   const unsubMessage = useMessageStore((state) => state.unsubscribe);
   const message = useMessageStore((state) => state.lastone);
@@ -582,6 +579,66 @@ export function Background(props: BackgroundProps) {
       });
     } else if (isPythonNotebook(fileType)) {
       // onNotebookModalOpen();
+          // Look for the file in the asset store
+    assets.forEach((a) => {
+      if (a._id === fileID) {
+        const localurl = '/api/assets/static/' + a.data.file;
+        // Get the content of the file
+        fetch(localurl, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(async function (json) {
+            // Create a notebook file in Jupyter with the content of the file
+            GetConfiguration().then((conf) => {
+              if (conf.token) {
+                // Create a new notebook
+                let base: string;
+                if (conf.production) {
+                  base = `https://${window.location.hostname}:4443`;
+                } else {
+                  base = `http://${window.location.hostname}`;
+                }
+                // Talk to the jupyter server API
+                const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+                const payload = {type: 'notebook', path: '/notebooks', format: 'json', content: json};
+                // Create a new notebook
+                fetch(j_url, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Token ' + conf.token,
+                  },
+                  body: JSON.stringify(payload),
+                })
+                  .then((response) => response.json())
+                  .then((res) => {
+                    console.log('Jupyter> notebook created', res);
+                    // Create a note from the json
+                    createApp(
+                      setupApp(
+                        '',
+                        'JupyterLab',
+                        xDrop,
+                        yDrop,
+                        props.roomId,
+                        props.boardId,
+
+                        {w: 700, h: 700},
+                        {notebook: a.data.originalfilename}
+                      )
+                    );
+                  });
+              }
+            });
+          });
+      }
+    });
 
     } else if (isJSON(fileType)) {
       // Look for the file in the asset store
@@ -722,14 +779,14 @@ export function Background(props: BackgroundProps) {
           // Open the file at the drop location
           const num = fileIDs.length;
           for (let i = 0; i < num; i++) {
-            // OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
-            if (isPythonNotebook(fileTypes[i])) {
-              onNotebookModalOpen();
-              // openNotebookFiles(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop)
-              // secondFunction(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
-            } else {
-              OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
-            }
+            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            // if (isPythonNotebook(fileTypes[i])) {
+            //   onNotebookModalOpen();
+            //   // openNotebookFiles(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop)
+            //   // secondFunction(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            // } else {
+            //   OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            // }
           }
         }
       }
@@ -994,7 +1051,7 @@ export function Background(props: BackgroundProps) {
       </Modal>
 
       <Modal isCentered isOpen={isNotebookModalOpen} onClose={onNotebookModalClose}>
-        <NotebookModal onNotebookModalOpen={onNotebookModalOpen} onNotebookModalClose={onNotebookModalClose} isNotebookModalOpen={isNotebookModalOpen}
+        <NotebookModal onNotebookModalClose={onNotebookModalClose} isNotebookModalOpen={isNotebookModalOpen}
                        roomId={props.roomId} boardId={props.boardId}></NotebookModal>
       </Modal>
     </Box>
