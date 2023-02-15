@@ -55,7 +55,6 @@ function AppComponent(props: App): JSX.Element {
   const toast = useToast();
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const [myKernels, setMyKernels] = useState(s.kernels);
   const [access, setAccess] = useState<boolean>(true);
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
@@ -66,8 +65,8 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     update(props._id, {
       size: {
-        width: 995,
-        height: 555,
+        width: 1000,
+        height: 485,
         depth: 1,
       },
     });
@@ -82,24 +81,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     setPrompt(s.prompt);
   }, [s.prompt]);
-
-  useEffect(() => {
-    // Get all kernels that I'm available to see
-    const kernels: any[] = [];
-    s.kernels
-      .filter((el) => el.value.room === props.data.roomId)
-      .filter((el) => el.value.board === props.data.boardId)
-      .map((el) => {
-        if (el.value.is_private) {
-          if (el.value.owner_uuid == user?._id) {
-            kernels.push(el);
-          }
-        } else {
-          kernels.push(el);
-        }
-      });
-    setMyKernels(kernels);
-  }, [JSON.stringify(s.kernels)]);
 
   // Update the state when the kernel changes
   useEffect(() => {
@@ -390,7 +371,8 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       <Editor
         value={code}
         defaultLanguage="python"
-        height={'15vh'}
+        // height={'16vh'}
+        height={'148px'}
         width={`calc(100% - ${props.access ? 50 : 0}px)`}
         language={'python'}
         theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
@@ -520,11 +502,6 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                 const html = data[key].replace(/&lt;/g, '<').replace(/&gt;/g, '>');
                 return <div key={i} dangerouslySetInnerHTML={{ __html: html }} />;
               case 'image/png':
-                if (data.metadata && data.metadata[key].height && data.metadata[key].width) {
-                  <AspectRatio ratio={data[key].metadata.height / data[key].metadata.width}>
-                    <Image key={i} src={`data:image/png;base64,${data[key]}`} />
-                  </AspectRatio>;
-                }
                 return <Image key={i} src={`data:image/png;base64,${data[key]}`} />;
               case 'image/svg+xml':
                 return <Image key={i} src={`data:image/svg+xml;base64,${data[key]}`} />;
@@ -540,14 +517,7 @@ const MapJSONObject = (obj: any): JSX.Element => {
   if (!obj) return <></>;
   if (typeof obj === 'object' && Object.keys(obj).length === 0) return <></>;
   return (
-    <Box
-      pl={2}
-      bg={useColorModeValue('#FFFFFF', '#000000')}
-      // boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-      // rounded={'md'}
-      fontSize={'16px'}
-      color={useColorModeValue('#000000', '#FFFFFF')}
-    >
+    <Box pl={2} bg={useColorModeValue('#FFFFFF', '#000000')} fontSize={'16px'} color={useColorModeValue('#000000', '#FFFFFF')}>
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
             if (typeof obj[key] === 'object') {
