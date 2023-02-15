@@ -7,12 +7,35 @@
 # -----------------------------------------------------------------------------
 
 from smartbitcollection import SmartBitsCollection
+from smartbits.smartbit import ExecuteInfo
 from utils.layout import Layout
-# from utils.generic_utils import import_cls
-# from utils.wall_utils import Sage3Communication
+from utils.sage_communication import SageCommunication
+
+import requests
+from config import config as conf, prod_type
+from jupyterkernelproxy import JupyterKernelProxy
+from task_scheduler import TaskScheduler
+from typing import ClassVar
+
+class BoardState:
+    """
+    This class represents the state of a board
+    """
+    kernelSpecs: list = []
+    availableKernels: list = []
+    lastHeartBeat: int
+    online: bool
+    executeInfo: ExecuteInfo
 
 
-class Board():
+class Board:
+    _redis_space: str = "JUPYTER:KERNELS"
+    _base_url: str = f"{conf[prod_type]['jupyter_server']}/api"
+    _jupyter_client = None
+    _r_json = None
+    _headers: dict = None
+    _task_scheduler = None
+    _s3_comm: ClassVar = SageCommunication(conf, prod_type)
 
     def __init__(self, doc):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
@@ -28,10 +51,79 @@ class Board():
         self.whiteboard_lines = None
         self.smartbits = SmartBitsCollection()
 
+        self.state = BoardState()
+
         if "executeInfo" in doc["data"]:
-            self.executeInfo = doc["data"]["executeInfo"]
+            self.state.executeInfo = doc["data"]["executeInfo"]
         else:
-            self.executeInfo = {'executeFunc': '', 'params': {}}
+            self.state.executeInfo = {'executeFunc': '', 'params': {}}
+
+        self._task_scheduler = TaskScheduler()
+        self._jupyter_client = JupyterKernelProxy()
+        self._headers = dict(self._jupyter_client.headers)
+        # self._r_json = self._jupyter_client.redis_server.json()
+        # if self._r_json.get(self._redis_space) is None:
+        #     self._r_json.set(self._redis_space, '.', {})
+        self.set_online()
+        self.get_kernel_specs()
+        self._task_scheduler.schedule_task(self.set_online, nb_secs=15)
+
+    def get_kernel_specs(self):
+        print("getting kernel specs", self._base_url, self._headers)
+        response = requests.get(self._base_url + "/kernelspecs", headers=self._headers)
+        kernel_specs = response.json()['kernelspecs']
+        self.state.kernelSpecs = list(kernel_specs.keys())
+        print("kernel specs are ", self.state.kernelSpecs)
+        self.get_available_kernels()
+
+    def get_available_kernels(self, user_uuid=None):
+        """
+        This function will get the kernels from the redis server
+        """
+        # get all valid kernel ids from jupyter server
+        valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        # get all kernels from redis server
+        kernels = self._jupyter_client.redis_server.json().get(self._redis_space)
+        # remove kernels the list of available kernels that are not in jupyter server
+        [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
+        available_kernels = []
+        for kernel in kernels.keys():
+            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
+                continue
+            if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
+                kernels[kernel]['kernel_alias'] = kernel[:8]
+            available_kernels.append({"key": kernel, "value": kernels[kernel]})
+        print("available kernels are ", available_kernels)
+        self.state.availableKernels = available_kernels
+        print("state is ", self.state)
+        self.state.executeInfo['executeFunc'] = ""
+        self.state.executeInfo['params'] = {}
+        self.send_updates()
+
+    def send_updates(self):
+        """
+        This function will send updates to the board
+        """
+        data = {
+          'kernelSpecs': self.state.kernelSpecs,
+          'availableKernels': self.state.availableKernels,
+          'lastHeartBeat': self.state.lastHeartBeat,
+          'online': self.state.online,
+          'executeInfo': self.state.executeInfo
+        }
+        print('Sending board update', data)
+        self._s3_comm.send_board_update(self.id, data)
+
+    def clean_up(self):
+        self.state.lastHeartBeat = 0
+        self.state.online = False
+        self._jupyter_client.clean_up()
+        self._task_scheduler.clean_up()
+
+    def set_online(self):
+        self.state.lastHeartBeat = self._s3_comm.get_time()["epoch"]
+        self.state.online = True
+        self.send_updates()
 
     def reorganize_layout(self, viewport_position, viewport_size, buffer_size=100, by="combined", mode="graphviz"):
         if by not in ["app_type", "semantic"]:
@@ -64,9 +156,10 @@ class Board():
             sb.data.position.x = coords[0]
             sb.data.position.y = coords[1]
             sb.send_updates()
-        print("Done executing organize_layout on the baord")
+        print("Done executing organize_layout on the board")
 
-        self.executeInfo = {'executeFunc': '', 'params': {}}
+        self.state.executeInfo = {'executeFunc': '', 'params': {}}
+
 
     # def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
     #     # intentionally not providing a default to x and y. Easy to get lazy with things that overlap
