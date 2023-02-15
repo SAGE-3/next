@@ -60,6 +60,7 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
+  const SPACE = 2;
 
   // Set the initial size of the window
   useEffect(() => {
@@ -155,7 +156,7 @@ function AppComponent(props: App): JSX.Element {
           overflowWrap: 'break-word',
           width: '100%',
           height: '100%',
-          overflowY: 'scroll',
+          overflowY: 'auto',
         }}
         css={{
           '&::-webkit-scrollbar': {
@@ -167,7 +168,7 @@ function AppComponent(props: App): JSX.Element {
           },
         }}
       >
-        <Stack m={2}>
+        <Stack m={SPACE} mb={SPACE / 2}>
           <Box // generation section container
             style={{
               height: '100%',
@@ -178,7 +179,7 @@ function AppComponent(props: App): JSX.Element {
               borderRadius: 'md',
             }}
           >
-            <HStack m={2}>
+            <HStack mr={SPACE}>
               <Textarea
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.shiftKey && access && s.kernel) {
@@ -248,9 +249,6 @@ function AppComponent(props: App): JSX.Element {
               </ButtonGroup>
             </HStack>
           </Box>
-        </Stack>
-        <Divider mt={2} />
-        <Stack m={2}>
           <Box // input section container
             style={{
               height: '100%',
@@ -259,12 +257,11 @@ function AppComponent(props: App): JSX.Element {
               minHeight: '150px',
               border: '2px solid',
               borderColor: '#008080',
-              borderRadius: '6px',
+              borderRadius: 'md',
             }}
           >
-            <HStack m={2}>{<InputBox app={props} access={true} />}</HStack>
+            <HStack mr={SPACE}>{<InputBox app={props} access={true} />}</HStack>
           </Box>
-          <Divider />
           <Box // output section container
             style={{
               backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
@@ -272,7 +269,7 @@ function AppComponent(props: App): JSX.Element {
               padding: '10px',
               border: '2px solid',
               borderColor: '#008080',
-              borderRadius: '6px',
+              borderRadius: 'md',
               overflow: 'auto',
             }}
           >
