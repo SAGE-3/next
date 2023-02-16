@@ -29,7 +29,7 @@ import {
   Presence,
   MessageSchema,
   PresenceSchema,
-  PublicServerConfiguration,
+  OpenConfiguration,
 } from '@sage3/shared/types';
 
 import { APIHttp } from '@sage3/frontend';
@@ -38,7 +38,9 @@ import { App, AppSchema } from '@sage3/applications/schema';
 export function AdminPage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-  const config = useData('/api/configuration') as PublicServerConfiguration;
+
+  // Config File
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   // Collections
   const [boards, setBoards] = useState<Board[]>([]);

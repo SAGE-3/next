@@ -27,7 +27,7 @@ import {
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
-import { PublicServerConfiguration } from '@sage3/shared/types';
+import { OpenConfiguration } from '@sage3/shared/types';
 
 /**
  * The board page which displays the board and its apps.
@@ -38,7 +38,7 @@ export function BoardPage() {
   const { toHome } = useRouteNav();
 
   // Config file
-  const config = useData('/api/configuration') as PublicServerConfiguration;
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   if (!roomId || !boardId) {
     toHome(roomId);

@@ -33,17 +33,14 @@ export interface ServerConfiguration {
 
   // Services
   redis: { url: string };
+
   // Twilio service
   twilio: TwilioConfiguration;
 
   // Feature flags
   features: {
-    twilio: boolean;
-    ai: boolean;
-    jupyter: boolean;
-    cell: boolean;
-    articulate: boolean;
     plugins: boolean;
+    apps: string[];
   };
 
   // ID management API keys
@@ -60,16 +57,17 @@ export interface ServerConfiguration {
 }
 
 // Public to everyone response from server to the configuration request, for security reasons
-export type PublicInfo = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production'> & {
+export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production'> & {
   isSage3: boolean;
   logins: ServerConfiguration['auth']['strategies'];
 };
 
 // Public to authenticated users from server to the configuration request, for security reasons
-export type PublicServerConfiguration = Pick<
-  ServerConfiguration,
-  'serverName' | 'port' | 'version' | 'production' | 'namespace' | 'features'
-> & { token: string; admins: ServerConfiguration['auth']['admins']; logins: ServerConfiguration['auth']['strategies'] };
+export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production' | 'namespace' | 'features'> & {
+  token: string;
+  admins: ServerConfiguration['auth']['admins'];
+  logins: ServerConfiguration['auth']['strategies'];
+};
 
 /**
  * Credentials for user autentification APIs (passport, cilogon, ...)

@@ -146,7 +146,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                 maxHeight="250px"
                 overflow="hidden"
                 overflowY="scroll"
-                pr="1"
+                px="1"
                 css={{
                   '&::-webkit-scrollbar': {
                     width: '6px',
@@ -172,7 +172,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                         background={backgroundColor}
                         border="solid 3px"
                         borderColor={borderColor}
-                        p="0"
+                        px="1"
+                        py="0"
                         boxShadow={'md'}
                       >
                         <CardBody p="1" display="flex" justifyContent="space-between" alignItems="center">

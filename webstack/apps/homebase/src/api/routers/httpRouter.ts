@@ -17,7 +17,6 @@
 import * as express from 'express';
 
 // Asset imports
-import { FilesRouter } from './custom/files';
 
 // Collection Imports
 import {
@@ -35,8 +34,8 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { ConfigRouter, InfoRouter, TimeRouter } from './custom/config';
-import { NLPRouter } from './custom/nlp';
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter } from './custom';
+
 import { config } from '../../config';
 
 /**

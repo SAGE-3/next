@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { PublicInfo, PublicServerConfiguration } from '@sage3/shared/types';
+import { PublicInformation, OpenConfiguration } from '@sage3/shared/types';
 import * as express from 'express';
 import { createClient } from 'redis';
 import { config } from '../../../config';
@@ -34,7 +34,7 @@ export function ConfigRouter(): express.Router {
       // Jupyter token
       token: token,
       admins: config.auth.admins || [],
-    } as PublicServerConfiguration;
+    } as OpenConfiguration;
     res.json(configuration);
   });
 
@@ -54,20 +54,7 @@ export function InfoRouter(): express.Router {
       version: config.version,
       logins: config.auth.strategies,
       isSage3: true,
-    } as PublicInfo;
-    res.json(configuration);
-  });
-
-  return router;
-}
-
-export function TimeRouter(): express.Router {
-  const router = express.Router();
-  router.get('/', async (req, res) => {
-    // Configuration public values
-    const configuration = {
-      epoch: Date.now(),
-    };
+    } as PublicInformation;
     res.json(configuration);
   });
 

@@ -28,7 +28,7 @@ import { MdPerson, MdLock } from 'react-icons/md';
 
 import { useData } from 'libs/frontend/src/lib/hooks';
 
-import { BoardSchema, PublicServerConfiguration } from '@sage3/shared/types';
+import { BoardSchema, OpenConfiguration } from '@sage3/shared/types';
 import { SAGEColors, randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore } from '../../../stores';
@@ -42,7 +42,7 @@ interface CreateBoardModalProps {
 
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as PublicServerConfiguration;
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   const { user } = useUser();
   const toast = useToast();

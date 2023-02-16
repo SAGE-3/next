@@ -22,13 +22,16 @@ import {
   Clock,
   usePluginStore,
 } from '@sage3/frontend';
-import { Board, PublicServerConfiguration, Room } from '@sage3/shared/types';
+import { Board, OpenConfiguration, Room } from '@sage3/shared/types';
 
 import { useParams } from 'react-router-dom';
 
 export function HomePage() {
   // URL Params
   const { roomId } = useParams();
+
+  // Config file
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   // Room Store
   const [selectedRoomId] = useState<string | undefined>(roomId);
@@ -52,7 +55,6 @@ export function HomePage() {
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-  const config = useData('/api/configuration') as PublicServerConfiguration;
 
   // Subscribe to user updates
   useEffect(() => {

@@ -22,7 +22,7 @@ import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
-import { uploadHandler } from '../routers/custom/asset';
+import { uploadHandler } from '../routers/custom';
 import { config } from '../../config';
 
 class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {

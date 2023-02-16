@@ -40,18 +40,21 @@ import {
   AnnotationsPanel,
   PluginsPanel,
 } from './components';
-import { PublicServerConfiguration } from '@sage3/shared/types';
+import { OpenConfiguration } from '@sage3/shared/types';
 
 type UILayerProps = {
   boardId: string;
   roomId: string;
-  config: PublicServerConfiguration;
+  config: OpenConfiguration;
 };
 
 export function UILayer(props: UILayerProps) {
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
+
+  // Configuration
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -73,7 +76,7 @@ export function UILayer(props: UILayerProps) {
 
   // Navigation
   const { toHome } = useRouteNav();
-  const config = useData('/api/configuration') as PublicServerConfiguration;
+
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
   // Toast

@@ -31,13 +31,13 @@ import {
   PluginModal,
 } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
-import { PublicServerConfiguration } from '@sage3/shared/types';
+import { OpenConfiguration } from '@sage3/shared/types';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
   backToRoom?: () => void;
   boardInfo?: { roomId: string; boardId: string };
-  config: PublicServerConfiguration;
+  config: OpenConfiguration;
 };
 /**
  * Main (StartMenu Button) component

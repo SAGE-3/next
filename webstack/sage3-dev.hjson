@@ -31,12 +31,24 @@
 
   // How to enable/disable some features for safety
   "features": {
-    "twilio": true,
-    "ai": true,
-    "cell": true,
-    "jupyter": true,
-    "articulate": true,
-    "plugins": true
+    "plugins": true,
+    // AIPane, CSVViewer, ChartGenerator, ChartMaker, Clock, Cobrowse, Counter, DataTable, DeepZoomImage, GLTFViewer
+    // Hawaii Mesonet, ImageViewer, JupyterLab, KernelDashboard, Kernels, LeafLet, Linker, Notepad
+    // PDFResult, PDFResult, RTCChat, RTCChat, Seer, Stickie, Screenshare, VegaLite, VegaLiteViewer, VideoViewer, Webview
+    "apps": [      
+      'AIPane',
+      'ChartMaker',
+      'KernelDashboard',
+      'JupyterLab',
+      'LeafLet',
+      'Notepad',
+      'SageCell',
+      'Screenshare',
+      'Stickie',
+      'Webview',
+      'Hawaii Mesonet'
+      ], 
+
   },
 
   // ID Management

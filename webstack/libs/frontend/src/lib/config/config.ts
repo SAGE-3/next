@@ -6,13 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { PublicInfo, PublicServerConfiguration } from '@sage3/shared/types';
+import { PublicInformation, OpenConfiguration } from '@sage3/shared/types';
 
 /**
  * Returns the whole data structure (albeit limited)
- * @returns serverConfiguration
+ * @returns {OpenConfiguration}
  */
-export async function GetConfiguration(): Promise<PublicServerConfiguration> {
+export async function GetConfiguration(): Promise<OpenConfiguration> {
   const response = await fetch('/api/configuration', {
     method: 'GET',
     credentials: 'include',
@@ -21,15 +21,15 @@ export async function GetConfiguration(): Promise<PublicServerConfiguration> {
       'Content-Type': 'application/json',
     },
   });
-  const config = (await response.json()) as PublicServerConfiguration;
+  const config = (await response.json()) as OpenConfiguration;
   return config;
 }
 
 /**
  * Returns the info public data structure
- * @returns Partial<serverConfiguration>
+ * @returns {PublicInformation}
  */
-export async function GetServerInfo(): Promise<PublicInfo> {
+export async function GetServerInfo(): Promise<PublicInformation> {
   const response = await fetch('/api/info', {
     method: 'GET',
     credentials: 'include',
@@ -38,6 +38,6 @@ export async function GetServerInfo(): Promise<PublicInfo> {
       'Content-Type': 'application/json',
     },
   });
-  const config = (await response.json()) as PublicInfo;
+  const config = (await response.json()) as PublicInformation;
   return config;
 }
