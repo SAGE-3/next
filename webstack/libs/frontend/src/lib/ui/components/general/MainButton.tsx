@@ -27,16 +27,17 @@ import {
   EnterBoardByIdModal,
   AboutModal,
   copyBoardUrlToClipboard,
-  GetConfiguration,
   useRouteNav,
   PluginModal,
 } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
+import { PublicServerConfiguration } from '@sage3/shared/types';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
   backToRoom?: () => void;
   boardInfo?: { roomId: string; boardId: string };
+  config: PublicServerConfiguration;
 };
 /**
  * Main (StartMenu Button) component
@@ -57,15 +58,10 @@ export function MainButton(props: MainButtonProps) {
   const { toAdmin } = useRouteNav();
 
   useEffect(() => {
-    const fetchAdmins = async () => {
-      if (user) {
-        const config = await GetConfiguration();
-        setIsAdmin(config.admins.includes(user.data.email));
-      }
-    };
-
-    fetchAdmins();
-  }, [user]);
+    if (user && props.config) {
+      setIsAdmin(props.config.admins.includes(user.data.email));
+    }
+  }, [user, props.config]);
 
   const isWall = user?.data.userType === 'wall';
 
@@ -127,9 +123,12 @@ export function MainButton(props: MainButtonProps) {
               Back to Room
             </MenuItem>
           )}
-          <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
-            Plugins
-          </MenuItem>
+          {props.config?.features?.plugins && (
+            <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
+              Plugins
+            </MenuItem>
+          )}
+
           <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
             About
           </MenuItem>

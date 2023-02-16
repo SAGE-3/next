@@ -11,13 +11,14 @@ import { HStack, useToast } from '@chakra-ui/react';
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 
-import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav } from '@sage3/frontend';
+import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
 import { HiPuzzle } from 'react-icons/hi';
 
 export interface ControllerProps {
   roomId: string;
   boardId: string;
+  plugins: boolean;
 }
 
 export function Controller(props: ControllerProps) {
@@ -81,12 +82,15 @@ export function Controller(props: ControllerProps) {
           isActive={applications?.show}
           onClick={() => handleShowPanel(applications)}
         />
-        <IconButtonPanel
-          icon={<HiPuzzle size="32px" />}
-          description="Plugins"
-          isActive={plugins?.show}
-          onClick={() => handleShowPanel(plugins)}
-        />
+        {props.plugins && (
+          <IconButtonPanel
+            icon={<HiPuzzle size="32px" />}
+            description="Plugins"
+            isActive={plugins?.show}
+            onClick={() => handleShowPanel(plugins)}
+          />
+        )}
+
         <IconButtonPanel icon={<MdFolder />} description="Assets" isActive={assets?.show} onClick={() => handleShowPanel(assets)} />
         <IconButtonPanel
           icon={<MdMap />}

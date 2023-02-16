@@ -22,16 +22,16 @@ import { formatDistance } from 'date-fns';
 import * as express from 'express';
 
 // Web server configuraton type
-import { serverConfiguration } from '@sage3/shared/types';
+import { ServerConfiguration } from '@sage3/shared/types';
 
 /**
  * Load SSL keys
  *
  * @export
- * @param {serverConfiguration} config
+ * @param {ServerConfiguration} config
  * @returns {https.ServerOptions}
  */
-export function loadCredentials(config: serverConfiguration): https.ServerOptions {
+export function loadCredentials(config: ServerConfiguration): https.ServerOptions {
   // SSL certificate imports for HTTPS
   const basePath = path.join(config.root, 'keys');
   const privateKeyFile = path.join(basePath, config.ssl.certificateKeyFile);

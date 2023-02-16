@@ -21,7 +21,6 @@ import {
   MainButton,
   useRouteNav,
   useData,
-  serverConfiguration,
   useRoomStore,
   Clock,
 } from '@sage3/frontend';
@@ -41,10 +40,12 @@ import {
   AnnotationsPanel,
   PluginsPanel,
 } from './components';
+import { PublicServerConfiguration } from '@sage3/shared/types';
 
 type UILayerProps = {
   boardId: string;
   roomId: string;
+  config: PublicServerConfiguration;
 };
 
 export function UILayer(props: UILayerProps) {
@@ -72,7 +73,7 @@ export function UILayer(props: UILayerProps) {
 
   // Navigation
   const { toHome } = useRouteNav();
-  const config = useData('/api/configuration') as serverConfiguration;
+  const config = useData('/api/configuration') as PublicServerConfiguration;
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
   // Toast
@@ -171,6 +172,7 @@ export function UILayer(props: UILayerProps) {
           buttonStyle="solid"
           backToRoom={() => toHome(props.roomId)}
           boardInfo={{ boardId: props.boardId, roomId: props.roomId }}
+          config={config}
         />
       </Box>
 
@@ -213,7 +215,7 @@ export function UILayer(props: UILayerProps) {
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
-      <Controller boardId={props.boardId} roomId={props.roomId} />
+      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       <LassoToolbar />

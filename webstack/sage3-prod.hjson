@@ -41,7 +41,8 @@
     "ai": true,
     "cell": true,
     "jupyter": true,
-    "articulate": true
+    "articulate": true,
+    "plugins": true
   },
 
   // ID Management

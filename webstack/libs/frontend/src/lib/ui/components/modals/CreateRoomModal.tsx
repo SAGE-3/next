@@ -26,9 +26,8 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
-import { RoomSchema } from '@sage3/shared/types';
+import { PublicServerConfiguration, RoomSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
 import { useRoomStore } from '../../../stores';
 import { useUser } from '../../../hooks';
@@ -41,7 +40,7 @@ interface CreateRoomModalProps {
 
 export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  const config = useData('/api/configuration') as PublicServerConfiguration;
 
   const toast = useToast();
 

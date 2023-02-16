@@ -12,15 +12,15 @@
  * @export
  * @interface serverConfiguration
  */
-export interface serverConfiguration {
+export interface ServerConfiguration {
   // Production of development
   production: boolean;
 
-  // version from the package.json file
-  version: string;
-
   // Pretty name of the server to show in the UI
   serverName?: string;
+
+  // version from the package.json file
+  version: string;
 
   // HTTP settings
   port: number;
@@ -30,10 +30,12 @@ export interface serverConfiguration {
   root: string;
   public: string;
   assets: string;
-  // Server list
-  servers: { name: string; url: string }[];
+
   // Services
   redis: { url: string };
+  // Twilio service
+  twilio: TwilioConfiguration;
+
   // Feature flags
   features: {
     twilio: boolean;
@@ -41,7 +43,9 @@ export interface serverConfiguration {
     jupyter: boolean;
     cell: boolean;
     articulate: boolean;
+    plugins: boolean;
   };
+
   // ID management API keys
   auth: AuthConfiguration;
   // SSL/HTTPS certificates
@@ -50,14 +54,22 @@ export interface serverConfiguration {
     certificateKeyFile: string;
     certificateChainFile: string;
   };
-  // Twilio service
-  twilio: TwilioConfiguration;
+
   // Namespace for signing uuid v5 keys
   namespace: string;
-
-  //Flag to check if server is sage3
-  isSage3: true;
 }
+
+// Public to everyone response from server to the configuration request, for security reasons
+export type PublicInfo = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production'> & {
+  isSage3: boolean;
+  logins: ServerConfiguration['auth']['strategies'];
+};
+
+// Public to authenticated users from server to the configuration request, for security reasons
+export type PublicServerConfiguration = Pick<
+  ServerConfiguration,
+  'serverName' | 'port' | 'version' | 'production' | 'namespace' | 'features'
+> & { token: string; admins: ServerConfiguration['auth']['admins']; logins: ServerConfiguration['auth']['strategies'] };
 
 /**
  * Credentials for user autentification APIs (passport, cilogon, ...)

@@ -27,9 +27,8 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
-import { BoardSchema } from '@sage3/shared/types';
+import { BoardSchema, PublicServerConfiguration } from '@sage3/shared/types';
 import { SAGEColors, randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore } from '../../../stores';
@@ -43,7 +42,7 @@ interface CreateBoardModalProps {
 
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  const config = useData('/api/configuration') as PublicServerConfiguration;
 
   const { user } = useUser();
   const toast = useToast();

@@ -12,7 +12,6 @@ import { Box, useColorModeValue, Text, Image, Progress } from '@chakra-ui/react'
 import {
   JoinBoardCheck,
   RoomList,
-  serverConfiguration,
   useBoardStore,
   useData,
   usePresenceStore,
@@ -23,7 +22,7 @@ import {
   Clock,
   usePluginStore,
 } from '@sage3/frontend';
-import { Board, Room } from '@sage3/shared/types';
+import { Board, PublicServerConfiguration, Room } from '@sage3/shared/types';
 
 import { useParams } from 'react-router-dom';
 
@@ -53,7 +52,7 @@ export function HomePage() {
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-  const config = useData('/api/configuration') as serverConfiguration;
+  const config = useData('/api/configuration') as PublicServerConfiguration;
 
   // Subscribe to user updates
   useEffect(() => {
@@ -190,7 +189,7 @@ export function HomePage() {
         py="2"
         px="2"
       >
-        <MainButton buttonStyle="solid" />
+        <MainButton buttonStyle="solid" config={config} />
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
       </Box>
     </Box>

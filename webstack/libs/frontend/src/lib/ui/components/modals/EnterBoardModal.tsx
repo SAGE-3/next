@@ -24,9 +24,9 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 
 import { useData, useRouteNav } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
+
 import { timeout } from '../../../utils';
-import { Board } from '@sage3/shared/types';
+import { Board, PublicServerConfiguration } from '@sage3/shared/types';
 
 export interface EnterBoardProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
   const toast = useToast();
   const initialRef = useRef<HTMLInputElement>(null);
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  const config = useData('/api/configuration') as PublicServerConfiguration;
 
   const [loading, setLoading] = useState(false);
 

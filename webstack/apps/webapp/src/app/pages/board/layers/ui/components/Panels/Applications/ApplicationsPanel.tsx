@@ -58,6 +58,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
   useEffect(() => {
     if (data) {
       const features = data.features;
+      if (!features) return;
       setAppsList((prev) => {
         let newlist = prev;
         if (!features['twilio']) {

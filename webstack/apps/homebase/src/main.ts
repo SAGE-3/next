@@ -48,7 +48,7 @@ import { expressAPIRouter, wsAPIRouter } from './api/routers';
 import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
-import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
+import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
@@ -66,7 +66,7 @@ process.on('unhandledRejection', (reason: Error) => {
  */
 async function startServer() {
   // Load the right configuration file
-  const config: serverConfiguration = await loadConfig();
+  const config: ServerConfiguration = await loadConfig();
 
   // Reverts the old DNS order, from v17 and up
   dns.setDefaultResultOrder('ipv4first');

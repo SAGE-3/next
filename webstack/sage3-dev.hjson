@@ -5,6 +5,9 @@
   // The name of the server
   "serverName": "Localhost",
 
+  // Version from the package.json
+  "version": "0.0.0",
+
   // HTTP
   "port": 3333,
   "tlsVersion": "TLSv1.2",
@@ -19,25 +22,12 @@
     "url": "redis://localhost:6379"
   },
 
-  // Active SAGE3 servers accessible at login page
-  "servers": [
-    {
-      "name": "Localhost",
-      "url": "http://localhost:4200"
-    },
-    {
-      "name": "Chicago",
-      "url": "https://sage3.app"
-    },
-    {
-      "name": "Hawaii",
-      "url": "https://manoa.sage3.app"
-    },
-    {
-      "name": "Development",
-      "url": "https://mini.sage3.app"
-    }
-  ],
+  // Twilio service
+  "twilio": {
+    "accountSid": "",
+    "apiKey": "",
+    "apiSecret": ""
+  },
 
   // How to enable/disable some features for safety
   "features": {
@@ -45,7 +35,8 @@
     "ai": true,
     "cell": true,
     "jupyter": true,
-    "articulate": true
+    "articulate": true,
+    "plugins": true
   },
 
   // ID Management
@@ -79,11 +70,7 @@
     "certificateFile": "localhost-server.crt",
     "certificateKeyFile": "localhost-server.key"
   },
-  "twilio": {
-    "accountSid": "",
-    "apiKey": "",
-    "apiSecret": ""
-  },
+
   // Namespace for signing uuid v5 keys
   "namespace": "150e32f0-62b8-11ed-974d-1b79350be347"
 }
