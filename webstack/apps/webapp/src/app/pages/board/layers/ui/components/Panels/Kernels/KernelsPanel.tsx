@@ -16,7 +16,7 @@ import {
 import { MdRestartAlt, MdCode, MdDelete, MdLock, MdLockOpen } from 'react-icons/md';
 
 import { Panel } from '../Panel';
-import { useHexColor, useUser, useAppStore, useBoardStore, truncateWithEllipsis } from '@sage3/frontend';
+import { useHexColor, useUser, useAppStore, useBoardStore, useUIStore, truncateWithEllipsis } from '@sage3/frontend';
 
 import { z } from 'zod';
 
@@ -62,6 +62,8 @@ export function KernelsPanel(props: KernelsProps) {
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === props.boardId);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
   // State
   const [s, update] = useState(initState);
   const createApp = useAppStore((state) => state.create);
@@ -89,15 +91,26 @@ export function KernelsPanel(props: KernelsProps) {
   useEffect(() => {
     if (!board) return;
     const data = board.data;
-    console.log("🚀 ~ file: KernelsPanel.tsx:92 ~ useEffect ~ data", data)
     // @ts-ignore
     if (data.online && !s.online) {
-      update({ ...s, online: true });
+      update((prev) => ({ ...prev, online: true }));
     }
     // @ts-ignore
     if (data.kernelSpecs && data.kernelSpecs.length > 0) {
       // @ts-ignore
-      update({ ...s, kernelSpecs: data.kernelSpecs });
+      update((prev) => ({ ...prev, kernelSpecs: data.kernelSpecs }));
+    }
+    // @ts-ignore
+    if (data.lastHeartBeat) {
+      // @ts-ignore
+      update((prev) => ({ ...prev, lastHeartBeat: data.lastHeartBeat }));
+    }
+    // @ts-ignore
+    if (data.availableKernels && Array.isArray(data.availableKernels)) {
+      // @ts-ignore
+      update((prev) => ({ ...prev, availableKernels: data.availableKernels }));
+      // @ts-ignore
+      setMyKernels(data.availableKernels);
     }
   }, [board]);
 
@@ -106,15 +119,15 @@ export function KernelsPanel(props: KernelsProps) {
       const response = await fetch('/api/time');
       const time = await response.json();
       const delta = Math.round(Math.abs(time.epoch - s.lastHeartBeat) / 1000);
+
       if (delta > heartBeatTimeCheck && s.online) {
-        update({ ...s, online: false });
+        update((prev) => ({ ...prev, online: false }));
       }
     }, 15000); // 15 Seconds
     return () => clearInterval(checkHeartBeat);
   }, [s.lastHeartBeat, s.online]);
 
   const refreshList = () => {
-    console.log('refreshing list', user?._id);
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
@@ -122,7 +135,6 @@ export function KernelsPanel(props: KernelsProps) {
       },
     });
   };
-
 
   useEffect(() => {
     if (!user) return;
@@ -137,13 +149,10 @@ export function KernelsPanel(props: KernelsProps) {
    */
   const removeKernel = (kernelId: string) => {
     if (!user || !kernelId) return;
-    update({
-      ...s,
+    updateBoard(props.boardId, {
       executeInfo: {
-        executeFunc: 'delete_kernel',
-        params: {
-          kernel_id: kernelId,
-          user_uuid: user._id,
+        executeFunc: 'delete_kernel', params: {
+          kernel_id: kernelId, user_uuid: user._id,
         },
       },
     });
@@ -157,7 +166,13 @@ export function KernelsPanel(props: KernelsProps) {
    */
   const restartKernel = (kernelId: string) => {
     if (!user || !kernelId) return;
-    update({ ...s, executeInfo: { executeFunc: 'restart_kernel', params: { kernel_id: kernelId, user_uuid: user._id } } });
+    updateBoard(props.boardId, {
+      executeInfo: {
+        executeFunc: 'restart_kernel', params: {
+          kernel_id: kernelId, user_uuid: user._id
+        }
+      }
+    });
   };
 
   /**
@@ -168,14 +183,17 @@ export function KernelsPanel(props: KernelsProps) {
    */
   const startSageCell = (kernelId: string, kernelAlias: string) => {
     if (!user) return;
+
+    // Get around  the center of the board
+    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+
     createApp({
       title: `${kernelAlias}`,
       roomId: props.roomId,
       boardId: props.boardId,
-      // position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-      position: { x: 100, y: 100, z: 0 },
-      // size: { width: 600, height: props.data.size.height, depth: 0 },
-      size: { width: 600, height: 400, depth: 0 },
+      position: { x: xDrop, y: yDrop, z: 0 },
+      size: { width: 650, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'SageCell',
       state: {
@@ -255,16 +273,16 @@ export function KernelsPanel(props: KernelsProps) {
               borderBottom={`2px solid ${scrollColorFix}`}
             >
               <Flex w="100%" alignItems="center" justifyContent="center" userSelect={'none'}>
-                <Box justifyContent="center" display="flex" flexGrow={1} flexBasis={0} color="white">
+                <Box justifyContent="center" display="flex" flexGrow={0.6} flexBasis={0} color="white">
                   Private
                 </Box>
-                <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
+                <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0} color="white">
                   Alias
                 </Box>
-                <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
+                <Box justifyContent="left" display="flex" flexGrow={1.2} flexBasis={0} color="white">
                   Kernel Id
                 </Box>
-                <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
+                <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0} color="white">
                   Type
                 </Box>
                 <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
@@ -280,10 +298,11 @@ export function KernelsPanel(props: KernelsProps) {
               // position="absolute"
               // left="0"
               // top="32px"
-              pt="2"
+              pt="0"
               height={`calc(100% - 40px)`}
-              borderRadius="0 0 8px 8px"
+              // borderRadius="0 0 8px 8px"
               overflowY={'auto'}
+              maxHeight={150}
               css={{
                 '&::-webkit-scrollbar': {
                   width: '12px',
@@ -309,15 +328,15 @@ export function KernelsPanel(props: KernelsProps) {
 
                     <Flex w="100%" fontFamily="mono" alignItems="center" justifyContent="center" userSelect={'none'} key={kernel.key + idx}>
                       {/* Status Icon */}
-                      <Box justifyContent="center" display="flex" flexGrow={1} flexBasis={0}>
+                      <Box justifyContent="center" display="flex" flexGrow={0.6} flexBasis={0}>
                         {kernel.value.is_private ? (
                           <Icon as={MdLock} fontSize="24px" color={'red.500'} />
                         ) : (
                           <Icon as={MdLockOpen} fontSize="24px" color="green.500" />
                         )}
                       </Box>
-                      {/* Kernel Name */}
-                      <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0}>
+                      {/* Kernel alias */}
+                      <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0}>
                         <Text
                           onClick={() => {
                             navigator.clipboard.writeText(kernel.value.kernel_alias);
@@ -327,8 +346,8 @@ export function KernelsPanel(props: KernelsProps) {
                           {kernel.value.kernel_alias}
                         </Text>
                       </Box>
-                      {/* Alias */}
-                      <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0}>
+                      {/* Kernel ID */}
+                      <Box justifyContent="left" display="flex" flexGrow={1.2} flexBasis={0}>
                         <Text
                           onClick={() => {
                             navigator.clipboard.writeText(kernel.key);
@@ -336,12 +355,12 @@ export function KernelsPanel(props: KernelsProps) {
                           ml={2}
                         >
                           <Tooltip label={kernel.key} placement="top" fontSize="xs" hasArrow>
-                            {truncateWithEllipsis(kernel.key, 8)}
+                            {truncateWithEllipsis(kernel.key, 15)}
                           </Tooltip>
                         </Text>
                       </Box>
                       {/* Kernel Type */}
-                      <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0}>
+                      <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0}>
                         <Text>
                           {
                             // show R for ir, Python for python3, etc.}
@@ -365,7 +384,7 @@ export function KernelsPanel(props: KernelsProps) {
                               onClick={() => {
                                 startSageCell(kernel.key, kernel.value.kernel_alias);
                               }}
-                              aria-label="Delete Kernel"
+                              aria-label="Open a SageCell"
                               icon={<MdCode color={teal} size="24px" />}
                             />
                           </Tooltip>

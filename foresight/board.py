@@ -61,9 +61,9 @@ class Board:
         self._task_scheduler = TaskScheduler()
         self._jupyter_client = JupyterKernelProxy()
         self._headers = dict(self._jupyter_client.headers)
-        # self._r_json = self._jupyter_client.redis_server.json()
-        # if self._r_json.get(self._redis_space) is None:
-        #     self._r_json.set(self._redis_space, '.', {})
+        self._r_json = self._jupyter_client.redis_server.json()
+        if self._r_json.get(self._redis_space) is None:
+            self._r_json.set(self._redis_space, '.', {})
         self.set_online()
         self.get_kernel_specs()
         self._task_scheduler.schedule_task(self.set_online, nb_secs=15)
@@ -93,12 +93,64 @@ class Board:
             if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})
-        print("available kernels are ", available_kernels)
         self.state.availableKernels = available_kernels
-        print("state is ", self.state)
         self.state.executeInfo['executeFunc'] = ""
         self.state.executeInfo['params'] = {}
         self.send_updates()
+
+    def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
+                   kernel_name="python3", auth_users=(), kernel_alias="my_kernel"):
+        body = {"name": kernel_name}
+        j_url = f'{self._base_url}/kernels'
+        response = requests.post(j_url, headers=self._headers, json=body)
+        if response.status_code == 201:
+            response_data = response.json()
+            kernel_info = {
+                "kernel_alias": kernel_alias,
+                "kernel_name": kernel_name,
+                "room": room_uuid,
+                "board": board_uuid,
+                "owner_uuid": owner_uuid,
+                "is_private": is_private,
+                "auth_users": auth_users
+            }
+            self._r_json.set(self._redis_space, response_data['id'], kernel_info)
+            self.get_available_kernels(user_uuid=owner_uuid)
+
+    def delete_kernel(self, kernel_id, user_uuid):
+        """ Shutdown a kernel
+        """
+        # get all valid kernel ids from jupyter server
+        kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        if kernel_id in kernel_list:
+            # shutdown kernel from jupyter server and remove from redis server
+            j_url = f'{self._base_url}/kernels/{kernel_id}'
+            response = requests.delete(j_url, headers=self._headers)
+            if response.status_code == 204:
+                self.get_available_kernels(user_uuid=user_uuid)
+            self._r_json.delete(self._redis_space, kernel_id)
+            self.get_available_kernels(user_uuid=user_uuid)
+        else:
+            # cleanup the kernel from redis server if it is not in jupyter server
+            self.get_available_kernels(user_uuid=user_uuid)
+            self._r_json.delete(self._redis_space, kernel_id)
+            self.get_available_kernels(user_uuid=user_uuid)
+
+    def shudown_all_kernels(self):
+        kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        for kernel_id in kernel_list:
+            j_url = f'{self._base_url}/kernels/{kernel_id}'
+            response = requests.delete(j_url, headers=self._headers)
+            if response.status_code == 204:
+                print(f"Kernel {kernel_id} shutdown successfully")
+                self._r_json.delete(self._redis_space, kernel_id)
+                self.get_available_kernels()
+
+    def restart_kernel(self, kernel_id, user_uuid):
+        j_url = f'{self._base_url}/kernels/{kernel_id}/restart'
+        response = requests.post(j_url, headers=self._headers)
+        if response.status_code == 200:
+            self.get_available_kernels(user_uuid=user_uuid)
 
     def send_updates(self):
         """
