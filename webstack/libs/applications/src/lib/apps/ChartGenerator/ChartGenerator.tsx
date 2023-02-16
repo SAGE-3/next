@@ -13,7 +13,19 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Chakra Imports styling
-import { Box, Button, ButtonGroup, Container, Grid, HStack, IconButton, Select, useColorModeValue, Tooltip } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  Container,
+  Grid,
+  HStack,
+  IconButton,
+  Select,
+  useColorModeValue,
+  Tooltip,
+  VStack,
+} from '@chakra-ui/react';
 
 //Icon imports
 import { MdAdd, MdAddCircle, MdClose, MdRemove } from 'react-icons/md';
@@ -114,7 +126,7 @@ function AppComponent(props: App): JSX.Element {
         ticks: {
           color: 'white',
           font: {
-            size: 20 * (1 / scale),
+            size: 40,
           },
         },
       },
@@ -129,7 +141,7 @@ function AppComponent(props: App): JSX.Element {
         ticks: {
           color: 'white',
           font: {
-            size: 20 * (1 / scale),
+            size: 40,
           },
         },
       },
@@ -139,7 +151,7 @@ function AppComponent(props: App): JSX.Element {
       title: {
         display: true,
         text: '',
-        font: { size: 30 * (1 / scale) },
+        font: { size: 60 },
         color: 'white',
       },
       legend: {
@@ -147,7 +159,7 @@ function AppComponent(props: App): JSX.Element {
           color: 'white',
           // This more specific font property overrides the global property
           font: {
-            size: 20 * (1 / scale),
+            size: 40,
           },
         },
       },
@@ -164,7 +176,10 @@ function AppComponent(props: App): JSX.Element {
     setOptions({
       ...options,
       scales: {
-        y: { ...options.scales.y, ticks: { ...options.scales.y.ticks, font: { size: fontSize } } },
+        y: {
+          ...options.scales.y,
+          ticks: { ...options.scales.y.ticks, font: { size: fontSize } },
+        },
         x: { ...options.scales.x, ticks: { ...options.scales.x.ticks, font: { size: fontSize } } },
       },
       plugins: {
@@ -257,21 +272,46 @@ function AppComponent(props: App): JSX.Element {
   // };
 
   // Change y axis
-  const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>, index: number) => {
+    //TODO: Set new y minimum value
+
     const value = e.target.value;
     const newDatasets = [...s.datasets];
-    newDatasets[0].yDataName = value;
+    newDatasets[index].yDataName = value;
+
+    // console.log(data[value]);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+
+    const minYValue = Math.min(...data[value].filter((v) => v != null));
+
+    setMinimumYValue(minYValue);
+
     updateState(props._id, { datasets: newDatasets });
   };
 
   // Change chart type
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    //TODO: customizable chart types for each dataset trace
     const value = e.target.value;
     const newDatasets = [...s.datasets];
     for (let i = 0; i < newDatasets.length; i++) {
       newDatasets[i].chartType = value;
     }
     updateState(props._id, { datasets: newDatasets });
+  };
+
+  const increaseDatasetSize = () => {
+    const tmpDatasets = [...s.datasets];
+    updateState(props._id, {
+      datasets: [
+        ...tmpDatasets,
+        {
+          yDataName: '',
+          chartType: 'line',
+        },
+      ],
+    });
   };
 
   return (
@@ -350,30 +390,39 @@ function AppComponent(props: App): JSX.Element {
               <Container>
                 <Box maxW="sm" overflow="hidden">
                   <HStack>
-                    <Select
-                      borderColor="black"
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      name="yAxis"
-                      placeholder={'choose an attribute'}
-                      onChange={handleYAxisChange}
-                    >
-                      {attributeNames.map((attributeName, index) => {
+                    <VStack>
+                      {s.datasets.map((dataset, index) => {
                         return (
-                          <option data-key={index} value={attributeName} key={index}>
-                            {attributeName}
-                          </option>
+                          <Select
+                            borderColor="black"
+                            borderWidth="1px"
+                            borderRadius="lg"
+                            name="yAxis"
+                            key={index}
+                            placeholder={'choose an attribute'}
+                            onChange={(e) => {
+                              handleYAxisChange(e, index);
+                            }}
+                          >
+                            {attributeNames.map((attributeName, index) => {
+                              return (
+                                <option data-key={index} value={attributeName} key={index}>
+                                  {attributeName}
+                                </option>
+                              );
+                            })}
+                          </Select>
                         );
                       })}
-                    </Select>
-                    {/**TODO: Create a way to add more attributes on a single chart */}
-                    {/* <IconButton
+                    </VStack>
+                    <IconButton
                       aria-label="Add Field"
                       borderColor="black"
                       borderWidth="1px"
                       borderRadius="lg"
                       icon={<MdAddCircle />}
-                    ></IconButton> */}
+                      onClick={increaseDatasetSize}
+                    ></IconButton>
                   </HStack>
                 </Box>
               </Container>
