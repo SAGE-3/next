@@ -6,20 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
 import { useAppStore, useUIStore } from '@sage3/frontend';
 
-import { Background } from './Background/Background';
-import { Apps } from './Background/Apps';
-import { Cursors } from './Background/Cursors';
-import { Viewports } from './Background/Viewports';
-import { Whiteboard } from './Background/Whiteboard/Whiteboard';
-import { UserPresenceUpdate } from './Background/UserPresenceUpdate';
-import { Lasso } from './Background/Lasso/Lasso';
+import { Background, Apps, Cursors, Viewports, Whiteboard, UserPresenceUpdate, Lasso } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -30,7 +24,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Apps Store
   const apps = useAppStore((state) => state.apps);
   const appsFetched = useAppStore((state) => state.fetched);
-
   // UI store
   const scale = useUIStore((state) => state.scale);
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -43,9 +36,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const fitApps = useUIStore((state) => state.fitApps);
   const boardLocked = useUIStore((state) => state.boardLocked);
-
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
+  const divRef = useRef<HTMLDivElement>(null);
 
   // Position board when entering board
   useEffect(() => {
@@ -61,6 +54,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Drag start of the board
   function handleDragBoardStart() {
+    if (divRef.current) {
+      divRef.current.style.willChange = 'transform';
+    }
     setBoardDragging(true);
   }
 
@@ -73,6 +69,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
+    if (divRef.current) {
+      divRef.current.style.willChange = 'auto';
+    }
     const x = data.x;
     const y = data.y;
     setBoardPosition({ x, y });
@@ -87,7 +86,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }
 
   return (
-    <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+    <div ref={divRef} style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
       {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
       <Rnd

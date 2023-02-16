@@ -205,7 +205,7 @@ export function Panel(props: PanelProps) {
 
   const handleCloseClick = (e: any) => {
     e.stopPropagation();
-    update({show: false})
+    update({ show: false })
   };
 
   const handleMinimizeClick = (e: any) => {
@@ -216,6 +216,10 @@ export function Panel(props: PanelProps) {
   // Handle a drag start of the panel
   const handleDragStart = () => {
     bringPanelForward(props.name);
+    // Trying to optimize performance
+    if (ref.current) {
+      ref.current.style.willChange = 'transform';
+    }
   }
 
   // Handle a drag stop of the panel
@@ -256,6 +260,11 @@ export function Panel(props: PanelProps) {
         update({ stuck: StuckTypes.Top, position: { x: data.x, y: 5 } });
       } else {
         update({ stuck: StuckTypes.None });
+      }
+
+      // Trying to optimize performance
+      if (ref.current) {
+        ref.current.style.willChange = 'auto';
       }
     }
   };

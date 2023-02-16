@@ -9,9 +9,8 @@
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabList, TabPanel, TabPanels, Tabs, useToast } from '@chakra-ui/react';
 
-import { JoinBoardCheck, serverConfiguration, useData, MainButton } from '@sage3/frontend';
+import { JoinBoardCheck, serverConfiguration, useData, MainButton, Clock } from '@sage3/frontend';
 
-import { Clock } from '../components/Board/UI/Clock';
 import { Link } from 'react-router-dom';
 
 import './adminStyle.css';

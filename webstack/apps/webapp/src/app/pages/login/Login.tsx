@@ -8,7 +8,8 @@
 
 import { useEffect, useCallback, useState } from 'react';
 
-import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Center, Text, VStack, Select, InputGroup } from '@chakra-ui/react';
+import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack, useColorModeValue } from '@chakra-ui/react';
+
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost } from 'react-icons/fa';
 
@@ -16,9 +17,7 @@ import { isElectron, useAuth, useRouteNav } from '@sage3/frontend';
 import { GetServerInfo } from '@sage3/frontend';
 
 // Logos
-import sage3DarkMode from '../../assets/SAGE3DarkMode.png';
-import sage3LightMode from '../../assets/SAGE3LightMode.png';
-import cilogonLogo from '../../assets/cilogon-logo-32x32.png';
+import cilogonLogo from '../../../assets/cilogon-logo-32x32.png';
 
 export function LoginPage() {
   const { auth, googleLogin, ciLogin, guestLogin } = useAuth();
@@ -27,25 +26,34 @@ export function LoginPage() {
   const [serverName, setServerName] = useState<string>('');
   // state to disable login buttons during server switch: default is enabled
   const [shouldDisable, setShouldDisable] = useState(false);
-
-  const isElec = isElectron();
+  const [logins, setLogins] = useState<string[]>([]);
+  // Logo URL
+  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  // Test for electron
+  const thisIsElectron = isElectron();
 
   // Retrieve the name of the server to display in the page
   useEffect(() => {
     GetServerInfo().then((conf) => {
       if (conf.serverName) setServerName(conf.serverName);
+      if (conf.logins) setLogins(conf.logins);
     });
   }, []);
 
   // Sending user back to the electron landing page
   const goToLanding = () => {
+    // Disable login buttons
+    setShouldDisable(true);
+    // Send message to electron to load the landing page
     window.electron.send('load-landing');
   };
 
+  // Button to download the client
   const goToClientDownload = () => {
     window.open('https://sage3.sagecommons.org/', '_blank');
   };
 
+  // Make sure user is logged in or not
   const authNavCheck = useCallback(() => {
     if (auth) {
       toHome();
@@ -59,23 +67,10 @@ export function LoginPage() {
   //  Dark/light mode
   const { colorMode } = useColorMode();
 
-  // Detect if in production or development mode
-  let production = true;
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    production = false;
-  }
-
   return (
     <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" width="100%" height="100%">
       <Box pb={'2rem'} alignItems="center">
-        <Image
-          width="20vw"
-          minWidth="400px"
-          maxWidth="35rem"
-          src={colorMode === 'light' ? sage3LightMode : sage3DarkMode}
-          alt="SAGE3 Logo"
-          fit="contain"
-        />
+        <Image width="20vw" minWidth="400px" maxWidth="35rem" src={logoUrl} alt="SAGE3 Logo" fit="contain" />
       </Box>
 
       {/* Server Name */}
@@ -95,7 +90,7 @@ export function LoginPage() {
         </Text>
       </Box>
 
-      {isElec ? (
+      {thisIsElectron ? (
         <Box left="2" bottom="2" position="absolute">
           <Button colorScheme="teal" size="sm" onClick={goToLanding}>
             Server List
@@ -121,7 +116,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={shouldDisable} justifyContent="left" onClick={googleLogin}>
+            <Button width="100%" disabled={shouldDisable || !logins.includes('google')} justifyContent="left" onClick={googleLogin}>
               Login with Google
             </Button>
           </ButtonGroup>
@@ -136,7 +131,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={shouldDisable || !production} justifyContent="left" onClick={ciLogin}>
+            <Button width="100%" disabled={shouldDisable || !logins.includes('cilogon')} justifyContent="left" onClick={ciLogin}>
               Login with CILogon
             </Button>
           </ButtonGroup>
@@ -151,7 +146,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={shouldDisable} justifyContent="left" onClick={guestLogin}>
+            <Button width="100%" disabled={shouldDisable || !logins.includes('guest')} justifyContent="left" onClick={guestLogin}>
               Login as Guest
             </Button>
           </ButtonGroup>
