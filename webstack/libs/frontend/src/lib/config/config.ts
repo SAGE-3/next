@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// limited response from server to the configuration request, for security reasons
+// Public and limited response from server to the configuration request, for security reasons
 export type serverConfiguration = {
   serverName: string;
   port: number;
@@ -19,6 +19,8 @@ export type serverConfiguration = {
   namespace: string;
   // Admin names
   admins: string[];
+  // Login strategies
+  logins: string[];
 };
 
 /**
