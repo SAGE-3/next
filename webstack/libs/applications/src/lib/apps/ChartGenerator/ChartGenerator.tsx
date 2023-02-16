@@ -206,7 +206,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const setMinimumYValue = (minYValue: number) => {
-    setOptions({ ...options, scales: { ...options.scales, y: { ...options.scales.y, min: minYValue } } });
+    setOptions({ ...options, plugins: { ...options.plugins }, scales: { ...options.scales, y: { ...options.scales.y, min: minYValue } } });
   };
 
   // Fetching HCDP datafrom state.url
@@ -223,10 +223,11 @@ function AppComponent(props: App): JSX.Element {
         setTitle('Data for Station ' + station['STATION'][0]['NWSFIREZONE']);
         setData(climateData);
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
-        setMinimumYValue(minYValue);
+        if (s.datasets[0].yDataName !== '') {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
+        }
 
         setAttributeNames(attributeProps);
       });
