@@ -280,11 +280,12 @@ function AppComponent(props: App): JSX.Element {
 
   // Change y axis
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>, index: number) => {
-    //TODO: Set new y minimum value
-
     const value = e.target.value;
     const newDatasets = [...s.datasets];
     newDatasets[index].yDataName = value;
+
+    //TODO: need to fix setting minimum value
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const minYValue = Math.min(...data[value].filter((v) => v != null));
@@ -366,7 +367,6 @@ function AppComponent(props: App): JSX.Element {
                   </Select>
                 </Box>
               </Container>
-              {/**TODO: May need to delete later? Will find out later if this makes sense with the HCDP data */}
               <h1 style={{ textAlign: 'center' }}> X values</h1>
               <Container>
                 <Box maxW="sm" overflow="hidden">
