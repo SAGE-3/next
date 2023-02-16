@@ -95,6 +95,7 @@ export function PluginsPanel(props: PluginProps) {
                 p="2"
                 openDelay={500}
                 borderRadius="8px"
+                placement="right"
                 label={
                   <Box>
                     <Badge variant="solid" colorScheme="teal">

@@ -46,12 +46,26 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
         return;
       }
 
+      // Check for file type
+      if (file.mimetype != 'application/zip') {
+        res.status(400).send({ success: false, message: 'Invalid file type. Only Zip Files.' });
+        return;
+      }
+
+      // Get the filename to delete later
+      const uploadName = req.file?.filename as string;
+      const removeUploadedFile = () => {
+        fs.rmSync(path.join(uploadPath, uploadName), { force: true });
+      };
+
+      // Get body information
       const pluginName = req.body.name as string;
       const description = req.body.description as string;
       const username = req.user.displayName as string;
 
       // Check if the request is valid
       if (!username || !description || !pluginName) {
+        removeUploadedFile();
         res.status(400).send({ success: false, message: 'Invalid request format.' });
         return;
       }
@@ -59,6 +73,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       // Check to see if plugin with that name already exists
       const check = await this.collection.query('name', pluginName);
       if (check.length > 0) {
+        removeUploadedFile();
         res.status(400).send({ success: false, message: 'Plugin with that name already exists.' });
         return;
       }
@@ -74,7 +89,15 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
         fs.readFile(p, async (err, data) => {
           if (err) throw err;
           // Load the zip file
-          const result = await jszip.loadAsync(data);
+          let result: jszip;
+          try {
+            result = await jszip.loadAsync(data);
+          } catch (e) {
+            removeUploadedFile();
+            res.status(500).send({ success: false, message: 'Error reading zip file.' });
+            return;
+          }
+
           // Extract keys
           const keys = Object.keys(result.files);
 
@@ -95,10 +118,11 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
             { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString() },
             req.user.id
           );
+          removeUploadedFile();
           res.status(200).send({ success: true, message: 'Plugin Uploaded' });
         });
       } catch (e) {
-        console.log(e);
+        removeUploadedFile();
         res.status(500).send({ success: false, message: 'Error reading zip file.' });
       }
     });

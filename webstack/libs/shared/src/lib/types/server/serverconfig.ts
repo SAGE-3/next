@@ -31,11 +31,13 @@ export interface ServerConfiguration {
   public: string;
   assets: string;
 
-  // Services
+  // Redis
   redis: { url: string };
 
-  // Twilio service
-  twilio: TwilioConfiguration;
+  // External Services
+  services: {
+    twilio: TwilioConfiguration;
+  };
 
   // Feature flags
   features: {

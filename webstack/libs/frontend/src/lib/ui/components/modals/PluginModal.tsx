@@ -30,6 +30,7 @@ import {
   useToast,
   useDisclosure,
   useColorModeValue,
+  Spinner,
 } from '@chakra-ui/react';
 
 import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 'react-icons/md';
@@ -61,6 +62,9 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   const [description, setDescription] = useState<string>('');
   const [name, setName] = useState<string>('');
 
+  // Uploading Status
+  const [uploading, setUploading] = useState<boolean>(false);
+
   // Delete Selected Plugin
   const [deleteId, setDeleteId] = useState<string>('');
 
@@ -83,10 +87,24 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
 
   // Perform the actual upload
   const handleUpload = async () => {
-    console.log(input, user, name, description);
-    if (input && user && name && description) {
+    // Check for required fields
+    if (input[0] && user && name && description) {
+      // Check file extension is a ZIP file
+      if (input[0].type !== 'application/zip') {
+        toast({
+          title: 'Plugin Upload',
+          description: 'Invalid file type. (Required: Zip File)',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+      // Set uploading to true, shows spinner
+      setUploading(true);
       // Upload with a POST request
       const response = await upload(input[0], name, description);
+      // Upload Successful
       if (response.success) {
         toast({
           title: 'Plugin Upload',
@@ -98,9 +116,19 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
       } else {
         toast({ title: 'Plugin Upload', description: response.message, status: 'warning', duration: 3000, isClosable: true });
       }
+      // Show spinner for just a little longer so it doesnt look like UI is flashing.
+      setTimeout(() => setUploading(false), 1000);
       setName('');
       setDescription('');
       setInput([]);
+    } else {
+      toast({
+        title: 'Plugin Upload',
+        description: 'Missing input fields. (Required: Zip File, Name, and Description)',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -207,58 +235,62 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
             </Box>
             <hr style={{ margin: '8px 0 8px 0' }} />
             <Text fontSize="lg">Upload</Text>
+            {uploading ? (
+              <Box width="100%" height="220px" display="flex" justifyContent="center">
+                <Spinner thickness="12px" speed="0.65s" emptyColor="gray.200" color="teal.300" size="xl" width="220px" height="220px" />
+              </Box>
+            ) : (
+              <FormControl isRequired>
+                <FormHelperText mb="2">Select Zip file containing a Plugin</FormHelperText>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
 
-            <FormControl isRequired>
-              <FormHelperText mb="2">Select Zip file containing a Plugin</FormHelperText>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
+                  <Input
+                    variant="outline"
+                    padding={'4px 35px'}
+                    id="files"
+                    type="file"
+                    accept={'.zip'}
+                    onChange={handleInputChange}
+                    onClick={() => setInput([])}
+                  />
+                  <br />
+                </InputGroup>
 
-                <Input
-                  variant="outline"
-                  padding={'4px 35px'}
-                  id="files"
-                  type="file"
-                  accept={'.zip'}
-                  multiple
-                  onChange={handleInputChange}
-                  onClick={() => setInput([])}
-                />
-                <br />
-              </InputGroup>
+                <FormHelperText mb="2">Plugin Name (Only letters and numbers. Max 20 characters.)</FormHelperText>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none" children={<Icon as={MdOutlineDriveFileRenameOutline} />} />
 
-              <FormHelperText mb="2">Plugin Name (Only letters and numbers. Max 20 characters.)</FormHelperText>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none" children={<Icon as={MdOutlineDriveFileRenameOutline} />} />
+                  <Input
+                    variant="outline"
+                    padding={'4px 35px'}
+                    id="name"
+                    type="text"
+                    value={name}
+                    autoComplete="off"
+                    maxLength={20}
+                    pattern="[A-Za-z0-9]+"
+                    onChange={handleNameChange}
+                  />
+                </InputGroup>
 
-                <Input
-                  variant="outline"
-                  padding={'4px 35px'}
-                  id="name"
-                  type="text"
-                  value={name}
-                  autoComplete="off"
-                  maxLength={20}
-                  pattern="[A-Za-z0-9]+"
-                  onChange={handleNameChange}
-                />
-              </InputGroup>
+                <FormHelperText mb="2">Plugin Description (Max 40 characters.)</FormHelperText>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} />} />
 
-              <FormHelperText mb="2">Plugin Description (Max 40 characters.)</FormHelperText>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} />} />
-
-                <Input
-                  variant="outline"
-                  padding={'4px 35px'}
-                  id="description"
-                  type="text"
-                  value={description}
-                  maxLength={40}
-                  autoComplete="off"
-                  onChange={handleDescriptionChange}
-                />
-              </InputGroup>
-            </FormControl>
+                  <Input
+                    variant="outline"
+                    padding={'4px 35px'}
+                    id="description"
+                    type="text"
+                    value={description}
+                    maxLength={40}
+                    autoComplete="off"
+                    onChange={handleDescriptionChange}
+                  />
+                </InputGroup>
+              </FormControl>
+            )}
           </ModalBody>
           <ModalFooter>
             <Button type="submit" colorScheme="green" mr={5} onClick={handleUpload}>

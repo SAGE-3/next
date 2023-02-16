@@ -1,92 +1,108 @@
-// We are in production mode
 {
+   // We are in production mode
   "production": true,
 
-  // Name of the server
+   // Name of the server to show in the UI
   "serverName": "My Local Server",
 
-    // HTTP
+  // HTTP Settings
   "port": 443,
   "tlsVersion": "TLSv1.2",
 
-    // Folders
+  // SSL Certificate names
+  "ssl": {
+    // Located in the `/configurations/node/keys' folder
+    "certificateFile": "localhost-server.crt",
+    "certificateKeyFile": "localhost-server.key"
+  },
+
+  // These can be left alone, they are used to find the assets
   "root": ".",
   "public": "dist/apps/homebase/assets",
   "assets": "dist/apps/webapp/assets/",
 
-    // Services
+  // Redis Database Config
   "redis": {
+    // The Redis Database URL
     "url": "redis://redis-server:6379"
   },
 
-    // Active SAGE3 servers accessible at login page
-  "servers": [
-    {
-      "name": "Chicago",
-      "url": "https://sage3.app"
-    },
-    {
-      "name": "Hawaii",
-      "url": "https://manoa.sage3.app"
-    },
-    {
-      "name": "Development",
-      "url": "https://mini.sage3.app"
+ // External Services
+ "services": {
+    twilio: {
+      // Your Account SID from www.twilio.com/console
+      accountSid: "", 
+      // API Key
+      apiKey: "", 
+      // API Secret
+      apiSecret: "" 
     }
-  ],
+  }, 
 
   // How to enable/disable some features for safety
   "features": {
-    "twilio": true,
-    "ai": true,
-    "cell": true,
-    "jupyter": true,
-    "articulate": true
+    // Enable Plugins
+    plugins: true, 
+    // Which Apps to enable.  Available Apps: 
+    // AIPane, ChartMaker, Leaflet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
+    apps: ["AIPane", "ChartMaker", "Leaflet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
   },
 
-  // ID Management
+  // Auth Configuration
   "auth": {
+    // Secret HASH for the sessions. Change this to something unique.
     "sessionSecret": "SUPERSECRET!!$$",
-    "sessionMaxAge": 604800000, // 1 weeks in ms
+    // Max age for a session per user. In milliseconds. 7 days
+    "sessionMaxAge": 604800000,
+    // Which login strategies to enable for the server. 
+    // If you enbable them ensure you add the relevant config information below.
     "strategies": [
       "google",
       "cilogon",
       "guest",
       "jwt"
     ],
+    // A List of emails to enable those users to be admins.
     "admins": [],
+    // Guest configuration
     "guestConfig": {
+      // Endpoint for the guest login. No need to change this
       "routeEndpoint": "/auth/guest"
     },
+    // Google configuration
     "googleConfig": {
-      "clientID": "XXX",
-      "clientSecret": "XXX",
+      // Client ID from the Google Developer Console
+      "clientID": "",
+      // Client Secret from the Google Developer Console
+      "clientSecret": "",
+      // Endpoint for the google login
       "routeEndpoint": "/auth/google",
+      // Callback URL for the google login
       "callbackURL": "/auth/google/redirect"
     },
+    // JWT configuration
     "jwtConfig": {
+      // The issuer of the JWT
       "issuer": "sage3app@gmail.com",
+      // The audience of the JWT
       "audience": "sage3.app",
+      // Public key location. Leave this alone
       "publicKey": "./keys/jwt_public.pem",
+      // JWT Route endpoint
       "routeEndpoint": "/auth/jwt"
     },
+    // CILogon configuration
     "cilogonConfig": {
-      "clientID": "XXX",
-      "clientSecret": "XXX",
+      // Client ID from CILogon
+      "clientID": "",
+      // Client Secret from CILogon
+      "clientSecret": "",
+      // Endpoint for the cilogon login
       "routeEndpoint": "/auth/cilogon",
+      // Callback URL for the cilogon login
       "callbackURL": "/auth/cilogon/redirect"
     }
   },
-  "ssl": {
-    // found in the 'keys' folder
-    "certificateFile": "localhost-server.crt",
-    "certificateKeyFile": "localhost-server.key"
-  },
-  "twilio": {
-    "accountSid": "XXX",
-    "apiKey": "XXX",
-    "apiSecret": "XXX"
-  },
-  // Namespace for signing uuid v5 keys
+  // Namespace for signing uuid v5 keys. Change to a unique value.
   "namespace": "XXX"
 }
