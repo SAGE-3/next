@@ -263,13 +263,19 @@ function AppComponent(props: App): JSX.Element {
     // setRevCount(Math.floor(Math.random() * 1000000));
   }, [JSON.stringify(data), JSON.stringify(s.datasets)]);
 
-  // // Change x axis
-  // const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
-  //   const value = e.target.value;
-  //   const newDatasets = [...s.datasets];
-  //   newDatasets[0].yDataName = value;
-  //   updateState(props._id, { datasets: newDatasets });
-  // };
+  // Change x axis
+  const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const xAxisProperty = e.target.value;
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const newData = data[xAxisProperty];
+    console.log(chartData);
+    setChartData({
+      ...chartData,
+      labels: [...newData],
+    });
+  };
 
   // Change y axis
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>, index: number) => {
@@ -278,11 +284,8 @@ function AppComponent(props: App): JSX.Element {
     const value = e.target.value;
     const newDatasets = [...s.datasets];
     newDatasets[index].yDataName = value;
-
-    // console.log(data[value]);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-
     const minYValue = Math.min(...data[value].filter((v) => v != null));
 
     setMinimumYValue(minYValue);
@@ -301,6 +304,7 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { datasets: newDatasets });
   };
 
+  // Increase the number of "traces" or variables to visualize
   const increaseDatasetSize = () => {
     const tmpDatasets = [...s.datasets];
     updateState(props._id, {
@@ -335,12 +339,18 @@ function AppComponent(props: App): JSX.Element {
             <br />
             <Grid templateColumns="repeat(1,1fr)" gap={2}>
               {Object.keys(stationMetadata).map((property, index) => {
-                return (
+                // Create a Title for each property name
+                const firstLetterCapitalized = property.slice(0, 1);
+                const remainingLettersWithoutUnderscore = property.replaceAll('_', ' ');
+                const remainingLettersToLowerCase = remainingLettersWithoutUnderscore.slice(1).toLowerCase();
+                const finalProperty = firstLetterCapitalized + remainingLettersToLowerCase;
+
+                return typeof stationMetadata[property] === 'string' ? (
                   <h1 style={{ marginLeft: '1rem' }} key={index}>
-                    <b>{property.slice(0, 1) + property.replaceAll('_', ' ').slice(1).toLowerCase()}</b>:{' '}
-                    {typeof stationMetadata[property] === 'string' ? stationMetadata[property] : null}
+                    <b>{finalProperty}: </b>
+                    {stationMetadata[property]}
                   </h1>
-                );
+                ) : null;
               })}
               <br />
               <h1 style={{ textAlign: 'center' }}>Graph Type</h1>
@@ -356,8 +366,8 @@ function AppComponent(props: App): JSX.Element {
                 </Box>
               </Container>
               {/**TODO: May need to delete later? Will find out later if this makes sense with the HCDP data */}
-              {/* <h1>X values</h1> */}
-              {/* <Container>
+              <h1 style={{ textAlign: 'center' }}> X values</h1>
+              <Container>
                 <Box maxW="sm" overflow="hidden">
                   <HStack>
                     <Select
@@ -376,16 +386,16 @@ function AppComponent(props: App): JSX.Element {
                         );
                       })}
                     </Select>
-                    <IconButton
+                    {/* <IconButton
                       aria-label="Add Field"
                       borderColor="black"
                       borderWidth="1px"
                       borderRadius="lg"
                       icon={<MdAddCircle />}
-                    ></IconButton>
+                    ></IconButton> */}
                   </HStack>
                 </Box>
-              </Container> */}
+              </Container>
               <h1 style={{ textAlign: 'center' }}>Y values</h1>
               <Container>
                 <Box maxW="sm" overflow="hidden">
