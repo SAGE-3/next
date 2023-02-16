@@ -17,7 +17,7 @@ type Plugin<T> = {
     size: { width: number; height: number; depth: number };
     rotation: { x: number; y: number; z: number };
     type: 'PluginApp';
-    state: T;
+    state: Partial<T>;
     raised: boolean;
   };
 };

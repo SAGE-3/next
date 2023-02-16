@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast } from '@chakra-ui/react';
+import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast, MenuDivider } from '@chakra-ui/react';
 import {
   MdOutlineGridOn,
   MdAccountCircle,
@@ -110,28 +110,34 @@ export function MainButton(props: MainButtonProps) {
               Admin Page
             </MenuItem>
           )}
+          {props.config?.features?.plugins && (
+            <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
+              Plugins
+            </MenuItem>
+          )}
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </MenuItem>
+
+          <MenuDivider />
           {props.boardInfo && (
             <MenuItem onClick={handleCopyLink} icon={<MdLink fontSize="24px" />}>
               Copy Board Link
             </MenuItem>
           )}
           {props.backToRoom && (
-            <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />}>
-              Back to Room
-            </MenuItem>
-          )}
-          {props.config?.features?.plugins && (
-            <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
-              Plugins
-            </MenuItem>
+            <>
+              <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />}>
+                Back to Room
+              </MenuItem>
+              <MenuDivider />
+            </>
           )}
 
           <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
             About
           </MenuItem>
+
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
             Logout
           </MenuItem>

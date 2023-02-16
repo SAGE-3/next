@@ -265,7 +265,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
               Upload
             </Button>
             <Button mr={3} onClick={props.onClose}>
-              Cancel
+              Close
             </Button>
           </ModalFooter>
         </ModalContent>

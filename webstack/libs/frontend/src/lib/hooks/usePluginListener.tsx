@@ -23,8 +23,6 @@ export function usePluginListener() {
       if (event.data.source !== 's3plugin') return;
       // Format message
       const message = event.data as { source: string; type: 'update'; state: Partial<AppSchema>; id: string };
-
-      console.log('Incoming message', message);
       // If this is an update
       if (message.type === 'update') {
         // Consolidated the Plugin update into one.

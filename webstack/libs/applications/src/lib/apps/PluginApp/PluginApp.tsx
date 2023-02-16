@@ -27,14 +27,14 @@ function AppComponent(props: App): JSX.Element {
     if (iRef.current) {
       const win = iRef.current.contentWindow;
       if (win) {
-        win.postMessage({
-          type: 'init',
-          state: props,
-        });
-        win.postMessage({
-          type: 'update',
-          state: props,
-        });
+        // Wait for the iframe to load until you send the init message
+        // This is a hacky way to do it, need a better solution
+        setTimeout(() => {
+          win.postMessage({
+            type: 'init',
+            state: props,
+          });
+        }, 1000);
       }
     }
   }, [iRef.current]);
