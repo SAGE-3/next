@@ -95,6 +95,11 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
 
   const scale = useUIStore((state) => state.scale);
 
+  const setBg = () => {
+    const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+    return '#' + randomColor
+  }
+
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
     // @ts-expect-error
@@ -109,6 +114,81 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     // hide context menu
     setShowMenu(false);
   }, [file]);
+
+  const explodeCells = () => {
+    if (!user) return;
+    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+    // Look for the file in the asset store
+    const localurl = '/api/assets/static/' + file.filename;
+    // Get the content of the file
+    fetch(localurl, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (spec) {
+        const cells = spec.cells;
+        let y = yDrop;
+        let columnCount = 0;
+        const columnHeight = 5;
+        let x = xDrop;
+        const height = 400;
+        const width = 500;
+        const spacing = 40;
+        const cellColor = setBg()
+        cells.forEach((cell: any) => {
+          if (cell.cell_type === 'code') {
+            const sourceCode = (cell.source as []).join(' ');
+            createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
+              w: width,
+              h: height
+            }, {code: sourceCode, groupColor: cellColor}));
+          }
+          if (cell.cell_type === 'markdown') {
+            createApp(
+              setupApp('', 'Stickie', x, y, roomId, boardId, {
+                w: width,
+                h: height
+              }, {text: `markdown ${cell.source}`})
+            );
+          }
+          if (cell.cell_type === 'raw') {
+            createApp(
+              setupApp('', 'Stickie', x, y, roomId, boardId, {
+                w: width,
+                h: height
+              }, {text: `markdown ${cell.source}`})
+            );
+          }
+          if (cell.cell_type === 'display_data') {
+            createApp(
+              setupApp(
+                '',
+                'SageCell',
+                x,
+                y,
+                roomId,
+                boardId,
+                {w: width, h: height},
+                {output: JSON.stringify(cell.data)}
+              )
+            );
+          }
+          y = y + height + spacing;
+          columnCount++;
+          if (columnCount >= columnHeight) {
+            columnCount = 0;
+            x = x + width + spacing;
+            y = yDrop;
+          }
+        });
+      })
+  }
 
   // Context menu selection handler
   const actionClick = async (e: React.MouseEvent<HTMLLIElement>) => {
@@ -141,78 +221,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
         });
       }
     } else if (id === 'cells') {
-      if (!user) return;
-      const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-      const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
-      // Look for the file in the asset store
-      const localurl = '/api/assets/static/' + file.filename;
-      // Get the content of the file
-      fetch(localurl, {
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      })
-        .then(function (response) {
-          return response.json();
-        })
-        .then(function (spec) {
-          const cells = spec.cells;
-          let y = yDrop;
-          let columnCount = 0;
-          const columnHeight = 5;
-          let x = xDrop;
-          const height = 400;
-          const width = 500;
-          const spacing = 40;
-          cells.forEach((cell: any) => {
-            if (cell.cell_type === 'code') {
-              const sourceCode = (cell.source as []).join(' ');
-              createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
-                w: width,
-                h: height
-              }, {code: sourceCode}));
-            }
-            if (cell.cell_type === 'markdown') {
-              createApp(
-                setupApp('', 'Stickie', x, y, roomId, boardId, {
-                  w: width,
-                  h: height
-                }, {text: `markdown ${cell.source}`})
-              );
-            }
-            if (cell.cell_type === 'raw') {
-              createApp(
-                setupApp('', 'Stickie', x, y, roomId, boardId, {
-                  w: width,
-                  h: height
-                }, {text: `markdown ${cell.source}`})
-              );
-            }
-            if (cell.cell_type === 'display_data') {
-              createApp(
-                setupApp(
-                  '',
-                  'SageCell',
-                  x,
-                  y,
-                  roomId,
-                  boardId,
-                  {w: width, h: height},
-                  {output: JSON.stringify(cell.data)}
-                )
-              );
-            }
-            y = y + height + spacing;
-            columnCount++;
-            if (columnCount >= columnHeight) {
-              columnCount = 0;
-              x = x + width + spacing;
-              y = yDrop;
-            }
-          });
-        })
-
+      explodeCells()
     }
     // deselect file selection
     setSelected(false);

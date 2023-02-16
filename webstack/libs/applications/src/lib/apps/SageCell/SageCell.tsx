@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {
   Box,
   Button,
@@ -30,12 +30,21 @@ import {
   Textarea,
 } from '@chakra-ui/react';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh, MdStop } from 'react-icons/md';
+import {
+  MdFileDownload,
+  MdAdd,
+  MdRemove,
+  MdArrowDropDown,
+  MdPlayArrow,
+  MdClearAll,
+  MdRefresh,
+  MdStop
+} from 'react-icons/md';
 
-import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
+import Editor, {Monaco, useMonaco} from '@monaco-editor/react';
 
 // UUID generation
-import { v4 as getUUID } from 'uuid';
+import {v4 as getUUID} from 'uuid';
 
 // Needed to help render the trace
 import Ansi from 'ansi-to-react';
@@ -44,12 +53,12 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 imports
-import { useAppStore, useUser, downloadFile, truncateWithEllipsis } from '@sage3/frontend';
-import { User } from '@sage3/shared/types';
+import {useAppStore, useUser, downloadFile, truncateWithEllipsis} from '@sage3/frontend';
+import {User} from '@sage3/shared/types';
 
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { App } from '../../schema';
+import {state as AppState} from './index';
+import {AppWindow} from '../../components';
+import {App} from '../../schema';
 
 const MARGIN = 2;
 
@@ -60,22 +69,30 @@ const MARGIN = 2;
  * @returns {JSX.Element}
  */
 const AppComponent = (props: App): JSX.Element => {
-  const { user } = useUser();
+  const {user} = useUser();
   const s = props.data.state as AppState;
   const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState(true);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
 
-  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
+  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+
+  // const [bgColor, setBgColor] = useState('')
+
+  // const setBg = () => {
+  //   const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+  //   const colorCode = '#' + randomColor
+  //   setBgColor(colorCode)
+  // }
 
   function getKernels() {
     if (!user) return;
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
+        params: {user_uuid: user._id},
       },
     });
   }
@@ -84,9 +101,10 @@ const AppComponent = (props: App): JSX.Element => {
   useEffect(() => {
     // update the title of the app
     if (props.data.title !== 'SageCell') {
-      update(props._id, { title: 'SageCell' });
+      update(props._id, {title: 'SageCell'});
     }
     getKernels();
+    // setBg()
   }, []);
 
   useEffect(() => {
@@ -113,7 +131,7 @@ const AppComponent = (props: App): JSX.Element => {
       if (access) {
         const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
         // update the title of the app
-        update(props._id, { title: 'Sage Cell: kernel [' + name + ']' });
+        update(props._id, {title: 'Sage Cell: kernel [' + name + ']'});
       }
     }
   }, [s.kernel, myKernels]);
@@ -124,7 +142,7 @@ const AppComponent = (props: App): JSX.Element => {
         id="sc-container"
         w={'100%'}
         h={'100%'}
-        bg={access ? bgColor : accessDeniedColor}
+        bg={access ? s.groupColor : accessDeniedColor}
         overflowY={'scroll'}
         css={{
           '&::-webkit-scrollbar': {
@@ -140,8 +158,8 @@ const AppComponent = (props: App): JSX.Element => {
         }}
         pointerEvents={access ? 'auto' : 'none'}
       >
-        <InputBox app={props} access={access} />
-        {!s.output ? null : <OutputBox output={s.output} app={props} user={user!} />}
+        <InputBox app={props} access={access}/>
+        {!s.output ? null : <OutputBox output={s.output} app={props} user={user!}/>}
       </Box>
     </AppWindow>
   );
@@ -156,7 +174,7 @@ const AppComponent = (props: App): JSX.Element => {
 function ToolbarComponent(props: App): JSX.Element {
   // Access the global app state
   const s = props.data.state as AppState;
-  const { user } = useUser();
+  const {user} = useUser();
   // Update functions from the store
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
@@ -169,7 +187,7 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
+        params: {user_uuid: user._id},
       },
     });
   }
@@ -212,9 +230,9 @@ function ToolbarComponent(props: App): JSX.Element {
       // save local state
       setSelected(e.target.value);
       // updae the app
-      updateState(props._id, { kernel: e.target.value });
+      updateState(props._id, {kernel: e.target.value});
       // update the app description
-      update(props._id, { title: `SageCell> ${e.currentTarget.selectedOptions[0].text}` });
+      update(props._id, {title: `SageCell> ${e.currentTarget.selectedOptions[0].text}`});
     }
   }
 
@@ -255,7 +273,7 @@ function ToolbarComponent(props: App): JSX.Element {
             ml={2}
             px={0}
             colorScheme="teal"
-            icon={<MdArrowDropDown />}
+            icon={<MdArrowDropDown/>}
             onChange={selectKernel}
             value={selected ?? undefined}
             variant={'outline'}
@@ -274,26 +292,28 @@ function ToolbarComponent(props: App): JSX.Element {
 
           <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
             <Button onClick={getKernels} size="xs" mx="1" colorScheme="teal">
-              <MdRefresh />
+              <MdRefresh/>
             </Button>
           </Tooltip>
 
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-              <Button isDisabled={s.fontSize <= 8} onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}>
-                <MdRemove />
+              <Button isDisabled={s.fontSize <= 8}
+                      onClick={() => updateState(props._id, {fontSize: Math.max(10, s.fontSize - 2)})}>
+                <MdRemove/>
               </Button>
             </Tooltip>
             <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-              <Button isDisabled={s.fontSize > 42} onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}>
-                <MdAdd />
+              <Button isDisabled={s.fontSize > 42}
+                      onClick={() => updateState(props._id, {fontSize: Math.min(48, s.fontSize + 2)})}>
+                <MdAdd/>
               </Button>
             </Tooltip>
           </ButtonGroup>
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
               <Button onClick={downloadPy}>
-                <MdFileDownload />
+                <MdFileDownload/>
               </Button>
             </Tooltip>
           </ButtonGroup>
@@ -303,7 +323,7 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+export default {AppComponent, ToolbarComponent};
 
 // interface Props {
 //   className?: string;
@@ -374,11 +394,11 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   // Reference to the editor
   const editor = useRef<Monaco>();
   const [code, setCode] = useState<string>(s.code);
-  const { user } = useUser();
-  const { colorMode } = useColorMode();
+  const {user} = useUser();
+  const {colorMode} = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
   const [lines, setLines] = useState(s.code.split('\n').length);
-  const [position, setPosition] = useState({ r: 1, c: 1 });
+  const [position, setPosition] = useState({r: 1, c: 1});
   // Make a toast to show errors
   const toast = useToast();
   // Handle to the Monoco API
@@ -413,7 +433,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       updateState(props.app._id, {
         code: code,
         output: '',
-        executeInfo: { executeFunc: 'execute', params: { user_uuid: getUUID() } },
+        executeInfo: {executeFunc: 'execute', params: {user_uuid: getUUID()}},
       });
     }
   };
@@ -422,7 +442,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     updateState(props.app._id, {
       code: '',
       output: '',
-      executeInfo: { executeFunc: '', params: {} },
+      executeInfo: {executeFunc: '', params: {}},
     });
     editor.current?.setValue('');
   };
@@ -437,7 +457,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const handleInterrupt = () => {
     if (!user) return;
     updateState(props.app._id, {
-      executeInfo: { executeFunc: 'interrupt', params: { user_uuid: user._id } },
+      executeInfo: {executeFunc: 'interrupt', params: {user_uuid: user._id}},
     });
   };
 
@@ -460,7 +480,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   function handleEditorDidMount(ed: Monaco) {
     editor.current = ed;
     editor.current.onDidChangeCursorPosition((ev: any) => {
-      setPosition({ r: ev.position.lineNumber, c: ev.position.column });
+      setPosition({r: ev.position.lineNumber, c: ev.position.column});
     });
   }
 
@@ -640,9 +660,9 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 variant="ghost"
                 icon={
                   s.executeInfo?.executeFunc === 'execute' ? (
-                    <Spinner size="sm" color="teal.500" />
+                    <Spinner size="sm" color="teal.500"/>
                   ) : (
-                    <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
+                    <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')}/>
                   )
                 }
               />
@@ -658,7 +678,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 disabled={user?._id !== s.kernel ? false : true}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
-                icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')}/>}
               />
             </Tooltip>
           ) : null}
@@ -672,7 +692,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 disabled={user?._id !== s.kernel ? false : true}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
-                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')}/>}
               />
             </Tooltip>
           ) : null}
@@ -743,7 +763,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
         <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
       ) : (
         <Alert status="error" variant="left-accent">
-          <AlertIcon />
+          <AlertIcon/>
           <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
         </Alert>
       )}
@@ -759,78 +779,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.display_data.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.display_data.data[key]}}/>;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`}/>;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`}/>;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.display_data.data[key]}}/>;
+                default:
+                  return MapJSONObject(parsedJSON.display_data[key]);
+              }
+            });
+          }
+          return null;
+        })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.execute_result.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.execute_result.data[key]}}/>;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`}/>;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`}/>;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{__html: parsedJSON.execute_result.data[key]}}/>;
+                default:
+                  return null;
+              }
+            });
+          }
+          return null;
+        })}
       {!s.privateMessage
         ? null
-        : s.privateMessage.map(({ userId, message }) => {
-            // find the user name that matches the userId
-            if (userId !== props.user._id) {
-              return null;
-            }
-            return (
-              <Toast
-                status="error"
-                position="bottom"
-                description={message + ', ' + props.user.data.name}
-                duration={4000}
-                isClosable
-                onClose={() => updateState(props.app._id, { privateMessage: [] })}
-                hidden={userId !== props.user._id}
-              />
-            );
-          })}
+        : s.privateMessage.map(({userId, message}) => {
+          // find the user name that matches the userId
+          if (userId !== props.user._id) {
+            return null;
+          }
+          return (
+            <Toast
+              status="error"
+              position="bottom"
+              description={message + ', ' + props.user.data.name}
+              duration={4000}
+              isClosable
+              onClose={() => updateState(props.app._id, {privateMessage: []})}
+              hidden={userId !== props.user._id}
+            />
+          );
+        })}
     </Box>
   );
 };
@@ -856,30 +876,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
+          if (typeof obj[key] === 'object') {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
                 </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
+                <Box as="span" ml={2}>
+                  {MapJSONObject(obj[key])}
                 </Box>
-              );
-            }
-          })
+              </Box>
+            );
+          } else {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
+                </Box>
+                <Box as="span" ml={2}>
+                  {obj[key]}
+                </Box>
+              </Box>
+            );
+          }
+        })
         : null}
     </Box>
   );
