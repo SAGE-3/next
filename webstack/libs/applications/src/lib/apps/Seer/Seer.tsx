@@ -151,6 +151,7 @@ function AppComponent(props: App): JSX.Element {
       >
         <Stack m={SPACE} mb={SPACE / 2}>
           <Box // generation section container
+            className="sagecell sagecell-light:hover"
             style={{
               height: '100%',
               backgroundColor: useColorModeValue('#FFFFFE', '#111111'),
@@ -247,11 +248,11 @@ function AppComponent(props: App): JSX.Element {
             style={{
               backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
               minHeight: '150px',
-              padding: '10px',
               border: '2px solid',
               borderColor: '#008080',
               borderRadius: 'md',
               overflow: 'auto',
+              resize: 'vertical',
             }}
           >
             {!s.output ? <></> : <OutputBox output={s.output} app={props} />}
@@ -459,56 +460,59 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
   if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
   return (
     <>
-      {executionCount > 0 ? (
-        <Text
-          fontSize="sm"
-          color="gray.500"
-          style={{
-            fontFamily: 'monospace',
-          }}
-        >
-          {`Out [${executionCount}]`}
-        </Text>
-      ) : null}
-      {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
-        <>
-          <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
-          <Ansi>{parsedJSON.error.traceback.join('\n')}</Ansi>
-        </>
-      ) : (
-        <Alert status="error" variant="left-accent">
-          <AlertIcon />
-          <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
-        </Alert>
-      )}
+      <div
+        style={{
+          padding: '0.5em',
+          boxShadow: 'inset 0 0 6px 2px rgb(0 0 0 / 30%)',
+          resize: 'vertical',
+        }}
+      >
+        {executionCount > 0 ? (
+          <Text fontSize={s.fontSize} color="red.500">
+            {`[${executionCount}]: `}
+          </Text>
+        ) : null}
+        {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
+          <>
+            <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
+            <Ansi>{parsedJSON.error.traceback.join('\n')}</Ansi>
+          </>
+        ) : (
+          <Alert status="error" variant="left-accent">
+            <AlertIcon />
+            <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
+          </Alert>
+        )}
 
-      {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
-        <Text>{parsedJSON.stream.text}</Text>
-      ) : (
-        <Text color="red">{parsedJSON.stream.text}</Text>
-      )}
+        {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
+          <Text>{parsedJSON.stream.text}</Text>
+        ) : (
+          <Text color="red">{parsedJSON.stream.text}</Text>
+        )}
 
-      {!data
-        ? null
-        : Object.keys(data).map((key, i) => {
-            if (key === 'metadata') {
-              // console.log('metadata', data[key]);
-            }
-            switch (key) {
-              case 'text/plain':
-                return <Text key={i}>{data[key]}</Text>;
-              case 'text/html':
-                data['text/plain'] && null;
-                const html = data[key].replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-                return <div key={i} dangerouslySetInnerHTML={{ __html: html }} />;
-              case 'image/png':
-                return <Image key={i} src={`data:image/png;base64,${data[key]}`} />;
-              case 'image/svg+xml':
-                return <Image key={i} src={`data:image/svg+xml;base64,${data[key]}`} />;
-              default:
-                return <MapJSONObject key={i} data={data[key]} />;
-            }
-          })}
+        {!data
+          ? null
+          : Object.keys(data).map((key, i) => {
+              if (key === 'metadata') {
+                // console.log('metadata', data[key]);
+              }
+              switch (key) {
+                case 'text/plain':
+                  // console.log('text/plain', data[key]);
+                  if (data['text/html']) return null;
+                  return <Text key={i}>{data[key]}</Text>;
+                case 'text/html':
+                  const html = data[key].replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${data[key]}`} />;
+                case 'image/svg+xml':
+                  return <Image key={i} src={`data:image/svg+xml;base64,${data[key]}`} />;
+                default:
+                  return <MapJSONObject key={i} data={data[key]} />;
+              }
+            })}
+      </div>
     </>
   );
 };

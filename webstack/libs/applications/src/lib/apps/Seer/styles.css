@@ -7,3 +7,25 @@
  */
 
 /* CSS definitions for the app Seer */
+
+blockquote {
+  border-left: 0.5em #eee solid;
+}
+
+.sagecell .sagecell-light:hover {
+  background-color: rgba(66, 165, 245, 0.75) !important;
+}
+
+.sagecell .sagecell-light-selected {
+  width: 8px;
+  margin-top: 0;
+  margin-right: 5px;
+  margin-bottom: 0;
+  margin-left: 0;
+  border-radius: 2px;
+  background-color: rgba(66, 165, 245, 1);
+}
+
+.sagecell .sagecell-light-selected:hover {
+  background-color: darken(rgba(66, 165, 245, 1), 20%);
+}
