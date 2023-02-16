@@ -35,6 +35,8 @@ import {
 import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 'react-icons/md';
 import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
+import { format } from 'date-fns';
+
 interface PluginUploadModalProps {
   isOpen: boolean;
   onOpen: () => void;
@@ -114,16 +116,12 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
 
   // Handle the description change from the form
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value.length <= 40) {
-      setDescription(e.target.value);
-    }
+    setDescription(e.target.value);
   };
 
   // Handle the name change from the form
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value.length <= 20) {
-      setName(sanitizeFilename(e.target.value));
-    }
+    setName(sanitizeFilename(e.target.value));
   };
 
   // Handle the delete button
@@ -166,10 +164,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                   // create a button for each application
                   .map((plugin) => {
                     const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
-                    const date = `${new Date(Number(plugin.data.dateCreated)).toLocaleDateString()} ${new Date().toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}`;
+                    const date = format(new Date(Number(plugin.data.dateCreated)), 'MM/dd/yyyy hh:mm');
                     return (
                       <Card
                         key={plugin._id}
@@ -241,6 +236,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                   type="text"
                   value={name}
                   autoComplete="off"
+                  maxLength={20}
+                  pattern="[A-Za-z0-9]+"
                   onChange={handleNameChange}
                 />
               </InputGroup>
@@ -255,6 +252,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                   id="description"
                   type="text"
                   value={description}
+                  maxLength={40}
                   autoComplete="off"
                   onChange={handleDescriptionChange}
                 />

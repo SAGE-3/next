@@ -18,22 +18,13 @@
   "redis": {
     "url": "redis://localhost:6379"
   },
-
-  // Active SAGE3 servers accessible at login page
-  "servers": [
-    {
-      "name": "Chicago",
-      "url": "https://sage3.app"
-    },
-    {
-      "name": "Hawaii",
-      "url": "https://manoa.sage3.app"
-    },
-    {
-      "name": "Development",
-      "url": "https://mini.sage3.app"
-    }
-  ],
+  
+  // Twilio service
+  "twilio": {
+    "accountSid": "",
+    "apiKey": "",
+    "apiSecret": ""
+  },
 
   // How to enable/disable some features for safety
   "features": {
@@ -82,11 +73,7 @@
     "certificateFile": "_.evl.uic.edu.crt",
     "certificateKeyFile": "_.evl.uic.edu.key"
   },
-  "twilio": {
-    "accountSid": "",
-    "apiKey": "",
-    "apiSecret": ""
-  },
+
   // Namespace for signing uuid v5 keys
   "namespace": "150e32f0-62b8-11ed-974d-1b79350be347"
 }

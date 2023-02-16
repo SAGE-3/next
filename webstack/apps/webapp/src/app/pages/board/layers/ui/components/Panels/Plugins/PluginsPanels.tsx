@@ -8,6 +8,7 @@
 
 import { useColorModeValue, VStack, Tooltip, Box, Badge, Text } from '@chakra-ui/react';
 import { useAppStore, usePluginStore, useUIStore, useUser } from '@sage3/frontend';
+import { format } from 'date-fns';
 import { ButtonPanel, Panel } from '../Panel';
 
 export interface PluginProps {
@@ -84,10 +85,8 @@ export function PluginsPanel(props: PluginProps) {
           // create a button for each application
           .map((plugin) => {
             const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
-            const date = `${new Date(Number(plugin.data.dateCreated)).toLocaleDateString()} ${new Date().toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}`;
+            const date = format(new Date(Number(plugin.data.dateCreated)), 'MM/dd/yyyy hh:mm');
+
             return (
               <Tooltip
                 key={plugin._id}
