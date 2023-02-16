@@ -11,6 +11,7 @@ import {
   Alert,
   AlertIcon,
   AspectRatio,
+  Avatar,
   Badge,
   Box,
   Button,
@@ -22,6 +23,9 @@ import {
   Select,
   Spinner,
   Stack,
+  Tag,
+  TagCloseButton,
+  TagLabel,
   Text,
   Textarea,
   Tooltip,
@@ -47,6 +51,7 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 import Editor, { DiffEditor, loader, Monaco, useMonaco } from '@monaco-editor/react';
+import { User } from '@sage3/shared/types';
 
 /* App component for Seer */
 
@@ -59,6 +64,10 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
+  const defaultPlaceHolderValue = 'Tell me what you want to do...';
+  const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
+  // const [activeUser, setActiveUser] = useState<User>();
+  // const [activeUserList, setActiveUserList] = useState<User[]>([]);
   const SPACE = 2;
 
   // Set the initial size of the window
@@ -66,20 +75,20 @@ function AppComponent(props: App): JSX.Element {
     update(props._id, {
       size: {
         width: 1000,
-        height: 485,
+        height: 525,
         depth: 1,
       },
     });
   }, []);
 
-  const updatePrompt = (e: any) => {
-    updateState(props._id, {
-      prompt: e.target.value,
-    });
+  const handleUpdatePrompt = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPrompt(e.target.value);
   };
 
   useEffect(() => {
-    setPrompt(s.prompt);
+    if (s.prompt !== prompt) {
+      setPrompt(s.prompt);
+    }
   }, [s.prompt]);
 
   // Update the state when the kernel changes
@@ -104,6 +113,7 @@ function AppComponent(props: App): JSX.Element {
     if (prompt) {
       updateState(props._id, {
         prompt: prompt,
+        code: '',
         output: '',
         executeInfo: { executeFunc: 'generate', params: { _uuid: getUUID() } },
       });
@@ -150,8 +160,33 @@ function AppComponent(props: App): JSX.Element {
         }}
       >
         <Stack m={SPACE} mb={SPACE / 2}>
+          <Stack direction="row" mb={-2} mt={-1}>
+            <Badge
+              variant="outline"
+              colorScheme="green"
+              onMouseOver={() => setPlaceHolderValue('Load the file named "test.csv"')}
+              onMouseLeave={() => setPlaceHolderValue(defaultPlaceHolderValue)}
+            >
+              Load a file
+            </Badge>
+            <Badge
+              variant="outline"
+              colorScheme="green"
+              onMouseOver={() => setPlaceHolderValue('Select the first 10 rows of the dataframe named "working_df"')}
+              onMouseLeave={() => setPlaceHolderValue(defaultPlaceHolderValue)}
+            >
+              Query a dataframe
+            </Badge>
+            <Badge
+              variant="outline"
+              colorScheme="green"
+              onMouseOver={() => setPlaceHolderValue('Show me a histogram based on the column "age"')}
+              onMouseLeave={() => setPlaceHolderValue(defaultPlaceHolderValue)}
+            >
+              Create a visualization
+            </Badge>
+          </Stack>
           <Box // generation section container
-            className="sagecell sagecell-light:hover"
             style={{
               height: '100%',
               backgroundColor: useColorModeValue('#FFFFFE', '#111111'),
@@ -168,9 +203,10 @@ function AppComponent(props: App): JSX.Element {
                     handleGenerate(s.kernel);
                   }
                 }}
-                value={s.prompt}
-                onChange={updatePrompt}
-                placeholder="Enter prompt..."
+                value={prompt}
+                // value={user === activeUser || activeUser === undefined ? prompt : `[Locked by ${activeUser?.data.name}]` + s.prompt}
+                onChange={handleUpdatePrompt}
+                placeholder={placeHolderValue}
                 _placeholder={{
                   color: useColorModeValue('gray.900', 'gray.100'),
                 }}
@@ -231,6 +267,11 @@ function AppComponent(props: App): JSX.Element {
               </ButtonGroup>
             </HStack>
           </Box>
+          <Stack direction="row">
+            <Badge variant="outline" colorScheme="facebook" mb={-2} mt={-1}>
+              Edit and Execute Code (Shift + Enter)
+            </Badge>
+          </Stack>
           <Box // input section container
             style={{
               height: '100%',
@@ -239,20 +280,25 @@ function AppComponent(props: App): JSX.Element {
               minHeight: '150px',
               border: '2px solid',
               borderColor: '#008080',
-              borderRadius: 'md',
+              marginBottom: '-4px',
             }}
           >
             <HStack mr={SPACE}>{<InputBox app={props} access={true} />}</HStack>
           </Box>
+          <Stack direction="row">
+            <Badge variant="outline" colorScheme="red" mb={-2}>
+              Output Box
+            </Badge>
+          </Stack>
+          {/* </Box> */}
           <Box // output section container
             style={{
               backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
-              minHeight: '150px',
+              // minHeight: '150px',
               border: '2px solid',
               borderColor: '#008080',
-              borderRadius: 'md',
-              overflow: 'auto',
-              resize: 'vertical',
+              // overflow: 'auto',
+              // resize: 'vertical',
             }}
           >
             {!s.output ? <></> : <OutputBox output={s.output} app={props} />}
@@ -349,14 +395,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     });
   };
 
-  // Update from Monaco Editor
-  function updateCode(value: string | undefined) {
-    if (value) {
-      // Store the code in the state
-      setCode(value);
-    }
-  }
-
   useEffect(() => {
     // update local state from global state
     setFontSize(s.fontSize);
@@ -379,12 +417,16 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
         options={{
           fontSize: fontSize,
-          minimap: { enabled: false },
-          lineNumbersMinChars: 4,
+          minimap: { enabled: true },
+          lineNumbers: 'off',
           automaticLayout: true,
           quickSuggestions: false,
+          scrollBeyondLastLine: false,
+          lineDecorationsWidth: 0,
+          lineNumbersMinChars: 0,
+          glyphMargin: false,
         }}
-        onChange={updateCode}
+        onChange={() => setCode(editor.current?.getValue() || '')}
         onMount={handleEditorDidMount}
       />
       <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
@@ -493,16 +535,12 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
         {!data
           ? null
           : Object.keys(data).map((key, i) => {
-              if (key === 'metadata') {
-                // console.log('metadata', data[key]);
-              }
               switch (key) {
                 case 'text/plain':
-                  // console.log('text/plain', data[key]);
-                  if (data['text/html']) return null;
+                  if (data['text/html']) return <></>;
                   return <Text key={i}>{data[key]}</Text>;
                 case 'text/html':
-                  const html = data[key].replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                  const html = data[key].replace('\n', '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
                   return <div key={i} dangerouslySetInnerHTML={{ __html: html }} />;
                 case 'image/png':
                   return <Image key={i} src={`data:image/png;base64,${data[key]}`} />;
