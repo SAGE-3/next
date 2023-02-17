@@ -91,6 +91,7 @@ export function KernelsPanel(props: KernelsProps) {
   useEffect(() => {
     if (!board) return;
     const data = board.data;
+
     // @ts-ignore
     if (data.online && !s.online) {
       update((prev) => ({ ...prev, online: true }));
@@ -257,16 +258,12 @@ export function KernelsPanel(props: KernelsProps) {
       <Panel title={'Kernels'} name="kernels" width={750} showClose={true}>
         <Box alignItems="center" pb="1" width="100%" display="flex">
           <VStack w={750} h={'100%'}>
+
             {/* Header */}
             <VStack
               w={'100%'}
               background={headerBackground}
-              pt="2"
-              pb="2"
-              height="45px"
-              // position="absolute"
-              // left="0"
-              // top="0"
+              pt="1" pb="1"
               zIndex={1}
               overflow="hidden"
               borderRadius="8px 8px 0 0"
@@ -295,12 +292,7 @@ export function KernelsPanel(props: KernelsProps) {
             <VStack
               w={'100%'}
               background={tableBackground}
-              // position="absolute"
-              // left="0"
-              // top="32px"
-              pt="0"
-              height={`calc(100% - 40px)`}
-              // borderRadius="0 0 8px 8px"
+              m={0} p={0}
               overflowY={'auto'}
               maxHeight={150}
               css={{
@@ -320,28 +312,26 @@ export function KernelsPanel(props: KernelsProps) {
                 },
               }}
             >
-
               {
                 // If there are kernels, display them
                 myKernels?.map((kernel, idx) => (
-                  <Box key={kernel.key} w="100%">
+                  <Box key={kernel.key} w="100%" height="fit-content">
 
-                    <Flex w="100%" fontFamily="mono" alignItems="center" justifyContent="center" userSelect={'none'} key={kernel.key + idx}>
+                    <Flex w="100%" fontFamily="mono" alignItems={"center"} userSelect={'none'} key={kernel.key + idx}>
                       {/* Status Icon */}
                       <Box justifyContent="center" display="flex" flexGrow={0.6} flexBasis={0}>
                         {kernel.value.is_private ? (
-                          <Icon as={MdLock} fontSize="24px" color={'red.500'} />
+                          <Icon as={MdLock} fontSize="20px" color={'red.500'} />
                         ) : (
-                          <Icon as={MdLockOpen} fontSize="24px" color="green.500" />
+                          <Icon as={MdLockOpen} fontSize="20px" color="green.500" />
                         )}
                       </Box>
                       {/* Kernel alias */}
                       <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0}>
-                        <Text
-                          onClick={() => {
-                            navigator.clipboard.writeText(kernel.value.kernel_alias);
-                          }}
-                          fontSize="md"
+                        <Text onClick={() => {
+                          navigator.clipboard.writeText(kernel.value.kernel_alias);
+                        }}
+                          fontSize="sm"
                         >
                           {kernel.value.kernel_alias}
                         </Text>
@@ -352,7 +342,7 @@ export function KernelsPanel(props: KernelsProps) {
                           onClick={() => {
                             navigator.clipboard.writeText(kernel.key);
                           }}
-                          ml={2}
+                          fontSize="sm"
                         >
                           <Tooltip label={kernel.key} placement="top" fontSize="xs" hasArrow>
                             {truncateWithEllipsis(kernel.key, 15)}
@@ -361,7 +351,7 @@ export function KernelsPanel(props: KernelsProps) {
                       </Box>
                       {/* Kernel Type */}
                       <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0}>
-                        <Text>
+                        <Text fontSize="sm">
                           {
                             // show R for ir, Python for python3, etc.}
                             kernel.value.kernel_name === 'ir'
@@ -380,35 +370,36 @@ export function KernelsPanel(props: KernelsProps) {
                           <Tooltip label={'Open a SageCell'} placement="top" fontSize="md" hasArrow>
                             <IconButton
                               variant="ghost"
-                              size="md"
+                              size="sm"
                               onClick={() => {
                                 startSageCell(kernel.key, kernel.value.kernel_alias);
                               }}
                               aria-label="Open a SageCell"
-                              icon={<MdCode color={teal} size="24px" />}
+                              icon={<MdCode color={teal} size="22px" />}
                             />
                           </Tooltip>
-                          <Tooltip label={'Restart Kernel'} placement="top" fontSize="md" hasArrow>
+                          <Tooltip label={'Restart Kernel'} placement="top" fontSize="sm" hasArrow>
                             <IconButton
-                              mx={2} // this provides spacing between the buttons
+                              mx={5} // this provides spacing between the buttons
                               variant="ghost"
-                              size="md"
+                              size="sm"
                               onClick={() => {
                                 restartKernel(kernel.key);
                               }}
                               aria-label="Restart Kernel"
-                              icon={<MdRestartAlt color={teal} size="24px" />}
+                              icon={<MdRestartAlt color={teal} size="20px" />}
                             />
                           </Tooltip>
-                          <Tooltip label="Delete kernel" aria-label="Delete kernel" placement="top" fontSize="md" hasArrow>
+                          <Tooltip label="Delete kernel" aria-label="Delete kernel" placement="top" fontSize="sm" hasArrow>
                             <IconButton
+                              m={0}
                               variant="ghost"
-                              size="md"
+                              size="sm"
                               aria-label="Delete Kernel"
                               onClick={() => {
                                 removeKernel(kernel.key);
                               }}
-                              icon={<MdDelete color={red} size="24px" />}
+                              icon={<MdDelete color={red} size="20px" />}
                             />
                           </Tooltip>
                         </Flex>
@@ -425,7 +416,7 @@ export function KernelsPanel(props: KernelsProps) {
                 height="20px"
                 position="absolute"
                 right="4"
-                top="10"
+                top="8"
                 borderRadius="100%"
                 zIndex={5}
                 backgroundColor={s.online ? green : red}
