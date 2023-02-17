@@ -51,7 +51,7 @@
   // Auth Configuration
   "auth": {
     // Secret HASH for the sessions. Change this to something unique.
-    "sessionSecret": "SUPERSECRET!!$$",
+    "sessionSecret": "SUPERSECRETaa!!$$",
     // Max age for a session per user. In milliseconds. 7 days
     "sessionMaxAge": 604800000,
     // Which login strategies to enable for the server. Available: guest, jwt, google, cilogon

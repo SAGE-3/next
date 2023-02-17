@@ -39,7 +39,6 @@ services:
       - SAGE3_SERVER=${HOST}
       - FUNCX_SDK_CLIENT_ID=${FUNCX_SDK_CLIENT_ID}
       - FUNCX_SDK_CLIENT_SECRET=${FUNCX_SDK_CLIENT_SECRET}
-      - ROOM_NAME=${ROOM_NAME}
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
