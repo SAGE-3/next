@@ -44,8 +44,11 @@ export function NavigationPanel(props: NavProps) {
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+
+  // user's viewport
   const usersPresence = presences.find((el) => el.data.userId === user?._id);
-  const userViewportBackgroundColor = useColorModeValue('#00000022', '#ffffff77');
+  const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');
+  const userViewportBackgroundColor = useColorModeValue('#00000022', '#ffffff44');
 
   // Clear board modal
   const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
@@ -216,7 +219,7 @@ export function NavigationPanel(props: NavProps) {
                   _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
                   borderWidth="2px"
                   borderStyle="solid"
-                  borderColor={'red.300'}
+                  borderColor={viewportBorderColor}
                   borderRadius="sm"
                   pointerEvents={'none'}
                 ></Box>
