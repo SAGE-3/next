@@ -123,9 +123,9 @@ export function RoomList(props: RoomListProps) {
   }
 
   return (
-    <Box textAlign="center" display="flex" flexDir="column" height="100%" width="100%" borderBottom="solid 1px" borderColor={borderColor}>
+    <Box textAlign="center" display="flex" flexDir="column" height="100%" width="100%">
       <EnterBoardByIdModal isOpen={isOpenEnterBoard} onOpen={onOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardByIdModal>
-      <Box textAlign="center" display="flex" flexDir="column" alignItems="center" width="100%" borderColor={borderColor}>
+      <Box textAlign="center" display="flex" flexDir="column" alignItems="center" width="100%">
         <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'3xl'}>
           <Text>Rooms</Text>
         </Box>
@@ -173,7 +173,6 @@ export function RoomList(props: RoomListProps) {
         overflowY="scroll"
         overflowX="hidden"
         pr="2"
-        borderColor={borderColor}
         mt="6"
         height="100%"
         css={{
