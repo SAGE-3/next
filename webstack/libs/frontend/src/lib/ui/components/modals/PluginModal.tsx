@@ -166,7 +166,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
 
   return (
     <>
-      <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
+      <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}
+        blockScrollOnMount={false} size="xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Plugins</ModalHeader>
@@ -247,7 +248,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
               </Box>
             ) : (
               <FormControl isRequired>
-                <FormHelperText mb="2">Select Zip file containing a Plugin</FormHelperText>
+                <FormHelperText mb="2">Select Zip file containing a plugin</FormHelperText>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
 
@@ -263,7 +264,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                   <br />
                 </InputGroup>
 
-                <FormHelperText mb="2">Plugin Name (Only letters and numbers. Max 20 characters.)</FormHelperText>
+                <FormHelperText mb="2">Plugin Name (only letters and numbers, maximum 20 characters)</FormHelperText>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none" children={<Icon as={MdOutlineDriveFileRenameOutline} />} />
 
@@ -273,6 +274,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                     id="name"
                     type="text"
                     value={name}
+                    placeholder="name"
+                    _placeholder={{ opacity: 0.5, color: 'gray.300' }}
                     autoComplete="off"
                     maxLength={20}
                     pattern="[A-Za-z0-9]+"
@@ -280,7 +283,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                   />
                 </InputGroup>
 
-                <FormHelperText mb="2">Plugin Description (Max 40 characters.)</FormHelperText>
+                <FormHelperText mb="2">Plugin Description (maximum 40 characters)</FormHelperText>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} />} />
 
@@ -290,6 +293,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                     id="description"
                     type="text"
                     value={description}
+                    placeholder="description"
+                    _placeholder={{ opacity: 0.5, color: 'gray.300' }}
                     maxLength={40}
                     autoComplete="off"
                     onChange={handleDescriptionChange}
