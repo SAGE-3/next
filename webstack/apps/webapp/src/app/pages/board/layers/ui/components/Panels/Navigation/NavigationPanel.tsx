@@ -44,6 +44,8 @@ export function NavigationPanel(props: NavProps) {
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+  const usersPresence = presences.find((el) => el.data.userId === user?._id);
+  const userViewportBackgroundColor = useColorModeValue('#00000022', '#ffffff77');
 
   // Clear board modal
   const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
@@ -201,6 +203,24 @@ export function NavigationPanel(props: NavProps) {
                     <NavMapCursor key={presence._id} presence={presence} user={u} mapScale={mapScale} boardShift={{ x: appsX, y: appsY }} />
                   );
                 })}
+              {/* View of the User's Viewport */}
+              {usersPresence && (
+                <Box
+                  backgroundColor={userViewportBackgroundColor}
+                  position="absolute"
+                  left={(usersPresence.data.viewport.position.x - appsX) * mapScale + 'px'}
+                  top={(usersPresence.data.viewport.position.y - appsY) * mapScale + 'px'}
+                  width={usersPresence.data.viewport.size.width * mapScale + 'px'}
+                  height={usersPresence.data.viewport.size.height * mapScale + 'px'}
+                  transition={'all .5s'}
+                  _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+                  borderWidth="2px"
+                  borderStyle="solid"
+                  borderColor={'red.300'}
+                  borderRadius="sm"
+                  pointerEvents={'none'}
+                ></Box>
+              )}
             </Box>
           </Box>
 
