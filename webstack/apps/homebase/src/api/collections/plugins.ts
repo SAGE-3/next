@@ -16,6 +16,7 @@ import * as path from 'path';
 // import { v4 as getUUID } from 'uuid';
 
 import * as jszip from 'jszip';
+import { isZip } from '@sage3/shared';
 
 // Plugin Paths
 const pluginPath = path.join('dist', 'apps', 'homebase', 'plugins');
@@ -47,7 +48,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       }
 
       // Check for file type
-      if (file.mimetype != 'application/zip') {
+      if (!isZip(file.mimetype)) {
         res.status(400).send({ success: false, message: 'Invalid file type. Only Zip Files.' });
         return;
       }

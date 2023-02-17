@@ -37,7 +37,7 @@ import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 're
 import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
 import { format } from 'date-fns';
-import { getMime } from '@sage3/shared';
+import { getMime, isZip } from '@sage3/shared';
 
 interface PluginUploadModalProps {
   isOpen: boolean;
@@ -97,8 +97,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
     // Check for required fields
     if (input[0] && user && name && description) {
       // Check file extension is a ZIP file
-      const type = getMime(input[0].name);
-      if (type !== 'application/zip') {
+      if (!isZip(input[0].type)) {
         toast({
           title: 'Plugin Upload',
           description: 'Invalid file type. (Required: Zip File)',
