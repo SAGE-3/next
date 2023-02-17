@@ -6,17 +6,19 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import {HStack, useToast} from '@chakra-ui/react';
+import { HStack, useToast } from '@chakra-ui/react';
 
-import {MdApps, MdArrowBack, MdFolder, MdGroups, MdMap} from 'react-icons/md';
-import {BiPencil} from 'react-icons/bi';
+import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
+import { BiPencil } from 'react-icons/bi';
 
-import {PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav} from '@sage3/frontend';
-import {IconButtonPanel, Panel} from '../Panel';
+import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav } from '@sage3/frontend';
+import { IconButtonPanel, Panel } from '../Panel';
+import { HiPuzzle } from 'react-icons/hi';
 
 export interface ControllerProps {
   roomId: string;
   boardId: string;
+  plugins: boolean;
 }
 
 export function Controller(props: ControllerProps) {
@@ -25,13 +27,14 @@ export function Controller(props: ControllerProps) {
   const room = rooms.find((el) => el._id === props.roomId);
 
   // Panel Store
-  const { updatePanel, getPanel, bringPanelForward} = usePanelStore((state) => state);
+  const { updatePanel, getPanel, bringPanelForward } = usePanelStore((state) => state);
 
   const annotations = getPanel('annotations');
   const applications = getPanel('applications');
   const assets = getPanel('assets');
   const navigation = getPanel('navigation');
   const users = getPanel('users');
+  const plugins = getPanel('plugins');
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome } = useRouteNav();
@@ -59,18 +62,16 @@ export function Controller(props: ControllerProps) {
     if (panel.stuck === StuckTypes.None) {
       const controller = getPanel('controller');
       if (controller) {
-        position = {...controller.position};
+        position = { ...controller.position };
         position.y = position.y + 85;
       }
     }
-    (position) ? updatePanel(panel.name, { show: !panel.show, position }) : updatePanel(panel.name, { show: !panel.show});
-    bringPanelForward(panel.name)
+    position ? updatePanel(panel.name, { show: !panel.show, position }) : updatePanel(panel.name, { show: !panel.show });
+    bringPanelForward(panel.name);
   };
 
   return (
-    <Panel name="controller" title={'Main Menu'} width={400}
-      showClose={false} titleDblClick={handleCopyId}
-    >
+    <Panel name="controller" title={'Main Menu'} width={400} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
         <IconButtonPanel icon={<MdArrowBack />} description={`Back to ${room?.data.name}`} isActive={false} onClick={handleHomeClick} />
 
@@ -81,6 +82,15 @@ export function Controller(props: ControllerProps) {
           isActive={applications?.show}
           onClick={() => handleShowPanel(applications)}
         />
+        {props.plugins && (
+          <IconButtonPanel
+            icon={<HiPuzzle size="32px" />}
+            description="Plugins"
+            isActive={plugins?.show}
+            onClick={() => handleShowPanel(plugins)}
+          />
+        )}
+
         <IconButtonPanel icon={<MdFolder />} description="Assets" isActive={assets?.show} onClick={() => handleShowPanel(assets)} />
         <IconButtonPanel
           icon={<MdMap />}

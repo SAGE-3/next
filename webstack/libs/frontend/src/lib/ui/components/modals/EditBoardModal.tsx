@@ -26,10 +26,9 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { Board, BoardSchema } from '@sage3/shared/types';
+import { Board, BoardSchema, OpenConfiguration } from '@sage3/shared/types';
 import { useBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { useData } from 'libs/frontend/src/lib/hooks';
 import { ColorPicker } from '../general';
 
@@ -42,7 +41,7 @@ interface EditBoardModalProps {
 
 export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   const [name, setName] = useState<BoardSchema['name']>(props.board.data.name);
   const [description, setEmail] = useState<BoardSchema['description']>(props.board.data.description);

@@ -120,7 +120,8 @@ export function isText(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isZip(mimeType: string): boolean {
-  return mimeType === 'application/zip';
+  const formats = ['application/zip', 'application/zip-compressed', 'application/x-zip-compressed', 'application/x-compressed'];
+  return formats.includes(mimeType);
 }
 /**
  * Test if a given mime type is a JSON file
