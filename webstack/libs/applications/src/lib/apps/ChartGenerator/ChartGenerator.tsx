@@ -227,6 +227,7 @@ function AppComponent(props: App): JSX.Element {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
+          setMinimumYValue(minYValue);
         }
 
         setAttributeNames(attributeProps);
