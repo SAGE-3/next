@@ -37,6 +37,7 @@ import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 're
 import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
 import { format } from 'date-fns';
+import { getMime } from '@sage3/shared';
 
 interface PluginUploadModalProps {
   isOpen: boolean;
@@ -85,12 +86,19 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   // Delete Confirmation  Modal
   const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
+  const resetInputFields = () => {
+    setName('');
+    setDescription('');
+    setInput([]);
+  };
+
   // Perform the actual upload
   const handleUpload = async () => {
     // Check for required fields
     if (input[0] && user && name && description) {
       // Check file extension is a ZIP file
-      if (input[0].type !== 'application/zip') {
+      const type = getMime(input[0].name);
+      if (type !== 'application/zip') {
         toast({
           title: 'Plugin Upload',
           description: 'Invalid file type. (Required: Zip File)',
@@ -98,6 +106,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
           duration: 3000,
           isClosable: true,
         });
+        resetInputFields();
         return;
       }
       // Set uploading to true, shows spinner
@@ -117,10 +126,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
         toast({ title: 'Plugin Upload', description: response.message, status: 'warning', duration: 3000, isClosable: true });
       }
       // Show spinner for just a little longer so it doesnt look like UI is flashing.
-      setTimeout(() => setUploading(false), 1000);
-      setName('');
-      setDescription('');
-      setInput([]);
+      setTimeout(() => setUploading(false), 500);
+      resetInputFields();
     } else {
       toast({
         title: 'Plugin Upload',
