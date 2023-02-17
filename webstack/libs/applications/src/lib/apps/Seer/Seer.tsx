@@ -16,22 +16,30 @@ import {
   Box,
   Button,
   ButtonGroup,
-  Divider,
   HStack,
   IconButton,
   Image,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
   Select,
+  Spacer,
   Spinner,
   Stack,
-  Tag,
-  TagCloseButton,
-  TagLabel,
   Text,
   Textarea,
   Tooltip,
   useColorMode,
   useColorModeValue,
   useToast,
+  useDisclosure,
+  Kbd,
+  Flex,
+  Container,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -40,7 +48,7 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styles.css';
-import { MdAdd, MdArrowDropDown, MdClearAll, MdFileDownload, MdPlayArrow, MdRefresh, MdRemove, MdStop } from 'react-icons/md';
+import { MdAdd, MdArrowDropDown, MdClearAll, MdFileDownload, MdHelp, MdPlayArrow, MdRefresh, MdRemove, MdStop } from 'react-icons/md';
 import { useEffect, useRef, useState } from 'react';
 
 // import AceEditor from "react-ace";
@@ -53,8 +61,93 @@ import dateFormat from 'date-fns/format';
 import Editor, { DiffEditor, loader, Monaco, useMonaco } from '@monaco-editor/react';
 import { User } from '@sage3/shared/types';
 
-/* App component for Seer */
+import imgSource from './seer_icon.png';
+import docsImageSource from './sage3-docs-how-to-use.png';
 
+type HelpProps = {
+  onClose: () => void;
+  isOpen: boolean;
+};
+
+export function HelpModal(props: HelpProps) {
+  return (
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="xl">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>
+          <Stack direction="row">
+            <Image boxSize={'32px'} src={imgSource} alt="SAGE3 Help" />
+            <Text>SAGE3 Seer Help</Text>
+          </Stack>
+        </ModalHeader>
+        <ModalBody>
+          <Box mb={4}>
+            <Text fontSize="lg">
+              Welcome to <b>Seer</b> - a powerful tool for generating code that currently focuses on working with Pandas dataframes.
+            </Text>
+            <Text fontSize="md" mt={2}>
+              Whether you're a seasoned programmer or have little to no experience, Seer is designed to be flexible and extensible, allowing
+              you to start wrangling and analyzing data right away.
+            </Text>
+          </Box>
+          <Box mb={4}>
+            <Text fontSize="md">
+              To generate code, simply enter a natural language prompt in the first input box, and then press <Kbd>Shift</Kbd> +{' '}
+              <Kbd>Enter</Kbd> or the play button to begin the process.
+            </Text>
+            <Text fontSize="md" mt={2}>
+              The generated code will appear in the second input box, which is a code editor. You can edit the code to fit your needs, and
+              then run it again using the play button or <Kbd>Shift</Kbd> + <Kbd>Enter</Kbd>. If you change your mind or want to stop the
+              process, simply press the stop button.
+            </Text>
+          </Box>
+          <Box mb={4}>
+            <Text fontSize="md">Use the button group below the input boxes to execute, stop, or clear the code editor:</Text>
+            <ButtonGroup isAttached variant="outline" size="lg">
+              <Tooltip hasArrow label="Execute" placement="right-start">
+                <IconButton aria-label={''} icon={<MdPlayArrow size={'1.5em'} color="#008080" />} />
+              </Tooltip>
+              <Tooltip hasArrow label="Stop" placement="right-start">
+                <IconButton aria-label={''} icon={<MdStop size={'1.5em'} color="#008080" />} />
+              </Tooltip>
+              <Tooltip hasArrow label="Clear All" placement="right-start">
+                <IconButton aria-label={''} icon={<MdClearAll size={'1.5em'} color="#008080" />} />
+              </Tooltip>
+            </ButtonGroup>
+          </Box>
+          <Box>
+            <Text fontSize="md">
+              The output of the code will be displayed in the third box. Use the toolbar at the bottom of the page to select from one of the
+              available kernels to get started!
+            </Text>
+          </Box>
+          <Box mt={4}>
+            <Text fontSize="md">
+              If you have any questions, comments, or suggestions, please contact the SAGE3 team or scan the following QR code to visit the
+              SAGE3 docs.
+            </Text>
+          </Box>
+          <Box mt={4}>
+            {/* <Text fontSize="md">SAGE3 Team</Text>
+            <Text fontSize="md">University of Hawaii</Text>
+            <Text fontSize="md">University of Illinois Chicago</Text>
+            <Text fontSize="md">Virginia Tech</Text> */}
+          </Box>
+          <Flex justifyContent="center" alignItems="center">
+            <Image boxSize={'48px'} src={docsImageSource} alt="SAGE3 Docs" />
+          </Flex>
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+/* App component for Seer */
 function AppComponent(props: App): JSX.Element {
   // Make a toast to show errors
   const toast = useToast();
@@ -66,9 +159,9 @@ function AppComponent(props: App): JSX.Element {
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
-  // const [activeUser, setActiveUser] = useState<User>();
-  // const [activeUserList, setActiveUserList] = useState<User[]>([]);
   const SPACE = 2;
+  // Help modal
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   // Set the initial size of the window
   useEffect(() => {
@@ -159,8 +252,9 @@ function AppComponent(props: App): JSX.Element {
           },
         }}
       >
+        <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
         <Stack m={SPACE} mb={SPACE / 2}>
-          <Stack direction="row" mb={-2} mt={-1}>
+          <Stack direction="row" mb={-1} mt={-1}>
             <Badge
               variant="outline"
               colorScheme="green"
@@ -185,6 +279,32 @@ function AppComponent(props: App): JSX.Element {
             >
               Create a visualization
             </Badge>
+            <Spacer />
+            <Tooltip label="Click for help" placement="top">
+              <IconButton
+                onClick={() => helpOnOpen()}
+                aria-label="Get Help"
+                colorScheme={'green'}
+                icon={<MdHelp size={'18px'} />}
+                variant={'ghost'}
+                _active={{ backgroundColor: 'transparent' }}
+                _focus={{ backgroundColor: 'transparent' }}
+                _hover={{ backgroundColor: 'transparent' }}
+                size={'24px'}
+              />
+            </Tooltip>
+            {!s.kernel ? (
+              <Badge variant="outline" colorScheme="red">
+                Offline{' '}
+              </Badge>
+            ) : (
+              <Badge variant="outline" colorScheme="green">
+                Online{' '}
+                {/* {myKernels[s.kernel] && myKernels[s.kernel].status === 'busy' && (
+                  <Spinner size="xs" color="green.500" ml={1} />
+                )} */}
+              </Badge>
+            )}
           </Stack>
           <Box // generation section container
             style={{
@@ -208,10 +328,11 @@ function AppComponent(props: App): JSX.Element {
                 onChange={handleUpdatePrompt}
                 placeholder={placeHolderValue}
                 _placeholder={{
-                  color: useColorModeValue('gray.900', 'gray.100'),
+                  opacity: 0.7,
+                  color: useColorModeValue('#000000', '#FFFFFF'),
                 }}
                 style={{
-                  backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
+                  backgroundColor: useColorModeValue('#FFFFFE', '#303030'),
                   width: '100%',
                   height: '100%',
                   fontSize: s.fontSize + 'px',
@@ -268,7 +389,7 @@ function AppComponent(props: App): JSX.Element {
             </HStack>
           </Box>
           <Stack direction="row">
-            <Badge variant="outline" colorScheme="facebook" mb={-2} mt={-1}>
+            <Badge variant="outline" colorScheme="facebook" mb={-1} mt={-1}>
               Edit and Execute Code (Shift + Enter)
             </Badge>
           </Stack>
@@ -286,7 +407,7 @@ function AppComponent(props: App): JSX.Element {
             <HStack mr={SPACE}>{<InputBox app={props} access={true} />}</HStack>
           </Box>
           <Stack direction="row">
-            <Badge variant="outline" colorScheme="red" mb={-2}>
+            <Badge variant="outline" colorScheme="red" mb={-1}>
               Output Box
             </Badge>
           </Stack>
@@ -294,7 +415,7 @@ function AppComponent(props: App): JSX.Element {
           <Box // output section container
             style={{
               backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
-              // minHeight: '150px',
+              minHeight: '150px',
               border: '2px solid',
               borderColor: '#008080',
               // overflow: 'auto',
