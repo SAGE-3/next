@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useColorModeValue, VStack } from '@chakra-ui/react';
 
-import { useAppStore, useUIStore, useUser, useData } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, useData, GetConfiguration } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName } from '@sage3/applications/schema';
@@ -21,23 +21,6 @@ const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === '
 
 // Build list of applications from apps.json
 // or all apps if in development mode
-const appListed = development
-  ? Object.keys(Applications).sort((a, b) => a.localeCompare(b))
-  : [
-      'AIPane',
-      'ChartMaker',
-      'KernelDashboard',
-      'JupyterLab',
-      'LeafLet',
-      'Notepad',
-      'SageCell',
-      'Screenshare',
-      'Stickie',
-      'Webview',
-      'Hawaii Mesonet',
-    ];
-
-const aiApps = ['AIPane', 'ChartMaker', 'KernelDashboard', 'JupyterLab', 'SageCell'].sort((a, b) => a.localeCompare(b));
 
 export interface ApplicationProps {
   boardId: string;
@@ -45,8 +28,7 @@ export interface ApplicationProps {
 }
 
 export function ApplicationsPanel(props: ApplicationProps) {
-  const data = useData('/api/info');
-  const [appsList, setAppsList] = useState(appListed);
+  const [appsList, setAppsList] = useState<string[]>([]);
 
   // App Store
   const createApp = useAppStore((state) => state.create);
@@ -56,31 +38,23 @@ export function ApplicationsPanel(props: ApplicationProps) {
   const scale = useUIStore((state) => state.scale);
 
   useEffect(() => {
-    if (data) {
-      const features = data.features;
-      setAppsList((prev) => {
-        let newlist = prev;
-        if (!features['twilio']) {
-          newlist = newlist.filter((a) => a !== 'Screenshare');
-        }
-        if (!features['ai']) {
-          newlist = newlist.filter((a) => a !== 'AIPane');
-        }
-        if (!features['cell']) {
-          newlist = newlist.filter((a) => a !== 'SageCell');
-        }
-        if (!features['jupyter']) {
-          newlist = newlist.filter((a) => a !== 'JupyterLab');
-          newlist = newlist.filter((a) => a !== 'KernelDashboard');
-        }
-        if (!features['articulate']) {
-          newlist = newlist.filter((a) => a !== 'ChartMaker');
-        }
+    const updateAppList = async () => {
+      const data = await GetConfiguration();
 
-        return newlist;
-      });
-    }
-  }, [data]);
+      // If developer show all apps
+      if (development) {
+        const apps = Object.keys(Applications).sort((a, b) => a.localeCompare(b));
+        setAppsList(apps);
+        // If Production show only the apps in the config file. config.features.apps
+      } else if (!development && data) {
+        const apps = data.features.apps.sort((a, b) => a.localeCompare(b));
+        setAppsList(apps);
+      } else {
+        setAppsList([]);
+      }
+    };
+    updateAppList();
+  }, []);
 
   // Theme
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
@@ -140,24 +114,11 @@ export function ApplicationsPanel(props: ApplicationProps) {
           },
         }}
       >
-        <>
-          <>Apps</>
-          {appsList
-            // create a button for each application
-            .map((appName) => {
-              const isAi = aiApps.includes(appName);
-              return !isAi ? (
-                <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={() => newApplication(appName as AppName)} />
-              ) : null;
-            })}
-          <>AI Apps</>
-          {/* <Box > */}
-          {aiApps.map((appName) => {
-            return appsList.includes(appName) ? (
-              <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={() => newApplication(appName as AppName)} />
-            ) : null;
-          })}
-        </>
+        {appsList
+          // create a button for each application
+          .map((appName) => (
+            <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={() => newApplication(appName as AppName)} />
+          ))}
       </VStack>
       {/* </Box> */}
     </Panel>

@@ -13,7 +13,19 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Chakra Imports styling
-import { Box, Button, ButtonGroup, Container, Grid, HStack, IconButton, Select, useColorModeValue, Tooltip } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  Container,
+  Grid,
+  HStack,
+  IconButton,
+  Select,
+  useColorModeValue,
+  Tooltip,
+  VStack,
+} from '@chakra-ui/react';
 
 //Icon imports
 import { MdAdd, MdAddCircle, MdClose, MdRemove } from 'react-icons/md';
@@ -43,7 +55,7 @@ import {
   Title,
   Colors,
 } from 'chart.js';
-import { Chart, Line } from 'react-chartjs-2';
+import { Chart } from 'react-chartjs-2';
 
 // ChartJS register
 ChartJS.register(
@@ -73,9 +85,9 @@ export const typeOptions = [
   },
 ];
 
-// For scaling apps when zooming in and out of board
-const maxFontSize = 100;
-const minFontSize = 25;
+// // For scaling apps when zooming in and out of board
+// const maxFontSize = 100;
+// const minFontSize = 25;
 
 /* App component for ChartJSViewer */
 
@@ -110,10 +122,11 @@ function AppComponent(props: App): JSX.Element {
     responsive: true,
     scales: {
       y: {
+        min: 0,
         ticks: {
           color: 'white',
           font: {
-            size: 20 * (1 / scale),
+            size: 40,
           },
         },
       },
@@ -128,7 +141,7 @@ function AppComponent(props: App): JSX.Element {
         ticks: {
           color: 'white',
           font: {
-            size: 20 * (1 / scale),
+            size: 40,
           },
         },
       },
@@ -138,84 +151,41 @@ function AppComponent(props: App): JSX.Element {
       title: {
         display: true,
         text: '',
-        font: { size: 20 * (1 / scale) },
+        font: { size: 60 },
+        color: 'white',
       },
       legend: {
         labels: {
           color: 'white',
           // This more specific font property overrides the global property
           font: {
-            size: 20 * (1 / scale),
+            size: 40,
           },
         },
       },
     },
   });
 
-  // Updating the font sizes of the charts based on the zoom level
-  // Only update after 1 s
-  const debounceSave = debounce(1000, (scale, fontSizeMultiplier) => {
-    let fontSize = fontSizeMultiplier * (1 / scale);
-
-    // Just in case user's text gets too big or too small
-    if (fontSize > maxFontSize) {
-      fontSize = maxFontSize;
-    }
-    if (fontSize < minFontSize) {
-      fontSize = minFontSize;
-    }
-
-    // Update ChartJS options
-    setOptions({
-      ...options,
-      scales: {
-        y: { ticks: { font: { size: fontSize }, color: 'white' } },
-        x: { ...options.scales.x, ticks: { font: { size: fontSize }, color: 'white' } },
-      },
-      plugins: {
-        title: {
-          display: false,
-          text: '',
-          font: { size: fontSize },
-        },
-        legend: {
-          labels: {
-            color: 'white',
-            // This more specific font property overrides the global property
-            font: {
-              size: fontSize,
-            },
-          },
-        },
-      },
-    });
-  });
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
-
-  useEffect(() => {
-    debounceFunc.current(scale, s.fontSizeMultiplier);
-  }, [scale]);
+  //TODO: Temporary for all properties for station data
+  const [stationMetadata, setStationMetadata] = useState<any>({});
 
   // Used to update font sizes in the toolbar +/-
   useEffect(() => {
-    let fontSize = s.fontSizeMultiplier * (1 / scale);
-    if (fontSize > maxFontSize) {
-      fontSize = maxFontSize;
-    }
-    if (fontSize < minFontSize) {
-      fontSize = minFontSize;
-    }
+    const fontSize = s.fontSizeMultiplier * (1 / scale);
+
     setOptions({
       ...options,
       scales: {
-        y: { ticks: { font: { size: fontSize }, color: 'white' } },
-        x: { ...options.scales.x, ticks: { font: { size: fontSize }, color: 'white' } },
+        y: {
+          ...options.scales.y,
+          ticks: { ...options.scales.y.ticks, font: { size: fontSize } },
+        },
+        x: { ...options.scales.x, ticks: { ...options.scales.x.ticks, font: { size: fontSize } } },
       },
       plugins: {
         title: {
-          display: false,
-          text: 'Line Chart',
+          ...options.plugins.title,
+
           font: { size: fontSize },
         },
         legend: {
@@ -231,6 +201,14 @@ function AppComponent(props: App): JSX.Element {
     });
   }, [s.fontSizeMultiplier]);
 
+  const setTitle = (chartTitle: string) => {
+    setOptions({ ...options, plugins: { ...options.plugins, title: { ...options.plugins.title, text: chartTitle } } });
+  };
+
+  const setMinimumYValue = (minYValue: number) => {
+    setOptions({ ...options, plugins: { ...options.plugins }, scales: { ...options.scales, y: { ...options.scales.y, min: minYValue } } });
+  };
+
   // Fetching HCDP datafrom state.url
   useEffect(() => {
     let climateData: never[] = [];
@@ -238,9 +216,20 @@ function AppComponent(props: App): JSX.Element {
     fetch(s.url).then((response) => {
       response.json().then((station) => {
         climateData = station['STATION'][0]['OBSERVATIONS'];
+        delete station['STATION'][0]['SENSOR_VARIABLES'];
+        delete station['STATION'][0]['OBSERVATIONS'];
+        setStationMetadata(station['STATION'][0]);
         const attributeProps = Object.keys(climateData);
-
+        setTitle('Data for Station ' + station['STATION'][0]['NWSFIREZONE']);
         setData(climateData);
+
+        if (s.datasets[0].yDataName !== '') {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
+          setMinimumYValue(minYValue);
+        }
+
         setAttributeNames(attributeProps);
       });
     });
@@ -276,22 +265,60 @@ function AppComponent(props: App): JSX.Element {
     // setRevCount(Math.floor(Math.random() * 1000000));
   }, [JSON.stringify(data), JSON.stringify(s.datasets)]);
 
+  // Change x axis
+  const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const xAxisProperty = e.target.value;
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const newData = data[xAxisProperty];
+    console.log(chartData);
+    setChartData({
+      ...chartData,
+      labels: [...newData],
+    });
+  };
+
   // Change y axis
-  const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>, index: number) => {
     const value = e.target.value;
     const newDatasets = [...s.datasets];
-    newDatasets[0].yDataName = value;
+    newDatasets[index].yDataName = value;
+
+    //TODO: need to fix setting minimum value
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const minYValue = Math.min(...data[value].filter((v) => v != null));
+
+    setMinimumYValue(minYValue);
+
     updateState(props._id, { datasets: newDatasets });
   };
 
   // Change chart type
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    //TODO: customizable chart types for each dataset trace
     const value = e.target.value;
     const newDatasets = [...s.datasets];
     for (let i = 0; i < newDatasets.length; i++) {
       newDatasets[i].chartType = value;
     }
     updateState(props._id, { datasets: newDatasets });
+  };
+
+  // Increase the number of "traces" or variables to visualize
+  const increaseDatasetSize = () => {
+    const tmpDatasets = [...s.datasets];
+    updateState(props._id, {
+      datasets: [
+        ...tmpDatasets,
+        {
+          yDataName: '',
+          chartType: 'line',
+        },
+      ],
+    });
   };
 
   return (
@@ -311,9 +338,25 @@ function AppComponent(props: App): JSX.Element {
             <Button className="closeButton" onClick={() => setOpen(false)} backgroundColor={commonButtonColors} size="sm" mx="1">
               <MdClose color={buttonTextColor} />
             </Button>
-            <Grid textAlign="center" templateColumns="repeat(1,1fr)" gap={2}>
+            <br />
+            <br />
+            <Grid templateColumns="repeat(1,1fr)" gap={2}>
+              {Object.keys(stationMetadata).map((property, index) => {
+                // Create a Title for each property name
+                const firstLetterCapitalized = property.slice(0, 1);
+                const remainingLettersWithoutUnderscore = property.replaceAll('_', ' ');
+                const remainingLettersToLowerCase = remainingLettersWithoutUnderscore.slice(1).toLowerCase();
+                const finalProperty = firstLetterCapitalized + remainingLettersToLowerCase;
+
+                return typeof stationMetadata[property] === 'string' ? (
+                  <h1 style={{ marginLeft: '1rem' }} key={index}>
+                    <b>{finalProperty}: </b>
+                    {stationMetadata[property]}
+                  </h1>
+                ) : null;
+              })}
               <br />
-              <h1>Graph Type</h1>
+              <h1 style={{ textAlign: 'center' }}>Graph Type</h1>
               <Container>
                 <Box borderColor="black" maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
                   <Select placeholder={'Chart Type'} onChange={handleTypeChange}>
@@ -325,9 +368,8 @@ function AppComponent(props: App): JSX.Element {
                   </Select>
                 </Box>
               </Container>
-              {/**TODO: May need to delete later? Will find out later if this makes sense with the HCDP data */}
-              {/* <h1>X values</h1> */}
-              {/* <Container>
+              <h1 style={{ textAlign: 'center' }}> X values</h1>
+              <Container>
                 <Box maxW="sm" overflow="hidden">
                   <HStack>
                     <Select
@@ -346,37 +388,6 @@ function AppComponent(props: App): JSX.Element {
                         );
                       })}
                     </Select>
-                    <IconButton
-                      aria-label="Add Field"
-                      borderColor="black"
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      icon={<MdAddCircle />}
-                    ></IconButton>
-                  </HStack>
-                </Box>
-              </Container> */}
-              <h1>Y values</h1>
-              <Container>
-                <Box maxW="sm" overflow="hidden">
-                  <HStack>
-                    <Select
-                      borderColor="black"
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      name="yAxis"
-                      placeholder={'choose an attribute'}
-                      onChange={handleYAxisChange}
-                    >
-                      {attributeNames.map((attributeName, index) => {
-                        return (
-                          <option data-key={index} value={attributeName} key={index}>
-                            {attributeName}
-                          </option>
-                        );
-                      })}
-                    </Select>
-                    {/**TODO: Create a way to add more attributes on a single chart */}
                     {/* <IconButton
                       aria-label="Add Field"
                       borderColor="black"
@@ -387,6 +398,48 @@ function AppComponent(props: App): JSX.Element {
                   </HStack>
                 </Box>
               </Container>
+              <h1 style={{ textAlign: 'center' }}>Y values</h1>
+              <Container>
+                <Box maxW="sm" overflow="hidden">
+                  <HStack>
+                    <VStack>
+                      {s.datasets.map((dataset, index) => {
+                        return (
+                          <Select
+                            borderColor="black"
+                            borderWidth="1px"
+                            borderRadius="lg"
+                            name="yAxis"
+                            key={index}
+                            placeholder={'choose an attribute'}
+                            onChange={(e) => {
+                              handleYAxisChange(e, index);
+                            }}
+                          >
+                            {attributeNames.map((attributeName, index) => {
+                              return (
+                                <option data-key={index} value={attributeName} key={index}>
+                                  {attributeName}
+                                </option>
+                              );
+                            })}
+                          </Select>
+                        );
+                      })}
+                    </VStack>
+                    <IconButton
+                      aria-label="Add Field"
+                      borderColor="black"
+                      borderWidth="1px"
+                      borderRadius="lg"
+                      icon={<MdAddCircle />}
+                      onClick={increaseDatasetSize}
+                    ></IconButton>
+                  </HStack>
+                </Box>
+              </Container>
+              <br />
+              <br />
             </Grid>
           </div>
         </div>

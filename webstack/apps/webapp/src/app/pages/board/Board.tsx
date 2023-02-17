@@ -20,12 +20,14 @@ import {
   PasteHandler,
   useUIStore,
   useData,
-  serverConfiguration,
   useUser,
+  usePluginListener,
+  usePluginStore,
 } from '@sage3/frontend';
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
+import { OpenConfiguration } from '@sage3/shared/types';
 
 /**
  * The board page which displays the board and its apps.
@@ -34,6 +36,9 @@ export function BoardPage() {
   // Navigation and routing
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
+
+  // Config file
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   if (!roomId || !boardId) {
     toHome(roomId);
@@ -46,6 +51,8 @@ export function BoardPage() {
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
+  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
+
   // Presence Information
   const { user } = useUser();
   const updatePresence = usePresenceStore((state) => state.update);
@@ -54,6 +61,10 @@ export function BoardPage() {
 
   // UI Store
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+
+  // Plugin Listener
+  // Listens to updates from plugin apps and sends them to the AppStore
+  usePluginListener();
 
   function handleDragOver(event: DragEvent) {
     const elt = event.target as HTMLElement;
@@ -79,6 +90,9 @@ export function BoardPage() {
     // Sub to users and presence
     subscribeToPresence();
     subscribeToUsers();
+
+    // plugins
+    subPlugins();
     // Update the user's presence information
     if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId, following: '' });
 
@@ -109,7 +123,7 @@ export function BoardPage() {
       <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer>
 
       {/* Upper layer for local UI stuff */}
-      <UILayer boardId={boardId} roomId={roomId}></UILayer>
+      <UILayer boardId={boardId} roomId={roomId} config={config}></UILayer>
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />

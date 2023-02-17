@@ -17,6 +17,7 @@ export * from './modals/EditRoomModal';
 export * from './modals/EnterBoardModal';
 export * from './modals/ConfirmModal';
 export * from './modals/AboutModal';
+export * from './modals/PluginModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';
