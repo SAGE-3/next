@@ -288,7 +288,7 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || lassoMode || isGuest ? 'none' : 'auto', // Guest Blocker
+        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -311,8 +311,10 @@ export function AppWindow(props: WindowProps) {
       // TODO: Make this not required in the future with persmissions system
       // Not ideal but right now we need this to prevent guests from moving apps.
       // This happens locally before updating the server.
-      enableResizing={!isGuest}
-      disableDragging={isGuest}
+      // enableResizing={!isGuest}
+      // disableDragging={isGuest}
+      enableResizing={true}
+      disableDragging={false}
     >
       {/* Title Above app */}
       {appTitles ? (
