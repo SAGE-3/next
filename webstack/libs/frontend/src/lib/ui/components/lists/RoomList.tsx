@@ -39,8 +39,15 @@ type RoomListProps = {
 export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
+
   const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+  const [isGuest, setIsGuest] = useState(true);
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
 
   // Data stores
   const storeError = useRoomStore((state) => state.error);

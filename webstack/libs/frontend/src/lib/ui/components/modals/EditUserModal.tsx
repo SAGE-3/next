@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -29,7 +29,7 @@ import { MdPerson } from 'react-icons/md';
 import { UserSchema } from '@sage3/shared/types';
 import { useAuth } from '@sage3/frontend';
 import { useUser } from '../../../hooks';
-import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+import { SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
 
 interface EditUserModalProps {
@@ -40,8 +40,15 @@ interface EditUserModalProps {
 
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { user, update } = useUser();
+
   const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+  const [isGuest, setIsGuest] = useState(true);
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
   const [color, setColor] = useState(user?.data.color as SAGEColors);
