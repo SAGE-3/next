@@ -116,7 +116,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={shouldDisable || !logins.includes('google')} justifyContent="left" onClick={googleLogin}>
+            <Button width="100%" isDisabled={shouldDisable || !logins.includes('google')} justifyContent="left" onClick={googleLogin}>
               Login with Google
             </Button>
           </ButtonGroup>
@@ -131,7 +131,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={shouldDisable || !logins.includes('cilogon')} justifyContent="left" onClick={ciLogin}>
+            <Button width="100%" isDisabled={shouldDisable || !logins.includes('cilogon')} justifyContent="left" onClick={ciLogin}>
               Login with CILogon
             </Button>
           </ButtonGroup>
@@ -146,7 +146,7 @@ export function LoginPage() {
               borderRight={`3px solid`}
               borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
             />
-            <Button width="100%" disabled={shouldDisable || !logins.includes('guest')} justifyContent="left" onClick={guestLogin}>
+            <Button width="100%" isDisabled={shouldDisable || !logins.includes('guest')} justifyContent="left" onClick={guestLogin}>
               Login as Guest
             </Button>
           </ButtonGroup>

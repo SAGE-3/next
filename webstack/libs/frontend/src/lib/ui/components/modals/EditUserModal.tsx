@@ -149,7 +149,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           )}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name}>
+          <Button colorScheme="green" onClick={() => updateAccount()} isDisabled={!name}>
             Update
           </Button>
         </ModalFooter>

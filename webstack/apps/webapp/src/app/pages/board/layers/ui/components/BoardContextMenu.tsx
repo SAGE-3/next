@@ -282,7 +282,7 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => openJupyter()}
-            disabled={!appsList.includes('JupyterLab')}
+            isDisabled={!appsList.includes('JupyterLab')}
           >
             Jupyter
           </Button>
@@ -297,7 +297,7 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => newApplication('SageCell')}
-            disabled={!appsList.includes('SageCell')}
+            isDisabled={!appsList.includes('SageCell')}
           >
             SageCell
           </Button>
@@ -312,7 +312,7 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => newApplication('Screenshare')}
-            disabled={!appsList.includes('Screenshare')}
+            isDisabled={!appsList.includes('Screenshare')}
           >
             Screenshare
           </Button>
@@ -326,7 +326,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            disabled={!appsList.includes('Stickie')}
+            isDisabled={!appsList.includes('Stickie')}
             onClick={() => newApplication('Stickie', user?.data.name)}
           >
             Stickie
@@ -340,7 +340,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            disabled={!appsList.includes('Webview')}
+            isDisabled={!appsList.includes('Webview')}
             onClick={() => newApplication('Webview')}
           >
             Webview

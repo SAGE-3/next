@@ -250,13 +250,13 @@ function ToolbarComponent(props: App): JSX.Element {
       <HStack>
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()} disabled={locked}>
+            <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
               <MdAdd />
             </Button>
           </Tooltip>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()} disabled={locked}>
+            <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
               <MdRemove />
             </Button>
           </Tooltip>

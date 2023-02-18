@@ -344,7 +344,7 @@ function AppComponent(props: App): JSX.Element {
               <Button colorScheme="red" mr="2" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button colorScheme="teal" disabled={!selectedSource} onClick={electronShareHandle}>
+              <Button colorScheme="teal" isDisabled={!selectedSource} onClick={electronShareHandle}>
                 Share
               </Button>
             </ModalFooter>
