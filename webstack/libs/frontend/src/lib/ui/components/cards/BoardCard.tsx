@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState, useEffect } from 'react';
 import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useToast } from '@chakra-ui/react';
 import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-icons/md';
 
@@ -32,11 +33,20 @@ export type BoardCardProps = {
 export function BoardCard(props: BoardCardProps) {
   const { user } = useUser();
   const { auth } = useAuth();
-  // Guest mode disabled for now
-  const isGuest = false; // auth?.provider === 'guest';
+  const [yours, setYours] = useState(false);
+  const [isGuest, setIsGuest] = useState(true);
 
   // Is it my board?
-  const yours = user?._id === props.board.data.ownerId;
+  useEffect(() => {
+    setYours(user?._id === props.board.data.ownerId);
+  }, [props.board.data.ownerId, user?._id]);
+
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
 
   // Custom color
   const boardColor = useHexColor(props.board.data.color);

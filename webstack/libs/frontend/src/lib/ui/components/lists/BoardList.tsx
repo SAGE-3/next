@@ -52,8 +52,15 @@ export function BoardList(props: BoardListProps) {
 
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
+
   const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+  const [isGuest, setIsGuest] = useState(true);
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');
