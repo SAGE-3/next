@@ -165,7 +165,7 @@ export function BoardCard(props: BoardCardProps) {
               variant="unstlyed"
               ml="-3"
               onClick={handleCopyLink}
-              disabled={isGuest}
+              isDisabled={isGuest}
               icon={<MdLink />}
             />
           </Tooltip>
@@ -176,7 +176,7 @@ export function BoardCard(props: BoardCardProps) {
               aria-label="Board Edit"
               fontSize="2xl"
               variant="unstlyed"
-              disabled={!yours}
+              isDisabled={!yours}
               marginLeft={-3} // Weird margin on the icon
               icon={<MdSettings />}
             />

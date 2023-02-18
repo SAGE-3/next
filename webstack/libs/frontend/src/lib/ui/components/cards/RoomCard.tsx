@@ -141,7 +141,7 @@ export function RoomCard(props: RoomCardProps) {
                   aria-label="Room Edit"
                   fontSize="3xl"
                   variant="unstlyed"
-                  disabled={!yours}
+                  isDisabled={!yours}
                   icon={<MdSettings />}
                 />
               </Tooltip>
