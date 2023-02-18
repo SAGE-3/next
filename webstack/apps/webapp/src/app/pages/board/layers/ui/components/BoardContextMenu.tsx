@@ -124,7 +124,7 @@ export function BoardContextMenu(props: ContextProps) {
     if (appName === 'SageCell' && appsList.includes('cell')) return;
     if (appName === 'Screenshare' && appsList.includes('twilio')) return;
     let width = 400;
-    let height = 400;
+    let height = 420;
     if (appName === 'SageCell') {
       width = 650;
     }
@@ -134,7 +134,7 @@ export function BoardContextMenu(props: ContextProps) {
     // Create the app
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
     createApp({
-      title: title ? title : '',
+      title: title ? title : appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { ...position, z: 0 },
@@ -157,7 +157,7 @@ export function BoardContextMenu(props: ContextProps) {
     const height = 700;
     // Open a webview into the SAGE3 builtin Jupyter instance
     createApp({
-      title: '',
+      title: 'JupyterLab',
       roomId: props.roomId,
       boardId: props.boardId,
       position: { ...position, z: 0 },

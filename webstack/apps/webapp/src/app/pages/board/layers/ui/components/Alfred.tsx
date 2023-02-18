@@ -100,7 +100,7 @@ export function Alfred(props: props) {
       const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
       const pos = me?.data.cursor || { x: 100, y: 100, z: 0 };
       const width = 400;
-      const height = 400;
+      const height = 420;
       pos.x -= width / 2;
       pos.y -= height / 2;
       // Decompose the search

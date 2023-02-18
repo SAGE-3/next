@@ -299,7 +299,7 @@ export function uploadHandler(req: express.Request, res: express.Response): void
         } else if (isMD(elt.mimetype)) {
           const text = fs.readFileSync(elt.path);
           const w = tw || 400;
-          const h = th || 400;
+          const h = th || 420;
           const u = await UsersCollection.get(req.user.id);
           AppsCollection.add(
             {
