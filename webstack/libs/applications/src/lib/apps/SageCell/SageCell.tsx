@@ -517,7 +517,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
                 onClick={handleInterrupt}
                 aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
+                isDisabled={user?._id !== s.kernel ? false : true}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
                 icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
@@ -531,7 +531,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
                 onClick={handleClear}
                 aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
+                isDisabled={user?._id !== s.kernel ? false : true}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
                 icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
@@ -621,78 +621,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.display_data.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                default:
+                  return MapJSONObject(parsedJSON.display_data[key]);
+              }
+            });
+          }
+          return null;
+        })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.execute_result.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                default:
+                  return null;
+              }
+            });
+          }
+          return null;
+        })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-            // find the user name that matches the userId
-            if (userId !== props.user._id) {
-              return null;
-            }
-            return (
-              <Toast
-                status="error"
-                position="bottom"
-                description={message + ', ' + props.user.data.name}
-                duration={4000}
-                isClosable
-                onClose={() => updateState(props.app._id, { privateMessage: [] })}
-                hidden={userId !== props.user._id}
-              />
-            );
-          })}
+          // find the user name that matches the userId
+          if (userId !== props.user._id) {
+            return null;
+          }
+          return (
+            <Toast
+              status="error"
+              position="bottom"
+              description={message + ', ' + props.user.data.name}
+              duration={4000}
+              isClosable
+              onClose={() => updateState(props.app._id, { privateMessage: [] })}
+              hidden={userId !== props.user._id}
+            />
+          );
+        })}
     </Box>
   );
 };
@@ -718,30 +718,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
+          if (typeof obj[key] === 'object') {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
                 </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
+                <Box as="span" ml={2}>
+                  {MapJSONObject(obj[key])}
                 </Box>
-              );
-            }
-          })
+              </Box>
+            );
+          } else {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
+                </Box>
+                <Box as="span" ml={2}>
+                  {obj[key]}
+                </Box>
+              </Box>
+            );
+          }
+        })
         : null}
     </Box>
   );
