@@ -35,11 +35,11 @@ function AppComponent(props: App): JSX.Element {
   const [clockoffset, setClockOffset] = useState(0);
 
   useEffect(() => {
-    setCity(s.city);
-    localizeCity(s.city);
+    // setCity(city);
+    localizeCity(city);
     // Update the app title
-    update(props._id, { title: s.city });
-  }, [s.city]);
+    if (city !== s.city) update(props._id, { title: city });
+  }, [city]);
 
   const localizeCity = (city: string) => {
     const key = 'AIzaSyBQ335g9XtAX56ZCqqF6jsHz4mP-qIX5vo';

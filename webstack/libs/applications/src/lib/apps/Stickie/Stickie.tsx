@@ -79,7 +79,9 @@ function AppComponent(props: App): JSX.Element {
         // change local number of rows
         setRows(numlines);
         // update size of the window
-        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        if (props.data.size.height !== numlines * s.fontSize) {
+          update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        }
       }
     }
   }, [s.fontSize]);
