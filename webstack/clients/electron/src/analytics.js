@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -11,7 +11,6 @@ const os = require('os');
 const fetch = require('node-fetch');
 const { v4 } = require('uuid');
 
-// const server_url = 'http://localhost:3000/events';
 const server_url = 'https://sage3.evl.uic.edu/events';
 
 /*
@@ -68,6 +67,9 @@ function analyticsOnStart(userId, arg_url) {
     .then((response) => response.json())
     .then((data) => {
       console.log('Analytics> on_start', data);
+    })
+    .catch((err) => {
+      console.log('Analytics> error', err.message);
     });
 }
 
@@ -83,16 +85,20 @@ async function analyticsOnStop(userId) {
     userId,
   };
 
-  const res = await fetch(server_url, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(event_stop),
-  });
-  const data = await res.json();
-  return data;
+  try {
+    const res = await fetch(server_url, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(event_stop),
+    });
+    const data = await res.json();
+    console.log('Analytics> on_stop', data);
+  } catch (err) {
+    console.log('Analytics> error', err.message);
+  }
 }
 
 function genUserId() {

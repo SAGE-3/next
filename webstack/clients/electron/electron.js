@@ -54,7 +54,6 @@ var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics'
 var analytics_enabled = true;
 // random user id
 const userId = genUserId();
-let state = {};
 
 // handle install/update for Windows
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
@@ -252,6 +251,40 @@ function openWindow() {
   }
 }
 
+/**
+ * Disable geolocation because of Electron v13 bug
+ * @param {any} session
+ */
+function disableGeolocation(session) {
+  if (process.platform === 'darwin') {
+    session.setPermissionRequestHandler((webContents, permission, callback) => {
+      if (permission === 'geolocation') {
+        // Denied
+        return callback(false);
+      }
+      callback(true);
+    });
+    session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+      if (permission === 'geolocation') {
+        // Denied
+        return false;
+      }
+      return true;
+    });
+  }
+}
+
+// Size and position of the window
+let state = {};
+const defaultSize = {
+  frame: !commander.no_decoration,
+  fullscreen: commander.fullscreen,
+  x: commander.xorigin,
+  y: commander.yorigin,
+  width: commander.width,
+  height: commander.height,
+};
+
 // Function to save the state in the data store
 const saveState = async () => {
   if (!mainWindow.isMinimized()) {
@@ -279,6 +312,7 @@ const getCurrentPosition = () => {
     height: size[1],
   };
 };
+
 // Function to check if window is within some bounds
 const windowWithinBounds = (windowState, bounds) => {
   return (
@@ -288,6 +322,7 @@ const windowWithinBounds = (windowState, bounds) => {
     windowState.y + windowState.height <= bounds.y + bounds.height
   );
 };
+
 // Function to return default values: center of primary screen
 const resetToDefaults = () => {
   const bounds = electron.screen.getPrimaryDisplay().bounds;
@@ -296,41 +331,6 @@ const resetToDefaults = () => {
     y: (bounds.height - defaultSize.height) / 2,
   });
 };
-// Function to calculate if window is visible
-const ensureVisibleOnSomeDisplay = (windowState) => {
-  const visible = electron.screen.getAllDisplays().some((display) => {
-    return windowWithinBounds(windowState, display.bounds);
-  });
-  if (!visible) {
-    // Window is partially or fully not visible now.
-    // Reset it to safe defaults.
-    return resetToDefaults();
-  }
-  return windowState;
-};
-
-/**
- * Disable geolocation because of Electron v13 bug
- * @param {any} session
- */
-function disableGeolocation(session) {
-  if (process.platform === 'darwin') {
-    session.setPermissionRequestHandler((webContents, permission, callback) => {
-      if (permission === 'geolocation') {
-        // Denied
-        return callback(false);
-      }
-      callback(true);
-    });
-    session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
-      if (permission === 'geolocation') {
-        // Denied
-        return false;
-      }
-      return true;
-    });
-  }
-}
 
 /**
  * Creates an electron window.
@@ -373,14 +373,17 @@ function createWindow() {
     },
   };
 
-  // Size and position of the window
-  const defaultSize = {
-    frame: !commander.no_decoration,
-    fullscreen: commander.fullscreen,
-    x: commander.xorigin,
-    y: commander.yorigin,
-    width: commander.width,
-    height: commander.height,
+  // Function to calculate if window is visible
+  const ensureVisibleOnSomeDisplay = (windowState) => {
+    const visible = electron.screen.getAllDisplays().some((display) => {
+      return windowWithinBounds(windowState, display.bounds);
+    });
+    if (!visible) {
+      // Window is partially or fully not visible now.
+      // Reset it to safe defaults.
+      return resetToDefaults();
+    }
+    return windowState;
   };
 
   // Restore the state
@@ -413,7 +416,7 @@ function createWindow() {
   // Build a menu
   buildMenu(mainWindow);
 
-  // analytics on start
+  // Analytics on start
   if (!commander.server.includes('localhost') && analytics_enabled) {
     analyticsOnStart(userId, state.server);
   } else {
@@ -501,7 +504,7 @@ function createWindow() {
 
   // mainWindow.on('close', saveState);
   // Emitted when the window is closed.
-  mainWindow.on('closed', async function () {
+  mainWindow.on('closed', function () {
     // Dereference the window object
     mainWindow = null;
   });
@@ -829,11 +832,11 @@ app.on('before-quit', async function (event) {
   saveState();
   // Analytics on stop
   if (analytics_enabled) {
-    const res = await analyticsOnStop(userId);
-    console.log('Analytics> on_stop', res);
+    await analyticsOnStop(userId);
   }
   process.exit(0);
 });
+
 /**
  * This method will be called when Electron has finished
  * initialization and is ready to create a browser window.
