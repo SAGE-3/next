@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
 
@@ -24,9 +24,18 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Guest mode disabled for now
-  // const { auth } = useAuth();
-  const isGuest = false; // auth?.provider === 'guest';
-  const { user } = useUser();
+  const { auth } = useAuth();
+
+  const [isGuest, setIsGuest] = useState(true);
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
+
+  // Ref to the app container
+  const divRef = useRef<HTMLDivElement>(null);
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -60,7 +69,7 @@ export function AppWindow(props: WindowProps) {
 
   const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
-  const borderColorGroupSelect = useHexColor('gray');
+  // const borderColorGroupSelect = useHexColor('gray');
 
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
@@ -68,9 +77,7 @@ export function AppWindow(props: WindowProps) {
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const outerBorderRadius = 12;
   const innerBorderRadius = outerBorderRadius - borderWidth;
-
   const titleColor = useColorModeValue('white', 'white');
-
   const selectColor = useHexColor('teal');
 
   // Resize Handle scale
@@ -118,6 +125,10 @@ export function AppWindow(props: WindowProps) {
 
   // Handle when the window starts to drag
   function handleDragStart() {
+    // Trying to optimize performance
+    if (divRef.current) {
+      divRef.current.style.willChange = 'transform';
+    }
     setAppDragging(true);
     bringForward();
     setDragStartPosition(props.app.data.position);
@@ -166,10 +177,18 @@ export function AppWindow(props: WindowProps) {
         });
       });
     }
+    // Trying to optimize performance
+    if (divRef.current) {
+      divRef.current.style.willChange = 'auto';
+    }
   }
 
   // Handle when the window starts to resize
   function handleResizeStart() {
+    // Trying to optimize performance
+    if (divRef.current) {
+      divRef.current.style.willChange = 'transform';
+    }
     setAppDragging(true);
     bringForward();
   }
@@ -211,6 +230,11 @@ export function AppWindow(props: WindowProps) {
         height,
       },
     });
+
+    // Trying to optimize performance
+    if (divRef.current) {
+      divRef.current.style.willChange = 'auto';
+    }
   }
 
   // Track raised state
@@ -264,8 +288,7 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        // pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', // Guest Blocker
-        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto', // Guest Blocker
+        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -288,8 +311,10 @@ export function AppWindow(props: WindowProps) {
       // TODO: Make this not required in the future with persmissions system
       // Not ideal but right now we need this to prevent guests from moving apps.
       // This happens locally before updating the server.
-      enableResizing={!isGuest}
-      disableDragging={isGuest}
+      // enableResizing={!isGuest}
+      // disableDragging={isGuest}
+      enableResizing={true}
+      disableDragging={false}
     >
       {/* Title Above app */}
       {appTitles ? (
@@ -337,6 +362,7 @@ export function AppWindow(props: WindowProps) {
 
       {/* The Application */}
       <Box
+        ref={divRef}
         id={'app_' + props.app._id}
         width="100%"
         height="100%"

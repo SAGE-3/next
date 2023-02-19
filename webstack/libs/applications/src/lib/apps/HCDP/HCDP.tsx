@@ -13,7 +13,7 @@ import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeVa
 
 // SAGE3 imports
 import { useAppStore, useHexColor } from '@sage3/frontend';
-import { App } from '../../schema';
+import { App, AppSchema } from '../../schema';
 import { state as AppState } from './index';
 
 // Leaflet plus React
@@ -29,7 +29,7 @@ import 'leaflet/dist/leaflet.css';
 import create from 'zustand';
 
 // Icon imports
-import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
+import { MdAdd, MdMap, MdOutlineZoomIn, MdOutlineZoomOut, MdRemove, MdTerrain } from 'react-icons/md';
 
 // Zustand store to communicate with toolbar
 export const useStore = create((set: any) => ({
@@ -70,11 +70,13 @@ const stationData = [
 function AppComponent(props: App): JSX.Element {
   // State and Store
   const s = props.data.state as AppState;
+
   const createApp = useAppStore((state) => state.create);
+  const updateState = useAppStore((state) => state.updateState);
 
   // Function to generate charts either for createAllCharts, or createChartTemplate
   const createChart = (appPos: { x: number; y: number; z: number }, stationName: string, axisTitle: string, climateProp: string) => {
-    createApp({
+    const app = createApp({
       title: '',
       roomId: props.data.roomId!,
       boardId: props.data.boardId!,
@@ -90,8 +92,8 @@ function AppComponent(props: App): JSX.Element {
       },
       raised: true,
     });
+    return app;
   };
-
   // This function will fetch the HCDP data and create a chart for each property available
   const createAllCharts = (data: { lat: number; lon: number; name: string }) => {
     const stationName = data.name;
@@ -102,7 +104,7 @@ function AppComponent(props: App): JSX.Element {
     fetch(
       `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
     ).then((response) => {
-      response.json().then((station) => {
+      response.json().then(async (station) => {
         climateData = station['STATION'][0]['OBSERVATIONS'];
         const climateProps = Object.keys(climateData); // Create an array will all properties
 
@@ -119,6 +121,7 @@ function AppComponent(props: App): JSX.Element {
         if (indexOfWind_Direction_set_1d !== -1) {
           climateProps.splice(indexOfWind_Direction_set_1d, 1);
         }
+        const appIds = [];
 
         // Loop through climate properties and create a chart for each property
         for (let i = 0; i < climateProps.length; i++) {
@@ -144,8 +147,10 @@ function AppComponent(props: App): JSX.Element {
             z: 0,
           };
 
-          createChart(appPos, stationName, axisTitle, climateProps[i]);
+          const appId = await createChart(appPos, stationName, axisTitle, climateProps[i]);
+          appIds.push(appId.data._id);
         }
+        updateState(props._id, { appIdsICreated: appIds });
       });
     });
   };
@@ -262,7 +267,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   const background = useColorModeValue('gray.50', 'gray.700');
-  const panelBackground = useHexColor(background);
 
   const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
   // @ts-expect-error
@@ -309,6 +313,21 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { zoom: limitZoom });
   };
 
+  const incrementFontSizeOfCreatedApps = () => {
+    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
+    s.appIdsICreated.forEach((appId) => {
+      updateState(appId, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
+    });
+  };
+
+  const decrementFontSizeOfCreatedApps = () => {
+    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
+
+    s.appIdsICreated.forEach((appId) => {
+      updateState(appId, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
+    });
+  };
+
   return (
     <HStack>
       <ButtonGroup>
@@ -330,33 +349,25 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom >= 18} onClick={incZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdAdd fontSize="16px" />
+            <MdOutlineZoomIn fontSize="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
           <Button isDisabled={s.zoom <= 1} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdRemove fontSize="16px" />
+            <MdOutlineZoomOut fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Street Map'} openDelay={400}>
-          <Button
-            border={s.baseLayer !== 'OpenStreetMap' ? `solid ${panelBackground} 2px` : 'teal'}
-            onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
-            <MdMap fontSize="20px" />
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size of Created Charts'} openDelay={400}>
+          <Button onClick={incrementFontSizeOfCreatedApps} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdAdd fontSize="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Satellite Map'} openDelay={400}>
-          <Button
-            border={s.baseLayer !== 'World Imagery' ? `solid ${panelBackground} 2px` : ''}
-            onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
-            <MdTerrain fontSize="20px" />
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size of Created Charts'} openDelay={400}>
+          <Button onClick={decrementFontSizeOfCreatedApps} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdRemove fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>

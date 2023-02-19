@@ -21,7 +21,6 @@ import {
   MainButton,
   useRouteNav,
   useData,
-  serverConfiguration,
   useRoomStore,
   Clock,
 } from '@sage3/frontend';
@@ -39,17 +38,23 @@ import {
   NavigationPanel,
   UsersPanel,
   AnnotationsPanel,
+  PluginsPanel,
 } from './components';
+import { OpenConfiguration } from '@sage3/shared/types';
 
 type UILayerProps = {
   boardId: string;
   roomId: string;
+  config: OpenConfiguration;
 };
 
 export function UILayer(props: UILayerProps) {
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
+
+  // Configuration
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -71,7 +76,7 @@ export function UILayer(props: UILayerProps) {
 
   // Navigation
   const { toHome } = useRouteNav();
-  const config = useData('/api/configuration') as serverConfiguration;
+
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
   // Toast
@@ -170,6 +175,7 @@ export function UILayer(props: UILayerProps) {
           buttonStyle="solid"
           backToRoom={() => toHome(props.roomId)}
           boardInfo={{ boardId: props.boardId, roomId: props.roomId }}
+          config={config}
         />
       </Box>
 
@@ -201,6 +207,8 @@ export function UILayer(props: UILayerProps) {
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
+      <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
+
       <AnnotationsPanel />
 
       {/* Clear board dialog */}
@@ -210,7 +218,7 @@ export function UILayer(props: UILayerProps) {
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
-      <Controller boardId={props.boardId} roomId={props.roomId} />
+      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       <LassoToolbar />

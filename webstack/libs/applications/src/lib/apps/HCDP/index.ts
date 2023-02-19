@@ -22,6 +22,8 @@ export const schema = z.object({
   baseLayer: Baselayer,
   overlay: z.boolean(),
   assetid: z.string().optional(),
+  appIdsICreated: z.string().array(),
+  fontSizeMultiplier: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -30,6 +32,8 @@ export const init: Partial<state> = {
   zoom: 8,
   baseLayer: 'OpenStreetMap',
   overlay: true,
+  appIdsICreated: [],
+  fontSizeMultiplier: 15,
 };
 
 export const name = 'Hawaii Mesonet';

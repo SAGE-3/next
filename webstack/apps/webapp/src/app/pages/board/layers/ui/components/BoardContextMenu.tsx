@@ -6,12 +6,26 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUIStore, useUser, useRouteNav, useData, useCursorBoardPosition, usePanelStore } from '@sage3/frontend';
+import {
+  useAppStore,
+  useUIStore,
+  useUser,
+  useRouteNav,
+  useData,
+  useCursorBoardPosition,
+  usePanelStore,
+  GetConfiguration,
+} from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
+import { OpenConfiguration } from '@sage3/shared/types';
+import { Applications } from '@sage3/applications/apps';
+
+// Development or production
+const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
 type ContextProps = {
   roomId: string;
@@ -25,7 +39,9 @@ type ContextProps = {
 const savedRadios = [false, true];
 
 export function BoardContextMenu(props: ContextProps) {
-  const data = useData('/api/info');
+  const data = useData('/api/configuration') as OpenConfiguration;
+
+  const [appsList, setAppsList] = useState<string[]>([]);
 
   // User information
   const { user } = useUser();
@@ -35,6 +51,24 @@ export function BoardContextMenu(props: ContextProps) {
   function handleHomeClick() {
     toHome(props.roomId);
   }
+  // Get apps list
+  useEffect(() => {
+    const updateAppList = async () => {
+      const data = await GetConfiguration();
+      // If development show all apps
+      if (development) {
+        const apps = Object.keys(Applications).sort((a, b) => a.localeCompare(b));
+        setAppsList(apps);
+        // If Production show only the apps in the config file. config.features.apps
+      } else if (!development && data) {
+        const apps = data.features.apps.sort((a, b) => a.localeCompare(b));
+        setAppsList(apps);
+      } else {
+        setAppsList([]);
+      }
+    };
+    updateAppList();
+  }, []);
 
   const createApp = useAppStore((state) => state.create);
 
@@ -86,11 +120,11 @@ export function BoardContextMenu(props: ContextProps) {
   const newApplication = (appName: AppName, title?: string) => {
     if (!user) return;
     // features disabled
-    if (appName === 'JupyterLab' && data.features && !data.features['jupyter']) return;
-    if (appName === 'SageCell' && data.features && !data.features['cell']) return;
-    if (appName === 'Screenshare' && data.features && !data.features['twilio']) return;
+    if (appName === 'JupyterLab' && appsList.includes('jupyter')) return;
+    if (appName === 'SageCell' && appsList.includes('cell')) return;
+    if (appName === 'Screenshare' && appsList.includes('twilio')) return;
     let width = 400;
-    let height = 400;
+    let height = 420;
     if (appName === 'SageCell') {
       width = 650;
     }
@@ -100,7 +134,7 @@ export function BoardContextMenu(props: ContextProps) {
     // Create the app
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
     createApp({
-      title: title ? title : '',
+      title: title ? title : appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { ...position, z: 0 },
@@ -116,14 +150,14 @@ export function BoardContextMenu(props: ContextProps) {
     // Not logged in
     if (!user) return;
     // jupyter disabled
-    if (data.features && !data.features['jupyter']) return;
+    if (data.features && appsList.includes('jupyter')) return;
 
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
     const width = 700;
     const height = 700;
     // Open a webview into the SAGE3 builtin Jupyter instance
     createApp({
-      title: '',
+      title: 'JupyterLab',
       roomId: props.roomId,
       boardId: props.boardId,
       position: { ...position, z: 0 },
@@ -247,23 +281,8 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => newApplication('SageCell')}
-            disabled={data && data.features && !data.features['cell']}
-          >
-            SageCell
-          </Button>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
             onClick={() => openJupyter()}
-            disabled={data && data.features && !data.features['jupyter']}
+            isDisabled={!appsList.includes('JupyterLab')}
           >
             Jupyter
           </Button>
@@ -277,8 +296,23 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
+            onClick={() => newApplication('SageCell')}
+            isDisabled={!appsList.includes('SageCell')}
+          >
+            SageCell
+          </Button>
+
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="auto"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
             onClick={() => newApplication('Screenshare')}
-            disabled={data && data.features && !data.features['twilio']}
+            isDisabled={!appsList.includes('Screenshare')}
           >
             Screenshare
           </Button>
@@ -292,6 +326,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
+            isDisabled={!appsList.includes('Stickie')}
             onClick={() => newApplication('Stickie', user?.data.name)}
           >
             Stickie
@@ -305,6 +340,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
+            isDisabled={!appsList.includes('Webview')}
             onClick={() => newApplication('Webview')}
           >
             Webview
