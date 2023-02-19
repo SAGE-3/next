@@ -330,7 +330,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
+              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 420 }, { text: text }));
             });
         }
       });
@@ -351,7 +351,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('SageCell', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
@@ -621,7 +621,7 @@ export function Background(props: BackgroundProps) {
       const x = cursorPosition.x;
       const y = cursorPosition.y;
       createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
       );
 
       // Returning false stops the event and prevents default browser events

@@ -69,7 +69,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
 
     // Setup initial size
     let w = 400;
-    let h = 400;
+    let h = 420;
     if (appName === 'SageCell') {
       w = 650;
       h = 400;
