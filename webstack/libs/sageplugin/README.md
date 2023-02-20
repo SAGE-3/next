@@ -39,16 +39,16 @@ s3api.update({ state: { count: counter } });
 # Packaging and uploading to a SAGE3 Server
 
 1. Build your webapp using the tools of your choice.
-2. Ensure the entry point to your webapp is an `index.html` that is located in the root folder of your dist.
-3. Ensure assets, scripts, styles, that are referenced in your `index.html` file are relative paths.
+2. Ensure the entry point to your webapp is an `index.html` file that is located in the root folder of your dist.
+3. Ensure assets, scripts, styles, etc. which are referenced in your `index.html` file are relative paths.
    - Instead of `<script src="script.js">`
-   - It has to be relative, `<Script src="./script.js"/>`
+   - It has to be relative, `<script src="./script.js"/>`
      - `./` has been prefixed
-4. Zip the folder containing your app. It must be a `.zip` file that is uploaded.
+4. Zip the folder containing your app. It must be a `.zip` file.
 5. Login to the SAGE3 Server of your choice. (Guests can not upload plugins.)
 6. From the SAGE3 Menu (lower left corner) select `Plugins`
 7. Under `Upload` select the zipped file of your app. Enter a `Plugin Name` and `Plugin Description`.
-8. Click Upload. After the upload has completed your should see the Plugin listed under `Your Plugins`
+8. Click Upload. After the upload has completed your should see the Plugin app listed under `Your Plugins`
 9. Enter any SAGE3 Board and Open the `Plugins Panel`. You should see your Plugin App listed.
 10. Click your Plugin to open it on the board.
 11. To delete your Plugin from the server, click the red X under the `Your Plugins` section.
