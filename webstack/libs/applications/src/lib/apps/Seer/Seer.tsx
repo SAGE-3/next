@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { downloadFile, useAppStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
+import { downloadFile, useAppStore, useHexColor, useUser, useUsersStore } from '@sage3/frontend';
 import {
   Alert,
   AlertIcon,
@@ -55,7 +55,6 @@ import Ansi from 'ansi-to-react';
 import dateFormat from 'date-fns/format';
 
 import Editor, { DiffEditor, loader, Monaco, useMonaco } from '@monaco-editor/react';
-import { User } from '@sage3/shared/types';
 
 import imgSource from './seer_icon.png';
 import docsImageSource from './sage3-docs-how-to-use.png';
@@ -713,8 +712,6 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       setOwnerColor(ownerColor || '#000000');
     }
   }, [s.kernel, users]);
-  // const owner = s.kernels.find((el) => el.key === s.kernel)?.value.owner;
-  // const ownerColor = users.find((el) => el._id === owner)?.data.color;
 
   useEffect(() => {
     if (parsedJSON.execute_result) {
@@ -735,11 +732,10 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
     <>
       <div
         style={{
-          background: `#f4f4f4`,
+          background: useColorModeValue(`#f4f4f4`, `#1b1b1b`),
           padding: `1em`,
           display: `block`,
-          // borderLeft: `3px solid #2a7bbd`,
-          borderLeft: `4px solid ${ownerColor}`,
+          borderLeft: `0.2em solid ${useHexColor(ownerColor)}`,
           pageBreakInside: `avoid`,
           overflow: `auto`,
         }}
