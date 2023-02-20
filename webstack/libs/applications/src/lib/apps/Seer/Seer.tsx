@@ -36,6 +36,12 @@ import {
   useDisclosure,
   Kbd,
   Flex,
+  Accordion,
+  AccordionItem,
+  AccordionIcon,
+  AccordionButton,
+  AccordionPanel,
+  Link,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -54,10 +60,13 @@ import Ansi from 'ansi-to-react';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import Editor, { DiffEditor, loader, Monaco, useMonaco } from '@monaco-editor/react';
+import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 
 import imgSource from './seer_icon.png';
 import docsImageSource from './sage3-docs-how-to-use.png';
+
+import { default as Markdown } from 'markdown-to-jsx';
+import { title } from 'vega-lite/build/src/channeldef';
 
 /**
  * Seer App
@@ -294,7 +303,11 @@ function AppComponent(props: App): JSX.Element {
         style={{
           backgroundColor: useColorModeValue('#F0F2F6', '#141414'),
           color: useColorModeValue('#000000', '#FFFFFF'),
-          fontFamily: 'monospace',
+          fontFamily:
+            "\
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', 'Arial', \
+          'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',\
+          ",
           fontSize: s.fontSize + 'px',
           whiteSpace: 'pre-wrap',
           wordWrap: 'break-word',
@@ -701,6 +714,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
   const parsedJSON = JSON.parse(props.output);
   const users = useUsersStore((state) => state.users);
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
+  const createApp = useAppStore((state) => state.create);
   const [data, setData] = useState<any>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
   const s = props.app.data.state as AppState;
@@ -712,6 +726,10 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       setOwnerColor(ownerColor || '#000000');
     }
   }, [s.kernel, users]);
+
+  // const LinkWrapper = (props: { children: React.ReactNode }) => {
+  //   return <span>{props.children}</span>;
+  // };
 
   useEffect(() => {
     if (parsedJSON.execute_result) {
@@ -727,21 +745,63 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
     }
   }, [props.output]);
 
+  const startSageCell = (kernelId: string, kernelAlias: string) => {
+    createApp({
+      title: `${kernelAlias}`,
+      roomId: props.app.data.roomId,
+      boardId: props.app.data.boardId,
+      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
+      size: { width: 600, height: props.app.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'SageCell',
+      state: {
+        code: '',
+        language: 'python',
+        fontSize: 16,
+        theme: 'xcode',
+        kernel: kernelId,
+        availableKernels: [],
+        privateMessage: [],
+        output: '',
+        executeInfo: { executeFunc: '', params: {} },
+      },
+      raised: true,
+    });
+  };
+
+  const startWebvew = (url: string) => {
+    console.log('startWebvew', url);
+    createApp({
+      title: `WTF`,
+      roomId: props.app.data.roomId,
+      boardId: props.app.data.boardId,
+      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
+      size: { width: 600, height: props.app.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Webview',
+      state: {
+        webviewurl: url,
+        zoom: 1.0,
+      },
+      raised: true,
+    });
+  };
+
   if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
   return (
     <>
       <div
         style={{
           background: useColorModeValue(`#f4f4f4`, `#1b1b1b`),
-          padding: `1em`,
+          padding: `.5em`,
           display: `block`,
           borderLeft: `0.2em solid ${useHexColor(ownerColor)}`,
           pageBreakInside: `avoid`,
-          overflow: `auto`,
+          fontSize: `${s.fontSize}px`,
         }}
       >
         {executionCount > 0 ? (
-          <Text fontSize={s.fontSize} color="red.500">
+          <Text fontSize={'14px'} color="red.500">
             {`[${executionCount}]: `}
           </Text>
         ) : null}
@@ -750,15 +810,10 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
             <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
             <Ansi>{parsedJSON.error.traceback.join('\n')}</Ansi>
           </>
-        ) : (
-          <Alert status="error" variant="left-accent">
-            <AlertIcon />
-            <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
-          </Alert>
-        )}
+        ) : null}
 
         {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
-          <Text>{parsedJSON.stream.text}</Text>
+          <Ansi>{parsedJSON.stream.text}</Ansi>
         ) : (
           <Text color="red">{parsedJSON.stream.text}</Text>
         )}
@@ -777,8 +832,178 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                   return <Image key={i} src={`data:image/png;base64,${data[key]}`} />;
                 case 'image/svg+xml':
                   return <Image key={i} src={`data:image/svg+xml;base64,${data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${data[key]}`} />;
+                case 'text/markdown':
+                  return (
+                    <Markdown
+                      options={{
+                        overrides: {
+                          a: {
+                            component: 'a',
+                            props: {
+                              onClick: (e: any) => {
+                                e.preventDefault();
+                                startWebvew(e.target.href);
+                              },
+                              style: {
+                                color: '#555',
+                                textDecoration: 'underline',
+                              },
+                            },
+                          },
+                          h1: {
+                            component: 'h1',
+                            props: {
+                              style: {
+                                fontSize: '1.5em',
+                                fontWeight: 'bold',
+                                color: '#008080',
+                              },
+                            },
+                          },
+                          h2: {
+                            component: 'h2',
+                            props: {
+                              style: {
+                                fontSize: '1.3em',
+                                fontWeight: 'bold',
+                                color: '#008080',
+                              },
+                            },
+                          },
+                          h3: {
+                            component: 'h3',
+                            props: {
+                              style: {
+                                fontSize: '1.1em',
+                                fontWeight: 'bold',
+                                color: '#008080',
+                              },
+                            },
+                          },
+                          h4: {
+                            component: 'h4',
+                            props: {
+                              style: {
+                                fontSize: '1em',
+                                fontWeight: 'bold',
+                                color: '#008080',
+                              },
+                            },
+                          },
+                          h5: {
+                            component: 'h5',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                                fontWeight: 'bold',
+                                color: '#008080',
+                              },
+                            },
+                          },
+                          h6: {
+                            component: 'h6',
+                            props: {
+                              style: {
+                                fontSize: '0.8em',
+                                fontWeight: 'bold',
+                                color: '#008080',
+                              },
+                            },
+                          },
+                          p: {
+                            component: 'p',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                              },
+                            },
+                          },
+                          li: {
+                            component: 'li',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                                display: 'list-item',
+                                margin: '1em',
+                              },
+                            },
+                          },
+                          ul: {
+                            component: 'ul',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                              },
+                            },
+                          },
+                          ol: {
+                            component: 'ol',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                                listStyleType: 'decimal',
+                              },
+                            },
+                          },
+                          blockquote: {
+                            component: 'blockquote',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                                borderLeft: '0.2em solid #008080',
+                                paddingLeft: '0.5em',
+                              },
+                            },
+                          },
+                          code: {
+                            component: 'code',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                                // backgroundColor: '#f4f4f4',
+                                padding: '0.2em',
+                                fontFamily: 'monospace',
+                              },
+                            },
+                          },
+                          del: {
+                            component: 'del',
+                            props: {
+                              style: {
+                                fontSize: '0.9em',
+                                textDecoration: 'line-through',
+                              },
+                            },
+                          },
+                        },
+                      }}
+                    >
+                      {data[key]}
+                    </Markdown>
+                  );
                 default:
-                  return <MapJSONObject key={i} data={data[key]} />;
+                  return (
+                    <Box>
+                      {/* Simple error message with a dropdown to show json  */}
+                      <Accordion allowToggle>
+                        <AccordionItem>
+                          <AccordionButton>
+                            <Box flex="1" textAlign="left">
+                              <Text color="red" fontWeight={'bold'}>
+                                Error: {key} is not supported in this version of Seer.
+                              </Text>
+                            </Box>
+                            <AccordionIcon />
+                          </AccordionButton>
+                          <AccordionPanel pb={4}>
+                            <MapJSONObject key={i} data={data[key]} />
+                          </AccordionPanel>
+                        </AccordionItem>
+                      </Accordion>
+                    </Box>
+                  );
               }
             })}
       </div>
