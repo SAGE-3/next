@@ -57,7 +57,7 @@ class Seer(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def get_available_kernels(self, user_uuid=None):
+    def get_available_kernels(self):
         """
         This function will get the kernels from the redis server
         """
@@ -69,8 +69,6 @@ class Seer(SmartBit):
         [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
         available_kernels = []
         for kernel in kernels.keys():
-            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
-                continue
             if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})

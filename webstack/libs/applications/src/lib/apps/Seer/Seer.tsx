@@ -6,12 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { downloadFile, useAppStore, useUser } from '@sage3/frontend';
+import { downloadFile, useAppStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
 import {
   Alert,
   AlertIcon,
-  AspectRatio,
-  Avatar,
   Badge,
   Box,
   Button,
@@ -25,7 +23,6 @@ import {
   ModalHeader,
   ModalFooter,
   ModalBody,
-  ModalCloseButton,
   Select,
   Spacer,
   Spinner,
@@ -39,7 +36,6 @@ import {
   useDisclosure,
   Kbd,
   Flex,
-  Container,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -64,11 +60,23 @@ import { User } from '@sage3/shared/types';
 import imgSource from './seer_icon.png';
 import docsImageSource from './sage3-docs-how-to-use.png';
 
+/**
+ * Seer App
+ */
+
+/**
+ * Props for help modal
+ */
 type HelpProps = {
   onClose: () => void;
   isOpen: boolean;
 };
 
+/**
+ * Help modal for Seer app
+ * @param props
+ * @returns
+ */
 export function HelpModal(props: HelpProps) {
   return (
     <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="xl">
@@ -127,12 +135,7 @@ export function HelpModal(props: HelpProps) {
               SAGE3 docs.
             </Text>
           </Box>
-          <Box mt={4}>
-            {/* <Text fontSize="md">SAGE3 Team</Text>
-            <Text fontSize="md">University of Hawaii</Text>
-            <Text fontSize="md">University of Illinois Chicago</Text>
-            <Text fontSize="md">Virginia Tech</Text> */}
-          </Box>
+          <Box mt={4}></Box>
           <Flex justifyContent="center" alignItems="center">
             <Image boxSize={'48px'} src={docsImageSource} alt="SAGE3 Docs" />
           </Flex>
@@ -153,12 +156,14 @@ function AppComponent(props: App): JSX.Element {
   const toast = useToast();
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const [access, setAccess] = useState<boolean>(true);
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
+  const [access, setAccess] = useState<boolean>(false);
+  const boardId = props.data.boardId;
   const SPACE = 2;
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
@@ -173,6 +178,35 @@ function AppComponent(props: App): JSX.Element {
       },
     });
   }, []);
+
+  useEffect(() => {
+    // Get all kernels that I'm available to see
+    const kernels: any[] = [];
+    s.kernels
+      // filter kernels to show this board kernels only
+      .filter((kernel) => kernel.value.board === boardId)
+      // filter kernels to show pulic or private kernels that I own
+      .forEach((kernel) => {
+        if (kernel.value.is_private) {
+          if (kernel.value.owner_uuid == user?._id) {
+            kernels.push(kernel);
+          }
+        } else {
+          kernels.push(kernel);
+        }
+      });
+    setMyKernels(kernels);
+  }, [JSON.stringify(s.kernels)]);
+
+  // Check if I have access to the selected kernel
+  useEffect(() => {
+    if (!s.kernel || s.kernel === '') {
+      setAccess(false);
+    } else {
+      const kernel = myKernels.find((kernel) => kernel.key == s.kernel);
+      setAccess(kernel ? true : false);
+    }
+  }, [s.kernel, myKernels]);
 
   const handleUpdatePrompt = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
@@ -226,6 +260,34 @@ function AppComponent(props: App): JSX.Element {
       executeInfo: { executeFunc: '', params: {} },
     });
   };
+
+  // update local state of myKernels when available kernels change
+  useEffect(() => {
+    const kernels: any[] = [];
+    s.kernels.forEach((kernel) => {
+      // only add private kernels if user owns them
+      if (kernel.value.is_private) {
+        if (kernel.value.owner_uuid == user?._id) {
+          kernels.push(kernel);
+        }
+      } else {
+        kernels.push(kernel);
+      }
+    });
+    setMyKernels(kernels);
+  }, [JSON.stringify(s.kernels)]);
+
+  // check if user has access to kernel
+  useEffect(() => {
+    if (!s.kernel || s.kernel === '') {
+      setAccess(false);
+    }
+    if (myKernels.length > 0) {
+      // need to have some kernels to choose from
+      const kernel = myKernels.find((kernel) => kernel.key == s.kernel);
+      setAccess(kernel ? true : false);
+    }
+  }, [s.kernel, myKernels]);
 
   return (
     <AppWindow app={props}>
@@ -293,18 +355,23 @@ function AppComponent(props: App): JSX.Element {
                 size={'24px'}
               />
             </Tooltip>
-            {!s.kernel ? (
+            {!s.kernel && !access ? ( // no kernel selected and no access
               <Badge variant="outline" colorScheme="red">
                 Offline{' '}
               </Badge>
-            ) : (
+            ) : !s.kernel && access ? ( // no kernel selected but access
+              <Badge variant="outline" colorScheme="red">
+                Error{' '}
+              </Badge>
+            ) : s.kernel && !access ? ( // kernel selected but no access
+              <Badge variant="outline" colorScheme="red">
+                No Access{' '}
+              </Badge>
+            ) : s.kernel && access ? ( // kernel selected and access
               <Badge variant="outline" colorScheme="green">
                 Online{' '}
-                {/* {myKernels[s.kernel] && myKernels[s.kernel].status === 'busy' && (
-                  <Spinner size="xs" color="green.500" ml={1} />
-                )} */}
               </Badge>
-            )}
+            ) : null}
           </Stack>
           <Box // generation section container
             style={{
@@ -324,15 +391,14 @@ function AppComponent(props: App): JSX.Element {
                   }
                 }}
                 value={prompt}
-                // value={user === activeUser || activeUser === undefined ? prompt : `[Locked by ${activeUser?.data.name}]` + s.prompt}
                 onChange={handleUpdatePrompt}
                 placeholder={placeHolderValue}
                 _placeholder={{
-                  opacity: 0.7,
+                  opacity: 0.5,
                   color: useColorModeValue('#000000', '#FFFFFF'),
                 }}
                 style={{
-                  backgroundColor: useColorModeValue('#FFFFFE', '#303030'),
+                  backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
                   width: '100%',
                   height: '100%',
                   fontSize: s.fontSize + 'px',
@@ -345,7 +411,7 @@ function AppComponent(props: App): JSX.Element {
                 minH={'150px'}
                 border={'none'}
                 resize={'none'}
-                disabled={!access || !s.kernel}
+                isDisabled={!access || !s.kernel}
               />
               <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
                 {access ? (
@@ -360,7 +426,7 @@ function AppComponent(props: App): JSX.Element {
                           <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
                         )
                       }
-                      disabled={!s.kernel}
+                      isDisabled={!s.kernel}
                     />
                   </Tooltip>
                 ) : null}
@@ -369,7 +435,7 @@ function AppComponent(props: App): JSX.Element {
                     <IconButton
                       onClick={handleInterrupt}
                       aria-label={''}
-                      disabled={!s.kernel}
+                      isDisabled={!s.kernel}
                       icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
                       hidden={s.executeInfo?.executeFunc === 'generate' ? false : true}
                     />
@@ -380,7 +446,7 @@ function AppComponent(props: App): JSX.Element {
                     <IconButton
                       onClick={handleClear}
                       aria-label={''}
-                      disabled={!s.kernel}
+                      isDisabled={!s.kernel}
                       icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
                     />
                   </Tooltip>
@@ -404,7 +470,7 @@ function AppComponent(props: App): JSX.Element {
               marginBottom: '-4px',
             }}
           >
-            <HStack mr={SPACE}>{<InputBox app={props} access={true} />}</HStack>
+            <HStack mr={SPACE}>{<InputBox app={props} />}</HStack>
           </Box>
           <Stack direction="row">
             <Badge variant="outline" colorScheme="red" mb={-1}>
@@ -418,8 +484,6 @@ function AppComponent(props: App): JSX.Element {
               minHeight: '150px',
               border: '2px solid',
               borderColor: '#008080',
-              // overflow: 'auto',
-              // resize: 'vertical',
             }}
           >
             {!s.output ? <></> : <OutputBox output={s.output} app={props} />}
@@ -437,7 +501,6 @@ function AppComponent(props: App): JSX.Element {
  */
 type InputBoxProps = {
   app: App;
-  access: boolean; //Does this user have access to the sagecell's selected kernel
 };
 
 /**
@@ -458,8 +521,40 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   const toast = useToast();
   // Handle to the Monoco API
   const monaco = useMonaco();
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
+  const [access, setAccess] = useState<boolean>(false);
+  const [kernel, setKernel] = useState(s.kernel);
+  const boardId = props.app.data.boardId;
 
-  // Register a new command to evaluate the code
+  useEffect(() => {
+    // Get all kernels that I'm available to see
+    const kernels: any[] = [];
+    s.kernels
+      // filter kernels to show this board kernels only
+      .filter((kernel) => kernel.value.board === boardId)
+      // filter kernels to show pulic or private kernels that I own
+      .forEach((kernel) => {
+        if (kernel.value.is_private) {
+          if (kernel.value.owner_uuid == user?._id) {
+            kernels.push(kernel);
+          }
+        } else {
+          kernels.push(kernel);
+        }
+      });
+    setMyKernels(kernels);
+  }, [JSON.stringify(s.kernels)]);
+
+  // Check if I have access to the selected kernel
+  useEffect(() => {
+    if (!s.kernel || s.kernel === '') {
+      setAccess(false);
+    } else {
+      const access = myKernels.find((kernel) => kernel.key == s.kernel);
+      setAccess(access ? true : false);
+    }
+  }, [s.kernel, myKernels]);
+
   useEffect(() => {
     if (editor.current) {
       editor.current.addAction({
@@ -526,6 +621,12 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     editor.current = ed;
   }
 
+  useEffect(() => {
+    if (s.kernel !== kernel) {
+      setKernel(s.kernel);
+    }
+  }, [s.kernel]);
+
   return (
     <>
       <Editor
@@ -533,7 +634,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         defaultLanguage="python"
         // height={'16vh'}
         height={'148px'}
-        width={`calc(100% - ${props.access ? 50 : 0}px)`}
+        width={`calc(100% - ${access ? 50 : 0}px)`}
         language={'python'}
         theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
         options={{
@@ -546,12 +647,14 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
           lineDecorationsWidth: 0,
           lineNumbersMinChars: 0,
           glyphMargin: false,
+          readOnlyMessage: 'You do not have access to this kernel',
+          readOnly: !access,
         }}
         onChange={() => setCode(editor.current?.getValue() || '')}
         onMount={handleEditorDidMount}
       />
-      <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
-        {props.access ? (
+      {access ? (
+        <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
           <Tooltip hasArrow label="Execute" placement="right-start">
             <IconButton
               onClick={() => handleExecute(s.kernel)}
@@ -563,28 +666,23 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                   <MdPlayArrow size={'1.5em'} color="#008080" />
                 )
               }
-              disabled={!s.kernel}
+              isDisabled={!s.kernel}
             />
           </Tooltip>
-        ) : null}
-        {props.access ? (
           <Tooltip hasArrow label="Stop" placement="right-start">
             <IconButton
               onClick={handleInterrupt}
               hidden={s.executeInfo?.executeFunc === 'execute' ? false : true}
               aria-label={''}
-              disabled={!s.kernel}
+              isDisabled={!s.kernel}
               icon={<MdStop size={'1.5em'} color="#008080" />}
             />
           </Tooltip>
-        ) : null}
-
-        {props.access ? (
           <Tooltip hasArrow label="Clear All" placement="right-start">
-            <IconButton onClick={handleClear} aria-label={''} disabled={!s.kernel} icon={<MdClearAll size={'1.5em'} color="#008080" />} />
+            <IconButton onClick={handleClear} aria-label={''} isDisabled={!s.kernel} icon={<MdClearAll size={'1.5em'} color="#008080" />} />
           </Tooltip>
-        ) : null}
-      </ButtonGroup>
+        </ButtonGroup>
+      ) : null}
     </>
   );
 };
@@ -602,9 +700,21 @@ type OutputBoxProps = {
 const OutputBox = (props: OutputBoxProps): JSX.Element => {
   if (!props.output) return <></>;
   const parsedJSON = JSON.parse(props.output);
+  const users = useUsersStore((state) => state.users);
+  const [ownerColor, setOwnerColor] = useState<string>('#000000');
   const [data, setData] = useState<any>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
   const s = props.app.data.state as AppState;
+
+  useEffect(() => {
+    if (s.kernel && users) {
+      const owner = s.kernels.find((el) => el.key === s.kernel)?.value.owner_uuid;
+      const ownerColor = users.find((el) => el._id === owner)?.data.color;
+      setOwnerColor(ownerColor || '#000000');
+    }
+  }, [s.kernel, users]);
+  // const owner = s.kernels.find((el) => el.key === s.kernel)?.value.owner;
+  // const ownerColor = users.find((el) => el._id === owner)?.data.color;
 
   useEffect(() => {
     if (parsedJSON.execute_result) {
@@ -625,9 +735,13 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
     <>
       <div
         style={{
-          padding: '0.5em',
-          boxShadow: 'inset 0 0 6px 2px rgb(0 0 0 / 30%)',
-          resize: 'vertical',
+          background: `#f4f4f4`,
+          padding: `1em`,
+          display: `block`,
+          // borderLeft: `3px solid #2a7bbd`,
+          borderLeft: `4px solid ${ownerColor}`,
+          pageBreakInside: `avoid`,
+          overflow: `auto`,
         }}
       >
         {executionCount > 0 ? (
@@ -662,7 +776,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                   return <Text key={i}>{data[key]}</Text>;
                 case 'text/html':
                   const html = data[key].replace('\n', '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+                  return <Box key={i} dangerouslySetInnerHTML={{ __html: html }} />;
                 case 'image/png':
                   return <Image key={i} src={`data:image/png;base64,${data[key]}`} />;
                 case 'image/svg+xml':
@@ -722,98 +836,167 @@ function ToolbarComponent(props: App): JSX.Element {
   // Access the global app state
   const s = props.data.state as AppState;
   const { user } = useUser();
+  const users = useUsersStore((state) => state.users);
   // Update functions from the store
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
-  const [selected, setSelected] = useState<string>('');
-  const [myKernels, setMyKernels] = useState(s.kernels);
-  const [access, setAccess] = useState(true);
+  const boardId = props.data.boardId;
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
+  // set to global kernel if it exists
+  const [selected, setSelected] = useState<string>(s.kernel);
+  const [ownerId, setOwnerId] = useState<string>('');
+  const [ownerName, setOwnerName] = useState<string>('');
+  const [isPrivate, setIsPrivate] = useState<boolean>(false);
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
+  /**
+   * This function gets the kernels for the board
+   * @returns
+   * @memberof ToolbarComponent
+   */
   function getKernels() {
-    if (!user) return;
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
+        params: {},
       },
     });
   }
 
-  useEffect(() => {
-    getKernels();
-  }, []);
-
-  useEffect(() => {
-    // Get all kernels that I'm available to see
-    const kernels: any[] = [];
-    s.kernels.forEach((kernel) => {
-      if (kernel.value.is_private) {
-        if (kernel.value.owner_uuid == user?._id) {
-          kernels.push(kernel);
-        }
-      } else {
-        kernels.push(kernel);
-      }
-    });
-    setMyKernels(kernels);
-  }, [JSON.stringify(s.kernels)]);
-
-  useEffect(() => {
-    if (s.kernel == '') {
-      setAccess(true);
-    } else {
-      const access = myKernels.find((kernel) => kernel.key == s.kernel);
-      setAccess(access ? true : false);
+  /**
+   * This function sets the state of the toolbar based on the kernels
+   * @returns
+   * @memberof ToolbarComponent
+   */
+  function setStates() {
+    const b = s.kernels.filter((el) => el.value.board === boardId);
+    if (!s.kernels || s.kernels.length === 0 || b.length === 0) {
+      setSelected('');
+      setOwnerId('');
+      setOwnerName('');
+      setIsPrivate(false);
+      update(props._id, { title: 'Seer> ' });
+      return;
     }
-  }, [s.kernel, myKernels]);
-
-  // Update from the props
-  useEffect(() => {
-    s.kernel ? setSelected(s.kernel) : setSelected('Select kernel');
-  }, [s.kernel]);
-
-  function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (e.target.value) {
-      // save local state
-      setSelected(e.target.value);
-      // updae the app
-      updateState(props._id, { kernel: e.target.value });
-      // update the app description
-      update(props._id, { title: `SageCell> ${e.currentTarget.selectedOptions[0].text}` });
+    if (b.length > 0) {
+      const publicKernels = b.filter((el) => !el.value.is_private);
+      const privateKernels = b.filter((el) => el.value.is_private);
+      const ownedKernels = privateKernels.filter((el) => el.value.owner_uuid === user?._id);
+      const myList: any[] = [...publicKernels, ...ownedKernels];
+      setMyKernels(myList);
+      // get the selected kernel from the global state
+      const selectedKernel = s.kernels.find((el) => el.key === s.kernel);
+      // check if the selected kernel is in the list of kernels for this board
+      const ownerId = selectedKernel?.value.owner_uuid;
+      const ownerName = users.find((u) => u._id === ownerId)?.data.name;
+      const isPrivate = selectedKernel?.value.is_private;
+      const inBoard = b.find((el) => el.key === selectedKernel?.key);
+      // if the selected kernel is not in the list of kernels for this board then
+      // there is a problem so we should reset the state to the default
+      if (!inBoard) {
+        setSelected('');
+        setOwnerId('');
+        setOwnerName('');
+        setIsPrivate(false);
+        return;
+      }
+      // const inMyList = myList.find((el) => el.key === s.kernel);
+      if (selectedKernel) {
+        setSelected(selectedKernel.key);
+        setOwnerId(ownerId);
+        setOwnerName(ownerName ? ownerName : '');
+        setIsPrivate(isPrivate ? isPrivate : false);
+      }
     }
   }
 
-  // // Download the stickie as a text file
-  const downloadPy = () => {
+  /**
+   * Get the kernels when the app is mounted and update the state
+   * This happens when the component is mounted but is not triggered
+   * when the global state changes so we need to use the useEffect below
+   * to force changes if the user has the app open already
+   */
+  useEffect(() => {
+    if (!user) return;
+    getKernels();
+    setStates();
+  }, []);
+
+  /**
+   * This happens when the global state changes
+   */
+  useEffect(() => {
+    setStates();
+  }, [s.kernel, JSON.stringify(s.kernels)]);
+
+  /**
+   * This is called when the user selects a kernel from the dropdown
+   * It updates the global state and the app description
+   * @param {React.ChangeEvent<HTMLSelectElement>} e
+   * @returns {void}
+   */
+  function selectKernel(e: React.ChangeEvent<HTMLSelectElement>): void {
+    if (e.target.value !== s.kernel) {
+      const name = e.currentTarget.selectedOptions[0].text.split(' ')[0];
+      if (name && name !== 'Select Kernel' && name !== 'Private') {
+        update(props._id, { title: `Seer> ${name}` });
+        updateState(props._id, { kernel: e.target.value });
+      } else {
+        update(props._id, { title: 'Seer> ' });
+        updateState(props._id, { kernel: '' });
+      }
+    }
+  }
+
+  /**
+   * Download the stickie as a text file
+   * @returns {void}
+   */
+  const downloadPy = (): void => {
     // Current date
     const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     const content = `${s.code}`;
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     // Make a filename with username and date
-    const filename = 'sagecell-' + dt + '.py';
+    const filename = 'seer-' + dt + '.py';
     // Go for download
     downloadFile(txturl, filename);
   };
 
   return (
     <HStack>
+      <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
       {
         <>
-          {/* check if there are any available kernels and if one is selected */}
-          {!myKernels || !s.kernel ? (
-            // show a red light if the kernel is not running
+          {/* check if there are kernels avaible. if none show offline, if available but no access show online with no kernels,
+           if available and access show online with kernels
+          */}
+          {s.kernels.length === 0 ? (
             <Badge colorScheme="red" rounded="sm" size="lg">
               Offline
             </Badge>
-          ) : (
-            // show a green light if the kernel is running
-            <Badge colorScheme="green" rounded="sm" size="lg">
+          ) : s.kernels.length > 0 && !selected ? (
+            <Badge colorScheme="yellow" rounded="sm" size="lg">
               Online
+            </Badge>
+          ) : isPrivate ? (
+            ownerId === user?._id ? (
+              <Badge colorScheme="red" rounded="sm" size="lg">
+                Locked
+              </Badge>
+            ) : (
+              <Badge colorScheme="red" rounded="sm" size="lg">
+                Locked by {ownerName}
+              </Badge>
+            )
+          ) : (
+            <Badge colorScheme="green" rounded="sm" size="lg">
+              Ready
             </Badge>
           )}
           <Select
-            placeholder="Select Kernel"
+            placeholder={isPrivate ? 'Private' : 'Select Kernel'}
             rounded="lg"
             size="sm"
             width="150px"
@@ -821,16 +1004,24 @@ function ToolbarComponent(props: App): JSX.Element {
             px={0}
             colorScheme="teal"
             icon={<MdArrowDropDown />}
-            onChange={selectKernel}
-            value={selected ?? undefined}
+            onChange={(e) => selectKernel(e as React.ChangeEvent<HTMLSelectElement>)}
+            value={
+              // if the selected kernel is not the same as the global state, set the selected to the global state
+              // selected !== s.kernel ? s.kernel : selected
+              selected ?? undefined
+            }
             variant={'outline'}
+            isDisabled={
+              // disable the dropdown there is a active kernel and the user does not have access
+              isPrivate && user && user._id !== ownerId ? true : false
+            }
           >
-            {myKernels.map((kernel) => (
-              <option value={kernel.key} key={kernel.key}>
-                {kernel.value.kernel_alias} (
+            {myKernels.map((el) => (
+              <option value={el.key} key={el.key}>
+                {el.value.kernel_alias} (
                 {
                   // show kernel name as Python, R, or Julia
-                  kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
+                  el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'
                 }
                 )
               </option>
@@ -840,6 +1031,12 @@ function ToolbarComponent(props: App): JSX.Element {
           <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
             <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
               <MdRefresh />
+            </Button>
+          </Tooltip>
+
+          <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
+            <Button onClick={() => helpOnOpen()} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+              <MdHelp />
             </Button>
           </Tooltip>
 

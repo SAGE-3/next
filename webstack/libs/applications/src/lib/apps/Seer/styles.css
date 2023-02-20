@@ -12,20 +12,45 @@ blockquote {
   border-left: 0.5em #eee solid;
 }
 
-.sagecell .sagecell-light:hover {
-  background-color: rgba(66, 165, 245, 0.75) !important;
+table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  table-layout: fixed;
+  background: #f5f5f5 !important;
+  box-shadow: 0px 2px 4px #bbb;
 }
 
-.sagecell .sagecell-light-selected {
-  width: 8px;
-  margin-top: 0;
-  margin-right: 5px;
-  margin-bottom: 0;
-  margin-left: 0;
-  border-radius: 2px;
-  background-color: rgba(66, 165, 245, 1);
+thead {
+  border-bottom: 2px solid black;
+  vertical-align: bottom;
 }
 
-.sagecell .sagecell-light-selected:hover {
-  background-color: darken(rgba(66, 165, 245, 1), 20%);
+tr,
+th,
+td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+
+th {
+  font-weight: bold;
+}
+
+tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+
+tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+td:hover {
+  background-color: rgba(66, 165, 245, 0.3) !important;
 }
