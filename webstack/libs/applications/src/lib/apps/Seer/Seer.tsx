@@ -41,7 +41,6 @@ import {
   AccordionIcon,
   AccordionButton,
   AccordionPanel,
-  Link,
   Icon,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
@@ -76,9 +75,6 @@ import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 
 import imgSource from './seer_icon.png';
 import docsImageSource from './sage3-docs-how-to-use.png';
-
-// import { default as Markdown } from 'markdown-to-jsx';
-import { title } from 'vega-lite/build/src/channeldef';
 
 import Markdown from './Markdown';
 
@@ -191,15 +187,15 @@ function AppComponent(props: App): JSX.Element {
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   // Set the initial size of the window
-  useEffect(() => {
-    update(props._id, {
-      size: {
-        width: 1000,
-        height: 525,
-        depth: 1,
-      },
-    });
-  }, []);
+  // useEffect(() => {
+  //   update(props._id, {
+  //     size: {
+  //       width: 1000,
+  //       height: 525,
+  //       depth: 1,
+  //     },
+  //   });
+  // }, []);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -658,7 +654,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       <Editor
         value={code}
         defaultLanguage="python"
-        // height={'16vh'}
         height={'148px'}
         width={`calc(100% - ${access ? 50 : 0}px)`}
         language={'python'}
@@ -779,8 +774,8 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
     });
   };
 
-  const startWebvew = (url: string): void => {
-    console.log('startWebvew', url);
+  const startWebview = (url: string): void => {
+    // console.log('startWebvew', url);
     createApp({
       title: `Webview`,
       roomId: props.app.data.roomId,
@@ -826,7 +821,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
           <Ansi>{parsedJSON.stream.text}</Ansi>
         ) : (
           <div>
-            <Icon as={MdError} color="red.500" />
+            <Icon as={MdError} color="red.500" mr={2} mt={1} />
             <Ansi>{parsedJSON.stream.text}</Ansi>
           </div>
         )}
@@ -848,7 +843,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                 case 'image/jpeg':
                   return <Image key={i} src={`data:image/jpeg;base64,${data[key]}`} />;
                 case 'text/markdown':
-                  return <Markdown markdown={data[key]} startWebvew={startWebvew} />;
+                  return <Markdown markdown={data[key]} startWebview={startWebview} />;
                 default:
                   return (
                     <Box>

@@ -2,11 +2,11 @@ import { default as MD } from 'markdown-to-jsx';
 
 type MarkdownProps = {
   markdown: any;
-  startWebvew: (url: string) => void;
+  startWebview: (url: string) => void;
 };
 
 export default function Markdown(props: any) {
-  const { markdown, startWebvew } = props as MarkdownProps;
+  const { markdown, startWebview } = props as MarkdownProps;
   return (
     <MD
       options={{
@@ -16,7 +16,7 @@ export default function Markdown(props: any) {
             props: {
               onClick: (e: any) => {
                 e.preventDefault();
-                startWebvew(e.target.href);
+                startWebview(e.target.href);
               },
               style: {
                 color: '#555',
