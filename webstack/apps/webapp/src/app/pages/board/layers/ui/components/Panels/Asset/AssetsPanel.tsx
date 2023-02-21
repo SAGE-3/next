@@ -105,7 +105,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
                 size={'xs'}
                 onClick={onOpen}
                 // Block guests from uploading assets
-                disabled={auth?.provider === 'guest'}
+                isDisabled={auth?.provider === 'guest'}
               >
                 Upload
               </Button>

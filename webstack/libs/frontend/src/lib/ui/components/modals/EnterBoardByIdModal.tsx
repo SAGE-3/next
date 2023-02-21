@@ -133,7 +133,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
             <Button colorScheme="blue" mr={4} onClick={props.onClose}>
               Cancel
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} disabled={!isUUIDv4(boardId)}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!isUUIDv4(boardId)}>
               Enter
             </Button>
           </ModalFooter>

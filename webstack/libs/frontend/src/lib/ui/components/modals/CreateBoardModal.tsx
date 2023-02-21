@@ -190,12 +190,12 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               value={password}
               onChange={handlePassword}
               isRequired={isProtected}
-              disabled={!isProtected}
+              isDisabled={!isProtected}
             />
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description || (isProtected && !password)}>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description || (isProtected && !password)}>
             Create
           </Button>
         </ModalFooter>

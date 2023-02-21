@@ -49,6 +49,12 @@ const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkStore');
 
+// Analytics
+var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
+var analytics_enabled = true;
+// random user id
+const userId = genUserId();
+
 // handle install/update for Windows
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
 if (require('electron-squirrel-startup')) {
@@ -204,7 +210,7 @@ if (commander.debug) {
 app.setAboutPanelOptions({
   applicationName: 'SAGE3',
   applicationVersion: version,
-  copyright: 'Copyright © 2022 Project SAGE3',
+  copyright: 'Copyright © 2023 Project SAGE3',
   website: 'https://www.sage3.app/',
 });
 
@@ -268,6 +274,64 @@ function disableGeolocation(session) {
   }
 }
 
+// Size and position of the window
+let state = {};
+const defaultSize = {
+  frame: !commander.no_decoration,
+  fullscreen: commander.fullscreen,
+  x: commander.xorigin,
+  y: commander.yorigin,
+  width: commander.width,
+  height: commander.height,
+};
+
+// Function to save the state in the data store
+const saveState = async () => {
+  if (!mainWindow.isMinimized()) {
+    Object.assign(state, getCurrentPosition());
+  }
+  state.fullscreen = mainWindow.isFullScreen();
+  state.server = mainWindow.webContents.getURL();
+  windowStore.setWindow(state);
+  if (commander.clear) {
+    console.log('Preferences> clear all');
+    windowStore.clear();
+  }
+};
+
+// Function to get values back from the store
+const restore = () => windowStore.getWindow();
+// Function to get the current position and size
+const getCurrentPosition = () => {
+  const position = mainWindow.getPosition();
+  const size = mainWindow.getSize();
+  return {
+    x: position[0],
+    y: position[1],
+    width: size[0],
+    height: size[1],
+  };
+};
+
+// Function to check if window is within some bounds
+const windowWithinBounds = (windowState, bounds) => {
+  return (
+    windowState.x >= bounds.x &&
+    windowState.y >= bounds.y &&
+    windowState.x + windowState.width <= bounds.x + bounds.width &&
+    windowState.y + windowState.height <= bounds.y + bounds.height
+  );
+};
+
+// Function to return default values: center of primary screen
+const resetToDefaults = () => {
+  const bounds = electron.screen.getPrimaryDisplay().bounds;
+  return Object.assign({}, defaultSize, {
+    x: (bounds.width - defaultSize.width) / 2,
+    y: (bounds.height - defaultSize.height) / 2,
+  });
+};
+
 /**
  * Creates an electron window.
  *
@@ -309,47 +373,6 @@ function createWindow() {
     },
   };
 
-  // Size and position of the window
-  let state = {};
-  const defaultSize = {
-    frame: !commander.no_decoration,
-    fullscreen: commander.fullscreen,
-    x: commander.xorigin,
-    y: commander.yorigin,
-    width: commander.width,
-    height: commander.height,
-  };
-
-  // Function to get values back from the store
-  const restore = () => windowStore.getWindow();
-  // Function to get the current position and size
-  const getCurrentPosition = () => {
-    const position = mainWindow.getPosition();
-    const size = mainWindow.getSize();
-    return {
-      x: position[0],
-      y: position[1],
-      width: size[0],
-      height: size[1],
-    };
-  };
-  // Function to check if window is within some bounds
-  const windowWithinBounds = (windowState, bounds) => {
-    return (
-      windowState.x >= bounds.x &&
-      windowState.y >= bounds.y &&
-      windowState.x + windowState.width <= bounds.x + bounds.width &&
-      windowState.y + windowState.height <= bounds.y + bounds.height
-    );
-  };
-  // Function to return default values: center of primary screen
-  const resetToDefaults = () => {
-    const bounds = electron.screen.getPrimaryDisplay().bounds;
-    return Object.assign({}, defaultSize, {
-      x: (bounds.width - defaultSize.width) / 2,
-      y: (bounds.height - defaultSize.height) / 2,
-    });
-  };
   // Function to calculate if window is visible
   const ensureVisibleOnSomeDisplay = (windowState) => {
     const visible = electron.screen.getAllDisplays().some((display) => {
@@ -362,19 +385,7 @@ function createWindow() {
     }
     return windowState;
   };
-  // Function to save the state in the data store
-  const saveState = () => {
-    if (!mainWindow.isMinimized()) {
-      Object.assign(state, getCurrentPosition());
-    }
-    state.fullscreen = mainWindow.isFullScreen();
-    state.server = mainWindow.webContents.getURL();
-    windowStore.setWindow(state);
-    if (commander.clear) {
-      console.log('Preferences> clear all');
-      windowStore.clear();
-    }
-  };
+
   // Restore the state
   state = ensureVisibleOnSomeDisplay(restore());
 
@@ -404,6 +415,13 @@ function createWindow() {
 
   // Build a menu
   buildMenu(mainWindow);
+
+  // Analytics on start
+  if (!commander.server.includes('localhost') && analytics_enabled) {
+    analyticsOnStart(userId, state.server);
+  } else {
+    analytics_enabled = false;
+  }
 
   if (commander.cache) {
     // clear the caches, useful to remove password cookies
@@ -484,7 +502,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  mainWindow.on('close', saveState);
+  // mainWindow.on('close', saveState);
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
     // Dereference the window object
@@ -807,6 +825,16 @@ app.on('activate', function () {
   if (mainWindow === null) {
     createWindow();
   }
+});
+
+app.on('before-quit', async function (event) {
+  event.preventDefault();
+  saveState();
+  // Analytics on stop
+  if (analytics_enabled) {
+    await analyticsOnStop(userId);
+  }
+  process.exit(0);
 });
 
 /**
