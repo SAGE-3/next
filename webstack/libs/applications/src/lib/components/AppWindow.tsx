@@ -127,7 +127,7 @@ export function AppWindow(props: WindowProps) {
   function handleDragStart() {
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'transform';
+      // divRef.current.style.willChange = 'transform';
     }
     setAppDragging(true);
     bringForward();
@@ -179,7 +179,7 @@ export function AppWindow(props: WindowProps) {
     }
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'auto';
+      // divRef.current.style.willChange = 'auto';
     }
   }
 
@@ -187,7 +187,7 @@ export function AppWindow(props: WindowProps) {
   function handleResizeStart() {
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'transform';
+      // divRef.current.style.willChange = 'transform';
     }
     setAppDragging(true);
     bringForward();
@@ -233,7 +233,7 @@ export function AppWindow(props: WindowProps) {
 
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'auto';
+      // divRef.current.style.willChange = 'auto';
     }
   }
 
