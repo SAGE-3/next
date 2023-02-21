@@ -42,6 +42,7 @@ import {
   AccordionButton,
   AccordionPanel,
   Link,
+  Icon,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -50,7 +51,18 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styles.css';
-import { MdAdd, MdArrowDropDown, MdClearAll, MdFileDownload, MdHelp, MdPlayArrow, MdRefresh, MdRemove, MdStop } from 'react-icons/md';
+import {
+  MdAdd,
+  MdArrowDropDown,
+  MdClearAll,
+  MdError,
+  MdFileDownload,
+  MdHelp,
+  MdPlayArrow,
+  MdRefresh,
+  MdRemove,
+  MdStop,
+} from 'react-icons/md';
 import { useEffect, useRef, useState } from 'react';
 
 // import AceEditor from "react-ace";
@@ -65,8 +77,10 @@ import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 import imgSource from './seer_icon.png';
 import docsImageSource from './sage3-docs-how-to-use.png';
 
-import { default as Markdown } from 'markdown-to-jsx';
+// import { default as Markdown } from 'markdown-to-jsx';
 import { title } from 'vega-lite/build/src/channeldef';
+
+import Markdown from './Markdown';
 
 /**
  * Seer App
@@ -727,10 +741,6 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
     }
   }, [s.kernel, users]);
 
-  // const LinkWrapper = (props: { children: React.ReactNode }) => {
-  //   return <span>{props.children}</span>;
-  // };
-
   useEffect(() => {
     if (parsedJSON.execute_result) {
       setData(parsedJSON.execute_result.data);
@@ -769,10 +779,10 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
     });
   };
 
-  const startWebvew = (url: string) => {
+  const startWebvew = (url: string): void => {
     console.log('startWebvew', url);
     createApp({
-      title: `WTF`,
+      title: `Webview`,
       roomId: props.app.data.roomId,
       boardId: props.app.data.boardId,
       position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
@@ -790,7 +800,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
   if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
   return (
     <>
-      <div
+      <Box
         style={{
           background: useColorModeValue(`#f4f4f4`, `#1b1b1b`),
           padding: `.5em`,
@@ -815,7 +825,10 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
         {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
           <Ansi>{parsedJSON.stream.text}</Ansi>
         ) : (
-          <Text color="red">{parsedJSON.stream.text}</Text>
+          <div>
+            <Icon as={MdError} color="red.500" />
+            <Ansi>{parsedJSON.stream.text}</Ansi>
+          </div>
         )}
 
         {!data
@@ -835,154 +848,7 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                 case 'image/jpeg':
                   return <Image key={i} src={`data:image/jpeg;base64,${data[key]}`} />;
                 case 'text/markdown':
-                  return (
-                    <Markdown
-                      options={{
-                        overrides: {
-                          a: {
-                            component: 'a',
-                            props: {
-                              onClick: (e: any) => {
-                                e.preventDefault();
-                                startWebvew(e.target.href);
-                              },
-                              style: {
-                                color: '#555',
-                                textDecoration: 'underline',
-                              },
-                            },
-                          },
-                          h1: {
-                            component: 'h1',
-                            props: {
-                              style: {
-                                fontSize: '1.5em',
-                                fontWeight: 'bold',
-                                color: '#008080',
-                              },
-                            },
-                          },
-                          h2: {
-                            component: 'h2',
-                            props: {
-                              style: {
-                                fontSize: '1.3em',
-                                fontWeight: 'bold',
-                                color: '#008080',
-                              },
-                            },
-                          },
-                          h3: {
-                            component: 'h3',
-                            props: {
-                              style: {
-                                fontSize: '1.1em',
-                                fontWeight: 'bold',
-                                color: '#008080',
-                              },
-                            },
-                          },
-                          h4: {
-                            component: 'h4',
-                            props: {
-                              style: {
-                                fontSize: '1em',
-                                fontWeight: 'bold',
-                                color: '#008080',
-                              },
-                            },
-                          },
-                          h5: {
-                            component: 'h5',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                                fontWeight: 'bold',
-                                color: '#008080',
-                              },
-                            },
-                          },
-                          h6: {
-                            component: 'h6',
-                            props: {
-                              style: {
-                                fontSize: '0.8em',
-                                fontWeight: 'bold',
-                                color: '#008080',
-                              },
-                            },
-                          },
-                          p: {
-                            component: 'p',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                              },
-                            },
-                          },
-                          li: {
-                            component: 'li',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                                display: 'list-item',
-                                margin: '1em',
-                              },
-                            },
-                          },
-                          ul: {
-                            component: 'ul',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                              },
-                            },
-                          },
-                          ol: {
-                            component: 'ol',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                                listStyleType: 'decimal',
-                              },
-                            },
-                          },
-                          blockquote: {
-                            component: 'blockquote',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                                borderLeft: '0.2em solid #008080',
-                                paddingLeft: '0.5em',
-                              },
-                            },
-                          },
-                          code: {
-                            component: 'code',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                                // backgroundColor: '#f4f4f4',
-                                padding: '0.2em',
-                                fontFamily: 'monospace',
-                              },
-                            },
-                          },
-                          del: {
-                            component: 'del',
-                            props: {
-                              style: {
-                                fontSize: '0.9em',
-                                textDecoration: 'line-through',
-                              },
-                            },
-                          },
-                        },
-                      }}
-                    >
-                      {data[key]}
-                    </Markdown>
-                  );
+                  return <Markdown markdown={data[key]} startWebvew={startWebvew} />;
                 default:
                   return (
                     <Box>
@@ -991,14 +857,16 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                         <AccordionItem>
                           <AccordionButton>
                             <Box flex="1" textAlign="left">
-                              <Text color="red" fontWeight={'bold'}>
+                              <Text color="red" fontWeight={'bold'} fontSize={s.fontSize}>
                                 Error: {key} is not supported in this version of Seer.
                               </Text>
                             </Box>
                             <AccordionIcon />
                           </AccordionButton>
                           <AccordionPanel pb={4}>
-                            <MapJSONObject key={i} data={data[key]} />
+                            <pre>
+                              <code>{JSON.stringify(data[key], null, 2)}</code>
+                            </pre>
                           </AccordionPanel>
                         </AccordionItem>
                       </Accordion>
@@ -1006,44 +874,8 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                   );
               }
             })}
-      </div>
+      </Box>
     </>
-  );
-};
-
-const MapJSONObject = (obj: any): JSX.Element => {
-  if (!obj) return <></>;
-  if (typeof obj === 'object' && Object.keys(obj).length === 0) return <></>;
-  return (
-    <Box pl={2} bg={useColorModeValue('#FFFFFF', '#000000')} fontSize={'16px'} color={useColorModeValue('#000000', '#FFFFFF')}>
-      {typeof obj === 'object'
-        ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
-                </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
-                </Box>
-              );
-            }
-          })
-        : null}
-    </Box>
   );
 };
 

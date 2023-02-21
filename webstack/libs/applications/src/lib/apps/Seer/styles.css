@@ -8,81 +8,55 @@
 
 /* CSS definitions for the app Seer */
 
-/* /* :root {
-  --color-bg: #000000;
-  --color-fg: #ffffff;
-} */
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-bg: #ffffff;
-    --color-fg: #000000;
-  }
-}
-*/
-
-/* body {
-  background-color: var(--color-bg);
-  color: var(--color-fg);
-} */
-
-/* #html {
-  background-color: var(--color-bg);
-  color: var(--color-fg);
-} */
-
-
 blockquote {
-  border-left: 0.5em #eee solid;
+  border-left: 0.5em #333 solid;
+}
+table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  table-layout: auto;
+  max-width: min-content;
+  background: #f5f5f5 !important;
+  box-shadow: inset 0px 2px 4px #bbb;
 }
 
-@media (prefers-color-scheme: light) {
-  blockquote {
-    border-left: 0.5em #333 solid;
-  }
-  table {
-    border: none;
-    border-collapse: collapse;
-    border-spacing: 0;
-    color: black;
-    max-width: min-content;
-    table-layout: auto;
-    background: #f5f5f5 !important;
-    box-shadow: 0px 2px 4px #bbb;
-  }
+thead {
+  border-bottom: 2px solid black;
+  vertical-align: bottom;
+}
 
-  thead {
-    border-bottom: 2px solid black;
-    vertical-align: bottom;
-  }
+tr,
+th,
+td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
 
-  tr,
-  th,
-  td {
-    text-align: right;
-    vertical-align: middle;
-    padding: 0.5em 0.5em;
-    line-height: normal;
-    white-space: normal;
-    max-width: none;
-    border: none;
-  }
+th {
+  font-weight: bold;
+}
 
-  th {
-    font-weight: bold;
-  }
+tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
 
-  tbody tr:nth-child(odd) {
-    background: #f5f5f5;
-  }
+tbody tr:nth-child(even) {
+  background: #b1b1b1;
+}
 
-  tbody tr:hover {
-    background: rgba(66, 165, 245, 0.2);
-  }
+tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
 
-  td:hover {
-    background-color: rgba(66, 165, 245, 0.3) !important;
-  }
+td:hover {
+  background-color: rgba(66, 165, 245, 0.3) !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -94,7 +68,7 @@ blockquote {
     border-collapse: collapse;
     border-spacing: 0;
     color: #ccc;
-    table-layout: normal;
+    table-layout: auto;
     max-width: min-content;
     background: #000 !important;
     box-shadow: inset 0px 2px 4px #ddd;
