@@ -87,10 +87,10 @@ class SAGEProxy:
 
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
-        rooms_sub = self.s3_comm.subscribe('/api/rooms')
-        boards_sub = self.s3_comm.subscribe('/api/boards')
-        apps_sub = self.s3_comm.subscribe('/api/apps')
-        self.sub_list = [rooms_sub, boards_sub, apps_sub]
+        self.s3_comm.subscribe('/api/rooms')
+        self.s3_comm.subscribe('/api/boards')
+        self.s3_comm.subscribe('/api/apps')
+        self.sub = self.s3_comm.get_queue()
 
         self.worker_process = threading.Thread(target=self.process_messages)
         self.stop_worker = False
@@ -123,36 +123,34 @@ class SAGEProxy:
         potentially work on a multiprocessing version where threads are processed separately
         Messages needs to be numbered to avoid received out of sequences messages.
         """
-
         while not self.stop_worker:
-            for sub in self.sub_list:
-                try:
-                    msg = sub.get(block=False)
+            try:
+                msg = self.sub.get(block=True)
+            except Empty as e:
+                continue
+            except EOFError as e:
+                print(f"Message queue was closed")
+                return
 
-                except Empty as e:
-                    continue
-                except EOFError as e:
-                    print(f"Message queue was closed")
-                    return
+            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                pass
 
-                if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                    pass
+            # logger.debug(f"Getting ready to process: {msg}")
 
-                # logger.debug(f"Getting ready to process: {msg}")
+            collection = msg["event"]['col']
+            doc = msg['event']['doc']
+            msg_type = msg["event"]["type"]
 
-                collection = msg["event"]['col']
-                doc = msg['event']['doc']
+            # print(f"Processing {msg_type} message for {collection} with id {doc['_id']}")
+            if msg_type == "UPDATE":
+                app_id = msg["event"]["doc"]["_id"]
+                if app_id in self.callbacks:
+                    self.handle_linked_app(app_id, msg)
 
-                msg_type = msg["event"]["type"]
-                if msg_type == "UPDATE":
-                    app_id = msg["event"]["doc"]["_id"]
-                    if app_id in self.callbacks:
-                        self.handle_linked_app(app_id, msg)
-
-                    updates = msg['event']['updates']
-                    self.__MSG_METHODS[msg_type](collection, doc, updates)
-                else:
-                    self.__MSG_METHODS[msg_type](collection, doc)
+                updates = msg['event']['updates']
+                self.__MSG_METHODS[msg_type](collection, doc, updates)
+            else:
+                self.__MSG_METHODS[msg_type](collection, doc)
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):

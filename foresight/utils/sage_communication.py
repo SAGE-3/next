@@ -51,6 +51,9 @@ class SageCommunication(Borg):
         self.socket = SageWebsocket()
         self.socket.run()
 
+    def get_queue(self):
+        return self.socket.get_queue()
+
     def send_app_update(self, app_id, data):
         """
         :param app_id:

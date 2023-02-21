@@ -38,24 +38,25 @@ class SageWebsocket:
                                          )
         self.wst = None
         self.received_msg_log = {}
-        self.queue_list = {}
+        self.queue = Queue()
 
     def on_open(self, ws):
         self.connected = True
 
     def on_message(self, ws, message):
         msg = json.loads(message)
-        # Get ID
-        sub_id = msg['id']
-        if self.queue_list[sub_id]:
-            # Put into proper queue
-            self.queue_list[sub_id].put(msg)
-            # Add to message log
-            self.received_msg_log[msg['id']] = (
-                msg['event']['type'], msg['event']['doc']['_updatedAt'])
+        # Put into the queue
+        self.queue.put(msg)
+        # Add to message log
+        self.received_msg_log[msg['id']] = (
+            msg['event']['type'], msg['event']['doc']['_updatedAt'])
 
     def on_error(self, ws, error):
         logger.error(f"error in webserver websocket connection {error}")
+
+    # returns the queue of messages
+    def get_queue(self):
+        return self.queue
 
     # Check if the ws has connected
     # attempts (number of times to attempt) 1 attempt per second default 10
@@ -78,17 +79,11 @@ class SageWebsocket:
             return
         # Generate id for subscription
         subscription_id = str(uuid.uuid4())
-        # Setup queue
-        new_queue = Queue()
-        # Save queue to list
-        self.queue_list[subscription_id] = new_queue
-        # WS Message
         msg_sub = {
             'route': route,
             'id': subscription_id, 'method': 'SUB'
         }
         self.ws.send(json.dumps(msg_sub))
-        return new_queue
 
     def run(self):
         self.wst = threading.Thread(target=self.ws.run_forever)
