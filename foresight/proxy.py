@@ -255,7 +255,7 @@ class SAGEProxy:
         pass
 
     def clean_up(self):
-        self.listening_process.clean_up()
+        # self.listening_process.clean_up()
 
         if not self.__message_queue.empty():
             print("Messages queue was not empty while starting to clean proxy")
