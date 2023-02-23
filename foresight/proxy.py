@@ -27,7 +27,6 @@ from board import Board
 from room import Room
 import uuid
 from multiprocessing import Queue
-import requests
 from smartbitfactory import SmartBitFactory
 import httpx
 from utils.sage_communication import SageCommunication
@@ -304,12 +303,6 @@ class SAGEProxy:
         del (self.callbacks[src_app]
              [f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
-
-# def get_cmdline_parser():
-#     parser = argparse.ArgumentParser(description='Sage3 Python Proxy Server')
-#     parser.add_argument('-c', '--config_file', type=str, required=True, help="Configuration file path")
-#     parser.add_argument('-r', '--room_id', type=str, required=False, help="Room id")
-#     return parser
 
 
 def clean_up_terminate(signum, frame):

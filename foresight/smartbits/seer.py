@@ -102,7 +102,7 @@ class Seer(SmartBit):
         if self.state.prompt:
             payload = {"query": self.state.prompt}
             headers = {'Content-Type': 'application/json'}
-            resp = httpx.post('http://127.0.0.1:5002/nlp-to-code', headers=headers, json=payload, timeout=15.0)
+            resp = httpx.post('http://128.171.10.194:5002/nlp-to-code', headers=headers, json=payload, timeout=15.0)
             if resp.status_code == 200 and resp.json()["status"] == "success":
                 code = resp.json()["code"]
                 print(f"GOT CODE FROM SEER SERVER AND IT's {code}")
