@@ -28,7 +28,7 @@ import {
 } from '@chakra-ui/react';
 
 //Icon imports
-import { MdAdd, MdAddCircle, MdClose, MdRemove } from 'react-icons/md';
+import { MdAdd, MdAddCircle, MdClose, MdFormatAlignLeft, MdFormatAlignRight, MdRemove, MdRemoveCircle } from 'react-icons/md';
 import { FaBars } from 'react-icons/fa';
 
 // Styling
@@ -40,38 +40,12 @@ import { debounce } from 'throttle-debounce';
 // ChartJS imports
 import 'chartjs-adapter-date-fns';
 import { enUS } from 'date-fns/locale';
-import {
-  Chart as ChartJS,
-  LinearScale,
-  CategoryScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Legend,
-  Tooltip as ChartJSTooltip,
-  LineController,
-  BarController,
-  TimeScale,
-  Title,
-  Colors,
-} from 'chart.js';
+import { Chart as ChartJS, registerables } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
+import React from 'react';
 
 // ChartJS register
-ChartJS.register(
-  LinearScale,
-  CategoryScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Legend,
-  ChartJSTooltip,
-  LineController,
-  BarController,
-  TimeScale,
-  Title,
-  Colors
-);
+ChartJS.register(...registerables);
 
 // Supported chart types
 export const typeOptions = [
@@ -94,15 +68,13 @@ export const typeOptions = [
 function AppComponent(props: App): JSX.Element {
   //App State
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+  const { updateState, update } = useAppStore((state) => state);
   const commonButtonColors = useColorModeValue('gray.300', 'gray.300');
   const buttonTextColor = useColorModeValue('white', 'black');
   const scale = useUIStore((state) => state.scale);
 
-  const chartRef = useRef<ChartJS>(null);
-
   //Local State
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [attributeNames, setAttributeNames] = useState<string[]>([]);
   const [data, setData] = useState<any[]>([]);
   const [labels] = useState<string[]>([]);
@@ -121,15 +93,31 @@ function AppComponent(props: App): JSX.Element {
     maintainAspectRatio: false,
     responsive: true,
     scales: {
+      // grid line settings
+
       y: {
         min: 0,
+        display: true,
+        position: 'left',
         ticks: {
-          color: 'white',
+          color: 'blue',
           font: {
             size: 40,
           },
         },
       },
+      y1: {
+        min: 0,
+        display: true,
+        position: 'right',
+        ticks: {
+          color: 'red',
+          font: {
+            size: 40,
+          },
+        },
+      },
+
       x: {
         type: 'time' as const,
 
@@ -166,6 +154,11 @@ function AppComponent(props: App): JSX.Element {
     },
   });
 
+  const chartRef = useRef<ChartJS>(null);
+  useEffect(() => {
+    update(props._id, { title: 'ChartJS - ' });
+  }, []);
+
   //TODO: Temporary for all properties for station data
   const [stationMetadata, setStationMetadata] = useState<any>({});
 
@@ -176,6 +169,9 @@ function AppComponent(props: App): JSX.Element {
     setOptions({
       ...options,
       scales: {
+        y1: {
+          ...options.scales.y1,
+        },
         y: {
           ...options.scales.y,
           ticks: { ...options.scales.y.ticks, font: { size: fontSize } },
@@ -205,8 +201,20 @@ function AppComponent(props: App): JSX.Element {
     setOptions({ ...options, plugins: { ...options.plugins, title: { ...options.plugins.title, text: chartTitle } } });
   };
 
-  const setMinimumYValue = (minYValue: number) => {
-    setOptions({ ...options, plugins: { ...options.plugins }, scales: { ...options.scales, y: { ...options.scales.y, min: minYValue } } });
+  const setMinimumYValue = (minYValue: number, yaxisID: string) => {
+    if (yaxisID === 'y') {
+      setOptions({
+        ...options,
+        plugins: { ...options.plugins, title: { ...options.plugins.title } },
+        scales: { ...options.scales, y: { ...options.scales.y, min: minYValue }, y1: { ...options.scales.y1 } },
+      });
+    } else {
+      setOptions({
+        ...options,
+        plugins: { ...options.plugins, title: { ...options.plugins.title } },
+        scales: { ...options.scales, y: { ...options.scales.y }, y1: { ...options.scales.y1, min: minYValue } },
+      });
+    }
   };
 
   // Fetching HCDP datafrom state.url
@@ -227,7 +235,7 @@ function AppComponent(props: App): JSX.Element {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
-          setMinimumYValue(minYValue);
+          setMinimumYValue(minYValue, s.datasets[0].yaxisID);
         }
 
         setAttributeNames(attributeProps);
@@ -240,21 +248,39 @@ function AppComponent(props: App): JSX.Element {
     const tmpTraces: any[] = [];
     let chartType = '';
     let yDataName = '';
+    let yaxisID = '';
     //Setting labels for X axis
     for (let i = 0; i < s.datasets.length; i++) {
       yDataName = s.datasets[i].yDataName;
       chartType = s.datasets[i].chartType;
-      tmpTraces.push({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        type: chartType as const,
-        label: yDataName,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        data: data[yDataName],
-        borderColor: 'rgb(255, 255, 255)',
-        backgroundColor: 'rgb(244, 187, 68)',
-      });
+      yaxisID = s.datasets[i].yaxisID;
+      console.log(yaxisID);
+      tmpTraces.push(
+        {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          type: chartType as const,
+          label: yDataName,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          data: data[yDataName],
+          borderColor: 'rgb(255, 255, 255)',
+          backgroundColor: yaxisID == 'y' ? 'red' : 'blue',
+          yaxisID: yaxisID,
+        }
+        // {
+        //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //   // @ts-ignore
+        //   type: chartType as const,
+        //   label: yDataName,
+        //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //   // @ts-ignore
+        //   data: data['soil_moisture_set_1'],
+        //   borderColor: 'rgb(255, 255, 255)',
+        //   backgroundColor: 'rgb(244, 187, 68)',
+        //   yaxisID: yaxisID,
+        // }
+      );
     }
     setChartData({
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -291,7 +317,7 @@ function AppComponent(props: App): JSX.Element {
     // @ts-ignore
     const minYValue = Math.min(...data[value].filter((v) => v != null));
 
-    setMinimumYValue(minYValue);
+    setMinimumYValue(minYValue, newDatasets[index].yaxisID);
 
     updateState(props._id, { datasets: newDatasets });
   };
@@ -320,6 +346,53 @@ function AppComponent(props: App): JSX.Element {
       ],
     });
   };
+
+  // decrement the number of "traces" or variables to visualize
+  const decreaseDatasetSize = (indexToRemove: number) => {
+    const tmpDatasets = [...s.datasets];
+
+    tmpDatasets.splice(indexToRemove, 1);
+    updateState(props._id, {
+      datasets: [...tmpDatasets],
+    });
+  };
+
+  const moveToRight = (indexToMove: number) => {
+    const newDatasets = [...s.datasets];
+    console.log(newDatasets);
+    newDatasets[indexToMove].yaxisID = 'y1';
+    updateState(props._id, { datasets: newDatasets });
+    if (s.datasets[indexToMove].yDataName !== '') {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const fullDataset = s.datasets.map((d) => data[d.yDataName]).flat();
+      console.log(fullDataset);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const minYValue = Math.ceil(Math.min(fullDataset.filter((v) => !isNaN(parseFloat(v)) && isFinite(v))));
+      console.log(minYValue);
+      setMinimumYValue(isNaN(minYValue) ? 0 : minYValue, 'y1');
+    }
+  };
+
+  const moveToLeft = (indexToMove: number) => {
+    const newDatasets = [...s.datasets];
+    console.log(newDatasets);
+    newDatasets[indexToMove].yaxisID = 'y';
+    updateState(props._id, { datasets: newDatasets });
+    if (s.datasets[indexToMove].yDataName !== '') {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const minYValue = Math.min(...data[s.datasets[indexToMove].yDataName].filter((v) => v != null));
+      setMinimumYValue(isNaN(minYValue) ? 0 : minYValue, 'y');
+    }
+  };
+
+  useEffect(() => {
+    if (chartRef.current) {
+      // chartRef.current?.options.interaction?.mode = 'nearest';
+    }
+  }, []);
 
   return (
     <AppWindow app={props}>
@@ -388,13 +461,13 @@ function AppComponent(props: App): JSX.Element {
                         );
                       })}
                     </Select>
-                    {/* <IconButton
+                    <IconButton
                       aria-label="Add Field"
                       borderColor="black"
                       borderWidth="1px"
                       borderRadius="lg"
                       icon={<MdAddCircle />}
-                    ></IconButton> */}
+                    ></IconButton>
                   </HStack>
                 </Box>
               </Container>
@@ -405,36 +478,64 @@ function AppComponent(props: App): JSX.Element {
                     <VStack>
                       {s.datasets.map((dataset, index) => {
                         return (
-                          <Select
-                            borderColor="black"
-                            borderWidth="1px"
-                            borderRadius="lg"
-                            name="yAxis"
-                            key={index}
-                            placeholder={'choose an attribute'}
-                            onChange={(e) => {
-                              handleYAxisChange(e, index);
-                            }}
-                          >
-                            {attributeNames.map((attributeName, index) => {
-                              return (
-                                <option data-key={index} value={attributeName} key={index}>
-                                  {attributeName}
-                                </option>
-                              );
-                            })}
-                          </Select>
+                          <HStack key={index}>
+                            <Select
+                              borderColor="black"
+                              borderWidth="1px"
+                              borderRadius="lg"
+                              name="yAxis"
+                              placeholder={'choose an attribute'}
+                              onChange={(e) => {
+                                handleYAxisChange(e, index);
+                              }}
+                            >
+                              {attributeNames.map((attributeName, index) => {
+                                return (
+                                  <option data-key={index} value={attributeName} key={index}>
+                                    {attributeName}
+                                  </option>
+                                );
+                              })}
+                            </Select>
+                            (
+                            <IconButton
+                              aria-label="Add Field"
+                              borderColor="black"
+                              borderWidth="1px"
+                              borderRadius="lg"
+                              disabled={index == 0 ? true : false}
+                              icon={<MdRemoveCircle />}
+                              onClick={() => decreaseDatasetSize(index)}
+                            ></IconButton>
+                            <IconButton
+                              aria-label="Add Field"
+                              borderColor="black"
+                              borderWidth="1px"
+                              borderRadius="lg"
+                              icon={<MdFormatAlignRight />}
+                              onClick={() => moveToRight(index)}
+                            ></IconButton>
+                            <IconButton
+                              aria-label="Add Field"
+                              borderColor="black"
+                              borderWidth="1px"
+                              borderRadius="lg"
+                              icon={<MdFormatAlignLeft />}
+                              onClick={() => moveToLeft(index)}
+                            ></IconButton>
+                            )
+                          </HStack>
                         );
                       })}
+                      <IconButton
+                        aria-label="Add Field"
+                        borderColor="black"
+                        borderWidth="1px"
+                        borderRadius="lg"
+                        icon={<MdAddCircle />}
+                        onClick={increaseDatasetSize}
+                      ></IconButton>
                     </VStack>
-                    <IconButton
-                      aria-label="Add Field"
-                      borderColor="black"
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      icon={<MdAddCircle />}
-                      onClick={increaseDatasetSize}
-                    ></IconButton>
                   </HStack>
                 </Box>
               </Container>

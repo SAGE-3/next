@@ -27,6 +27,7 @@ export const schema = z.object({
     .object({
       yDataName: z.string(),
       chartType: z.any(),
+      yaxisID: z.string(),
     })
     .array(),
   fontSizeMultiplier: z.number(),

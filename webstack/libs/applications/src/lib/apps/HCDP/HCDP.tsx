@@ -87,7 +87,7 @@ function AppComponent(props: App): JSX.Element {
       state: {
         labelName: 'date_time',
         fontSizeMultiplier: 15,
-        datasets: [{ yDataName: climateProp, chartType: 'line' }],
+        datasets: [{ yDataName: climateProp, chartType: 'line', yaxisID: 'y' }],
         url: `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`,
       },
       raised: true,
