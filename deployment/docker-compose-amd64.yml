@@ -21,6 +21,7 @@ services:
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
+      - ./configurations/node/plugins:/app/dist/apps/homebase/plugins
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
     deploy:
       restart_policy:
@@ -38,7 +39,6 @@ services:
       - SAGE3_SERVER=${HOST}
       - FUNCX_SDK_CLIENT_ID=${FUNCX_SDK_CLIENT_ID}
       - FUNCX_SDK_CLIENT_SECRET=${FUNCX_SDK_CLIENT_SECRET}
-      - ROOM_NAME=${ROOM_NAME}
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
@@ -58,6 +58,7 @@ services:
       - "4443:8888"
     environment:
       - ENVIRONMENT=production
+      - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
     command: /conf/start.sh

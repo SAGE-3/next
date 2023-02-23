@@ -6,59 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// limited response from server to the configuration request, for security reasons
-export type serverConfiguration = {
-  serverName: string;
-  port: number;
-  production: boolean;
-  servers: { name: string; url: string }[];
-  version: string;
-  // Jupyter token
-  token: string;
-  // Namespace for signing uuid v5 keys
-  namespace: string;
-  // Admin names
-  admins: string[];
-};
-
-/**
- * Returns the fancy name of the host hosting SAGE3
- *
- * @export
- * @returns {string}
- */
-export async function GetServerName(): Promise<string | null> {
-  const response = await fetch('/api/configuration', {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  });
-  const config = (await response.json()) as serverConfiguration;
-  return config.serverName || null;
-}
-
-export async function GetPort(): Promise<number | null> {
-  const response = await fetch('/api/configuration', {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  });
-
-  const config = (await response.json()) as serverConfiguration;
-  return config.port || null;
-}
+import { PublicInformation, OpenConfiguration } from '@sage3/shared/types';
 
 /**
  * Returns the whole data structure (albeit limited)
- * @returns serverConfiguration
+ * @returns {OpenConfiguration}
  */
-export async function GetConfiguration(): Promise<serverConfiguration> {
+export async function GetConfiguration(): Promise<OpenConfiguration> {
   const response = await fetch('/api/configuration', {
     method: 'GET',
     credentials: 'include',
@@ -67,15 +21,15 @@ export async function GetConfiguration(): Promise<serverConfiguration> {
       'Content-Type': 'application/json',
     },
   });
-  const config = (await response.json()) as serverConfiguration;
+  const config = (await response.json()) as OpenConfiguration;
   return config;
 }
 
 /**
  * Returns the info public data structure
- * @returns Partial<serverConfiguration>
+ * @returns {PublicInformation}
  */
-export async function GetServerInfo(): Promise<Partial<serverConfiguration>> {
+export async function GetServerInfo(): Promise<PublicInformation> {
   const response = await fetch('/api/info', {
     method: 'GET',
     credentials: 'include',
@@ -84,6 +38,6 @@ export async function GetServerInfo(): Promise<Partial<serverConfiguration>> {
       'Content-Type': 'application/json',
     },
   });
-  const config = (await response.json()) as Partial<serverConfiguration>;
+  const config = (await response.json()) as PublicInformation;
   return config;
 }

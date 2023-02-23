@@ -59,18 +59,25 @@ function AppComponent(props: App): JSX.Element {
     if (asset) {
       setFile(asset);
       // Update the state of the app
-      if (asset.data.derived) {
+      if (asset.data.derived && props._updatedBy === user?._id) {
         const pages = asset.data.derived as ExtraPDFType;
-        updateState(props._id, { numPages: pages.length });
+        if (pages.length !== s.numPages) {
+          updateState(props._id, { numPages: pages.length });
+        }
         // Update the app title
         const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-        update(props._id, { title: asset?.data.originalfilename + pageInfo });
+        const newTitle = asset?.data.originalfilename + pageInfo;
+        if (newTitle !== props.data.title) {
+          update(props._id, { title: newTitle });
+        }
       } else {
         // Update the app title
-        update(props._id, { title: asset?.data.originalfilename });
+        if (asset?.data.originalfilename !== props.data.title) {
+          update(props._id, { title: asset?.data.originalfilename });
+        }
       }
     }
-  }, [s.assetid, assets]);
+  }, [s.assetid, assets, user]);
 
   useEffect(() => {
     if (file) {
@@ -95,9 +102,12 @@ function AppComponent(props: App): JSX.Element {
     if (file) {
       const pages = file.data.derived as ExtraPDFType;
       if (pages) {
-        if (pages.length > 1) {
+        if (pages.length > 1 && props._updatedBy === user?._id) {
           const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-          update(props._id, { title: file.data.originalfilename + pageInfo });
+          const newTitle = file.data.originalfilename + pageInfo;
+          if (newTitle !== props.data.title) {
+            update(props._id, { title: newTitle });
+          }
         }
       }
     }
