@@ -9,7 +9,7 @@
 import uuid
 import httpx
 import os
-from utils.sage_websocket import SageWebsocket
+# from utils.sage_websocket import SageWebsocket
 
 import logging
 logger = logging.getLogger(__name__)
@@ -48,8 +48,8 @@ class SageCommunication(Borg):
             "get_configuration": "/api/configuration"
         }
         self.web_config = self.get_configuration()
-        self.socket = SageWebsocket()
-        self.socket.run()
+        # self.socket = SageWebsocket()
+        # self.socket.run()
 
     def send_app_update(self, app_id, data):
         """
@@ -168,7 +168,7 @@ class SageCommunication(Borg):
 
     def get_boards(self, room_id=None):
         """
-        list all the rerouces belonging to room_id
+        list all the resources belonging to room_id
         :param room_id: the id of the room to list
         :param room_id:
         :param board_id:
@@ -184,5 +184,3 @@ class SageCommunication(Borg):
 
         return data
 
-    def subscribe(self, route):
-        return self.socket.setup_sub_queue(route)

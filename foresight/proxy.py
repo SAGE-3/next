@@ -25,14 +25,12 @@ import threading
 import logging
 from board import Board
 from room import Room
-import uuid
-from multiprocessing import Queue
-import requests
 from smartbitfactory import SmartBitFactory
-import httpx
 from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
+from utils.sage_websocket import SageWebsocket
+
 
 
 debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
@@ -76,28 +74,33 @@ class SAGEProxy:
         self.conf = conf
         self.prod_type = prod_type
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-
+        self.socket = SageWebsocket(on_message_fn=self.on_message)
         self.__MSG_METHODS = {
             "CREATE": self.__handle_create,
             "UPDATE": self.__handle_update,
             "DELETE": self.__handle_delete,
         }
-        self.httpx_client = httpx.Client(timeout=None)
+        # self.httpx_client = httpx.Client(timeout=None)
         self.callbacks = {}  # for linked apps
         self.received_msg_log = {}
 
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
-        rooms_sub = self.s3_comm.subscribe('/api/rooms')
-        boards_sub = self.s3_comm.subscribe('/api/boards')
-        apps_sub = self.s3_comm.subscribe('/api/apps')
-        self.sub_list = [rooms_sub, boards_sub, apps_sub]
+        # rooms_sub = self.s3_comm.subscribe('/api/rooms')
+        # boards_sub = self.s3_comm.subscribe('/api/boards')
+        # apps_sub = self.s3_comm.subscribe('/api/apps')
+        # self.sub_list = [rooms_sub, boards_sub, apps_sub]
 
-        self.worker_process = threading.Thread(target=self.process_messages)
+        # self.worker_process = threading.Thread(target=self.process_messages)
         self.stop_worker = False
 
         # Grab and load info already on the board
-        self.populate_existing()
+        # self.populate_existing()
+
+
+    def on_message(self, ws, message):
+        msg = json.loads(message)
+        print(f"received message in alternate fun in porxy's on_message {msg}")
 
     def start_threads(self):
         self.worker_process.start()

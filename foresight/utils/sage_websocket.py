@@ -5,7 +5,7 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
-
+from typing import Callable
 import os
 import websocket
 import threading
@@ -24,7 +24,7 @@ from config import config as conf, prod_type
 
 class SageWebsocket:
 
-    def __init__(self):
+    def __init__(self, on_message_fn: Callable =None):
         self.connected = False
         self.ws = websocket.WebSocketApp(conf[prod_type]["ws_server"]+"/api",
                                          header={
@@ -36,23 +36,31 @@ class SageWebsocket:
                                          # on_close=lambda ws: self.on_close(ws),
                                          on_open=lambda ws: self.on_open(ws)
                                          )
+
         self.wst = None
         self.received_msg_log = {}
         self.queue_list = {}
+        if on_message_fn is not None:
+            self.on_message = on_message_fn
+        self.run()
+
+    # def subscribe(self, route):
+    #     return self.socket.setup_sub_queue(route)
 
     def on_open(self, ws):
+        print("connected")
         self.connected = True
 
     def on_message(self, ws, message):
         msg = json.loads(message)
-        # Get ID
-        sub_id = msg['id']
-        if self.queue_list[sub_id]:
-            # Put into proper queue
-            self.queue_list[sub_id].put(msg)
-            # Add to message log
-            self.received_msg_log[msg['id']] = (
-                msg['event']['type'], msg['event']['doc']['_updatedAt'])
+        print(f"received message in default fun on_message {message}")
+        # sub_id = msg['id']
+        # if self.queue_list[sub_id]:
+        #     # Put into proper queue
+        #     self.queue_list[sub_id].put(msg)
+        #     # Add to message log
+        #     self.received_msg_log[msg['id']] = (
+        #         msg['event']['type'], msg['event']['doc']['_updatedAt'])
 
     def on_error(self, ws, error):
         logger.error(f"error in webserver websocket connection {error}")
@@ -73,22 +81,18 @@ class SageWebsocket:
         return True
 
     # Subscribe to a route
-    def setup_sub_queue(self, route):
+    def subscribe(self, route):
         if not self.check_connection():
             return
-        # Generate id for subscription
+        # # Generate id for subscription
         subscription_id = str(uuid.uuid4())
-        # Setup queue
-        new_queue = Queue()
-        # Save queue to list
-        self.queue_list[subscription_id] = new_queue
         # WS Message
         msg_sub = {
             'route': route,
             'id': subscription_id, 'method': 'SUB'
         }
         self.ws.send(json.dumps(msg_sub))
-        return new_queue
+        # return new_queue
 
     def run(self):
         self.wst = threading.Thread(target=self.ws.run_forever)
