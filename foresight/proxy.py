@@ -51,20 +51,20 @@ def setup_logger():
 logger = setup_logger()
 
 # TODO: Find another spot for this.
-# class LinkedInfo(BaseModel):
-#     board_id: str
-#     src_app: str
-#     dest_app: str
-#     src_field: str
-#     dest_field: str
-#     callback: Callable
-#
-#
-# # TODO: sample callback for linked app. Other example
-# #  needed. Also new home for such functions is also needed
-# def update_dest_from_src(src_val, dest_app, dest_field):
-#     setattr(dest_app.state, dest_field, src_val)
-#     dest_app.send_updates()
+class LinkedInfo(BaseModel):
+    board_id: str
+    src_app: str
+    dest_app: str
+    src_field: str
+    dest_field: str
+    callback: Callable
+
+
+# TODO: sample callback for linked app. Other example
+#  needed. Also new home for such functions is also needed
+def update_dest_from_src(src_val, dest_app, dest_field):
+    setattr(dest_app.state, dest_field, src_val)
+    dest_app.send_updates()
 
 
 class SAGEProxy:
@@ -85,8 +85,10 @@ class SAGEProxy:
 
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
+        print("in here\n\n\n\n")
         self.socket = SageWebsocket(on_message_fn=self.process_messages)
-        self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
+        # self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
+        self.socket.subscribe('/api/apps')
 
         # Grab and load info already on the board
         self.populate_existing()

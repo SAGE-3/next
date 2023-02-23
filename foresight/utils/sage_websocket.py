@@ -40,20 +40,20 @@ class SageWebsocket:
         self.wst = None
         self.received_msg_log = {}
         self.queue_list = {}
+        self.run()
         if on_message_fn is not None:
             self.on_message = on_message_fn
-        self.run()
 
     # def subscribe(self, route):
     #     return self.socket.setup_sub_queue(route)
 
     def on_open(self, ws):
-        print("connected")
+        logger.info("Websocket connected")
         self.connected = True
 
     def on_message(self, ws, message):
         msg = json.loads(message)
-        logger.log(f"received message in default func on_message {message}, WRANIGN---not doing anything")
+        logger.warning(f"received message in default func on_message {message}, WRANIGN---not doing anything")
         # sub_id = msg['id']
         # if self.queue_list[sub_id]:
         #     # Put into proper queue
@@ -66,7 +66,7 @@ class SageWebsocket:
         logger.error(f"error in webserver websocket connection {error}")
 
     # Check if the ws has connected
-    # attempts (number of times to attempt) 1 attempt per second default 10
+    # attempts (number of times to attempt) 2 attempt per second default 10
     def check_connection(self, attempts=10):
         if self.connected == True:
             return True
@@ -77,25 +77,23 @@ class SageWebsocket:
             if count > attempts:
                 logger.error('Could not establish a connection to the server after {attempts} attempts')
                 return False
-            time.sleep(1)
+            time.sleep(2)
         return True
 
     # Subscribe to a route
-    def subscribe(self, routes: list[str]):
-        print("subscribing to: ")
-        logger.debug(f"Subscribing to {routes}")
+    def subscribe(self, route):
+        logger.debug(f"Subscribing to {route}")
         if not self.check_connection():
             return
         # # Generate id for subscription
         subscription_id = str(uuid.uuid4())
         # WS Message
-        for route in routes:
-            msg_sub = {
-                'route': routes,
-                'id': subscription_id, 'method': 'SUB'
-            }
-            self.ws.send(json.dumps(msg_sub))
-        # return new_queue
+        msg_sub = {
+            'route': route,
+            'id': subscription_id, 'method': 'SUB'
+        }
+        self.ws.send(json.dumps(msg_sub))
+    # return new_queue
 
     def run(self):
         self.wst = threading.Thread(target=self.ws.run_forever)
