@@ -87,8 +87,8 @@ class SAGEProxy:
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         print("in here\n\n\n\n")
         self.socket = SageWebsocket(on_message_fn=self.process_messages)
-        # self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
-        self.socket.subscribe('/api/apps')
+        self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
+        # self.socket.subscribe('/api/apps')
 
         # Grab and load info already on the board
         self.populate_existing()

@@ -81,17 +81,18 @@ class SageWebsocket:
         return True
 
     # Subscribe to a route
-    def subscribe(self, route):
-        logger.debug(f"Subscribing to {route}")
+    def subscribe(self, routes: list[str]):
+        logger.debug(f"Subscribing to {routes}")
         if not self.check_connection():
             return
         # # Generate id for subscription
         subscription_id = str(uuid.uuid4())
         # WS Message
-        msg_sub = {
-            'route': route,
-            'id': subscription_id, 'method': 'SUB'
-        }
+        for route in routes:
+            msg_sub = {
+                'route': route,
+                'id': subscription_id, 'method': 'SUB'
+            }
         self.ws.send(json.dumps(msg_sub))
     # return new_queue
 
