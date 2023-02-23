@@ -58,6 +58,7 @@ services:
       - "4443:8888"
     environment:
       - ENVIRONMENT=production
+      - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
     command: /conf/start.sh

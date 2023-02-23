@@ -19,6 +19,7 @@ services:
       - "80:8888"
     environment:
       - ENVIRONMENT=development
+      - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
     command: /conf/start.sh
