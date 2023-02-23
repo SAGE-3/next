@@ -13,7 +13,6 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 export enum StuckTypes {
-  Controller, // 0
   None, // 1
   Top, // 2
   Bottom, // 3
@@ -25,7 +24,7 @@ export enum StuckTypes {
   BottomLeft, // 9
 }
 
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'annotations';
+export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'annotations' | 'plugins';
 
 // Typescript interface defining the store
 export interface PanelUI {
@@ -52,44 +51,51 @@ export const usePanelStore = create<UIState>((set, get) => ({
     {
       position: { x: 5, y: 105 },
       name: 'applications',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'assets',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'navigation',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'annotations',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
       position: { x: 5, y: 105 },
       name: 'users',
-      stuck: StuckTypes.Controller,
+      stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
     {
-      position: { x: 5, y: 5 },
+      position: { x: 5, y: 25 },
       name: 'controller',
-      stuck: StuckTypes.TopLeft,
+      stuck: StuckTypes.Left,
       minimized: false,
       show: true,
+    },
+    {
+      position: { x: 5, y: 105 },
+      name: 'plugins',
+      stuck: StuckTypes.None,
+      minimized: false,
+      show: false,
     },
   ],
   getPanel: (name: PanelNames) => get().panels.find((el) => el.name === name),

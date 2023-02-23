@@ -79,7 +79,9 @@ function AppComponent(props: App): JSX.Element {
         // change local number of rows
         setRows(numlines);
         // update size of the window
-        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        if (props.data.size.height !== numlines * s.fontSize) {
+          update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        }
       }
     }
   }, [s.fontSize]);
@@ -114,7 +116,9 @@ function AppComponent(props: App): JSX.Element {
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!user) return;
-    if (e.repeat) { return }
+    if (e.repeat) {
+      return;
+    }
     if (e.code === 'Tab') {
       if (e.shiftKey) {
         // Create a new stickie
@@ -248,30 +252,20 @@ function ToolbarComponent(props: App): JSX.Element {
       <HStack>
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button
-              isDisabled={s.fontSize > 128}
-              onClick={() => handleIncreaseFont()}
-              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              disabled={locked}
-            >
+            <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
               <MdAdd />
             </Button>
           </Tooltip>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button
-              isDisabled={s.fontSize <= 8}
-              onClick={() => handleDecreaseFont()}
-              _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              disabled={locked}
-            >
+            <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
               <MdRemove />
             </Button>
           </Tooltip>
         </ButtonGroup>
         {yours && (
           <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
-            <Button onClick={lockUnlock} colorScheme="teal" size="xs" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button onClick={lockUnlock} colorScheme="teal" size="xs">
               {locked ? <MdLock /> : <MdLockOpen />}
             </Button>
           </Tooltip>
@@ -280,12 +274,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
-            <Button onClick={downloadTxt} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button onClick={downloadTxt}>
               <MdFileDownload />
             </Button>
           </Tooltip>
           <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
-            <Button onClick={downloadMd} colorScheme="pink" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <Button onClick={downloadMd} colorScheme="pink">
               <MdFileDownload />
             </Button>
           </Tooltip>

@@ -134,6 +134,40 @@
       },
       "tags": []
     },
+    "sageplugin": {
+      "root": "libs/sageplugin",
+      "sourceRoot": "libs/sageplugin/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/sageplugin/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/sageplugin"],
+          "options": {
+            "jestConfig": "libs/sageplugin/jest.config.ts",
+            "passWithNoTests": true
+          }
+        },
+        "build": {
+          "builder": "@nrwl/js:tsc",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/sageplugin",
+            "tsConfig": "libs/sageplugin/tsconfig.lib.json",
+            "packageJson": "libs/sageplugin/package.json",
+            "main": "libs/sageplugin/src/index.ts",
+            "assets": ["libs/sageplugin/*.md"]
+          }
+        }
+      },
+      "tags": []
+    },
     "shared": {
       "root": "libs/shared",
       "sourceRoot": "libs/shared/src",
@@ -169,7 +203,7 @@
           "options": {
             "outputPath": "dist/apps/webapp",
             "index": "apps/webapp/src/index.html",
-            "baseHref": "/",
+            "baseHref": "",
             "main": "apps/webapp/src/main.tsx",
             "polyfills": "apps/webapp/src/polyfills.ts",
             "tsConfig": "apps/webapp/tsconfig.app.json",

@@ -57,7 +57,7 @@ class SageCommunication(Borg):
         :return:
         """
         #print(logging.getLogger().handlers)
-        logger.info(f"sendign following update: {data}")
+        logger.debug(f"sendign following update: {data}")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                   headers=self.__headers,
                                   json=data)

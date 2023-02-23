@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast } from '@chakra-ui/react';
+import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast, MenuDivider } from '@chakra-ui/react';
 import {
   MdOutlineGridOn,
   MdAccountCircle,
@@ -18,6 +18,7 @@ import {
   MdOutlineVpnKey,
   MdHelp,
 } from 'react-icons/md';
+import { HiPuzzle } from 'react-icons/hi';
 
 import {
   useAuth,
@@ -26,15 +27,17 @@ import {
   EnterBoardByIdModal,
   AboutModal,
   copyBoardUrlToClipboard,
-  GetConfiguration,
   useRouteNav,
+  PluginModal,
 } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
+import { OpenConfiguration } from '@sage3/shared/types';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
   backToRoom?: () => void;
   boardInfo?: { roomId: string; boardId: string };
+  config: OpenConfiguration;
 };
 /**
  * Main (StartMenu Button) component
@@ -49,20 +52,16 @@ export function MainButton(props: MainButtonProps) {
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
+  const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const { toAdmin } = useRouteNav();
 
   useEffect(() => {
-    const fetchAdmins = async () => {
-      if (user) {
-        const config = await GetConfiguration();
-        setIsAdmin(config.admins.includes(user.data.email));
-      }
-    };
-
-    fetchAdmins();
-  }, [user]);
+    if (user && props.config) {
+      setIsAdmin(props.config.admins.includes(user.data.email));
+    }
+  }, [user, props.config]);
 
   const isWall = user?.data.userType === 'wall';
 
@@ -111,22 +110,34 @@ export function MainButton(props: MainButtonProps) {
               Admin Page
             </MenuItem>
           )}
+          {props.config?.features?.plugins && (
+            <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
+              Plugins
+            </MenuItem>
+          )}
           <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
           </MenuItem>
+
+          <MenuDivider />
           {props.boardInfo && (
             <MenuItem onClick={handleCopyLink} icon={<MdLink fontSize="24px" />}>
               Copy Board Link
             </MenuItem>
           )}
           {props.backToRoom && (
-            <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />}>
-              Back to Room
-            </MenuItem>
+            <>
+              <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />}>
+                Back to Room
+              </MenuItem>
+              <MenuDivider />
+            </>
           )}
+
           <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
             About
           </MenuItem>
+
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
             Logout
           </MenuItem>
@@ -135,6 +146,7 @@ export function MainButton(props: MainButtonProps) {
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
       <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
+      <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
     </>
   );
 }

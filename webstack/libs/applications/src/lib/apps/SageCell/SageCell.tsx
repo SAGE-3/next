@@ -32,7 +32,6 @@ import {
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh, MdStop } from 'react-icons/md';
 
 import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
-// import * as MEditor from 'monaco-editor';
 
 // UUID generation
 import { v4 as getUUID } from 'uuid';
@@ -273,34 +272,26 @@ function ToolbarComponent(props: App): JSX.Element {
           </Select>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
-            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+            <Button onClick={getKernels} size="xs" mx="1" colorScheme="teal">
               <MdRefresh />
             </Button>
           </Tooltip>
 
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize <= 8}
-                onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
+              <Button isDisabled={s.fontSize <= 8} onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}>
                 <MdRemove />
               </Button>
             </Tooltip>
             <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize > 42}
-                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
+              <Button isDisabled={s.fontSize > 42} onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}>
                 <MdAdd />
               </Button>
             </Tooltip>
           </ButtonGroup>
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+              <Button onClick={downloadPy}>
                 <MdFileDownload />
               </Button>
             </Tooltip>
@@ -382,11 +373,11 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
     editor.current?.setValue('');
   };
 
-  // useEffect(() => {
-  //   if (s.code !== code) {
-  //     setCode(s.code);
-  //   }
-  // }, [s.code]);
+  useEffect(() => {
+    if (s.code !== code) {
+      setCode(s.code);
+    }
+  }, [s.code]);
 
   // handle interrupt
   const handleInterrupt = () => {
@@ -412,7 +403,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
   }, [s.fontSize]);
 
   // Get the reference to the Monaco Editor after it mounts
-  function handleEditorDidMount(ed: typeof Editor) {
+  function handleEditorDidMount(ed: Monaco) {
     editor.current = ed;
     editor.current.onDidChangeCursorPosition((ev: any) => {
       setPosition({ r: ev.position.lineNumber, c: ev.position.column });
@@ -435,24 +426,23 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
             overflow: 'hidden',
             backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
             boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-            // borderRadius: '4px', // this causes the editor to be blurry
           }}
         >
           <Editor
             onMount={handleEditorDidMount}
-            defaultValue={code}
+            value={code}
             onChange={updateCode}
             height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
             language={s.language}
             theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
             options={{
-              fontSize: `${fontSize}px`,
+              fontSize: fontSize,
               minimap: { enabled: false },
               lineNumbersMinChars: 4,
               acceptSuggestionOnCommitCharacter: true,
               acceptSuggestionOnEnter: 'on',
               accessibilitySupport: 'auto',
-              autoIndent: false,
+              autoIndent: 'full',
               automaticLayout: true,
               codeLens: true,
               colorDecorators: true,
@@ -470,7 +460,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               formatOnPaste: false,
               formatOnType: false,
               hideCursorInOverviewRuler: false,
-              highlightActiveIndentGuide: true,
               links: true,
               mouseWheelZoom: false,
               multiCursorMergeOverlapping: true,
@@ -482,7 +471,6 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               readOnly: false,
               renderControlCharacters: false,
               renderFinalNewline: true,
-              renderIndentGuides: true,
               renderLineHighlight: 'all',
               renderWhitespace: 'none',
               revealHorizontalRightPadding: 30,
@@ -497,13 +485,8 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
               smoothScrolling: false,
               suggestOnTriggerCharacters: true,
               wordBasedSuggestions: true,
-              wordSeparators: '~!@#$%^&*()-=+[{]}|;:\'",.<>/?',
               wordWrap: 'off',
-              wordWrapBreakAfterCharacters: '\t})]?|&,;',
-              wordWrapBreakBeforeCharacters: '{([+',
-              wordWrapBreakObtrusiveCharacters: '.',
               wordWrapColumn: 80,
-              wordWrapMinified: true,
               wrappingIndent: 'none',
             }}
           />
@@ -534,7 +517,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
                 onClick={handleInterrupt}
                 aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
+                isDisabled={user?._id !== s.kernel ? false : true}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
                 icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
@@ -548,7 +531,7 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
                 boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
                 onClick={handleClear}
                 aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
+                isDisabled={user?._id !== s.kernel ? false : true}
                 bg={useColorModeValue('#FFFFFF', '#000000')}
                 variant="ghost"
                 icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
@@ -638,78 +621,78 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
       {!parsedJSON.display_data
         ? null
         : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.display_data.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                default:
+                  return MapJSONObject(parsedJSON.display_data[key]);
+              }
+            });
+          }
+          return null;
+        })}
 
       {!parsedJSON.execute_result
         ? null
         : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
-                }
-              });
-            }
-            return null;
-          })}
+          if (key === 'data') {
+            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
+              switch (key) {
+                case 'text/plain':
+                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
+                  return (
+                    <Text key={i} id="sc-stdout">
+                      {parsedJSON.execute_result.data[key]}
+                    </Text>
+                  );
+                case 'text/html':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                case 'image/png':
+                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/jpeg':
+                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
+                case 'image/svg+xml':
+                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
+                default:
+                  return null;
+              }
+            });
+          }
+          return null;
+        })}
       {!s.privateMessage
         ? null
         : s.privateMessage.map(({ userId, message }) => {
-            // find the user name that matches the userId
-            if (userId !== props.user._id) {
-              return null;
-            }
-            return (
-              <Toast
-                status="error"
-                position="bottom"
-                description={message + ', ' + props.user.data.name}
-                duration={4000}
-                isClosable
-                onClose={() => updateState(props.app._id, { privateMessage: [] })}
-                hidden={userId !== props.user._id}
-              />
-            );
-          })}
+          // find the user name that matches the userId
+          if (userId !== props.user._id) {
+            return null;
+          }
+          return (
+            <Toast
+              status="error"
+              position="bottom"
+              description={message + ', ' + props.user.data.name}
+              duration={4000}
+              isClosable
+              onClose={() => updateState(props.app._id, { privateMessage: [] })}
+              hidden={userId !== props.user._id}
+            />
+          );
+        })}
     </Box>
   );
 };
@@ -735,30 +718,30 @@ const MapJSONObject = (obj: any): JSX.Element => {
     >
       {typeof obj === 'object'
         ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
+          if (typeof obj[key] === 'object') {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
                 </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
+                <Box as="span" ml={2}>
+                  {MapJSONObject(obj[key])}
                 </Box>
-              );
-            }
-          })
+              </Box>
+            );
+          } else {
+            return (
+              <Box key={key}>
+                <Box as="span" fontWeight="bold">
+                  {key}:
+                </Box>
+                <Box as="span" ml={2}>
+                  {obj[key]}
+                </Box>
+              </Box>
+            );
+          }
+        })
         : null}
     </Box>
   );

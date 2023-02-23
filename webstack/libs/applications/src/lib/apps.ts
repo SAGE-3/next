@@ -2,6 +2,7 @@
 
 import { name as AIPaneName } from './apps/AIPane';
 import { name as CSVViewerName } from './apps/CSVViewer';
+import { name as ChartGeneratorName } from './apps/ChartGenerator';
 import { name as ChartMakerName } from './apps/ChartMaker';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
@@ -9,6 +10,7 @@ import { name as CounterName } from './apps/Counter';
 import { name as DataTableName } from './apps/DataTable';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
+import { name as HCDPName } from './apps/HCDP';
 import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as KernelDashboardName } from './apps/KernelDashboard';
@@ -18,6 +20,7 @@ import { name as LinkerName } from './apps/Linker';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
+import { name as PluginAppName } from './apps/PluginApp';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
@@ -31,6 +34,7 @@ import { name as WebviewName } from './apps/Webview';
 
 import AIPane from './apps/AIPane/AIPane';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
+import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
 import ChartMaker from './apps/ChartMaker/ChartMaker';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
@@ -38,6 +42,7 @@ import Counter from './apps/Counter/Counter';
 import DataTable from './apps/DataTable/DataTable';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
+import HCDP from './apps/HCDP/HCDP';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
 import KernelDashboard from './apps/KernelDashboard/KernelDashboard';
@@ -47,6 +52,7 @@ import Linker from './apps/Linker/Linker';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
+import PluginApp from './apps/PluginApp/PluginApp';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
@@ -62,6 +68,7 @@ import React from 'react';
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent },
+  [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent },
   [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent },
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent },
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent },
@@ -69,6 +76,7 @@ export const Applications = {
   [DataTableName]: { AppComponent: React.memo(DataTable.AppComponent), ToolbarComponent: DataTable.ToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent },
+  [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent },
   [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent },
   [KernelDashboardName]: { AppComponent: React.memo(KernelDashboard.AppComponent), ToolbarComponent: KernelDashboard.ToolbarComponent },
@@ -78,6 +86,7 @@ export const Applications = {
   [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent },
   [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent },
+  [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent },
   [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent },
   [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent },
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent },

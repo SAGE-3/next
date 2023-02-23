@@ -38,8 +38,6 @@ jobs:
           rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Resources/app/node_modules/electron-installer*
           rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Resources/app/node_modules/electron-winstaller*
           rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Resources/app/node_modules/appdmg
-          rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Resources/*.lproj
-          rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Frameworks/Electron\ Framework.framework/Versions/A/Resources/*.lproj
         working-directory: webstack/clients/electron
       - name: Sign
         env: 
@@ -61,7 +59,7 @@ jobs:
           node notarize-arm.js
         working-directory: webstack/clients/electron
       - name: DMG
-        run: npx electron-installer-dmg SAGE3-darwin-arm64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-arm64/SAGE3-darwin-arm64.dmg --icon=s3.icns --background=background.png --overwrite
+        run: npx electron-installer-dmg SAGE3-darwin-arm64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-arm64/SAGE3-darwin-arm64.dmg --icon=s3.icns --background=images/background.png --overwrite
         working-directory: webstack/clients/electron
       - uses: actions/upload-artifact@v3
         with:

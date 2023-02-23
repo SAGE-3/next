@@ -1,6 +1,7 @@
 [
     "AIPane",
     "CSVViewer",
+    "ChartGenerator",
     "ChartMaker",
     "Clock",
     "Cobrowse",
@@ -8,6 +9,7 @@
     "DataTable",
     "DeepZoomImage",
     "GLTFViewer",
+    "HCDP",
     "ImageViewer",
     "JupyterLab",
     "KernelDashboard",
@@ -17,6 +19,7 @@
     "Notepad",
     "PDFResult",
     "PDFViewer",
+    "PluginApp",
     "RTCChat",
     "SageCell",
     "Seer",

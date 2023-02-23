@@ -18,11 +18,10 @@ class SmartBitFactory:
     cls_root = "smartbits"
 
     # TODO: read these names from some conf file; not hardcoded here
-    # REMOVED "Stickie": "stickie",
     class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note", "Stickie": "stickie",
                    "DataTable": "data_table", "CodeCell": "codecell",
                    "KernelDashboard": "kerneldashboard", "SageCell": "sagecell",
-                   "Slider": "slider", "VegaLite": "vegalite",
+                   "Slider": "slider", "VegaLite": "vegalite", "PDFViewer": "pdfviewer",
                    "VegaLiteViewer": "vegaliteviewer", "ImageViewer": "imageviewer", "Seer": "seer"}
 
     @classmethod

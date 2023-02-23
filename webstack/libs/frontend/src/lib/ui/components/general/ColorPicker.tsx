@@ -36,7 +36,7 @@ export function ColorPicker(props: ColorPickerProps) {
             key={c}
             value={c}
             bgColor={c}
-            disabled={props.disabled}
+            isDisabled={props.disabled}
             _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
             _active={{ background: c, opacity: 0.9 }}
             size={props.size ? props.size : 'md'}
