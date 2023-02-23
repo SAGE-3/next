@@ -49,10 +49,13 @@ class SageWebsocket:
         sub_id = msg['id']
         if self.queue_list[sub_id]:
             # Put into proper queue
+            print(f"You just a message from {sub_id}")
             self.queue_list[sub_id].put(msg)
             # Add to message log
             self.received_msg_log[msg['id']] = (
                 msg['event']['type'], msg['event']['doc']['_updatedAt'])
+        else:
+            logger.warning("received a message on unknown queue")
 
     def on_error(self, ws, error):
         logger.error(f"error in webserver websocket connection {error}")
