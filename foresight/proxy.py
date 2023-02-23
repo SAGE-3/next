@@ -112,12 +112,12 @@ class SAGEProxy:
             self.__handle_create("APPS", app_info)
 
     def process_messages(self, ws, msg):
-        print("received and processing a new message")
+        logger.debug("received and processing a new message")
 
         msg = json.loads(msg)
         if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
             pass
-        print(msg)
+        logger.debug(msg)
 
         collection = msg["event"]['col']
         doc = msg['event']['doc']
@@ -208,17 +208,17 @@ class SAGEProxy:
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
-        id = doc['_id']
-        print("Delete Event", collection, id)
+        _id = doc['_id']
+        print("Delete Event", collection, _id)
         if collection == "ROOMS":
             try:
-                del self.rooms[id]
+                del self.rooms[_id]
             except:
-                logger.debug(f"Couldn't delete room_id: {id}")
+                logger.debug(f"Couldn't delete room_id: {_id}")
         elif collection == "BOARDS":
             room_id = doc['data']['roomId']
             try:
-                del self.rooms[room_id].boards[id]
+                del self.rooms[room_id].boards[_id]
             except:
                 print(
                     f"Couldn't delete board_id: {id}")
@@ -226,9 +226,13 @@ class SAGEProxy:
             board_id = doc['data']["boardId"]
             room_id = doc['data']['roomId']
             try:
-                del self.rooms[room_id].boards[board_id].smartbits[id]
+                # get the smartbit and clean up after itself before deleting
+
+                sb = self.rooms[room_id].boards[board_id].smartbits[_id]
+                sb.clean_up()
+                del self.rooms[room_id].boards[board_id].smartbits[_id]
             except:
-                logger.error(f"Couldn't delete app_id: {id}")
+                logger.error(f"Couldn't delete app_id: {_id}")
 
     def handle_linked_app(self, app_id, msg):
         if app_id in self.callbacks:

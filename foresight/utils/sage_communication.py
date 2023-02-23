@@ -47,8 +47,6 @@ class SageCommunication(Borg):
             "get_configuration": "/api/configuration"
         }
         self.web_config = self.get_configuration()
-        # self.socket = SageWebsocket()
-        # self.socket.run()
 
     def send_app_update(self, app_id, data):
         """
