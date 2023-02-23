@@ -31,50 +31,49 @@ from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
 
+def setup_logger():
+    debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
+    devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
+    # logging.basicConfig(filename='proxy.log')
+    logging.basicConfig()
 
+    formatter = None
+    logger = logging.getLogger(__name__)
+    if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
+        formatter = logging.Formatter(debug_fmt)
+        logger.root.setLevel(logging.DEBUG)
+    else:
+        formatter = logging.Formatter(devel_fmt)
+        logger.root.setLevel(logging.INFO)
+    logger.root.handlers[0].setFormatter(formatter)
+    return logger
 
-debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
-devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
-logging.basicConfig(filename='proxy.log')
-formatter = None
+logger = setup_logger()
 
-
-logger = logging.getLogger(__name__)
-
-
-if os.getenv("LOG_LEVEL") is not None and os.getenv("LOG_LEVEL") == "debug":
-    formatter = logging.Formatter(debug_fmt)
-    logger.root.setLevel(logging.DEBUG)
-else:
-    formatter = logging.Formatter(devel_fmt)
-    logger.root.setLevel(logging.INFO)
-# print(logger.handlers)
-logger.root.handlers[0].setFormatter(formatter)
-
-
-class LinkedInfo(BaseModel):
-    board_id: str
-    src_app: str
-    dest_app: str
-    src_field: str
-    dest_field: str
-    callback: Callable
-
-
-# TODO: sample callback for linked app. Other example
-#  needed. Also new home for such functions is also needed
-def update_dest_from_src(src_val, dest_app, dest_field):
-    setattr(dest_app.state, dest_field, src_val)
-    dest_app.send_updates()
+# TODO: Find another spot for this.
+# class LinkedInfo(BaseModel):
+#     board_id: str
+#     src_app: str
+#     dest_app: str
+#     src_field: str
+#     dest_field: str
+#     callback: Callable
+#
+#
+# # TODO: sample callback for linked app. Other example
+# #  needed. Also new home for such functions is also needed
+# def update_dest_from_src(src_val, dest_app, dest_field):
+#     setattr(dest_app.state, dest_field, src_val)
+#     dest_app.send_updates()
 
 
 class SAGEProxy:
+
     def __init__(self, conf, prod_type):
 
         self.conf = conf
         self.prod_type = prod_type
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
-        self.socket = SageWebsocket(on_message_fn=self.on_message)
         self.__MSG_METHODS = {
             "CREATE": self.__handle_create,
             "UPDATE": self.__handle_update,
@@ -86,24 +85,13 @@ class SAGEProxy:
 
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
-        # rooms_sub = self.s3_comm.subscribe('/api/rooms')
-        # boards_sub = self.s3_comm.subscribe('/api/boards')
-        # apps_sub = self.s3_comm.subscribe('/api/apps')
-        # self.sub_list = [rooms_sub, boards_sub, apps_sub]
-
-        # self.worker_process = threading.Thread(target=self.process_messages)
-        self.stop_worker = False
+        self.socket = SageWebsocket(on_message_fn=self.process_messages)
+        self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
 
         # Grab and load info already on the board
-        # self.populate_existing()
+        self.populate_existing()
 
 
-    def on_message(self, ws, message):
-        msg = json.loads(message)
-        print(f"received message in alternate fun in porxy's on_message {msg}")
-
-    def start_threads(self):
-        self.worker_process.start()
 
     def populate_existing(self):
         # Populate existing rooms
@@ -121,42 +109,27 @@ class SAGEProxy:
         for app_info in apps_info:
             self.__handle_create("APPS", app_info)
 
-    def process_messages(self):
-        """
-        Running this in the main thread to not deal with sharing variables right now.
-        potentially work on a multiprocessing version where threads are processed separately
-        Messages needs to be numbered to avoid received out of sequences messages.
-        """
+    def process_messages(self, ws, msg):
+        print("received and processing a new message")
 
-        while not self.stop_worker:
-            for sub in self.sub_list:
-                try:
-                    msg = sub.get(block=False)
+        msg = json.loads(msg)
+        if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+            pass
+        print(msg)
 
-                except Empty as e:
-                    continue
-                except EOFError as e:
-                    print(f"Message queue was closed")
-                    return
+        collection = msg["event"]['col']
+        doc = msg['event']['doc']
 
-                if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                    pass
+        msg_type = msg["event"]["type"]
+        if msg_type == "UPDATE":
+            app_id = msg["event"]["doc"]["_id"]
+            if app_id in self.callbacks:
+                self.handle_linked_app(app_id, msg)
 
-                # logger.debug(f"Getting ready to process: {msg}")
-
-                collection = msg["event"]['col']
-                doc = msg['event']['doc']
-
-                msg_type = msg["event"]["type"]
-                if msg_type == "UPDATE":
-                    app_id = msg["event"]["doc"]["_id"]
-                    if app_id in self.callbacks:
-                        self.handle_linked_app(app_id, msg)
-
-                    updates = msg['event']['updates']
-                    self.__MSG_METHODS[msg_type](collection, doc, updates)
-                else:
-                    self.__MSG_METHODS[msg_type](collection, doc)
+            updates = msg['event']['updates']
+            self.__MSG_METHODS[msg_type](collection, doc, updates)
+        else:
+            self.__MSG_METHODS[msg_type](collection, doc)
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
@@ -286,8 +259,6 @@ class SAGEProxy:
             print("Messages queue was not empty while starting to clean proxy")
         self.__message_queue.close()
 
-        self.stop_worker = True
-        self.worker_process.join()
 
         for board_id in sage_proxy.room.boards.keys():
             for app_info in sage_proxy.room.boards[board_id].smartbits:
@@ -323,10 +294,9 @@ def clean_up_terminate(signum, frame):
 
 if __name__ == "__main__":
 
-
     logger.info(f"Starting proxy")
     sage_proxy = SAGEProxy(conf, prod_type)
-    sage_proxy.start_threads()
+    # sage_proxy.start_threads()
 
     signal.signal(signal.SIGINT, clean_up_terminate)
     signal.signal(signal.SIGTERM, clean_up_terminate)

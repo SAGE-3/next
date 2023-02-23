@@ -53,7 +53,7 @@ class SageWebsocket:
 
     def on_message(self, ws, message):
         msg = json.loads(message)
-        print(f"received message in default fun on_message {message}")
+        logger.log(f"received message in default func on_message {message}, WRANIGN---not doing anything")
         # sub_id = msg['id']
         # if self.queue_list[sub_id]:
         #     # Put into proper queue
@@ -81,17 +81,20 @@ class SageWebsocket:
         return True
 
     # Subscribe to a route
-    def subscribe(self, route):
+    def subscribe(self, routes: list[str]):
+        print("subscribing to: ")
+        logger.debug(f"Subscribing to {routes}")
         if not self.check_connection():
             return
         # # Generate id for subscription
         subscription_id = str(uuid.uuid4())
         # WS Message
-        msg_sub = {
-            'route': route,
-            'id': subscription_id, 'method': 'SUB'
-        }
-        self.ws.send(json.dumps(msg_sub))
+        for route in routes:
+            msg_sub = {
+                'route': routes,
+                'id': subscription_id, 'method': 'SUB'
+            }
+            self.ws.send(json.dumps(msg_sub))
         # return new_queue
 
     def run(self):
