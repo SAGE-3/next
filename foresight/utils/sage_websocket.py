@@ -93,7 +93,7 @@ class SageWebsocket:
                 'route': route,
                 'id': subscription_id, 'method': 'SUB'
             }
-        self.ws.send(json.dumps(msg_sub))
+            self.ws.send(json.dumps(msg_sub))
     # return new_queue
 
     def run(self):
