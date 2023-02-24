@@ -52,8 +52,8 @@ import {
 import {getExtension} from '@sage3/shared';
 import {FileEntry} from './types';
 import {setupAppForFile} from './CreateApp';
-import './menu.scss';
 import {setupApp} from "../../../../background/components";
+import './menu.scss';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -95,6 +95,21 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
 
   const scale = useUIStore((state) => state.scale);
 
+  // Select the file when clicked
+  const onSingleClick = (e: MouseEvent): void => {
+    // @ts-expect-error
+    const ismac = navigator.userAgentData.platform === 'macOS';
+    const modifier = ismac ? e.metaKey : e.ctrlKey;
+    clickCB(file, e.shiftKey, modifier);
+    if (showMenu) setShowMenu(false);
+  };
+
+  useEffect(() => {
+    setSelected(file.selected);
+    // hide context menu
+    setShowMenu(false);
+  }, [file]);
+
   const randColor = () => {
     const colors =
       [
@@ -110,20 +125,19 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     return colors[randomIndex];
   }
 
-  // Select the file when clicked
-  const onSingleClick = (e: MouseEvent): void => {
-    // @ts-expect-error
-    const ismac = navigator.userAgentData.platform === 'macOS';
-    const modifier = ismac ? e.metaKey : e.ctrlKey;
-    clickCB(file, e.shiftKey, modifier);
-    if (showMenu) setShowMenu(false);
-  };
+  const getPinBoardDims = (n: any, columnHeight: number, x: number, y: number, width: number, height: number, spacing: number) => {
+    let pinBoardWidth = 0;
+    const pinBoardHeight = (height + spacing) * n.length / (columnHeight);
+    const pinBoardX = x - width / 2;
+    const pinBoardY = y - height / 2;
 
-  useEffect(() => {
-    setSelected(file.selected);
-    // hide context menu
-    setShowMenu(false);
-  }, [file]);
+    if (n.length % columnHeight != 0) {
+      pinBoardWidth = (width + spacing) * n.length / (columnHeight - 1)
+    } else {
+      pinBoardWidth = (width + spacing) * n.length / (columnHeight)
+    }
+    return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight]
+  }
 
   const explodeCells = () => {
     if (!user) return;
@@ -143,23 +157,19 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
       })
       .then(function (spec) {
         const cells = spec.cells;
-        let y = yDrop;
         let columnCount = 0;
         const columnHeight = 5;
         let x = xDrop;
+        let y = yDrop;
         const height = 400;
         const width = 500;
         const spacing = 40;
         const cellColor = randColor()
-        const backdropX = xDrop - width/2
-        const backdropY = yDrop - height/2
-        const backdropWidth = width * cells.length/(columnHeight - 1.5)
-        const backdropHeight = height * cells.length/(columnHeight - 1.5)
-        createApp(setupApp('', 'AIPane', backdropX, backdropY, roomId, boardId, {
-          w: backdropWidth,
-          h: backdropHeight
+        const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(cells, columnHeight, xDrop, yDrop, width, height, spacing)
+        createApp(setupApp('', 'PinBoard', pinBoardX, pinBoardY, roomId, boardId, {
+            w: pinBoardWidth,
+            h: pinBoardHeight
           })
-
         )
         cells.forEach((cell: any) => {
           if (cell.cell_type === 'code') {
@@ -211,7 +221,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
   }
 
   // Context menu selection handler
-  const actionClick = async (e: React.MouseEvent<HTMLLIElement>) => {
+  const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
     const id = e.currentTarget.id;
     if (id === 'down') {
       // download a file
