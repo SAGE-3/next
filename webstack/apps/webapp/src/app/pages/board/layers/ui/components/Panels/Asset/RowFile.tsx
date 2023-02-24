@@ -151,6 +151,16 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
         const width = 500;
         const spacing = 40;
         const cellColor = randColor()
+        const backdropX = xDrop - width/2
+        const backdropY = yDrop - height/2
+        const backdropWidth = width * cells.length/(columnHeight - 1.5)
+        const backdropHeight = height * cells.length/(columnHeight - 1.5)
+        createApp(setupApp('', 'AIPane', backdropX, backdropY, roomId, boardId, {
+          w: backdropWidth,
+          h: backdropHeight
+          })
+
+        )
         cells.forEach((cell: any) => {
           if (cell.cell_type === 'code') {
             const sourceCode = (cell.source as []).join(' ');
