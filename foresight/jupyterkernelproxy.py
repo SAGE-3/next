@@ -6,7 +6,6 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-import os
 import redis
 import uuid
 import datetime
@@ -14,7 +13,7 @@ import requests
 import json
 from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager
-from ws4py import format_addresses, configure_logger
+from ws4py import format_addresses
 from config import config as conf, prod_type
 
 import logging
