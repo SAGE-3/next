@@ -51,7 +51,7 @@ export const init: Partial<state> = {
   language: 'python',
   fontSize: 14,
   theme: 'xcode',
-  groupColor: '#1A1A1A',
+  groupColor: '#A0AEC0',
   kernel: '',
   output: '',
   privateMessage: [],

@@ -67,16 +67,7 @@ const AppComponent = (props: App): JSX.Element => {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
 
-  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
-
-  // const [bgColor, setBgColor] = useState('')
-
-  // const setBg = () => {
-  //   const randomColor = Math.floor(Math.random() * 16777215).toString(16);
-  //   const colorCode = '#' + randomColor
-  //   setBgColor(colorCode)
-  // }
 
   function getKernels() {
     if (!user) return;

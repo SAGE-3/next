@@ -95,9 +95,19 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
 
   const scale = useUIStore((state) => state.scale);
 
-  const setBg = () => {
-    const randomColor = Math.floor(Math.random() * 16777215).toString(16);
-    return '#' + randomColor
+  const randColor = () => {
+    const colors =
+      [
+        "red.400",
+        "green.400",
+        "blue.400",
+        "yellow.400",
+        "purple.400",
+        "pink.400",
+        "teal.400",
+      ]
+    const randomIndex = Math.floor(Math.random() * colors.length);
+    return colors[randomIndex];
   }
 
   // Select the file when clicked
@@ -140,7 +150,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
         const height = 400;
         const width = 500;
         const spacing = 40;
-        const cellColor = setBg()
+        const cellColor = randColor()
         cells.forEach((cell: any) => {
           if (cell.cell_type === 'code') {
             const sourceCode = (cell.source as []).join(' ');

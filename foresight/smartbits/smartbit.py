@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
 from typing import ClassVar
-from abc  import abstractmethod
+from abc import abstractmethod
 
 
 # from utils.generic_utils import create_dict
