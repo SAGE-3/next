@@ -131,6 +131,7 @@ class KernelDashboard(SmartBit):
         self.send_updates()
 
     def clean_up(self):
+        print("Closing the kernel dashboard")
         self.state.lastHeartBeat = 0
         self.state.online = False
         self._jupyter_client.clean_up()

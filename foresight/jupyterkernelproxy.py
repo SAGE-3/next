@@ -6,7 +6,6 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-import os
 import redis
 import uuid
 import datetime
@@ -14,7 +13,7 @@ import requests
 import json
 from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager
-from ws4py import format_addresses, configure_logger
+from ws4py import format_addresses
 from config import config as conf, prod_type
 
 import logging
@@ -61,7 +60,7 @@ class JupyterKernelProxy:
 
         def received_message(self, msg):
             # check if the message
-            logger.debug(f"processing a message {msg}")
+            # print(f"processing a message {msg}")
             msg = json.loads(msg.data.decode("utf-8"))
             msg_id_uuid = str(uuid.UUID(msg["parent_header"]["msg_id"].split("_")[0]))
             result = {}
@@ -184,6 +183,7 @@ class JupyterKernelProxy:
             raise Exception("couldn't communicate with the Jupyter Kernel Gateway.")
 
     def clean_up(self):
+        pass
         self.conn_manager.close_all()
         self.conn_manager.stop()
         self.conn_manager.join()
