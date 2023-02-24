@@ -649,7 +649,8 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
                 case 'image/svg+xml':
                   return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
                 default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
+                  // return MapJSONObject(parsedJSON.display_data[key]);
+                  return null;
               }
             });
           }
