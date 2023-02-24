@@ -121,7 +121,6 @@ class JupyterKernelProxy:
             self.connections[kernel_id].connect()
 
     def execute(self, command_info):
-        print(f"Command info to execute is {command_info}")
         user_passed_uuid = command_info["uuid"]
         msg = format_execute_request_msg(user_passed_uuid, command_info["code"])
         kernel_id = command_info['kernel']

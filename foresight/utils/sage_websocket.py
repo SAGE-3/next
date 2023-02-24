@@ -38,6 +38,7 @@ class SageWebsocket:
                                          )
 
         self.wst = None
+
         self.received_msg_log = {}
         self.queue_list = {}
         self.run()
@@ -48,7 +49,7 @@ class SageWebsocket:
     #     return self.socket.setup_sub_queue(route)
 
     def on_open(self, ws):
-        print("Websocket connected")
+        logger.debug("Websocket connected")
         self.connected = True
 
     def on_message(self, ws, message):
@@ -97,12 +98,10 @@ class SageWebsocket:
 
     def run(self):
         self.wst = threading.Thread(target=self.ws.run_forever)
-        # self.wst.daemon = True
+        self.wst.daemon = True
         self.wst.start()
-        print("started the process in a new thread")
 
     def clean_up(self):
-        print("in cleaning up")
         self.ws.close()
         # try to jon thread
         nb_tries = 3

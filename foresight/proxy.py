@@ -14,7 +14,7 @@
 #  and no unknown fields
 
 # TODO prevent apps updates on fields that were touched?
-from queue import Empty
+import time
 import signal
 import sys
 import os
@@ -105,11 +105,9 @@ class SAGEProxy:
         boards_info = self.s3_comm.get_boards()
         for board_info in boards_info:
             self.__handle_create("BOARDS", board_info)
-        print("populating apps")
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
-            print(f"Populating {app_info}")
             self.__handle_create("APPS", app_info)
 
     def process_messages(self, ws, msg):
@@ -296,17 +294,23 @@ class SAGEProxy:
 #     return parser
 
 
-def clean_up_terminate(signum, frame):
-    logger.debug("Cleaning up before terminating")
-    sage_proxy.clean_up()
+# def clean_up_terminate(signum, frame):
+#     logger.debug("Cleaning up before terminating")
+#     sage_proxy.clean_up()
 
 
 if __name__ == "__main__":
 
     logger.info(f"Starting proxy")
+    # signal.signal(signal.SIGINT, clean_up_terminate)
+    # signal.signal(signal.SIGTERM, clean_up_terminate)
+    # signal.signal(signal.SIGHUP, clean_up_terminate)
     sage_proxy = SAGEProxy(conf, prod_type)
-    # sage_proxy.start_threads()
 
-    signal.signal(signal.SIGINT, clean_up_terminate)
-    signal.signal(signal.SIGTERM, clean_up_terminate)
-    signal.signal(signal.SIGHUP, clean_up_terminate)
+    while True:
+        try:
+            time.sleep(10)
+        except KeyboardInterrupt:
+            sage_proxy.clean_up()
+            break
+    logger.info("Terminating SageProxy")
