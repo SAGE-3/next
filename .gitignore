@@ -28,3 +28,4 @@ webstack/package-lock.json
 
 # logs
 *.log
+webstack/yarn.lock
