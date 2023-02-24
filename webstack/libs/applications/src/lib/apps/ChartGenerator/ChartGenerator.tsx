@@ -33,7 +33,7 @@ import { FaBars } from 'react-icons/fa';
 
 // Styling
 import './styling.css';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, Key, useEffect, useRef, useState } from 'react';
 
 import { debounce } from 'throttle-debounce';
 
@@ -99,185 +99,211 @@ function AppComponent(props: App): JSX.Element {
   const buttonTextColor = useColorModeValue('white', 'black');
   const scale = useUIStore((state) => state.scale);
 
-  const chartRef = useRef<ChartJS>(null);
+  const chartRef = useRef<any>(null);
+  const [chart, setChart] = useState<any>(null);
 
   //Local State
   const [open, setOpen] = useState(false);
   const [attributeNames, setAttributeNames] = useState<string[]>([]);
   const [data, setData] = useState<any[]>([]);
   const [labels] = useState<string[]>([]);
-  const [chartData, setChartData] = useState<any>({
-    labels,
-    datasets: [
-      {
-        label: 'Dataset 1',
-        data: [1, 2, 3, 4],
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-      },
-    ],
-  });
-  const [options, setOptions] = useState({
-    maintainAspectRatio: false,
-    responsive: true,
-    scales: {
-      y: {
-        min: 0,
-        ticks: {
-          color: 'white',
-          font: {
-            size: 40,
-          },
-        },
-      },
-      x: {
-        type: 'time' as const,
-
-        adapters: {
-          date: {
-            locale: enUS,
-          },
-        },
-        ticks: {
-          color: 'white',
-          font: {
-            size: 40,
-          },
-        },
-      },
-    },
-
-    plugins: {
-      title: {
-        display: true,
-        text: '',
-        font: { size: 60 },
-        color: 'white',
-      },
-      legend: {
-        labels: {
-          color: 'white',
-          // This more specific font property overrides the global property
-          font: {
-            size: 40,
-          },
-        },
-      },
-    },
-  });
 
   //TODO: Temporary for all properties for station data
   const [stationMetadata, setStationMetadata] = useState<any>({});
 
-  // Used to update font sizes in the toolbar +/-
   useEffect(() => {
-    const fontSize = s.fontSizeMultiplier * (1 / scale);
+    if (chart) {
+      chart.data.datasets = [
+        ...s.datasets.map((d) => ({
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          type: d.chartType as const,
+          label: d.yDataName,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          data: data[d.yDataName],
+          borderColor: d.borderColor,
+          backgroundColor: d.backgroundColor,
+          yAxisID: d.yAxisID,
+        })),
+      ];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const minYValue = Math.min(...data[s.datasets[0].yDataName].filter((v) => v != null));
+      chart.options.scales.y.min = minYValue;
+      console.log(chart.data.datasets);
+      chart.update();
+    }
+  }, [JSON.stringify(s.datasets), JSON.stringify(data)]);
 
-    setOptions({
-      ...options,
-      scales: {
-        y: {
-          ...options.scales.y,
-          ticks: { ...options.scales.y.ticks, font: { size: fontSize } },
-        },
-        x: { ...options.scales.x, ticks: { ...options.scales.x.ticks, font: { size: fontSize } } },
-      },
-      plugins: {
-        title: {
-          ...options.plugins.title,
-
-          font: { size: fontSize },
-        },
-        legend: {
-          labels: {
-            color: 'white',
-            // This more specific font property overrides the global property
-            font: {
-              size: fontSize,
-            },
-          },
-        },
-      },
-    });
-  }, [s.fontSizeMultiplier]);
-
-  const setTitle = (chartTitle: string) => {
-    setOptions({ ...options, plugins: { ...options.plugins, title: { ...options.plugins.title, text: chartTitle } } });
-  };
-
-  const setMinimumYValue = (minYValue: number) => {
-    setOptions({ ...options, plugins: { ...options.plugins }, scales: { ...options.scales, y: { ...options.scales.y, min: minYValue } } });
-  };
-
-  // Fetching HCDP datafrom state.url
   useEffect(() => {
+    const ctx = chartRef.current?.getContext('2d');
     let climateData: never[] = [];
+    const getData = (isIntervalCall: boolean) => {
+      fetch(s.url).then((response) => {
+        response.json().then((station) => {
+          climateData = station['STATION'][0]['OBSERVATIONS'];
+          delete station['STATION'][0]['SENSOR_VARIABLES'];
+          delete station['STATION'][0]['OBSERVATIONS'];
+          const attributeProps = Object.keys(climateData);
 
-    fetch(s.url).then((response) => {
-      response.json().then((station) => {
-        climateData = station['STATION'][0]['OBSERVATIONS'];
-        delete station['STATION'][0]['SENSOR_VARIABLES'];
-        delete station['STATION'][0]['OBSERVATIONS'];
-        setStationMetadata(station['STATION'][0]);
-        const attributeProps = Object.keys(climateData);
-        setTitle('Data for Station ' + station['STATION'][0]['NWSFIREZONE']);
-        setData(climateData);
-
-        if (s.datasets[0].yDataName !== '') {
+          setStationMetadata(station['STATION'][0]);
+          // setData(climateData);
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
-          setMinimumYValue(minYValue);
-        }
+          console.log(station);
+          // setAttributeNames(attributeProps);
+          if (!isIntervalCall) {
+            const chartTmp = new ChartJS(ctx, {
+              type: 'bar',
 
-        setAttributeNames(attributeProps);
+              data: {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                labels: climateData[s.labelName],
+                datasets: [
+                  {
+                    label: s.datasets[0].yDataName,
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    data: climateData[s.datasets[0].yDataName],
+                    borderColor: s.datasets[0].borderColor,
+                    backgroundColor: s.datasets[0].backgroundColor,
+                    yAxisID: s.datasets[0].yAxisID,
+                    type: s.datasets[0].chartType,
+                  },
+                ],
+              },
+              options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                  y: {
+                    type: 'linear',
+                    min: minYValue,
+                    beginAtZero: true,
+                    ticks: {
+                      color: 'white',
+                      font: {
+                        size: 40,
+                      },
+                    },
+                  },
+                  y1: {
+                    min: 20,
+                    position: 'right',
+                    display: false,
+                    beginAtZero: true,
+                    ticks: {
+                      color: 'white',
+                      font: {
+                        size: 40,
+                      },
+                    },
+                  },
+                  x: {
+                    type: 'time' as const,
+
+                    adapters: {
+                      date: {
+                        locale: enUS,
+                      },
+                    },
+                    ticks: {
+                      color: 'white',
+                      font: {
+                        size: 40,
+                      },
+                    },
+                  },
+                },
+                plugins: {
+                  title: {
+                    display: true,
+                    text: station['STATION'][0]['NAME'],
+                    font: { size: 60 },
+                    color: 'white',
+                  },
+                  legend: {
+                    labels: {
+                      color: 'white',
+                      // This more specific font property overrides the global property
+                      font: {
+                        size: 40,
+                      },
+                    },
+                  },
+                },
+              },
+            });
+            setChart(chartTmp);
+          }
+
+          setData(climateData);
+        });
       });
-    });
-  }, [s.url]);
+    };
+    getData(false);
+    // Fetch data every 10 minutes. TODO: late joiners will not be synced. They will get recent data faster than older
+    const interval = setInterval(() => {
+      getData(true);
+    }, 60 * 1000 * 10);
 
-  // Update the chart if axis or data changes
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <AppWindow app={props}>
+      <>
+        <canvas style={{ backgroundColor: 'black' }} ref={chartRef}></canvas>
+      </>
+    </AppWindow>
+  );
+}
+
+/* App toolbar component for the app ChartGenerator */
+
+function ToolbarComponent(props: App): JSX.Element {
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
+  const [sensorVariableNames, setSensorVariableNames] = useState<any>([]);
+  const [climateData, setClimateData] = useState<any>([]);
+
   useEffect(() => {
-    const tmpTraces: any[] = [];
-    let chartType = '';
-    let yDataName = '';
-    //Setting labels for X axis
-    for (let i = 0; i < s.datasets.length; i++) {
-      yDataName = s.datasets[i].yDataName;
-      chartType = s.datasets[i].chartType;
-      tmpTraces.push({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        type: chartType as const,
-        label: yDataName,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        data: data[yDataName],
-        borderColor: 'rgb(255, 255, 255)',
-        backgroundColor: 'rgb(244, 187, 68)',
+    fetch(s.url).then((response) => {
+      response.json().then((station) => {
+        const tmpClimateDdata = station['STATION'][0]['OBSERVATIONS'];
+        delete station['STATION'][0]['SENSOR_VARIABLES'];
+        delete station['STATION'][0]['OBSERVATIONS'];
+
+        setSensorVariableNames(Object.keys(tmpClimateDdata));
+        setClimateData(tmpClimateDdata);
       });
-    }
-    setChartData({
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      labels: data[s.labelName],
-      datasets: [...tmpTraces],
     });
-    // setRevCount(Math.floor(Math.random() * 1000000));
-  }, [JSON.stringify(data), JSON.stringify(s.datasets)]);
-
-  // Change x axis
-  const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const xAxisProperty = e.target.value;
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const newData = data[xAxisProperty];
-    console.log(chartData);
-    setChartData({
-      ...chartData,
-      labels: [...newData],
-    });
+  }, []);
+  // Functions to increase/decrease font size for chart titles
+  const increaseFontSize = () => {
+    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
   };
+  const decreaseFontSize = () => {
+    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
+  };
+
+  //  // Change x axis
+  //  const handleXAxisChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  //   const xAxisProperty = e.target.value;
+
+  //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //   // @ts-ignore
+  //   const newData = data[xAxisProperty];
+  //   console.log(chartData);
+  //   setChartData({
+  //     ...chartData,
+  //     labels: [...newData],
+  //   });
+  // };
 
   // Change y axis
   const handleYAxisChange = (e: ChangeEvent<HTMLSelectElement>, index: number) => {
@@ -289,10 +315,8 @@ function AppComponent(props: App): JSX.Element {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const minYValue = Math.min(...data[value].filter((v) => v != null));
-
-    setMinimumYValue(minYValue);
-
+    const minYValue = Math.min(...climateData[value].filter((v) => v != null));
+    newDatasets[index].minYValue = minYValue;
     updateState(props._id, { datasets: newDatasets });
   };
 
@@ -322,166 +346,6 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <AppWindow app={props}>
-      <>
-        <div
-          style={{
-            position: 'absolute',
-            overflow: 'hidden',
-            width: '400px',
-            maxWidth: props.data.size.width,
-            height: '100%',
-            pointerEvents: open ? 'all' : 'none',
-          }}
-        >
-          <div className="sideMenu" style={{ left: open ? 0 : '-100%', opacity: open ? 1.0 : 0.0 }}>
-            <Button className="closeButton" onClick={() => setOpen(false)} backgroundColor={commonButtonColors} size="sm" mx="1">
-              <MdClose color={buttonTextColor} />
-            </Button>
-            <br />
-            <br />
-            <Grid templateColumns="repeat(1,1fr)" gap={2}>
-              {Object.keys(stationMetadata).map((property, index) => {
-                // Create a Title for each property name
-                const firstLetterCapitalized = property.slice(0, 1);
-                const remainingLettersWithoutUnderscore = property.replaceAll('_', ' ');
-                const remainingLettersToLowerCase = remainingLettersWithoutUnderscore.slice(1).toLowerCase();
-                const finalProperty = firstLetterCapitalized + remainingLettersToLowerCase;
-
-                return typeof stationMetadata[property] === 'string' ? (
-                  <h1 style={{ marginLeft: '1rem' }} key={index}>
-                    <b>{finalProperty}: </b>
-                    {stationMetadata[property]}
-                  </h1>
-                ) : null;
-              })}
-              <br />
-              <h1 style={{ textAlign: 'center' }}>Graph Type</h1>
-              <Container>
-                <Box borderColor="black" maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
-                  <Select placeholder={'Chart Type'} onChange={handleTypeChange}>
-                    {typeOptions.map((value, index) => (
-                      <option value={value.value} key={index}>
-                        {value.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Box>
-              </Container>
-              <h1 style={{ textAlign: 'center' }}> X values</h1>
-              <Container>
-                <Box maxW="sm" overflow="hidden">
-                  <HStack>
-                    <Select
-                      borderColor="black"
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      name="xAxis"
-                      placeholder={'choose an attribute'}
-                      onChange={handleXAxisChange}
-                    >
-                      {attributeNames.map((attributeName, index) => {
-                        return (
-                          <option data-key={index} value={attributeName} key={index}>
-                            {attributeName}
-                          </option>
-                        );
-                      })}
-                    </Select>
-                    {/* <IconButton
-                      aria-label="Add Field"
-                      borderColor="black"
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      icon={<MdAddCircle />}
-                    ></IconButton> */}
-                  </HStack>
-                </Box>
-              </Container>
-              <h1 style={{ textAlign: 'center' }}>Y values</h1>
-              <Container>
-                <Box maxW="sm" overflow="hidden">
-                  <HStack>
-                    <VStack>
-                      {s.datasets.map((dataset, index) => {
-                        return (
-                          <Select
-                            borderColor="black"
-                            borderWidth="1px"
-                            borderRadius="lg"
-                            name="yAxis"
-                            key={index}
-                            placeholder={'choose an attribute'}
-                            onChange={(e) => {
-                              handleYAxisChange(e, index);
-                            }}
-                          >
-                            {attributeNames.map((attributeName, index) => {
-                              return (
-                                <option data-key={index} value={attributeName} key={index}>
-                                  {attributeName}
-                                </option>
-                              );
-                            })}
-                          </Select>
-                        );
-                      })}
-                    </VStack>
-                    <IconButton
-                      aria-label="Add Field"
-                      borderColor="black"
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      icon={<MdAddCircle />}
-                      onClick={increaseDatasetSize}
-                    ></IconButton>
-                  </HStack>
-                </Box>
-              </Container>
-              <br />
-              <br />
-            </Grid>
-          </div>
-        </div>
-
-        <div className={open ? 'dimBackground' : undefined}>
-          <div onClick={() => setOpen(false)} style={{ width: props.data.size.width, height: props.data.size.height }}>
-            <Chart ref={chartRef} style={{ backgroundColor: 'black', color: 'white' }} options={options} data={chartData} type={'bar'} />;
-          </div>
-        </div>
-
-        <Button
-          position="absolute"
-          backgroundColor={commonButtonColors}
-          size="sm"
-          left="0"
-          top="0"
-          onClick={(e: any) => {
-            e.preventDefault();
-            setOpen(true);
-          }}
-        >
-          <FaBars color={buttonTextColor} />
-        </Button>
-      </>
-    </AppWindow>
-  );
-}
-
-/* App toolbar component for the app ChartGenerator */
-
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-  // Functions to increase/decrease font size for chart titles
-  const increaseFontSize = () => {
-    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
-  };
-  const decreaseFontSize = () => {
-    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
-  };
-  return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
@@ -495,6 +359,33 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+      {s.datasets.map((dataset, index) => {
+        console.log(sensorVariableNames);
+        return (
+          <Select
+            borderWidth="1px"
+            borderRadius="lg"
+            size="sm"
+            mx="1rem"
+            backgroundColor={'whiteAlpha.900'}
+            color="gray.800"
+            name="yAxis"
+            key={index}
+            placeholder={'choose an attribute'}
+            onChange={(e) => {
+              handleYAxisChange(e, index);
+            }}
+          >
+            {sensorVariableNames.map((variableName: any, index: Key | null | undefined) => {
+              return (
+                <option data-key={index} value={variableName} key={index}>
+                  {variableName}
+                </option>
+              );
+            })}
+          </Select>
+        );
+      })}
     </>
   );
 }
