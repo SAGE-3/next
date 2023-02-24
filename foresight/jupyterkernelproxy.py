@@ -82,8 +82,7 @@ class JupyterKernelProxy:
                     result = {}
 
                 if msg['msg_type'] in ['execute_result', 'display_data', "error", "stream"]:
-                    result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content'],
-                              msg['msg_type']: msg['content']}
+                    result = {"request_id": msg["parent_header"]["msg_id"], msg['msg_type']: msg['content']}
                 elif msg['msg_type'] in ["execute_reply"]:
                     if msg['content']["status"] == "error":
                         result = {"request_id": msg["parent_header"]["msg_id"], "error": msg['content']['traceback']}
