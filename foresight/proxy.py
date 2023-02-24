@@ -34,8 +34,8 @@ from utils.sage_websocket import SageWebsocket
 def setup_logger():
     debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
     devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
-    # logging.basicConfig(filename='proxy.log')
-    logging.basicConfig()
+    logging.basicConfig(filename='proxy.log')
+    # logging.basicConfig()
 
     formatter = None
     logger = logging.getLogger(__name__)
@@ -50,27 +50,27 @@ def setup_logger():
 
 logger = setup_logger()
 
-# TODO: Find another spot for this.
-class LinkedInfo(BaseModel):
-    board_id: str
-    src_app: str
-    dest_app: str
-    src_field: str
-    dest_field: str
-    callback: Callable
+# # TODO: Find another spot for this.
+# class LinkedInfo(BaseModel):
+#     board_id: str
+#     src_app: str
+#     dest_app: str
+#     src_field: str
+#     dest_field: str
+#     callback: Callable
 
 
 # TODO: sample callback for linked app. Other example
-#  needed. Also new home for such functions is also needed
-def update_dest_from_src(src_val, dest_app, dest_field):
-    setattr(dest_app.state, dest_field, src_val)
-    dest_app.send_updates()
+# #  needed. Also new home for such functions is also needed
+# def update_dest_from_src(src_val, dest_app, dest_field):
+#     setattr(dest_app.state, dest_field, src_val)
+#     dest_app.send_updates()
 
 
 class SAGEProxy:
 
     def __init__(self, conf, prod_type):
-
+        self.done_init = False
         self.conf = conf
         self.prod_type = prod_type
         self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
@@ -85,18 +85,18 @@ class SAGEProxy:
 
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
-        print("in here\n\n\n\n")
         self.socket = SageWebsocket(on_message_fn=self.process_messages)
         self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
-        # self.socket.subscribe('/api/apps')
 
         # Grab and load info already on the board
-        self.populate_existing()
 
+        self.populate_existing()
+        self.done_init = True
 
 
     def populate_existing(self):
         # Populate existing rooms
+
         rooms_info = self.s3_comm.get_rooms()
         for room_info in rooms_info:
             self.__handle_create("ROOMS", room_info)
@@ -105,10 +105,11 @@ class SAGEProxy:
         boards_info = self.s3_comm.get_boards()
         for board_info in boards_info:
             self.__handle_create("BOARDS", board_info)
-
+        print("populating apps")
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
+            print(f"Populating {app_info}")
             self.__handle_create("APPS", app_info)
 
     def process_messages(self, ws, msg):
@@ -147,16 +148,18 @@ class SAGEProxy:
             doc["state"] = doc["data"]["state"]
             del (doc["data"]["state"])
             smartbit = SmartBitFactory.create_smartbit(doc)
-            roomId = doc["data"]["roomId"]
-            boardId = doc["data"]["boardId"]
-            if roomId in self.rooms:
-                if boardId in self.rooms[roomId].boards:
-                    self.rooms[roomId].boards[boardId].smartbits[smartbit.app_id] = smartbit
+            room_id = doc["data"]["roomId"]
+            board_id = doc["data"]["boardId"]
+            if room_id in self.rooms:
+                if board_id in self.rooms[room_id].boards:
+                    self.rooms[room_id].boards[board_id].smartbits[smartbit.app_id] = smartbit
 
     # Handle Update Messages
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
+
+
         id = doc["_id"]
         if collection == "ROOMS":
             self.rooms[id].handleUpdate(doc)
@@ -174,7 +177,7 @@ class SAGEProxy:
                     logger.debug(f"About to execute board function --{func_name}-- with params --{_params}--")
                     _func(**_params)
                 except Exception as e:
-                    print(
+                    logger.error(
                         f"Exception trying to execute board function {func_name}. \n\t{e}")
 
         elif collection == "APPS":
@@ -187,29 +190,29 @@ class SAGEProxy:
                 logger.debug("not handling generic smartbit update")
                 logger.debug(f"\t\tmessage was {doc}")
                 return
+            if sb is not None:
+                # Note that set_data_form_update clear touched field
+                sb.refresh_data_form_update(doc, updates)
 
-            # Note that set_data_form_update clear touched field
-            sb.refresh_data_form_update(doc, updates)
+                exec_info = getattr(sb.state, "executeInfo", None)
 
-            exec_info = getattr(sb.state, "executeInfo", None)
-
-            if exec_info is not None:
-                func_name = getattr(exec_info, "executeFunc")
-                if func_name != '':
-                    try:
-                        _func = getattr(sb, func_name)
-                        _params = getattr(exec_info, "params")
-                        # TODO: validate the params are valid
-                        # print(f"About to execute function --{func_name}-- with params --{_params}--")
-
-                        _func(**_params)
-                    except Exception as e:
-                        logger.error(f"Exception trying to execute function `{func_name}` on sb `{sb}`. \n{e}")
+                if exec_info is not None:
+                    func_name = getattr(exec_info, "executeFunc")
+                    if func_name != '':
+                        try:
+                            _func = getattr(sb, func_name)
+                            _params = getattr(exec_info, "params")
+                            # TODO: validate the params are valid
+                            _func(**_params)
+                        except Exception as e:
+                            logger.error(f"Exception trying to execute function `{func_name}` on sb `{sb}`. \n{e}")
+                else:
+                    logger.error("\n\n\nTried to update non existent smartbit\n\n\n")
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
         _id = doc['_id']
-        print("Delete Event", collection, _id)
+        logger.debug(f"Delete Event {collection} {_id}")
         if collection == "ROOMS":
             try:
                 del self.rooms[_id]
@@ -220,7 +223,7 @@ class SAGEProxy:
             try:
                 del self.rooms[room_id].boards[_id]
             except:
-                print(
+                logger.debug(
                     f"Couldn't delete board_id: {id}")
         elif collection == "APPS":
             board_id = doc['data']["boardId"]
@@ -234,56 +237,54 @@ class SAGEProxy:
             except:
                 logger.error(f"Couldn't delete app_id: {_id}")
 
-    def handle_linked_app(self, app_id, msg):
-        if app_id in self.callbacks:
-            # handle callback
-
-            for linked_info in self.callbacks[app_id].values():
-                if f"state.{linked_info.src_field}" in msg['event']['updates']:
-                    # print("Yes, the tracked fields was updated")
-                    # TODO 4: make callback function optional. In which case, jsut update dest with src
-                    # TODO 1. We need to dispatch the function on a different thread, not run it
-                    #  on the same thread as proxy
-                    # TODO 2. Catch to avoid errors here so the thread does not crash
-                    try:
-                        board_id = linked_info.board_id
-                        src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
-                        dest_field = linked_info.dest_field
-                        dest_id = linked_info.dest_app
-                        dest_app = self.room.boards[board_id].smartbits[dest_id]
-                        linked_info.callback(src_val, dest_app, dest_field)
-                    except Exception as e:
-                        logger.error(f"Error happened during callback for linked app {app_id}.\n {e}")
+    # def handle_linked_app(self, app_id, msg):
+    #     if app_id in self.callbacks:
+    #         # handle callback
+    #
+    #         for linked_info in self.callbacks[app_id].values():
+    #             if f"state.{linked_info.src_field}" in msg['event']['updates']:
+    #                 # print("Yes, the tracked fields was updated")
+    #                 # TODO 4: make callback function optional. In which case, jsut update dest with src
+    #                 # TODO 1. We need to dispatch the function on a different thread, not run it
+    #                 #  on the same thread as proxy
+    #                 # TODO 2. Catch to avoid errors here so the thread does not crash
+    #                 try:
+    #                     board_id = linked_info.board_id
+    #                     src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
+    #                     dest_field = linked_info.dest_field
+    #                     dest_id = linked_info.dest_app
+    #                     dest_app = self.room.boards[board_id].smartbits[dest_id]
+    #                     linked_info.callback(src_val, dest_app, dest_field)
+    #                 except Exception as e:
+    #                     logger.error(f"Error happened during callback for linked app {app_id}.\n {e}")
 
     def handle_exec_function(self):
         pass
 
     def clean_up(self):
-        # self.listening_process.clean_up()
+        pass
 
-        if not self.__message_queue.empty():
-            print("Messages queue was not empty while starting to clean proxy")
-        self.__message_queue.close()
+        # TODO: make sure to free all resources used by the smartbits.
+        # for board_id in sage_proxy.room.boards.keys():
+        #     for app_info in sage_proxy.room.boards[board_id].smartbits:
+        #         app_info[1].clean_up()
+        
 
 
-        for board_id in sage_proxy.room.boards.keys():
-            for app_info in sage_proxy.room.boards[board_id].smartbits:
-                app_info[1].clean_up()
-
-    def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
-        if src_app not in self.callbacks:
-            self.callbacks[src_app] = {}
-        self.callbacks[src_app] = {f"{src_app}:{dest_app}:{src_field}:{dest_field}":
-                                   LinkedInfo(board_id=board_id,
-                                              src_app=src_app,
-                                              dest_app=dest_app,
-                                              src_field=src_field,
-                                              dest_field=dest_field,
-                                              callback=callback)}
-
-    def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
-        del (self.callbacks[src_app]
-             [f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
+    # def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
+    #     if src_app not in self.callbacks:
+    #         self.callbacks[src_app] = {}
+    #     self.callbacks[src_app] = {f"{src_app}:{dest_app}:{src_field}:{dest_field}":
+    #                                LinkedInfo(board_id=board_id,
+    #                                           src_app=src_app,
+    #                                           dest_app=dest_app,
+    #                                           src_field=src_field,
+    #                                           dest_field=dest_field,
+    #                                           callback=callback)}
+    #
+    # def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
+    #     del (self.callbacks[src_app]
+    #          [f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
 
 # def get_cmdline_parser():

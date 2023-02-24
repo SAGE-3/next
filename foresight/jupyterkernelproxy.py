@@ -121,6 +121,7 @@ class JupyterKernelProxy:
             self.connections[kernel_id].connect()
 
     def execute(self, command_info):
+        print(f"Command info to execute is {command_info}")
         user_passed_uuid = command_info["uuid"]
         msg = format_execute_request_msg(user_passed_uuid, command_info["code"])
         kernel_id = command_info['kernel']
@@ -185,7 +186,8 @@ class JupyterKernelProxy:
             raise Exception("couldn't communicate with the Jupyter Kernel Gateway.")
 
     def clean_up(self):
+        pass
         self.conn_manager.close_all()
         self.conn_manager.stop()
-        self.conn_manager.join()
+        # self.conn_manager.join()
 
