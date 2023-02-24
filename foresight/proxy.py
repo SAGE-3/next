@@ -35,7 +35,7 @@ def setup_logger():
     debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
     devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
     logging.basicConfig(filename='proxy.log')
-    # logging.basicConfig()
+    logging.basicConfig()
 
     formatter = None
     logger = logging.getLogger(__name__)
@@ -50,21 +50,21 @@ def setup_logger():
 
 logger = setup_logger()
 
-# # TODO: Find another spot for this.
-# class LinkedInfo(BaseModel):
-#     board_id: str
-#     src_app: str
-#     dest_app: str
-#     src_field: str
-#     dest_field: str
-#     callback: Callable
+# TODO: Find another spot for this.
+class LinkedInfo(BaseModel):
+    board_id: str
+    src_app: str
+    dest_app: str
+    src_field: str
+    dest_field: str
+    callback: Callable
 
 
 # TODO: sample callback for linked app. Other example
-# #  needed. Also new home for such functions is also needed
-# def update_dest_from_src(src_val, dest_app, dest_field):
-#     setattr(dest_app.state, dest_field, src_val)
-#     dest_app.send_updates()
+#  needed. Also new home for such functions is also needed
+def update_dest_from_src(src_val, dest_app, dest_field):
+    setattr(dest_app.state, dest_field, src_val)
+    dest_app.send_updates()
 
 
 class SAGEProxy:
@@ -237,54 +237,56 @@ class SAGEProxy:
             except:
                 logger.error(f"Couldn't delete app_id: {_id}")
 
-    # def handle_linked_app(self, app_id, msg):
-    #     if app_id in self.callbacks:
-    #         # handle callback
-    #
-    #         for linked_info in self.callbacks[app_id].values():
-    #             if f"state.{linked_info.src_field}" in msg['event']['updates']:
-    #                 # print("Yes, the tracked fields was updated")
-    #                 # TODO 4: make callback function optional. In which case, jsut update dest with src
-    #                 # TODO 1. We need to dispatch the function on a different thread, not run it
-    #                 #  on the same thread as proxy
-    #                 # TODO 2. Catch to avoid errors here so the thread does not crash
-    #                 try:
-    #                     board_id = linked_info.board_id
-    #                     src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
-    #                     dest_field = linked_info.dest_field
-    #                     dest_id = linked_info.dest_app
-    #                     dest_app = self.room.boards[board_id].smartbits[dest_id]
-    #                     linked_info.callback(src_val, dest_app, dest_field)
-    #                 except Exception as e:
-    #                     logger.error(f"Error happened during callback for linked app {app_id}.\n {e}")
+    def handle_linked_app(self, app_id, msg):
+        if app_id in self.callbacks:
+            # handle callback
+
+            for linked_info in self.callbacks[app_id].values():
+                if f"state.{linked_info.src_field}" in msg['event']['updates']:
+                    # print("Yes, the tracked fields was updated")
+                    # TODO 4: make callback function optional. In which case, jsut update dest with src
+                    # TODO 1. We need to dispatch the function on a different thread, not run it
+                    #  on the same thread as proxy
+                    # TODO 2. Catch to avoid errors here so the thread does not crash
+                    try:
+                        board_id = linked_info.board_id
+                        src_val = msg['event']['updates'][f"state.{linked_info.src_field}"]
+                        dest_field = linked_info.dest_field
+                        dest_id = linked_info.dest_app
+                        dest_app = self.room.boards[board_id].smartbits[dest_id]
+                        linked_info.callback(src_val, dest_app, dest_field)
+                    except Exception as e:
+                        logger.error(f"Error happened during callback for linked app {app_id}.\n {e}")
 
     def handle_exec_function(self):
         pass
 
     def clean_up(self):
-        pass
+        # self.listening_process.clean_up()
 
-        # TODO: make sure to free all resources used by the smartbits.
-        # for board_id in sage_proxy.room.boards.keys():
-        #     for app_info in sage_proxy.room.boards[board_id].smartbits:
-        #         app_info[1].clean_up()
-        
+        # if not self.__message_queue.empty():
+        #     logger.warn("Messages queue was not empty while starting to clean proxy")
+        # self.__message_queue.close()
 
+        for room_id in sage_proxy.rooms.keys():
+            for board_id in sage_proxy.rooms[room_id].boards.keys():
+                for app_info in sage_proxy.rooms[room_id].boards[board_id].smartbits:
+                    app_info[1].clean_up()
 
-    # def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
-    #     if src_app not in self.callbacks:
-    #         self.callbacks[src_app] = {}
-    #     self.callbacks[src_app] = {f"{src_app}:{dest_app}:{src_field}:{dest_field}":
-    #                                LinkedInfo(board_id=board_id,
-    #                                           src_app=src_app,
-    #                                           dest_app=dest_app,
-    #                                           src_field=src_field,
-    #                                           dest_field=dest_field,
-    #                                           callback=callback)}
-    #
-    # def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
-    #     del (self.callbacks[src_app]
-    #          [f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
+    def register_linked_app(self, board_id, src_app, dest_app, src_field, dest_field, callback):
+        if src_app not in self.callbacks:
+            self.callbacks[src_app] = {}
+        self.callbacks[src_app] = {f"{src_app}:{dest_app}:{src_field}:{dest_field}":
+                                   LinkedInfo(board_id=board_id,
+                                              src_app=src_app,
+                                              dest_app=dest_app,
+                                              src_field=src_field,
+                                              dest_field=dest_field,
+                                              callback=callback)}
+
+    def deregister_linked_app(self, board_id, src_app, dest_app, src_field, dest_field):
+        del (self.callbacks[src_app]
+             [f"{src_app}:{dest_app}:{src_field}:{dest_field}"])
 
 
 # def get_cmdline_parser():

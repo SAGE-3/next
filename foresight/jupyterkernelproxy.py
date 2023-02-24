@@ -189,5 +189,5 @@ class JupyterKernelProxy:
         pass
         self.conn_manager.close_all()
         self.conn_manager.stop()
-        # self.conn_manager.join()
+        self.conn_manager.join()
 
