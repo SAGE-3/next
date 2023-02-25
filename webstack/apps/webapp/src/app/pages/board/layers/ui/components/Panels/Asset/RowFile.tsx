@@ -124,7 +124,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     return newColor
   }
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const newColor = randColor(groupColor)
     setGroupColor(newColor)
     // const bg = useColorModeValue(groupColor + '.100', groupColor + '.400');
@@ -192,7 +192,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
               setupApp('', 'Stickie', x, y, roomId, boardId, {
                 w: width,
                 h: height
-              }, {text: `markdown ${cell.source}`})
+              }, {text: `markdown ${cell.source}`, color: groupColor})
             );
           }
           if (cell.cell_type === 'raw') {
@@ -200,7 +200,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
               setupApp('', 'Stickie', x, y, roomId, boardId, {
                 w: width,
                 h: height
-              }, {text: `markdown ${cell.source}`, color: "red"})
+              }, {text: `markdown ${cell.source}`, color: groupColor})
             );
           }
           if (cell.cell_type === 'display_data') {
@@ -226,6 +226,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
           }
         });
       })
+    setGroupIndex(groupIndex + 1)
   }
 
   // Context menu selection handler
