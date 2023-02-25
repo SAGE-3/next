@@ -6,12 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useLayoutEffect} from 'react';
 import {useParams} from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import {format as formatDate, formatDistanceStrict} from 'date-fns';
-import {AssetHTTPService} from '@sage3/frontend';
+import {AssetHTTPService, useHexColor} from '@sage3/frontend';
 
 import {
   Modal,
@@ -95,6 +95,10 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
 
   const scale = useUIStore((state) => state.scale);
 
+  const [groupIndex, setGroupIndex] = useState(0)
+  const [groupColor, setGroupColor] = useState("gray")
+  const [groupHexColor, setGroupHexColor] = useState("#A0AEC0")
+
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
     // @ts-expect-error
@@ -110,20 +114,24 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     setShowMenu(false);
   }, [file]);
 
-  const randColor = () => {
-    const colors =
-      [
-        "red.400",
-        "green.400",
-        "blue.400",
-        "yellow.400",
-        "purple.400",
-        "pink.400",
-        "teal.400",
-      ]
-    const randomIndex = Math.floor(Math.random() * colors.length);
-    return colors[randomIndex];
+  // Generate a random color that is never the same as the last
+  const randColor = (current: string) => {
+    const colors = ["red", "green", "blue", "yellow", "purple", "pink", "teal", "gray"]
+    let newColor = null;
+    do {
+      newColor = colors[Math.floor(Math.random() * colors.length)];
+    } while (newColor === current);
+    return newColor
   }
+
+  useLayoutEffect(() => {
+    const newColor = randColor(groupColor)
+    setGroupColor(newColor)
+    // const bg = useColorModeValue(groupColor + '.100', groupColor + '.400');
+    // const hbg = useHexColor(bg);
+    // setGroupHexColor(hbg)
+  }, [groupIndex])
+
 
   const getPinBoardDims = (n: any, columnHeight: number, x: number, y: number, width: number, height: number, spacing: number) => {
     let pinBoardWidth = 0;
@@ -139,6 +147,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight]
   }
 
+  // Split a .ipynb into a series of SageCells
   const explodeCells = () => {
     if (!user) return;
     const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
@@ -164,7 +173,6 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
         const height = 400;
         const width = 500;
         const spacing = 40;
-        const cellColor = randColor()
         const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(cells, columnHeight, xDrop, yDrop, width, height, spacing)
         createApp(setupApp('', 'PinBoard', pinBoardX, pinBoardY, roomId, boardId, {
             w: pinBoardWidth,
@@ -177,7 +185,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
             createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
               w: width,
               h: height
-            }, {code: sourceCode, groupColor: cellColor}));
+            }, {code: sourceCode, groupColor: groupColor + '.400'}));
           }
           if (cell.cell_type === 'markdown') {
             createApp(
@@ -192,7 +200,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
               setupApp('', 'Stickie', x, y, roomId, boardId, {
                 w: width,
                 h: height
-              }, {text: `markdown ${cell.source}`})
+              }, {text: `markdown ${cell.source}`, color: "red"})
             );
           }
           if (cell.cell_type === 'display_data') {
