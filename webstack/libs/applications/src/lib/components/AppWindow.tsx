@@ -177,6 +177,7 @@ export function AppWindow(props: WindowProps) {
         });
       });
     }
+
     // Trying to optimize performance
     if (divRef.current) {
       // divRef.current.style.willChange = 'auto';
@@ -271,7 +272,7 @@ export function AppWindow(props: WindowProps) {
       if (!props.app.data.raised) update(props.app._id, { raised: true });
     }
   }
-  console.log(appDragging);
+
   return (
     <Rnd
       bounds="parent"

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Chakra Imports
 import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue, Text, Center, VStack, Box } from '@chakra-ui/react';
@@ -19,7 +19,7 @@ import { state as AppState } from './index';
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { TileLayer, LayersControl, Popup, CircleMarker } from 'react-leaflet';
+import { TileLayer, LayersControl, Popup, CircleMarker, Polygon, Marker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
 
 // Import the CSS style sheet from the node_modules folder
@@ -48,22 +48,22 @@ const minZoom = 1;
 
 // For now, this is hard-coded. Will change when HCDP is ready.
 const stationData = [
-  { lat: 20.8415, lon: -156.2948, name: '017HI' },
-  { lat: 20.7067, lon: -156.3554, name: '016HI' },
-  { lat: 20.7579, lon: -156.32, name: '001HI' },
-  { lat: 20.7598, lon: -156.2482, name: '002HI' },
-  { lat: 20.7382, lon: -156.2458, name: '013HI' },
-  { lat: 20.7104, lon: -156.2567, name: '003HI' },
-  { lat: 19.6974, lon: -155.0954, name: '005HI' },
-  { lat: 19.964, lon: -155.25, name: '006HI' },
-  { lat: 19.932, lon: -155.291, name: '007HI' },
-  { lat: 19.748, lon: -155.996, name: '008HI' },
-  { lat: 19.803, lon: -155.851, name: '009HI' },
-  { lat: 19.73, lon: -155.87, name: '010HI' },
-  { lat: 21.333, lon: -157.8025, name: '011HI' },
-  { lat: 21.3391, lon: -157.8369, name: '012HI' },
-  { lat: 22.2026, lon: -159.5188, name: '014HI' },
-  { lat: 22.1975, lon: -159.421, name: '015HI' },
+  { lat: 20.8415, lon: -156.2948, name: '017HI', temperature: 0 },
+  { lat: 20.7067, lon: -156.3554, name: '016HI', temperature: 0 },
+  { lat: 20.7579, lon: -156.32, name: '001HI', temperature: 0 },
+  { lat: 20.7598, lon: -156.2482, name: '002HI', temperature: 0 },
+  { lat: 20.7382, lon: -156.2458, name: '013HI', temperature: 0 },
+  { lat: 20.7104, lon: -156.2567, name: '003HI', temperature: 0 },
+  { lat: 19.6974, lon: -155.0954, name: '005HI', temperature: 0 },
+  { lat: 19.964, lon: -155.25, name: '006HI', temperature: 0 },
+  { lat: 19.932, lon: -155.291, name: '007HI', temperature: 0 },
+  { lat: 19.748, lon: -155.996, name: '008HI', temperature: 0 },
+  { lat: 19.803, lon: -155.851, name: '009HI', temperature: 0 },
+  { lat: 19.73, lon: -155.87, name: '010HI', temperature: 0 },
+  { lat: 21.333, lon: -157.8025, name: '011HI', temperature: 0 },
+  { lat: 21.3391, lon: -157.8369, name: '012HI', temperature: 0 },
+  { lat: 22.2026, lon: -159.5188, name: '014HI', temperature: 0 },
+  { lat: 22.1975, lon: -159.421, name: '015HI', temperature: 0 },
 ];
 
 // HCDP app
@@ -73,6 +73,21 @@ function AppComponent(props: App): JSX.Element {
 
   const createApp = useAppStore((state) => state.create);
   const updateState = useAppStore((state) => state.updateState);
+
+  useEffect(() => {
+    for (let i = 0; i < stationData.length; i++) {
+      fetch(
+        `https://api.mesowest.net/v2/stations/timeseries?STID=${stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+      ).then((response) => {
+        response.json().then((station) => {
+          stationData[i].temperature = Math.floor(
+            station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1]
+          );
+          console.log(station);
+        });
+      });
+    }
+  }, []);
 
   // Function to generate charts either for createAllCharts, or createChartTemplate
   const createChart = (appPos: { x: number; y: number; z: number }, stationName: string, axisTitle: string, climateProp: string) => {
@@ -118,7 +133,6 @@ function AppComponent(props: App): JSX.Element {
       response.json().then(async (station) => {
         climateData = station['STATION'][0]['OBSERVATIONS'];
         const climateProps = Object.keys(climateData); // Create an array will all properties
-
         // Remove indices that are NOT quantiative, date_time, wind_cardinal_direction_set_1, and wind_cardinal_direction_set_1d
         const indexOfDate_Time = climateProps.indexOf('date_time');
         if (indexOfDate_Time !== -1) {
@@ -205,6 +219,21 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  const createOverview = () => {
+    const appPos = { x: props.data.position.x + props.data.size.width, y: props.data.position.y, z: 0 };
+    createApp({
+      title: '',
+      roomId: props.data.roomId!,
+      boardId: props.data.boardId!,
+      position: appPos,
+      size: { width: 1000, height: 1000, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'SensorOverview',
+      state: {},
+      raised: true,
+    });
+  };
+
   return (
     <LeafletWrapper {...props}>
       <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
@@ -215,54 +244,77 @@ function AppComponent(props: App): JSX.Element {
         {stationData.map((data, index) => {
           const height = 1;
           const width = height * 0.73;
+          const text = Leaflet.divIcon({ html: 'Your HTML text here' });
+          console.log(data.lat, data.lon);
           return (
-            <CircleMarker
-              key={index}
-              center={{ lat: data.lat, lng: data.lon }}
-              fillColor="rgb(244, 187, 68)"
-              // weight={100}
-              // fill={true}
-              fillOpacity={0.5}
-              radius={(3 / s.zoom) * 50}
-              eventHandlers={{
-                mouseover: (e) => {
-                  e.target.openPopup();
-                },
-              }}
-            >
-              <Popup className="leaflet-content">
-                <Box textAlign={'center'} mb="1rem" height="250px">
-                  <Center>
-                    <VStack>
-                      <Text fontSize={'30px'} fontWeight="bold">
-                        Station: {data.name}
-                      </Text>
-                      <Button
-                        onClick={() => createAllCharts(data)}
-                        color="gray.700"
-                        colorScheme="blue"
-                        w={'40'}
-                        h={'10'}
-                        fontSize={'3xl'}
-                        mx="1"
-                      >
-                        All Data
-                      </Button>
-                      <Button
-                        w={'40'}
-                        h={'10'}
-                        fontSize={'3xl'}
-                        onClick={() => createChartTemplate(data)}
-                        color="gray.700"
-                        colorScheme="blue"
-                      >
-                        Template
-                      </Button>
-                    </VStack>
-                  </Center>
-                </Box>
-              </Popup>
-            </CircleMarker>
+            <>
+              <SVGOverlay
+                bounds={[
+                  [data.lat - 0.05, data.lon - 0.05],
+                  [data.lat + 0.05, data.lon + 0.05],
+                ]}
+              >
+                <text
+                  x="50%"
+                  y="50%"
+                  stroke="white"
+                  textRendering={'geometricPrecision'}
+                  dominantBaseline={'middle'}
+                  textAnchor={'middle'}
+                  fontSize={'50px'}
+                  fontWeight="bold"
+                >
+                  {data.temperature}
+                </text>
+              </SVGOverlay>
+              <CircleMarker
+                key={index}
+                center={{ lat: data.lat, lng: data.lon }}
+                fillColor="rgb(244, 187, 68)"
+                fillOpacity={0.5}
+                radius={(5 / s.zoom) * 50 + 50}
+                eventHandlers={{
+                  mouseover: (e) => {
+                    e.target.openPopup();
+                  },
+                }}
+              >
+                <Popup className="leaflet-content">
+                  <Box textAlign={'center'} mb="3rem" height="350px" width="300px">
+                    <Center>
+                      <VStack>
+                        <Text fontSize={'30px'} fontWeight="bold">
+                          Station: {data.name}
+                        </Text>
+                        <Button onClick={() => createOverview()} color="gray.700" colorScheme="blue" w={'50'} h={'20'} fontSize={'4xl'}>
+                          Overview
+                        </Button>
+                        <Button
+                          onClick={() => createAllCharts(data)}
+                          color="gray.700"
+                          colorScheme="blue"
+                          w={'70'}
+                          h={'20'}
+                          fontSize={'4xl'}
+                        >
+                          All Data
+                        </Button>
+                        <Button
+                          w={'50'}
+                          h={'20'}
+                          fontSize={'4xl'}
+                          onClick={() => createChartTemplate(data)}
+                          color="gray.700"
+                          colorScheme="blue"
+                        >
+                          Template
+                        </Button>
+                      </VStack>
+                    </Center>
+                  </Box>
+                </Popup>
+              </CircleMarker>
+            </>
           );
         })}
       </LayersControl.BaseLayer>
