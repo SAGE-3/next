@@ -40,38 +40,10 @@ import { debounce } from 'throttle-debounce';
 // ChartJS imports
 import 'chartjs-adapter-date-fns';
 import { enUS } from 'date-fns/locale';
-import {
-  Chart as ChartJS,
-  LinearScale,
-  CategoryScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Legend,
-  Tooltip as ChartJSTooltip,
-  LineController,
-  BarController,
-  TimeScale,
-  Title,
-  Colors,
-} from 'chart.js';
-import { Chart } from 'react-chartjs-2';
+import { Chart as ChartJS, registerables } from 'chart.js';
 
 // ChartJS register
-ChartJS.register(
-  LinearScale,
-  CategoryScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Legend,
-  ChartJSTooltip,
-  LineController,
-  BarController,
-  TimeScale,
-  Title,
-  Colors
-);
+ChartJS.register(...registerables);
 
 // Supported chart types
 export const typeOptions = [
@@ -83,11 +55,33 @@ export const typeOptions = [
     name: 'Line Graph',
     value: 'line',
   },
+  {
+    name: 'Bubble Graph',
+    value: 'bubble',
+  },
+  {
+    name: 'Pie Graph',
+    value: 'doughnut',
+  },
+  {
+    name: 'Polar Area Graph',
+    value: 'polarArea',
+  },
+  {
+    name: 'Radar Graph',
+    value: 'radar',
+  },
+  {
+    name: 'Scatter Graph',
+    value: 'scatter',
+  },
 ];
 
 // // For scaling apps when zooming in and out of board
 // const maxFontSize = 100;
 // const minFontSize = 25;
+
+const skipped = (ctx: { p0: { skip: any }; p1: { skip: any } }, value: number[]) => (ctx.p0.skip || ctx.p1.skip ? value : undefined);
 
 /* App component for ChartJSViewer */
 
@@ -112,7 +106,7 @@ function AppComponent(props: App): JSX.Element {
   const [stationMetadata, setStationMetadata] = useState<any>({});
 
   useEffect(() => {
-    if (chart) {
+    if (chart && s.datasets[0].yDataName.length > 0) {
       chart.data.datasets = [
         ...s.datasets.map((d) => ({
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -125,20 +119,37 @@ function AppComponent(props: App): JSX.Element {
           borderColor: d.borderColor,
           backgroundColor: d.backgroundColor,
           yAxisID: d.yAxisID,
+
+          // Added properties
+          borderWidth: 3,
+          segment: {
+            borderDash: (ctx: any) => skipped(ctx, [20, 30]),
+          },
+          spanGaps: true,
         })),
       ];
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const minYValue = Math.min(...data[s.datasets[0].yDataName].filter((v) => v != null));
       chart.options.scales.y.min = minYValue;
-      console.log(chart.data.datasets);
-      chart.update();
+      if (s.datasets[1] && s.datasets[1].yDataName.length > 1) {
+        chart.options.scales.y1.display = true;
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const minY1Value = Math.min(...data[s.datasets[1].yDataName].filter((v) => v != null));
+        chart.options.scales.y1.min = minY1Value;
+      } else {
+        chart.options.scales.y1.display = false;
+      }
+
+      chart.update('none');
     }
   }, [JSON.stringify(s.datasets), JSON.stringify(data)]);
 
   useEffect(() => {
     const ctx = chartRef.current?.getContext('2d');
     let climateData: never[] = [];
+
     const getData = (isIntervalCall: boolean) => {
       fetch(s.url).then((response) => {
         response.json().then((station) => {
@@ -151,9 +162,6 @@ function AppComponent(props: App): JSX.Element {
           // setData(climateData);
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
-          const minYValue = Math.min(...climateData[s.datasets[0].yDataName].filter((v) => v != null));
-          console.log(station);
-          // setAttributeNames(attributeProps);
           if (!isIntervalCall) {
             const chartTmp = new ChartJS(ctx, {
               type: 'bar',
@@ -172,31 +180,40 @@ function AppComponent(props: App): JSX.Element {
                     backgroundColor: s.datasets[0].backgroundColor,
                     yAxisID: s.datasets[0].yAxisID,
                     type: s.datasets[0].chartType,
+
+                    // Added properties
+                    borderWidth: 8,
+                    segment: {
+                      borderDash: (ctx: any) => skipped(ctx, [30, 30]),
+                    },
+                    spanGaps: true,
                   },
                 ],
               },
               options: {
                 maintainAspectRatio: false,
+                resizeDelay: 200, // Delay after resize before chart is resized
                 responsive: true,
                 scales: {
                   y: {
                     type: 'linear',
-                    min: minYValue,
+                    min: 42,
                     beginAtZero: true,
                     ticks: {
-                      color: 'white',
+                      color: 'rgb(244, 187, 68)',
                       font: {
                         size: 40,
                       },
                     },
                   },
                   y1: {
-                    min: 20,
+                    type: 'linear',
+                    min: 42,
                     position: 'right',
                     display: false,
-                    beginAtZero: true,
                     ticks: {
-                      color: 'white',
+                      color: 'rgb(68, 187, 244)',
+                      beginAtZero: true,
                       font: {
                         size: 40,
                       },
@@ -256,7 +273,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <canvas style={{ backgroundColor: 'black' }} ref={chartRef}></canvas>
+        <canvas id="chartCanvas" style={{ backgroundColor: 'rgb(30,30,30)' }} ref={chartRef}></canvas>
       </>
     </AppWindow>
   );
@@ -321,18 +338,20 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   // Change chart type
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>, index: number) => {
     //TODO: customizable chart types for each dataset trace
     const value = e.target.value;
     const newDatasets = [...s.datasets];
-    for (let i = 0; i < newDatasets.length; i++) {
-      newDatasets[i].chartType = value;
-    }
+    newDatasets[index].chartType = value;
     updateState(props._id, { datasets: newDatasets });
   };
 
   // Increase the number of "traces" or variables to visualize
   const increaseDatasetSize = () => {
+    // Get canvas
+    const c = document.getElementById('chartCanvas') as HTMLCanvasElement;
+    const ctx = c.getContext('2d') as CanvasRenderingContext2D;
+
     const tmpDatasets = [...s.datasets];
     updateState(props._id, {
       datasets: [
@@ -340,8 +359,20 @@ function ToolbarComponent(props: App): JSX.Element {
         {
           yDataName: '',
           chartType: 'line',
+          borderColor: 'rgb(68, 187, 244)',
+          backgroundColor: 'rgb(68, 187, 244)',
+          yAxisID: 'y1',
+          minYValue: 0,
         },
       ],
+    });
+  };
+  // Increase the number of "traces" or variables to visualize
+  const decreaseDatasetSize = () => {
+    const tmpDatasets = [...s.datasets];
+    tmpDatasets.pop();
+    updateState(props._id, {
+      datasets: [...tmpDatasets],
     });
   };
 
@@ -365,7 +396,34 @@ function ToolbarComponent(props: App): JSX.Element {
           <Select
             borderWidth="1px"
             borderRadius="lg"
-            size="sm"
+            size="xs"
+            mx="1rem"
+            backgroundColor={'whiteAlpha.900'}
+            color="gray.800"
+            name="yAxis"
+            key={index}
+            placeholder={'choose an attribute'}
+            onChange={(e) => {
+              handleTypeChange(e, index);
+            }}
+          >
+            {typeOptions.map((option: any, index: Key | null | undefined) => {
+              return (
+                <option data-key={index} value={option.value} key={index}>
+                  {option.name}
+                </option>
+              );
+            })}
+          </Select>
+        );
+      })}
+      {s.datasets.map((dataset, index) => {
+        console.log(sensorVariableNames);
+        return (
+          <Select
+            borderWidth="1px"
+            borderRadius="lg"
+            size="xs"
             mx="1rem"
             backgroundColor={'whiteAlpha.900'}
             color="gray.800"
@@ -386,6 +444,18 @@ function ToolbarComponent(props: App): JSX.Element {
           </Select>
         );
       })}
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Add Variable'} openDelay={400}>
+          <Button isDisabled={s.datasets.length >= 2} onClick={increaseDatasetSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdAdd fontSize="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Remove Variable'} openDelay={400}>
+          <Button isDisabled={s.datasets.length <= 1} onClick={decreaseDatasetSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdRemove fontSize="16px" />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   );
 }

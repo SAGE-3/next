@@ -94,7 +94,7 @@ function AppComponent(props: App): JSX.Element {
             yDataName: climateProp,
             minYValue: 0,
             yAxisID: 'y',
-            borderColor: 'rgb(255, 255, 255)',
+            borderColor: 'rgb(244, 187, 68)',
             backgroundColor: 'rgb(244, 187, 68)',
             chartType: 'line',
           },

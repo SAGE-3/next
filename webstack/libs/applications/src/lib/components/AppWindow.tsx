@@ -271,7 +271,7 @@ export function AppWindow(props: WindowProps) {
       if (!props.app.data.raised) update(props.app._id, { raised: true });
     }
   }
-
+  console.log(appDragging);
   return (
     <Rnd
       bounds="parent"
