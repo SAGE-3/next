@@ -25,9 +25,12 @@ export function Apps() {
   // Save the previous location and scale when zoming to an application
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false })
+  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false });
 
   const { position } = useCursorBoardPosition();
+
+  // Fitapps
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // Reset the global zIndex when no apps
   useEffect(() => {
@@ -69,73 +72,45 @@ export function Apps() {
     { dependencies: [position.x, position.y, JSON.stringify(apps)] }
   );
 
-  function moveToApp(app: App) {
-    if (app) {
-      // Scale
-      const aW = app.data.size.width + 60; // Border Buffer
-      const aH = app.data.size.height + 100; // Border Buffer
-      const wW = window.innerWidth;
-      const wH = window.innerHeight;
-      const sX = wW / aW;
-      const sY = wH / aH;
-      const zoom = Math.min(sX, sY);
-
-      // Position
-      let aX = -app.data.position.x + 20;
-      let aY = -app.data.position.y + 20;
-      const w = app.data.size.width;
-      const h = app.data.size.height;
-      if (sX >= sY) {
-        aX = aX - w / 2 + wW / 2 / zoom;
-      } else {
-        aY = aY - h / 2 + wH / 2 / zoom;
-      }
-      const x = aX;
-      const y = aY;
-
-      if (x !== boardPosition.x || y !== boardPosition.y || zoom !== scale) {
-        setPreviousLocation({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true });
-        setBoardPosition({ x, y });
-        setScale(zoom);
-      }
-    }
-  }
-
   // Zoom to app when pressing z over an app
-  useHotkeys('z', () => {
-    if (position && apps.length > 0) {
-      const cx = position.x;
-      const cy = position.y;
-      let found = false;
-      // Sort the apps by the last time they were updated to order them correctly
-      apps
-        .slice()
-        .sort((a, b) => b._updatedAt - a._updatedAt)
-        .forEach((el) => {
-          if (found) return;
-          const x1 = el.data.position.x;
-          const y1 = el.data.position.y;
-          const x2 = x1 + el.data.size.width;
-          const y2 = y1 + el.data.size.height;
-          // If the cursor is inside the app, delete it. Only delete the top one
-          if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-            found = true;
-            moveToApp(el);
-          }
-        });
-    }
-  },
+  useHotkeys(
+    'z',
+    () => {
+      if (position && apps.length > 0) {
+        const cx = position.x;
+        const cy = position.y;
+        let found = false;
+        // Sort the apps by the last time they were updated to order them correctly
+        apps
+          .slice()
+          .sort((a, b) => b._updatedAt - a._updatedAt)
+          .forEach((el) => {
+            if (found) return;
+            const x1 = el.data.position.x;
+            const y1 = el.data.position.y;
+            const x2 = x1 + el.data.size.width;
+            const y2 = y1 + el.data.size.height;
+            // If the cursor is inside the app, delete it. Only delete the top one
+            if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+              found = true;
+              fitApps([el]);
+            }
+          });
+      }
+    },
     { dependencies: [position.x, position.y, JSON.stringify(apps)] }
   );
 
   // Un-Zoom with shift+z
-  useHotkeys('shift+z', () => {
-    if (previousLocation.set) {
-      setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
-      setScale(previousLocation.s);
-      setPreviousLocation((prev) => ({ ...prev, set: false }));
-    }
-  },
+  useHotkeys(
+    'shift+z',
+    () => {
+      if (previousLocation.set) {
+        setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
+        setScale(previousLocation.s);
+        setPreviousLocation((prev) => ({ ...prev, set: false }));
+      }
+    },
     { dependencies: [previousLocation.set] }
   );
 
