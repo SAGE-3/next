@@ -17,7 +17,7 @@ import { SAGE3Doc } from './sage3doc';
 
 // Import SAGE3 schema
 import { SBSchema } from '../../../libs/shared/src/lib/types/schemas';
-import { BoardSchema, AssetSchema, RoomSchema, UserSchema, MessageSchema, PresenceSchema } from './sage3';
+import { AppZodSchema, BoardSchema, AssetSchema, RoomSchema, UserSchema, MessageSchema, PresenceSchema } from './sage3';
 // Apps
 
 async function OutputSchema(app: string, schema: any) {
@@ -51,6 +51,7 @@ OutputSchema('user', UserSchema);
 OutputSchema('asset', AssetSchema);
 OutputSchema('message', MessageSchema);
 OutputSchema('presence', PresenceSchema);
+OutputSchema('app', AppZodSchema);
 
 // Read the file containing all the apps
 const text = fs.readFileSync(path.join(__dirname, '../../../libs/applications/src/lib/apps.json'));
