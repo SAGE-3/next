@@ -19,7 +19,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
-import { useAppStore, useUser, useTwilioStore, useHexColor, isElectron } from '@sage3/frontend';
+import { useAppStore, useUser, useTwilioStore, useHexColor, useUIStore, isElectron } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Twilio Imports
@@ -32,7 +32,7 @@ type ElectronSource = {
   name: string;
   thumbnail: string;
 };
-const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
+const screenShareTimeLimit = 60 * 75 * 1000; // 75 minutes
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
@@ -74,6 +74,13 @@ function AppComponent(props: App): JSX.Element {
 
   // The user that is sharing only sets the selTrack
   const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
+
+  // UIStore
+  const scale = useUIStore((state) => state.scale);
+  const setScale = useUIStore((state) => state.setScale);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+
 
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
@@ -171,7 +178,7 @@ function AppComponent(props: App): JSX.Element {
           // Show a notification
           toast({
             title: "Screensharing started for " + props.data.title,
-            status: 'warning',
+            status: 'success',
             duration: 3000,
             isClosable: true,
           });
@@ -206,6 +213,44 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [stopStreamId]);
 
+  function moveToApp(app: App) {
+    if (app) {
+      // Scale
+      const aW = app.data.size.width + 60; // Border Buffer
+      const aH = app.data.size.height + 100; // Border Buffer
+      const wW = window.innerWidth;
+      const wH = window.innerHeight;
+      const sX = wW / aW;
+      const sY = wH / aH;
+      const zoom = Math.min(sX, sY);
+
+      // Position
+      let aX = -app.data.position.x + 20;
+      let aY = -app.data.position.y + 20;
+      const w = app.data.size.width;
+      const h = app.data.size.height;
+      if (sX >= sY) {
+        aX = aX - w / 2 + wW / 2 / zoom;
+      } else {
+        aY = aY - h / 2 + wH / 2 / zoom;
+      }
+      const x = aX;
+      const y = aY;
+
+      if (x !== boardPosition.x || y !== boardPosition.y || zoom !== scale) {
+        setBoardPosition({ x, y });
+        setScale(zoom);
+      }
+    }
+  }
+
+  const goToScreenshare = () => {
+    // Close the popups
+    toast.closeAll();
+    // Zoom in
+    moveToApp(props);
+  };
+
   useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
@@ -213,9 +258,10 @@ function AppComponent(props: App): JSX.Element {
         track.attach(videoRef.current);
         // Show a notification
         toast({
-          title: "Screensharing started for " + props.data.title,
-          status: 'warning',
-          duration: 3000,
+          title: "Screensharing1 started for " + props.data.title,
+          description: <Button variant='solid' colorScheme='blue' size='sm' onClick={goToScreenshare}>Zoom to Window</Button>,
+          status: 'success',
+          duration: 12000,
           isClosable: true,
         });
 
@@ -230,7 +276,7 @@ function AppComponent(props: App): JSX.Element {
       // Show a notification
       toast({
         title: "Screensharing stopped",
-        status: 'warning',
+        status: 'success',
         duration: 3000,
         isClosable: true,
       });
@@ -272,9 +318,10 @@ function AppComponent(props: App): JSX.Element {
       onClose();
       // Show a notification
       toast({
-        title: "Screensharing started for " + props.data.title,
-        status: 'warning',
-        duration: 3000,
+        title: "Screensharing2 started for " + props.data.title,
+        description: <Button variant="solid" colorScheme='blue' size='sm' onClick={goToScreenshare}>Zoom to Window</Button>,
+        status: 'success',
+        duration: 12000,
         isClosable: true,
       });
     }
