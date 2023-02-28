@@ -9,9 +9,25 @@
 // Chakra and React imports
 import { useEffect, useRef, useState } from 'react';
 import {
-  Box, Button, Text, SimpleGrid, useDisclosure, Tabs, TabList, Tab, TabPanels,
-  TabPanel, Image, ButtonGroup, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  useToast
+  Box,
+  Button,
+  Text,
+  SimpleGrid,
+  useDisclosure,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Image,
+  ButtonGroup,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  useToast,
 } from '@chakra-ui/react';
 
 import { App } from '../../schema';
@@ -60,6 +76,7 @@ function AppComponent(props: App): JSX.Element {
   // UI
   const red = useHexColor('red');
   const teal = useHexColor('teal');
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
@@ -80,7 +97,6 @@ function AppComponent(props: App): JSX.Element {
   const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-
 
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
@@ -177,7 +193,7 @@ function AppComponent(props: App): JSX.Element {
 
           // Show a notification
           toast({
-            title: "Screensharing started for " + props.data.title,
+            title: 'Screensharing started for ' + props.data.title,
             status: 'success',
             duration: 3000,
             isClosable: true,
@@ -213,42 +229,11 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [stopStreamId]);
 
-  function moveToApp(app: App) {
-    if (app) {
-      // Scale
-      const aW = app.data.size.width + 60; // Border Buffer
-      const aH = app.data.size.height + 100; // Border Buffer
-      const wW = window.innerWidth;
-      const wH = window.innerHeight;
-      const sX = wW / aW;
-      const sY = wH / aH;
-      const zoom = Math.min(sX, sY);
-
-      // Position
-      let aX = -app.data.position.x + 20;
-      let aY = -app.data.position.y + 20;
-      const w = app.data.size.width;
-      const h = app.data.size.height;
-      if (sX >= sY) {
-        aX = aX - w / 2 + wW / 2 / zoom;
-      } else {
-        aY = aY - h / 2 + wH / 2 / zoom;
-      }
-      const x = aX;
-      const y = aY;
-
-      if (x !== boardPosition.x || y !== boardPosition.y || zoom !== scale) {
-        setBoardPosition({ x, y });
-        setScale(zoom);
-      }
-    }
-  }
-
   const goToScreenshare = () => {
     // Close the popups
     toast.closeAll();
     // Zoom in
-    moveToApp(props);
+    fitApps([props]);
   };
 
   useEffect(() => {
@@ -258,13 +243,16 @@ function AppComponent(props: App): JSX.Element {
         track.attach(videoRef.current);
         // Show a notification
         toast({
-          title: "Screensharing1 started for " + props.data.title,
-          description: <Button variant='solid' colorScheme='blue' size='sm' onClick={goToScreenshare}>Zoom to Window</Button>,
+          title: 'Screensharing1 started for ' + props.data.title,
+          description: (
+            <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
+              Zoom to Window
+            </Button>
+          ),
           status: 'success',
           duration: 12000,
           isClosable: true,
         });
-
       }
     });
   }, [tracks, s.videoId]);
@@ -275,7 +263,7 @@ function AppComponent(props: App): JSX.Element {
     return () => {
       // Show a notification
       toast({
-        title: "Screensharing stopped",
+        title: 'Screensharing stopped',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -318,8 +306,12 @@ function AppComponent(props: App): JSX.Element {
       onClose();
       // Show a notification
       toast({
-        title: "Screensharing2 started for " + props.data.title,
-        description: <Button variant="solid" colorScheme='blue' size='sm' onClick={goToScreenshare}>Zoom to Window</Button>,
+        title: 'Screensharing2 started for ' + props.data.title,
+        description: (
+          <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
+            Zoom to Window
+          </Button>
+        ),
         status: 'success',
         duration: 12000,
         isClosable: true,
