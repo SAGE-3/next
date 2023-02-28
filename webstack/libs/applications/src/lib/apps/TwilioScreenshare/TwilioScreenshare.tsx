@@ -21,15 +21,21 @@ import {
   TabPanel,
   Image,
   ButtonGroup,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  useToast,
 } from '@chakra-ui/react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody } from '@chakra-ui/react';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // SAGE imports
-import { useAppStore, useUser, useTwilioStore, useHexColor, isElectron } from '@sage3/frontend';
+import { useAppStore, useUser, useTwilioStore, useHexColor, useUIStore, isElectron } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 // Twilio Imports
@@ -42,11 +48,13 @@ type ElectronSource = {
   name: string;
   thumbnail: string;
 };
-const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
+const screenShareTimeLimit = 60 * 75 * 1000; // 75 minutes
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+
+  const toast = useToast();
 
   // Current User
   const { user } = useUser();
@@ -68,6 +76,7 @@ function AppComponent(props: App): JSX.Element {
   // UI
   const red = useHexColor('red');
   const teal = useHexColor('teal');
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
@@ -82,6 +91,12 @@ function AppComponent(props: App): JSX.Element {
 
   // The user that is sharing only sets the selTrack
   const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
+
+  // UIStore
+  const scale = useUIStore((state) => state.scale);
+  const setScale = useUIStore((state) => state.setScale);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
 
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
@@ -175,6 +190,14 @@ function AppComponent(props: App): JSX.Element {
           room.localParticipant.publishTrack(screenTrack);
           await updateState(props._id, { videoId });
           setSelTrack(screenTrack);
+
+          // Show a notification
+          toast({
+            title: 'Screensharing started for ' + props.data.title,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
         } catch (err) {
           deleteApp(props._id);
         }
@@ -206,11 +229,30 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [stopStreamId]);
 
+  const goToScreenshare = () => {
+    // Close the popups
+    toast.closeAll();
+    // Zoom in
+    fitApps([props]);
+  };
+
   useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current) {
         track.attach(videoRef.current);
+        // Show a notification
+        toast({
+          title: 'Screensharing1 started for ' + props.data.title,
+          description: (
+            <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
+              Zoom to Window
+            </Button>
+          ),
+          status: 'success',
+          duration: 12000,
+          isClosable: true,
+        });
       }
     });
   }, [tracks, s.videoId]);
@@ -219,6 +261,13 @@ function AppComponent(props: App): JSX.Element {
     stopStream();
     if (yours) update(props._id, { title: `${user.data.name}` });
     return () => {
+      // Show a notification
+      toast({
+        title: 'Screensharing stopped',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
       stopStream();
     };
   }, []);
@@ -255,6 +304,18 @@ function AppComponent(props: App): JSX.Element {
       await updateState(props._id, { videoId });
       setSelTrack(screenTrack);
       onClose();
+      // Show a notification
+      toast({
+        title: 'Screensharing2 started for ' + props.data.title,
+        description: (
+          <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
+            Zoom to Window
+          </Button>
+        ),
+        status: 'success',
+        duration: 12000,
+        isClosable: true,
+      });
     }
   };
 
