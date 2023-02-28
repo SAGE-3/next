@@ -9,20 +9,10 @@
 // Chakra and React imports
 import { useEffect, useRef, useState } from 'react';
 import {
-  Box,
-  Button,
-  Text,
-  SimpleGrid,
-  useDisclosure,
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
-  Image,
-  ButtonGroup,
+  Box, Button, Text, SimpleGrid, useDisclosure, Tabs, TabList, Tab, TabPanels,
+  TabPanel, Image, ButtonGroup, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
+  useToast
 } from '@chakra-ui/react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody } from '@chakra-ui/react';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -47,6 +37,8 @@ const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+
+  const toast = useToast();
 
   // Current User
   const { user } = useUser();
@@ -175,6 +167,14 @@ function AppComponent(props: App): JSX.Element {
           room.localParticipant.publishTrack(screenTrack);
           await updateState(props._id, { videoId });
           setSelTrack(screenTrack);
+
+          // Show a notification
+          toast({
+            title: "Screensharing started for " + props.data.title,
+            status: 'warning',
+            duration: 3000,
+            isClosable: true,
+          });
         } catch (err) {
           deleteApp(props._id);
         }
@@ -211,6 +211,14 @@ function AppComponent(props: App): JSX.Element {
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current) {
         track.attach(videoRef.current);
+        // Show a notification
+        toast({
+          title: "Screensharing started for " + props.data.title,
+          status: 'warning',
+          duration: 3000,
+          isClosable: true,
+        });
+
       }
     });
   }, [tracks, s.videoId]);
@@ -219,6 +227,13 @@ function AppComponent(props: App): JSX.Element {
     stopStream();
     if (yours) update(props._id, { title: `${user.data.name}` });
     return () => {
+      // Show a notification
+      toast({
+        title: "Screensharing stopped",
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
       stopStream();
     };
   }, []);
@@ -255,6 +270,13 @@ function AppComponent(props: App): JSX.Element {
       await updateState(props._id, { videoId });
       setSelTrack(screenTrack);
       onClose();
+      // Show a notification
+      toast({
+        title: "Screensharing started for " + props.data.title,
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
