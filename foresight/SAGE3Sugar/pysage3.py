@@ -25,7 +25,7 @@ from utils.sage_communication import SageCommunication
 from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
 from json_templates.templates import create_app_template
-
+from smartbits.smartbit import SmartBit
 # signal.signal(signal.SIGINT, lambda x: print("interrupting"))
 # signal.signal(signal.SIGTERM, lambda x: print("interrupting"))
 # signal.signal(signal.SIGHUP, lambda x: print("interrupting"))
@@ -48,15 +48,31 @@ class PySage3:
 
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
-        self.socket = SageWebsocket(on_message_fn=self.process_messages)
+        self.socket = SageWebsocket(on_message_fn=self.__process_messages)
         self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
 
         # Grab and load info already on the board
 
-        self.populate_existing()
+        self.__populate_existing()
         self.done_init = True
         print("Completed configuring Sage3 Client")
 
+
+
+
+
+    def __populate_existing(self):
+        rooms_info = self.s3_comm.get_rooms()
+        for room_info in rooms_info:
+            self.__handle_create("ROOMS", room_info)
+        # Populate existing boards
+        boards_info = self.s3_comm.get_boards()
+        for board_info in boards_info:
+            self.__handle_create("BOARDS", board_info)
+        # Populate existing apps
+        apps_info = self.s3_comm.get_apps()
+        for app_info in apps_info:
+            self.__handle_create("APPS", app_info)
 
     def create_app(self, room_id, baord_id, app_type, state):
         try:
@@ -80,35 +96,6 @@ class PySage3:
             print(f"Err or during creation of app {e}")
 
 
-    def populate_existing(self):
-        rooms_info = self.s3_comm.get_rooms()
-        for room_info in rooms_info:
-            self.__handle_create("ROOMS", room_info)
-        # Populate existing boards
-        boards_info = self.s3_comm.get_boards()
-        for board_info in boards_info:
-            self.__handle_create("BOARDS", board_info)
-        # Populate existing apps
-        apps_info = self.s3_comm.get_apps()
-        for app_info in apps_info:
-            self.__handle_create("APPS", app_info)
-
-    def process_messages(self, ws, msg):
-        msg = json.loads(msg)
-        if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-            pass
-
-        collection = msg["event"]['col']
-        doc = msg['event']['doc']
-
-        msg_type = msg["event"]["type"]
-        if msg_type == "UPDATE":
-            app_id = msg["event"]["doc"]["_id"]
-
-            updates = msg['event']['updates']
-            self.__MSG_METHODS[msg_type](collection, doc, updates)
-        else:
-            self.__MSG_METHODS[msg_type](collection, doc)
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
@@ -156,9 +143,9 @@ class PySage3:
     def __handle_delete(self, collection, doc):
         print("Delete not yet  supported through API")
 
-    def apps(self, room_id=None, board_id=None, type=None):
+    def get_apps(self, room_id=None, board_id=None, type=None):
 
-        if room_id is None or  board_id is None:
+        if room_id is None or board_id is None:
             print("listing apps requires  room and board ids")
             return
         if type is not None:
@@ -166,8 +153,90 @@ class PySage3:
         else:
             return {x[0]: x[1] for x in self.rooms[room_id].boards[board_id].smartbits}
 
-    def clean_up(self):
+    def __process_messages(self, ws, msg):
+        msg = json.loads(msg)
+        # if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+        #     pass
 
+        collection = msg["event"]['col']
+        doc = msg['event']['doc']
+
+        msg_type = msg["event"]["type"]
+        if msg_type == "UPDATE":
+            # app_id = msg["event"]["doc"]["_id"]
+            #
+            updates = msg['event']['updates']
+            self.__MSG_METHODS[msg_type](collection, doc, updates)
+        else:
+            self.__MSG_METHODS[msg_type](collection, doc)
+
+    # def update_app(self, app, **kwargs):
+    #     print("I am updating the app with the following attributes")
+    #     print(kwargs)
+    #     for k,v in kwargs:
+    #         if k in app.data:
+    #             app
+
+    def update_size(self, app, width=None, height=None, depth=None):
+        if not isinstance(app, SmartBit):
+            print(f"apps should be a smartbit. Found {type(app)}")
+            return
+        if width is None and height is None and depth is None:
+            print("At last one of the parameters is required")
+            return
+        if width is not None:
+            app.data.size.width = width
+        if height is not None:
+            app.data.size.height = width
+        if depth is not None:
+            app.data.size.depth = depth
+        app.send_updates()
+
+    def update_position(self, app, x=None, y=None, z=None):
+        if not isinstance(app, SmartBit):
+            print(f"apps should be a smartbit. Found {type(app)}")
+            return
+        if x is None and y is None and z is None:
+            print("At last one of the parameters is required")
+            return
+        if x is not None:
+            app.data.position.x = x
+        if y is not None:
+            app.data.position.y = y
+        if z is not None:
+            app.data.position.depth = z
+        app.send_updates()
+
+    def list_assets(self, room_id):
+        assets = self.s3_comm.get_assets(room_id=room_id)
+        assets_info = []
+        for asset in assets:
+            assets_info.append({
+                "_id": asset["_id"],
+                "filename": asset["data"]["originalfilename"],
+                "mimetype": asset["data"]["mimetype"],
+                "size":  asset["data"]["size"],
+                "uri": self.s3_comm.format_public_url(asset["_id"])
+            })
+        return assets_info
+
+    def update_state_attrs(self, app, **kwargs):
+        print("I am here")
+        if not isinstance(app, SmartBit):
+            print(f"apps should be a smartbit. Found {type(app)}")
+            return
+
+        for k in kwargs.keys():
+            # TODO also check that the values passed are valid values for that field
+            if not hasattr(app.state, k):
+                print(f"{k} is not a valid attribute of the {type(app)}'s state")
+                return
+
+        for k, v in  kwargs.items():
+            setattr(app.state, k, v)
+        app.send_updates()
+
+    def clean_up(self):
         print("cleaning up client resources")
         for room_id in self.rooms.keys():
             for board_id in self.rooms[room_id].boards.keys():

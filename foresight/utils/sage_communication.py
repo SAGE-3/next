@@ -105,7 +105,7 @@ class SageCommunication(Borg):
         data = json_data['data']
         if r.is_success:
             if room_id is not None:
-                data = [app for app in data if app["data"]["roomId"] == room_id]
+                data = [app for app in data if app["data"]["room"] == room_id]
             if board_id is not None:
                 data = [app for app in data if app["data"]
                         ["boardId"] == board_id]
@@ -136,7 +136,7 @@ class SageCommunication(Borg):
         data = json_data['data']
         if r.is_success:
             if room_id is not None:
-                data = [app for app in data if app["data"]["roomId"] == room_id]
+                data = [app for app in data if app["data"]["room"] == room_id]
             if board_id is not None:
                 data = [app for app in data if app["data"]
                         ["boardId"] == board_id]
@@ -177,7 +177,7 @@ class SageCommunication(Borg):
         data = json_data['data']
         if r.is_success:
             if room_id is not None:
-                data = [app for app in data if app["data"]["roomId"] == room_id]
+                data = [app for app in data if app["data"]["room"] == room_id]
 
         return data
 
