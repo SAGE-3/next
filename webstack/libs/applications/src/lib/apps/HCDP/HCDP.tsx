@@ -368,6 +368,8 @@ function AppComponent(props: App): JSX.Element {
         {stationData.map((data, index) => {
           const height = 1;
           console.log((30 / s.zoom) * 4 - 6);
+
+          console.log(s.zoom);
           return (
             <div key={index}>
               <CircleMarker
@@ -429,14 +431,24 @@ function AppComponent(props: App): JSX.Element {
                 {s.variableToDisplay === 'windSpeed' ? (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                     {data['windDirection'] == 0 ? null : (
-                      <g ref={arrowRef} fill="white" transform={`rotate(${data['windDirection']},100,100)`}>
+                      <g
+                        ref={arrowRef}
+                        fill="white"
+                        transform={
+                          s.zoom <= 11
+                            ? `rotate(${data['windDirection']},100,100)`
+                            : `translate(100, 100) scale(${(30 / s.zoom) * 4 - 9}) translate(-100, -100) rotate(${
+                                data['windDirection']
+                              },100,100)`
+                        }
+                      >
                         <Arrow degree={data['windDirection']} />
 
                         {/* <polygon points="80,130 100,60 120,130 100,125" fill="black" /> */}
                       </g>
                     )}
                     <g transform={`translate(100, 100) scale(${(30 / s.zoom) * 4 - 8}) translate(-100, -100)`}>
-                      <circle fill="white" cx="100" cy="100" r="20" stroke="black" stroke-width="3" />
+                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
 
                       <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
                         {data[s.variableToDisplay]}
@@ -445,10 +457,12 @@ function AppComponent(props: App): JSX.Element {
                   </svg>
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    <circle cx="100" cy="100" r="20" fill="white" stroke="black" stroke-width="3" />
-                    <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
-                      {data[s.variableToDisplay]}
-                    </text>
+                    <g transform={`translate(100, 100) scale(${(30 / s.zoom) * 4 - 8}) translate(-100, -100)`}>
+                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
+                      <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
+                        {data[s.variableToDisplay]}
+                      </text>
+                    </g>
                   </svg>
                 )}
               </SVGOverlay>
