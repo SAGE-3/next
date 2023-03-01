@@ -9,7 +9,7 @@
 import uuid
 import httpx
 import os
-from utils.sage_websocket import SageWebsocket
+# from utils.sage_websocket import SageWebsocket
 
 import logging
 logger = logging.getLogger(__name__)
@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 class Borg:
     _shared_state = {}
-
     def __init__(self):
         self.__dict__ = self._shared_state
 
@@ -48,8 +47,6 @@ class SageCommunication(Borg):
             "get_configuration": "/api/configuration"
         }
         self.web_config = self.get_configuration()
-        self.socket = SageWebsocket()
-        self.socket.run()
 
     def send_app_update(self, app_id, data):
         """
@@ -58,7 +55,7 @@ class SageCommunication(Borg):
         :return:
         """
         #print(logging.getLogger().handlers)
-        logger.debug(f"sendign following update: {data}")
+        logger.debug(f"sending following update: {data}")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                   headers=self.__headers,
                                   json=data)
@@ -168,7 +165,7 @@ class SageCommunication(Borg):
 
     def get_boards(self, room_id=None):
         """
-        list all the rerouces belonging to room_id
+        list all the resources belonging to room_id
         :param room_id: the id of the room to list
         :param room_id:
         :param board_id:
@@ -184,5 +181,3 @@ class SageCommunication(Borg):
 
         return data
 
-    def subscribe(self, route):
-        return self.socket.setup_sub_queue(route)

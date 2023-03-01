@@ -1,8 +1,8 @@
 {
-  "currentRelease": "1.0.0-beta.4",
+  "currentRelease": "1.0.0-beta.12",
   "releases": [
     {
-      "version": "1.0.0-beta.4",
+      "version": "1.0.0-beta.12",
       "notes": "Bug fixes and performances issues",
       "name": "Beta release 1.0.0",
       "darwinintel": {
