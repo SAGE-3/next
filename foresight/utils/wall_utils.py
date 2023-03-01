@@ -8,7 +8,7 @@
 
 import json
 import requests
-# import os
+import os
 
 
 class Sage3Communication:

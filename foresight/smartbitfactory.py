@@ -7,7 +7,7 @@
 # -----------------------------------------------------------------------------
 
 from utils.generic_utils import import_cls
-import sys
+# import sys
 
 import logging
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class SmartBitFactory:
                     smartbit_class = import_cls(cls_path, smartbit_type)
                     smartbit_instance = smartbit_class(**doc)
                 else:
-                    logger.erorr(f"Couldn't convert following doc to actual smartbit: {doc}")
+                    logger.error(f"Couldn't convert following doc to actual smartbit: {doc}")
                     # raise Exception("Couldn't conver doc to actual smartbit")
             except Exception as e:
                 logger.error(f"Couldn't create the class in the SmartbitFactory {e}")

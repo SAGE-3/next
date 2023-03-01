@@ -157,6 +157,10 @@ class TrackedBaseModel(BaseModel):
     def cleanup(self):
         pass
 
+    def required_params(self):
+        print("Required params:")
+        pass
+
 class Position(TrackedBaseModel):
     x: int
     y: int
