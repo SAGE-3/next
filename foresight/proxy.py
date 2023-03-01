@@ -14,14 +14,12 @@
 #  and no unknown fields
 
 # TODO prevent apps updates on fields that were touched?
+
 import time
-import signal
-import sys
 import os
 from typing import Callable
 from pydantic import BaseModel
 import json
-import threading
 import logging
 from board import Board
 from room import Room
@@ -156,7 +154,6 @@ class SAGEProxy:
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
-
 
         id = doc["_id"]
         if collection == "ROOMS":

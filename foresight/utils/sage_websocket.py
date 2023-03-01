@@ -13,7 +13,6 @@ import json
 import uuid
 import time
 import sys
-from multiprocessing import Queue
 
 import logging
 logger = logging.getLogger(__name__)
@@ -53,8 +52,8 @@ class SageWebsocket:
         self.connected = True
 
     def on_message(self, ws, message):
-        msg = json.loads(message)
         logger.warning(f"received message in default func on_message {message}, WRANIGN---not doing anything")
+        # msg = json.loads(message)
         # sub_id = msg['id']
         # if self.queue_list[sub_id]:
         #     # Put into proper queue
@@ -82,7 +81,7 @@ class SageWebsocket:
         return True
 
     # Subscribe to a route
-    def subscribe(self, routes: list[str]):
+    def subscribe(self, routes):
         logger.debug(f"Subscribing to {routes}")
         if not self.check_connection():
             return
