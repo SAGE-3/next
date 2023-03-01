@@ -60,6 +60,7 @@ console.log('List apps:', listApps.length, ' apps');
 
 listApps.forEach((elt: any) => {
   const appName = elt;
+  if (appName === 'ChartMaker') return;
   // load one app
   import(`../../../libs/applications/src/lib/apps/${appName}`)
     .then((ap) => {
@@ -68,11 +69,15 @@ listApps.forEach((elt: any) => {
         console.log('App loaded>', app);
 
         // TS type for sagebase
-        const SAGEschema = SBSchema.extend({ data: ap.schema });
-        const jsonSchema = zodToJsonSchema(SAGEschema as any, {
+        // const SAGEschema = SBSchema.extend({ data: ap.schema });
+        const jsonSchema = zodToJsonSchema(ap.schema, {
           name: app,
           target: 'jsonSchema7',
         });
+        // const jsonSchema = zodToJsonSchema(SAGEschema as any, {
+        //   name: app,
+        //   target: 'jsonSchema7',
+        // });
 
         const folder = 'output';
         fs.writeFile(path.join(folder, app + '-schema.json'), JSON.stringify(jsonSchema, null, 2), (err) => {
