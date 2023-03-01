@@ -12,7 +12,7 @@ export const schema = z.object({
   count: z.number(),
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 export type state = z.infer<typeof schema>;

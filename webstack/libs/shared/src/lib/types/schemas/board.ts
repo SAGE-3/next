@@ -32,7 +32,7 @@ const schema = z.object({
   // function to execute on the baord
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 
