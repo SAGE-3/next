@@ -32,7 +32,10 @@ import {
 
 import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh, MdStop } from 'react-icons/md';
 
+// Monaco Editor
 import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
+// Plotly library
+import Plot from 'react-plotly.js';
 
 // UUID generation
 import { v4 as getUUID } from 'uuid';
@@ -722,21 +725,29 @@ const OutputBox = (props: OutputBoxProps): JSX.Element => {
             return Object.keys(parsedJSON.display_data.data).map((key, i) => {
               switch (key) {
                 case 'text/plain':
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.display_data.data[key]}
-                    </Text>
-                  );
+                  return (<Text key={i} id="sc-stdout">{parsedJSON.display_data.data[key]}</Text>);
                 case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  // return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
+                  // return <iframe key={i} srcDoc={parsedJSON.display_data.data[key]} />;
+                  return null;
                 case 'image/png':
                   return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
                 case 'image/jpeg':
                   return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
+                case 'application/vnd.plotly.v1+json': {
+                  // Plotly information
+                  const data = parsedJSON.display_data.data[key].data;
+                  const layout = parsedJSON.display_data.data[key].layout;
+                  const config = parsedJSON.display_data.data[key].config;
+                  return <Plot key={i} data={data} layout={layout} config={config} />;
+                }
+                case 'application/vnd.bokehjs_exec.v0+json':
+                  return null;
                 case 'image/svg+xml':
                   return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
                 default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
+                  // return MapJSONObject(parsedJSON.display_data[key]);
+                  return null;
               }
             });
           }

@@ -17,7 +17,7 @@ import { SAGE3Doc } from './sage3doc';
 
 // Import SAGE3 schema
 import { SBSchema } from '../../../libs/shared/src/lib/types/schemas';
-import { BoardSchema, AssetSchema, RoomSchema, UserSchema, MessageSchema, PresenceSchema } from './sage3';
+import { AppZodSchema, BoardSchema, AssetSchema, RoomSchema, UserSchema, MessageSchema, PresenceSchema } from './sage3';
 // Apps
 
 async function OutputSchema(app: string, schema: any) {
@@ -51,6 +51,7 @@ OutputSchema('user', UserSchema);
 OutputSchema('asset', AssetSchema);
 OutputSchema('message', MessageSchema);
 OutputSchema('presence', PresenceSchema);
+OutputSchema('app', AppZodSchema);
 
 // Read the file containing all the apps
 const text = fs.readFileSync(path.join(__dirname, '../../../libs/applications/src/lib/apps.json'));
@@ -59,6 +60,7 @@ console.log('List apps:', listApps.length, ' apps');
 
 listApps.forEach((elt: any) => {
   const appName = elt;
+  if (appName === 'ChartMaker') return;
   // load one app
   import(`../../../libs/applications/src/lib/apps/${appName}`)
     .then((ap) => {
@@ -67,11 +69,15 @@ listApps.forEach((elt: any) => {
         console.log('App loaded>', app);
 
         // TS type for sagebase
-        const SAGEschema = SBSchema.extend({ data: ap.schema });
-        const jsonSchema = zodToJsonSchema(SAGEschema as any, {
+        // const SAGEschema = SBSchema.extend({ data: ap.schema });
+        const jsonSchema = zodToJsonSchema(ap.schema, {
           name: app,
           target: 'jsonSchema7',
         });
+        // const jsonSchema = zodToJsonSchema(SAGEschema as any, {
+        //   name: app,
+        //   target: 'jsonSchema7',
+        // });
 
         const folder = 'output';
         fs.writeFile(path.join(folder, app + '-schema.json'), JSON.stringify(jsonSchema, null, 2), (err) => {

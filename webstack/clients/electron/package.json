@@ -17,7 +17,7 @@
     "uuid": "8.3.0"
   },
   "devDependencies": {
-    "electron": "21.4.1",
+    "electron": "21.4.2",
     "electron-notarize": "^1",
     "electron-packager": "latest"
   },
