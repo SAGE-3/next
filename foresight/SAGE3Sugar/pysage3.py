@@ -231,7 +231,6 @@ class PySage3:
             if not hasattr(app.state, k):
                 print(f"{k} is not a valid attribute of the {type(app)}'s state")
                 return
-
         for k, v in kwargs.items():
             setattr(app.state, k, v)
         app.send_updates()
