@@ -26,10 +26,7 @@ from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
 from json_templates.templates import create_app_template
 from smartbits.smartbit import SmartBit
-# signal.signal(signal.SIGINT, lambda x: print("interrupting"))
-# signal.signal(signal.SIGTERM, lambda x: print("interrupting"))
-# signal.signal(signal.SIGHUP, lambda x: print("interrupting"))
-#
+
 
 class PySage3:
 
@@ -215,15 +212,18 @@ class PySage3:
                 "_id": asset["_id"],
                 "filename": asset["data"]["originalfilename"],
                 "mimetype": asset["data"]["mimetype"],
-                "size":  asset["data"]["size"],
-                "uri": self.s3_comm.format_public_url(asset["_id"])
+                "size":  asset["data"]["size"]
+                #"uri": self.s3_comm.format_public_url(asset["_id"])
             })
         return assets_info
+
+    def get_public_url(self, asset_id):
+        return self.s3_comm.format_public_url(asset_id)
 
     def update_state_attrs(self, app, **kwargs):
         print("I am here")
         if not isinstance(app, SmartBit):
-            print(f"apps should be a smartbit. Found {type(app)}")
+            print(f"Apps should be a smartbit. Found {type(app)}")
             return
 
         for k in kwargs.keys():
@@ -232,7 +232,7 @@ class PySage3:
                 print(f"{k} is not a valid attribute of the {type(app)}'s state")
                 return
 
-        for k, v in  kwargs.items():
+        for k, v in kwargs.items():
             setattr(app.state, k, v)
         app.send_updates()
 
