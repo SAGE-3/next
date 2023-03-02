@@ -18,7 +18,6 @@ import { SAGEColors } from '@sage3/shared';
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
 
-
 export function AnnotationsPanel() {
   // UI Store
   const hideUI = useUIStore((state) => state.hideUI);
@@ -98,7 +97,7 @@ export function AnnotationsPanel() {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow openDelay={1600} label="Screenshot in SAGE3 client (maximize your window for high-quality)">
-          <Button onClick={screenshot} ml="2" size="sm" disabled={!isElectron()}>
+          <Button onClick={screenshot} ml="2" size="sm" isDisabled={!isElectron()}>
             <FaCamera />
           </Button>
         </Tooltip>

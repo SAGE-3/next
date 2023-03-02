@@ -7,7 +7,6 @@
 # -----------------------------------------------------------------------------
 
 from utils.generic_utils import import_cls
-import sys
 
 import logging
 logger = logging.getLogger(__name__)

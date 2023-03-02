@@ -10,14 +10,15 @@ import { HStack, useToast } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
-import { HiChip } from 'react-icons/hi';
 
-import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav } from '@sage3/frontend';
+import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
+import { HiPuzzle, HiChip } from 'react-icons/hi';
 
 export interface ControllerProps {
   roomId: string;
   boardId: string;
+  plugins: boolean;
 }
 
 export function Controller(props: ControllerProps) {
@@ -34,6 +35,7 @@ export function Controller(props: ControllerProps) {
   const navigation = getPanel('navigation');
   const users = getPanel('users');
   const kernels = getPanel('kernels');
+  const plugins = getPanel('plugins');
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome } = useRouteNav();
@@ -65,14 +67,12 @@ export function Controller(props: ControllerProps) {
         position.y = position.y + 85;
       }
     }
-    (position) ? updatePanel(panel.name, { show: !panel.show, position }) : updatePanel(panel.name, { show: !panel.show });
-    bringPanelForward(panel.name)
+    position ? updatePanel(panel.name, { show: !panel.show, position }) : updatePanel(panel.name, { show: !panel.show });
+    bringPanelForward(panel.name);
   };
 
   return (
-    <Panel name="controller" title={'Main Menu'} width={400}
-      showClose={false} titleDblClick={handleCopyId}
-    >
+    <Panel name="controller" title={'Main Menu'} width={400} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
         <IconButtonPanel icon={<MdArrowBack />} description={`Back to ${room?.data.name}`} isActive={false} onClick={handleHomeClick} />
 
@@ -89,6 +89,15 @@ export function Controller(props: ControllerProps) {
           isActive={kernels?.show}
           onClick={() => handleShowPanel(kernels)}
         />
+        {props.plugins && (
+          <IconButtonPanel
+            icon={<HiPuzzle size="32px" />}
+            description="Plugins"
+            isActive={plugins?.show}
+            onClick={() => handleShowPanel(plugins)}
+          />
+        )}
+
         <IconButtonPanel icon={<MdFolder />} description="Assets" isActive={assets?.show} onClick={() => handleShowPanel(assets)} />
         <IconButtonPanel
           icon={<MdMap />}

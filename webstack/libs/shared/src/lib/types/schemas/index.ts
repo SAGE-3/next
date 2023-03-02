@@ -13,3 +13,4 @@ export * from './asset';
 export * from './presence';
 export * from './message';
 export * from './SBSchema';
+export * from './plugin';

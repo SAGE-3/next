@@ -20,9 +20,11 @@ import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
+import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
+import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -51,9 +53,11 @@ export const initialValues = {
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
+  [PluginAppName]: defaultPluginApp,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
   [SeerName]: defaultSeer,
+  [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,

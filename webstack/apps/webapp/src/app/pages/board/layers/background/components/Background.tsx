@@ -251,7 +251,11 @@ export function Background(props: BackgroundProps) {
 
   const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
-    createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+    if (type === 'Screenshare') {
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }));
+    } else {
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+    }
   };
 
   // Create an app for a file
@@ -330,7 +334,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
+              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 420 }, { text: text }));
             });
         }
       });
@@ -351,7 +355,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('SageCell', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
@@ -621,7 +625,7 @@ export function Background(props: BackgroundProps) {
       const x = cursorPosition.x;
       const y = cursorPosition.y;
       createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
       );
 
       // Returning false stops the event and prevents default browser events

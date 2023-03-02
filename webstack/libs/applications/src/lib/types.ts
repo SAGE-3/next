@@ -20,9 +20,11 @@ import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
+import { state as PluginAppState, name as PluginAppName } from './apps/PluginApp';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as SageCellState, name as SageCellName } from './apps/SageCell';
 import { state as SeerState, name as SeerName } from './apps/Seer';
+import { state as SensorOverviewState, name as SensorOverviewName } from './apps/SensorOverview';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
@@ -52,9 +54,11 @@ export type AppState =
   | NotepadState
   | PDFResultState
   | PDFViewerState
+  | PluginAppState
   | RTCChatState
   | SageCellState
   | SeerState
+  | SensorOverviewState
   | StickieState
   | TwilioScreenshareState
   | VegaLiteState
@@ -83,9 +87,11 @@ export type AppName =
   | typeof NotepadName
   | typeof PDFResultName
   | typeof PDFViewerName
+  | typeof PluginAppName
   | typeof RTCChatName
   | typeof SageCellName
   | typeof SeerName
+  | typeof SensorOverviewName
   | typeof StickieName
   | typeof TwilioScreenshareName
   | typeof VegaLiteName

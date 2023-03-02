@@ -273,19 +273,19 @@ function ToolbarComponent(props: App): JSX.Element {
           {/* App State with server */}
           <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
             <Tooltip placement="top-start" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
-              <Button onClick={handleRewind} disabled={!videoRef}>
+              <Button onClick={handleRewind} isDisabled={!videoRef}>
                 <MdFastRewind />
               </Button>
             </Tooltip>
 
             <Tooltip placement="top-start" hasArrow={true} label={videoRef.paused ? 'Play Video' : 'Pause Video'} openDelay={400}>
-              <Button onClick={handlePlay} disabled={!videoRef}>
+              <Button onClick={handlePlay} isDisabled={!videoRef}>
                 {videoRef.paused ? <MdPlayArrow /> : <MdPause />}
               </Button>
             </Tooltip>
 
             <Tooltip placement="top-start" hasArrow={true} label={'Forward 5 Seconds'} openDelay={400}>
-              <Button onClick={handleForward} disabled={!videoRef}>
+              <Button onClick={handleForward} isDisabled={!videoRef}>
                 <MdFastForward />
               </Button>
             </Tooltip>
@@ -293,12 +293,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
           <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
             <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
-              <Button onClick={handleLoop} disabled={!videoRef}>
+              <Button onClick={handleLoop} isDisabled={!videoRef}>
                 {videoRef.loop ? <MdLoop /> : <MdArrowRightAlt />}
               </Button>
             </Tooltip>
             <Tooltip placement="top-start" hasArrow={true} label={'Sync on me'} openDelay={400}>
-              <Button onClick={handleSyncOnMe} disabled={!videoRef}>
+              <Button onClick={handleSyncOnMe} isDisabled={!videoRef}>
                 <MdAccessTime />
               </Button>
             </Tooltip>
@@ -345,12 +345,12 @@ function ToolbarComponent(props: App): JSX.Element {
           {/* Local State Buttons - Only Changes the video state for the local user */}
           <ButtonGroup isAttached size="xs" colorScheme={'teal'} mx={1}>
             <Tooltip placement="top-start" hasArrow={true} label={videoRef.muted ? 'Unmute' : 'Mute'} openDelay={400}>
-              <Button onClick={handleMute} disabled={!videoRef}>
+              <Button onClick={handleMute} isDisabled={!videoRef}>
                 {videoRef.muted ? <MdVolumeOff /> : <MdVolumeUp />}
               </Button>
             </Tooltip>
             <Tooltip placement="top-start" hasArrow={true} label={'Download Video'} openDelay={400}>
-              <Button onClick={handleDownload} disabled={!videoRef}>
+              <Button onClick={handleDownload} isDisabled={!videoRef}>
                 <MdFileDownload />
               </Button>
             </Tooltip>

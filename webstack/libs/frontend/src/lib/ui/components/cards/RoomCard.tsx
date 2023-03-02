@@ -39,7 +39,12 @@ export type RoomCardProps = {
 export function RoomCard(props: RoomCardProps) {
   const { user } = useUser();
   // Is it my board?
-  const yours = user?._id === props.room.data.ownerId;
+  const [yours, setYours] = useState(false);
+  useEffect(() => {
+    setYours(user?._id === props.room.data.ownerId);
+  }, [props.room.data.ownerId, user?._id]);
+
+
   // Can I list the boards: is it mine or not private?
   const [canList, setCanList] = useState(!props.room.data.isPrivate || yours);
 
@@ -136,7 +141,7 @@ export function RoomCard(props: RoomCardProps) {
                   aria-label="Room Edit"
                   fontSize="3xl"
                   variant="unstlyed"
-                  disabled={!yours}
+                  isDisabled={!yours}
                   icon={<MdSettings />}
                 />
               </Tooltip>

@@ -218,7 +218,7 @@ export function Panel(props: PanelProps) {
     bringPanelForward(props.name);
     // Trying to optimize performance
     if (ref.current) {
-      ref.current.style.willChange = 'transform';
+      // ref.current.style.willChange = 'transform';
     }
   }
 
@@ -264,7 +264,7 @@ export function Panel(props: PanelProps) {
 
       // Trying to optimize performance
       if (ref.current) {
-        ref.current.style.willChange = 'auto';
+        // ref.current.style.willChange = 'auto';
       }
     }
   };

@@ -12,7 +12,6 @@ import { Box, useColorModeValue, Text, Image, Progress } from '@chakra-ui/react'
 import {
   JoinBoardCheck,
   RoomList,
-  serverConfiguration,
   useBoardStore,
   useData,
   usePresenceStore,
@@ -21,14 +20,18 @@ import {
   MainButton,
   useUser,
   Clock,
+  usePluginStore,
 } from '@sage3/frontend';
-import { Board, Room } from '@sage3/shared/types';
+import { Board, OpenConfiguration, Room } from '@sage3/shared/types';
 
 import { useParams } from 'react-router-dom';
 
 export function HomePage() {
   // URL Params
   const { roomId } = useParams();
+
+  // Config file
+  const config = useData('/api/configuration') as OpenConfiguration;
 
   // Room Store
   const [selectedRoomId] = useState<string | undefined>(roomId);
@@ -41,6 +44,9 @@ export function HomePage() {
   const boards = useBoardStore((state) => state.boards);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
 
+  // Plugins
+  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
+
   // Users and presence
   const { user } = useUser();
   const updatePresence = usePresenceStore((state) => state.update);
@@ -49,13 +55,13 @@ export function HomePage() {
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-  const config = useData('/api/configuration') as serverConfiguration;
 
   // Subscribe to user updates
   useEffect(() => {
     subscribeToPresence();
     subscribeToUsers();
     subToRooms();
+    subPlugins();
   }, []);
 
   function handleRoomClick(room: Room | undefined) {
@@ -185,7 +191,7 @@ export function HomePage() {
         py="2"
         px="2"
       >
-        <MainButton buttonStyle="solid" />
+        <MainButton buttonStyle="solid" config={config} />
         <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
       </Box>
     </Box>

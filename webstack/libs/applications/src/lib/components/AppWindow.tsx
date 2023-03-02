@@ -24,9 +24,15 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Guest mode disabled for now
-  // const { auth } = useAuth();
-  const isGuest = false; // auth?.provider === 'guest';
-  // const { user } = useUser();
+  const { auth } = useAuth();
+
+  const [isGuest, setIsGuest] = useState(true);
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
 
   // Ref to the app container
   const divRef = useRef<HTMLDivElement>(null);
@@ -121,7 +127,7 @@ export function AppWindow(props: WindowProps) {
   function handleDragStart() {
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'transform';
+      // divRef.current.style.willChange = 'transform';
     }
     setAppDragging(true);
     bringForward();
@@ -171,9 +177,10 @@ export function AppWindow(props: WindowProps) {
         });
       });
     }
+
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'auto';
+      // divRef.current.style.willChange = 'auto';
     }
   }
 
@@ -181,7 +188,7 @@ export function AppWindow(props: WindowProps) {
   function handleResizeStart() {
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'transform';
+      // divRef.current.style.willChange = 'transform';
     }
     setAppDragging(true);
     bringForward();
@@ -227,7 +234,7 @@ export function AppWindow(props: WindowProps) {
 
     // Trying to optimize performance
     if (divRef.current) {
-      divRef.current.style.willChange = 'auto';
+      // divRef.current.style.willChange = 'auto';
     }
   }
 
@@ -282,8 +289,7 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        // pointerEvents: spacebarPressed || isGuest ? 'none' : 'auto', // Guest Blocker
-        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto', // Guest Blocker
+        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -306,8 +312,10 @@ export function AppWindow(props: WindowProps) {
       // TODO: Make this not required in the future with persmissions system
       // Not ideal but right now we need this to prevent guests from moving apps.
       // This happens locally before updating the server.
-      enableResizing={!isGuest}
-      disableDragging={isGuest}
+      // enableResizing={!isGuest}
+      // disableDragging={isGuest}
+      enableResizing={true}
+      disableDragging={false}
     >
       {/* Title Above app */}
       {appTitles ? (

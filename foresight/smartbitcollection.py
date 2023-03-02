@@ -6,8 +6,6 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-# import rx
-
 class SmartBitsCollection():
     # TODO refactor this into properties
     def __init__(self):
