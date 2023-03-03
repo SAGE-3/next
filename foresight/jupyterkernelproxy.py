@@ -120,10 +120,16 @@ class JupyterKernelProxy:
 
     def execute(self, command_info):
         user_passed_uuid = command_info["uuid"]
-        msg = format_execute_request_msg(user_passed_uuid, command_info["code"])
         kernel_id = command_info['kernel']
         callback_fn = command_info["call_fn"]
-
+        room_id = command_info["room_id"]
+        board_id = command_info["board_id"]
+        code = command_info["code"]
+        # code to add the room_id and board_id into to the code
+        code_inject = f'_s3_room_id, _s3_board_id = "{room_id}", "{board_id}"\n'
+        # add to the code
+        code =  code_inject + code
+        msg = format_execute_request_msg(user_passed_uuid, code)
         if kernel_id not in self.connections or self.connections[kernel_id].stream is None:
             self.add_client(kernel_id)
 

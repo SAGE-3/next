@@ -77,7 +77,7 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def execute(self, user_uuid):
+    def execute(self, user_uuid, board_id="", room_id=""):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
         and to call a call_back function which know how to handle the results message
@@ -90,6 +90,8 @@ class SageCell(SmartBit):
             "call_fn": self.handle_exec_result,
             "code": self.state.code,
             "kernel": self.state.kernel,
+            "room_id": room_id,
+            "board_id": board_id,
             "token": ""
         }
         if self.state.kernel:

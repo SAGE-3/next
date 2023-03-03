@@ -359,10 +359,13 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
       return;
     }
     if (code) {
+      // Add the room id and board id to the execute message to be sent to the kernel
+      const room_id = props.app.data.roomId;
+      const board_id = props.app.data.boardId;
       updateState(props.app._id, {
         code: code,
         output: '',
-        executeInfo: { executeFunc: 'execute', params: { user_uuid: getUUID() } },
+        executeInfo: { executeFunc: 'execute', params: { user_uuid: getUUID(), room_id: room_id, board_id: board_id } },
       });
     }
   };
