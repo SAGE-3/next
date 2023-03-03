@@ -10,21 +10,21 @@
 * This css file is used to style the HTML elements in SageCell.
 */
 
-:root {
+/* :root {
   --color-bg: #000000;
   --color-fg: #ffffff;
 }
 
-/* #html,
+#html,
 body {
   height: 100%;
   width: 100%;
-} */
+}
 
 #html {
   background-color: var(--color-bg);
   color: var(--color-fg);
-}
+} */
 table {
   border: none;
   border-collapse: collapse;
@@ -86,4 +86,77 @@ tbody tr:hover {
 
 .highlight {
   background-color: #ffffff;
+}
+
+.arrow-top {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  width: 10px;
+  height: 10px;
+  margin-top: 15px;
+  border-top: 3px solid #fff;
+  border-left: 3px solid #fff;
+  margin: 0 auto;
+}
+.arrow-down {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  width: 10px;
+  height: 10px;
+  margin-bottom: 20px;
+  border-right: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+  margin: 0 auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  blockquote {
+    border-left: 0.5em #333 solid;
+  }
+  table {
+    border: none;
+    border-collapse: collapse;
+    border-spacing: 0;
+    color: #ccc;
+    table-layout: auto;
+    max-width: min-content;
+    background: #000 !important;
+    box-shadow: inset 0px 2px 4px #ddd;
+  }
+
+  thead {
+    border-bottom: 2px solid #fff;
+    vertical-align: bottom;
+  }
+  tr,
+  th,
+  td {
+    text-align: right;
+    vertical-align: middle;
+    padding: 0.5em 0.5em;
+    line-height: normal;
+    white-space: normal;
+    max-width: none;
+    border: none;
+  }
+
+  th {
+    font-weight: bold;
+  }
+
+  tbody tr:nth-child(odd) {
+    background: #333;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #171717;
+  }
+
+  tbody tr:hover {
+    background: rgba(66, 165, 245, 0.2);
+  }
+
+  td:hover {
+    background-color: rgba(66, 165, 245, 0.3) !important;
+  }
 }

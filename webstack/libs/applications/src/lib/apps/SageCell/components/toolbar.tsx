@@ -1,0 +1,264 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
+import { downloadFile, useAppStore, useUser, useUsersStore } from '@sage3/frontend';
+import { Badge, Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
+import { App } from '../../../schema';
+
+import { state as AppState } from '../index';
+
+import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
+import { useEffect, useState } from 'react';
+
+// Date manipulation (for filename)
+import dateFormat from 'date-fns/format';
+
+/**
+ * UI toolbar for the SAGEcell application
+ *
+ * @param {App} props
+ * @returns {JSX.Element}
+ */
+export function ToolbarComponent(props: App): JSX.Element {
+  // Access the global app state
+  const s = props.data.state as AppState;
+  const { user } = useUser();
+  const users = useUsersStore((state) => state.users);
+  // Update functions from the store
+  const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
+  const boardId = props.data.boardId;
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
+  // set to global kernel if it exists
+  const [selected, setSelected] = useState<string>(s.kernel);
+  const [ownerId, setOwnerId] = useState<string>('');
+  const [ownerName, setOwnerName] = useState<string>('');
+  const [isPrivate, setIsPrivate] = useState<boolean>(false);
+  /**
+   * This function gets the kernels for the board
+   * @returns
+   * @memberof ToolbarComponent
+   */
+  function getKernels() {
+    updateState(props._id, {
+      executeInfo: {
+        executeFunc: 'get_available_kernels',
+        params: {},
+      },
+    });
+  }
+
+  /**
+   * This function sets the state of the toolbar based on the kernels
+   * @returns
+   * @memberof ToolbarComponent
+   */
+  function setStates() {
+    const kernels = s.availableKernels;
+    const b = kernels.filter((el) => el.value.board === boardId);
+    if (!kernels || kernels.length === 0 || b.length === 0) {
+      setSelected('');
+      setOwnerId('');
+      setOwnerName('');
+      setIsPrivate(false);
+      update(props._id, { title: 'Seer> ' });
+      return;
+    }
+    if (b.length > 0) {
+      const publicKernels = b.filter((el) => !el.value.is_private);
+      const privateKernels = b.filter((el) => el.value.is_private);
+      const ownedKernels = privateKernels.filter((el) => el.value.owner_uuid === user?._id);
+      const myList: any[] = [...publicKernels, ...ownedKernels];
+      setMyKernels(myList);
+      // get the selected kernel from the global state
+      const selectedKernel = kernels.find((el) => el.key === s.kernel);
+      // check if the selected kernel is in the list of kernels for this board
+      const ownerId = selectedKernel?.value.owner_uuid;
+      const ownerName = users.find((u: any) => u._id === ownerId)?.data.name;
+      const isPrivate = selectedKernel?.value.is_private;
+      const inBoard = b.find((el) => el.key === selectedKernel?.key);
+      // if the selected kernel is not in the list of kernels for this board then
+      // there is a problem so we should reset the state to the default
+      if (!inBoard) {
+        setSelected('');
+        setOwnerId('');
+        setOwnerName('');
+        setIsPrivate(false);
+        return;
+      }
+      // const inMyList = myList.find((el) => el.key === s.kernel);
+      if (selectedKernel) {
+        setSelected(selectedKernel.key);
+        setOwnerId(ownerId);
+        setOwnerName(ownerName ? ownerName : '');
+        setIsPrivate(isPrivate ? isPrivate : false);
+      }
+    }
+  }
+
+  /**
+   * Get the kernels when the app is mounted and update the state
+   * This happens when the component is mounted but is not triggered
+   * when the global state changes so we need to use the useEffect below
+   * to force changes if the user has the app open already
+   */
+  useEffect(() => {
+    if (!user) return;
+    getKernels();
+    setStates();
+  }, []);
+
+  /**
+   * This happens when the global state changes
+   */
+  useEffect(() => {
+    setStates();
+  }, [s.kernel, JSON.stringify(s.availableKernels)]);
+
+  /**
+   * This is called when the user selects a kernel from the dropdown
+   * It updates the global state and the app description
+   * @param {React.ChangeEvent<HTMLSelectElement>} e
+   * @returns {void}
+   */
+  function selectKernel(e: React.ChangeEvent<HTMLSelectElement>): void {
+    if (e.target.value !== s.kernel) {
+      const name = e.currentTarget.selectedOptions[0].text.split(' ')[0];
+      if (name && name !== 'Select Kernel' && name !== 'Private') {
+        update(props._id, { title: `Seer> ${name}` });
+        updateState(props._id, { kernel: e.target.value });
+      } else {
+        update(props._id, { title: 'Seer> ' });
+        updateState(props._id, { kernel: '' });
+      }
+    }
+  }
+
+  /**
+   * Download the stickie as a text file
+   * @returns {void}
+   */
+  const downloadPy = (): void => {
+    // Current date
+    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const content = `${s.code}`;
+    // generate a URL containing the text of the note
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    // Make a filename with username and date
+    const filename = 'seer-' + dt + '.py';
+    // Go for download
+    downloadFile(txturl, filename);
+  };
+
+  return (
+    <HStack>
+      {
+        <>
+          {/* check if there are kernels avaible. if none show offline, if available but no access show online with no kernels,
+           if available and access show online with kernels
+          */}
+          {s.availableKernels.length === 0 ? (
+            <Badge colorScheme="red" rounded="sm" size="lg">
+              Offline
+            </Badge>
+          ) : s.availableKernels.length > 0 && !selected ? (
+            <Badge colorScheme="yellow" rounded="sm" size="lg">
+              Online
+            </Badge>
+          ) : isPrivate ? (
+            ownerId === user?._id ? (
+              <Badge colorScheme="red" rounded="sm" size="lg">
+                Locked
+              </Badge>
+            ) : (
+              <Badge colorScheme="red" rounded="sm" size="lg">
+                Locked by {ownerName}
+              </Badge>
+            )
+          ) : (
+            <Badge colorScheme="green" rounded="sm" size="lg">
+              Ready
+            </Badge>
+          )}
+          <Select
+            placeholder={isPrivate ? 'Private' : 'Select Kernel'}
+            rounded="lg"
+            size="sm"
+            width="150px"
+            ml={2}
+            px={0}
+            colorScheme="teal"
+            icon={<MdArrowDropDown />}
+            onChange={(e) => selectKernel(e as React.ChangeEvent<HTMLSelectElement>)}
+            value={
+              // if the selected kernel is not the same as the global state, set the selected to the global state
+              // selected !== s.kernel ? s.kernel : selected
+              selected ?? undefined
+            }
+            variant={'outline'}
+            isDisabled={
+              // disable the dropdown there is a active kernel and the user does not have access
+              isPrivate && user && user._id !== ownerId ? true : false
+            }
+          >
+            {myKernels.map((el) => (
+              <option value={el.key} key={el.key}>
+                {el.value.kernel_alias} (
+                {
+                  // show kernel name as Python, R, or Julia
+                  el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'
+                }
+                )
+              </option>
+            ))}
+          </Select>
+
+          <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
+            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+              <MdRefresh />
+            </Button>
+          </Tooltip>
+
+          {/* <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
+            <Button onClick={() => helpOnOpen()} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+              <MdHelp />
+            </Button>
+          </Tooltip> */}
+
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize <= 8}
+                onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdRemove />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+              <Button
+                isDisabled={s.fontSize > 42}
+                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
+                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
+              >
+                <MdAdd />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+                <MdFileDownload />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+        </>
+      }
+    </HStack>
+  );
+}
