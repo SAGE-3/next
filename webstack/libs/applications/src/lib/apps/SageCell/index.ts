@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
-  params: z.record(z.any()),
+  params: z.any(),
 });
 
 export const schema = z.object({
@@ -32,13 +32,13 @@ export const schema = z.object({
   availableKernels: z.array(
     z.object({
       key: z.string(),
-      value: z.record(z.string(), z.any()),
+      value: z.any(),
     })
   ),
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 

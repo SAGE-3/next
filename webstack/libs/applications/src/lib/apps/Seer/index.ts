@@ -16,7 +16,7 @@ import { executeInfoType } from '../SageCell';
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
-  params: z.record(z.any()),
+  params: z.any(),
 });
 const fieldTypes = z.enum(['code', 'text']);
 export type fieldT = z.infer<typeof fieldTypes>;
@@ -29,7 +29,7 @@ export const schema = z.object({
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 
