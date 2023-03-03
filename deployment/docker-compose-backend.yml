@@ -15,7 +15,6 @@ services:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/foresight:/foresight
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
-      - ./redis-client:/home/jovyan/work
     ports:
       - "80:8888"
     environment:

@@ -53,7 +53,6 @@ services:
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
-      - ./redis-client:/home/jovyan/work
     ports:
       - "4443:8888"
     environment:
