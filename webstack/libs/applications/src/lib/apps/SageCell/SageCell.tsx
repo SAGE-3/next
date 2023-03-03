@@ -46,7 +46,7 @@ const AppComponent = (props: App): JSX.Element => {
     updateState(props._id, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
+        params: { _uuid: user._id },
       },
     });
   }
@@ -77,7 +77,7 @@ const AppComponent = (props: App): JSX.Element => {
 
   useEffect(() => {
     if (s.kernel == '') {
-      setAccess(true);
+      setAccess(true); // need to check this...it's weird
     } else {
       const access = myKernels.find((kernel) => kernel.key === s.kernel);
       setAccess(access ? true : false);
@@ -127,8 +127,9 @@ const AppComponent = (props: App): JSX.Element => {
               Offline{' '}
             </Badge>
           ) : !s.kernel && access ? ( // no kernel selected but access
-            <Badge variant="outline" colorScheme="red">
-              Error{' '}
+            <Badge variant="outline" colorScheme="yellow">
+              {/* {setAccess(false)} somewhere ?? */}
+              Online{' '}
             </Badge>
           ) : s.kernel && !access ? ( // kernel selected but no access
             <Badge variant="outline" colorScheme="red">
@@ -149,7 +150,6 @@ const AppComponent = (props: App): JSX.Element => {
           flexDirection="column"
           flex="1"
           whiteSpace={'pre-wrap'}
-          // wordWrap='break-word'
           overflowWrap="break-word"
           overflowY="auto"
         >

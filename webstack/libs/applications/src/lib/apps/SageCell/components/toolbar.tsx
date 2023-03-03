@@ -18,6 +18,8 @@ import { useEffect, useState } from 'react';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
+import { HelpModal } from './help';
+
 /**
  * UI toolbar for the SAGEcell application
  *
@@ -39,6 +41,8 @@ export function ToolbarComponent(props: App): JSX.Element {
   const [ownerId, setOwnerId] = useState<string>('');
   const [ownerName, setOwnerName] = useState<string>('');
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+
   /**
    * This function gets the kernels for the board
    * @returns
@@ -157,6 +161,7 @@ export function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <HStack>
+      <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
       {
         <>
           {/* check if there are kernels avaible. if none show offline, if available but no access show online with no kernels,
@@ -224,11 +229,11 @@ export function ToolbarComponent(props: App): JSX.Element {
             </Button>
           </Tooltip>
 
-          {/* <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
             <Button onClick={() => helpOnOpen()} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
               <MdHelp />
             </Button>
-          </Tooltip> */}
+          </Tooltip>
 
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
