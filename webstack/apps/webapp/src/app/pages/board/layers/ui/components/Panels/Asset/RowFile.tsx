@@ -134,16 +134,18 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
 
 
   const getPinBoardDims = (n: any, columnHeight: number, x: number, y: number, width: number, height: number, spacing: number) => {
-    let pinBoardWidth = 0;
-    const pinBoardHeight = (height + spacing) * n.length / (columnHeight);
+    let pinBoardHeight = 0
     const pinBoardX = x - width / 2;
     const pinBoardY = y - height / 2;
+    const colNum = Math.ceil(n.length / columnHeight)
+    const pinBoardWidth = Math.ceil((width + spacing) * (colNum + 1))
 
-    if (n.length % columnHeight != 0) {
-      pinBoardWidth = (width + spacing) * n.length / (columnHeight - 1)
+    if (n.length < columnHeight) {
+      pinBoardHeight = (height + spacing) * (n.length + 1)
     } else {
-      pinBoardWidth = (width + spacing) * n.length / (columnHeight)
+      pinBoardHeight = (height + spacing) * (columnHeight + 1);
     }
+
     return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight]
   }
 
