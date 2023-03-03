@@ -17,11 +17,9 @@ pip3 install redis
 python3 /conf/redis-store.py $token
 
 # dependencies (requirements.txt)
-pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx pydantic
+pip3 install websockets matplotlib pytest requests namesgenerator httpx pydantic
 pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share plotly
 pip3 install rectpack graphviz
-# extras
-#pip3 install python-magic rq dill opencv-python Pillow
 
 # 2D extension
 jupyter nbextension install /conf/2D-Jupyter --user
