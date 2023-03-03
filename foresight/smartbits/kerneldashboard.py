@@ -56,7 +56,7 @@ class KernelDashboard(SmartBit):
 
     def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
                    kernel_name="python3", auth_users=(), kernel_alias="my_kernel"):
-        body = {"name": kernel_name}
+        body = {"name": kernel_name, "path": "foresight"}
         j_url = f'{self._base_url}/kernels'
         response = requests.post(j_url, headers=self._headers, json=body)
         if response.status_code == 201:
