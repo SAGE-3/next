@@ -331,9 +331,9 @@ function AppComponent(props: App): JSX.Element {
   return (
     <LeafletWrapper {...props}>
       <Box
-        w="12rem"
-        h="14rem"
-        bg="white"
+        w="20rem"
+        h="24rem"
+        bg="gray.300"
         position="absolute"
         zIndex="999"
         color={'black'}
@@ -344,19 +344,32 @@ function AppComponent(props: App): JSX.Element {
         onClick={() => {
           console.log('Hello');
         }}
-        margin="auto"
+        // margin="auto"
         padding="0 20px"
-        text-align="center"
+        fontWeight={'bold'}
+        fontSize="xl"
       >
         <br />
         <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
           <Stack direction="column">
-            <Radio value="temperatureC">Temperature C</Radio>
-            <Radio value="temperatureF">Temperature F</Radio>
-            <Radio value="soilMoisture">Soil Moisture</Radio>
-            <Radio value="windSpeed">Wind Speed</Radio>
-            <Radio value="relativeHumidity">Relative Humidity</Radio>
-            <Radio value="solarRadiation">Solar Radiation</Radio>
+            <Radio colorScheme="orange" value="temperatureC">
+              <p style={{ fontSize: 30 }}>Temperature C</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="temperatureF">
+              <p style={{ fontSize: 30 }}>Temperature F</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="soilMoisture">
+              <p style={{ fontSize: 30 }}>Soil Moisture</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="windSpeed">
+              <p style={{ fontSize: 30 }}>Wind Speed</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="relativeHumidity">
+              <p style={{ fontSize: 30 }}>Relative Humidity</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="solarRadiation">
+              <p style={{ fontSize: 30 }}>Solar Radiation</p>
+            </Radio>
           </Stack>
         </RadioGroup>
       </Box>
