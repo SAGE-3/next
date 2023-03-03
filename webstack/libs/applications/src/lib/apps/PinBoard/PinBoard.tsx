@@ -40,15 +40,17 @@ import {v4 as getUUID} from 'uuid';
 import {Position, Size} from "@sage3/shared/types";
 
 function AppComponent(props: App): JSX.Element {
+  // App Store
   const s = props.data.state as AppState;
+  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
-
-  const selectedAppId = useUIStore((state) => state.selectedAppId);
-
   const boardApps = useAppStore((state) => state.apps);
+
+
+  // UI Store
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
   const selApp = boardApps.find((el) => el._id === selectedAppId);
 
-  const update = useAppStore((state) => state.update);
 
   /**
    * Keeps track of AI Pane previous position, necessary to move hosted apps with pane
@@ -59,6 +61,24 @@ function AppComponent(props: App): JSX.Element {
   const prevHosted = useRef(s.hostedApps);
 
   const [localHostedApps, setLocalHostedApps] = useState<Record<string, string>>({});
+  const [centerLine, setCenterLine] = useState(0)
+
+  /**
+   * Set the center line every time the pinboard is readjusted
+   * Snap pinnedApps to centerline
+   *
+   */
+  useEffect(() => {
+    const centerX = props.data.size.width / 2
+    setCenterLine(centerX)
+
+    for (const app of boardApps) {
+      if (Object.keys(localHostedApps).includes(app._id)) {
+        app.data.position.x = props.data.position.x
+      }
+    }
+  }, [props.data.size.width, JSON.stringify(localHostedApps)])
+
 
   /**
    * Checks for apps on or off the pane
@@ -99,7 +119,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     updateState(props._id, {hostedApps: localHostedApps});
     console.log('Updated hostedApps: ' + Object.keys(s.hostedApps))
-  }, [localHostedApps]);
+  }, [JSON.stringify(localHostedApps)]);
 
   /**
    * Move all apps together with the AIPane
