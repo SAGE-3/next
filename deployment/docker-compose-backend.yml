@@ -13,12 +13,13 @@ services:
     image: "jupyter/datascience-notebook"
     volumes:
       - ./configurations/jupyter/conf:/conf
+      - ./configurations/jupyter/foresight:/foresight
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
       - ./redis-client:/home/jovyan/work
     ports:
       - "80:8888"
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=backend
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
