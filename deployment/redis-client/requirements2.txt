@@ -1,2 +1,0 @@
-asyncio
-aioredis == 1.3.1
