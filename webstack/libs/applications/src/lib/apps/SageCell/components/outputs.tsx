@@ -18,20 +18,14 @@ import {
   AccordionIcon,
   AccordionButton,
   AccordionPanel,
-  AspectRatio,
   Icon,
   Code,
-  Table,
-  useColorModePreference,
-  Button,
-  Modal,
-  useDisclosure,
 } from '@chakra-ui/react';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 
 // Styling
-import './styles.css';
+import './outputs.styles.css';
 import { MdError } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 
@@ -52,16 +46,6 @@ import { VegaLite } from 'react-vega';
 
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
-
-// // JSONTree
-// import JSONTree from './JSONOut';
-
-// // HTMLViewer
-// import { Preview } from './Preview';
-
-// // Monaco Editor
-// import Editor from '@monaco-editor/react';
-// import { ContentJSON } from 'yjs';
 
 interface Result {
   request_id?: string;
@@ -110,45 +94,6 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   const [error, setError] = useState<any>();
   const [stream, setStream] = useState<Result['stream']>();
   const [msgId, setMsgId] = useState<unknown>();
-
-  const styles = {
-    cell: {
-      fontFamily: 'source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace',
-      background: useColorModeValue(`#f4f4f4`, `#1b1b1b`),
-      padding: `.5em`,
-      minHeight: `container`,
-      display: `block`,
-      borderLeft: `0.2em solid ${useHexColor(ownerColor)}`,
-      fontSize: `${s.fontSize}px`,
-      height: '100%',
-      wdith: '100%',
-    },
-    data: {
-      table: {
-        borderCollapse: 'collapse',
-        borderSpacing: 0,
-        width: '100%',
-        border: '1px solid #ddd',
-      },
-      th: {
-        textAlign: 'left',
-        padding: '8px',
-      },
-      tr: {
-        '&:nth-child(even)': {
-          backgroundColor: '#f2f2f2',
-        },
-      },
-      td: {
-        textAlign: 'left',
-        padding: '8px',
-      },
-    },
-    stdout: {},
-    stderr: {
-      color: '#ff0000',
-    },
-  };
 
   const openInWebview = (url: string): void => {
     createApp({
@@ -304,138 +249,150 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   }, [s.kernel, users]);
 
   return (
-    <Box style={styles.cell} h={'100%'}>
-      <Box>
-        {executionCount && (
-          <Text color="red" fontSize="16px">
-            {`Out[${executionCount}]`}
-          </Text>
-        )}
-        {!stream ? null : stream.name === 'stdout' ? (
-          <Ansi>{stream.text}</Ansi>
-        ) : (
-          <Icon name="warning" color="red" /> && <Ansi>{stream.text}</Ansi>
-        )}
-        {!data
-          ? null
-          : Object.keys(data).map((key: string, i) => {
-              const value = data[key];
-              const ww = metadata && metadata[key] && metadata[key].width;
-              const hh = metadata && metadata[key] && metadata[key].height;
-              switch (key) {
-                case 'text/html':
-                  if (!data[key]) return null; // hides other outputs if html is present
-                  // clean the html to make sure it doesn't have iframes or scripts or http:// links, etc.
-                  // #TODO need to add a sanitizeHtml function to the backend maybe
-                  // const clean = sanitizeHtml(value, {
-                  //   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-                  //   allowedAttributes: {
-                  //     ...sanitizeHtml.defaults.allowedAttributes,
-                  //     img: ['src'],
-                  //   },
-                  //   allowedSchemes: ['data', 'http', 'https'],
-                  //   allowedSchemesByTag: {},
-                  //   allowedSchemesAppliedToAttributes: ['href', 'src', 'cite'],
-                  //   allowProtocolRelative: true,
-                  // });
-                  return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-                case 'text/plain':
-                  if (data['text/html']) return null;
-                  return <Ansi key={i}>{value}</Ansi>;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${value}`} width={ww} height={hh} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={ww} height={hh} />;
-                case 'image/svg+xml':
-                  return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-                case 'text/markdown':
-                  return <Markdown key={i} data={value} openInWebview={openInWebview} />;
-                case 'application/vnd.vegalite.v4+json':
-                  // create separate VegaLiteViewer app if the user wants to open the spec in a new app
-                  //   const [openInNewApp, setOpenInNewApp] = useState(false);
-                  //   const { isOpen, onOpen, onClose } = useDisclosure();
-                  //   <Modal isOpen={isOpen} onClose={() => setOpenInNewApp(false)}>
-                  //     <Box>
-                  //       <Text>Open in new app?</Text>
-                  //       <Button onClick={() => setOpenInNewApp(false)}>No</Button>
-                  //       <Button onClick={() => setOpenInNewApp(false)}>Yes</Button>
-                  //     </Box>
-                  //   </Modal>;
-                  //   onOpen();
-                  //   if (openInNewApp) {
-                  //     openInVega(value);
-                  //     return null;
-                  //   }
-                  return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.vegalite.v3+json':
-                  return <VegaLite spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.vegalite.v2+json':
-                  return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.vega.v5+json':
-                  return <Vega spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.vega.v4+json':
-                  return <Vega spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.vega.v3+json':
-                  return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.vega.v2+json':
-                  return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.vega.v1+json':
-                  return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-                case 'application/vnd.plotly.v1+json':
-                  // openInPlotly(value);
-                  const config = value.config || {};
-                  const layout = value.layout || {};
-                  config.displaylogo = false;
-                  config.displayModeBar = false;
-                  config.scrollZoom = true;
-                  layout.dragmode = 'pan';
-                  layout.hovermode = 'closest';
-                  layout.margin = { l: 0, r: 0, b: 0, t: 0, pad: 0 };
-                  layout.font = { size: s.fontSize };
-                  layout.hoverlabel = {
-                    font: { size: s.fontSize },
-                    bgcolor: '#ffffff',
-                    bordercolor: '#000000',
-                    fontFamily: 'sans-serif',
-                  };
-                  layout.width = 'auto';
-                  layout.height = 'auto';
-                  return <Plot key={i} data={value.data} layout={layout} config={config} />;
-                case 'application/pdf':
-                  return <PdfViewer data={value} />;
-                case 'application/json':
-                  return <pre>{JSON.stringify(value, null, 2)}</pre>;
-                case 'application/javascript':
-                  return <pre>{JSON.stringify(value, null, 2)}</pre>;
-                default:
-                  return (
-                    <Box>
-                      <Accordion allowToggle>
-                        <AccordionItem>
-                          <AccordionButton>
-                            <Box flex="1" textAlign="left">
-                              <Text color="red" fontSize={s.fontSize}>
-                                Error: {key} is not supported in this version of Seer.
-                              </Text>
-                            </Box>
-                            <AccordionIcon />
-                          </AccordionButton>
-                          <AccordionPanel pb={4}>
-                            <pre>{JSON.stringify(value, null, 2)}</pre>
-                          </AccordionPanel>
-                        </AccordionItem>
-                      </Accordion>
-                    </Box>
-                  );
-              }
-            })}
-      </Box>
+    <Box
+      // fontFamily="source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace"
+      fontFamily="Consolas, monospace;"
+      background={useColorModeValue(`#f4f4f4`, `#1b1b1b`)}
+      padding=".5em"
+      minHeight="container"
+      display="block"
+      borderLeft={`0.2em solid ${useHexColor(ownerColor)}`}
+      fontSize={s.fontSize + 'px'}
+      whiteSpace="pre-wrap"
+      overflow="auto"
+      lineHeight="1.5em"
+    >
+      {!executionCount ? null : (
+        <Text color="red" fontSize="16px">
+          {`Out[${executionCount}]`}
+        </Text>
+      )}
+      {!stream ? null : stream.name === 'stdout' ? (
+        <Ansi>{stream.text}</Ansi>
+      ) : (
+        <Icon name="warning" color="red" /> && <Ansi>{stream.text}</Ansi>
+      )}
+
+      {!data
+        ? null
+        : Object.keys(data).map((key: string, i) => {
+            const value = data[key];
+            const ww = metadata && metadata[key] && metadata[key].width;
+            const hh = metadata && metadata[key] && metadata[key].height;
+            console.log('metadata', metadata);
+            console.log('key', key);
+            switch (key) {
+              case 'text/html':
+                if (!data[key]) return null; // hides other outputs if html is present
+                // clean the html to make sure it doesn't have iframes or scripts or http:// links, etc.
+                // #TODO need to add a sanitizeHtml function to the backend
+                // const clean = sanitizeHtml(value, {
+                //   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+                //   allowedAttributes: {
+                //     ...sanitizeHtml.defaults.allowedAttributes,
+                //     img: ['src'],
+                //   },
+                //   allowedSchemes: ['data', 'http', 'https'],
+                //   allowedSchemesByTag: {},
+                //   allowedSchemesAppliedToAttributes: ['href', 'src', 'cite'],
+                //   allowProtocolRelative: true,
+                // });
+                let clean = value;
+                clean.includes('iframe') && console.log('iframe detected');
+                clean.includes('script') && console.log('script detected');
+                clean.includes('http://') && console.log('http:// detected');
+                clean.includes('https://') && console.log('https:// detected');
+                clean.includes('iframe') && (clean = clean.replace(/iframe/g, ''));
+                clean.includes('script') && (clean = clean.replace(/script/g, ''));
+                clean.includes('http://') && (clean = clean.replace(/http:\/\//g, 'https://'));
+                clean.includes('&lt;') && (clean = clean.replace(/&lt;/g, '<'));
+                clean.includes('&gt;') && (clean = clean.replace(/&gt;/g, '>'));
+                clean.includes('&amp;') && (clean = clean.replace(/&amp;/g, '&'));
+                clean.includes('&quot;') && (clean = clean.replace(/&quot;/g, '"'));
+                clean.includes('&apos;') && (clean = clean.replace(/&apos;/g, "'"));
+                return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
+              case 'text/plain':
+                if (data['text/html']) return null;
+                return <Ansi key={i}>{value}</Ansi>;
+              case 'image/png':
+                return <Image key={i} src={`data:image/png;base64,${value}`} width={ww} height={hh} />;
+              case 'image/jpeg':
+                return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={ww} height={hh} />;
+              case 'image/svg+xml':
+                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+              case 'text/markdown':
+                return <Markdown key={i} data={value} openInWebview={openInWebview} />;
+              case 'application/vnd.vegalite.v4+json':
+                return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vegalite.v3+json':
+                return <VegaLite spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vegalite.v2+json':
+                return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v5+json':
+                return <Vega spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v4+json':
+                return <Vega spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v3+json':
+                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v2+json':
+                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v1+json':
+                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.plotly.v1+json':
+                // openInPlotly(value);
+                const config = value.config || {};
+                const layout = value.layout || {};
+                config.displaylogo = false;
+                config.displayModeBar = false;
+                config.scrollZoom = true;
+                layout.dragmode = 'pan';
+                layout.hovermode = 'closest';
+                layout.margin = { l: 0, r: 0, b: 0, t: 0, pad: 0 };
+                layout.font = { size: s.fontSize };
+                layout.hoverlabel = {
+                  font: { size: s.fontSize },
+                  bgcolor: '#ffffff',
+                  bordercolor: '#000000',
+                  fontFamily: 'sans-serif',
+                };
+                layout.width = 'auto';
+                layout.height = 'auto';
+                return <Plot key={i} data={value.data} layout={layout} config={config} />;
+              case 'application/pdf':
+                return <PdfViewer data={value} />;
+              case 'application/json':
+                return <pre>{JSON.stringify(value, null, 2)}</pre>;
+              case 'application/javascript':
+                return <pre>{JSON.stringify(value, null, 2)}</pre>;
+              default:
+                return (
+                  <Box>
+                    <Accordion allowToggle>
+                      <AccordionItem>
+                        <AccordionButton>
+                          <Box flex="1" textAlign="left">
+                            <Text color="red" fontSize={s.fontSize}>
+                              Error: {key} is not supported in this version of SAGECell.
+                            </Text>
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                        <AccordionPanel pb={4}>
+                          <pre>{JSON.stringify(value, null, 2)}</pre>
+                        </AccordionPanel>
+                      </AccordionItem>
+                    </Accordion>
+                  </Box>
+                );
+            }
+          })}
       {!error ? null : (
-        <>
+        <Box>
           <Alert status="error">
             <Icon as={MdError} />
             <Code
               style={{
+                fontFamily: 'monospace',
                 display: 'inline-block',
                 marginLeft: '0.5em',
                 marginRight: '0.5em',
@@ -450,7 +407,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
           {Object(error.traceback).map((line: string) => (
             <Ansi>{line}</Ansi>
           ))}
-        </>
+        </Box>
       )}
     </Box>
   );
