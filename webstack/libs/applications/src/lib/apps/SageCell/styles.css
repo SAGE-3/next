@@ -88,25 +88,35 @@ tbody tr:hover {
   background-color: #ffffff;
 }
 
+/* .arrow-top {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  width: 10px;
+  height: 10px;
+  margin-top: 10px;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  margin: 0 auto;
+} */
+
 .arrow-top {
   -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
   width: 10px;
   height: 10px;
-  margin-top: 15px;
-  border-top: 3px solid #fff;
-  border-left: 3px solid #fff;
-  margin: 0 auto;
+  border: solid teal;
+  border-width: 3px 0 0 3px;
+  margin: 0 0 -5px calc(50% - 5px);
 }
+
 .arrow-down {
   -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
   width: 10px;
   height: 10px;
-  margin-bottom: 20px;
-  border-right: 3px solid #fff;
-  border-bottom: 3px solid #fff;
-  margin: 0 auto;
+  border: solid teal;
+  border-width: 0 3px 3px 0;
+  margin: -3px 0 0 calc(50% - 5px);
 }
 
 @media (prefers-color-scheme: dark) {

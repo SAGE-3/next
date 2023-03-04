@@ -155,19 +155,19 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
         <Editor
           value={code}
           defaultLanguage="python"
-          height={props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150}
+          height={props.editorHeight && props.editorHeight > 100 ? props.editorHeight : 100}
           width={`calc(100% - ${access ? 50 : 0}px)`}
           language={'python'}
           theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
           options={{
             fontSize: fontSize,
-            minimap: { enabled: true },
-            lineNumbers: 'off',
+            minimap: { enabled: false },
+            lineNumbers: 'on',
             automaticLayout: true,
             quickSuggestions: false,
             scrollBeyondLastLine: false,
             lineDecorationsWidth: 0,
-            lineNumbersMinChars: 0,
+            lineNumbersMinChars: 3,
             glyphMargin: false,
             readOnlyMessage: 'You do not have access to this kernel',
             readOnly: !access,

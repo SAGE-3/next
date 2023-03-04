@@ -76,7 +76,8 @@ export function HelpModal(props: HelpProps) {
               You can drop a .py script onto the board to create a SAGECell, or just start typing. Edit the code to fit your needs, and then
               run it using the <b>play button</b> or <Kbd>Shift</Kbd> + <Kbd>Enter</Kbd>. If you change your mind or want to stop the
               process, simply press the <b>stop button</b>. If the code is running and there is an error, the code will stop and the error
-              will be displayed in the <b>output box</b>. If you want to clear the code editor, press the <b>clear button</b>.
+              will be displayed in the <b>output box</b>. If you want to clear the code editor, press the <b>clear button</b>. We recently
+              added split-pane support, so you can now view adjust how much of the screen is dedicated to the code editor and output box.
             </Text>
             <Text mt={2}>Let's work together to create something amazing!</Text>
             <Text fontSize="md" color="gray.500" mt={2}>
