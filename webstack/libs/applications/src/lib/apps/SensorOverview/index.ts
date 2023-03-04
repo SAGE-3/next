@@ -15,11 +15,13 @@ import { z } from 'zod';
 
 export const schema = z.object({
   sensorData: z.any(),
+  stationName: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   sensorData: {},
+  stationName: '016HI',
 };
 
 export const name = 'SensorOverview';

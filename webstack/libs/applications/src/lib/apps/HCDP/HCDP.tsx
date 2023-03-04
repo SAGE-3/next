@@ -67,20 +67,6 @@ const convertToFahrenheit = (tempInCelcius: number) => {
 const maxZoom = 18;
 const minZoom = 1;
 
-type SensorTypes = {
-  lat: number;
-  lon: number;
-  name: string;
-  temperatureC: number;
-  temperatureF: number;
-
-  soilMoisture: number;
-  relativeHumidity: number;
-  windSpeed: number;
-  solarRadiation: number;
-  windDirection: number;
-};
-
 // HCDP app
 function AppComponent(props: App): JSX.Element {
   // State and Store
@@ -266,7 +252,7 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const createOverview = () => {
+  const createOverview = (stationName: string) => {
     const appPos = { x: props.data.position.x + props.data.size.width, y: props.data.position.y, z: 0 };
     createApp({
       title: '',
@@ -276,7 +262,7 @@ function AppComponent(props: App): JSX.Element {
       size: { width: 1000, height: 1000, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'SensorOverview',
-      state: {},
+      state: { stationName: stationName },
       raised: true,
     });
   };
@@ -405,7 +391,14 @@ function AppComponent(props: App): JSX.Element {
                         <Text fontSize={'30px'} fontWeight="bold">
                           Station: {data.name}
                         </Text>
-                        <Button onClick={() => createOverview()} color="gray.700" colorScheme="blue" w={'50'} h={'20'} fontSize={'4xl'}>
+                        <Button
+                          onClick={() => createOverview(data.name)}
+                          color="gray.700"
+                          colorScheme="blue"
+                          w={'50'}
+                          h={'20'}
+                          fontSize={'4xl'}
+                        >
                           Overview
                         </Button>
                         <Button
@@ -450,17 +443,15 @@ function AppComponent(props: App): JSX.Element {
                         transform={
                           s.zoom <= 11
                             ? `rotate(${data['windDirection']},100,100)`
-                            : `translate(100, 100) scale(${(30 / s.zoom) * 4 - 9}) translate(-100, -100) rotate(${
-                                data['windDirection']
-                              },100,100)`
+                            : `translate(100, 100) scale(1.5) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`
                         }
                       >
-                        <Arrow degree={data['windDirection']} />
+                        <Arrow degree={data['windDirection'] + 180} />
 
                         {/* <polygon points="80,130 100,60 120,130 100,125" fill="black" /> */}
                       </g>
                     )}
-                    <g transform={`translate(100, 100) scale(${(30 / s.zoom) * 4 - 8}) translate(-100, -100)`}>
+                    <g transform={`translate(100, 100) scale(1.5) translate(-100, -100)`}>
                       <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
 
                       <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
@@ -470,7 +461,7 @@ function AppComponent(props: App): JSX.Element {
                   </svg>
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    <g transform={`translate(100, 100) scale(${(30 / s.zoom) * 4 - 8}) translate(-100, -100)`}>
+                    <g transform={`translate(100, 100) scale(1.5) translate(-100, -100)`}>
                       <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
                       <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
                         {data[s.variableToDisplay]}
@@ -499,8 +490,8 @@ function Arrow({ degree }: { degree: number }) {
 
     // Calculate the x and y displacement based on the degree
     const radian = (degree * Math.PI) / 180;
-    const x = Math.cos(radian) * distance;
-    const y = Math.sin(radian) * distance;
+    const x = -Math.cos(radian) * distance;
+    const y = -Math.sin(radian) * distance;
 
     // Calculate the rotation angle based on the degree
     const angle = degree - 90;
@@ -669,6 +660,20 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 export default { AppComponent, ToolbarComponent };
+
+type SensorTypes = {
+  lat: number;
+  lon: number;
+  name: string;
+  temperatureC: number;
+  temperatureF: number;
+
+  soilMoisture: number;
+  relativeHumidity: number;
+  windSpeed: number;
+  solarRadiation: number;
+  windDirection: number;
+};
 
 // For now, this is hard-coded. Will change when HCDP is ready.
 const stationData: SensorTypes[] = [
