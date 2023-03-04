@@ -13,7 +13,7 @@
 /******** Light Theme ********/
 @media (prefers-color-scheme: light) {
   table {
-    border: 1px solid #000;
+    border: 1px solid #212121;
     border-collapse: collapse;
     border-spacing: 0;
     color: black;
@@ -49,13 +49,13 @@
     background: rgba(66, 165, 245, 0.2);
   }
   tbody tr:last-of-type {
-    border-bottom: 3px solid #009879;
+    border-bottom: 4px solid #212121;
   }
 }
 /********* Dark Mode *********/
 @media (prefers-color-scheme: dark) {
   table {
-    border: 1px solid #fff;
+    border: 1px solid #cecece;
     border-collapse: collapse;
     border-spacing: 0;
     color: #ccc;
@@ -101,6 +101,6 @@
   }
 
   tbody tr:last-of-type {
-    border-bottom: 3px solid #009879;
+    border-bottom: 3px solid #cecece;
   }
 }

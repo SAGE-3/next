@@ -209,15 +209,15 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
    */
   useEffect(() => {
     const requestId = p.request_id;
-    console.log('request_id', requestId);
+    // console.log('request_id', requestId);
     if (p.execute_result) {
-      p.execute_result && console.log('execute_result', p.execute_result);
+      // p.execute_result && console.log('execute_result', p.execute_result);
       setMsgType('execute_result');
       setData(p.execute_result.data);
       setExecutionCount(p.execute_result.execution_count);
       setMetadata(p.execute_result.metadata);
     } else if (p.display_data) {
-      p.display_data && console.log('display_data', p.display_data);
+      // p.display_data && console.log('display_data', p.display_data);
       setMsgType('display_data');
       setData(p.display_data.data);
       setMetadata(p.display_data.metadata);
@@ -263,7 +263,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       lineHeight="1.5em"
     >
       {!executionCount ? null : (
-        <Text color="red" fontSize="16px">
+        <Text color="red" fontSize="16px" py={0}>
           {`Out[${executionCount}]`}
         </Text>
       )}
@@ -279,30 +279,17 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
             const value = data[key];
             const ww = metadata && metadata[key] && metadata[key].width;
             const hh = metadata && metadata[key] && metadata[key].height;
-            console.log('metadata', metadata);
-            console.log('key', key);
+            // console.log('metadata', metadata);
+            // console.log('key', key);
             switch (key) {
               case 'text/html':
                 if (!data[key]) return null; // hides other outputs if html is present
-                // clean the html to make sure it doesn't have iframes or scripts or http:// links, etc.
-                // #TODO need to add a sanitizeHtml function to the backend
-                // const clean = sanitizeHtml(value, {
-                //   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-                //   allowedAttributes: {
-                //     ...sanitizeHtml.defaults.allowedAttributes,
-                //     img: ['src'],
-                //   },
-                //   allowedSchemes: ['data', 'http', 'https'],
-                //   allowedSchemesByTag: {},
-                //   allowedSchemesAppliedToAttributes: ['href', 'src', 'cite'],
-                //   allowProtocolRelative: true,
-                // });
                 let clean = value;
                 clean.includes('iframe') && console.log('iframe detected');
                 clean.includes('script') && console.log('script detected');
                 clean.includes('http://') && console.log('http:// detected');
                 clean.includes('https://') && console.log('https:// detected');
-                clean.includes('iframe') && (clean = clean.replace(/iframe/g, ''));
+                // clean.includes('iframe') && (clean = clean.replace(/iframe/g, ''));
                 clean.includes('script') && (clean = clean.replace(/script/g, ''));
                 clean.includes('http://') && (clean = clean.replace(/http:\/\//g, 'https://'));
                 clean.includes('&lt;') && (clean = clean.replace(/&lt;/g, '<'));
@@ -310,6 +297,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
                 clean.includes('&amp;') && (clean = clean.replace(/&amp;/g, '&'));
                 clean.includes('&quot;') && (clean = clean.replace(/&quot;/g, '"'));
                 clean.includes('&apos;') && (clean = clean.replace(/&apos;/g, "'"));
+                clean.includes('allowfullscreen') && (clean = clean.replace(/allowfullscreen/g, ''));
                 return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
               case 'text/plain':
                 if (data['text/html']) return null;
