@@ -271,49 +271,6 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { variableToDisplay: variableName });
   };
 
-  useEffect(() => {
-    const arrowGroup = arrowRef.current;
-    if (arrowGroup === null) return;
-
-    const duration = 2; // in seconds
-    const distance = 200; // in pixels
-
-    // Calculate the x and y displacement based on the degree
-    const radian = (30 * Math.PI) / 180;
-    const x = Math.cos(radian) * distance;
-    const y = Math.sin(radian) * distance;
-
-    // Calculate the rotation angle based on the degree
-    const angle = 30 - 45;
-
-    // Apply the animation to the arrow group
-    arrowGroup.style.transformOrigin = '0 0';
-    arrowGroup.style.animation = `moveArrow ${duration}s linear infinite`;
-
-    // Define the keyframes for the animation
-    const keyframes = `
-      0% {
-        transform: rotate(0deg) translate(0, 0);
-      }
-      100% {
-        transform: rotate(360deg) translate(${x}px, ${y}px) rotate(${angle}deg);
-      }
-    `;
-
-    // Create a style element and append the keyframes to it
-    const style = document.createElement('style');
-    style.innerHTML = `@keyframes moveArrow { ${keyframes} }`;
-
-    // Append the style element to the document head
-    document.head.appendChild(style);
-
-    return () => {
-      // Remove the animation and style element when the component unmounts
-      arrowGroup.style.animation = '';
-      document.head.removeChild(style);
-    };
-  }, []);
-
   return (
     <LeafletWrapper {...props}>
       <Box
@@ -440,11 +397,7 @@ function AppComponent(props: App): JSX.Element {
                       <g
                         ref={arrowRef}
                         fill="white"
-                        transform={
-                          s.zoom <= 11
-                            ? `rotate(${data['windDirection']},100,100)`
-                            : `translate(100, 100) scale(1.5) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`
-                        }
+                        transform={`translate(100, 100) scale(1.5) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`}
                       >
                         <Arrow degree={data['windDirection'] + 180} />
 
@@ -490,7 +443,7 @@ function Arrow({ degree }: { degree: number }) {
 
     // Calculate the x and y displacement based on the degree
     const radian = (degree * Math.PI) / 180;
-    const x = -Math.cos(radian) * distance;
+    const x = -Math.cos(radian) * distance - 20;
     const y = -Math.sin(radian) * distance;
 
     // Calculate the rotation angle based on the degree
@@ -499,7 +452,7 @@ function Arrow({ degree }: { degree: number }) {
     // Apply the animation to the arrow group
     // arrowGroup.style.transformOrigin = '0 0';
     arrowGroup.style.animation = `moveArrow ${duration}s linear infinite`;
-    arrowGroup.style.transformOrigin = '50% 50%';
+    arrowGroup.style.transformOrigin = 'center';
 
     // Define the keyframes for the animation
     const keyframes = `
