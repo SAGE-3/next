@@ -324,8 +324,20 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
               const hh = metadata && metadata[key] && metadata[key].height;
               switch (key) {
                 case 'text/html':
-                  // return <Preview key={i} code={value} />;
-                  if (data['application/vnd.plotly.v1+json']) return null;
+                  if (!data[key]) return null; // hides other outputs if html is present
+                  // clean the html to make sure it doesn't have iframes or scripts or http:// links, etc.
+                  // #TODO need to add a sanitizeHtml function to the backend maybe
+                  // const clean = sanitizeHtml(value, {
+                  //   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+                  //   allowedAttributes: {
+                  //     ...sanitizeHtml.defaults.allowedAttributes,
+                  //     img: ['src'],
+                  //   },
+                  //   allowedSchemes: ['data', 'http', 'https'],
+                  //   allowedSchemesByTag: {},
+                  //   allowedSchemesAppliedToAttributes: ['href', 'src', 'cite'],
+                  //   allowProtocolRelative: true,
+                  // });
                   return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
                 case 'text/plain':
                   if (data['text/html']) return null;

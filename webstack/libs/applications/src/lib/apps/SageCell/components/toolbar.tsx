@@ -63,17 +63,29 @@ export function ToolbarComponent(props: App): JSX.Element {
    * @memberof ToolbarComponent
    */
   function setStates() {
+    // get all the kernels in the wild
     const kernels = s.availableKernels;
     const b = kernels.filter((el) => el.value.board === boardId);
+    // if there are no kernels for the board, or at all, reset the local state
     if (!kernels || kernels.length === 0 || b.length === 0) {
+      // reset the local state
       setSelected('');
       setOwnerId('');
       setOwnerName('');
+      // make it public by default
       setIsPrivate(false);
+      // empty the user's list of kernels
+      setMyKernels([]);
+      // reset the title of the app
       update(props._id, { title: 'Seer> ' });
+      // clear the global selected kernel state
+      updateState(props._id, { kernel: '' }); // this could be a problem since it is a global state
+      // get the kernels for this board
       return;
     }
     if (b.length > 0) {
+      // if there are kernels for this board then
+      // get the public kernels and the kernels owned by the user
       const publicKernels = b.filter((el) => !el.value.is_private);
       const privateKernels = b.filter((el) => el.value.is_private);
       const ownedKernels = privateKernels.filter((el) => el.value.owner_uuid === user?._id);
@@ -121,6 +133,8 @@ export function ToolbarComponent(props: App): JSX.Element {
    * This happens when the global state changes
    */
   useEffect(() => {
+    // rebuild the state to reflect any changes affected
+    // by the global state change
     setStates();
   }, [s.kernel, JSON.stringify(s.availableKernels)]);
 
@@ -139,6 +153,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       } else {
         update(props._id, { title: 'Seer> ' });
         updateState(props._id, { kernel: '' });
+        // maybe trigger the setStates() function here ?
       }
     }
   }
@@ -211,16 +226,16 @@ export function ToolbarComponent(props: App): JSX.Element {
               isPrivate && user && user._id !== ownerId ? true : false
             }
           >
-            {myKernels.map((el) => (
-              <option value={el.key} key={el.key}>
-                {el.value.kernel_alias} (
-                {
-                  // show kernel name as Python, R, or Julia
-                  el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'
-                }
-                )
-              </option>
-            ))}
+            {
+              //filter only Python kernels at this time
+              myKernels
+                .filter((el) => el.value.kernel_name === 'python3')
+                .map((el) => (
+                  <option value={el.key} key={el.key}>
+                    {el.value.kernel_alias} ({el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'})
+                  </option>
+                ))
+            }
           </Select>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
