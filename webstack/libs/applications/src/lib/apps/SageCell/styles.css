@@ -102,21 +102,21 @@ tbody tr:hover {
 .arrow-top {
   -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border: solid teal;
-  border-width: 3px 0 0 3px;
-  margin: 0 0 -5px calc(50% - 5px);
+  border-width: 2px 0 0 2px;
+  margin: 0 0 0 calc(50% - 4px);
 }
 
 .arrow-down {
   -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border: solid teal;
-  border-width: 0 3px 3px 0;
-  margin: -3px 0 0 calc(50% - 5px);
+  border-width: 0 2px 2px 0;
+  margin: 0 0 0 calc(50% - 4px);
 }
 
 @media (prefers-color-scheme: dark) {
