@@ -289,6 +289,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
                 clean.includes('script') && console.log('script detected');
                 clean.includes('http://') && console.log('http:// detected');
                 clean.includes('https://') && console.log('https:// detected');
+                // remove do not remove iframe or the html will not render
                 // clean.includes('iframe') && (clean = clean.replace(/iframe/g, ''));
                 clean.includes('script') && (clean = clean.replace(/script/g, ''));
                 clean.includes('http://') && (clean = clean.replace(/http:\/\//g, 'https://'));
