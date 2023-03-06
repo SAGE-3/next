@@ -196,7 +196,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
 
   return (
     <>
-      <HStack mr={2}>
+      <HStack pr={2}>
         <Editor
           value={code}
           defaultLanguage="python"
