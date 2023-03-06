@@ -1,0 +1,85 @@
+
+<!-- Code For Sky Clear -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+</svg>
+
+
+<!-- Code For few clouds -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+  <line x1="100" x2="100" y1="65" y2="135" stroke="black" stroke-width="6"/>
+</svg>
+
+<!-- Code For Sky 25% clouds -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+    </svg>
+
+
+<!-- Code For Sky 50% clouds -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+  <g transform="rotate(90, 100, 100)">
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+<g/>
+</svg>
+
+<!-- Code For Sky 75% clouds -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+  <g transform="rotate(90, 100, 100)">
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+<g/>
+  <g transform="rotate(90, 100, 100)">
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+<g/>
+
+</svg>
+
+<!-- Code For Sky 100% clouds -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+  <g transform="rotate(90, 100, 100)">
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+<g/>
+  <g transform="rotate(90, 100, 100)">
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+<g/>
+  <g transform="rotate(90, 100, 100)">
+  <path d="M 100,60 A 40,50 0 0 1 140,100 L 100,100 Z" fill="black" stroke="black" stroke-width="4"/>
+<g/>
+
+</svg>
+
+<!-- Sky Obscured -->
+
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+  <g transform="rotate(45, 100, 100)">
+  <line x1="100" x2="100" y1="65" y2="135" stroke="black" stroke-width="6"/>
+  </g>
+    <g transform="rotate(-45, 100, 100)">
+  <line x1="100" x2="100" y1="65" y2="135" stroke="black" stroke-width="6"/>
+  </g>
+</svg>
+
+<!-- Sky Cover Missing -->
+
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="40" fill="none" stroke="black" stroke-width="4"/>
+  <g transform="rotate(35, 100, 100)">
+  <line x1="100" x2="100" y1="65" y2="102" stroke="black" stroke-width="6"/>
+  </g>
+    <g transform="rotate(-35, 100, 100)">
+  <line x1="100" x2="100" y1="65" y2="102" stroke="black" stroke-width="6"/>
+  </g>
+    <line x1="80" x2="80" y1="70" y2="130" stroke="black" stroke-width="6"/>
+    <line x1="120" x2="120" y1="70" y2="130" stroke="black" stroke-width="6"/>
+
+</svg>
+
