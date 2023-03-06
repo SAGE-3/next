@@ -1,52 +1,39 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, useHexColor, useUser, useUsersStore } from '@sage3/frontend';
-import {
-  Alert,
-  Box,
-  Image,
-  Text,
-  useColorModeValue,
-  Accordion,
-  AccordionItem,
-  AccordionIcon,
-  AccordionButton,
-  AccordionPanel,
-  Icon,
-  Code,
-} from '@chakra-ui/react';
-import { App } from '../../../schema';
-import { state as AppState } from '../index';
-
-import { MdError } from 'react-icons/md';
 import { useEffect, useState } from 'react';
+
+import {
+  Alert, Box, Image, Text, Icon, Code, useColorModeValue,
+  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
+} from '@chakra-ui/react';
+import { MdError } from 'react-icons/md';
 
 // Ansi library
 import Ansi from 'ansi-to-react';
-
+// Markdown library
+import { Markdown } from './markdown';
+// Plotly library
+import Plot from 'react-plotly.js';
+// Vega library
+import { Vega } from 'react-vega';
+// VegaLite library
+import { VegaLite } from 'react-vega';
+// PdfViewer
+import { PdfViewer } from './pdfviewer';
 // sanitize html
 // import DOMPurify from 'dompurify';
 
-// Markdown library
-import { Markdown } from './markdown';
+import { useAppStore, useHexColor, useUser, useUsersStore } from '@sage3/frontend';
 
-// Plotly library
-import Plot from 'react-plotly.js';
+import { App } from '../../../schema';
+import { state as AppState } from '../index';
 
-// Vega library
-import { Vega } from 'react-vega';
-
-// VegaLite library
-import { VegaLite } from 'react-vega';
-
-// PdfViewer
-import { PdfViewer } from './pdfviewer';
 
 interface Result {
   request_id?: string;
@@ -266,95 +253,95 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       {!data
         ? null
         : Object.keys(data).map((key: string, i) => {
-            const value = data[key];
-            const ww = metadata && metadata[key] && metadata[key].width;
-            const hh = metadata && metadata[key] && metadata[key].height;
-            // const clean = DOMPurify.sanitize(value, {
-            //   ALLOWED_TAGS: ['iframe'],
-            //   ADD_ATTR: ['frameborder', 'scrolling'],
-            // });
-            switch (key) {
-              case 'text/html':
-                if (!data[key]) return null; // hides other outputs if html is present
-                // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
-                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-              case 'text/plain':
-                if (data['text/html']) return null;
-                return <Ansi key={i}>{value}</Ansi>;
-              case 'image/png':
-                return <Image key={i} src={`data:image/png;base64,${value}`} width={ww} height={hh} />;
-              case 'image/jpeg':
-                return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={ww} height={hh} />;
-              case 'image/svg+xml':
-                // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
-                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-              case 'text/markdown':
-                // return <Markdown key={i} data={clean} openInWebview={openInWebview} />;
-                return <Markdown key={i} data={value} openInWebview={openInWebview} />;
-              case 'application/vnd.vegalite.v4+json':
-                return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vegalite.v3+json':
-                return <VegaLite spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vegalite.v2+json':
-                return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vega.v5+json':
-                return <Vega spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vega.v4+json':
-                return <Vega spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vega.v3+json':
-                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vega.v2+json':
-                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vega.v1+json':
-                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.plotly.v1+json':
-                // openInPlotly(value);
-                const config = value.config || {};
-                const layout = value.layout || {};
-                config.displaylogo = false;
-                config.displayModeBar = false;
-                config.scrollZoom = true;
-                layout.dragmode = 'pan';
-                layout.hovermode = 'closest';
-                layout.margin = { l: 0, r: 0, b: 0, t: 0, pad: 0 };
-                layout.font = { size: s.fontSize };
-                layout.hoverlabel = {
-                  font: { size: s.fontSize },
-                  bgcolor: '#ffffff',
-                  bordercolor: '#000000',
-                  fontFamily: 'sans-serif',
-                };
-                layout.width = 'auto';
-                layout.height = 'auto';
-                return <Plot key={i} data={value.data} layout={layout} config={config} />;
-              case 'application/pdf':
-                return <PdfViewer data={value} />;
-              case 'application/json':
-                return <pre>{JSON.stringify(value, null, 2)}</pre>;
-              // case 'application/javascript':
-              //   return <pre>{JSON.stringify(value, null, 2)}</pre>;
-              default:
-                return (
-                  <Box>
-                    <Accordion allowToggle>
-                      <AccordionItem>
-                        <AccordionButton>
-                          <Box flex="1" textAlign="left">
-                            <Text color="red" fontSize={s.fontSize}>
-                              Error: {key} is not supported in this version of SAGECell.
-                            </Text>
-                          </Box>
-                          <AccordionIcon />
-                        </AccordionButton>
-                        <AccordionPanel pb={4}>
-                          <pre>{JSON.stringify(value, null, 2)}</pre>
-                        </AccordionPanel>
-                      </AccordionItem>
-                    </Accordion>
-                  </Box>
-                );
-            }
-          })}
+          const value = data[key];
+          const ww = metadata && metadata[key] && metadata[key].width;
+          const hh = metadata && metadata[key] && metadata[key].height;
+          // const clean = DOMPurify.sanitize(value, {
+          //   ALLOWED_TAGS: ['iframe'],
+          //   ADD_ATTR: ['frameborder', 'scrolling'],
+          // });
+          switch (key) {
+            case 'text/html':
+              if (!data[key]) return null; // hides other outputs if html is present
+              // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
+              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+            case 'text/plain':
+              if (data['text/html']) return null;
+              return <Ansi key={i}>{value}</Ansi>;
+            case 'image/png':
+              return <Image key={i} src={`data:image/png;base64,${value}`} width={ww} height={hh} />;
+            case 'image/jpeg':
+              return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={ww} height={hh} />;
+            case 'image/svg+xml':
+              // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
+              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+            case 'text/markdown':
+              // return <Markdown key={i} data={clean} openInWebview={openInWebview} />;
+              return <Markdown key={i} data={value} openInWebview={openInWebview} />;
+            case 'application/vnd.vegalite.v4+json':
+              return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vegalite.v3+json':
+              return <VegaLite spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vegalite.v2+json':
+              return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vega.v5+json':
+              return <Vega spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vega.v4+json':
+              return <Vega spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vega.v3+json':
+              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vega.v2+json':
+              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vega.v1+json':
+              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.plotly.v1+json':
+              // openInPlotly(value);
+              const config = value.config || {};
+              const layout = value.layout || {};
+              config.displaylogo = false;
+              config.displayModeBar = false;
+              config.scrollZoom = true;
+              layout.dragmode = 'pan';
+              layout.hovermode = 'closest';
+              layout.margin = { l: 0, r: 0, b: 0, t: 0, pad: 0 };
+              layout.font = { size: s.fontSize };
+              layout.hoverlabel = {
+                font: { size: s.fontSize },
+                bgcolor: '#ffffff',
+                bordercolor: '#000000',
+                fontFamily: 'sans-serif',
+              };
+              layout.width = 'auto';
+              layout.height = 'auto';
+              return <Plot key={i} data={value.data} layout={layout} config={config} />;
+            case 'application/pdf':
+              return <PdfViewer data={value} />;
+            case 'application/json':
+              return <pre>{JSON.stringify(value, null, 2)}</pre>;
+            // case 'application/javascript':
+            //   return <pre>{JSON.stringify(value, null, 2)}</pre>;
+            default:
+              return (
+                <Box>
+                  <Accordion allowToggle>
+                    <AccordionItem>
+                      <AccordionButton>
+                        <Box flex="1" textAlign="left">
+                          <Text color="red" fontSize={s.fontSize}>
+                            Error: {key} is not supported in this version of SAGECell.
+                          </Text>
+                        </Box>
+                        <AccordionIcon />
+                      </AccordionButton>
+                      <AccordionPanel pb={4}>
+                        <pre>{JSON.stringify(value, null, 2)}</pre>
+                      </AccordionPanel>
+                    </AccordionItem>
+                  </Accordion>
+                </Box>
+              );
+          }
+        })}
       {!error ? null : (
         <>
           <Alert status="error">

@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import './styles.css';
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Divider, Badge, Spacer, Stack } from '@chakra-ui/react';
 
@@ -19,6 +18,8 @@ import { App } from '../../schema';
 import { CodeEditor } from './components/editor';
 import { Outputs } from './components/outputs';
 import { ToolbarComponent } from './components/toolbar';
+
+import './styles.css';
 
 /**
  * SageCell - SAGE3 application

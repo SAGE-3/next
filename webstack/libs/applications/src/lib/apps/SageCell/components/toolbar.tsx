@@ -1,23 +1,20 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { downloadFile, useAppStore, useUser, useUsersStore } from '@sage3/frontend';
-import { Badge, Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
-import { App } from '../../../schema';
-
-import { state as AppState } from '../index';
-
-import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
 import { useEffect, useState } from 'react';
-
+import { Badge, Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
+import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
+import { downloadFile, useAppStore, useUser, useUsersStore } from '@sage3/frontend';
+import { App } from '../../../schema';
+import { state as AppState } from '../index';
 import { HelpModal } from './help';
 
 /**

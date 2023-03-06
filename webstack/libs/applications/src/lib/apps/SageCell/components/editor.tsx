@@ -1,24 +1,21 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, useUser } from '@sage3/frontend';
-import { ButtonGroup, HStack, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
-import { App } from '../../../schema';
-// import { useParams } from 'react-router';
-
-import { state as AppState } from '../index';
-
-import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 import { useEffect, useRef, useState } from 'react';
-
+import { ButtonGroup, HStack, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
+import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
+import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 import { v4 as getUUID } from 'uuid';
 
-import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
+import { useAppStore, useUser } from '@sage3/frontend';
+import { state as AppState } from '../index';
+import { App } from '../../../schema';
+
 
 type CodeEditorProps = {
   app: App;
@@ -130,7 +127,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     }
   }, [s.code]);
 
-  // handle interrupt
+  // Handle interrupt
   const handleInterrupt = () => {
     if (!user) return;
     updateState(props.app._id, {
