@@ -9,6 +9,7 @@
 import { useAppStore, useUser } from '@sage3/frontend';
 import { ButtonGroup, HStack, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
 import { App } from '../../../schema';
+// import { useParams } from 'react-router';
 
 import { state as AppState } from '../index';
 
@@ -46,6 +47,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
   const [access, setAccess] = useState<boolean>(false);
   const [kernel, setKernel] = useState(s.kernel);
+  const roomId = props.app.data.roomId;
   const boardId = props.app.data.boardId;
 
   useEffect(() => {
@@ -89,7 +91,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   }, [s.kernel, editor.current]);
 
   const handleExecute = (kernel: string) => {
-    const code = editor.current?.getValue();
+    let code = editor.current?.getValue();
     if (!kernel) {
       toast({
         title: 'No kernel selected',
@@ -102,6 +104,9 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       return;
     }
     if (code) {
+      if (code.slice(0, 6) === '%%info') {
+        code = `roomId = '${roomId}'\nboardId = '${boardId}'\nkernelId = '${kernel}'`;
+      }
       updateState(props.app._id, {
         code: code,
         output: '',
@@ -149,6 +154,46 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     }
   }, [s.kernel]);
 
+  const options = {
+    fontSize: fontSize,
+    fontFamily: 'monaco, monospace',
+    minimap: { enabled: false },
+    lineNumbers: 'on',
+    automaticLayout: true,
+    quickSuggestions: false,
+    scrollBeyondLastLine: false,
+    lineDecorationsWidth: 0,
+    wordBasedSuggestions: false,
+    lineNumbersMinChars: 3,
+    glyphMargin: false,
+    autoIndent: 'advanced', // 'none' | 'keep' | 'brackets' | 'advanced' | 'full'
+    fixedOverflowWidgets: true,
+    readOnlyMessage: 'You do not have access to this kernel',
+    readOnly: !access,
+    padding: {
+      top: 8,
+      bottom: 5,
+    },
+    renderLineHighlight: 'none', // 'none' | 'gutter' | 'line' | 'all'
+    scrollbar: {
+      useShadows: false,
+      verticalHasArrows: false,
+      horizontalHasArrows: false,
+      // we may need to set this to 'auto' to enable scrollbars
+      // for VR and large screens with no mouse
+      vertical: 'hidden', // 'scroll' | 'hidden' | 'visible' | 'auto'
+      horizontal: 'scroll',
+      verticalScrollbarSize: 0,
+      horizontalScrollbarSize: 10,
+      arrowSize: 30,
+    },
+    find: {
+      addExtraSpaceOnTop: false,
+      seedSearchStringFromSelection: 'always', // default is "always"
+      autoFindInSelection: 'never', // default is "never"
+    },
+  };
+
   return (
     <>
       <HStack mr={2}>
@@ -159,19 +204,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
           width={`calc(100% - ${access ? 50 : 0}px)`}
           language={'python'}
           theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
-          options={{
-            fontSize: fontSize,
-            minimap: { enabled: false },
-            lineNumbers: 'on',
-            automaticLayout: true,
-            quickSuggestions: false,
-            scrollBeyondLastLine: false,
-            lineDecorationsWidth: 0,
-            lineNumbersMinChars: 3,
-            glyphMargin: false,
-            readOnlyMessage: 'You do not have access to this kernel',
-            readOnly: !access,
-          }}
+          options={options}
           onChange={() => setCode(editor.current?.getValue() || '')}
           onMount={handleEditorDidMount}
         />

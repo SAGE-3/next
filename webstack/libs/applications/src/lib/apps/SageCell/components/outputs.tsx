@@ -24,13 +24,14 @@ import {
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 
-// Styling
-import './outputs.styles.css';
 import { MdError } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 
 // Ansi library
 import Ansi from 'ansi-to-react';
+
+// sanitize html
+// import DOMPurify from 'dompurify';
 
 // Markdown library
 import { Markdown } from './markdown';
@@ -250,56 +251,33 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
 
   return (
     <Box
-      // fontFamily="source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace"
-      fontFamily="Consolas, monospace;"
+      // interactive styling
+      className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}
       background={useColorModeValue(`#f4f4f4`, `#1b1b1b`)}
-      padding=".5em"
-      minHeight="container"
-      display="block"
       borderLeft={`0.2em solid ${useHexColor(ownerColor)}`}
       fontSize={s.fontSize + 'px'}
-      whiteSpace="pre-wrap"
-      overflow="auto"
-      lineHeight="1.5em"
     >
       {!executionCount ? null : (
-        <Text color="red" fontSize="16px" py={0}>
-          {`Out[${executionCount}]`}
+        <Text color="red" fontSize={s.fontSize + 'px'}>
+          {`Out[${executionCount}]:`}
         </Text>
       )}
-      {!stream ? null : stream.name === 'stdout' ? (
-        <Ansi>{stream.text}</Ansi>
-      ) : (
-        <Icon name="warning" color="red" /> && <Ansi>{stream.text}</Ansi>
-      )}
-
+      {!stream ? null : <Ansi>{stream.text}</Ansi>}
       {!data
         ? null
         : Object.keys(data).map((key: string, i) => {
             const value = data[key];
             const ww = metadata && metadata[key] && metadata[key].width;
             const hh = metadata && metadata[key] && metadata[key].height;
-            // console.log('metadata', metadata);
-            // console.log('key', key);
+            // const clean = DOMPurify.sanitize(value, {
+            //   ALLOWED_TAGS: ['iframe'],
+            //   ADD_ATTR: ['frameborder', 'scrolling'],
+            // });
             switch (key) {
               case 'text/html':
                 if (!data[key]) return null; // hides other outputs if html is present
-                let clean = value;
-                clean.includes('iframe') && console.log('iframe detected');
-                clean.includes('script') && console.log('script detected');
-                clean.includes('http://') && console.log('http:// detected');
-                clean.includes('https://') && console.log('https:// detected');
-                // remove do not remove iframe or the html will not render
-                // clean.includes('iframe') && (clean = clean.replace(/iframe/g, ''));
-                clean.includes('script') && (clean = clean.replace(/script/g, ''));
-                clean.includes('http://') && (clean = clean.replace(/http:\/\//g, 'https://'));
-                clean.includes('&lt;') && (clean = clean.replace(/&lt;/g, '<'));
-                clean.includes('&gt;') && (clean = clean.replace(/&gt;/g, '>'));
-                clean.includes('&amp;') && (clean = clean.replace(/&amp;/g, '&'));
-                clean.includes('&quot;') && (clean = clean.replace(/&quot;/g, '"'));
-                clean.includes('&apos;') && (clean = clean.replace(/&apos;/g, "'"));
-                clean.includes('allowfullscreen') && (clean = clean.replace(/allowfullscreen/g, ''));
-                return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
+                // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
+                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
               case 'text/plain':
                 if (data['text/html']) return null;
                 return <Ansi key={i}>{value}</Ansi>;
@@ -308,8 +286,10 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
               case 'image/jpeg':
                 return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={ww} height={hh} />;
               case 'image/svg+xml':
+                // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
                 return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
               case 'text/markdown':
+                // return <Markdown key={i} data={clean} openInWebview={openInWebview} />;
                 return <Markdown key={i} data={value} openInWebview={openInWebview} />;
               case 'application/vnd.vegalite.v4+json':
                 return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
@@ -351,8 +331,8 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
                 return <PdfViewer data={value} />;
               case 'application/json':
                 return <pre>{JSON.stringify(value, null, 2)}</pre>;
-              case 'application/javascript':
-                return <pre>{JSON.stringify(value, null, 2)}</pre>;
+              // case 'application/javascript':
+              //   return <pre>{JSON.stringify(value, null, 2)}</pre>;
               default:
                 return (
                   <Box>
@@ -376,7 +356,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
             }
           })}
       {!error ? null : (
-        <Box>
+        <>
           <Alert status="error">
             <Icon as={MdError} />
             <Code
@@ -396,7 +376,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
           {Object(error.traceback).map((line: string) => (
             <Ansi>{line}</Ansi>
           ))}
-        </Box>
+        </>
       )}
     </Box>
   );

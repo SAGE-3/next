@@ -20,8 +20,6 @@ import { CodeEditor } from './components/editor';
 import { Outputs } from './components/outputs';
 import { ToolbarComponent } from './components/toolbar';
 
-const MARGIN = 2;
-
 /**
  * SageCell - SAGE3 application
  *
@@ -117,7 +115,7 @@ const AppComponent = (props: App): JSX.Element => {
     <AppWindow app={props}>
       <>
         {/* Wrap the code cell and output in a container */}
-        <Box h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
+        <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
           <Stack direction="row" bgColor={bgColor} p={1}>
             <Badge variant="outline" colorScheme="blue">
               {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
