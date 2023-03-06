@@ -62,6 +62,7 @@
     "jsonwebtoken": "^8.5.1",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.2",
+    "maplibre-gl": "^2.4.0",
     "markdown-to-jsx": "^7.1.1",
     "mime": "^3.0.0",
     "morgan": "^1.10.0",

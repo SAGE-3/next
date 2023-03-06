@@ -17,6 +17,7 @@ import { name as KernelDashboardName } from './apps/KernelDashboard';
 import { name as KernelsName } from './apps/Kernels';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
+import { name as MapGLName } from './apps/MapGL';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
@@ -31,6 +32,7 @@ import { name as VegaLiteName } from './apps/VegaLite';
 import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
+
 
 import AIPane from './apps/AIPane/AIPane';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
@@ -49,6 +51,7 @@ import KernelDashboard from './apps/KernelDashboard/KernelDashboard';
 import Kernels from './apps/Kernels/Kernels';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
+import MapGL from './apps/MapGL/MapGL';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
@@ -64,6 +67,7 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import React from 'react';
+
 
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
@@ -83,6 +87,7 @@ export const Applications = {
   [KernelsName]: { AppComponent: React.memo(Kernels.AppComponent), ToolbarComponent: Kernels.ToolbarComponent },
   [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent },
   [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent },
+  [MapGLName]: { AppComponent: React.memo(MapGL.AppComponent), ToolbarComponent: MapGL.ToolbarComponent },
   [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent },
   [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent },
@@ -92,14 +97,11 @@ export const Applications = {
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent },
   [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent },
-  [TwilioScreenshareName]: {
-    AppComponent: React.memo(TwilioScreenshare.AppComponent),
-    ToolbarComponent: TwilioScreenshare.ToolbarComponent,
-  },
+  [TwilioScreenshareName]: { AppComponent: React.memo(TwilioScreenshare.AppComponent), ToolbarComponent: TwilioScreenshare.ToolbarComponent },
   [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent },
   [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent },
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';

@@ -17,6 +17,7 @@ import { state as KernelDashboardState, name as KernelDashboardName } from './ap
 import { state as KernelsState, name as KernelsName } from './apps/Kernels';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
+import { state as MapGLState, name as MapGLName } from './apps/MapGL';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
@@ -31,6 +32,7 @@ import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
+
 
 export type AppState =
   | {}
@@ -51,6 +53,7 @@ export type AppState =
   | KernelsState
   | LeafLetState
   | LinkerState
+  | MapGLState
   | NotepadState
   | PDFResultState
   | PDFViewerState
@@ -66,35 +69,5 @@ export type AppState =
   | VideoViewerState
   | WebviewState;
 
-export type AppName =
-  | typeof AIPaneName
-  | typeof CSVViewerName
-  | typeof ChartGeneratorName
-  | typeof ChartMakerName
-  | typeof ClockName
-  | typeof CobrowseName
-  | typeof CounterName
-  | typeof DataTableName
-  | typeof DeepZoomImageName
-  | typeof GLTFViewerName
-  | typeof HCDPName
-  | typeof ImageViewerName
-  | typeof JupyterLabName
-  | typeof KernelDashboardName
-  | typeof KernelsName
-  | typeof LeafLetName
-  | typeof LinkerName
-  | typeof NotepadName
-  | typeof PDFResultName
-  | typeof PDFViewerName
-  | typeof PluginAppName
-  | typeof RTCChatName
-  | typeof SageCellName
-  | typeof SeerName
-  | typeof SensorOverviewName
-  | typeof StickieName
-  | typeof TwilioScreenshareName
-  | typeof VegaLiteName
-  | typeof VegaLiteViewerName
-  | typeof VideoViewerName
-  | typeof WebviewName;
+
+export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
