@@ -37,7 +37,7 @@
 .sc canvas,
 .sc svg {
   display: block;
-  max-width: 100%;
+  max-width: 95%;
 }
 .sc input,
 .sc button,
