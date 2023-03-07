@@ -79,7 +79,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
 
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
   const [data, setData] = useState<any>();
-  const [metadata, setMetadata] = useState<any>({});
+  // const [metadata, setMetadata] = useState<any>({});
   const [executionCount, setExecutionCount] = useState<number>();
   const [error, setError] = useState<any>();
   const [stream, setStream] = useState<Result['stream']>();
@@ -113,10 +113,10 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
     if (p.execute_result) {
       setData(p.execute_result.data);
       setExecutionCount(p.execute_result.execution_count);
-      setMetadata(p.execute_result.metadata);
+      // setMetadata(p.execute_result.metadata);
     } else if (p.display_data) {
       setData(p.display_data.data);
-      setMetadata(p.display_data.metadata);
+      // setMetadata(p.display_data.metadata);
     } else if (p.stream) {
       let incoming = p.stream.text;
       if (requestId === msgId && stream && stream.text !== p.stream.text) {
