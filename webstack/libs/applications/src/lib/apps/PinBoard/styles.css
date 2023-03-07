@@ -6,49 +6,23 @@
  *
  */
 
-.message-container {
-  position: absolute;
-  left: 2rem;
-  top: 3rem;
-}
-
-.status-container {
-  position: absolute;
-  right: 2rem;
-  top: 2.5rem;
-}
-
-.output-container {
-  position: absolute;
-  bottom: 15%;
-  left: 1rem;
-  display: flex;
-  margin: 1rem;
-  padding: 1rem;
-}
-
-.popover-close {
-  position: relative;
-  float: right;
-}
-
 html {
   height: 100%;
   width: 100%;
 }
 
-body {
-  background-image: linear-gradient(
-    to bottom,
-    rgb(242, 248, 254) 70%,
-    rgb(224, 230, 243)
-  );
-  font-family: 'Rubik', Helvetica, Arial, sans-serif;
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
+/*body {*/
+/*  background-image: linear-gradient(*/
+/*    to bottom,*/
+/*    rgb(242, 248, 254) 70%,*/
+/*    rgb(224, 230, 243)*/
+/*  );*/
+/*  font-family: 'Rubik', Helvetica, Arial, sans-serif;*/
+/*  height: 100%;*/
+/*  width: 100%;*/
+/*  margin: 0;*/
+/*  padding: 0;*/
+/*}*/
 
 h1 {
   font-size: 1.5rem;
@@ -64,52 +38,9 @@ h1 {
   max-width: 36rem;
 }
 
-.ColumnContainer {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #9a9fa6;
-  padding: 0;
-  min-height: 18.75rem;
-  width: 14rem;
-}
-
-.TaskListContainer {
-  padding: 0;
-  background-color: #fff;
-  box-shadow: 3px 5px 5px rgba(0, 0, 0, 0.25);
-  flex-grow: 1;
-  transition: background-color 0.2s;
-}
-
-.TaskListContainer.isDraggingOver {
-  background-color: rgb(211, 229, 250);
-}
-
-.TaskContainer {
-  display: flex;
-  background-color: #fff;
-  border: none;
-  padding: 1rem;
-  font-size: 0.875rem;
-  transition: background-color 0.1s, color 0.1s;
-}
-.TaskContainer:hover {
-  background-color: rgb(66, 145, 233);
-  color: #fff;
-  border-color: #fff;
-}
-.TaskContainer:last-of-type {
-  margin-bottom: 0;
-}
-.TaskContainer.isDragging {
-  border: 1px solid #7b828a;
-}
-
-.TaskHandle {
-  width: 2px;
-  height: 18px;
-  border-left: 2px dotted #7b828a;
-  border-right: 2px dotted #7b828a;
-  border-color: inherit;
-  margin-right: 8px;
+div.drag-line {
+  width: 100%;
+  height: 5px;
+  background-color: green;
+  margin: 5px;
 }

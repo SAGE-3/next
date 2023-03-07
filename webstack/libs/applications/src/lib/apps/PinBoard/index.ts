@@ -9,7 +9,7 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  hostedApps: z.record(z.string(), z.string()),
+  pinnedApps: z.record(z.string(), z.string()),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -19,7 +19,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
-  hostedApps: {},
+  pinnedApps: {},
 };
 
 export const name = 'PinBoard';

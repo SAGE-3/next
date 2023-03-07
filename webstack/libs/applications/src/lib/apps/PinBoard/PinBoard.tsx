@@ -8,21 +8,6 @@
 
 import {
   Box,
-  Button, ButtonGroup,
-  CloseButton,
-  Icon,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverTrigger,
-  Portal,
-  Tooltip,
-  VisuallyHidden,
 } from '@chakra-ui/react';
 
 
@@ -36,123 +21,134 @@ import './styles.css';
 
 import {useEffect, useState, useRef} from 'react';
 
-import {v4 as getUUID} from 'uuid';
-import {Position, Size} from "@sage3/shared/types";
 
-function AppComponent(props: App): JSX.Element {
-  // App Store
+type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
+
+interface DraggableListProps {
+  data: any[],
+  renderItemContent: (item: any) => JSX.Element;
+}
+
+
+function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   const s = props.data.state as AppState;
-  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
+
   const boardApps = useAppStore((state) => state.apps);
 
+  const [localPinnedApps, setLocalPinnedApps] = useState<Record<string, string>>({});
 
-  // UI Store
-  const selectedAppId = useUIStore((state) => state.selectedAppId);
-  const selApp = boardApps.find((el) => el._id === selectedAppId);
-
-
-  /**
-   * Keeps track of AI Pane previous position, necessary to move hosted apps with pane
-   */
-  const prevX = useRef(props.data.position.x);
-  const prevY = useRef(props.data.position.y);
-
-  const prevHosted = useRef(s.hostedApps);
-
-  const [localHostedApps, setLocalHostedApps] = useState<Record<string, string>>({});
-  const [centerLine, setCenterLine] = useState(0)
-
-  /**
-   * Set the center line every time the pinboard is readjusted
-   * Snap pinnedApps to centerline
-   *
-   */
   useEffect(() => {
-    const centerX = props.data.size.width / 2
-    setCenterLine(centerX)
+    updateState(props._id, {pinnedApps: localPinnedApps});
+    console.log('Updated pinnedApps: ' + Object.keys(s.pinnedApps))
+  }, [localPinnedApps]);
 
-    for (const app of boardApps) {
-      if (Object.keys(localHostedApps).includes(app._id)) {
-        app.data.position.x = props.data.position.x
-      }
+
+  interface ListItem {
+    item: string;
+    isDragging: boolean;
+  }
+
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+  const [list, setList] = useState<ListItem[]>([
+    {
+      item: 'Item 1',
+      isDragging: false
+    },
+    {
+      item: 'Item 2',
+      isDragging: false
+
+    },
+    {
+      item: 'Item 3',
+      isDragging: false
+
+    },
+    {
+      item: 'Item 4',
+      isDragging: false
+
+    },
+    {
+      item: 'Item 5',
+      isDragging: false
+
     }
-  }, [props.data.size.width, JSON.stringify(localHostedApps)])
+  ]);
 
-
-  /**
-   * Checks for apps on or off the pane
-   * Should work if pane or any hosted apps are moved, resized, or closed out
-   */
-  useEffect(() => {
-    // Check all apps on board
-    for (const app of boardApps) {
-      const client = {[app._id]: app.data.type};
-
-      // Hosted app window should fall within AI Pane window
-      // Ignore apps already being hosted
-      if (
-        app.data.position.x + app.data.size.width < props.data.position.x + props.data.size.width &&
-        app.data.position.x + app.data.size.width > props.data.position.x &&
-        app.data.position.y + app.data.size.height < props.data.position.y + props.data.size.height &&
-        app.data.size.height + app.data.position.y > props.data.position.y &&
-        app.data.type !== 'PinBoard'
-      ) {
-        if (!Object.keys(localHostedApps).includes(app._id)) {
-          setLocalHostedApps(localHostedApps => ({
-            ...localHostedApps,
-            ...client
-          }));
-
-        }
-      } else {
-        // This code is necessary to remove hosted apps and messages once apps are no longer being hosted
-        if (Object.keys(localHostedApps).includes(app._id)) {
-          const hostedCopy = {...localHostedApps};
-          delete hostedCopy[app._id];
-          setLocalHostedApps(hostedCopy)
-        }
-      }
+  const dragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    dragItem.current = position;
+    if (e.target instanceof HTMLDivElement) {
+      console.log(e.target.innerHTML);
     }
-  }, [selApp?.data.position, selApp?.data.size, boardApps, JSON.stringify(localHostedApps)]);
+  };
 
-  useEffect(() => {
-    updateState(props._id, {hostedApps: localHostedApps});
-    console.log('Updated hostedApps: ' + Object.keys(s.hostedApps))
-  }, [JSON.stringify(localHostedApps)]);
+  const dragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    dragOverItem.current = position;
+    if (e.target instanceof HTMLDivElement) {
+      console.log(e.target.innerHTML);
+      const listCopy = [...list]
 
-  /**
-   * Move all apps together with the AIPane
-   * TODO: Track movement in a local state
-   */
-  useEffect(() => {
-    const hostedCopy = {...s.hostedApps};
-    const xDiff = props.data.position.x - prevX.current;
-    const yDiff = props.data.position.y - prevY.current;
+      const listLoopCopy: ListItem[] = []
+      listCopy.forEach(item => {
+        listLoopCopy.push({
+          item: item.item,
+          isDragging: false
+        })
 
-    for (const app of boardApps) {
-      const client = {[app._id]: app.data.type};
-      if (Object.keys(hostedCopy).includes(app._id)) {
-        update(app._id, {
-          position: {
-            x: (app.data.position.x += xDiff),
-            y: (app.data.position.y += yDiff),
-            z: app.data.position.z,
-          },
-        });
-      }
+      })
+
+      listLoopCopy[position].isDragging = true;
+      setList(listLoopCopy)
     }
-    prevX.current = props.data.position.x;
-    prevY.current = props.data.position.y;
-  }, [props.data.position.x, props.data.position.y, JSON.stringify(localHostedApps)]);
+  };
 
+  const drop = (e: React.DragEvent<HTMLDivElement>) => {
+    const copyListItems = [...list];
+    if (dragItem.current !== null && dragOverItem.current !== null) {
+      const dragItemContent = copyListItems[dragItem.current];
+      copyListItems.splice(dragItem.current, 1);
+      copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+      dragItem.current = null;
+      dragOverItem.current = null;
+
+      const listLoopCopy: ListItem[] = []
+      copyListItems.forEach(item => {
+        listLoopCopy.push({
+          item: item.item,
+          isDragging: false
+        })
+      })
+
+      setList(listLoopCopy);
+    }
+  };
 
   return (
     <AppWindow app={props} lockToBackground={true}>
-      <>
-        <Box>
-        </Box>
-      </>
+      <Box>
+        <>
+          {
+            list &&
+            list.map((item, index) => (
+              <>
+                <div style={{backgroundColor: 'lightblue', margin: '10px 10%', textAlign: 'center', fontSize: '40px'}}
+                     onDragStart={(e) => dragStart(e, index)}
+                     onDragEnter={(e) => dragEnter(e, index)}
+                     onDragEnd={drop}
+                     key={index}
+                     draggable>
+                  {item.item}
+                </div>
+                {item.isDragging ? <div className="drag-line"/> : null}
+              </>
+            ))}
+        </>
+      </Box>
     </AppWindow>
   );
 }
@@ -163,8 +159,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
 
   return (
-    <Box>
-    </Box>
+    <>
+    </>
   );
 }
 
