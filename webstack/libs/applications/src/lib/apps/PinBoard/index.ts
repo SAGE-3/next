@@ -6,10 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { z } from 'zod';
+import {z} from 'zod';
+
+interface ListItem {
+  item: string;
+  isDragging: boolean;
+}
+
+const ListItemType = z.array(
+  z.object({
+    item: z.string(),
+    isDragging: z.boolean()
+  })
+);
+
 
 export const schema = z.object({
-  pinnedApps: z.record(z.string(), z.string()),
+  list: ListItemType,
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -18,8 +31,8 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  executeInfo: { executeFunc: '', params: {} },
-  pinnedApps: {},
+  executeInfo: {executeFunc: '', params: {}},
+  list: [],
 };
 
 export const name = 'PinBoard';

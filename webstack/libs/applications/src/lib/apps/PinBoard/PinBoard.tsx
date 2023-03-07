@@ -38,14 +38,6 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
 
   const boardApps = useAppStore((state) => state.apps);
 
-  const [localPinnedApps, setLocalPinnedApps] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    updateState(props._id, {pinnedApps: localPinnedApps});
-    console.log('Updated pinnedApps: ' + Object.keys(s.pinnedApps))
-  }, [localPinnedApps]);
-
-
   interface ListItem {
     item: string;
     isDragging: boolean;
@@ -79,6 +71,10 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
 
     }
   ]);
+
+  useEffect(() => {
+    updateState(props._id, { list: list });
+  }, [list])
 
   const dragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
     dragItem.current = position;
@@ -133,8 +129,8 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
       <Box>
         <>
           {
-            list &&
-            list.map((item, index) => (
+            s.list &&
+            s.list.map((item, index) => (
               <>
                 <div style={{backgroundColor: 'lightblue', margin: '10px 10%', textAlign: 'center', fontSize: '40px'}}
                      onDragStart={(e) => dragStart(e, index)}
