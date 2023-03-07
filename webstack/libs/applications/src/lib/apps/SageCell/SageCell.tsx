@@ -114,76 +114,73 @@ const AppComponent = (props: App): JSX.Element => {
 
   return (
     <AppWindow app={props}>
-      <>
-        {/* Wrap the code cell and output in a container */}
-        <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
-          <Stack direction="row" bgColor={bgColor} p={1}>
-            <Badge variant="outline" colorScheme="blue">
-              {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
+      {/* Wrap the code cell and output in a container */}
+      <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
+        <Stack direction="row" bgColor={bgColor} p={1}>
+          <Badge variant="outline" colorScheme="blue">
+            {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
+          </Badge>
+          <Spacer />
+          {!s.kernel && !access ? ( // no kernel selected and no access
+            <Badge variant="outline" colorScheme="red">
+              Offline{' '}
             </Badge>
-            <Spacer />
-            {!s.kernel && !access ? ( // no kernel selected and no access
-              <Badge variant="outline" colorScheme="red">
-                Offline{' '}
-              </Badge>
-            ) : !s.kernel && access ? ( // no kernel selected but access
-              <Badge variant="outline" colorScheme="yellow">
-                {/* {setAccess(false)} somewhere ?? */}
-                Online{' '}
-              </Badge>
-            ) : s.kernel && !access ? ( // kernel selected but no access
-              <Badge variant="outline" colorScheme="red">
-                No Access{' '}
-              </Badge>
-            ) : s.kernel && access ? ( // kernel selected and access
-              <Badge variant="outline" colorScheme="green">
-                Online{' '}
-              </Badge>
-            ) : null}
-          </Stack>
-          <Box
-            w={'100%'}
-            h={'100%'}
-            bg={access ? bgColor : accessDeniedColor}
-            pointerEvents={access ? 'auto' : 'none'}
-            display="flex"
-            flexDirection="column"
-            flex="1"
-            whiteSpace={'pre-wrap'}
-            overflowWrap="break-word"
-            overflowY="auto"
-          >
-            {/* The code cell */}
-            <Box flex="1" overflow="auto">
-              <CodeEditor app={props} access={access} editorHeight={editorHeight} />
-              <Box
-                h="20px"
-                background={'transparent'}
-                _active={{ bg: 'transparent' }}
-                _hover={{ bg: 'transparent' }}
-                cursor="row-resize"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  document.addEventListener('mousemove', handleMouseMove);
-                  document.addEventListener('mouseup', handleMouseUp);
-                }}
-              >
-                {/* The grab bar */}
-                <Box>
-                  <Box className="arrow-top" />
-                  <Divider borderColor={'teal.600'} _hover={{ bg: 'teal.200' }} />
-                  <Box className="arrow-down" />
-                </Box>
+          ) : !s.kernel && access ? ( // no kernel selected but access
+            <Badge variant="outline" colorScheme="yellow">
+              {/* {setAccess(false)} somewhere ?? */}
+              Online{' '}
+            </Badge>
+          ) : s.kernel && !access ? ( // kernel selected but no access
+            <Badge variant="outline" colorScheme="red">
+              No Access{' '}
+            </Badge>
+          ) : s.kernel && access ? ( // kernel selected and access
+            <Badge variant="outline" colorScheme="green">
+              Online{' '}
+            </Badge>
+          ) : null}
+        </Stack>
+        <Box
+          w={'100%'}
+          h={'100%'}
+          bg={access ? bgColor : accessDeniedColor}
+          pointerEvents={access ? 'auto' : 'none'}
+          display="flex"
+          flexDirection="column"
+          flex="1"
+          whiteSpace={'pre-wrap'}
+          overflowWrap="break-word"
+          overflowY="auto"
+        >
+          {/* The code cell */}
+          <Box flex="1">
+            <CodeEditor app={props} access={access} editorHeight={editorHeight} />
+            <Box
+              h="20px"
+              background={'transparent'}
+              _active={{ bg: 'transparent' }}
+              _hover={{ bg: 'transparent' }}
+              cursor="row-resize"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            >
+              {/* The grab bar */}
+              <Box>
+                <Box className="arrow-top" />
+                <Divider borderColor={'teal.600'} _hover={{ bg: 'teal.200' }} />
+                <Box className="arrow-down" />
               </Box>
-              {/* The output */}
-              <Box flex="1" overflow="auto" id="render-target" style={{ maxHeight: '100vh' }}>
-                {!s.output ? null : <Outputs output={s.output} app={props} />}
-              </Box>
+            </Box>
+            {/* The output */}
+            <Box flex="1" overflow="auto" id="render-target" style={{ maxHeight: '100vh' }}>
+              {!s.output ? null : <Outputs output={s.output} app={props} />}
             </Box>
           </Box>
         </Box>
-        <Box h={'1px'} bg={bgColor}></Box>
-      </>
+      </Box>
     </AppWindow>
   );
 };

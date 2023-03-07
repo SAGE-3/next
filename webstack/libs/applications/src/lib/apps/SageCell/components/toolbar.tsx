@@ -74,7 +74,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       // empty the user's list of kernels
       setMyKernels([]);
       // reset the title of the app
-      update(props._id, { title: 'Seer> ' });
+      update(props._id, { title: 'SAGECell>' });
       // clear the global selected kernel state
       updateState(props._id, { kernel: '' }); // this could be a problem since it is a global state
       // get the kernels for this board
@@ -145,12 +145,11 @@ export function ToolbarComponent(props: App): JSX.Element {
     if (e.target.value !== s.kernel) {
       const name = e.currentTarget.selectedOptions[0].text.split(' ')[0];
       if (name && name !== 'Select Kernel' && name !== 'Private') {
-        update(props._id, { title: `Seer> ${name}` });
+        update(props._id, { title: `SAGECell> ${name}` });
         updateState(props._id, { kernel: e.target.value });
       } else {
-        update(props._id, { title: 'Seer> ' });
+        update(props._id, { title: 'SAGECell>' });
         updateState(props._id, { kernel: '' });
-        // maybe trigger the setStates() function here ?
       }
     }
   }
@@ -166,7 +165,7 @@ export function ToolbarComponent(props: App): JSX.Element {
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     // Make a filename with username and date
-    const filename = 'seer-' + dt + '.py';
+    const filename = 'sagecell-' + dt + '.py';
     // Go for download
     downloadFile(txturl, filename);
   };

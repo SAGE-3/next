@@ -18,7 +18,7 @@ import { App } from '../../../schema';
 
 type CodeEditorProps = {
   app: App;
-  access: boolean; //Does this user have access to the sagecell's selected kernel
+  access: boolean; // Does this user have access to the sagecell's selected kernel
   editorHeight?: number;
 };
 
@@ -202,41 +202,38 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
           onChange={() => setCode(editor.current?.getValue() || '')}
           onMount={handleEditorDidMount}
         />
-        {access ? (
-          <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
-            <Tooltip hasArrow label="Execute" placement="right-start">
-              <IconButton
-                onClick={() => handleExecute(s.kernel)}
-                aria-label={''}
-                icon={
-                  s.executeInfo?.executeFunc === 'execute' ? (
-                    <Spinner size="sm" color="teal.500" />
-                  ) : (
-                    <MdPlayArrow size={'1.5em'} color="#008080" />
-                  )
-                }
-                isDisabled={!s.kernel}
-              />
-            </Tooltip>
-            <Tooltip hasArrow label="Stop" placement="right-start">
-              <IconButton
-                onClick={handleInterrupt}
-                hidden={s.executeInfo?.executeFunc === 'execute' ? false : true}
-                aria-label={''}
-                isDisabled={!s.kernel}
-                icon={<MdStop size={'1.5em'} color="#008080" />}
-              />
-            </Tooltip>
-            <Tooltip hasArrow label="Clear All" placement="right-start">
-              <IconButton
-                onClick={handleClear}
-                aria-label={''}
-                isDisabled={!s.kernel}
-                icon={<MdClearAll size={'1.5em'} color="#008080" />}
-              />
-            </Tooltip>
-          </ButtonGroup>
-        ) : null}
+        <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+          <Tooltip hasArrow label="Execute" placement="right-start">
+            <IconButton
+              onClick={() => handleExecute(s.kernel)}
+              aria-label={''}
+              icon={
+                s.executeInfo?.executeFunc === 'execute' ? (
+                  <Spinner size="sm" color="teal.500" />
+                ) : (
+                  <MdPlayArrow size={'1.5em'} color="#008080" />
+                )
+              }
+              isDisabled={!s.kernel}
+            />
+          </Tooltip>
+          <Tooltip hasArrow label="Stop" placement="right-start">
+            <IconButton
+              onClick={handleInterrupt}
+              aria-label={''}
+              isDisabled={!s.kernel || s.executeInfo?.executeFunc !== 'execute'}
+              icon={<MdStop size={'1.5em'} color="#008080" />}
+            />
+          </Tooltip>
+          <Tooltip hasArrow label="Clear All" placement="right-start">
+            <IconButton
+              onClick={handleClear}
+              aria-label={''}
+              isDisabled={!s.kernel}
+              icon={<MdClearAll size={'1.5em'} color="#008080" />}
+            />
+          </Tooltip>
+        </ButtonGroup>
       </HStack>
     </>
   );
