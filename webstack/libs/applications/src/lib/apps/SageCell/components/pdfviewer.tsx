@@ -6,23 +6,22 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useMemo } from 'react';
+import { useState, memo, useEffect } from 'react';
 import { AspectRatio, Box } from '@chakra-ui/react';
-
-import { Buffer } from 'buffer';
 
 interface PdfViewerProps {
   data: string;
 }
 
-export const PdfViewer = React.memo(({ data }: PdfViewerProps): JSX.Element => {
-  const base64DecodedArray = useMemo(() => {
-    const atob = (str: string) => Buffer.from(str, 'base64').toString('binary');
-    const pdfData: string = atob(data);
-    return Uint8Array.from(pdfData, (c) => c.charCodeAt(0));
-  }, [data]);
+export const PdfViewer = memo(({ data }: PdfViewerProps): JSX.Element => {
+  const [url, setUrl] = useState<string>('');
 
-  const url = useMemo(() => URL.createObjectURL(new Blob([base64DecodedArray], { type: 'application/pdf' })), [base64DecodedArray]);
+  useEffect(() => {
+    // Function to convert base64 to blob, without dependencies
+    const b64toBlob = (base64: string) => fetch(`data:application/pdf;base64,${base64}`).then(res => res.blob())
+    // convert the data we got into a blob that can be displayed in an iframe
+    b64toBlob(data).then(blob => { setUrl(URL.createObjectURL(blob)); });
+  }, [data]);
 
   return (
     <AspectRatio maxW="content" ratio={1}>
