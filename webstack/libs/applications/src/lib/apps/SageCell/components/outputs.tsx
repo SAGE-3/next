@@ -9,8 +9,18 @@
 import { useEffect, useState } from 'react';
 
 import {
-  Alert, Box, Image, Text, Icon, Code, useColorModeValue,
-  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
+  Alert,
+  Box,
+  Image,
+  Text,
+  Icon,
+  Code,
+  useColorModeValue,
+  Accordion,
+  AccordionItem,
+  AccordionIcon,
+  AccordionButton,
+  AccordionPanel,
 } from '@chakra-ui/react';
 import { MdError } from 'react-icons/md';
 
@@ -26,14 +36,11 @@ import { Vega } from 'react-vega';
 import { VegaLite } from 'react-vega';
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
-// sanitize html
-// import DOMPurify from 'dompurify';
 
 import { useAppStore, useHexColor, useUser, useUsersStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
-
 
 interface Result {
   request_id?: string;
@@ -67,17 +74,11 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   if (!props.output) return <></>;
   const s = props.app.data.state as AppState;
   const p = JSON.parse(props.output) as Result;
-  const user = useUser();
-  const roomId = props.app.data.roomId;
-  const boardId = props.app.data.boardId;
   const users = useUsersStore((state: { users: any }) => state.users);
-  const [ownerColor, setOwnerColor] = useState<string>('#000000');
   const createApp = useAppStore((state: { create: any }) => state.create);
-
-  const [msgType, setMsgType] = useState<string>();
+  const [ownerColor, setOwnerColor] = useState<string>('#000000');
   const [data, setData] = useState<any>();
   const [metadata, setMetadata] = useState<any>({});
-  const [transient, setTransient] = useState<any>({}); // transient data
   const [executionCount, setExecutionCount] = useState<number>();
   const [error, setError] = useState<any>();
   const [stream, setStream] = useState<Result['stream']>();
@@ -95,87 +96,6 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       state: {
         webviewurl: url,
         zoom: 1.0,
-      },
-      raised: true,
-    });
-  };
-
-  const openInPlotly = (data: any): void => {
-    createApp({
-      title: `Plotly`,
-      roomId: props.app.data.roomId,
-      boardId: props.app.data.boardId,
-      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
-      size: { width: 600, height: props.app.data.size.height, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'Plotly',
-      state: {
-        data: data,
-        layout: {
-          autosize: true,
-          margin: {
-            l: 50,
-            r: 50,
-            b: 50,
-            t: 50,
-            pad: 4,
-          },
-          paper_bgcolor: 'rgba(0,0,0,0)',
-          plot_bgcolor: 'rgba(0,0,0,0)',
-          font: {
-            color: 'white',
-            family: 'Roboto, sans-serif',
-            size: 12,
-          },
-          xaxis: {
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: true,
-            ticks: 'outside',
-            tickcolor: 'white',
-            tickfont: {
-              family: 'Roboto, sans-serif',
-              size: 12,
-              color: 'white',
-            },
-          },
-          yaxis: {
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: true,
-            ticks: 'outside',
-            tickcolor: 'white',
-            tickfont: {
-              family: 'Roboto, sans-serif',
-              size: 12,
-              color: 'white',
-            },
-          },
-        },
-        config: {
-          responsive: true,
-          displaylogo: false,
-        },
-      },
-      raised: true,
-    });
-  };
-
-  // Creates a new VegaLiteViewer app with aceeditor text
-  const openInVega = (spec: any) => {
-    if (!user) return;
-    createApp({
-      title: '',
-      roomId: props.app.data.roomId,
-      boardId: props.app.data.boardId,
-      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
-      size: { width: props.app.data.size.width, height: props.app.data.size.height, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'VegaLiteViewer',
-      state: {
-        spec: spec,
       },
       raised: true,
     });
@@ -200,25 +120,20 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
     // console.log('request_id', requestId);
     if (p.execute_result) {
       // p.execute_result && console.log('execute_result', p.execute_result);
-      setMsgType('execute_result');
       setData(p.execute_result.data);
       setExecutionCount(p.execute_result.execution_count);
       setMetadata(p.execute_result.metadata);
     } else if (p.display_data) {
       // p.display_data && console.log('display_data', p.display_data);
-      setMsgType('display_data');
       setData(p.display_data.data);
       setMetadata(p.display_data.metadata);
-      setTransient;
     } else if (p.stream) {
-      setMsgType('stream');
       let incoming = p.stream.text;
       if (requestId === msgId && stream && stream.text !== p.stream.text) {
         incoming = stream.text + incoming;
       }
       setStream({ name: p.stream.name, text: incoming });
     } else if (p.error) {
-      setMsgType('error');
       setError(p.error);
     } else {
       console.log('unknown output', p);
@@ -253,95 +168,86 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       {!data
         ? null
         : Object.keys(data).map((key: string, i) => {
-          const value = data[key];
-          const ww = metadata && metadata[key] && metadata[key].width;
-          const hh = metadata && metadata[key] && metadata[key].height;
-          // const clean = DOMPurify.sanitize(value, {
-          //   ALLOWED_TAGS: ['iframe'],
-          //   ADD_ATTR: ['frameborder', 'scrolling'],
-          // });
-          switch (key) {
-            case 'text/html':
-              if (!data[key]) return null; // hides other outputs if html is present
-              // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
-              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-            case 'text/plain':
-              if (data['text/html']) return null;
-              return <Ansi key={i}>{value}</Ansi>;
-            case 'image/png':
-              return <Image key={i} src={`data:image/png;base64,${value}`} width={ww} height={hh} />;
-            case 'image/jpeg':
-              return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={ww} height={hh} />;
-            case 'image/svg+xml':
-              // return <Box key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
-              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-            case 'text/markdown':
-              // return <Markdown key={i} data={clean} openInWebview={openInWebview} />;
-              return <Markdown key={i} data={value} openInWebview={openInWebview} />;
-            case 'application/vnd.vegalite.v4+json':
-              return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vegalite.v3+json':
-              return <VegaLite spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vegalite.v2+json':
-              return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vega.v5+json':
-              return <Vega spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vega.v4+json':
-              return <Vega spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vega.v3+json':
-              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vega.v2+json':
-              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vega.v1+json':
-              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.plotly.v1+json':
-              // openInPlotly(value);
-              const config = value.config || {};
-              const layout = value.layout || {};
-              config.displaylogo = false;
-              config.displayModeBar = false;
-              config.scrollZoom = true;
-              layout.dragmode = 'pan';
-              layout.hovermode = 'closest';
-              layout.margin = { l: 0, r: 0, b: 0, t: 0, pad: 0 };
-              layout.font = { size: s.fontSize };
-              layout.hoverlabel = {
-                font: { size: s.fontSize },
-                bgcolor: '#ffffff',
-                bordercolor: '#000000',
-                fontFamily: 'sans-serif',
-              };
-              layout.width = 'auto';
-              layout.height = 'auto';
-              return <Plot key={i} data={value.data} layout={layout} config={config} />;
-            case 'application/pdf':
-              return <PdfViewer data={value} />;
-            case 'application/json':
-              return <pre>{JSON.stringify(value, null, 2)}</pre>;
-            // case 'application/javascript':
-            //   return <pre>{JSON.stringify(value, null, 2)}</pre>;
-            default:
-              return (
-                <Box>
-                  <Accordion allowToggle>
-                    <AccordionItem>
-                      <AccordionButton>
-                        <Box flex="1" textAlign="left">
-                          <Text color="red" fontSize={s.fontSize}>
-                            Error: {key} is not supported in this version of SAGECell.
-                          </Text>
-                        </Box>
-                        <AccordionIcon />
-                      </AccordionButton>
-                      <AccordionPanel pb={4}>
-                        <pre>{JSON.stringify(value, null, 2)}</pre>
-                      </AccordionPanel>
-                    </AccordionItem>
-                  </Accordion>
-                </Box>
-              );
-          }
-        })}
+            const value = data[key];
+            const ww = metadata && metadata[key] && metadata[key].width;
+            const hh = metadata && metadata[key] && metadata[key].height;
+            switch (key) {
+              case 'text/html':
+                if (!data[key]) return null; // hides other outputs if html is present
+                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+              case 'text/plain':
+                if (data['text/html']) return null;
+                return <Ansi key={i}>{value}</Ansi>;
+              case 'image/png':
+                return <Image key={i} src={`data:image/png;base64,${value}`} width={ww} height={hh} />;
+              case 'image/jpeg':
+                return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={ww} height={hh} />;
+              case 'image/svg+xml':
+                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+              case 'text/markdown':
+                return <Markdown key={i} data={value} openInWebview={openInWebview} />;
+              case 'application/vnd.vegalite.v4+json':
+                return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vegalite.v3+json':
+                return <VegaLite spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vegalite.v2+json':
+                return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v5+json':
+                return <Vega spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v4+json':
+                return <Vega spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v3+json':
+                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v2+json':
+                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v1+json':
+                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+              case 'application/vnd.plotly.v1+json':
+                // configure plotly so the viewer is more useful
+                const config = value.config || {};
+                const layout = value.layout || {};
+                config.displaylogo = false;
+                config.displayModeBar = false;
+                config.scrollZoom = true;
+                layout.dragmode = 'pan';
+                layout.hovermode = 'closest';
+                layout.margin = { l: 0, r: 0, b: 0, t: 0, pad: 0 };
+                layout.font = { size: s.fontSize };
+                layout.hoverlabel = {
+                  font: { size: s.fontSize },
+                  bgcolor: '#ffffff',
+                  bordercolor: '#000000',
+                  fontFamily: 'sans-serif',
+                };
+                layout.width = 'auto';
+                layout.height = 'auto';
+                return <Plot key={i} data={value.data} layout={layout} config={config} />;
+              case 'application/pdf':
+                return <PdfViewer data={value} />;
+              case 'application/json':
+                return <pre>{JSON.stringify(value, null, 2)}</pre>;
+              default:
+                return (
+                  <Box>
+                    <Accordion allowToggle>
+                      <AccordionItem>
+                        <AccordionButton>
+                          <Box flex="1" textAlign="left">
+                            <Text color="red" fontSize={s.fontSize}>
+                              Error: {key} is not supported in this version of SAGECell.
+                            </Text>
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                        <AccordionPanel pb={4}>
+                          <pre>{JSON.stringify(value, null, 2)}</pre>
+                        </AccordionPanel>
+                      </AccordionItem>
+                    </Accordion>
+                  </Box>
+                );
+            }
+          })}
       {!error ? null : (
         <>
           <Alert status="error">

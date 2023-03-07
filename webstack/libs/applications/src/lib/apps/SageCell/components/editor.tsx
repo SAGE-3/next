@@ -16,7 +16,6 @@ import { useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
-
 type CodeEditorProps = {
   app: App;
   access: boolean; //Does this user have access to the sagecell's selected kernel
@@ -176,8 +175,6 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       useShadows: false,
       verticalHasArrows: false,
       horizontalHasArrows: false,
-      // we may need to set this to 'auto' to enable scrollbars
-      // for VR and large screens with no mouse
       vertical: 'hidden', // 'scroll' | 'hidden' | 'visible' | 'auto'
       horizontal: 'scroll',
       verticalScrollbarSize: 0,

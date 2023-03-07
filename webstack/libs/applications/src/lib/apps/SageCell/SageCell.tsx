@@ -168,6 +168,7 @@ const AppComponent = (props: App): JSX.Element => {
                   document.addEventListener('mouseup', handleMouseUp);
                 }}
               >
+                {/* The grab bar */}
                 <Box>
                   <Box className="arrow-top" />
                   <Divider borderColor={'teal.600'} _hover={{ bg: 'teal.200' }} />
