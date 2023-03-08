@@ -545,6 +545,8 @@ export function Background(props: BackgroundProps) {
           // Get information from the drop
           const ids = event.dataTransfer.getData('file');
           const types = event.dataTransfer.getData('type');
+          // check if valid json
+          if (!isJSON(ids) || !isJSON(types)) return;
           const fileIDs = JSON.parse(ids);
           const fileTypes = JSON.parse(types);
           // Open the file at the drop location
