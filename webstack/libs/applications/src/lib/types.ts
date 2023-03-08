@@ -68,5 +68,36 @@ export type AppState =
   | VideoViewerState
   | WebviewState;
 
-export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PinBoardName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
-
+export type AppName =
+  | typeof AIPaneName
+  | typeof CSVViewerName
+  | typeof ChartGeneratorName
+  | typeof ChartMakerName
+  | typeof ClockName
+  | typeof CobrowseName
+  | typeof CounterName
+  | typeof DataTableName
+  | typeof DeepZoomImageName
+  | typeof GLTFViewerName
+  | typeof HCDPName
+  | typeof ImageViewerName
+  | typeof JupyterLabName
+  | typeof KernelDashboardName
+  | typeof KernelsName
+  | typeof LeafLetName
+  | typeof LinkerName
+  | typeof NotepadName
+  | typeof PDFResultName
+  | typeof PDFViewerName
+  | typeof PinBoardName
+  | typeof PluginAppName
+  | typeof RTCChatName
+  | typeof SageCellName
+  | typeof SeerName
+  | typeof SensorOverviewName
+  | typeof StickieName
+  | typeof TwilioScreenshareName
+  | typeof VegaLiteName
+  | typeof VegaLiteViewerName
+  | typeof VideoViewerName
+  | typeof WebviewName;
