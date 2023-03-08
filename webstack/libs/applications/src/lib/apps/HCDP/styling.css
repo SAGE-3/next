@@ -10,3 +10,21 @@
 .leaflet-content {
   border-radius: 0px;
 }
+
+.leaflet-image-layer {
+  z-index: 190 !important;
+}
+
+/* #arrow-group {
+  transform-origin: 0 0;
+  animation: moveArrow 2s linear infinite;
+}
+
+@keyframes moveArrow {
+  0% {
+    transform: rotate(0deg) translate(0, 0);
+  }
+  100% {
+    transform: rotate(360deg) translate(200px, 0) rotate(-45deg);
+  }
+} */

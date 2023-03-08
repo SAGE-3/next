@@ -25,6 +25,7 @@ import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginAp
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
+import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -58,6 +59,7 @@ export const initialValues = {
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
   [SeerName]: defaultSeer,
+  [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
@@ -65,4 +67,3 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
 };
-

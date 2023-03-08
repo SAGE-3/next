@@ -88,8 +88,14 @@ listApps.forEach((elt: any) => {
           const genmd = new SAGE3Doc();
           // load the schema
           genmd.load(jsonSchema);
+          let mdcontent = genmd.generate();
+          mdcontent += '\n\n';
+          mdcontent += '# default values\n';
+          mdcontent += '```\n';
+          mdcontent += `${JSON.stringify(ap.init, null, 2)}\n`;
+          mdcontent += '```\n\n';
           // generate the markdown
-          fs.writeFile(path.join(folder, app + '.md'), genmd.generate(), (err) => {
+          fs.writeFile(path.join(folder, app + '.md'), mdcontent, (err) => {
             if (err) throw err;
             console.log('Doc saved: ' + app + '.md');
           });
