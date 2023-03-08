@@ -42,7 +42,7 @@ export function getStaticAssetUrl(filename: string): string {
 const maxZoom = 18;
 const minZoom = 1;
 
-function LeafletWrapper(props: App & { children: any }) {
+function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
@@ -50,8 +50,6 @@ function LeafletWrapper(props: App & { children: any }) {
   const selectedId = useUIStore((state) => state.selectedAppId);
   const selected = props._id === selectedId;
 
-  // The map: any, I kown, should be Leaflet.Map but don't work
-  const [map, setMap] = useState<any>();
   // Keep an handle of the overlay, to show/hide
   const overlayLayer = useRef<Leaflet.GeoJSON>();
   // Assets store
@@ -101,25 +99,25 @@ function LeafletWrapper(props: App & { children: any }) {
               pointToLayer: function (feature, latlng) {
                 return Leaflet.circleMarker(latlng, markerOptions);
               },
-            }).addTo(map);
+            }).addTo(props.map);
             // Fit view to new data
             const bounds = overlayLayer.current.getBounds();
             const center = bounds.getCenter();
-            map.setView(center);
+            props.map.setView(center);
             const value: [number, number] = [center.lat, center.lng];
             updateState(props._id, { location: value });
-            map.fitBounds(bounds);
+            props.map.fitBounds(bounds);
             // Add a new control (don't know how to add it to main control, need the list of layers)
-            Leaflet.control.layers({}, { 'Data layer': overlayLayer.current }).addTo(map);
+            Leaflet.control.layers({}, { 'Data layer': overlayLayer.current }).addTo(props.map);
           });
       }
     }
   }, [file]);
 
   useEffect(() => {
-    if (!map) return;
+    if (!props.map) return;
     // put in the  zustand store
-    saveMap(props._id, map);
+    saveMap(props._id, props.map);
     // Update the default markers
     Leaflet.Icon.Default.mergeOptions({
       iconRetinaUrl: 'assets/marker-icon-2x.png',
@@ -128,62 +126,62 @@ function LeafletWrapper(props: App & { children: any }) {
       shadowSize: [0, 0],
       iconSize: [24, 40],
     });
-  }, [map, s.overlay]);
+  }, [props.map, s.overlay]);
 
   // Add or remove the overlay layer with the geojson data
   useEffect(() => {
-    if (s.overlay && map) {
-      overlayLayer.current?.addTo(map);
+    if (s.overlay && props.map) {
+      overlayLayer.current?.addTo(props.map);
     } else {
-      if (map) overlayLayer.current?.removeFrom(map);
+      if (props.map) overlayLayer.current?.removeFrom(props.map);
     }
-  }, [map, s.overlay]);
+  }, [props.map, s.overlay]);
 
   // Window resize
   useEffect(() => {
-    if (map) {
+    if (props.map) {
       // Using timeout here due to invalidateSize seems to be ahead of the parent div's size being set
       // 250ms seems to fix the issue when resizing
       // what?
       setTimeout(() => {
-        if (map) {
-          map.invalidateSize();
-          if (map.getCenter().lat !== s.location[0] || map.getCenter().lng !== s.location[1]) {
-            const loc = new Leaflet.LatLng(map.getCenter().lat, map.getCenter().lng);
-            map.setView(loc);
+        if (props.map) {
+          props.map.invalidateSize();
+          if (props.map.getCenter().lat !== s.location[0] || props.map.getCenter().lng !== s.location[1]) {
+            const loc = new Leaflet.LatLng(props.map.getCenter().lat, props.map.getCenter().lng);
+            props.map.setView(loc);
           }
         }
       }, 250);
     }
-  }, [props.data.size.width, props.data.size.height, map]);
+  }, [props.data.size.width, props.data.size.height, props.map]);
 
   // Location sync
   const onMove = useCallback(() => {
-    if (map) {
-      const value: [number, number] = [map.getCenter().lat, map.getCenter().lng];
+    if (props.map) {
+      const value: [number, number] = [props.map.getCenter().lat, props.map.getCenter().lng];
       updateState(props._id, { location: value });
     }
-  }, [map, s.location]);
+  }, [props.map, s.location]);
 
   // Drag events
   useEffect(() => {
-    if (map) {
-      map.on('dragend', onMove);
+    if (props.map) {
+      props.map.on('dragend', onMove);
     }
     return () => {
-      if (map) {
-        map.off('dragend', onMove);
+      if (props.map) {
+        props.map.off('dragend', onMove);
       }
     };
-  }, [map, onMove]);
+  }, [props.map, onMove]);
 
   // Synchronize the view
   useEffect(() => {
-    if (map) {
+    if (props.map) {
       const loc = new Leaflet.LatLng(s.location[0], s.location[1]);
-      map.setView(loc);
+      props.map.setView(loc);
     }
-  }, [s.location, map]);
+  }, [s.location, props.map]);
 
   // BaseLayer sync
   const onBaseLayerChange = useCallback(
@@ -195,15 +193,15 @@ function LeafletWrapper(props: App & { children: any }) {
   );
 
   useEffect(() => {
-    if (map) {
-      map.on('baselayerchange', onBaseLayerChange);
+    if (props.map) {
+      props.map.on('baselayerchange', onBaseLayerChange);
     }
     return () => {
-      if (map) {
-        map.off('baselayerchange', onBaseLayerChange);
+      if (props.map) {
+        props.map.off('baselayerchange', onBaseLayerChange);
       }
     };
-  }, [map, onBaseLayerChange]);
+  }, [props.map, onBaseLayerChange]);
 
   // Overlay layer control
   const onOverlayAdd = useCallback(() => {
@@ -215,29 +213,29 @@ function LeafletWrapper(props: App & { children: any }) {
   }, [s.overlay]);
 
   useEffect(() => {
-    if (map) {
-      map.on('overlayadd', onOverlayAdd);
-      map.on('overlayremove', onOverlayRemove);
+    if (props.map) {
+      props.map.on('overlayadd', onOverlayAdd);
+      props.map.on('overlayremove', onOverlayRemove);
     }
     return () => {
-      if (map) {
-        map.off('overlayadd', onOverlayAdd);
-        map.off('overlayremove', onOverlayRemove);
+      if (props.map) {
+        props.map.off('overlayadd', onOverlayAdd);
+        props.map.off('overlayremove', onOverlayRemove);
       }
     };
-  }, [map]);
+  }, [props.map]);
 
   useEffect(() => {
-    if (map) {
-      map.invalidateSize();
+    if (props.map) {
+      props.map.invalidateSize();
     }
-  }, [map, s.baseLayer]);
+  }, [props.map, s.baseLayer]);
 
   useEffect(() => {
-    if (map) {
-      map.setZoom(s.zoom);
+    if (props.map) {
+      props.map.setZoom(s.zoom);
     }
-  }, [map, s.zoom]);
+  }, [props.map, s.zoom]);
 
   // Zoom in on the map
   const incZoom = () => {
@@ -271,7 +269,7 @@ function LeafletWrapper(props: App & { children: any }) {
         keyboard={false}
         preferCanvas={true}
         style={{ height: `100%`, width: `100%`, zIndex: 0 }}
-        ref={setMap}
+        ref={props.setMap}
         attributionControl={false}
         zoomControl={false}
       >

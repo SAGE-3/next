@@ -35,6 +35,7 @@ import { state as AppState } from './index';
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
+import { LeafletTrackingMarker } from 'react-leaflet-tracking-marker';
 import { TileLayer, LayersControl, Popup, CircleMarker, Polygon, Marker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
 
@@ -52,6 +53,8 @@ export const useStore = create((set: any) => ({
   map: {} as { [key: string]: Leaflet.Map },
   saveMap: (id: string, map: Leaflet.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
 }));
+
+import AirplaneMarker from './AirplaneMarker';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -76,6 +79,9 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   const arrowRef = useRef<any>(null);
+
+  // The map: any, I kown, should be Leaflet.Map but don't work
+  const [map, setMap] = useState<any>();
 
   useEffect(() => {
     for (let i = 0; i < stationData.length; i++) {
@@ -116,7 +122,6 @@ function AppComponent(props: App): JSX.Element {
           stationData[i].solarRadiation = Math.floor(
             station.STATION[0].OBSERVATIONS.solar_radiation_set_1[station.STATION[0].OBSERVATIONS.solar_radiation_set_1.length - 1]
           );
-          console.log(station);
         });
       });
     }
@@ -271,8 +276,10 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { variableToDisplay: variableName });
   };
 
+  const forceUpdate = useForceUpdate();
+
   return (
-    <LeafletWrapper {...props}>
+    <LeafletWrapper map={map} setMap={setMap} {...props}>
       <Box
         w="20rem"
         h="24rem"
@@ -284,13 +291,11 @@ function AppComponent(props: App): JSX.Element {
         left="2px"
         border="10px"
         rounded={10}
-        onClick={() => {
-          console.log('Hello');
-        }}
         // margin="auto"
         padding="0 20px"
         fontWeight={'bold'}
         fontSize="xl"
+        onClick={forceUpdate}
       >
         <br />
         <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
@@ -321,11 +326,8 @@ function AppComponent(props: App): JSX.Element {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {stationData.map((data, index) => {
-          const height = 1;
-          console.log((30 / s.zoom) * 4 - 6);
 
-          console.log(s.zoom);
+        {stationData.map((data, index) => {
           return (
             <div key={index}>
               <CircleMarker
@@ -383,6 +385,8 @@ function AppComponent(props: App): JSX.Element {
                   </Box>
                 </Popup>
               </CircleMarker>
+              {/* <AirplaneMarker index={index} dataStory={[{ lat: data.lat, lng: data.lon }]} degree={data['windDirection']} /> */}
+
               <SVGOverlay
                 bounds={[
                   [data.lat - 0.17, data.lon - 0.05],
@@ -399,13 +403,13 @@ function AppComponent(props: App): JSX.Element {
                         fill="white"
                         transform={`translate(100, 100) scale(1.5) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`}
                       >
-                        <Arrow degree={data['windDirection'] + 180} />
+                        <Arrow degree={data['windDirection']} />
 
                         {/* <polygon points="80,130 100,60 120,130 100,125" fill="black" /> */}
                       </g>
                     )}
                     <g transform={`translate(100, 100) scale(1.5) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
+                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" strokeWidth="3" />
 
                       <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
                         {data[s.variableToDisplay]}
@@ -431,6 +435,14 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
+//create your forceUpdate hook
+function useForceUpdate() {
+  const [value, setValue] = useState(0); // integer state
+  return () => setValue((value) => value + 1); // update state to force render
+  // A function that increment 👆🏻 the previous state like here
+  // is better than directly setting `setValue(value + 1)`
+}
+
 function Arrow({ degree }: { degree: number }) {
   const arrowRef = useRef<any>(null);
   const blue = useHexColor('blue.500');
@@ -452,7 +464,7 @@ function Arrow({ degree }: { degree: number }) {
     // Apply the animation to the arrow group
     // arrowGroup.style.transformOrigin = '0 0';
     arrowGroup.style.animation = `moveArrow ${duration}s linear infinite`;
-    arrowGroup.style.transformOrigin = 'center';
+    arrowGroup.style.transformOrigin = '0 0';
 
     // Define the keyframes for the animation
     const keyframes = `
@@ -562,8 +574,6 @@ function ToolbarComponent(props: App): JSX.Element {
       updateState(appId, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
     });
   };
-
-  useEffect(() => {}, []);
 
   return (
     <HStack>
