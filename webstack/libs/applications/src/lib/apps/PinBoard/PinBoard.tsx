@@ -6,10 +6,8 @@
  *
  */
 
-import {
-  Box,
-} from '@chakra-ui/react';
-
+import {Box} from '@chakra-ui/react';
+import {useEffect, useState, useRef} from 'react';
 
 import {useAppStore, useUIStore} from '@sage3/frontend';
 
@@ -19,16 +17,23 @@ import {AppWindow} from '../../components';
 
 import './styles.css';
 
-import {useEffect, useState, useRef} from 'react';
-
-
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
-interface DraggableListProps {
-  data: any[],
-  renderItemContent: (item: any) => JSX.Element;
+
+interface ListItem {
+  item: string;
+  isDragging: boolean;
 }
 
+interface List {
+  listID: string;
+  list: ListItem[];
+}
+
+interface DraggableListProps {
+  data: List[];
+  renderItemContent: (item: ListItem) => JSX.Element;
+}
 
 function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   const s = props.data.state as AppState;
@@ -37,114 +42,138 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   const selectedAppId = useUIStore((state) => state.selectedAppId);
 
   const boardApps = useAppStore((state) => state.apps);
+  // const [lists, setLocalLists] = useState<List[]>(props.data);
 
-  interface ListItem {
-    item: string;
-    isDragging: boolean;
-  }
+  const dragItem = useRef<{ listID: string; itemId: number } | null>(null);
+  const dragOverItem = useRef<{ listID: string; itemId: number } | null>(null);
 
-  const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
-  const [list, setList] = useState<ListItem[]>([
-    {
-      item: 'Item 1',
-      isDragging: false
-    },
-    {
-      item: 'Item 2',
-      isDragging: false
+  const [localLists, setLocalLists] = useState<List[]>(
+    [
+      {
+        listID: "1234",
+        list: [
+          {
+            item: "item 1",
+            isDragging: false
+          },
+          {
+            item: "item 2",
+            isDragging: false
+          },
+          {
+            item: "item 3",
+            isDragging: false
+          }
+        ]
+      },
+      {
+        listID: "5678",
+        list: [
+          {
+            item: "item 4",
+            isDragging: false
+          },
+          {
+            item: "item 5",
+            isDragging: false
+          }
+        ]
+      }
+    ]
+  );
 
-    },
-    {
-      item: 'Item 3',
-      isDragging: false
-
-    },
-    {
-      item: 'Item 4',
-      isDragging: false
-
-    },
-    {
-      item: 'Item 5',
-      isDragging: false
-
-    }
-  ]);
+  const updateList = (listID: string, newList: ListItem[]) => {
+    setLocalLists(localLists.map((list) => (list.listID === listID ? {...list, list: newList} : list)));
+  };
 
   useEffect(() => {
-    updateState(props._id, { list: list });
-  }, [list])
+    updateState(props._id, {lists: localLists});
+  }, [localLists])
 
-  const dragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
-    dragItem.current = position;
-    if (e.target instanceof HTMLDivElement) {
-      console.log(e.target.innerHTML);
+  const dragStart = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
+    dragItem.current = {listID, itemId};
+  };
+
+  const dragEnter = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
+    dragOverItem.current = {listID, itemId};
+
+    const newList = localLists.find((list) => list.listID === listID)?.list.map((item, index) => ({
+      ...item,
+      isDragging: index === itemId,
+    }));
+
+    if (newList) {
+      updateList(listID, newList);
     }
   };
 
-  const dragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
-    dragOverItem.current = position;
-    if (e.target instanceof HTMLDivElement) {
-      console.log(e.target.innerHTML);
-      const listCopy = [...list]
+  const drop = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
+    const dragItemId = dragItem.current?.itemId;
+    const draglistID = dragItem.current?.listID;
+    const dropItemId = dragOverItem.current?.itemId;
+    const droplistID = dragOverItem.current?.listID;
 
-      const listLoopCopy: ListItem[] = []
-      listCopy.forEach(item => {
-        listLoopCopy.push({
-          item: item.item,
-          isDragging: false
-        })
+    if (dragItemId !== undefined && draglistID !== undefined && dropItemId !== undefined && droplistID !== undefined) {
+      if (draglistID === droplistID) {
+        const newList = localLists.find((list) => list.listID === listID)?.list;
+        if (newList) {
+          const dragItemContent = newList[dragItemId];
+          newList.splice(dragItemId, 1);
+          newList.splice(dropItemId, 0, dragItemContent);
+          updateList(listID, newList);
+        }
+      } else {
+        const dragList = localLists.find((list) => list.listID === draglistID);
+        const dropList = localLists.find((list) => list.listID === droplistID);
+        if (dragList && dropList) {
+          const dragItemContent = dragList.list[dragItemId];
+          dragList.list.splice(dragItemId, 1);
+          dropList.list.splice(dropItemId, 0, dragItemContent);
+          updateList(draglistID, dragList.list);
+          updateList(droplistID, dropList.list);
 
-      })
+        }
+      }
+      setLocalLists(localLists.map((list) => ({
+        ...list,
+        list: list.list.map((item) => ({...item, isDragging: false}))
+      })));
 
-      listLoopCopy[position].isDragging = true;
-      setList(listLoopCopy)
-    }
-  };
-
-  const drop = (e: React.DragEvent<HTMLDivElement>) => {
-    const copyListItems = [...list];
-    if (dragItem.current !== null && dragOverItem.current !== null) {
-      const dragItemContent = copyListItems[dragItem.current];
-      copyListItems.splice(dragItem.current, 1);
-      copyListItems.splice(dragOverItem.current, 0, dragItemContent);
-      dragItem.current = null;
-      dragOverItem.current = null;
-
-      const listLoopCopy: ListItem[] = []
-      copyListItems.forEach(item => {
-        listLoopCopy.push({
-          item: item.item,
-          isDragging: false
-        })
-      })
-
-      setList(listLoopCopy);
     }
   };
 
   return (
     <AppWindow app={props} lockToBackground={true}>
-      <Box>
-        <>
-          {
-            s.list &&
-            s.list.map((item, index) => (
+      <div>
+        {s.lists.map((list) => (
+          <Box
+            key={list.listID}
+            border="1px"
+            borderColor="teal"
+            borderWidth="5px"
+            borderRadius="25px"
+            backgroundColor="green.300"
+            p="5px">
+            {list.list.map((item) => (
               <>
-                <div style={{backgroundColor: 'lightblue', margin: '10px 10%', textAlign: 'center', fontSize: '40px'}}
-                     onDragStart={(e) => dragStart(e, index)}
-                     onDragEnter={(e) => dragEnter(e, index)}
-                     onDragEnd={drop}
-                     key={index}
-                     draggable>
+                <div
+                  style={{backgroundColor: 'orange', borderRadius: '25px', margin: '10px 5%', textAlign: 'center', fontSize: '40px'}}
+                  key={item.item}
+                  draggable
+                  onDragStart={(e) => dragStart(e, list.listID, list.list.indexOf(item))}
+                  onDragEnter={(e) => dragEnter(e, list.listID, list.list.indexOf(item))}
+                  // onDragEnd={() => dragEnd()}
+                  onDragEnd={(e) => drop(e, list.listID, list.list.indexOf(item))}
+                >
                   {item.item}
                 </div>
                 {item.isDragging ? <div className="drag-line"/> : null}
               </>
             ))}
-        </>
-      </Box>
+          </Box>
+
+        ))}
+      </div>
     </AppWindow>
   );
 }

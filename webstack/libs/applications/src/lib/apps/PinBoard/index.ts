@@ -20,9 +20,21 @@ const ListItemType = z.array(
   })
 );
 
+interface Lists {
+  listId: string;
+  list: ListItem[]
+}
+
+const ListType = z.array(
+  z.object({
+    listID: z.string(),
+    list: ListItemType
+  })
+)
+
 
 export const schema = z.object({
-  list: ListItemType,
+  lists: ListType,
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -32,7 +44,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   executeInfo: {executeFunc: '', params: {}},
-  list: [],
+  lists: [],
 };
 
 export const name = 'PinBoard';
