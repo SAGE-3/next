@@ -18,12 +18,12 @@ export const schema = z.object({
   availableKernels: z.array(
     z.object({
       key: z.string(),
-      value: z.record(z.string(), z.any()),
+      value: z.any(),
     })
   ),
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
   lastHeartBeat: z.number(),
   online: z.boolean(),

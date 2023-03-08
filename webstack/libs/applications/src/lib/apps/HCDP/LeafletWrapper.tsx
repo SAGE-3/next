@@ -7,7 +7,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue, propNames } from '@chakra-ui/react';
+import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue, propNames, Box } from '@chakra-ui/react';
 
 import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';

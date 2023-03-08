@@ -177,6 +177,7 @@ export function AppWindow(props: WindowProps) {
         });
       });
     }
+
     // Trying to optimize performance
     if (divRef.current) {
       // divRef.current.style.willChange = 'auto';

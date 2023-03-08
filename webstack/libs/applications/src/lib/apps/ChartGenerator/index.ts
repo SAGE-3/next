@@ -25,7 +25,12 @@ export const schema = z.object({
   labelName: z.string(),
   datasets: z
     .object({
-      yDataName: z.string(),
+      label: z.string(),
+      yDataName: z.any(),
+      minYValue: z.number(),
+      yAxisID: z.string(),
+      borderColor: z.string(),
+      backgroundColor: z.string(),
       chartType: z.any(),
     })
     .array(),

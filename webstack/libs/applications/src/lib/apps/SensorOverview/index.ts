@@ -8,24 +8,18 @@
 
 import { z } from 'zod';
 
+/**
+ * SAGE3 application: Sensor Overview
+ * created by: RJ
+ */
+
 export const schema = z.object({
-  text: z.string(),
-  fontSize: z.number(),
-  color: z.string(),
-  lock: z.boolean(),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
+  sensorData: z.any(),
 });
 export type state = z.infer<typeof schema>;
 
-export const init: state = {
-  text: 'stickie note',
-  fontSize: 42,
-  color: 'yellow',
-  lock: false,
-  executeInfo: { executeFunc: '', params: {} },
+export const init: Partial<state> = {
+  sensorData: {},
 };
 
-export const name = 'Stickie';
+export const name = 'SensorOverview';

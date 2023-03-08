@@ -16,7 +16,7 @@ export const schema = z.object({
   messages: z.record(z.string(), z.any()),
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 export type state = z.infer<typeof schema>;

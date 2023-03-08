@@ -21,7 +21,7 @@ export const schema = z.object({
   // Functions to execute
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
   analyzed: z.string(),
   client: z.string(),
