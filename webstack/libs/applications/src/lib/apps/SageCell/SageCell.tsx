@@ -12,7 +12,7 @@ import { Box, useColorModeValue, Divider, Badge, Spacer, Stack } from '@chakra-u
 // SAGE3 imports
 import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
 
-import { state as AppState } from './index';
+import { state as AppState, availableKernelsType } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 import { CodeEditor } from './components/editor';
@@ -30,7 +30,7 @@ import './styles.css';
 const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const [myKernels, setMyKernels] = useState(s.availableKernels);
+  const [myKernels, setMyKernels] = useState<availableKernelsType>(s.availableKernels);
   const [access, setAccess] = useState(true);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
@@ -61,7 +61,7 @@ const AppComponent = (props: App): JSX.Element => {
 
   useEffect(() => {
     // Get all kernels that I'm available to see
-    const kernels: any[] = [];
+    const kernels: availableKernelsType = [];
     s.availableKernels.forEach((kernel) => {
       if (kernel.value.is_private) {
         if (kernel.value.owner_uuid == user?._id) {

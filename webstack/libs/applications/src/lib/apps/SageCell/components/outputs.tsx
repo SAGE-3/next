@@ -39,7 +39,7 @@ import { PdfViewer } from './pdfviewer';
 
 import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
 
-import { App, AppSchema } from '../../../schema';
+import { App } from '../../../schema';
 import { state as AppState } from '../index';
 
 export interface Result {
@@ -51,19 +51,19 @@ export interface Result {
 }
 
 export interface ExecuteResult {
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   metadata?: Metadata;
   execution_count: number;
 }
 
 export interface DisplayData {
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   metadata?: Metadata;
-  transient?: {};
+  transient?: unknown;
 }
 
 export interface Metadata {
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface Stream {
@@ -77,38 +77,17 @@ interface Error {
   traceback: string[];
 }
 
-interface UserState {
-  users: User[];
-}
-
-interface User {
-  _id: string;
-  _createdAt: number;
-  _createdBy: string;
-  _updatedAt: number;
-  _updatedBy: string;
-  data: UserData;
-}
-
-interface UserData {
-  name: string;
-  email: string;
-  color: string;
-  userRole: string;
-  userType: string;
-  profilePicture: string;
-}
-
 type OutputBoxProps = {
   output: string;
   app: App;
 };
 
 export function Outputs(props: OutputBoxProps): JSX.Element {
-  if (!props.output) return <></>;
   const s = props.app.data.state as AppState;
-  const users = useUsersStore((state: UserState) => state.users);
-  const createApp = useAppStore((state: { create: (app: AppSchema) => void }) => state.create);
+  // Data stores
+  const users = useUsersStore((state) => state.users);
+  const createApp = useAppStore((state) => state.create);
+  // Application state
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
   const [data, setData] = useState<Record<string, any>>(); // execute_result.data or display_data.data is unknown type
   const [executionCount, setExecutionCount] = useState<number>();
@@ -187,81 +166,81 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       {!data
         ? null
         : Object.keys(data).map((key, i) => {
-            const value = data[key];
-            switch (key) {
-              case 'text/html':
-                if (!data[key]) return null; // hides other outputs if html is present
-                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-              case 'text/plain':
-                if (data['text/html']) return null;
-                return <Ansi key={i}>{value}</Ansi>;
-              case 'image/png':
-                return <Image key={i} src={`data:image/png;base64,${value}`} />;
-              case 'image/jpeg':
-                return <Image key={i} src={`data:image/jpeg;base64,${value}`} />;
-              case 'image/svg+xml':
-                return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-              case 'text/markdown':
-                return <Markdown key={i} data={value} openInWebview={openInWebview} />;
-              case 'application/vnd.vegalite.v4+json':
-              case 'application/vnd.vegalite.v3+json':
-              case 'application/vnd.vegalite.v2+json':
-                return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.vega.v5+json':
-              case 'application/vnd.vega.v4+json':
-              case 'application/vnd.vega.v3+json':
-              case 'application/vnd.vega.v2+json':
-              case 'application/vnd.vega.v1+json':
-                return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-              case 'application/vnd.plotly.v1+json': {
-                // Configure plotly
-                const config = value.config || {};
-                const layout = value.layout || {};
-                config.displaylogo = false;
-                config.displayModeBar = false;
-                config.scrollZoom = true;
-                layout.dragmode = 'pan';
-                layout.hovermode = 'closest';
-                layout.font = { size: s.fontSize };
-                layout.hoverlabel = {
-                  font: { size: s.fontSize },
-                  bgcolor: '#ffffff',
-                  bordercolor: '#000000',
-                  fontFamily: 'sans-serif',
-                };
-                layout.width = 'auto';
-                layout.height = 'auto';
-                // Rebuild the plotly plot
-                return <Plot key={i} data={value.data} layout={layout} config={config} />;
-              }
-              case 'application/pdf':
-                // Open a iframe with the pdf
-                return <PdfViewer key={i} data={value} />;
-              case 'application/json':
-                // Render the json as string into a PRE tag
-                return <pre key={i}>{JSON.stringify(value, null, 2)}</pre>;
-              default:
-                return (
-                  <Box>
-                    <Accordion allowToggle>
-                      <AccordionItem>
-                        <AccordionButton>
-                          <Box flex="1" textAlign="left">
-                            <Text color="red" fontSize={s.fontSize}>
-                              Error: {key} is not supported in this version of SAGECell.
-                            </Text>
-                          </Box>
-                          <AccordionIcon />
-                        </AccordionButton>
-                        <AccordionPanel pb={4}>
-                          <pre>{JSON.stringify(value, null, 2)}</pre>
-                        </AccordionPanel>
-                      </AccordionItem>
-                    </Accordion>
-                  </Box>
-                );
+          const value = data[key];
+          switch (key) {
+            case 'text/html':
+              if (!data[key]) return null; // hides other outputs if html is present
+              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+            case 'text/plain':
+              if (data['text/html']) return null;
+              return <Ansi key={i}>{value}</Ansi>;
+            case 'image/png':
+              return <Image key={i} src={`data:image/png;base64,${value}`} />;
+            case 'image/jpeg':
+              return <Image key={i} src={`data:image/jpeg;base64,${value}`} />;
+            case 'image/svg+xml':
+              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+            case 'text/markdown':
+              return <Markdown key={i} data={value} openInWebview={openInWebview} />;
+            case 'application/vnd.vegalite.v4+json':
+            case 'application/vnd.vegalite.v3+json':
+            case 'application/vnd.vegalite.v2+json':
+              return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.vega.v5+json':
+            case 'application/vnd.vega.v4+json':
+            case 'application/vnd.vega.v3+json':
+            case 'application/vnd.vega.v2+json':
+            case 'application/vnd.vega.v1+json':
+              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
+            case 'application/vnd.plotly.v1+json': {
+              // Configure plotly
+              const config = value.config || {};
+              const layout = value.layout || {};
+              config.displaylogo = false;
+              config.displayModeBar = false;
+              config.scrollZoom = true;
+              layout.dragmode = 'pan';
+              layout.hovermode = 'closest';
+              layout.font = { size: s.fontSize };
+              layout.hoverlabel = {
+                font: { size: s.fontSize },
+                bgcolor: '#ffffff',
+                bordercolor: '#000000',
+                fontFamily: 'sans-serif',
+              };
+              layout.width = 'auto';
+              layout.height = 'auto';
+              // Rebuild the plotly plot
+              return <Plot key={i} data={value.data} layout={layout} config={config} />;
             }
-          })}
+            case 'application/pdf':
+              // Open a iframe with the pdf
+              return <PdfViewer key={i} data={value} />;
+            case 'application/json':
+              // Render the json as string into a PRE tag
+              return <pre key={i}>{JSON.stringify(value, null, 2)}</pre>;
+            default:
+              return (
+                <Box>
+                  <Accordion allowToggle>
+                    <AccordionItem>
+                      <AccordionButton>
+                        <Box flex="1" textAlign="left">
+                          <Text color="red" fontSize={s.fontSize}>
+                            Error: {key} is not supported in this version of SAGECell.
+                          </Text>
+                        </Box>
+                        <AccordionIcon />
+                      </AccordionButton>
+                      <AccordionPanel pb={4}>
+                        <pre>{JSON.stringify(value, null, 2)}</pre>
+                      </AccordionPanel>
+                    </AccordionItem>
+                  </Accordion>
+                </Box>
+              );
+          }
+        })}
       {!error ? null : (
         <>
           <Alert status="error">
