@@ -10,38 +10,97 @@
 * This css file is used to style the HTML elements in SageCell.
 */
 
-:root {
-  --color-bg: #000000;
-  --color-fg: #ffffff;
-}
+/**
+  * This css file is used to style the HTML elements in SageCell.
+  * It is a modified version of the css file from SageCell.
+  */
 
-/* #html,
-body {
+.sc *,
+.sc *::before,
+.sc *::after {
+  box-sizing: border-box;
+}
+.sc * {
+  margin: 0;
+}
+.sc html,
+.sc body {
   height: 100%;
-  width: 100%;
-} */
+}
+.sc body {
+  line-height: calc(1em + 0.5rem);
+  -webkit-font-smoothing: antialiased;
+}
+.sc img,
+.sc picture,
+.sc video,
+.sc canvas,
+.sc svg {
+  display: block;
+  max-width: 95%;
+}
+.sc input,
+.sc button,
+.sc textarea,
+.sc select {
+  font: inherit;
+}
+.sc p,
+.sc h1,
+.sc h2,
+.sc h3,
+.sc h4,
+.sc h5,
+.sc h6 {
+  overflow-wrap: break-word;
+}
+.sc #root,
+.sc #__next {
+  isolation: isolate;
+}
 
-#html {
-  background-color: var(--color-bg);
-  color: var(--color-fg);
+.arrow-top {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  width: 8px;
+  height: 8px;
+  border: solid teal;
+  border-width: 2px 0 0 2px;
+  margin: 0 0 0 calc(50% - 4px);
 }
-table {
-  border: none;
+
+.arrow-down {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  width: 8px;
+  height: 8px;
+  border: solid teal;
+  border-width: 0 2px 2px 0;
+  margin: 0 0 0 calc(50% - 4px);
+}
+
+.output {
+  font-family: 'Monaco', 'Courier New', Courier, monospace;
+  padding-left: 1em;
+  display: block;
+  font-size: 'inherit';
+  white-space: pre-wrap;
+  overflow: auto;
+  line-height: calc(1em + 0.5rem);
+}
+
+/******** Light Theme ********/
+.output table {
+  border: 1px solid #212121;
+  color: #171717;
   border-collapse: collapse;
-  border-spacing: 0;
-  color: black;
-  font-size: 12px;
-  table-layout: fixed;
+  table-layout: auto;
+  max-width: min-content;
   background: #fff;
-  box-shadow: 0px 1px 2px #bbb;
 }
-thead {
-  border-bottom: 1px solid black;
-  vertical-align: bottom;
-}
-tr,
-th,
-td {
+.output-area-light tr,
+.output-area-light th,
+.output-area-light td {
   text-align: right;
   vertical-align: middle;
   padding: 0.5em 0.5em;
@@ -50,40 +109,77 @@ td {
   max-width: none;
   border: none;
 }
-th {
+.output-area-light tr td {
+  border-right: 0;
+}
+.output-area-light thead {
+  background: #fff;
+  border-bottom: 1px solid #000;
+  vertical-align: bottom;
+}
+.output-area-light td:hover {
+  background-color: rgba(66, 165, 245, 0.3) !important;
+}
+.output-area-light th {
   font-weight: bold;
 }
-tbody tr:nth-child(odd) {
+.output-area-light tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
-tbody tr:hover {
+.output-area-light tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+.output-area-light tbody tr:last-of-type {
+  border-bottom: 4px solid #212121;
+}
+/********* Dark Mode *********/
+.output-area-dark table {
+  /* border: 1px solid #cecece; */
+  border: 1px solid #515151;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: #ccc;
+  table-layout: auto;
+  max-width: min-content;
+  background: #000 !important;
+}
+
+.output-area-dark thead {
+  border-bottom: 2px solid #ccc;
+  vertical-align: bottom;
+}
+.output-area-dark tr,
+.output-area-dark th,
+.output-area-dark td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+
+.output-area-dark th {
+  font-weight: bold;
+}
+
+.output-area-dark tbody tr:nth-child(odd) {
+  background: #333;
+}
+
+.output-area-dark tbody tr:nth-child(even) {
+  background: #171717;
+}
+
+.output-area-dark tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
 
-.dataframe {
-  border-collapse: collapse;
-  font-family: sans-serif;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+.output-area-dark td:hover {
+  background-color: rgba(66, 165, 245, 0.3) !important;
 }
 
-.dataframe {
-  background: #fff;
-  box-shadow: 0px 1px 2px #bbb;
-}
-
-.dataframe thead th,
-.dataframe tbody td {
-  padding: 1.5em;
-}
-
-.dataframe tbody tr:last-of-type {
-  border-bottom: 3px solid #009879;
-}
-
-.dataframe td:hover {
-  background-color: lightblue !important;
-}
-
-.highlight {
-  background-color: #ffffff;
+.output-area-dark tbody tr:last-of-type {
+  border-bottom: 2px solid #262626;
 }
