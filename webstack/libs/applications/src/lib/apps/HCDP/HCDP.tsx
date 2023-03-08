@@ -35,9 +35,10 @@ import { state as AppState } from './index';
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { LeafletTrackingMarker } from 'react-leaflet-tracking-marker';
-import { TileLayer, LayersControl, Popup, CircleMarker, Polygon, Marker, SVGOverlay } from 'react-leaflet';
+import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
+
+import { stationData } from './stationData';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
@@ -46,15 +47,13 @@ import 'leaflet/dist/leaflet.css';
 import create from 'zustand';
 
 // Icon imports
-import { MdAdd, MdMap, MdOutlineZoomIn, MdOutlineZoomOut, MdRemove, MdTerrain } from 'react-icons/md';
+import { MdAdd, MdOutlineZoomIn, MdOutlineZoomOut, MdRemove } from 'react-icons/md';
 
 // Zustand store to communicate with toolbar
 export const useStore = create((set: any) => ({
   map: {} as { [key: string]: Leaflet.Map },
   saveMap: (id: string, map: Leaflet.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
 }));
-
-import AirplaneMarker from './AirplaneMarker';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -385,7 +384,6 @@ function AppComponent(props: App): JSX.Element {
                   </Box>
                 </Popup>
               </CircleMarker>
-              {/* <AirplaneMarker index={index} dataStory={[{ lat: data.lat, lng: data.lon }]} degree={data['windDirection']} /> */}
 
               <SVGOverlay
                 bounds={[
@@ -516,6 +514,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const background = useColorModeValue('gray.50', 'gray.700');
 
   const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
   const geocoder = new esriLeafletGeocoder.geocode({
     apikey: apiKey,
@@ -623,213 +622,3 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 export default { AppComponent, ToolbarComponent };
-
-type SensorTypes = {
-  lat: number;
-  lon: number;
-  name: string;
-  temperatureC: number;
-  temperatureF: number;
-
-  soilMoisture: number;
-  relativeHumidity: number;
-  windSpeed: number;
-  solarRadiation: number;
-  windDirection: number;
-};
-
-// For now, this is hard-coded. Will change when HCDP is ready.
-const stationData: SensorTypes[] = [
-  {
-    lat: 20.8415,
-    lon: -156.2948,
-    name: '017HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7067,
-    lon: -156.3554,
-    name: '016HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7579,
-    lon: -156.32,
-    name: '001HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7598,
-    lon: -156.2482,
-    name: '002HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7382,
-    lon: -156.2458,
-    name: '013HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7104,
-    lon: -156.2567,
-    name: '003HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.6974,
-    lon: -155.0954,
-    name: '005HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.964,
-    lon: -155.25,
-    name: '006HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.932,
-    lon: -155.291,
-    name: '007HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.748,
-    lon: -155.996,
-    name: '008HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.803,
-    lon: -155.851,
-    name: '009HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.73,
-    lon: -155.87,
-    name: '010HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 21.333,
-    lon: -157.8025,
-    name: '011HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 21.3391,
-    lon: -157.8369,
-    name: '012HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 22.2026,
-    lon: -159.5188,
-    name: '014HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 22.1975,
-    lon: -159.421,
-    name: '015HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-];

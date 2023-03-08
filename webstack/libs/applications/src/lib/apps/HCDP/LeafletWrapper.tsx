@@ -18,14 +18,12 @@ import { AppWindow } from '../../components';
 
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { MapContainer, TileLayer, LayersControl, Marker, Popup } from 'react-leaflet';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
 import create from 'zustand';
-import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
 import React from 'react';
 
 // Zustand store to communicate with toolbar

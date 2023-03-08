@@ -1,4 +1,0 @@
-<svg width="320" height="320" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="80,130 100,60 120,130 100,125" fill={blue} stroke="black" strokeWidth={3} strokeLinecap="round" />
-
-</svg>

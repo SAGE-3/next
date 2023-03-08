@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { LeafletTrackingMarker } from 'react-leaflet-tracking-marker';
 import L from 'leaflet';
 
-import arrowIcon from './arrow.png';
+import airplaneIcon from './airplane.png';
 import { Popup } from 'react-leaflet';
 import React from 'react';
 
 const icon = L.icon({
   iconSize: [100, 100],
   popupAnchor: [2, -20],
-  iconUrl: arrowIcon,
+  iconUrl: airplaneIcon,
 });
 
 // const dataStory = [
