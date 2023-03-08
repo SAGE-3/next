@@ -42,23 +42,13 @@ import { stationData } from './stationData';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
+import { useStore } from './LeafletWrapper';
 
 // Store imports
 import create from 'zustand';
 
 // Icon imports
 import { MdAdd, MdOutlineZoomIn, MdOutlineZoomOut, MdRemove } from 'react-icons/md';
-
-// Zustand store to communicate with toolbar
-export const useStore = create((set: any) => ({
-  map: {} as { [key: string]: Leaflet.Map },
-  saveMap: (id: string, map: Leaflet.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
-}));
-
-// Get a URL for an asset
-export function getStaticAssetUrl(filename: string): string {
-  return `api/assets/static/${filename}`;
-}
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
@@ -275,8 +265,6 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { variableToDisplay: variableName });
   };
 
-  const forceUpdate = useForceUpdate();
-
   return (
     <LeafletWrapper map={map} setMap={setMap} {...props}>
       <Box
@@ -294,7 +282,6 @@ function AppComponent(props: App): JSX.Element {
         padding="0 20px"
         fontWeight={'bold'}
         fontSize="xl"
-        onClick={forceUpdate}
       >
         <br />
         <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
@@ -433,14 +420,6 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-//create your forceUpdate hook
-function useForceUpdate() {
-  const [value, setValue] = useState(0); // integer state
-  return () => setValue((value) => value + 1); // update state to force render
-  // A function that increment 👆🏻 the previous state like here
-  // is better than directly setting `setValue(value + 1)`
-}
-
 function Arrow({ degree }: { degree: number }) {
   const arrowRef = useRef<any>(null);
   const blue = useHexColor('blue.500');
@@ -504,6 +483,33 @@ function Arrow({ degree }: { degree: number }) {
   );
 }
 
+const hawaiiLatLngCoordinates = [
+  {
+    name: 'Kauai',
+    lat: 22.05809405806077,
+    lng: -159.5064180703451,
+    zoom: 11,
+  },
+  {
+    name: 'Honolulu',
+    lat: 21.474661068505032,
+    lng: -157.9658777888294,
+    zoom: 11,
+  },
+  {
+    name: 'Maui',
+    lat: 20.804509245368596,
+    lng: -156.31157458227207,
+    zoom: 11,
+  },
+  {
+    name: 'Big Island',
+    lat: 19.617391599674416,
+    lng: -155.48167943875694,
+    zoom: 10,
+  },
+];
+
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -559,38 +565,24 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { zoom: limitZoom });
   };
 
-  const incrementFontSizeOfCreatedApps = () => {
-    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
-    s.appIdsICreated.forEach((appId) => {
-      updateState(appId, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
-    });
-  };
+  const handleChangePosition = (location: any) => {
+    console.log({ location });
 
-  const decrementFontSizeOfCreatedApps = () => {
-    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
-
-    s.appIdsICreated.forEach((appId) => {
-      updateState(appId, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
-    });
+    updateState(props._id, { location: [location.lat, location.lng] });
   };
 
   return (
     <HStack>
-      <ButtonGroup>
-        <form onSubmit={changeAddr}>
-          <InputGroup size="xs" minWidth="200px">
-            <Input
-              defaultValue={addrValue}
-              onChange={handleAddrChange}
-              onPaste={(event) => {
-                event.stopPropagation();
-              }}
-              backgroundColor="whiteAlpha.300"
-              placeholder="Type a place or address"
-              _placeholder={{ opacity: 1, color: 'gray.400' }}
-            />
-          </InputGroup>
-        </form>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        {hawaiiLatLngCoordinates.map((location) => {
+          return (
+            <Tooltip placement="top-start" hasArrow={true} label={location.name} openDelay={400}>
+              <Button onClick={() => handleChangePosition(location)} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+                {location.name}
+              </Button>
+            </Tooltip>
+          );
+        })}
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
@@ -599,21 +591,8 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= 1} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.zoom <= 9} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdOutlineZoomOut fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size of Created Charts'} openDelay={400}>
-          <Button onClick={incrementFontSizeOfCreatedApps} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdAdd fontSize="16px" />
-          </Button>
-        </Tooltip>
-
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size of Created Charts'} openDelay={400}>
-          <Button onClick={decrementFontSizeOfCreatedApps} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdRemove fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
