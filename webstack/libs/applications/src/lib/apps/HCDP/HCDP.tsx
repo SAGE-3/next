@@ -12,8 +12,6 @@ import './styling.css';
 // Chakra Imports
 import {
   HStack,
-  InputGroup,
-  Input,
   ButtonGroup,
   Tooltip,
   Button,
@@ -28,12 +26,13 @@ import {
 } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useAppStore, useHexColor } from '@sage3/frontend';
-import { App, AppSchema } from '../../schema';
+import { useAppStore } from '@sage3/frontend';
+import { App } from '../../schema';
 import { state as AppState } from './index';
 
+import Arrow from './Arrow';
+
 // Leaflet plus React
-import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
@@ -44,11 +43,8 @@ import { stationData } from './stationData';
 import 'leaflet/dist/leaflet.css';
 import { useStore } from './LeafletWrapper';
 
-// Store imports
-import create from 'zustand';
-
 // Icon imports
-import { MdAdd, MdOutlineZoomIn, MdOutlineZoomOut, MdRemove } from 'react-icons/md';
+import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
@@ -246,6 +242,7 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  // Creates an overview that shows the metadata of a station
   const createOverview = (stationName: string) => {
     const appPos = { x: props.data.position.x + props.data.size.width, y: props.data.position.y, z: 0 };
     createApp({
@@ -261,6 +258,7 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  // Change the variable to display on the map
   const handleChangeVariable = (variableName: string) => {
     updateState(props._id, { variableToDisplay: variableName });
   };
@@ -420,69 +418,6 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function Arrow({ degree }: { degree: number }) {
-  const arrowRef = useRef<any>(null);
-  const blue = useHexColor('blue.500');
-
-  useEffect(() => {
-    const arrowGroup = arrowRef.current;
-    //TODO factor in wind speed and change color
-    const duration = 2; // in seconds
-    const distance = -50; // in pixels
-
-    // Calculate the x and y displacement based on the degree
-    const radian = (degree * Math.PI) / 180;
-    const x = -Math.cos(radian) * distance - 20;
-    const y = -Math.sin(radian) * distance;
-
-    // Calculate the rotation angle based on the degree
-    const angle = degree - 90;
-
-    // Apply the animation to the arrow group
-    // arrowGroup.style.transformOrigin = '0 0';
-    arrowGroup.style.animation = `moveArrow ${duration}s linear infinite`;
-    arrowGroup.style.transformOrigin = '0 0';
-
-    // Define the keyframes for the animation
-    const keyframes = `
-      0% {
-        opacity: 0;
-        transform:  translate(${-x}px, ${-y}px);
-      }
-      25% {
-        opacity: 1;
-      }
-      75% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 0;
-        transform: translate(${x}px, ${y}px);
-      }
-    `;
-
-    // Create a style element and append the keyframes to it
-    const style = document.createElement('style');
-    style.innerHTML = `@keyframes moveArrow { ${keyframes} }`;
-
-    // Append the style element to the document head
-    document.head.appendChild(style);
-
-    return () => {
-      // Remove the animation and style element when the component unmounts
-      arrowGroup.style.animation = '';
-      document.head.removeChild(style);
-    };
-  }, [degree]);
-
-  return (
-    <g ref={arrowRef}>
-      <object type="image/svg+xml" data="./Rain.svg"></object>
-      <polygon points="80,130 100,60 120,130 100,125" fill={blue} stroke="black" strokeWidth={3} strokeLinecap="round" />
-    </g>
-  );
-}
-
 const hawaiiLatLngCoordinates = [
   {
     name: 'Kauai',
@@ -574,9 +509,9 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <HStack>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        {hawaiiLatLngCoordinates.map((location) => {
+        {hawaiiLatLngCoordinates.map((location, index) => {
           return (
-            <Tooltip placement="top-start" hasArrow={true} label={location.name} openDelay={400}>
+            <Tooltip key={index} placement="top-start" hasArrow={true} label={location.name} openDelay={400}>
               <Button onClick={() => handleChangePosition(location)} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
                 {location.name}
               </Button>

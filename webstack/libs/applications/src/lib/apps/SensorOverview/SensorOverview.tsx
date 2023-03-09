@@ -23,7 +23,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
-  const [sensorData, setSensorData] = useState({} as any);
+  const [singularSensorData, setSingularSensorData] = useState({} as any);
 
   useEffect(() => {
     // Fetch from the Mesonet website. Will change to HCDP database when website is ready
@@ -32,47 +32,22 @@ function AppComponent(props: App): JSX.Element {
     ).then((response) => {
       response.json().then(async (sensor) => {
         const sensorData = sensor['STATION'][0];
-        setSensorData(sensorData);
+        console.log(sensorData);
+        setSingularSensorData(sensorData);
       });
     });
   }, [s.stationName]);
 
-  const handleChangeSensor = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateState(props._id, { stationName: e.target.value });
-  };
-
   return (
     <AppWindow app={props}>
       <Box p={'1rem'} w="100%" bg="white" color="black" h="100%">
-        <Select
-          borderWidth="1px"
-          borderRadius="lg"
-          size="xs"
-          mx="1rem"
-          w="10rem"
-          borderColor={'gray.400'}
-          backgroundColor={'white'}
-          color="black"
-          name="yAxis"
-          placeholder={'choose an attribute'}
-          onChange={handleChangeSensor}
-        >
-          {stationData.map((sensor, index) => {
-            return (
-              <option key={index} value={sensor.name}>
-                {sensor.name}
-              </option>
-            );
-          })}
-        </Select>
-        <br />
-        {Object.keys(sensorData).length > 0 ? (
-          Object.keys(sensorData).map((sensor) => {
-            if (typeof sensorData[sensor] !== 'object') {
+        {Object.keys(singularSensorData).length > 0 ? (
+          Object.keys(singularSensorData).map((sensor) => {
+            if (typeof singularSensorData[sensor] !== 'object') {
               return (
                 <div>
                   <h2>
-                    <strong>{sensor}:</strong> {sensorData[sensor]}
+                    <strong>{sensor}:</strong> {singularSensorData[sensor]}
                   </h2>
                 </div>
               );
@@ -100,9 +75,51 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
+  const [stations, setStations] = useState<any[]>([]);
+
+  const handleChangeSensor = (e: ChangeEvent<HTMLSelectElement>) => {
+    updateState(props._id, { stationName: e.target.value });
+  };
+
+  useEffect(() => {
+    for (let i = 0; i < stationData.length; i++) {
+      console.log(stationData[i].name, s.stationName);
+      fetch(
+        `https://api.mesowest.net/v2/stations/timeseries?STID=${stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+      ).then((response) => {
+        response.json().then(async (sensor) => {
+          console.log(sensor);
+          const sensorData = sensor['STATION'][0];
+          setStations((stations) => [...stations, sensorData]);
+          console.log(sensorData);
+        });
+      });
+    }
+  }, []);
+
   return (
     <>
-      <Button colorScheme="green">Action</Button>
+      <Select
+        borderWidth="1px"
+        borderRadius="lg"
+        size="xs"
+        mx="1rem"
+        w="10rem"
+        borderColor={'gray.400'}
+        backgroundColor={'white'}
+        color="black"
+        name="yAxis"
+        placeholder={'Choose Sensor'}
+        onChange={handleChangeSensor}
+      >
+        {stations.map((station: any, index: number) => {
+          return (
+            <option key={index} value={station.STID}>
+              {station.NAME}
+            </option>
+          );
+        })}
+      </Select>
     </>
   );
 }
