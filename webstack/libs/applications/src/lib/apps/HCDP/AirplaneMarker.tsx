@@ -63,12 +63,12 @@ function toDegrees(radians: number) {
 let cursor = 0;
 
 export default function AirplaneMarker(props: { dataStory: { lat: number; lng: number }[]; degree: number; index: number }) {
-  const [currentTrack, setCurrentTrack] = useState(props.dataStory[0]);
+  const [currentTrack, setCurrentTrack] = useState(dataStory[0]);
   const { lat, lng } = currentTrack;
   const [prevPos, setPrevPos] = useState<any>([lat, lng]);
   const [duration, setDuration] = useState(1000);
   const [intervalTimer, setIntervalTimer] = useState(1000);
-  const [locations, setLocations] = useState<any>([...props.dataStory]);
+  const [locations, setLocations] = useState<any>([...dataStory]);
 
   useEffect(() => {
     //TODO factor in wind speed and change color of plane
