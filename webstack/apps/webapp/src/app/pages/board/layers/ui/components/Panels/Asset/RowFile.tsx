@@ -187,14 +187,16 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
             createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
               w: width,
               h: height
-            }, {code: sourceCode, groupColor: groupColor + '.400'}));
+            }, {code: sourceCode}));
+            // }, {code: sourceCode, groupColor: groupColor + '.400'}));
           }
           if (cell.cell_type === 'markdown') {
             createApp(
               setupApp('', 'Stickie', x, y, roomId, boardId, {
                 w: width,
                 h: height
-              }, {text: `markdown ${cell.source}`, color: groupColor})
+              }, {text: `markdown ${cell.source}`})
+              // }, {text: `markdown ${cell.source}`, color: groupColor})
             );
           }
           if (cell.cell_type === 'raw') {
@@ -202,7 +204,8 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
               setupApp('', 'Stickie', x, y, roomId, boardId, {
                 w: width,
                 h: height
-              }, {text: `markdown ${cell.source}`, color: groupColor})
+              }, {text: `markdown ${cell.source}`})
+              // }, {text: `markdown ${cell.source}`, color: groupColor})
             );
           }
           if (cell.cell_type === 'display_data') {
