@@ -44,3 +44,18 @@ div.drag-line {
   background-color: green;
   margin: 5px;
 }
+
+/*.column {*/
+/*  display: flex;*/
+/*  justify-content: center;*/
+/*  align-items: center;*/
+/*  background-color: #f5f5f5;*/
+/*  border: 1px solid #ddd;*/
+/*  border-radius: 5px;*/
+/*  position: relative;*/
+/*  z-index: 1;*/
+/*}*/
+
+.drag-handle {
+  cursor: move;
+}

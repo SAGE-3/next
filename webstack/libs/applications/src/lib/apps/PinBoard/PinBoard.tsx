@@ -6,7 +6,7 @@
  *
  */
 
-import {Box, Button} from '@chakra-ui/react';
+import {Box, Button, Icon} from '@chakra-ui/react';
 import {useEffect, useState, useRef} from 'react';
 
 import {useAppStore, useUIStore} from '@sage3/frontend';
@@ -17,6 +17,8 @@ import {AppWindow} from '../../components';
 import {v4 as uuidv4} from 'uuid';
 
 import './styles.css';
+import {Rnd} from "react-rnd";
+import {RxDragHandleDots2} from "react-icons/rx";
 
 type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
@@ -44,6 +46,9 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
 
   const boardApps = useAppStore((state) => state.apps);
   // const [lists, setLocalLists] = useState<List[]>(props.data);
+
+  const [pos, setPos] = useState({x: 0, y: 0})
+  const [size, setSize] = useState({width: 400, height: 300})
 
   const dragItem = useRef<{ listID: string; itemId: number } | null>(null);
   const dragOverItem = useRef<{ listID: string; itemId: number } | null>(null);
@@ -89,18 +94,17 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
 
   useEffect(() => {
     updateState(props._id, {lists: localLists});
-
   }, [localLists])
 
-  const updateListCount = () => {
-    const newuuid = uuidv4();
-
-    const blankListItem: ListItem = {item: "", isDragging: false}
-    const blankList: List = {listID: newuuid, list: [blankListItem]}
-    const newList = [...localLists, blankList]
-
-    setLocalLists(newList)
-  }
+  // const updateListCount = () => {
+  //   const newuuid = uuidv4();
+  //
+  //   const blankListItem: ListItem = {item: "", isDragging: false}
+  //   const blankList: List = {listID: newuuid, list: [blankListItem]}
+  //   const newList = [...localLists, blankList]
+  //
+  //   setLocalLists(newList)
+  // }
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
     dragItem.current = {listID, itemId};
@@ -168,44 +172,45 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
       <div>
         {s.lists &&
           s.lists.map((list) => (
-            <Box
-              key={list.listID}
-              border="1px"
-              borderColor="teal"
-              borderWidth="5px"
-              borderRadius="25px"
-              backgroundColor="green.300"
-              p="5px">
-              {list.list.map((item, index) => (
-                <>
-                  <div
-                    style={{
-                      backgroundColor: 'orange',
-                      borderRadius: '25px',
-                      margin: '10px 5%',
-                      textAlign: 'center',
-                      fontSize: '40px'
-                    }}
-                    key={item.item}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, list.listID, list.list.indexOf(item))}
-                    onDragEnter={(e) => handleDragEnter(e, list.listID, list.list.indexOf(item))}
-                    // onDragEnd={() => dragEnd()}
-                    onDragEnd={(e) => handleDragEnd(e, list.listID, list.list.indexOf(item))}
-                  >
-                    {item.item == "" ? <Box backgroundColor="green.300" p="3px"/> : item.item}
-                  </div>
-                  {item.isDragging ? <div className="drag-line"/> : null}
-                </>
-              ))}
-            </Box>
+            <Rnd
+              size={size}
+              dragHandleClassName={"drag-handle"}
+            >
+              <Box
+                key={list.listID}
+                border="1px"
+                borderColor="teal"
+                borderWidth="5px"
+                borderRadius="25px"
+                backgroundColor="green.300"
+                position="relative"
+                p="5px">
+                <Icon className={"drag-handle"} as={RxDragHandleDots2} boxSize={12} position="absolute" top={"50%"}
+                      transform={"translateY(-50%)"}/>
+                {list.list.map((item, index) => (
+                  <>
+                    <div
+                      style={{
+                        backgroundColor: 'orange',
+                        borderRadius: '25px',
+                        margin: '3% 5% 3% 15%',
+                        textAlign: 'center',
+                        fontSize: '40px',
+                      }}
+                      key={item.item}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, list.listID, list.list.indexOf(item))}
+                      onDragEnter={(e) => handleDragEnter(e, list.listID, list.list.indexOf(item))}
+                      onDragEnd={(e) => handleDragEnd(e, list.listID, list.list.indexOf(item))}
+                    >
+                      {item.item == "" ? <Box backgroundColor="green.300" p="5px"/> : item.item}
+                    </div>
+                    {item.isDragging ? <div className="drag-line"/> : null}
+                  </>
+                ))}
+              </Box>
+            </Rnd>
           ))}
-        <Button
-          colorScheme="blue"
-          onClick={() => updateListCount()}
-        >
-          Add Column
-        </Button>
       </div>
     </AppWindow>
   );
@@ -215,11 +220,25 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const [addColumns, setAddColumns] = useState<List[]>();
+  // TODO Share state between Toolbar and App
+  const updateListCount = () => {
+    const newuuid = uuidv4();
+    const blankListItem: ListItem = {item: "", isDragging: false}
+    const blankList: List = {listID: newuuid, list: [blankListItem]}
+    const newList = [...s.lists, blankList]
+    // updateState(props._id, {lists: newList});
+  }
 
 
   return (
     <>
+      <Button
+        colorScheme="blue"
+        size="sm"
+        onClick={() => updateListCount()}
+      >
+        Add Column
+      </Button>
     </>
   );
 }
