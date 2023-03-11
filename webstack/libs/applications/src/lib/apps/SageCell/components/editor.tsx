@@ -88,6 +88,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
 
   const handleExecute = (kernel: string) => {
     let code = editor.current?.getValue();
+    const requestId = getUUID();
     if (!kernel) {
       toast({
         title: 'No kernel selected',
@@ -106,7 +107,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       updateState(props.app._id, {
         code: code,
         output: '',
-        executeInfo: { executeFunc: 'execute', params: { _uuid: getUUID() } },
+        executeInfo: { executeFunc: 'execute', params: { _uuid: requestId } },
       });
     }
   };
@@ -226,12 +227,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
             />
           </Tooltip>
           <Tooltip hasArrow label="Clear All" placement="right-start">
-            <IconButton
-              onClick={handleClear}
-              aria-label={''}
-              isDisabled={!s.kernel}
-              icon={<MdClearAll size={'1.5em'} color="#008080" />}
-            />
+            <IconButton onClick={handleClear} aria-label={''} isDisabled={!s.kernel} icon={<MdClearAll size={'1.5em'} color="#008080" />} />
           </Tooltip>
         </ButtonGroup>
       </HStack>

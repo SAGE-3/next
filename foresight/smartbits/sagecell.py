@@ -32,6 +32,8 @@ class SageCell(SmartBit):
     _jupyter_client = PrivateAttr()
     _r_json = PrivateAttr()
     _redis_space = PrivateAttr(default='JUPYTER:KERNELS')
+    _msg_count = PrivateAttr(default=0)
+    _request_id = PrivateAttr(default='')
 
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
@@ -42,7 +44,22 @@ class SageCell(SmartBit):
             self._r_json.set(self._redis_space, '.', {})
 
     def handle_exec_result(self, msg):
+        """
+        This function will handle the results from the jupyter server
+
+        We need to add a msg_count to the message so that the front end can
+        determine if the message is the last message in the sequence
+
+        :param msg:
+        :return:
+        """
+        if msg['request_id'] != self._request_id:
+            self._msg_count = 0
+            self._request_id = msg['request_id']
+        self._msg_count += 1
+        msg['msg_count'] = self._msg_count
         self.state.output = json.dumps(msg)
+        # print(f"handle_exec_result: {self.state.output}")
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
         self.send_updates()

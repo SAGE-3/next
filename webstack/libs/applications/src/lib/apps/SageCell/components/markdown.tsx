@@ -6,160 +6,66 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { default as MD } from 'markdown-to-jsx';
+import { default as Mark } from 'markdown-to-jsx';
+import { Text, Box, Highlight, OrderedList, UnorderedList, ListItem, Link, useColorModeValue } from '@chakra-ui/react';
 
 type MarkdownProps = {
-  data: any;
+  markdown: string;
   openInWebview: (url: string) => void;
 };
 
-export const Markdown = (props: any): JSX.Element => {
-  const { data, openInWebview } = props as MarkdownProps;
+export function Markdown(props: any): JSX.Element {
+  const { markdown, openInWebview } = props as MarkdownProps;
   return (
-    <MD
+    <Mark
       options={{
         overrides: {
+          div: { component: Box, props: { as: 'div', fontFamily: 'Menlo, Consolas' } },
+          text: { component: Text, props: { as: 'span', fontFamily: 'Menlo, Consolas' } },
+          p: { component: Text, props: { as: 'p', fontFamily: 'Menlo, San-serif' } },
+          h1: { component: Text, props: { as: 'h1', fontSize: '2xl' } },
+          h2: { component: Text, props: { as: 'h2', fontSize: 'xl' } },
+          h3: { component: Text, props: { as: 'h3', fontSize: 'lg' } },
+          h4: { component: Text, props: { as: 'h4', fontSize: 'md' } },
+          h5: { component: Text, props: { as: 'h5', fontSize: 'sm' } },
+          h6: { component: Text, props: { as: 'h6', fontSize: 'xs' } },
           a: {
-            component: 'a',
+            component: Link,
             props: {
               onClick: (e: any) => {
                 e.preventDefault();
                 openInWebview(e.target.href);
               },
               style: {
-                color: '#555',
+                color: useColorModeValue('darkblue', 'lightblue'),
                 textDecoration: 'underline',
               },
+              isExternal: true,
             },
           },
-          h1: {
-            component: 'h1',
-            props: {
-              style: {
-                fontSize: '1.5em',
-                fontWeight: 'bold',
-                color: '#008080',
-              },
-            },
-          },
-          h2: {
-            component: 'h2',
-            props: {
-              style: {
-                fontSize: '1.3em',
-                fontWeight: 'bold',
-                color: '#008080',
-              },
-            },
-          },
-          h3: {
-            component: 'h3',
-            props: {
-              style: {
-                fontSize: '1.1em',
-                fontWeight: 'bold',
-                color: '#008080',
-              },
-            },
-          },
-          h4: {
-            component: 'h4',
-            props: {
-              style: {
-                fontSize: '1em',
-                fontWeight: 'bold',
-                color: '#008080',
-              },
-            },
-          },
-          h5: {
-            component: 'h5',
-            props: {
-              style: {
-                fontSize: '0.9em',
-                fontWeight: 'bold',
-                color: '#008080',
-              },
-            },
-          },
-          h6: {
-            component: 'h6',
-            props: {
-              style: {
-                fontSize: '0.8em',
-                fontWeight: 'bold',
-                color: '#008080',
-              },
-            },
-          },
-          p: {
-            component: 'p',
-            props: {
-              style: {
-                fontSize: '0.9em',
-              },
-            },
-          },
-          li: {
-            component: 'li',
-            props: {
-              style: {
-                fontSize: '0.9em',
-                display: 'list-item',
-                margin: '1em',
-              },
-            },
-          },
-          ul: {
-            component: 'ul',
-            props: {
-              style: {
-                fontSize: '0.9em',
-              },
-            },
-          },
-          ol: {
-            component: 'ol',
-            props: {
-              style: {
-                fontSize: '0.9em',
-                listStyleType: 'decimal',
-              },
-            },
-          },
-          blockquote: {
-            component: 'blockquote',
-            props: {
-              style: {
-                fontSize: '0.9em',
-                borderLeft: '0.2em solid #008080',
-                paddingLeft: '0.5em',
-              },
-            },
-          },
-          code: {
-            component: 'code',
-            props: {
-              style: {
-                fontSize: '0.9em',
-                padding: '0.2em',
-                fontFamily: 'monospace',
-              },
-            },
-          },
-          del: {
-            component: 'del',
-            props: {
-              style: {
-                fontSize: '0.9em',
-                textDecoration: 'line-through',
-              },
-            },
-          },
+          em: { component: Text, props: { as: 'em' } },
+          strong: { component: Text, props: { as: 'strong' } },
+          code: { component: Text, props: { as: 'code' } },
+          del: { component: Text, props: { as: 'del' } },
+          ins: { component: Text, props: { as: 'ins' } },
+          pre: { component: Text, props: { as: 'pre' } },
+          sub: { component: Text, props: { as: 'sub' } },
+          sup: { component: Text, props: { as: 'sup' } },
+          ul: { component: UnorderedList, props: { spacing: '' } },
+          ol: { component: Text, props: { as: 'ol' } },
+          li: { component: Text, props: { as: 'li' } },
+          table: { component: Text, props: { as: 'table' } },
+          thead: { component: Text, props: { as: 'thead' } },
+          tbody: { component: Text, props: { as: 'tbody' } },
+          tr: { component: Text, props: { as: 'tr' } },
+          th: { component: Text, props: { as: 'th' } },
+          td: { component: Text, props: { as: 'td' } },
+          hr: { component: Text, props: { as: 'hr' } },
+          br: { component: Text, props: { as: 'br' } },
         },
       }}
     >
-      {data}
-    </MD>
+      {markdown}
+    </Mark>
   );
-};
+}

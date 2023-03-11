@@ -12,7 +12,7 @@ import { Box, useColorModeValue, Divider, Badge, Spacer, Stack } from '@chakra-u
 // SAGE3 imports
 import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
 
-import { state as AppState, availableKernelsType } from './index';
+import { state as AppState, Kernels } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 import { CodeEditor } from './components/editor';
@@ -30,12 +30,13 @@ import './styles.css';
 const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
   const s = props.data.state as AppState;
-  const [myKernels, setMyKernels] = useState<availableKernelsType>(s.availableKernels);
+  const [myKernels, setMyKernels] = useState<Kernels>(s.availableKernels);
   const [access, setAccess] = useState(true);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+
   // Needed for Div resizing
-  const [editorHeight, setEditorHeight] = useState(150); // not beign used?
+  const [editorHeight, setEditorHeight] = useState(150);
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
@@ -61,7 +62,7 @@ const AppComponent = (props: App): JSX.Element => {
 
   useEffect(() => {
     // Get all kernels that I'm available to see
-    const kernels: availableKernelsType = [];
+    const kernels: Kernels = [];
     s.availableKernels.forEach((kernel) => {
       if (kernel.value.is_private) {
         if (kernel.value.owner_uuid == user?._id) {

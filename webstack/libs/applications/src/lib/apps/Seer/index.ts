@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { executeInfoType } from '../SageCell';
+import { ExecuteInfo } from '../SageCell';
 
 /**
  * SAGE3 application: Seer
@@ -40,7 +40,7 @@ export const init: Partial<state> = {
   fieldType: 'code',
   code: '',
   output: '',
-  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
+  executeInfo: { executeFunc: '', params: {} } as ExecuteInfo,
   fontSize: 24,
 };
 
