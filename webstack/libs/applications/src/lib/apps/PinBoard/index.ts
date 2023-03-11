@@ -22,13 +22,23 @@ const ListItemType = z.array(
 
 interface Lists {
   listId: string;
-  list: ListItem[]
+  list: ListItem[];
+  position: { x: number, y: number };
+  size: { width: number, height: number };
 }
 
 const ListType = z.array(
   z.object({
     listID: z.string(),
-    list: ListItemType
+    list: ListItemType,
+    position: z.object({
+      x: z.number(),
+      y: z.number()
+    }),
+    size: z.object({
+      width: z.number(),
+      height: z.number()
+    })
   })
 )
 

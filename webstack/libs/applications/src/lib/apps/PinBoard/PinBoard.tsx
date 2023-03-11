@@ -31,6 +31,8 @@ interface ListItem {
 interface List {
   listID: string;
   list: ListItem[];
+  position: { x: number, y: number };
+  size: { width: number, height: number };
 }
 
 interface DraggableListProps {
@@ -47,8 +49,8 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   const boardApps = useAppStore((state) => state.apps);
   // const [lists, setLocalLists] = useState<List[]>(props.data);
 
-  const [pos, setPos] = useState({x: 0, y: 0})
-  const [size, setSize] = useState({width: 400, height: 300})
+  // const [pos, setPos] = useState({x: 0, y: 0})
+  // const [size, setSize] = useState({width: 400, height: 300})
 
   const dragItem = useRef<{ listID: string; itemId: number } | null>(null);
   const dragOverItem = useRef<{ listID: string; itemId: number } | null>(null);
@@ -70,7 +72,9 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
             item: "item 3",
             isDragging: false
           }
-        ]
+        ],
+        position: {x: 0, y: 0},
+        size: {width: 400, height: 300}
       },
       {
         listID: "5678",
@@ -83,27 +87,71 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
             item: "item 5",
             isDragging: false
           }
-        ]
+        ],
+        position: {x: 0, y: 0},
+        size: {width: 400, height: 300}
       }
     ]
   );
 
-  const updateList = (listID: string, newList: ListItem[]) => {
-    setLocalLists(localLists.map((list) => (list.listID === listID ? {...list, list: newList} : list)));
+  // const updateList = (listID: string, newList: ListItem[]) => {
+  //   setLocalLists(localLists.map((list) => (list.listID === listID ? {...list, list: newList} : list)));
+  // };
+
+  const updateList = (listID: string, newList: ListItem[], newPosition?: { x: number; y: number }, newSize?: { width: number, height: number }) => {
+    const newListIndex = localLists.findIndex((list) => list.listID === listID);
+    const newListObj = {
+      listID,
+      list: newList,
+      position: newPosition ?? localLists[newListIndex].position,
+      size: newSize ?? localLists[newListIndex].size,
+    };
+    const newLocalLists = [...localLists];
+    newLocalLists.splice(newListIndex, 1, newListObj);
+    setLocalLists(newLocalLists);
   };
 
   useEffect(() => {
     updateState(props._id, {lists: localLists});
+    console.log(JSON.stringify(s.lists))
   }, [localLists])
 
-  // const updateListCount = () => {
-  //   const newuuid = uuidv4();
+  const updateListCount = () => {
+    const newuuid = uuidv4();
+
+    const blankListItem: ListItem = {item: "", isDragging: false}
+    const blankList: List = {
+      listID: newuuid,
+      list: [blankListItem],
+      position: {x: 0, y: 0},
+      size: {width: 400, height: 300}
+    }
+    const newList = [...localLists, blankList]
+
+    setLocalLists(newList)
+  }
+
+  const handleColumnDragStop = (e: any, data: any, listID: string) => {
+    const {x, y} = data;
+    const newList = localLists.find((list) => list.listID === listID)?.list ?? [];
+    updateList(listID, newList, {x, y});
+  };
+
+  const handleColumnResize = (e: any, data: any, listID: string) => {
+    const {width, height} = data;
+    const newList = localLists.find((list) => list.listID === listID)?.list ?? [];
+    // updateList(listID, newList, newSize={width, height})
+    // updateList(listID, newList, newSize: {width, height});
+  }
+
+  // const handleColumnDragStop = (e: any, listID: string) => {
+  //   // setLocalLists(localLists.map((list) => (list.listID === listID ? {...list, list: newList} : list)));
+  //   let newListPosition = localLists.find((list) => list.listID === listID)?.position
+  //   newListPosition = {x: 10, y: 10}
   //
-  //   const blankListItem: ListItem = {item: "", isDragging: false}
-  //   const blankList: List = {listID: newuuid, list: [blankListItem]}
-  //   const newList = [...localLists, blankList]
-  //
-  //   setLocalLists(newList)
+  //   if (newListPosition) {
+  //     updateList(listID, newListPosition);
+  //   }
   // }
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
@@ -113,11 +161,7 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
     dragOverItem.current = {listID, itemId};
-    // console.log("dragOverItem " + JSON.stringify(dragOverItem))
-
     const isDragOverEmpty = localLists.find((list) => list.listID === listID)?.list[itemId].item === "";
-    console.log("isEmpty " + isDragOverEmpty)
-
 
     const newList = localLists.find((list) => list.listID === listID)?.list.map((item, index) => ({
       ...item,
@@ -127,7 +171,6 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
       updateList(listID, newList);
     }
   };
-
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
     const dragItemId = dragItem.current?.itemId;
@@ -150,6 +193,13 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
         if (dragList && dropList) {
           const dragItemContent = dragList.list[dragItemId];
           dragList.list.splice(dragItemId, 1);
+
+          if (dragList.list.length === 0) {
+            const blankListItem: ListItem = {item: "", isDragging: false}
+            dragList.list = [blankListItem]
+            updateList(draglistID, dragList.list)
+          }
+
           if (dropList.list[0].item === "") {
             dropList.list[0] = dragItemContent
           } else {
@@ -170,11 +220,14 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <div>
-        {s.lists &&
-          s.lists.map((list) => (
+        {localLists &&
+          localLists.map((list) => (
             <Rnd
-              size={size}
+              // size={{width: "400px", height: "300px"}}
+              size={{width: list.size.width, height: list?.size.height}}
+              position={{x: list?.position.x, y: list?.position.y}}
               dragHandleClassName={"drag-handle"}
+              onDragStop={(e, data) => handleColumnDragStop(e, data, list.listID)}
             >
               <Box
                 key={list.listID}
@@ -211,6 +264,13 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
               </Box>
             </Rnd>
           ))}
+        <Button
+          colorScheme="blue"
+          size="sm"
+          onClick={() => updateListCount()}
+        >
+          Add Column
+        </Button>
       </div>
     </AppWindow>
   );
@@ -224,7 +284,12 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateListCount = () => {
     const newuuid = uuidv4();
     const blankListItem: ListItem = {item: "", isDragging: false}
-    const blankList: List = {listID: newuuid, list: [blankListItem]}
+    const blankList: List = {
+      listID: newuuid,
+      list: [blankListItem],
+      position: {x: 0, y: 0},
+      size: {width: 400, height: 300}
+    }
     const newList = [...s.lists, blankList]
     // updateState(props._id, {lists: newList});
   }
