@@ -45,7 +45,7 @@
     plugins: true, 
     // Which Apps to enable.  Available Apps: 
     // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["ChartMaker", "LeafLet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
+    apps: ["ChartMaker", "LeafLet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview", "Hawaii Mesonet"],
   },
 
   // Auth Configuration
