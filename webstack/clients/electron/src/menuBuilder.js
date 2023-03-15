@@ -107,7 +107,7 @@ function buildSageMenu(window) {
           },
         },
         {
-          label: 'Take Screenshot1',
+          label: 'Take Screenshot',
           click() {
             takeScreenshot(window);
           },
