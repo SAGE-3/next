@@ -7,7 +7,7 @@
  */
 
 import { default as Mark } from 'markdown-to-jsx';
-import { Text, Box, Highlight, OrderedList, UnorderedList, ListItem, Link, useColorModeValue } from '@chakra-ui/react';
+import { Text, Box, Highlight, Image, OrderedList, UnorderedList, ListItem, Link, useColorModeValue } from '@chakra-ui/react';
 
 type MarkdownProps = {
   markdown: string;
@@ -62,6 +62,7 @@ export function Markdown(props: any): JSX.Element {
           td: { component: Text, props: { as: 'td' } },
           hr: { component: Text, props: { as: 'hr' } },
           br: { component: Text, props: { as: 'br' } },
+          img: { component: Image },
         },
       }}
     >
