@@ -37,54 +37,19 @@ interface List {
   size: { width: number, height: number };
 }
 
+interface ListState {
+  lists: { [appID: string]: List[] };
+  setList: (id: string, li: List[]) => void;
+}
+
 interface DraggableListProps {
-  data: List[];
+  data: { [appID: string]: List[] };
   renderItemContent: (item: ListItem) => JSX.Element;
 }
 
-interface ListState {
-  lists: List[];
-  setLists: (lists: List[]) => void;
-}
-
 const useListStore = create<ListState>((set) => ({
-  lists: [
-    {
-      listID: "1234",
-      list: [
-        {
-          item: "item 1",
-          isDragging: false
-        },
-        {
-          item: "item 2",
-          isDragging: false
-        },
-        {
-          item: "item 3",
-          isDragging: false
-        }
-      ],
-      position: {x: 0, y: 0},
-      size: {width: 400, height: 300}
-    },
-    {
-      listID: "5678",
-      list: [
-        {
-          item: "item 4",
-          isDragging: false
-        },
-        {
-          item: "item 5",
-          isDragging: false
-        }
-      ],
-      position: {x: 0, y: 0},
-      size: {width: 400, height: 300}
-    }
-  ],
-  setLists: (lists: List[]) => set({lists})
+  lists: {} as { [appID: string]: List[] },
+  setList: (id: string, li: List[]) => set((state) => ({lists: {...state.lists, [id]: li}})),
 }));
 
 function AppComponent(props: (App & DraggableListProps)): JSX.Element {
@@ -101,8 +66,13 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   const dragItem = useRef<{ listID: string; itemId: number } | null>(null);
   const dragOverItem = useRef<{ listID: string; itemId: number } | null>(null);
 
-  const listStore = useListStore((state) => state.lists);
-  const setListStore = useListStore((state) => state.setLists);
+  const listStore: List[] = useListStore((state: any) => state.lists[props._id])
+  const setListStore = useListStore((state: any) => state.setList)
+
+  useEffect(() => {
+    console.log("ListStore start: " + JSON.stringify(listStore))
+  }, [listStore])
+
 
   const updateList = (listID: string, newList: ListItem[], newPosition?: { x: number; y: number }, newSize?: { width: number, height: number }) => {
     const newListIndex = listStore.findIndex((list) => list.listID === listID);
@@ -114,7 +84,7 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
     };
     const newLocalLists = [...listStore];
     newLocalLists.splice(newListIndex, 1, newListObj);
-    setListStore(newLocalLists);
+    setListStore(props._id, newLocalLists);
   };
 
   useEffect(() => {
@@ -190,7 +160,7 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
           updateList(droplistID, dropList.list);
         }
       }
-      setListStore(listStore.map((list) => ({
+      setListStore(props._id, listStore.map((list) => ({
         ...list,
         list: list.list.map((item) => ({...item, isDragging: false}))
       })));
@@ -201,8 +171,6 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   return (
     <AppWindow app={props} lockToBackground={true}>
       <div>
-        {/*{listStore &&*/}
-        {/*  listStore.map((list) => (*/}
         {s.lists &&
           s.lists.map((list) => (
             <Rnd
@@ -257,23 +225,39 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const listStore = useListStore((state) => state.lists);
-  const setListStore = useListStore((state) => state.setLists);
+  // const listStore = useListStore((state) => state.lists);
+  // const setListStore = useListStore((state) => state.setLists);
+  const listStore: List[] = useListStore((state: any) => state.lists[props._id])
+  const setListStore = useListStore((state: any) => state.setList)
 
   // TODO Share state between Toolbar and App
   const updateListCount = () => {
     const newuuid = uuidv4();
 
-    const blankListItem: ListItem = {item: "", isDragging: false}
+    const blankListItem: ListItem = {item: "1", isDragging: false}
+    const blankListItem2: ListItem = {item: "2", isDragging: false}
     const blankList: List = {
       listID: newuuid,
-      list: [blankListItem],
+      list: [blankListItem, blankListItem2],
       position: {x: 0, y: 0},
       size: {width: 400, height: 300}
     }
-    const newList = [...listStore, blankList]
+    console.log("listStore " + listStore)
+    // const newList = [...listStore, blankList]
+    if (listStore) {
+      const newList = [...listStore, blankList]
+      console.log("Here ")
+      setListStore(props._id, newList)
+    } else {
+      console.log("There")
+      setListStore(props._id, [blankList])
+      console.log("There there ")
 
-    setListStore(newList)
+    }
+    console.log("ID: " + props._id)
+
+    // setListStore(newList)
+    // console.log("listStore " + listStore)
   }
 
 
