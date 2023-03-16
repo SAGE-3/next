@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -12,8 +12,6 @@ import './styling.css';
 // Chakra Imports
 import {
   HStack,
-  InputGroup,
-  Input,
   ButtonGroup,
   Tooltip,
   Button,
@@ -28,35 +26,25 @@ import {
 } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useAppStore, useHexColor } from '@sage3/frontend';
-import { App, AppSchema } from '../../schema';
+import { useAppStore } from '@sage3/frontend';
+import { App } from '../../schema';
 import { state as AppState } from './index';
 
+import Arrow from './Arrow';
+
 // Leaflet plus React
-import * as Leaflet from 'leaflet';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { TileLayer, LayersControl, Popup, CircleMarker, Polygon, Marker, SVGOverlay } from 'react-leaflet';
+import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
+
+import { stationData } from './stationData';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
-
-// Store imports
-import create from 'zustand';
+import { useStore } from './LeafletWrapper';
 
 // Icon imports
-import { MdAdd, MdMap, MdOutlineZoomIn, MdOutlineZoomOut, MdRemove, MdTerrain } from 'react-icons/md';
-
-// Zustand store to communicate with toolbar
-export const useStore = create((set: any) => ({
-  map: {} as { [key: string]: Leaflet.Map },
-  saveMap: (id: string, map: Leaflet.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
-}));
-
-// Get a URL for an asset
-export function getStaticAssetUrl(filename: string): string {
-  return `api/assets/static/${filename}`;
-}
+import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
@@ -67,20 +55,6 @@ const convertToFahrenheit = (tempInCelcius: number) => {
 const maxZoom = 18;
 const minZoom = 1;
 
-type SensorTypes = {
-  lat: number;
-  lon: number;
-  name: string;
-  temperatureC: number;
-  temperatureF: number;
-
-  soilMoisture: number;
-  relativeHumidity: number;
-  windSpeed: number;
-  solarRadiation: number;
-  windDirection: number;
-};
-
 // HCDP app
 function AppComponent(props: App): JSX.Element {
   // State and Store
@@ -90,6 +64,9 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   const arrowRef = useRef<any>(null);
+
+  // The map: any, I kown, should be Leaflet.Map but don't work
+  const [map, setMap] = useState<any>();
 
   useEffect(() => {
     for (let i = 0; i < stationData.length; i++) {
@@ -130,7 +107,6 @@ function AppComponent(props: App): JSX.Element {
           stationData[i].solarRadiation = Math.floor(
             station.STATION[0].OBSERVATIONS.solar_radiation_set_1[station.STATION[0].OBSERVATIONS.solar_radiation_set_1.length - 1]
           );
-          console.log(station);
         });
       });
     }
@@ -266,7 +242,8 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const createOverview = () => {
+  // Creates an overview that shows the metadata of a station
+  const createOverview = (stationName: string) => {
     const appPos = { x: props.data.position.x + props.data.size.width, y: props.data.position.y, z: 0 };
     createApp({
       title: '',
@@ -276,64 +253,22 @@ function AppComponent(props: App): JSX.Element {
       size: { width: 1000, height: 1000, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'SensorOverview',
-      state: {},
+      state: { stationName: stationName },
       raised: true,
     });
   };
 
+  // Change the variable to display on the map
   const handleChangeVariable = (variableName: string) => {
     updateState(props._id, { variableToDisplay: variableName });
   };
 
-  useEffect(() => {
-    const arrowGroup = arrowRef.current;
-    if (arrowGroup === null) return;
-
-    const duration = 2; // in seconds
-    const distance = 200; // in pixels
-
-    // Calculate the x and y displacement based on the degree
-    const radian = (30 * Math.PI) / 180;
-    const x = Math.cos(radian) * distance;
-    const y = Math.sin(radian) * distance;
-
-    // Calculate the rotation angle based on the degree
-    const angle = 30 - 45;
-
-    // Apply the animation to the arrow group
-    arrowGroup.style.transformOrigin = '0 0';
-    arrowGroup.style.animation = `moveArrow ${duration}s linear infinite`;
-
-    // Define the keyframes for the animation
-    const keyframes = `
-      0% {
-        transform: rotate(0deg) translate(0, 0);
-      }
-      100% {
-        transform: rotate(360deg) translate(${x}px, ${y}px) rotate(${angle}deg);
-      }
-    `;
-
-    // Create a style element and append the keyframes to it
-    const style = document.createElement('style');
-    style.innerHTML = `@keyframes moveArrow { ${keyframes} }`;
-
-    // Append the style element to the document head
-    document.head.appendChild(style);
-
-    return () => {
-      // Remove the animation and style element when the component unmounts
-      arrowGroup.style.animation = '';
-      document.head.removeChild(style);
-    };
-  }, []);
-
   return (
-    <LeafletWrapper {...props}>
+    <LeafletWrapper map={map} setMap={setMap} {...props}>
       <Box
-        w="12rem"
-        h="14rem"
-        bg="white"
+        w="20rem"
+        h="24rem"
+        bg="gray.300"
         position="absolute"
         zIndex="999"
         color={'black'}
@@ -341,22 +276,32 @@ function AppComponent(props: App): JSX.Element {
         left="2px"
         border="10px"
         rounded={10}
-        onClick={() => {
-          console.log('Hello');
-        }}
-        margin="auto"
+        // margin="auto"
         padding="0 20px"
-        text-align="center"
+        fontWeight={'bold'}
+        fontSize="xl"
       >
         <br />
         <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
           <Stack direction="column">
-            <Radio value="temperatureC">Temperature C</Radio>
-            <Radio value="temperatureF">Temperature F</Radio>
-            <Radio value="soilMoisture">Soil Moisture</Radio>
-            <Radio value="windSpeed">Wind Speed</Radio>
-            <Radio value="relativeHumidity">Relative Humidity</Radio>
-            <Radio value="solarRadiation">Solar Radiation</Radio>
+            <Radio colorScheme="orange" value="temperatureC">
+              <p style={{ fontSize: 30 }}>Temperature C</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="temperatureF">
+              <p style={{ fontSize: 30 }}>Temperature F</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="soilMoisture">
+              <p style={{ fontSize: 30 }}>Soil Moisture</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="windSpeed">
+              <p style={{ fontSize: 30 }}>Wind Speed</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="relativeHumidity">
+              <p style={{ fontSize: 30 }}>Relative Humidity</p>
+            </Radio>
+            <Radio size="lg" colorScheme="orange" value="solarRadiation">
+              <p style={{ fontSize: 30 }}>Solar Radiation</p>
+            </Radio>
           </Stack>
         </RadioGroup>
       </Box>
@@ -365,11 +310,8 @@ function AppComponent(props: App): JSX.Element {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {stationData.map((data, index) => {
-          const height = 1;
-          console.log((30 / s.zoom) * 4 - 6);
 
-          console.log(s.zoom);
+        {stationData.map((data, index) => {
           return (
             <div key={index}>
               <CircleMarker
@@ -392,7 +334,14 @@ function AppComponent(props: App): JSX.Element {
                         <Text fontSize={'30px'} fontWeight="bold">
                           Station: {data.name}
                         </Text>
-                        <Button onClick={() => createOverview()} color="gray.700" colorScheme="blue" w={'50'} h={'20'} fontSize={'4xl'}>
+                        <Button
+                          onClick={() => createOverview(data.name)}
+                          color="gray.700"
+                          colorScheme="blue"
+                          w={'50'}
+                          h={'20'}
+                          fontSize={'4xl'}
+                        >
                           Overview
                         </Button>
                         <Button
@@ -420,6 +369,7 @@ function AppComponent(props: App): JSX.Element {
                   </Box>
                 </Popup>
               </CircleMarker>
+
               <SVGOverlay
                 bounds={[
                   [data.lat - 0.17, data.lon - 0.05],
@@ -434,21 +384,15 @@ function AppComponent(props: App): JSX.Element {
                       <g
                         ref={arrowRef}
                         fill="white"
-                        transform={
-                          s.zoom <= 11
-                            ? `rotate(${data['windDirection']},100,100)`
-                            : `translate(100, 100) scale(${(30 / s.zoom) * 4 - 9}) translate(-100, -100) rotate(${
-                                data['windDirection']
-                              },100,100)`
-                        }
+                        transform={`translate(100, 100) scale(1.5) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`}
                       >
                         <Arrow degree={data['windDirection']} />
 
                         {/* <polygon points="80,130 100,60 120,130 100,125" fill="black" /> */}
                       </g>
                     )}
-                    <g transform={`translate(100, 100) scale(${(30 / s.zoom) * 4 - 8}) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
+                    <g transform={`translate(100, 100) scale(1.5) translate(-100, -100)`}>
+                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" strokeWidth="3" />
 
                       <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
                         {data[s.variableToDisplay]}
@@ -457,7 +401,7 @@ function AppComponent(props: App): JSX.Element {
                   </svg>
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    <g transform={`translate(100, 100) scale(${(30 / s.zoom) * 4 - 8}) translate(-100, -100)`}>
+                    <g transform={`translate(100, 100) scale(1.5) translate(-100, -100)`}>
                       <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
                       <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
                         {data[s.variableToDisplay]}
@@ -474,68 +418,32 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function Arrow({ degree }: { degree: number }) {
-  const arrowRef = useRef<any>(null);
-  const blue = useHexColor('blue.500');
-
-  useEffect(() => {
-    const arrowGroup = arrowRef.current;
-    //TODO factor in wind speed and change color
-    const duration = 2; // in seconds
-    const distance = -50; // in pixels
-
-    // Calculate the x and y displacement based on the degree
-    const radian = (degree * Math.PI) / 180;
-    const x = Math.cos(radian) * distance;
-    const y = Math.sin(radian) * distance;
-
-    // Calculate the rotation angle based on the degree
-    const angle = degree - 90;
-
-    // Apply the animation to the arrow group
-    // arrowGroup.style.transformOrigin = '0 0';
-    arrowGroup.style.animation = `moveArrow ${duration}s linear infinite`;
-    arrowGroup.style.transformOrigin = '50% 50%';
-
-    // Define the keyframes for the animation
-    const keyframes = `
-      0% {
-        opacity: 0;
-        transform:  translate(${-x}px, ${-y}px);
-      }
-      25% {
-        opacity: 1;
-      }
-      75% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 0;
-        transform: translate(${x}px, ${y}px);
-      }
-    `;
-
-    // Create a style element and append the keyframes to it
-    const style = document.createElement('style');
-    style.innerHTML = `@keyframes moveArrow { ${keyframes} }`;
-
-    // Append the style element to the document head
-    document.head.appendChild(style);
-
-    return () => {
-      // Remove the animation and style element when the component unmounts
-      arrowGroup.style.animation = '';
-      document.head.removeChild(style);
-    };
-  }, [degree]);
-
-  return (
-    <g ref={arrowRef}>
-      <object type="image/svg+xml" data="./Rain.svg"></object>
-      <polygon points="80,130 100,60 120,130 100,125" fill={blue} stroke="black" strokeWidth={3} strokeLinecap="round" />
-    </g>
-  );
-}
+const hawaiiLatLngCoordinates = [
+  {
+    name: 'Kauai',
+    lat: 22.05809405806077,
+    lng: -159.5064180703451,
+    zoom: 11,
+  },
+  {
+    name: 'Honolulu',
+    lat: 21.474661068505032,
+    lng: -157.9658777888294,
+    zoom: 11,
+  },
+  {
+    name: 'Maui',
+    lat: 20.804509245368596,
+    lng: -156.31157458227207,
+    zoom: 11,
+  },
+  {
+    name: 'Big Island',
+    lat: 19.617391599674416,
+    lng: -155.48167943875694,
+    zoom: 10,
+  },
+];
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -547,6 +455,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const background = useColorModeValue('gray.50', 'gray.700');
 
   const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
   const geocoder = new esriLeafletGeocoder.geocode({
     apikey: apiKey,
@@ -591,40 +500,24 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { zoom: limitZoom });
   };
 
-  const incrementFontSizeOfCreatedApps = () => {
-    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
-    s.appIdsICreated.forEach((appId) => {
-      updateState(appId, { fontSizeMultiplier: s.fontSizeMultiplier + 1 });
-    });
+  const handleChangePosition = (location: any) => {
+    console.log({ location });
+
+    updateState(props._id, { location: [location.lat, location.lng] });
   };
-
-  const decrementFontSizeOfCreatedApps = () => {
-    updateState(props._id, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
-
-    s.appIdsICreated.forEach((appId) => {
-      updateState(appId, { fontSizeMultiplier: s.fontSizeMultiplier - 1 });
-    });
-  };
-
-  useEffect(() => {}, []);
 
   return (
     <HStack>
-      <ButtonGroup>
-        <form onSubmit={changeAddr}>
-          <InputGroup size="xs" minWidth="200px">
-            <Input
-              defaultValue={addrValue}
-              onChange={handleAddrChange}
-              onPaste={(event) => {
-                event.stopPropagation();
-              }}
-              backgroundColor="whiteAlpha.300"
-              placeholder="Type a place or address"
-              _placeholder={{ opacity: 1, color: 'gray.400' }}
-            />
-          </InputGroup>
-        </form>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        {hawaiiLatLngCoordinates.map((location, index) => {
+          return (
+            <Tooltip key={index} placement="top-start" hasArrow={true} label={location.name} openDelay={400}>
+              <Button onClick={() => handleChangePosition(location)} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+                {location.name}
+              </Button>
+            </Tooltip>
+          );
+        })}
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
@@ -633,21 +526,8 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= 1} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.zoom <= 9} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdOutlineZoomOut fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size of Created Charts'} openDelay={400}>
-          <Button onClick={incrementFontSizeOfCreatedApps} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdAdd fontSize="16px" />
-          </Button>
-        </Tooltip>
-
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size of Created Charts'} openDelay={400}>
-          <Button onClick={decrementFontSizeOfCreatedApps} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdRemove fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -656,199 +536,3 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 export default { AppComponent, ToolbarComponent };
-
-// For now, this is hard-coded. Will change when HCDP is ready.
-const stationData: SensorTypes[] = [
-  {
-    lat: 20.8415,
-    lon: -156.2948,
-    name: '017HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7067,
-    lon: -156.3554,
-    name: '016HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7579,
-    lon: -156.32,
-    name: '001HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7598,
-    lon: -156.2482,
-    name: '002HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7382,
-    lon: -156.2458,
-    name: '013HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7104,
-    lon: -156.2567,
-    name: '003HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.6974,
-    lon: -155.0954,
-    name: '005HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.964,
-    lon: -155.25,
-    name: '006HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.932,
-    lon: -155.291,
-    name: '007HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.748,
-    lon: -155.996,
-    name: '008HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.803,
-    lon: -155.851,
-    name: '009HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.73,
-    lon: -155.87,
-    name: '010HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 21.333,
-    lon: -157.8025,
-    name: '011HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 21.3391,
-    lon: -157.8369,
-    name: '012HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 22.2026,
-    lon: -159.5188,
-    name: '014HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 22.1975,
-    lon: -159.421,
-    name: '015HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-];
