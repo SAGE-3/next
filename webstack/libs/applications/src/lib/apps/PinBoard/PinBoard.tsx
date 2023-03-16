@@ -123,7 +123,7 @@ function AppComponent(props: App): JSX.Element {
                 key={listIndex} // need an index for each column
                 size={{ width: list.size.width, height: list?.size.height }}
                 position={{ x: list?.position.x, y: list?.position.y }}
-                bounds="parent"
+                // bounds="parent"
                 dragHandleClassName={'column-drag'}
                 onDragStart={(e) => handleColumnDragStart(listIndex)}
                 onDragStop={(e, data) => handleColumnDragStop(e, data, listIndex)}
