@@ -14,7 +14,6 @@ import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { v4 as uuidv4 } from 'uuid';
 
 import './styles.css';
 import { DraggableData, Rnd as ListColumn } from 'react-rnd';
@@ -23,6 +22,17 @@ import { RxDragHandleDots1, RxDragHandleDots2 } from 'react-icons/rx';
 
 import ToolbarComponent from './components/toolbar';
 import { defaultData } from './components/default';
+
+/**
+ * Pinboard App
+ *
+ * TODO: Remove item when it is dropped outside of the Pinboard
+ * TODO: Fix resizing issue - when zoomed in or out, the size/position is off
+ * TODO: Fix issue with dragging items - mouse cursor does not move with the item always
+ * TODO: Add ability to select a list (column) and add items to it
+ * TODO: Add ability to add a column title - needs to be added to state
+ * TODO: Add ability to add a column description - needs to be added to state
+ */
 
 interface ListItem {
   item: string;
