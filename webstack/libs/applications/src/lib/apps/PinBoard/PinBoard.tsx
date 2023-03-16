@@ -6,299 +6,167 @@
  *
  */
 
-import {Box, Button, Icon} from '@chakra-ui/react';
-import {useEffect, useState, useRef} from 'react';
+import { Box, Button, Container, Divider, Grid, HStack, Icon, Spacer, Text } from '@chakra-ui/react';
+import { useEffect, useState, useRef } from 'react';
 
-import create from 'zustand';
+import { useAppStore } from '@sage3/frontend';
 
-import {useAppStore, useUIStore} from '@sage3/frontend';
-
-import {App} from '../../schema';
-import {state as AppState} from './index';
-import {AppWindow} from '../../components';
-import {v4 as uuidv4} from 'uuid';
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import { v4 as uuidv4 } from 'uuid';
 
 import './styles.css';
-import {DraggableData, Rnd} from "react-rnd";
-import {DraggableEvent} from "react-draggable";
-import {RxDragHandleDots2} from "react-icons/rx";
+import { DraggableData, Rnd as ListColumn } from 'react-rnd';
+import { DraggableEvent } from 'react-draggable';
+import { RxDragHandleDots1, RxDragHandleDots2 } from 'react-icons/rx';
 
+import ToolbarComponent from './components/toolbar';
+import { defaultData } from './components/default';
 
 interface ListItem {
-  item: any;
+  item: string;
   isDragging: boolean;
 }
 
 interface List {
-  listID: string;
-  list: ListItem[];
-  position: { x: number, y: number };
-  size: { width: number, height: number };
+  items: ListItem[];
+  position: { x: number; y: number };
+  size: { width: number; height: number };
 }
 
-interface ListState {
-  lists: { [appID: string]: List[] };
-  setList: (id: string, li: List[]) => void;
-}
-
-interface DraggableListProps {
-  data: { [appID: string]: List[] };
-  renderItemContent: (item: ListItem) => JSX.Element;
-}
-
-const useListStore = create<ListState>((set) => ({
-  lists: {} as { [appID: string]: List[] },
-  setList: (id: string, li: List[]) => set((state) => ({lists: {...state.lists, [id]: li}})),
-}));
-
-function AppComponent(props: (App & DraggableListProps)): JSX.Element {
+function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const dragItem = useRef<{ listID: string; itemId: number } | null>(null);
-  const dragOverItem = useRef<{ listID: string; itemId: number } | null>(null);
+  const dragItem = useRef<{ listId: number; itemId: number } | null>(null);
+  const dragOverItem = useRef<{ listId: number; itemId: number } | null>(null);
 
-  const listStore: List[] = useListStore((state: any) => state.lists[props._id])
-  const setListStore = useListStore((state: any) => state.setList)
-
-
-  const updateList = (listID: string, newList: ListItem[], newPosition?: { x: number; y: number }, newSize?: { width: number, height: number }) => {
-    if (listStore) {
-      const newListIndex = listStore.findIndex((list) => list.listID === listID);
-      const newListObj = {
-        listID,
-        list: newList,
-        position: newPosition ?? listStore[newListIndex].position,
-        size: newSize ?? listStore[newListIndex].size,
-      };
-      const newLocalLists = [...listStore];
-      newLocalLists.splice(newListIndex, 1, newListObj);
-      setListStore(props._id, newLocalLists);
-    }
-  };
+  const [pinboardData, setPinboardData] = useState<List[]>([]);
 
   useEffect(() => {
-    updateState(props._id, {lists: listStore});
-  }, [listStore])
-
-  const handleSetItem = (listID: string, itemIndex: number, newItem: any) => {
-    const newList = listStore?.find((list) => list.listID === listID)?.list ?? [];
-    const updatedList = newList.map((item, index) => {
-      if (index === itemIndex) {
-        return {
-          ...item,
-          item: newItem,
-        };
-      } else {
-        return item;
-      }
-    });
-    updateList(listID, updatedList);
-  };
-
-  const updateListCount = () => {
-    const newuuid = uuidv4();
-
-    const blankList: List = {
-      listID: newuuid,
-      list: [],
-      position: {x: 0, y: 0},
-      size: {width: 400, height: 300}
-    }
-    console.log("listStore " + listStore)
-    if (listStore) {
-      const newList = [...listStore, blankList]
-      setListStore(props._id, newList)
+    if (s.lists && s.lists.length > 0) {
+      setPinboardData(s.lists);
     } else {
-      setListStore(props._id, [blankList])
+      setPinboardData([]);
     }
-    return newuuid
+  }, [JSON.stringify(s.lists)]);
+
+  function handleColumnDragStart(listIndex: number) {
+    const newPinboardData = [...pinboardData];
+    newPinboardData[listIndex].items.forEach((item) => (item.isDragging = true));
+    setPinboardData(newPinboardData);
+    updateState(props._id, { lists: newPinboardData });
   }
 
-  useEffect(() => {
-    if (s.items.length > 0) {
-      const newuuid = updateListCount()
-      s.items?.map((item: any, index: number) => {
-        const newListItem: ListItem = {item: item, isDragging: false}
-        handleSetItem(newuuid, index, newListItem)
-      })
-    }
-  }, [s.items.length])
+  function handleColumnDragStop(e: DraggableEvent, data: DraggableData, listIndex: number) {
+    const newPinboardData = [...pinboardData];
+    newPinboardData[listIndex].position = { x: data.x, y: data.y };
+    newPinboardData[listIndex].items.forEach((item) => (item.isDragging = false));
+    setPinboardData(newPinboardData);
+    updateState(props._id, { lists: newPinboardData });
+  }
 
+  function handleRowDragStart(listIndex: number, itemIndex: number) {
+    dragItem.current = { listId: listIndex, itemId: itemIndex };
+    pinboardData[listIndex].items[itemIndex].isDragging = true;
+    setPinboardData([...pinboardData]);
+  }
 
-  const handleColumnDragStop = (e: DraggableEvent, data: DraggableData, listID: string) => {
-    const {x, y} = data;
-    const newList = listStore.find((list) => list.listID === listID)?.list ?? [];
-    updateList(listID, newList, {x, y});
-    console.log(data)
-  };
+  function handleRowDragOver(listIndex: number, itemIndex: number) {
+    if (!dragItem.current) return;
+    dragOverItem.current = { listId: listIndex, itemId: itemIndex };
+  }
 
-  // const handleColumnResize = (e: any, data: any, listID: string) => {
-  //   console.log("Resize")
-  //   const {width, height} = data;
-  //   const newList = localLists.find((list) => list.listID === listID)?.list ?? [];
-  //   updateList(listID, newList, undefined, {width, height});
-  // }
+  function handleRowDragStop(listIndex: number, itemIndex: number) {
+    if (!dragItem.current || !dragOverItem.current) return;
+    // set dragging to false and place item in the new position (dragOverItem position)
+    pinboardData[listIndex].items[itemIndex].isDragging = false;
+    const newPinboardData = [...pinboardData];
+    newPinboardData[listIndex].items[itemIndex].isDragging = false;
+    // place the item in the new position
+    const item = newPinboardData[dragItem.current.listId].items[dragItem.current.itemId];
+    newPinboardData[dragItem.current.listId].items.splice(dragItem.current.itemId, 1);
+    newPinboardData[dragOverItem.current.listId].items.splice(dragOverItem.current.itemId, 0, item);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    setPinboardData(newPinboardData);
+    updateState(props._id, { lists: newPinboardData });
+  }
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
-    dragItem.current = {listID, itemId};
-  };
+  function clearBoard() {
+    setPinboardData([]);
+    updateState(props._id, { lists: [] });
+  }
 
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
-    dragOverItem.current = {listID, itemId};
-
-    const newList = listStore.find((list) => list.listID === listID)?.list.map((item, index) => ({
-      ...item,
-      isDragging: index === itemId,
-    }));
-    if (newList) {
-      updateList(listID, newList);
-    }
-  };
-
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
-    const dragItemId = dragItem.current?.itemId;
-    const draglistID = dragItem.current?.listID;
-    const dropItemId = dragOverItem.current?.itemId;
-    const droplistID = dragOverItem.current?.listID;
-
-    if (dragItemId !== undefined && draglistID !== undefined && dropItemId !== undefined && droplistID !== undefined) {
-      if (draglistID === droplistID) {
-        const newList = listStore.find((list) => list.listID === listID)?.list;
-        if (newList) {
-          const dragItemContent = newList[dragItemId];
-          newList.splice(dragItemId, 1);
-          newList.splice(dropItemId, 0, dragItemContent);
-          updateList(listID, newList);
-        }
-      } else {
-        const dragList = listStore.find((list) => list.listID === draglistID);
-        const dropList = listStore.find((list) => list.listID === droplistID);
-        if (dragList && dropList) {
-          const dragItemContent = dragList.list[dragItemId];
-          dragList.list.splice(dragItemId, 1);
-
-          if (dragList.list.length === 0) {
-            const blankListItem: ListItem = {item: "", isDragging: false}
-            dragList.list = [blankListItem]
-            updateList(draglistID, dragList.list)
-          }
-
-          if (dropList.list[0].item === "") {
-            dropList.list[0] = dragItemContent
-          } else {
-            dropList.list.splice(dropItemId, 0, dragItemContent);
-          }
-          updateList(draglistID, dragList.list);
-          updateList(droplistID, dropList.list);
-        }
-      }
-      setListStore(props._id, listStore.map((list) => ({
-        ...list,
-        list: list.list.map((item) => ({...item, isDragging: false}))
-      })));
-
-    }
-  };
+  function resetBoard() {
+    setPinboardData(defaultData);
+    updateState(props._id, { lists: defaultData });
+  }
 
   return (
     <AppWindow app={props} lockToBackground={true}>
-      <div>
-        {s.lists &&
-          s.lists.map((list) => (
-            <Rnd
-              size={{width: list.size.width, height: list?.size.height}}
-              position={{x: list?.position.x, y: list?.position.y}}
-              dragHandleClassName={"drag-handle"}
-              onDragStop={(e, data) => handleColumnDragStop(e, data, list.listID)}
-              // onResize={(e, data) => handleColumnResize(e, data, list.listID)}
-              // bounds={props.data.state.data}
-            >
-              <Box
-                key={list.listID}
-                border="1px"
-                borderColor="teal"
-                borderWidth="5px"
-                borderRadius="25px"
-                backgroundColor="green.300"
-                position="relative"
-                p="5px">
-                <Icon className={"drag-handle"} as={RxDragHandleDots2} boxSize={12} position="absolute" top={"50%"}
-                      transform={"translateY(-50%)"}/>
-                {list.list.map((item, index) => (
-                  <>
-                    <div
-                      style={{
-                        backgroundColor: 'orange',
-                        borderRadius: '25px',
-                        margin: '3% 5% 3% 15%',
-                        textAlign: 'center',
-                        fontSize: '40px',
-                      }}
-                      key={item.item}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, list.listID, list.list.indexOf(item))}
-                      onDragEnter={(e) => handleDragEnter(e, list.listID, list.list.indexOf(item))}
-                      onDragEnd={(e) => handleDragEnd(e, list.listID, list.list.indexOf(item))}
-                    >
-                      {item.item == "" ? <Box backgroundColor="green.300" p="5px"/> : item.item}
-                    </div>
-                    {item.isDragging ? <div className="drag-line"/> : null}
-                  </>
-                ))}
-              </Box>
-            </Rnd>
-          ))}
-      </div>
+      <>
+        {/* Random Navbar For Debugging */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" m={0} p={1} borderBottom="1px solid black">
+          <Text fontSize={'xl'}>DropBoard</Text>
+          <Box>
+            <Button onClick={clearBoard}>Clear</Button>
+            <Button onClick={resetBoard}>Reset</Button>
+            <Button onClick={() => console.log(pinboardData)}>Log</Button>
+          </Box>
+        </Box>
+        <Box w={'100%'} h={'100%'} bg={'#222'}>
+          {pinboardData.length > 0 &&
+            pinboardData.map((list, listIndex) => (
+              <ListColumn
+                key={listIndex} // need an index for each column
+                size={{ width: list.size.width, height: list?.size.height }}
+                position={{ x: list?.position.x, y: list?.position.y }}
+                bounds="parent"
+                dragHandleClassName={'column-drag'}
+                onDragStart={(e) => handleColumnDragStart(listIndex)}
+                onDragStop={(e, data) => handleColumnDragStop(e, data, listIndex)}
+              >
+                <Box key={listIndex} border="1px solid black" backgroundColor="white" position="relative" p="1px" w={'175px'}>
+                  <HStack px={2}>
+                    <Text as={'h2'}>{listIndex + 1}</Text>
+                    <Spacer />
+                    <Icon className={'column-drag'} as={RxDragHandleDots2} transform="rotate(90deg)" boxSize={6} cursor="move" />
+                  </HStack>
+                  {list.items.map((item, itemIndex) => (
+                    <>
+                      <Box
+                        key={itemIndex}
+                        border="1px solid black"
+                        m={1}
+                        p={1}
+                        draggable
+                        onDragStart={(e) => handleRowDragStart(listIndex, itemIndex)}
+                        onDragOver={(e) => handleRowDragOver(listIndex, itemIndex)}
+                        onDragEnd={(e) => handleRowDragStop(listIndex, itemIndex)}
+                      >
+                        {item.item && (
+                          <HStack>
+                            <Icon mr={-1} className={'item-drag'} as={RxDragHandleDots2} boxSize={6} />
+                            <Box backgroundColor={item.isDragging ? 'red.100' : 'green.100'} p={1} w={'100%'}>
+                              {item.item}
+                            </Box>
+                          </HStack>
+                        )}
+                      </Box>
+                    </>
+                  ))}
+                </Box>
+              </ListColumn>
+            ))}
+        </Box>
+      </>
     </AppWindow>
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-
-  const listStore: List[] = useListStore((state: any) => state.lists[props._id])
-  const setListStore = useListStore((state: any) => state.setList)
-
-  const updateListCount = () => {
-    const newuuid = uuidv4();
-
-    const blankListItem: ListItem = {item: "1", isDragging: false}
-    const blankListItem2: ListItem = {item: "2", isDragging: false}
-    const blankList: List = {
-      listID: newuuid,
-      list: [blankListItem, blankListItem2],
-      position: {x: 0, y: 0},
-      size: {width: 400, height: 300}
-    }
-    console.log("listStore " + listStore)
-    if (listStore) {
-      const newList = [...listStore, blankList]
-      setListStore(props._id, newList)
-    } else {
-      setListStore(props._id, [blankList])
-
-    }
-    console.log("ID: " + props._id)
-  }
-
-
-  return (
-    <>
-      <Button
-        colorScheme="blue"
-        size="sm"
-        onClick={() => updateListCount()}
-      >
-        Add Column
-      </Button>
-    </>
-  );
-}
-
 export default {
-  AppComponent, ToolbarComponent
-}
-;
+  AppComponent,
+  ToolbarComponent,
+};

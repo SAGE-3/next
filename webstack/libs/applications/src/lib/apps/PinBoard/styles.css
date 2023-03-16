@@ -24,7 +24,7 @@ html {
 /*  padding: 0;*/
 /*}*/
 
-h1 {
+/* h1 {
   font-size: 1.5rem;
 }
 
@@ -43,7 +43,7 @@ div.drag-line {
   height: 5px;
   background-color: green;
   margin: 5px;
-}
+} */
 
 /*.column {*/
 /*  display: flex;*/
@@ -57,5 +57,12 @@ div.drag-line {
 /*}*/
 
 .drag-handle {
+  cursor: move;
+}
+
+.column-drag {
+  cursor: move;
+}
+.item-drag {
   cursor: move;
 }
