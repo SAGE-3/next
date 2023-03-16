@@ -8,24 +8,12 @@
 
 import {z} from 'zod';
 
-interface ListItem {
-  item: string;
-  isDragging: boolean;
-}
-
 const ListItemType = z.array(
   z.object({
-    item: z.string(),
+    item: z.any(),
     isDragging: z.boolean()
   })
 );
-
-interface Lists {
-  listId: string;
-  list: ListItem[];
-  position: { x: number, y: number };
-  size: { width: number, height: number };
-}
 
 const ListType = z.array(
   z.object({
@@ -42,9 +30,9 @@ const ListType = z.array(
   })
 )
 
-
 export const schema = z.object({
   lists: ListType,
+  items: z.any(),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
@@ -55,6 +43,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   executeInfo: {executeFunc: '', params: {}},
   lists: [],
+  items: []
 };
 
 export const name = 'PinBoard';

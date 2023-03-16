@@ -176,60 +176,61 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
         const width = 500;
         const spacing = 40;
         const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(cells, columnHeight, xDrop, yDrop, width, height, spacing)
-        createApp(setupApp('', 'PinBoard', pinBoardX, pinBoardY, roomId, boardId, {
+        createApp(
+          setupApp('', 'PinBoard', pinBoardX, pinBoardY, roomId, boardId, {
             w: pinBoardWidth,
             h: pinBoardHeight
-          })
+          }, {items: cells})
         )
-        cells.forEach((cell: any) => {
-          if (cell.cell_type === 'code') {
-            const sourceCode = (cell.source as []).join(' ');
-            createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
-              w: width,
-              h: height
-            }, {code: sourceCode}));
-            // }, {code: sourceCode, groupColor: groupColor + '.400'}));
-          }
-          if (cell.cell_type === 'markdown') {
-            createApp(
-              setupApp('', 'Stickie', x, y, roomId, boardId, {
-                w: width,
-                h: height
-              }, {text: `markdown ${cell.source}`})
-              // }, {text: `markdown ${cell.source}`, color: groupColor})
-            );
-          }
-          if (cell.cell_type === 'raw') {
-            createApp(
-              setupApp('', 'Stickie', x, y, roomId, boardId, {
-                w: width,
-                h: height
-              }, {text: `markdown ${cell.source}`})
-              // }, {text: `markdown ${cell.source}`, color: groupColor})
-            );
-          }
-          if (cell.cell_type === 'display_data') {
-            createApp(
-              setupApp(
-                '',
-                'SageCell',
-                x,
-                y,
-                roomId,
-                boardId,
-                {w: width, h: height},
-                {output: JSON.stringify(cell.data)}
-              )
-            );
-          }
-          y = y + height + spacing;
-          columnCount++;
-          if (columnCount >= columnHeight) {
-            columnCount = 0;
-            x = x + width + spacing;
-            y = yDrop;
-          }
-        });
+        // cells.forEach((cell: any) => {
+        //   if (cell.cell_type === 'code') {
+        //     const sourceCode = (cell.source as []).join(' ');
+        //     createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
+        //       w: width,
+        //       h: height
+        //     }, {code: sourceCode}));
+        //     // }, {code: sourceCode, groupColor: groupColor + '.400'}));
+        //   }
+        //   if (cell.cell_type === 'markdown') {
+        //     createApp(
+        //       setupApp('', 'Stickie', x, y, roomId, boardId, {
+        //         w: width,
+        //         h: height
+        //       }, {text: `markdown ${cell.source}`})
+        //       // }, {text: `markdown ${cell.source}`, color: groupColor})
+        //     );
+        //   }
+        //   if (cell.cell_type === 'raw') {
+        //     createApp(
+        //       setupApp('', 'Stickie', x, y, roomId, boardId, {
+        //         w: width,
+        //         h: height
+        //       }, {text: `markdown ${cell.source}`})
+        //       // }, {text: `markdown ${cell.source}`, color: groupColor})
+        //     );
+        //   }
+        //   if (cell.cell_type === 'display_data') {
+        //     createApp(
+        //       setupApp(
+        //         '',
+        //         'SageCell',
+        //         x,
+        //         y,
+        //         roomId,
+        //         boardId,
+        //         {w: width, h: height},
+        //         {output: JSON.stringify(cell.data)}
+        //       )
+        //     );
+        //   }
+        //   y = y + height + spacing;
+        //   columnCount++;
+        //   if (columnCount >= columnHeight) {
+        //     columnCount = 0;
+        //     x = x + width + spacing;
+        //     y = yDrop;
+        //   }
+        // });
       })
     setGroupIndex(groupIndex + 1)
   }

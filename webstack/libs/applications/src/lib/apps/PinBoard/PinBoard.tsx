@@ -23,10 +23,9 @@ import {DraggableData, Rnd} from "react-rnd";
 import {DraggableEvent} from "react-draggable";
 import {RxDragHandleDots2} from "react-icons/rx";
 
-// type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
 
 interface ListItem {
-  item: string;
+  item: any;
   isDragging: boolean;
 }
 
@@ -56,40 +55,76 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-
-  // const boardApps = useAppStore((state) => state.apps);
-  // const [lists, setLocalLists] = useState<List[]>(props.data);
-
-  // const [pos, setPos] = useState({x: 0, y: 0})
-  // const [size, setSize] = useState({width: 400, height: 300})
-
   const dragItem = useRef<{ listID: string; itemId: number } | null>(null);
   const dragOverItem = useRef<{ listID: string; itemId: number } | null>(null);
 
   const listStore: List[] = useListStore((state: any) => state.lists[props._id])
   const setListStore = useListStore((state: any) => state.setList)
 
-  useEffect(() => {
-    console.log("ListStore start: " + JSON.stringify(listStore))
-  }, [listStore])
-
 
   const updateList = (listID: string, newList: ListItem[], newPosition?: { x: number; y: number }, newSize?: { width: number, height: number }) => {
-    const newListIndex = listStore.findIndex((list) => list.listID === listID);
-    const newListObj = {
-      listID,
-      list: newList,
-      position: newPosition ?? listStore[newListIndex].position,
-      size: newSize ?? listStore[newListIndex].size,
-    };
-    const newLocalLists = [...listStore];
-    newLocalLists.splice(newListIndex, 1, newListObj);
-    setListStore(props._id, newLocalLists);
+    if (listStore) {
+      const newListIndex = listStore.findIndex((list) => list.listID === listID);
+      const newListObj = {
+        listID,
+        list: newList,
+        position: newPosition ?? listStore[newListIndex].position,
+        size: newSize ?? listStore[newListIndex].size,
+      };
+      const newLocalLists = [...listStore];
+      newLocalLists.splice(newListIndex, 1, newListObj);
+      setListStore(props._id, newLocalLists);
+    }
   };
 
   useEffect(() => {
     updateState(props._id, {lists: listStore});
   }, [listStore])
+
+  const handleSetItem = (listID: string, itemIndex: number, newItem: any) => {
+    const newList = listStore?.find((list) => list.listID === listID)?.list ?? [];
+    const updatedList = newList.map((item, index) => {
+      if (index === itemIndex) {
+        return {
+          ...item,
+          item: newItem,
+        };
+      } else {
+        return item;
+      }
+    });
+    updateList(listID, updatedList);
+  };
+
+  const updateListCount = () => {
+    const newuuid = uuidv4();
+
+    const blankList: List = {
+      listID: newuuid,
+      list: [],
+      position: {x: 0, y: 0},
+      size: {width: 400, height: 300}
+    }
+    console.log("listStore " + listStore)
+    if (listStore) {
+      const newList = [...listStore, blankList]
+      setListStore(props._id, newList)
+    } else {
+      setListStore(props._id, [blankList])
+    }
+    return newuuid
+  }
+
+  useEffect(() => {
+    if (s.items.length > 0) {
+      const newuuid = updateListCount()
+      s.items?.map((item: any, index: number) => {
+        const newListItem: ListItem = {item: item, isDragging: false}
+        handleSetItem(newuuid, index, newListItem)
+      })
+    }
+  }, [s.items.length])
+
 
   const handleColumnDragStop = (e: DraggableEvent, data: DraggableData, listID: string) => {
     const {x, y} = data;
@@ -107,12 +142,10 @@ function AppComponent(props: (App & DraggableListProps)): JSX.Element {
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
     dragItem.current = {listID, itemId};
-
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, listID: string, itemId: number) => {
     dragOverItem.current = {listID, itemId};
-    const isDragOverEmpty = listStore.find((list) => list.listID === listID)?.list[itemId].item === "";
 
     const newList = listStore.find((list) => list.listID === listID)?.list.map((item, index) => ({
       ...item,
@@ -225,12 +258,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  // const listStore = useListStore((state) => state.lists);
-  // const setListStore = useListStore((state) => state.setLists);
+
   const listStore: List[] = useListStore((state: any) => state.lists[props._id])
   const setListStore = useListStore((state: any) => state.setList)
 
-  // TODO Share state between Toolbar and App
   const updateListCount = () => {
     const newuuid = uuidv4();
 
@@ -243,21 +274,14 @@ function ToolbarComponent(props: App): JSX.Element {
       size: {width: 400, height: 300}
     }
     console.log("listStore " + listStore)
-    // const newList = [...listStore, blankList]
     if (listStore) {
       const newList = [...listStore, blankList]
-      console.log("Here ")
       setListStore(props._id, newList)
     } else {
-      console.log("There")
       setListStore(props._id, [blankList])
-      console.log("There there ")
 
     }
     console.log("ID: " + props._id)
-
-    // setListStore(newList)
-    // console.log("listStore " + listStore)
   }
 
 
