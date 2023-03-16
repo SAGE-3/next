@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Divider, Badge, Spacer, Stack } from '@chakra-ui/react';
+import { Box, useColorModeValue, Divider, Badge, Spacer, Stack, Input } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
@@ -18,6 +18,7 @@ import { App } from '../../schema';
 import { CodeEditor } from './components/editor';
 import { Outputs } from './components/outputs';
 import { ToolbarComponent } from './components/toolbar';
+import { SageCellInput } from './components/input';
 
 import './styles.css';
 
@@ -40,6 +41,13 @@ const AppComponent = (props: App): JSX.Element => {
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+
+  const [awaitingInput, setAwaitingInput] = useState(false);
+  const [input, setInput] = useState('');
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+    setInput(e.target.value);
+  }
 
   function getKernels() {
     if (!user) return;
@@ -175,6 +183,43 @@ const AppComponent = (props: App): JSX.Element => {
                 <Box className="arrow-down" />
               </Box>
             </Box>
+            {awaitingInput ? null : (
+              // <SageCellInput />
+              <Box>
+                <Input
+                  placeholder="Enter input"
+                  _placeholder={{ color: useColorModeValue('gray.800', 'gray.200') }}
+                  _focus={{ borderColor: 'teal.600', boxShadow: '0 0 0 1px teal.600' }}
+                  _hover={{ borderColor: 'teal.600' }}
+                  size="lg"
+                  variant="filled"
+                  fontFamily="Menlo, Consolas"
+                  fontSize={s.fontSize + 'px'}
+                  rounded="none"
+                  // borderColor={bgColor}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                  }}
+                  value={input}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      updateState(props._id, {
+                        code: input,
+                        output: '',
+                        executeInfo: {
+                          executeFunc: 'execute',
+                          params: {
+                            _uuid: user!._id,
+                          },
+                        },
+                      });
+                      setInput('');
+                      setAwaitingInput(false);
+                    }
+                  }}
+                />
+              </Box>
+            )}
             {/* The output */}
             <Box flex="1" overflow="auto" id="render-target" style={{ maxHeight: '100vh' }}>
               {!s.output ? null : <Outputs output={s.output} app={props} />}

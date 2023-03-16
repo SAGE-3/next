@@ -184,8 +184,6 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     },
     find: {
       addExtraSpaceOnTop: false,
-      seedSearchStringFromSelection: 'always', // default is "always"
-      autoFindInSelection: 'never', // default is "never"
     },
   };
 
