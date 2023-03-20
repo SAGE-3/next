@@ -60,16 +60,14 @@ class SageCell(SmartBit):
         msg['msg_count'] = self._msg_count
         self.state.output = json.dumps(msg)
         # print(f"handle_exec_result: {self.state.output}")
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
+        self.state.executeInfo = {'executeFunc': '', 'params': {}}
         self.send_updates()
 
     def generate_error_message(self, user_uuid, error_msg):
         # 'You do not have access to this kernel'
         pm = [{'userId': user_uuid, 'message': error_msg}]
         self.state.privateMessage = pm
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
+        self.state.executeInfo = {'executeFunc': '', 'params': {}}
         self.send_updates()
 
     def get_available_kernels(self, _uuid=None):
@@ -88,8 +86,7 @@ class SageCell(SmartBit):
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})
         self.state.availableKernels = available_kernels
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
+        self.state.executeInfo = {'executeFunc': '', 'params': {}}
         self.send_updates()
 
     def execute(self, _uuid):
@@ -110,8 +107,7 @@ class SageCell(SmartBit):
         if self.state.kernel:
             self._jupyter_client.execute(command_info)
         else:
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
+            self.state.executeInfo = {'executeFunc': '', 'params': {}}
             self.send_updates()
 
     def interrupt(self, _uuid=None):
@@ -129,8 +125,7 @@ class SageCell(SmartBit):
         else:
             # TODO: MLR fix to solve issue #339
             # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
+            self.state.executeInfo = {'executeFunc': '', 'params': {}}
             self.send_updates()
 
     def clean_up(self):

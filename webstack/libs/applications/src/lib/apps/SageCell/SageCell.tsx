@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Divider, Badge, Spacer, Stack, Input } from '@chakra-ui/react';
+import { Box, useColorModeValue, Divider, Badge, Spacer, Stack, Input, Avatar, AvatarBadge, AvatarGroup, Tooltip } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
@@ -41,9 +41,10 @@ const AppComponent = (props: App): JSX.Element => {
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
-
   const [awaitingInput, setAwaitingInput] = useState(false);
   const [input, setInput] = useState('');
+  // activeUsers is a list of users that are currently active in the sagecell
+  const [activeUsers, setActiveUsers] = useState<{ value: Record<string, any>; key: string }[]>([]);
 
   function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
     setInput(e.target.value);
@@ -121,14 +122,32 @@ const AppComponent = (props: App): JSX.Element => {
     }
   }, [s.kernel]);
 
+  function handleOnCellClick() {
+    if (!user) return;
+    setActiveUsers((prev) => {
+      const users = prev.filter((u) => u.key !== user._id);
+      users.push({ key: user._id, value: user });
+      return users;
+    });
+  }
+
   return (
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
-      <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
+      <Box className="sc" h={'calc(100% - 1px)'} w={'calc(100% - 1px'}>
         <Stack direction="row" bgColor={bgColor} p={1}>
           <Badge variant="outline" colorScheme="blue">
             {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
           </Badge>
+          {/* {!activeUsers ? null : (
+            <AvatarGroup size="xs" max={10}>
+              {activeUsers.map((user) => (
+                <Tooltip key={user.key} label={user.value.data.name} placement="top">
+                  <Avatar size={'2xs'} name={user.value.data.name} src={user.value.data.profilePicture} />
+                </Tooltip>
+              ))}
+            </AvatarGroup>
+          )} */}
           <Spacer />
           {!s.kernel && !access ? ( // no kernel selected and no access
             <Badge variant="outline" colorScheme="red">
@@ -162,7 +181,7 @@ const AppComponent = (props: App): JSX.Element => {
           overflowY="auto"
         >
           {/* The code cell */}
-          <Box flex="1">
+          <Box flex="1" onClick={handleOnCellClick}>
             <CodeEditor app={props} access={access} editorHeight={editorHeight} />
             <Box
               h="20px"
@@ -183,7 +202,7 @@ const AppComponent = (props: App): JSX.Element => {
                 <Box className="arrow-down" />
               </Box>
             </Box>
-            {awaitingInput ? null : (
+            {/* {awaitingInput ? null : (
               // <SageCellInput />
               <Box>
                 <Input
@@ -219,9 +238,9 @@ const AppComponent = (props: App): JSX.Element => {
                   }}
                 />
               </Box>
-            )}
+            )} */}
             {/* The output */}
-            <Box flex="1" overflow="auto" id="render-target" style={{ maxHeight: '100vh' }}>
+            <Box flex="1" overflow="auto" w={'100%'} h={'100%'}>
               {!s.output ? null : <Outputs output={s.output} app={props} />}
             </Box>
           </Box>

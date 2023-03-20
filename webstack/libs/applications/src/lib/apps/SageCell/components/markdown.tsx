@@ -7,7 +7,7 @@
  */
 
 import { default as Mark } from 'markdown-to-jsx';
-import { Text, Box, Highlight, Image, OrderedList, UnorderedList, ListItem, Link, useColorModeValue } from '@chakra-ui/react';
+import { Text, Box, Image, OrderedList, UnorderedList, ListItem, Link, useColorModeValue, AspectRatio } from '@chakra-ui/react';
 
 type MarkdownProps = {
   markdown: string;
@@ -20,9 +20,10 @@ export function Markdown(props: any): JSX.Element {
     <Mark
       options={{
         overrides: {
-          div: { component: Box, props: { as: 'div', fontFamily: 'Menlo, Consolas' } },
-          text: { component: Text, props: { as: 'span', fontFamily: 'Menlo, Consolas' } },
-          p: { component: Text, props: { as: 'p', fontFamily: 'Menlo, San-serif' } },
+          div: { component: Box, props: { as: 'div' } },
+          text: { component: Text, props: { as: 'span' } },
+          p: { component: Text, props: { as: 'p' } },
+          title: { component: Text, props: { as: 'h1', fontSize: '3xl' } },
           h1: { component: Text, props: { as: 'h1', fontSize: '2xl' } },
           h2: { component: Text, props: { as: 'h2', fontSize: 'xl' } },
           h3: { component: Text, props: { as: 'h3', fontSize: 'lg' } },
@@ -34,26 +35,50 @@ export function Markdown(props: any): JSX.Element {
             props: {
               onClick: (e: any) => {
                 e.preventDefault();
-                openInWebview(e.target.href);
+                if (e.target.href.startsWith('http')) {
+                  openInWebview(e.target.href);
+                } else {
+                  window.open(e.target.href, '_blank');
+                }
               },
               style: {
-                color: useColorModeValue('darkblue', 'lightblue'),
-                textDecoration: 'underline',
+                color: useColorModeValue('rgb(86, 133, 213)', 'rgb(24, 200, 213)'),
+                _hover: {
+                  textDecoration: 'underline',
+                },
               },
               isExternal: true,
             },
           },
           em: { component: Text, props: { as: 'em' } },
           strong: { component: Text, props: { as: 'strong' } },
-          code: { component: Text, props: { as: 'code' } },
+          code: { component: Text, props: { as: 'code', fontFamily: 'monospace' } },
           del: { component: Text, props: { as: 'del' } },
           ins: { component: Text, props: { as: 'ins' } },
           pre: { component: Text, props: { as: 'pre' } },
           sub: { component: Text, props: { as: 'sub' } },
           sup: { component: Text, props: { as: 'sup' } },
-          ul: { component: UnorderedList, props: { spacing: '' } },
-          ol: { component: Text, props: { as: 'ol' } },
-          li: { component: Text, props: { as: 'li' } },
+          ul: {
+            component: UnorderedList,
+            props: {
+              style: {
+                listStyleType: 'disc',
+                listStylePosition: 'inside',
+                paddingLeft: '.5em',
+              },
+            },
+          },
+          ol: {
+            component: OrderedList,
+            props: {
+              style: {
+                listStyleType: 'decimal',
+                listStylePosition: 'inside',
+                paddingLeft: '.5em',
+              },
+            },
+          },
+          li: { component: ListItem },
           table: { component: Text, props: { as: 'table' } },
           thead: { component: Text, props: { as: 'thead' } },
           tbody: { component: Text, props: { as: 'tbody' } },
@@ -63,6 +88,18 @@ export function Markdown(props: any): JSX.Element {
           hr: { component: Text, props: { as: 'hr' } },
           br: { component: Text, props: { as: 'br' } },
           img: { component: Image },
+          blockquote: {
+            props: {
+              style: {
+                borderLeft: '4px solid #ccc',
+                paddingLeft: '1em',
+              },
+            },
+          },
+          // iframe: {
+          //   component: Box,
+          //   props: { as: 'iframe', title: 'lol', src: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+          // },
         },
       }}
     >

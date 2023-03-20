@@ -180,7 +180,6 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       horizontal: 'scroll',
       verticalScrollbarSize: 0,
       horizontalScrollbarSize: 10,
-      arrowSize: 30,
     },
     find: {
       addExtraSpaceOnTop: false,
@@ -194,7 +193,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
           value={code}
           defaultLanguage="python"
           height={props.editorHeight && props.editorHeight > 100 ? props.editorHeight : 100}
-          width={`calc(100% - ${access ? 50 : 0}px)`}
+          width="100%"
           language={'python'}
           theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
           options={options}

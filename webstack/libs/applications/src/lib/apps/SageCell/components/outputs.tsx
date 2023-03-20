@@ -8,21 +8,7 @@
 
 import { useEffect, useState } from 'react';
 
-import {
-  Alert,
-  Box,
-  Image,
-  Text,
-  Icon,
-  Code,
-  useColorModeValue,
-  Accordion,
-  AccordionItem,
-  AccordionIcon,
-  AccordionButton,
-  AccordionPanel,
-} from '@chakra-ui/react';
-import { MdError } from 'react-icons/md';
+import { Box, Image, Text, useColorModeValue } from '@chakra-ui/react';
 
 // Ansi library
 import Ansi from 'ansi-to-react';
@@ -42,6 +28,8 @@ import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
 import { App } from '../../../schema';
 import { Output, state as AppState } from '../index';
 
+import { v4 as getUUID } from 'uuid';
+
 type OutputBoxProps = {
   output: string;
   app: App;
@@ -54,15 +42,13 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   // Data stores
   const users = useUsersStore((state) => state.users);
   const createApp = useAppStore((state) => state.create);
-  const updateState = useAppStore((state) => state.updateState);
   // Application state
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
   const [count, setCount] = useState<number | null>(null);
-  // const data = p.execute_result?.data || p.display_data?.data;
-  // const stream = p.stream;
-  // const error = p.error;
   const [prevId, setPrevId] = useState<string>(); // used to track the request id
   const [output, setOutput] = useState<JSX.Element[]>([]);
+
+  // const errorColor = useColorModeValue('rgb(250, 223, 222)', 'rgb(075, 036, 029)');
 
   const openInWebview = (url: string): void => {
     createApp({
@@ -78,7 +64,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
     });
   };
 
-  // Get the color of the kernel owner
+  // Get the color of the kernel owner --- move this above and pass it down
   useEffect(() => {
     if (s.kernel && users) {
       const kernels = s.availableKernels;
@@ -96,6 +82,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   }, [p.request_id]);
 
   useEffect(() => {
+    // if (!p) return;
     if (p.execute_result) {
       setCount(p.execute_result.execution_count);
     }
@@ -105,8 +92,10 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
         streamOutput = <Ansi>{p.stream.text}</Ansi>;
       } else {
         streamOutput = (
-          <Text as={'mark'} bg={'#0C0'}>
-            <Ansi>{p.stream.text}</Ansi>
+          <Text as={'mark'} bg={'rgb(250, 223, 222)'}>
+            <Box bgColor={'#0C0'}>
+              <Ansi>{p.stream.text}</Ansi>
+            </Box>
           </Text>
         );
       }
@@ -118,10 +107,8 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       const traceback = p.error.traceback;
       errorOutput = (
         <Box key={p.error.ename}>
-          {traceback.map((el, idx) => (
-            <>
-              <Ansi>{el}</Ansi>
-            </>
+          {traceback.map((line, idx) => (
+            <Ansi key={idx}>{line}</Ansi>
           ))}
         </Box>
       );
@@ -132,38 +119,50 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       const metadata = p.execute_result?.metadata || p.display_data?.metadata;
       const data = p.execute_result?.data || p.display_data?.data;
       if (data) {
-        const dataOutput = Object.keys(data).map((key, i): JSX.Element => {
-          if (key === 'undefined') return <></>;
-          const value = data[key];
+        for (const [key, value] of Object.entries(data)) {
           const width = metadata[key] ? metadata[key]['width'] : 'auto';
           const height = metadata[key] ? metadata[key]['height'] : 'auto';
+          const uuid = getUUID();
           switch (key) {
             case 'text/html':
-              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-            case 'text/plain':
-              if (data['text/html']) return <></>;
-              if (data['text/markdown']) return <></>;
-              return <Ansi key={i}>{value}</Ansi>;
-            case 'image/png':
-              const size = metadata[key];
-              return <Image key={i} src={`data:image/png;base64,${value}`} width={width} height={height} />;
-            case 'image/jpeg':
-              return <Image key={i} src={`data:image/jpeg;base64,${value}`} width={width} height={height} />;
             case 'image/svg+xml':
-              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
+              setOutput((prev) => [...prev, <Box key={uuid} dangerouslySetInnerHTML={{ __html: value }} width={width} height={height} />]);
+              break;
+            case 'text/plain':
+              if (Object.keys(data).length > 1) break;
+              // if (data['text/html']) break;
+              // if (data['text/markdown']) break;
+              // if (data['image/svg+xml']) break;
+              // if (data['application/pdf']) break;
+              // if (data['image/png']) break;
+              // if (data['image/jpeg']) break;
+              setOutput((prev) => [...prev, <Ansi key={uuid}>{value}</Ansi>]);
+              break;
+            case 'image/png':
+              setOutput((prev) => [...prev, <Image key={uuid} src={`data:image/png;base64,${value}`} width={width} height={height} />]);
+              break;
+            case 'image/jpeg':
+              setOutput((prev) => [...prev, <Image key={uuid} src={`data:image/jpeg;base64,${value}`} width={width} height={height} />]);
+              break;
+            case 'application/pdf':
+              setOutput((prev) => [...prev, <PdfViewer key={uuid} data={value} />]);
+              break;
             case 'text/markdown':
-              return <Markdown key={i} markdown={`${value}`} openInWebview={openInWebview} />;
+              setOutput((prev) => [...prev, <Markdown key={uuid} markdown={`${value}`} openInWebview={openInWebview} />]);
+              break;
             case 'application/vnd.vegalite.v4+json':
             case 'application/vnd.vegalite.v3+json':
             case 'application/vnd.vegalite.v2+json':
-              return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
+              setOutput((prev) => [...prev, <VegaLite key={uuid} spec={value} actions={false} renderer="svg" />]);
+              break;
             case 'application/vnd.vega.v5+json':
             case 'application/vnd.vega.v4+json':
             case 'application/vnd.vega.v3+json':
             case 'application/vnd.vega.v2+json':
             case 'application/vnd.vega.v1+json':
-              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.plotly.v1+json': {
+              setOutput((prev) => [...prev, <Vega key={uuid} spec={value} actions={false} renderer="svg" />]);
+              break;
+            case 'application/vnd.plotly.v1+json':
               // Configure plotly
               const config = value.config || {};
               const layout = value.layout || {};
@@ -182,34 +181,37 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
               layout.width = 'auto';
               layout.height = 'auto';
               // Rebuild the plotly plot
-              return <Plot key={i} data={value.data} layout={layout} config={config} />;
-            }
-            case 'application/pdf':
-              return <PdfViewer key={i} data={value} />;
+              setOutput((prev) => [...prev, <Plot key={uuid} data={value.data} layout={layout} config={config} />]);
+              break;
             default:
-              return <></>;
+              const jsxElement = <Text color="red">SAGECell does not currently support the ${key} mime-type</Text>;
+              setOutput((prev) => [...prev, jsxElement]);
+              break;
           }
-        });
-        setOutput((prev) => [...prev, ...dataOutput]);
+        }
       }
     }
   }, [p.msg_count]);
 
   return (
-    <Box
-      m={1}
-      // Interactive styling
-      className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}
-      background={useColorModeValue(`#f4f4f4`, `#1b1b1b`)}
-      borderLeft={`0.2em solid ${useHexColor(ownerColor)}`}
-      fontSize={s.fontSize + 'px'}
-    >
-      {count && (
-        <Text key={count} color={'red'} fontSize="sm">
-          Out[{count}]:
-        </Text>
-      )}
-      {!output ? <Text>No results to display.</Text> : output}
-    </Box>
+    <>
+      <Box
+        m={1}
+        className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}
+        background={useColorModeValue(`#fff`, `#171717`)}
+        borderLeft={`0.2em solid ${useHexColor(ownerColor)}`}
+        fontSize={s.fontSize + 'px'}
+      >
+        {count && (
+          <Text color={'red'} fontSize="sm">
+            Out[{count}]:
+          </Text>
+        )}
+        {!output
+          ? null
+          : // : output.length === 0 ? <Text></Text>
+            output}
+      </Box>
+    </>
   );
 }

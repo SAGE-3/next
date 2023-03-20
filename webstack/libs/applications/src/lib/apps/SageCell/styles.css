@@ -81,7 +81,7 @@
 
 .output {
   font-family: 'Monaco', 'Courier New', Courier, monospace;
-  padding-left: 1em;
+  padding: 0.5em;
   display: block;
   font-size: 'inherit';
   white-space: pre-wrap;
@@ -130,12 +130,12 @@
   background: rgba(66, 165, 245, 0.2);
 }
 .output-area-light tbody tr:last-of-type {
-  border-bottom: 4px solid #212121;
+  border-bottom: 2px solid #212121;
 }
 /********* Dark Mode *********/
 .output-area-dark table {
   /* border: 1px solid #cecece; */
-  border: 1px solid #515151;
+  border: 1px solid #fff;
   border-collapse: collapse;
   border-spacing: 0;
   color: #ccc;
@@ -181,5 +181,5 @@
 }
 
 .output-area-dark tbody tr:last-of-type {
-  border-bottom: 2px solid #262626;
+  border-bottom: 2px solid #fff;
 }
