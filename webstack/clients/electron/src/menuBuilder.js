@@ -13,7 +13,7 @@ const electron = require('electron');
 const bookmarkStore = require('./bookmarkstore');
 
 // Utils
-const { updateLandingPage, dialogUserTextInput, checkServerIsSage } = require('./utils');
+const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
 const updater = require('./updater');
 
 /**
@@ -109,7 +109,7 @@ function buildSageMenu(window) {
         {
           label: 'Take Screenshot',
           click() {
-            TakeScreenshot();
+            takeScreenshot(window);
           },
         },
         {
