@@ -37,7 +37,7 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
 
-import { stationData } from './stationData';
+import { SensorTypes, stationDataTemplate } from './stationData';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
@@ -69,49 +69,52 @@ function AppComponent(props: App): JSX.Element {
   const [map, setMap] = useState<any>();
 
   useEffect(() => {
-    for (let i = 0; i < stationData.length; i++) {
+    for (let i = 0; i < s.stationData.length; i++) {
       fetch(
-        `https://api.mesowest.net/v2/stations/timeseries?STID=${stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+        `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
       ).then((response) => {
         response.json().then((station) => {
+          const tmpStation: any = s.stationData[i];
           if (station.STATION[0].OBSERVATIONS.soil_moisture_set_1 !== undefined) {
-            stationData[i].soilMoisture = Math.floor(
+            tmpStation.soilMoisture = Math.floor(
               station.STATION[0].OBSERVATIONS.soil_moisture_set_1[station.STATION[0].OBSERVATIONS.soil_moisture_set_1.length - 1]
             );
           }
           if (station.STATION[0].OBSERVATIONS.wind_speed_set_1 !== undefined) {
             {
-              stationData[i].windSpeed = Math.floor(
+              tmpStation.windSpeed = Math.floor(
                 station.STATION[0].OBSERVATIONS.wind_speed_set_1[station.STATION[0].OBSERVATIONS.wind_speed_set_1.length - 1]
               );
             }
           }
           if (station.STATION[0].OBSERVATIONS.wind_direction_set_1 !== undefined) {
             {
-              stationData[i].windDirection = Math.floor(
+              tmpStation.windDirection = Math.floor(
                 station.STATION[0].OBSERVATIONS.wind_direction_set_1[station.STATION[0].OBSERVATIONS.wind_direction_set_1.length - 1]
               );
             }
           }
 
-          stationData[i].relativeHumidity = Math.floor(
+          tmpStation.relativeHumidity = Math.floor(
             station.STATION[0].OBSERVATIONS.relative_humidity_set_1[station.STATION[0].OBSERVATIONS.relative_humidity_set_1.length - 1]
           );
-          stationData[i].temperatureC = Math.floor(
+          tmpStation.temperatureC = Math.floor(
             station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1]
           );
-          stationData[i].temperatureF = convertToFahrenheit(
+          tmpStation.temperatureF = convertToFahrenheit(
             Math.floor(station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1])
           );
 
-          stationData[i].solarRadiation = Math.floor(
+          tmpStation.solarRadiation = Math.floor(
             station.STATION[0].OBSERVATIONS.solar_radiation_set_1[station.STATION[0].OBSERVATIONS.solar_radiation_set_1.length - 1]
           );
+          const tmpStationData = [...s.stationData];
+          tmpStationData[tmpStationData.indexOf(station)] = tmpStation;
+          updateState(props._id, { stationData: [...tmpStationData] });
         });
       });
     }
   }, []);
-
   // Function to generate charts either for createAllCharts, or createChartTemplate
   const createChart = (appPos: { x: number; y: number; z: number }, stationName: string, axisTitle: string, climateProp: string) => {
     const app = createApp({
@@ -263,6 +266,16 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { variableToDisplay: variableName });
   };
 
+  const handleAddSelectedStation = (station: SensorTypes) => {
+    const tmpArray = [...s.stationData];
+    for (let i = 0; i < tmpArray.length; i++) {
+      if (tmpArray[i] == station) {
+        tmpArray[i].selected = !tmpArray[i].selected;
+      }
+    }
+    updateState(props._id, { stationData: tmpArray });
+  };
+
   return (
     <LeafletWrapper map={map} setMap={setMap} {...props}>
       <Box
@@ -311,24 +324,27 @@ function AppComponent(props: App): JSX.Element {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {stationData.map((data, index) => {
+        {s.stationData.map((data: SensorTypes, index: number) => {
           return (
             <div key={index}>
               <CircleMarker
                 key={index}
                 center={{ lat: data.lat - 0.01, lng: data.lon }}
-                fillColor="rgb(244, 187, 68)"
+                fillColor={'rgb(244, 187, 68)'}
                 stroke={false}
                 fillOpacity={0}
                 radius={(5 / s.zoom) * 50 + 15}
                 eventHandlers={{
-                  mouseover: (e) => {
-                    e.target.openPopup();
+                  // mouseover: (e) => {
+                  //   e.target.openPopup();
+                  // },
+                  click: (e) => {
+                    handleAddSelectedStation(data);
                   },
                 }}
               >
-                <Popup className="leaflet-content">
-                  <Box textAlign={'center'} mb="3rem" height="350px" width="300px">
+                {/* <Popup className="leaflet-content">
+                  <Box textAlign={'center'} transform={'translate(0,-5rem)'} mb="3rem" pb="5rem" height="350px" width="300px">
                     <Center>
                       <VStack>
                         <Text fontSize={'30px'} fontWeight="bold">
@@ -367,7 +383,7 @@ function AppComponent(props: App): JSX.Element {
                       </VStack>
                     </Center>
                   </Box>
-                </Popup>
+                </Popup> */}
               </CircleMarker>
 
               <SVGOverlay
@@ -384,26 +400,26 @@ function AppComponent(props: App): JSX.Element {
                       <g
                         ref={arrowRef}
                         fill="white"
-                        transform={`translate(100, 100) scale(1.5) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`}
+                        transform={`translate(100, 100) scale(2) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`}
                       >
                         <Arrow degree={data['windDirection']} />
 
                         {/* <polygon points="80,130 100,60 120,130 100,125" fill="black" /> */}
                       </g>
                     )}
-                    <g transform={`translate(100, 100) scale(1.5) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" strokeWidth="3" />
+                    <g transform={`translate(100, 100) scale(2) translate(-100, -100)`}>
+                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={data.selected ? '#FC03DE' : 'black'} strokeWidth="3" />
 
-                      <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
+                      <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
                         {data[s.variableToDisplay]}
                       </text>
                     </g>
                   </svg>
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    <g transform={`translate(100, 100) scale(1.5) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E5B16A'} stroke="black" stroke-width="3" />
-                      <text x="100" y="100" alignment-baseline="middle" text-anchor="middle" fill="black">
+                    <g transform={`translate(100, 100) scale(2) translate(-100, -100)`}>
+                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={data.selected ? '#FC03DE' : 'black'} strokeWidth="3" />
+                      <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
                         {data[s.variableToDisplay]}
                       </text>
                     </g>
@@ -501,8 +517,6 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   const handleChangePosition = (location: any) => {
-    console.log({ location });
-
     updateState(props._id, { location: [location.lat, location.lng] });
   };
 
@@ -531,6 +545,9 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+      <Button size="xs" colorScheme={'green'}>
+        View Data
+      </Button>
     </HStack>
   );
 }

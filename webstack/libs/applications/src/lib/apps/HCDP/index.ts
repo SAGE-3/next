@@ -12,6 +12,7 @@
  */
 
 import { z } from 'zod';
+import { stationDataTemplate } from './stationData';
 
 const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
 export type Baselayer = z.infer<typeof Baselayer>;
@@ -35,6 +36,7 @@ export const schema = z.object({
   appIdsICreated: z.string().array(),
   fontSizeMultiplier: z.number(),
   variableToDisplay: variableTypes,
+  stationData: z.any(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -46,6 +48,7 @@ export const init: Partial<state> = {
   appIdsICreated: [],
   fontSizeMultiplier: 15,
   variableToDisplay: 'temperatureC',
+  stationData: [...stationDataTemplate],
 };
 
 export const name = 'Hawaii Mesonet';

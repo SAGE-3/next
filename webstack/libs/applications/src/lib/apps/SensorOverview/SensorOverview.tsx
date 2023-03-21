@@ -7,7 +7,7 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Box, Button, Container, Select, Spinner } from '@chakra-ui/react';
+import { Box, Button, Container, HStack, Text, Spinner, useColorModeValue, GridItem, Grid, Wrap, WrapItem } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -16,6 +16,8 @@ import { AppWindow } from '../../components';
 // Styling
 import './styling.css';
 import { ChangeEvent, useEffect, useState } from 'react';
+import { useParams } from 'react-router';
+import VariableCard from './VariableCard';
 
 /* App component for Sensor Overview */
 
@@ -24,24 +26,123 @@ function AppComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
   const [singularSensorData, setSingularSensorData] = useState({} as any);
+  const [stationMetadata, setStationMetadata] = useState([]);
+  const createApp = useAppStore((state) => state.create);
+  // BoardInfo
+  const { boardId, roomId } = useParams();
+
+  const bgColor = useColorModeValue('gray.100', 'gray.900');
+  const sc = useColorModeValue('gray.400', 'gray.200');
+  const textColor = useColorModeValue('gray.700', 'gray.100');
 
   useEffect(() => {
-    // Fetch from the Mesonet website. Will change to HCDP database when website is ready
-    fetch(
-      `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-    ).then((response) => {
-      response.json().then(async (sensor) => {
-        const sensorData = sensor['STATION'][0];
-        console.log(sensorData);
-        setSingularSensorData(sensorData);
-      });
+    const fetchStationData = async () => {
+      const tmpStationMetadata: any = [];
+
+      for (let i = 0; i < s.listOfStationNames.length; i++) {
+        // Fetch from the Mesonet website. Will change to HCDP database when website is ready
+        await fetch(
+          `https://api.mesowest.net/v2/stations/timeseries?STID=${s.listOfStationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+        ).then((response) => {
+          response.json().then(async (sensor) => {
+            const sensorData = sensor['STATION'][0];
+            tmpStationMetadata.push(sensorData);
+          });
+        });
+      }
+      return tmpStationMetadata;
+    };
+    fetchStationData().then((data) => {
+      setStationMetadata(data);
     });
-  }, [s.stationName]);
+    console.log('I am CAlled');
+  }, []);
 
   return (
     <AppWindow app={props}>
-      <Box p={'1rem'} w="100%" bg="white" color="black" h="100%">
-        {Object.keys(singularSensorData).length > 0 ? (
+      <Box overflowY="scroll" p={'1rem'} bg={bgColor} h="100%">
+        {stationMetadata.length > 0 ? (
+          stationMetadata.map((station, index) => {
+            return (
+              <Box bgColor={bgColor} color={textColor} fontSize="lg" key={index} p="1rem" border="solid black 1px">
+                <Text textAlign="center" fontSize={'4rem'}>
+                  {station['NAME']}
+                </Text>
+                <HStack>
+                  <Box>
+                    <Box h="25rem" w={props.data.size.width / 2} border="black solid 1px">
+                      <Text textAlign="center">This is where the leaflet map is going</Text>
+                    </Box>
+                    <Box p="1rem" h="10rem" w={props.data.size.width / 4} border="solid black 1px">
+                      <HStack>
+                        <Box>
+                          <Text>
+                            <strong>Island: </strong>
+                          </Text>
+                          <Text>
+                            <strong>Status: </strong>
+                          </Text>
+                          <Text>
+                            <strong>Elevation: </strong>
+                          </Text>
+                          <Text>
+                            <strong>Latitude: </strong>
+                          </Text>
+                          <Text>
+                            <strong>Longitude: </strong>
+                          </Text>
+                        </Box>
+                        <Box>
+                          <Text> &nbsp; {station['COUNTY']}</Text>
+                          <Text> &nbsp; {station['STATUS']}</Text>
+                          <Text> &nbsp; {station['ELEVATION']}</Text>
+                          <Text> &nbsp; {station['LATITUDE']}</Text>
+                          <Text>{station['LONGITUDE']}</Text>
+                        </Box>
+                      </HStack>
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    <Wrap>
+                      {Object.keys(station['OBSERVATIONS']).map((variableName, index) => {
+                        const observations: any = station['OBSERVATIONS'];
+                        return (
+                          <WrapItem>
+                            <VariableCard
+                              variableName={variableName}
+                              variableValue={station['OBSERVATIONS'][variableName][observations[variableName].length - 1]}
+                              stationName={station['STID']}
+                              appPos={{
+                                x: props.data.position.x + props.data.size.width * 1 + 20,
+                                y: props.data.position.y,
+                                z: 0,
+                              }}
+                            />
+                            {/* // <h2>
+                            //   <strong>{variableName}: </strong>{' '}
+                            //   {station['OBSERVATIONS'][variableName][observations[variableName].length - 1]}
+                            // </h2>
+                            //{' '} */}
+                          </WrapItem>
+                        );
+                      })}
+                    </Wrap>
+                  </Box>
+                </HStack>
+              </Box>
+            );
+          })
+        ) : (
+          <Spinner
+            w={Math.min(props.data.size.height / 2, props.data.size.width / 2)}
+            h={Math.min(props.data.size.height / 2, props.data.size.width / 2)}
+            thickness="20px"
+            speed="0.30s"
+            emptyColor="gray.200"
+          />
+        )}
+        {/* {Object.keys(singularSensorData).length > 0 ? (
           Object.keys(singularSensorData).map((sensor) => {
             if (typeof singularSensorData[sensor] !== 'object') {
               return (
@@ -63,7 +164,7 @@ function AppComponent(props: App): JSX.Element {
             speed="0.30s"
             emptyColor="gray.200"
           />
-        )}
+        )} */}
       </Box>
     </AppWindow>
   );
@@ -75,53 +176,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  const [stations, setStations] = useState<any[]>([]);
-
-  const handleChangeSensor = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateState(props._id, { stationName: e.target.value });
-  };
-
-  useEffect(() => {
-    for (let i = 0; i < stationData.length; i++) {
-      console.log(stationData[i].name, s.stationName);
-      fetch(
-        `https://api.mesowest.net/v2/stations/timeseries?STID=${stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-      ).then((response) => {
-        response.json().then(async (sensor) => {
-          console.log(sensor);
-          const sensorData = sensor['STATION'][0];
-          setStations((stations) => [...stations, sensorData]);
-          console.log(sensorData);
-        });
-      });
-    }
-  }, []);
-
-  return (
-    <>
-      <Select
-        borderWidth="1px"
-        borderRadius="lg"
-        size="xs"
-        mx="1rem"
-        w="10rem"
-        borderColor={'gray.400'}
-        backgroundColor={'white'}
-        color="black"
-        name="yAxis"
-        placeholder={'Choose Sensor'}
-        onChange={handleChangeSensor}
-      >
-        {stations.map((station: any, index: number) => {
-          return (
-            <option key={index} value={station.STID}>
-              {station.NAME}
-            </option>
-          );
-        })}
-      </Select>
-    </>
-  );
+  return <></>;
 }
 
 export default { AppComponent, ToolbarComponent };

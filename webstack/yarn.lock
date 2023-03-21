@@ -4282,6 +4282,13 @@
     "@types/d3-transition" "*"
     "@types/d3-zoom" "*"
 
+"@types/echarts@^18.0.21":
+  version "4.9.16"
+  resolved "https://registry.yarnpkg.com/@types/echarts/-/echarts-4.9.16.tgz#7156aea4623f3543b083200f6c65e04d3693bcc8"
+  integrity sha512-bfiagfPw3dWauAIJ9fgoJQoL4hLWlGcltqwbE6LGye0NIY5xnbZau+mDmadCzGojic3MWuFDCUiO25kl4sRGeA==
+  dependencies:
+    "@types/zrender" "*"
+
 "@types/eslint-scope@^3.7.3":
   version "3.7.4"
   resolved "https://registry.yarnpkg.com/@types/eslint-scope/-/eslint-scope-3.7.4.tgz#37fc1223f0786c39627068a12e94d6e6fc61de16"
@@ -4805,6 +4812,11 @@
   integrity sha512-AxO/ADJOBFJScHbWhq2xAhlWP24rY4aCEG/NFaMvbT3X2MgRsLjhjQwsn0Zi5zn0LG9jUhCCZMeX9Dkuw6k+vQ==
   dependencies:
     "@types/yargs-parser" "*"
+
+"@types/zrender@*":
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/@types/zrender/-/zrender-4.0.3.tgz#d18b31648b2f11b9ec672a560836e1887a965ec1"
+  integrity sha512-EPI269lkHNsObwILJ1k1z7znLjKyePuWRy/XKK0shSGpBb9cIX307arcwJV4+2NeZj5wEjN06r4D8yFv7sI06g==
 
 "@typescript-eslint/eslint-plugin@5.18.0":
   version "5.18.0"
@@ -7970,6 +7982,14 @@ ecdsa-sig-formatter@1.0.11:
   integrity sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==
   dependencies:
     safe-buffer "^5.0.1"
+
+echarts@^5.4.1:
+  version "5.4.1"
+  resolved "https://registry.yarnpkg.com/echarts/-/echarts-5.4.1.tgz#d7f65a584d78beff62568d878b16151b3381811c"
+  integrity sha512-9ltS3M2JB0w2EhcYjCdmtrJ+6haZcW6acBolMGIuf01Hql1yrIV01L1aRj7jsaaIULJslEP9Z3vKlEmnJaWJVQ==
+  dependencies:
+    tslib "2.3.0"
+    zrender "5.4.1"
 
 ee-first@1.1.1:
   version "1.1.1"
@@ -15839,6 +15859,11 @@ tsconfig-paths@^3.14.1, tsconfig-paths@^3.9.0:
     minimist "^1.2.6"
     strip-bom "^3.0.0"
 
+tslib@2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.0.tgz#803b8cdab3e12ba581a4ca41c8839bbb0dacb09e"
+  integrity sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==
+
 tslib@2.3.1:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.1.tgz#e8a335add5ceae51aa261d32a490158ef042ef01"
@@ -17281,6 +17306,13 @@ zod@^3.19.1:
   version "3.21.3"
   resolved "https://registry.yarnpkg.com/zod/-/zod-3.21.3.tgz#4ce194ae8f254fc102099a0292af66aa17c4ae7f"
   integrity sha512-tz1QgJomEhMTQhOBvQxnnrTo8q77EjpGLlaWicCoEEkMzScuONzDkJKIHr83CS89fGY24iGCStj2ZOCHpPOEyA==
+
+zrender@5.4.1:
+  version "5.4.1"
+  resolved "https://registry.yarnpkg.com/zrender/-/zrender-5.4.1.tgz#892f864b885c71e1dc25dcb3c7a4ba42678d3f11"
+  integrity sha512-M4Z05BHWtajY2241EmMPHglDQAJ1UyHQcYsxDNzD9XLSkPDqMq4bB28v9Pb4mvHnVQ0GxyTklZ/69xCFP6RXBA==
+  dependencies:
+    tslib "2.3.0"
 
 zustand@4.2.0:
   version "4.2.0"

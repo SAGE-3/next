@@ -9,6 +9,7 @@ import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CounterName } from './apps/Counter';
 import { name as DataTableName } from './apps/DataTable';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
+import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
 import { name as ImageViewerName } from './apps/ImageViewer';
@@ -32,6 +33,7 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
 
+
 import AIPane from './apps/AIPane/AIPane';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
@@ -41,6 +43,7 @@ import Cobrowse from './apps/Cobrowse/Cobrowse';
 import Counter from './apps/Counter/Counter';
 import DataTable from './apps/DataTable/DataTable';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
+import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
@@ -65,6 +68,7 @@ import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import React from 'react';
 
+
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent },
@@ -75,6 +79,7 @@ export const Applications = {
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent },
   [DataTableName]: { AppComponent: React.memo(DataTable.AppComponent), ToolbarComponent: DataTable.ToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent },
+  [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent },
   [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent },
@@ -92,14 +97,11 @@ export const Applications = {
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent },
   [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent },
-  [TwilioScreenshareName]: {
-    AppComponent: React.memo(TwilioScreenshare.AppComponent),
-    ToolbarComponent: TwilioScreenshare.ToolbarComponent,
-  },
+  [TwilioScreenshareName]: { AppComponent: React.memo(TwilioScreenshare.AppComponent), ToolbarComponent: TwilioScreenshare.ToolbarComponent },
   [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent },
   [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent },
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';
