@@ -51,11 +51,13 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
 
   function handleTyping(userId: string) {
     // add the userId to the global array of active users
+    if (!s.activeUsers) return;
     const currentUsers = s.activeUsers;
     if (currentUsers.includes(userId)) return;
     currentUsers.push(userId);
-    updateState(props.app._id, { currentUsers });
+    // need to udpate both local and global state here
     setActiveUsers(new Set(currentUsers));
+    updateState(props.app._id, { currentUsers });
   }
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
         updateState(props.app._id, { activeUsers: [...newActiveUsers] });
         return newActiveUsers;
       });
-    }, 10000);
+    }, 3000);
 
     return () => {
       clearTimeout(timer);
@@ -141,6 +143,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
         code: code,
         output: '',
         executeInfo: { executeFunc: 'execute', params: { _uuid: requestId } },
+        activeUsers: new Set(),
       });
     }
   };
@@ -153,7 +156,8 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       executeInfo: { executeFunc: '', params: {} },
     });
     editor.current?.setValue('');
-    updateState(props.app._id, { activeUsers: new Set<string>([]) });
+    setActiveUsers(new Set());
+    updateState(props.app._id, { activeUsers: new Set() });
   };
 
   // updates the local state when the global state changes
@@ -199,7 +203,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     wordBasedSuggestions: false,
     lineNumbersMinChars: 3,
     glyphMargin: false,
-    autoIndent: 'advanced', // 'none' | 'keep' | 'brackets' | 'advanced' | 'full'
+    autoIndent: 'advanced',
     fixedOverflowWidgets: true,
     readOnlyMessage: 'You do not have access to this kernel',
     readOnly: !access,
@@ -207,12 +211,12 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       top: 8,
       bottom: 5,
     },
-    renderLineHighlight: 'none', // 'none' | 'gutter' | 'line' | 'all'
+    renderLineHighlight: 'none',
     scrollbar: {
       useShadows: false,
       verticalHasArrows: false,
       horizontalHasArrows: false,
-      vertical: 'hidden', // 'scroll' | 'hidden' | 'visible' | 'auto'
+      vertical: 'hidden',
       horizontal: 'scroll',
       verticalScrollbarSize: 0,
       horizontalScrollbarSize: 10,
@@ -237,6 +241,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
             if (!user) return;
             handleTyping(user._id);
             setCode(editor.current?.getValue() || '');
+            // updateState(props.app._id, { code: editor.current?.getValue() || '' });
           }}
           onMount={handleEditorDidMount}
         />

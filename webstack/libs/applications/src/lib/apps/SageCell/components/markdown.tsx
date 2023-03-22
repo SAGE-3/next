@@ -96,6 +96,18 @@ export function Markdown(props: any): JSX.Element {
               },
             },
           },
+          audio: {
+            component: Box,
+            props: { as: 'audio', controls: true, src: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+          },
+          // video: {
+          //   component: AspectRatio,
+          //   props: { ratio: 16 / 9 },
+          //   children: {
+          //     component: iframe,
+          //     props: { title: 'lol', src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', allowFullScreen: false },
+          //   },
+          // },
           // iframe: {
           //   component: Box,
           //   props: { as: 'iframe', title: 'lol', src: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
