@@ -14,7 +14,7 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  location: z.array(z.number(), z.number()),
+  location: z.array(z.number(), z.number()), // Lng, Lat
   zoom: z.number(),
   baseLayer: z.string(),
   overlay: z.boolean(),
@@ -23,7 +23,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  location: [21.297, -157.816],
+  location: [-157.816, 21.297], // Lng, Lat
   zoom: 13,
   baseLayer: 'OpenStreetMap',
   overlay: true,
