@@ -7,10 +7,24 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Divider, Badge, Spacer, Stack, Input, Avatar, AvatarBadge, AvatarGroup, Tooltip } from '@chakra-ui/react';
+import {
+  Box,
+  useColorModeValue,
+  Divider,
+  Badge,
+  Spacer,
+  Stack,
+  Input,
+  Avatar,
+  AvatarBadge,
+  AvatarGroup,
+  Tooltip,
+  IconButton,
+  Icon,
+} from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
+import { useAppStore, useUser, useUsersStore, truncateWithEllipsis, useRoomStore } from '@sage3/frontend';
 
 import { state as AppState, Kernels } from './index';
 import { AppWindow } from '../../components';
@@ -19,8 +33,9 @@ import { CodeEditor } from './components/editor';
 import { Outputs } from './components/outputs';
 import { ToolbarComponent } from './components/toolbar';
 import { SageCellInput } from './components/input';
-
 import './styles.css';
+import { FaUserFriends } from 'react-icons/fa';
+import { use } from 'passport';
 
 /**
  * SageCell - SAGE3 application
@@ -30,6 +45,7 @@ import './styles.css';
  */
 const AppComponent = (props: App): JSX.Element => {
   const { user } = useUser();
+  const { users } = useUsersStore();
   const s = props.data.state as AppState;
   const [myKernels, setMyKernels] = useState<Kernels>(s.availableKernels);
   const [access, setAccess] = useState(true);
@@ -41,14 +57,17 @@ const AppComponent = (props: App): JSX.Element => {
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
-  const [awaitingInput, setAwaitingInput] = useState(false);
-  const [input, setInput] = useState('');
-  // activeUsers is a list of users that are currently active in the sagecell
-  const [activeUsers, setActiveUsers] = useState<{ value: Record<string, any>; key: string }[]>([]);
 
-  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
-    setInput(e.target.value);
-  }
+  const [activeUsers, setActiveUsers] = useState<Set<string>>(new Set());
+  const typingUsers = users.filter((user) => activeUsers.has(user._id));
+
+  useEffect(() => {
+    setActiveUsers(new Set([...s.activeUsers]));
+  }, [JSON.stringify(s.activeUsers)]);
+
+  useEffect(() => {
+    console.log('active users', activeUsers);
+  }, [activeUsers]);
 
   function getKernels() {
     if (!user) return;
@@ -86,7 +105,7 @@ const AppComponent = (props: App): JSX.Element => {
 
   useEffect(() => {
     if (s.kernel == '') {
-      setAccess(true); // need to check this...it's weird
+      setAccess(false);
     } else {
       const access = myKernels.find((kernel) => kernel.key === s.kernel);
       setAccess(access ? true : false);
@@ -122,15 +141,6 @@ const AppComponent = (props: App): JSX.Element => {
     }
   }, [s.kernel]);
 
-  function handleOnCellClick() {
-    if (!user) return;
-    setActiveUsers((prev) => {
-      const users = prev.filter((u) => u.key !== user._id);
-      users.push({ key: user._id, value: user });
-      return users;
-    });
-  }
-
   return (
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
@@ -139,15 +149,15 @@ const AppComponent = (props: App): JSX.Element => {
           <Badge variant="outline" colorScheme="blue">
             {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
           </Badge>
-          {/* {!activeUsers ? null : (
+          {!activeUsers ? null : (
             <AvatarGroup size="xs" max={10}>
-              {activeUsers.map((user) => (
-                <Tooltip key={user.key} label={user.value.data.name} placement="top">
-                  <Avatar size={'2xs'} name={user.value.data.name} src={user.value.data.profilePicture} />
+              {typingUsers.map((user) => (
+                <Tooltip key={user._id} label={user.data.name} placement="top">
+                  <Avatar size={'2xs'} name={user.data.name} src={user.data.profilePicture} />
                 </Tooltip>
               ))}
             </AvatarGroup>
-          )} */}
+          )}
           <Spacer />
           {!s.kernel && !access ? ( // no kernel selected and no access
             <Badge variant="outline" colorScheme="red">
@@ -181,7 +191,8 @@ const AppComponent = (props: App): JSX.Element => {
           overflowY="auto"
         >
           {/* The code cell */}
-          <Box flex="1" onClick={handleOnCellClick}>
+          {/* <Box flex="1" onClick={handleOnCellClick}> */}
+          <Box flex="1">
             <CodeEditor app={props} access={access} editorHeight={editorHeight} />
             <Box
               h="20px"

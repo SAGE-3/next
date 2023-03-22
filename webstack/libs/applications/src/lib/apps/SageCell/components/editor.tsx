@@ -7,12 +7,12 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ButtonGroup, HStack, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
+import { ButtonGroup, HStack, Icon, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 import { v4 as getUUID } from 'uuid';
 
-import { useAppStore, useUser } from '@sage3/frontend';
+import { useAppStore, useUser, useUsersStore } from '@sage3/frontend';
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
@@ -34,6 +34,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const editor = useRef<Monaco>();
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
+  const { users } = useUsersStore();
   const { colorMode } = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
   // Make a toast to show errors
@@ -45,6 +46,38 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const [kernel, setKernel] = useState(s.kernel);
   const roomId = props.app.data.roomId;
   const boardId = props.app.data.boardId;
+
+  const [activeUsers, setActiveUsers] = useState<Set<string>>(new Set());
+
+  function handleTyping(userId: string) {
+    // add the userId to the global array of active users
+    const currentUsers = s.activeUsers;
+    if (currentUsers.includes(userId)) return;
+    currentUsers.push(userId);
+    updateState(props.app._id, { currentUsers });
+    setActiveUsers(new Set(currentUsers));
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    const timer = setTimeout(() => {
+      setActiveUsers((prevActiveUsers) => {
+        const newActiveUsers = new Set(prevActiveUsers);
+        users.forEach((user) => newActiveUsers.delete(user._id));
+        updateState(props.app._id, { activeUsers: [...newActiveUsers] });
+        return newActiveUsers;
+      });
+    }, 10000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [activeUsers]);
+
+  useEffect(() => {
+    if (!activeUsers || activeUsers === undefined || activeUsers.size === 0) return;
+    updateState(props.app._id, { activeUsers: [...activeUsers] });
+  }, [activeUsers]);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -112,6 +145,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     }
   };
 
+  // clears the app state and editor values
   const handleClear = () => {
     updateState(props.app._id, {
       code: '',
@@ -119,10 +153,12 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       executeInfo: { executeFunc: '', params: {} },
     });
     editor.current?.setValue('');
+    updateState(props.app._id, { activeUsers: new Set<string>([]) });
   };
 
+  // updates the local state when the global state changes
   useEffect(() => {
-    if (s.code !== code) {
+    if (code !== s.code) {
       setCode(s.code);
     }
   }, [s.code]);
@@ -197,7 +233,11 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
           language={'python'}
           theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
           options={options}
-          onChange={() => setCode(editor.current?.getValue() || '')}
+          onChange={() => {
+            if (!user) return;
+            handleTyping(user._id);
+            setCode(editor.current?.getValue() || '');
+          }}
           onMount={handleEditorDidMount}
         />
         <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">

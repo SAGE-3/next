@@ -36,7 +36,6 @@ class SageCell(SmartBit):
     _request_id = PrivateAttr(default='')
 
     def __init__(self, **kwargs):
-        # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(SageCell, self).__init__(**kwargs)
         self._jupyter_client = JupyterKernelProxy()
         self._r_json = self._jupyter_client.redis_server.json()
@@ -44,30 +43,14 @@ class SageCell(SmartBit):
             self._r_json.set(self._redis_space, '.', {})
 
     def handle_exec_result(self, msg):
-        """
-        This function will handle the results from the jupyter server
-
-        We need to add a msg_count to the message so that the front end can
-        determine if the message is the last message in the sequence
-
-        :param msg:
-        :return:
-        """
         if msg['request_id'] != self._request_id:
             self._msg_count = 0
             self._request_id = msg['request_id']
         self._msg_count += 1
         msg['msg_count'] = self._msg_count
         self.state.output = json.dumps(msg)
-        # print(f"handle_exec_result: {self.state.output}")
-        self.state.executeInfo = {'executeFunc': '', 'params': {}}
-        self.send_updates()
-
-    def generate_error_message(self, user_uuid, error_msg):
-        # 'You do not have access to this kernel'
-        pm = [{'userId': user_uuid, 'message': error_msg}]
-        self.state.privateMessage = pm
-        self.state.executeInfo = {'executeFunc': '', 'params': {}}
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
         self.send_updates()
 
     def get_available_kernels(self, _uuid=None):
@@ -86,7 +69,8 @@ class SageCell(SmartBit):
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})
         self.state.availableKernels = available_kernels
-        self.state.executeInfo = {'executeFunc': '', 'params': {}}
+        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.params = {}
         self.send_updates()
 
     def execute(self, _uuid):
@@ -107,7 +91,8 @@ class SageCell(SmartBit):
         if self.state.kernel:
             self._jupyter_client.execute(command_info)
         else:
-            self.state.executeInfo = {'executeFunc': '', 'params': {}}
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
             self.send_updates()
 
     def interrupt(self, _uuid=None):
@@ -123,9 +108,8 @@ class SageCell(SmartBit):
             logger.debug(f"Sending interrupt request to  kernel {command_info['kernel']}")
             self._jupyter_client.interrupt(command_info)
         else:
-            # TODO: MLR fix to solve issue #339
-            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
-            self.state.executeInfo = {'executeFunc': '', 'params': {}}
+            self.state.executeInfo.executeFunc = ""
+            self.state.executeInfo.params = {}
             self.send_updates()
 
     def clean_up(self):

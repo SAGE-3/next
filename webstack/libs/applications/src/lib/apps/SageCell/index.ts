@@ -39,6 +39,7 @@ const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.any(),
 });
+
 const availableKernelsSchema = z.array(
   z.object({
     key: z.string(),
@@ -46,18 +47,16 @@ const availableKernelsSchema = z.array(
   })
 );
 
+// array of user ids, for some reason Set() is not supported
+const activeUsersSchema = z.array(z.string());
+
 export const schema = z.object({
   code: z.string(),
   language: z.string(),
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
-  privateMessage: z.array(
-    z.object({
-      userId: z.string(),
-      message: z.string(),
-    })
-  ),
+  activeUsers: activeUsersSchema,
   availableKernels: availableKernelsSchema,
   output: z.string(),
   msgCount: z.number(),
@@ -70,6 +69,7 @@ export const schema = z.object({
 export type ExecuteInfo = z.infer<typeof executeInfoSchema>;
 export type Kernels = z.infer<typeof availableKernelsSchema>;
 export type Output = z.infer<typeof outputSchema>;
+export type activeUsers = z.infer<typeof activeUsersSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
@@ -79,7 +79,7 @@ export const init: Partial<state> = {
   theme: 'vs-dark',
   kernel: '',
   output: '',
-  privateMessage: [],
+  activeUsers: [],
   availableKernels: [],
   executeInfo: { executeFunc: '', params: {} } as ExecuteInfo,
 };
