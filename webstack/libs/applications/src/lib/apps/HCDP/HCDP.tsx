@@ -45,6 +45,7 @@ import { useStore } from './LeafletWrapper';
 
 // Icon imports
 import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
+import { useParams } from 'react-router';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
@@ -94,20 +95,26 @@ function AppComponent(props: App): JSX.Element {
               );
             }
           }
+          if (station.STATION[0].OBSERVATIONS.relative_humidity_set_1 !== undefined) {
+            tmpStation.relativeHumidity = Math.floor(
+              station.STATION[0].OBSERVATIONS.relative_humidity_set_1[station.STATION[0].OBSERVATIONS.relative_humidity_set_1.length - 1]
+            );
+          }
+          if (station.STATION[0].OBSERVATIONS.air_temp_set_1 !== undefined) {
+            tmpStation.temperatureC = Math.floor(
+              station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1]
+            );
+            tmpStation.temperatureF = convertToFahrenheit(
+              Math.floor(station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1])
+            );
+          }
 
-          tmpStation.relativeHumidity = Math.floor(
-            station.STATION[0].OBSERVATIONS.relative_humidity_set_1[station.STATION[0].OBSERVATIONS.relative_humidity_set_1.length - 1]
-          );
-          tmpStation.temperatureC = Math.floor(
-            station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1]
-          );
-          tmpStation.temperatureF = convertToFahrenheit(
-            Math.floor(station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1])
-          );
+          if (station.STATION[0].OBSERVATIONS.solar_radiation_set_1 !== undefined) {
+            tmpStation.solarRadiation = Math.floor(
+              station.STATION[0].OBSERVATIONS.solar_radiation_set_1[station.STATION[0].OBSERVATIONS.solar_radiation_set_1.length - 1]
+            );
+          }
 
-          tmpStation.solarRadiation = Math.floor(
-            station.STATION[0].OBSERVATIONS.solar_radiation_set_1[station.STATION[0].OBSERVATIONS.solar_radiation_set_1.length - 1]
-          );
           const tmpStationData = [...s.stationData];
           tmpStationData[tmpStationData.indexOf(station)] = tmpStation;
           updateState(props._id, { stationData: [...tmpStationData] });
@@ -467,6 +474,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const [addrValue, setAddrValue] = useState('');
   const map = useStore((state: any) => state.map[props._id]);
   const update = useAppStore((state) => state.update);
+  // BoardInfo
+  const { boardId, roomId } = useParams();
+  const createApp = useAppStore((state) => state.create);
 
   const background = useColorModeValue('gray.50', 'gray.700');
 
@@ -520,6 +530,35 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { location: [location.lat, location.lng] });
   };
 
+  const handleCreateDashboard = () => {
+    const listOfSelectedStations = [];
+    for (let i = 0; i < s.stationData.length; i++) {
+      if (s.stationData[i].selected) {
+        listOfSelectedStations.push(s.stationData[i].name);
+      }
+    }
+    console.log(listOfSelectedStations);
+    createApp({
+      title: 'SensorOverview',
+      roomId: roomId!,
+      boardId: boardId!,
+      position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
+      size: { width: 1000, height: 1000, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'SensorOverview',
+      state: {
+        listOfStationNames: listOfSelectedStations,
+        widgetsEnabled: [
+          { visualizationType: 'variableCard', yAxisNames: ['wind_speed_set_1'], xAxisNames: [''] },
+          { visualizationType: 'variableCard', yAxisNames: ['relative_humidity_set_1'], xAxisNames: [''] },
+          { visualizationType: 'variableCard', yAxisNames: ['air_temp_set_1'], xAxisNames: [''] },
+          { visualizationType: 'line', yAxisNames: ['soil_moisture_set_1'], xAxisNames: ['date_time'] },
+        ],
+      },
+      raised: true,
+    });
+  };
+
   return (
     <HStack>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -545,8 +584,8 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <Button size="xs" colorScheme={'green'}>
-        View Data
+      <Button onClick={handleCreateDashboard} size="xs" colorScheme={'green'}>
+        Create Dashboard
       </Button>
     </HStack>
   );

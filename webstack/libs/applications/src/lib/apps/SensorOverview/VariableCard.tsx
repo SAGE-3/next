@@ -8,54 +8,18 @@
 
 import React from 'react';
 
-import { Box, Button, Text } from '@chakra-ui/react';
-import { useAppStore } from '@sage3/frontend';
-import { useParams } from 'react-router';
+import { Box, Text } from '@chakra-ui/react';
 
-export default function VariableCard(props: {
-  variableName: string;
-  variableValue: string;
-  stationName: string;
-  appPos: { x: number; y: number; z: number };
-}) {
-  const createApp = useAppStore((state) => state.create);
-  // BoardInfo
-  const { boardId, roomId } = useParams();
+export default function VariableCard(props: { variableName: string; variableValue: string; isEnabled?: boolean }) {
   return (
     <>
-      <Box p="1rem" w="21rem" h="12rem" border="solid white 1px">
+      <Box p="1rem" w="300px" h="300px" border="solid white 1px" bgColor={props.isEnabled ? 'blackAlpha.200' : 'blackAlpha.700'}>
         <Text textAlign={'center'}>
           <strong>{props.variableName}</strong>
         </Text>
         <Text lineHeight={'7rem'} textAlign="center" fontSize={'xl'} verticalAlign={'middle'}>
           <strong>{props.variableValue}</strong>
         </Text>
-        <Button
-          colorScheme="cyan"
-          size="xs"
-          onClick={() => {
-            createApp({
-              title: 'SensorOverview',
-              roomId: roomId!,
-              boardId: boardId!,
-              position: { x: props.appPos.x, y: props.appPos.y, z: props.appPos.z },
-              size: { width: 1000, height: 1000, depth: 0 },
-              rotation: { x: 0, y: 0, z: 0 },
-              type: 'EChartsViewer',
-              state: {
-                stationName: [props.stationName],
-                chartType: 'line',
-                yAxisAttributes: [props.variableName],
-                xAxisAttributes: ['date_time'],
-                transform: [],
-                options: {},
-              },
-              raised: true,
-            });
-          }}
-        >
-          create chart
-        </Button>
       </Box>
     </>
   );

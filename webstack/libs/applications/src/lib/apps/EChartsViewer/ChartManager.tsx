@@ -68,10 +68,10 @@ function createLineChart(options: EChartsOption, yAxisData: string | any[], xAxi
         data: [
           [
             {
-              xAxis: xAxisData[600],
+              xAxis: xAxisData[xAxisData.length / 2],
             },
             {
-              xAxis: xAxisData[850],
+              xAxis: xAxisData[xAxisData.length - 1],
             },
           ],
         ],
