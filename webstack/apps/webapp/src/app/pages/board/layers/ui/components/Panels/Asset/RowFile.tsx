@@ -169,21 +169,21 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           height,
           spacing
         );
-        createApp(
-          setupApp(
-            '',
-            'PinBoard',
-            pinBoardX,
-            pinBoardY,
-            roomId,
-            boardId,
-            {
-              w: pinBoardWidth,
-              h: pinBoardHeight,
-            },
-            { items: cells }
-          )
-        );
+        // createApp(
+        //   setupApp(
+        //     '',
+        //     'PinBoard',
+        //     pinBoardX,
+        //     pinBoardY,
+        //     roomId,
+        //     boardId,
+        //     {
+        //       w: pinBoardWidth,
+        //       h: pinBoardHeight,
+        //     },
+        //     { items: cells }
+        //   )
+        // );
         cells.forEach((cell: any) => {
           if (cell.cell_type === 'code') {
             const sourceCode = (cell.source as []).join('');
@@ -228,12 +228,9 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
                 }
               )
             );
-            // }, {code: sourceCode, groupColor: groupColor + '.400'}));
           }
           if (cell.cell_type === 'markdown') {
-            // console.log('markdown');
             console.log(cell.source);
-            // do nothing
             createApp(
               setupApp(
                 '',
@@ -254,44 +251,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
               )
             );
           }
-          //   createApp(
-          //     setupApp(
-          //       '',
-          //       'Stickie',
-          //       x,
-          //       y,
-          //       roomId,
-          //       boardId,
-          //       {
-          //         w: width,
-          //         h: height,
-          //       },
-          //       { text: `markdown ${cell.source}` }
-          //     )
-          //     // }, {text: `markdown ${cell.source}`, color: groupColor})
-          //   );
-          // }
-          // if (cell.cell_type === 'raw') {
-          //   createApp(
-          //     setupApp(
-          //       '',
-          //       'Stickie',
-          //       x,
-          //       y,
-          //       roomId,
-          //       boardId,
-          //       {
-          //         w: width,
-          //         h: height,
-          //       },
-          //       { text: `markdown ${cell.source}` }
-          //     )
-          //     // }, {text: `markdown ${cell.source}`, color: groupColor})
-          //   );
-          // }
-          // if (cell.cell_type === 'display_data') {
-          //   createApp(setupApp('', 'SageCell', x, y, roomId, boardId, { w: width, h: height }, { output: JSON.stringify(cell.data) }));
-          // }
           y = y + height + spacing;
           columnCount++;
           if (columnCount >= columnHeight) {
@@ -518,16 +477,3 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     </div>
   );
 }
-
-const reviver = (key: string, value: any) => {
-  if (key === 'stream' && value.text instanceof Array) {
-    value.text = value.text.join('');
-  } else if (value instanceof Array && value.length === 0) {
-    // Convert empty arrays to empty strings
-    value = '';
-  }
-  if (key === 'text/plain' && value instanceof Array) {
-    value = value.join('');
-  }
-  return value;
-};
