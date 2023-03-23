@@ -28,7 +28,8 @@ export const schema = z.object({
   language: z.string(),
   fontSize: z.number(),
   theme: z.string(),
-  // groupColor: z.string(),
+  groupColor: z.string(),
+  status: z.string(),
   kernel: z.string(),
   privateMessage: z.array(
     z.object({
@@ -53,7 +54,8 @@ export const init: Partial<state> = {
   language: 'python',
   fontSize: 16,
   theme: 'xcode',
-  // groupColor: '#A0AEC0',
+  groupColor: '#A0AEC0',
+  status: 'idle',
   kernel: '',
   output: '',
   privateMessage: [],

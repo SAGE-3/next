@@ -24,6 +24,7 @@ class SageCellState(TrackedBaseModel):
     kernel: str = ""
     availableKernels: list = []
     privateMessage: list = []
+    status: str = ""
     executeInfo: ExecuteInfo
 
 class SageCell(SmartBit):

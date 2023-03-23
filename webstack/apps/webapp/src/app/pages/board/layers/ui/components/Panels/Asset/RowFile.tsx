@@ -6,12 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, {useState, useRef, useEffect, useLayoutEffect} from 'react';
-import {useParams} from 'react-router-dom';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
-import {format as formatDate, formatDistanceStrict} from 'date-fns';
-import {AssetHTTPService, useHexColor} from '@sage3/frontend';
+import { format as formatDate, formatDistanceStrict } from 'date-fns';
+import { AssetHTTPService, useHexColor } from '@sage3/frontend';
 
 import {
   Modal,
@@ -32,27 +32,13 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import {
-  MdOutlinePictureAsPdf,
-  MdOutlineImage,
-  MdOutlineFilePresent,
-  MdOndemandVideo,
-  MdOutlineStickyNote2
-} from 'react-icons/md';
+import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
-import {
-  humanFileSize,
-  downloadFile,
-  useUser,
-  useAuth,
-  useAppStore,
-  useUIStore,
-  useCursorBoardPosition
-} from '@sage3/frontend';
-import {getExtension} from '@sage3/shared';
-import {FileEntry} from './types';
-import {setupAppForFile} from './CreateApp';
-import {setupApp} from "../../../../background/components";
+import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore, useCursorBoardPosition } from '@sage3/frontend';
+import { getExtension } from '@sage3/shared';
+import { FileEntry } from './types';
+import { setupAppForFile } from './CreateApp';
+import { setupApp } from '../../../../background/components';
 import './menu.scss';
 
 export type RowFileProps = {
@@ -68,36 +54,36 @@ export type RowFileProps = {
  * @param p FileEntry
  * @returns
  */
-export function RowFile({file, clickCB, dragCB}: RowFileProps) {
+export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // check if user is a guest
-  const {user} = useUser();
-  const {auth} = useAuth();
+  const { user } = useUser();
+  const { auth } = useAuth();
 
   const toast = useToast();
   // Store if the file is selected or not
   const [selected, setSelected] = useState(file.selected);
   const buttonRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
-  const [anchorPoint, setAnchorPoint] = useState({x: 0, y: 0});
+  const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
   // Modal for delete
-  const {isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose} = useDisclosure({id: 'delete'});
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
   // show the context menu
   const [showMenu, setShowMenu] = useState(false);
   const [dragImage, setDragImage] = useState<HTMLImageElement>();
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   // Room and board
-  const {boardId, roomId} = useParams();
+  const { boardId, roomId } = useParams();
   if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const {position: cursorPosition} = useCursorBoardPosition();
+  const { position: cursorPosition } = useCursorBoardPosition();
 
   const scale = useUIStore((state) => state.scale);
 
-  const [groupIndex, setGroupIndex] = useState(0)
-  const [groupColor, setGroupColor] = useState("gray")
-  const [groupHexColor, setGroupHexColor] = useState("#A0AEC0")
+  const [groupIndex, setGroupIndex] = useState(0);
+  const [groupColor, setGroupColor] = useState('gray');
+  const [groupHexColor, setGroupHexColor] = useState('#A0AEC0');
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -116,38 +102,37 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
 
   // Generate a random color that is never the same as the last
   const randColor = (current: string) => {
-    const colors = ["red", "green", "blue", "yellow", "purple", "pink", "teal", "gray"]
+    const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'teal', 'gray'];
     let newColor = null;
     do {
       newColor = colors[Math.floor(Math.random() * colors.length)];
     } while (newColor === current);
-    return newColor
-  }
+    return newColor;
+  };
 
   useEffect(() => {
-    const newColor = randColor(groupColor)
-    setGroupColor(newColor)
+    const newColor = randColor(groupColor);
+    setGroupColor(newColor);
     // const bg = useColorModeValue(groupColor + '.100', groupColor + '.400');
     // const hbg = useHexColor(bg);
-    // setGroupHexColor(hbg)
-  }, [groupIndex])
-
+    // setGroupHexColor(hbg);
+  }, [groupIndex]);
 
   const getPinBoardDims = (n: any, columnHeight: number, x: number, y: number, width: number, height: number, spacing: number) => {
-    let pinBoardHeight = 0
+    let pinBoardHeight = 0;
     const pinBoardX = x - width / 2;
     const pinBoardY = y - height / 2;
-    const colNum = Math.ceil(n.length / columnHeight)
-    const pinBoardWidth = Math.ceil((width + spacing) * (colNum + 1))
+    const colNum = Math.ceil(n.length / columnHeight);
+    const pinBoardWidth = Math.ceil((width + spacing) * (colNum + 1));
 
     if (n.length < columnHeight) {
-      pinBoardHeight = (height + spacing) * (n.length + 1)
+      pinBoardHeight = (height + spacing) * (n.length + 1);
     } else {
       pinBoardHeight = (height + spacing) * (columnHeight + 1);
     }
 
-    return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight]
-  }
+    return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight];
+  };
 
   // Split a .ipynb into a series of SageCells
   const explodeCells = () => {
@@ -172,68 +157,152 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
         const columnHeight = 5;
         let x = xDrop;
         let y = yDrop;
-        const height = 400;
-        const width = 500;
+        const height = 300;
+        const width = 800;
         const spacing = 40;
-        const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(cells, columnHeight, xDrop, yDrop, width, height, spacing)
+        const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(
+          cells,
+          columnHeight,
+          xDrop,
+          yDrop,
+          width,
+          height,
+          spacing
+        );
         createApp(
-          setupApp('', 'PinBoard', pinBoardX, pinBoardY, roomId, boardId, {
-            w: pinBoardWidth,
-            h: pinBoardHeight
-          }, {items: cells})
-        )
-        // cells.forEach((cell: any) => {
-        //   if (cell.cell_type === 'code') {
-        //     const sourceCode = (cell.source as []).join(' ');
-        //     createApp(setupApp('', 'SageCell', x, y, roomId, boardId, {
-        //       w: width,
-        //       h: height
-        //     }, {code: sourceCode}));
-        //     // }, {code: sourceCode, groupColor: groupColor + '.400'}));
-        //   }
-        //   if (cell.cell_type === 'markdown') {
-        //     createApp(
-        //       setupApp('', 'Stickie', x, y, roomId, boardId, {
-        //         w: width,
-        //         h: height
-        //       }, {text: `markdown ${cell.source}`})
-        //       // }, {text: `markdown ${cell.source}`, color: groupColor})
-        //     );
-        //   }
-        //   if (cell.cell_type === 'raw') {
-        //     createApp(
-        //       setupApp('', 'Stickie', x, y, roomId, boardId, {
-        //         w: width,
-        //         h: height
-        //       }, {text: `markdown ${cell.source}`})
-        //       // }, {text: `markdown ${cell.source}`, color: groupColor})
-        //     );
-        //   }
-        //   if (cell.cell_type === 'display_data') {
-        //     createApp(
-        //       setupApp(
-        //         '',
-        //         'SageCell',
-        //         x,
-        //         y,
-        //         roomId,
-        //         boardId,
-        //         {w: width, h: height},
-        //         {output: JSON.stringify(cell.data)}
-        //       )
-        //     );
-        //   }
-        //   y = y + height + spacing;
-        //   columnCount++;
-        //   if (columnCount >= columnHeight) {
-        //     columnCount = 0;
-        //     x = x + width + spacing;
-        //     y = yDrop;
-        //   }
-        // });
-      })
-    setGroupIndex(groupIndex + 1)
-  }
+          setupApp(
+            '',
+            'PinBoard',
+            pinBoardX,
+            pinBoardY,
+            roomId,
+            boardId,
+            {
+              w: pinBoardWidth,
+              h: pinBoardHeight,
+            },
+            { items: cells }
+          )
+        );
+        cells.forEach((cell: any) => {
+          if (cell.cell_type === 'code') {
+            const sourceCode = (cell.source as []).join('');
+            let result: any;
+            const outputs = cell.outputs[0];
+            if (outputs) {
+              result = { [outputs['output_type']]: outputs };
+              // need to convert all the arrays to strings
+              Object.keys(result).forEach((key) => {
+                if (key === 'stream' && result[key].text instanceof Array) {
+                  result[key].text = result[key].text.join('');
+                }
+                if (key === 'execute_result' || key === 'display_data') {
+                  Object.keys(result[key].data).forEach((dataKey) => {
+                    if (result[key].data[dataKey] instanceof Array) {
+                      result[key].data[dataKey] = result[key].data[dataKey].join('');
+                    }
+                  });
+                }
+                if (key === 'error') {
+                  result[key].traceback = result[key].traceback.join('');
+                }
+              });
+              result = JSON.stringify(result);
+            }
+            createApp(
+              setupApp(
+                '',
+                'SageCell',
+                x,
+                y,
+                roomId,
+                boardId,
+                {
+                  w: width,
+                  h: height,
+                },
+                {
+                  code: sourceCode,
+                  output: result,
+                  groupColor: groupColor + '.400',
+                }
+              )
+            );
+            // }, {code: sourceCode, groupColor: groupColor + '.400'}));
+          }
+          if (cell.cell_type === 'markdown') {
+            // console.log('markdown');
+            console.log(cell.source);
+            // do nothing
+            createApp(
+              setupApp(
+                '',
+                'SageCell',
+                x,
+                y,
+                roomId,
+                boardId,
+                {
+                  w: width,
+                  h: height,
+                },
+                {
+                  code: '',
+                  output: JSON.stringify({ display_data: { data: { 'text/markdown': cell.source.join('') } } }),
+                  groupColor: groupColor + '.400',
+                }
+              )
+            );
+          }
+          //   createApp(
+          //     setupApp(
+          //       '',
+          //       'Stickie',
+          //       x,
+          //       y,
+          //       roomId,
+          //       boardId,
+          //       {
+          //         w: width,
+          //         h: height,
+          //       },
+          //       { text: `markdown ${cell.source}` }
+          //     )
+          //     // }, {text: `markdown ${cell.source}`, color: groupColor})
+          //   );
+          // }
+          // if (cell.cell_type === 'raw') {
+          //   createApp(
+          //     setupApp(
+          //       '',
+          //       'Stickie',
+          //       x,
+          //       y,
+          //       roomId,
+          //       boardId,
+          //       {
+          //         w: width,
+          //         h: height,
+          //       },
+          //       { text: `markdown ${cell.source}` }
+          //     )
+          //     // }, {text: `markdown ${cell.source}`, color: groupColor})
+          //   );
+          // }
+          // if (cell.cell_type === 'display_data') {
+          //   createApp(setupApp('', 'SageCell', x, y, roomId, boardId, { w: width, h: height }, { output: JSON.stringify(cell.data) }));
+          // }
+          y = y + height + spacing;
+          columnCount++;
+          if (columnCount >= columnHeight) {
+            columnCount = 0;
+            x = x + width + spacing;
+            y = yDrop;
+          }
+        });
+      });
+    setGroupIndex(groupIndex + 1);
+  };
 
   // Context menu selection handler
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
@@ -266,7 +335,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
         });
       }
     } else if (id === 'cells') {
-      explodeCells()
+      explodeCells();
     }
     // deselect file selection
     setSelected(false);
@@ -297,7 +366,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     setShowMenu(false);
     if (divRef.current?.contains(e.target as any)) {
       // capture the cursor position to show the menu
-      setAnchorPoint({x: e.pageX, y: e.pageY});
+      setAnchorPoint({ x: e.pageX, y: e.pageY });
       // show context menu
       setShowMenu(true);
       setSelected(true);
@@ -309,22 +378,22 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
   const whichIcon = (type: string) => {
     switch (type) {
       case 'pdf':
-        return <MdOutlinePictureAsPdf style={{color: 'tomato'}} size={'20px'}/>;
+        return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
       case 'jpeg':
-        return <MdOutlineImage style={{color: 'lightblue'}} size={'20px'}/>;
+        return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
       case 'mp4':
-        return <MdOndemandVideo style={{color: 'lightgreen'}} size={'20px'}/>;
+        return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'json':
-        return <MdOutlineStickyNote2 style={{color: 'darkgray'}} size={'20px'}/>;
+        return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
       default:
-        return <MdOutlineFilePresent size={'20px'}/>;
+        return <MdOutlineFilePresent size={'20px'} />;
     }
   };
 
   // Generate a human readable string from date
   const modif = formatDate(new Date(file.date), 'MM/dd/yyyy');
   // const added = formatDate(new Date(file.dateAdded), 'MM/dd/yyyy');
-  const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), {addSuffix: false});
+  const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), { addSuffix: false });
 
   // Select the color when item is selected
   const highlight = selected ? 'teal.600' : 'inherit';
@@ -360,7 +429,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     <div ref={divRef}>
       <Flex
         bg={highlight}
-        _hover={{background: hover}}
+        _hover={{ background: hover }}
         ref={buttonRef}
         fontFamily="mono"
         alignItems="center"
@@ -411,8 +480,12 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
             <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
               Delete
             </li>
-            <li style={{display: extension === "ipynb" ? 'block' : 'none'}} className="s3contextmenuitem" id={'cells'}
-                onClick={actionClick}>
+            <li
+              style={{ display: extension === 'ipynb' ? 'block' : 'none' }}
+              className="s3contextmenuitem"
+              id={'cells'}
+              onClick={actionClick}
+            >
               Open in SageCells
             </li>
           </ul>
@@ -421,7 +494,7 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
 
       {/* Delete a file modal */}
       <Modal isCentered isOpen={isDeleteOpen} onClose={onDeleteClose} size={'2xl'} blockScrollOnMount={false}>
-        <ModalOverlay/>
+        <ModalOverlay />
         <ModalContent>
           <ModalHeader>Delete an Asset</ModalHeader>
           <ModalBody>Are you sure you want to delete "{file.originalfilename}" ?</ModalBody>
@@ -445,3 +518,16 @@ export function RowFile({file, clickCB, dragCB}: RowFileProps) {
     </div>
   );
 }
+
+const reviver = (key: string, value: any) => {
+  if (key === 'stream' && value.text instanceof Array) {
+    value.text = value.text.join('');
+  } else if (value instanceof Array && value.length === 0) {
+    // Convert empty arrays to empty strings
+    value = '';
+  }
+  if (key === 'text/plain' && value instanceof Array) {
+    value = value.join('');
+  }
+  return value;
+};

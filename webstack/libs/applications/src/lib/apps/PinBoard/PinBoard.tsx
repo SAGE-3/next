@@ -72,6 +72,9 @@ function AppComponent(props: App): JSX.Element {
   function handleColumnDragStop(e: DraggableEvent, data: DraggableData, listIndex: number) {
     const newPinboardData = [...pinboardData];
     newPinboardData[listIndex].position = { x: data.x, y: data.y };
+    console.log(newPinboardData[listIndex].position);
+    // show mouse x and y position in console
+    console.log(data.x, data.y);
     newPinboardData[listIndex].items.forEach((item) => (item.isDragging = false));
     setPinboardData(newPinboardData);
     updateState(props._id, { lists: newPinboardData });
@@ -114,6 +117,17 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { lists: defaultData });
   }
 
+  // function handleDropEvent(e: React.DragEvent<HTMLDivElement>) {
+  //   e.preventDefault();
+  //   const data = e.dataTransfer.getData('text/plain');
+  //   console.log(data);
+  //   const listIndex = parseInt(e.currentTarget.id);
+  //   const newPinboardData = [...pinboardData];
+  //   newPinboardData[listIndex].items.push({ item: data, isDragging: false });
+  //   setPinboardData(newPinboardData);
+  //   updateState(props._id, { lists: newPinboardData });
+  // }
+
   return (
     <AppWindow app={props} lockToBackground={true}>
       <>
@@ -126,19 +140,27 @@ function AppComponent(props: App): JSX.Element {
             <Button onClick={() => console.log(pinboardData)}>Log</Button>
           </Box>
         </Box>
+        {/* Drop Space */}
         <Box w={'100%'} h={'100%'} bg={'#222'}>
           {pinboardData.length > 0 &&
             pinboardData.map((list, listIndex) => (
               <ListColumn
                 key={listIndex} // need an index for each column
-                size={{ width: list.size.width, height: list?.size.height }}
-                position={{ x: list?.position.x, y: list?.position.y }}
-                // bounds="parent"
+                size={{ width: list.size.width, height: list.size.height }}
+                position={{ x: list.position.x, y: list.position.y }}
+                // bounds="window"
                 dragHandleClassName={'column-drag'}
                 onDragStart={(e) => handleColumnDragStart(listIndex)}
                 onDragStop={(e, data) => handleColumnDragStop(e, data, listIndex)}
               >
-                <Box key={listIndex} border="1px solid black" backgroundColor="white" position="relative" p="1px" w={'175px'}>
+                <Box
+                  key={listIndex}
+                  border="1px solid black"
+                  backgroundColor="white"
+                  // position="relative"
+                  p="1px"
+                  w={'150px'}
+                >
                   <HStack px={2}>
                     <Text as={'h2'}>{listIndex + 1}</Text>
                     <Spacer />
