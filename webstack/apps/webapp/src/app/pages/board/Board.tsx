@@ -38,7 +38,7 @@ export function BoardPage() {
   const { toHome } = useRouteNav();
 
   // Config file
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   if (!roomId || !boardId) {
     toHome(roomId);

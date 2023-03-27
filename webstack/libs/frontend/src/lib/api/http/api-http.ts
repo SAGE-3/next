@@ -29,7 +29,7 @@ type DELResponse = {
 }
 
 async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
-  const response = await fetch('/api' + url, {
+  const response = await fetch('api' + url, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -43,7 +43,7 @@ async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
 
 async function GET<T, K>(url: string, query?: Partial<T>): Promise<GETResponse<K>> {
   if (query) url = url + '?' + new URLSearchParams(query as any);
-  const response = await fetch('/api' + url, {
+  const response = await fetch('api' + url, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -55,7 +55,7 @@ async function GET<T, K>(url: string, query?: Partial<T>): Promise<GETResponse<K
 }
 
 async function PUT<T>(url: string, body: Partial<T>): Promise<PUTResponse> {
-  const response = await fetch('/api' + url, {
+  const response = await fetch('api' + url, {
     method: 'PUT',
     credentials: 'include',
     headers: {
@@ -68,7 +68,7 @@ async function PUT<T>(url: string, body: Partial<T>): Promise<PUTResponse> {
 }
 
 async function DELETE(url: string): Promise<DELResponse> {
-  const response = await fetch('/api' + url, {
+  const response = await fetch('api' + url, {
     method: 'DELETE',
     credentials: 'include',
     headers: {

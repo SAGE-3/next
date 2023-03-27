@@ -80,7 +80,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       fd.append('room', roomId!);
 
       // Upload with a POST request
-      fetch('/api/assets/upload', {
+      fetch('api/assets/upload', {
         method: 'POST',
         body: fd,
       })

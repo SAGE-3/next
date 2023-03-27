@@ -89,7 +89,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     const checkHeartBeat = setInterval(async () => {
-      const response = await fetch('/api/time');
+      const response = await fetch('api/time');
       const time = await response.json();
       const delta = Math.round(Math.abs(time.epoch - s.lastHeartBeat) / 1000);
       if (delta > heartBeatTimeCheck && s.online) {
@@ -290,10 +290,10 @@ function AppComponent(props: App): JSX.Element {
                         kernel.value.kernel_name === 'ir'
                           ? 'R'
                           : kernel.value.kernel_name === 'python3'
-                          ? 'Python'
-                          : kernel.value.kernel_name === 'julia-1.8'
-                          ? 'Julia'
-                          : kernel.value.kernel_name
+                            ? 'Python'
+                            : kernel.value.kernel_name === 'julia-1.8'
+                              ? 'Julia'
+                              : kernel.value.kernel_name
                       }
                     </Text>
                   </Box>

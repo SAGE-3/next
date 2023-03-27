@@ -178,7 +178,7 @@ export function Background(props: BackgroundProps) {
       // Upload with a POST request
       axios({
         method: 'post',
-        url: '/api/assets/upload',
+        url: 'api/assets/upload',
         data: fd,
         onUploadProgress: (p: AxiosProgressEvent) => {
           if (toastIdRef.current && p.progress) {

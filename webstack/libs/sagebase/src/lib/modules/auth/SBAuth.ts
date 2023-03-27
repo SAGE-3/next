@@ -92,7 +92,8 @@ export class SBAuth {
             config.googleConfig.routeEndpoint,
             passport.authenticate('google', { prompt: 'select_account', scope: ['profile', 'email'] })
           );
-          express.get(config.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
+          // express.get(config.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
+          express.get('/auth/google/redirect', passport.authenticate('google', { successRedirect: '/sage3/', failureRedirect: '/sage3/' }));
         }
       }
 
@@ -108,7 +109,7 @@ export class SBAuth {
       // Guest Setup
       if (config.strategies.includes('guest') && config.guestConfig) {
         if (passportGuestSetup()) {
-          express.post(config.guestConfig.routeEndpoint, passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' }));
+          express.post(config.guestConfig.routeEndpoint, passport.authenticate('guest', { successRedirect: '/sage3/', failureRedirect: '/sage3/' }));
         }
       }
 
@@ -121,7 +122,7 @@ export class SBAuth {
           );
           express.get(
             config.cilogonConfig.callbackURL,
-            passport.authenticate('openidconnect', { successRedirect: '/', failureRedirect: '/' })
+            passport.authenticate('openidconnect', { successRedirect: '/sage3/', failureRedirect: '/sage3/' })
           );
         }
       }

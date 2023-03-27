@@ -42,7 +42,7 @@ interface CreateBoardModalProps {
 
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   const { user } = useUser();
   const toast = useToast();

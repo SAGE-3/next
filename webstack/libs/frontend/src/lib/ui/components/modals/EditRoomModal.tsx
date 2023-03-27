@@ -41,7 +41,7 @@ interface EditRoomModalProps {
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   const [name, setName] = useState<RoomSchema['name']>(props.room.data.name);
   const [description, setEmail] = useState<RoomSchema['description']>(props.room.data.description);

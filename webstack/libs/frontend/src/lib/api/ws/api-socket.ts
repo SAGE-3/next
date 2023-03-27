@@ -109,7 +109,9 @@ class SocketAPISingleton {
 
       this._subscriptions = {};
 
-      this._socket = new WebSocket(`${this._socketType}//${window.location.host}/api`);
+      const wsurl = `${this._socketType}//${window.location.host}${window.location.pathname}api`;
+      this._socket = new WebSocket(wsurl);
+      // this._socket = new WebSocket(`${this._socketType}//${window.location.host}/api`);
 
       this._socket.addEventListener('open', (event) => {
         this.print('Connection Open');

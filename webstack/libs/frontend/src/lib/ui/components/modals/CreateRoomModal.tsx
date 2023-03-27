@@ -40,7 +40,7 @@ interface CreateRoomModalProps {
 
 export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   const toast = useToast();
 

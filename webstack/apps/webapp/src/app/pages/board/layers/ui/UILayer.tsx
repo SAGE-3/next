@@ -54,7 +54,7 @@ export function UILayer(props: UILayerProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
 
   // Configuration
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -72,7 +72,7 @@ export function UILayer(props: UILayerProps) {
   const deleteApp = useAppStore((state) => state.delete);
 
   // Logo
-  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const logoUrl = useColorModeValue('assets/SAGE3LightMode.png', 'assets/SAGE3DarkMode.png');
 
   // Navigation
   const { toHome } = useRouteNav();

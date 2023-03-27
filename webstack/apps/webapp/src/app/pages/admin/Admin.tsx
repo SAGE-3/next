@@ -37,10 +37,10 @@ import { App, AppSchema } from '@sage3/applications/schema';
 
 export function AdminPage() {
   // SAGE3 Image
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const imageUrl = useColorModeValue('assets/SAGE3LightMode.png', 'assets/SAGE3DarkMode.png');
 
   // Config File
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   // Collections
   const [boards, setBoards] = useState<Board[]>([]);

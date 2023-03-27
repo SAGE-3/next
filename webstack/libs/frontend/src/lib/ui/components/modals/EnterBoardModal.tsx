@@ -40,7 +40,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
   const toast = useToast();
   const initialRef = useRef<HTMLInputElement>(null);
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   const [loading, setLoading] = useState(false);
 

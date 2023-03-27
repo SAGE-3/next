@@ -46,7 +46,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   // Status of the request
   const [submitStatus, setSubmitStatus] = useState<'pending' | 'submitted' | 'success'>('pending');
   // Fetch board from the server
-  const results = useData(`/api/boards/${boardId}`) as { success: boolean; data: Board[] };
+  const results = useData(`api/boards/${boardId}`) as { success: boolean; data: Board[] };
 
   // Chakra Toast
   const toast = useToast();

@@ -31,7 +31,7 @@ export function HomePage() {
   const { roomId } = useParams();
 
   // Config file
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   // Room Store
   const [selectedRoomId] = useState<string | undefined>(roomId);
@@ -54,7 +54,7 @@ export function HomePage() {
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
   // SAGE3 Image
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const imageUrl = useColorModeValue('assets/SAGE3LightMode.png', 'assets/SAGE3DarkMode.png');
 
   // Subscribe to user updates
   useEffect(() => {

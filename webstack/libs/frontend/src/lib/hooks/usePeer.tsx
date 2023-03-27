@@ -185,7 +185,7 @@ export function usePeer(props: usePeerProps): usePeerReturn {
 
       // Open websocket connection to the server
       const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const socketUrl = `${socketType}//${window.location.host}/rtc/${roomId}`;
+      const socketUrl = `${socketType}//${window.location.host}${window.location.pathname}rtc/${roomId}`;
       console.log('RTC> Connecting to', socketUrl);
       rtcSock.current = new WebSocket(socketUrl);
       rtcSock.current.addEventListener('open', () => {

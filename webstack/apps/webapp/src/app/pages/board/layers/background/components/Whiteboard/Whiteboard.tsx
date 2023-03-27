@@ -61,7 +61,7 @@ export function Whiteboard(props: WhiteboardProps) {
 
     // WS Provider
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + props.boardId, ydoc);
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}${window.location.pathname}yjs`, 'whiteboard-' + props.boardId, ydoc);
 
     // Lines array
     const yLines = ydoc.getArray('lines') as Y.Array<Y.Map<any>>;

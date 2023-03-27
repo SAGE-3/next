@@ -41,7 +41,7 @@ interface EditBoardModalProps {
 
 export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   const [name, setName] = useState<BoardSchema['name']>(props.board.data.name);
   const [description, setEmail] = useState<BoardSchema['description']>(props.board.data.description);

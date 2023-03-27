@@ -39,7 +39,7 @@ type ContextProps = {
 const savedRadios = [false, true];
 
 export function BoardContextMenu(props: ContextProps) {
-  const data = useData('/api/configuration') as OpenConfiguration;
+  const data = useData('api/configuration') as OpenConfiguration;
 
   const [appsList, setAppsList] = useState<string[]>([]);
 

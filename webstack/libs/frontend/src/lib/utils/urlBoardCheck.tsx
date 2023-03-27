@@ -46,7 +46,7 @@ export function JoinBoardCheck() {
   // Enter a board if the url contains it
   useEffect(() => {
     async function joinBoard() {
-      const res = await fetch(`/api/boards/${boardId}`);
+      const res = await fetch(`api/boards/${boardId}`);
       const resjson = await res.json();
       if (resjson.success) {
         const board = resjson.data[0] as Board;

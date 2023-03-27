@@ -36,7 +36,7 @@ export interface EnterRoomProps {
 
 export const EnterRoomModal = (props: EnterRoomProps) => {
   // Fetch configuration from the server
-  const config = useData('/api/configuration') as OpenConfiguration;
+  const config = useData('api/configuration') as OpenConfiguration;
 
   const [privateText, setPrivateText] = useState('');
   const toast = useToast();

@@ -48,7 +48,7 @@ const MaxElements = 12;
 
 export function Alfred(props: props) {
   // get features
-  const data = useData('/api/info');
+  const data = useData('api/info');
   // UI
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
