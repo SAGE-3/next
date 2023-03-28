@@ -51,6 +51,13 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Add a single item to the collection
+   * @param item The item to add
+   * @param by Who added the item
+   * @param id Force an id for the item
+   * @returns The added item if succesfull. Otherwise underfined
+   */
   public async add(item: T, by: string, id?: string): Promise<SBDocument<T> | undefined> {
     try {
       const docRef = await this._collection.addDoc(item, by, id);
@@ -66,6 +73,36 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Add a batch of items to the collection
+   * This will partially add if some are 'adds' are not successful
+   * @param item Item to add
+   * @param by The id of the user adding the item
+   * @returns An array of the succcesully added items
+   */
+  public async addBatch(item: T[], by: string): Promise<SBDocument<T>[] | undefined> {
+    try {
+      // Create promise for each item
+      const promises = item.map((i) => this._collection.addDoc(i, by));
+      // Wait for all promises to resolve
+      const docRefs = await Promise.all(promises);
+      // Read all documents
+      const docs = await Promise.all(docRefs.map((ref) => ref?.read()));
+      // Remove undefined values
+      const filteredDocs = docs.filter((doc) => doc !== undefined) as SBDocument<T>[];
+      // Return docs
+      return filteredDocs;
+    } catch (error) {
+      this.printError(error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get an item by id from the collection
+   * @param id The id of the item to get
+   * @returns The item if successful. Otherwise undefined
+   */
   public async get(id: string): Promise<SBDocument<T> | undefined> {
     try {
       const doc = await this._collection.docRef(id).read();
@@ -76,6 +113,10 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Get all documents from the collection
+   * @returns All documents if successful. Otherwise undefined
+   */
   public async getAll(): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.getAllDocs();
@@ -86,6 +127,12 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Query the collection for a specific value
+   * @param field The property field to query
+   * @param query The value to query
+   * @returns The documents that match the query if successful. Otherwise undefined
+   */
   public async query(field: keyof T, query: string | number): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.query(field, query);
@@ -96,6 +143,13 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Update a document in the collection
+   * @param id The id of the document to update
+   * @param by Who is updating the document
+   * @param update The update to apply
+   * @returns True if successful. Otherwise false
+   */
   public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<boolean> {
     try {
       const response = await this._collection.docRef(id).update(update, by);
@@ -106,10 +160,40 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  public async updateBatch(updates: { id: string; update: SBDocumentUpdate<T> }[], by: string): Promise<boolean[] | boolean> {
+    try {
+      // Create a promise for each update
+      const promises = updates.map((u) => this._collection.docRef(u.id).update(u.update, by));
+      // Wait for all promises to resolve
+      const responses = await Promise.all(promises);
+      // Check if all responses are successful
+      const success = responses.map((r) => r.success);
+      return success;
+    } catch (error) {
+      this.printError(error);
+      return false;
+    }
+  }
+
   public async delete(id: string): Promise<boolean> {
     try {
       const response = await this._collection.docRef(id).delete();
       return response.success;
+    } catch (error) {
+      this.printError(error);
+      return false;
+    }
+  }
+
+  public async deleteBatch(id: string[]): Promise<boolean[] | boolean> {
+    try {
+      // Create a promise for each delete
+      const promises = id.map((i) => this._collection.docRef(i).delete());
+      // Wait for all promises to resolve
+      const responses = await Promise.all(promises);
+      // Check if all responses are successful
+      const success = responses.map((r) => r.success);
+      return success;
     } catch (error) {
       this.printError(error);
       return false;

@@ -49,9 +49,16 @@ export async function sageWSRouter<T extends SBJSON>(
         socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
         return;
       } else {
-        const doc = await collection.add(body, user.id);
-        if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
-        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
+        // Check if body is an array, if so this is a batch post
+        if (Array.isArray(body)) {
+          const docs = await collection.addBatch(body, user.id);
+          if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create docs.' }));
+        } else {
+          const doc = await collection.add(body, user.id);
+          if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
+        }
       }
       break;
     }
@@ -82,22 +89,38 @@ export async function sageWSRouter<T extends SBJSON>(
         socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
         return;
       }
-      const body = message.body as SBDocumentUpdate<T>;
-      const update = await collection.update(id, user.id, body);
-      if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
-      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update doc' }));
+      const body = message.body as SBDocumentUpdate<T> | { id: string; update: SBDocumentUpdate<T> }[];
+      // Check if body is an array, if so this is a batch put
+      if (Array.isArray(body)) {
+        const docs = await collection.updateBatch(body, user.id);
+        if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update docs.' }));
+      } else {
+        const update = await collection.update(id, user.id, body);
+        if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update doc' }));
+      }
       break;
     }
     // DELETE: Delete one doc.
     case 'DELETE': {
-      const id = getIdFromRoute(route);
-      if (!id) {
-        socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
-        return;
+      // Check if body is an array, if so this is a batch delete
+      const body = message.body as string[];
+      if (Array.isArray(body)) {
+        const docs = await collection.deleteBatch(body);
+        if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete docs.' }));
+      } else {
+        const id = getIdFromRoute(route);
+        if (!id) {
+          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          return;
+        }
+        const del = await collection.delete(id);
+        if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete doc' }));
       }
-      const del = await collection.delete(id);
-      if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
-      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete doc' }));
+
       break;
     }
     case 'SUB': {

@@ -32,7 +32,7 @@ interface Applications {
   create: (newApp: AppSchema) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
-  delete: (id: string) => Promise<void>;
+  delete: (id: string | string[]) => Promise<void>;
   unsubToBoard: (uid: string) => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
   fetchBoardApps: (boardId: AppSchema['boardId']) => Promise<App[] | undefined>;
@@ -78,10 +78,17 @@ const AppStore = createVanilla<Applications>((set, get) => {
         set({ error: { msg: res.message } });
       }
     },
-    delete: async (id: string) => {
-      const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
-      if (!res.success) {
-        set({ error: { id, msg: res.message } });
+    delete: async (id: string | string[]) => {
+      if (Array.isArray(id)) {
+        const res = await SocketAPI.sendRESTMessage('/apps', 'DELETE', id);
+        if (!res.success) {
+          set({ error: { msg: res.message } });
+        }
+      } else {
+        const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');
+        if (!res.success) {
+          set({ error: { id, msg: res.message } });
+        }
       }
     },
     unsubToBoard: (uid: string) => {

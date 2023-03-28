@@ -53,7 +53,7 @@ class SocketAPISingleton {
   public async sendRESTMessage(
     route: APIClientWSMessage['route'],
     method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>,
-    body?: Record<string, unknown>
+    body?: Record<string, unknown> | string[]
   ): Promise<any> {
     await this.init();
     const message = {

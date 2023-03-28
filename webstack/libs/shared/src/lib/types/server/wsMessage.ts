@@ -6,10 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export type APIClientWSMessage =
-  {
-    id: string,
-    route: string,
-    method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB',
-    body?: Record<string, unknown>
-  };
+export type APIClientWSMessage = {
+  id: string;
+  route: string;
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
+  body?: Record<string, unknown> | string[];
+};

@@ -7,28 +7,28 @@
  */
 
 type POSTResponse<T> = {
-  success: boolean,
-  message?: string;
-  data?: T[]
-}
-
-type GETResponse<T> = {
-  success: boolean,
+  success: boolean;
   message?: string;
   data?: T[];
-}
+};
+
+type GETResponse<T> = {
+  success: boolean;
+  message?: string;
+  data?: T[];
+};
 
 type PUTResponse = {
-  success: boolean,
+  success: boolean;
   message?: string;
-}
+};
 
 type DELResponse = {
   success: boolean;
   message?: string;
-}
+};
 
-async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
+async function POST<T, K>(url: string, body: T | T[]): Promise<POSTResponse<K>> {
   const response = await fetch('/api' + url, {
     method: 'POST',
     credentials: 'include',
@@ -36,7 +36,7 @@ async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ...body }),
+    body: JSON.stringify(Array.isArray(body) ? body : { ...body }),
   });
   return await response.json();
 }
@@ -49,12 +49,12 @@ async function GET<T, K>(url: string, query?: Partial<T>): Promise<GETResponse<K
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-    }
+    },
   });
   return await response.json();
 }
 
-async function PUT<T>(url: string, body: Partial<T>): Promise<PUTResponse> {
+async function PUT<T>(url: string, body: Partial<T> | { id: string; update: Partial<T> }[]): Promise<PUTResponse> {
   const response = await fetch('/api' + url, {
     method: 'PUT',
     credentials: 'include',
@@ -62,12 +62,12 @@ async function PUT<T>(url: string, body: Partial<T>): Promise<PUTResponse> {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ...body }),
+    body: JSON.stringify(Array.isArray(body) ? body : { ...body }),
   });
   return await response.json();
 }
 
-async function DELETE(url: string): Promise<DELResponse> {
+async function DELETE(url: string, body?: string[]): Promise<DELResponse> {
   const response = await fetch('/api' + url, {
     method: 'DELETE',
     credentials: 'include',
@@ -75,6 +75,7 @@ async function DELETE(url: string): Promise<DELResponse> {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
+    body: JSON.stringify(body),
   });
   return await response.json();
 }
@@ -83,5 +84,5 @@ export const APIHttp = {
   POST,
   GET,
   PUT,
-  DELETE
-}
+  DELETE,
+};

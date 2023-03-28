@@ -93,7 +93,9 @@ export function UILayer(props: UILayerProps) {
    */
   const onClearConfirm = () => {
     // delete all apps
-    apps.forEach((a) => deleteApp(a._id));
+    // apps.forEach((a) => deleteApp(a._id));
+    const ids = apps.map((a) => a._id);
+    deleteApp(ids);
     setClearAllMarkers(true);
     // close the modal
     clearOnClose();
