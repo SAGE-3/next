@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Divider, Badge, Spacer, Stack } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
 
 import { state as AppState, availableKernelsType } from './index';
 import { AppWindow } from '../../components';
@@ -35,10 +35,14 @@ const AppComponent = (props: App): JSX.Element => {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   // Needed for Div resizing
-  const [editorHeight, setEditorHeight] = useState(150); // not beign used?
+  const [editorHeight, setEditorHeight] = useState(150); // not being used?
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+  // const [borderColor, setBorderColor] = useState(s.groupColor);
+
+  const [hasMarkdown, setHasMarkdown] = useState(false);
+  const scale = useUIStore((state) => state.scale);
 
   function getKernels() {
     if (!user) return;
@@ -112,11 +116,29 @@ const AppComponent = (props: App): JSX.Element => {
     }
   }, [s.kernel]);
 
+  useEffect(() => {
+    if (s.output.length > 0) {
+      const output = JSON.parse(s.output);
+      if (output.hasOwnProperty('display_data') && output['display_data']['data'].hasOwnProperty('text/markdown')) {
+        setHasMarkdown(true);
+      } else {
+        setHasMarkdown(false);
+      }
+    }
+  }, [s.output]);
+
   return (
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
-      <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
-        <Stack direction="row" bgColor={bgColor} p={1}>
+      <Box
+        border={`${4 / scale}px solid ${s.groupColor}`}
+        borderRadius="inherit"
+        h={'calc(100% - 1px)'}
+        w={'100%'}
+        display="flex"
+        flexDirection="column"
+      >
+        <Stack hidden={hasMarkdown} direction="row" bgColor={bgColor} p={1}>
           <Badge variant="outline" colorScheme="blue">
             {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
           </Badge>
@@ -154,7 +176,7 @@ const AppComponent = (props: App): JSX.Element => {
         >
           {/* The code cell */}
           <Box flex="1">
-            <CodeEditor app={props} access={access} editorHeight={editorHeight} />
+            <CodeEditor hidden={hasMarkdown} app={props} access={access} editorHeight={editorHeight} />
             <Box
               h="20px"
               background={'transparent'}
@@ -168,7 +190,7 @@ const AppComponent = (props: App): JSX.Element => {
               }}
             >
               {/* The grab bar */}
-              <Box>
+              <Box hidden={hasMarkdown}>
                 <Box className="arrow-top" />
                 <Divider borderColor={'teal.600'} _hover={{ bg: 'teal.200' }} />
                 <Box className="arrow-down" />

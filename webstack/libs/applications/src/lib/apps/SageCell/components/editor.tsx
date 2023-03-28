@@ -20,6 +20,7 @@ type CodeEditorProps = {
   app: App;
   access: boolean; // Does this user have access to the sagecell's selected kernel
   editorHeight?: number;
+  hidden?: boolean;
 };
 
 /**
@@ -190,7 +191,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
 
   return (
     <>
-      <HStack pr={2}>
+      <HStack pr={2} hidden={props.hidden}>
         <Editor
           value={code}
           defaultLanguage="python"
@@ -226,12 +227,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
             />
           </Tooltip>
           <Tooltip hasArrow label="Clear All" placement="right-start">
-            <IconButton
-              onClick={handleClear}
-              aria-label={''}
-              isDisabled={!s.kernel}
-              icon={<MdClearAll size={'1.5em'} color="#008080" />}
-            />
+            <IconButton onClick={handleClear} aria-label={''} isDisabled={!s.kernel} icon={<MdClearAll size={'1.5em'} color="#008080" />} />
           </Tooltip>
         </ButtonGroup>
       </HStack>

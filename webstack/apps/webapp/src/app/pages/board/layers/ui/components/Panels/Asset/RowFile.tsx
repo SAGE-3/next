@@ -82,8 +82,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const scale = useUIStore((state) => state.scale);
 
   const [groupIndex, setGroupIndex] = useState(0);
-  const [groupColor, setGroupColor] = useState('gray');
-  const [groupHexColor, setGroupHexColor] = useState('#A0AEC0');
+  // const [groupColor, setGroupColor] = useState('gray');
+  // const [groupHexColor, setGroupHexColor] = useState('#A0AEC0');
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -101,38 +101,30 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   }, [file]);
 
   // Generate a random color that is never the same as the last
-  const randColor = (current: string) => {
-    const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'teal', 'gray'];
-    let newColor = null;
-    do {
-      newColor = colors[Math.floor(Math.random() * colors.length)];
-    } while (newColor === current);
-    return newColor;
-  };
+  // const randColor = (current: string) => {
+  //   const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'teal', 'gray'];
+  //   let newColor = null;
+  //   do {
+  //     newColor = colors[Math.floor(Math.random() * colors.length)];
+  //   } while (newColor === current);
+  //   return newColor;
+  // };
 
-  useEffect(() => {
-    const newColor = randColor(groupColor);
-    setGroupColor(newColor);
-    // const bg = useColorModeValue(groupColor + '.100', groupColor + '.400');
-    // const hbg = useHexColor(bg);
-    // setGroupHexColor(hbg);
-  }, [groupIndex]);
+  // const getPinBoardDims = (n: any, columnHeight: number, x: number, y: number, width: number, height: number, spacing: number) => {
+  //   let pinBoardHeight = 0;
+  //   const pinBoardX = x - width / 2;
+  //   const pinBoardY = y - height / 2;
+  //   const colNum = Math.ceil(n.length / columnHeight);
+  //   const pinBoardWidth = Math.ceil((width + spacing) * (colNum + 1));
 
-  const getPinBoardDims = (n: any, columnHeight: number, x: number, y: number, width: number, height: number, spacing: number) => {
-    let pinBoardHeight = 0;
-    const pinBoardX = x - width / 2;
-    const pinBoardY = y - height / 2;
-    const colNum = Math.ceil(n.length / columnHeight);
-    const pinBoardWidth = Math.ceil((width + spacing) * (colNum + 1));
+  //   if (n.length < columnHeight) {
+  //     pinBoardHeight = (height + spacing) * (n.length + 1);
+  //   } else {
+  //     pinBoardHeight = (height + spacing) * (columnHeight + 1);
+  //   }
 
-    if (n.length < columnHeight) {
-      pinBoardHeight = (height + spacing) * (n.length + 1);
-    } else {
-      pinBoardHeight = (height + spacing) * (columnHeight + 1);
-    }
-
-    return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight];
-  };
+  //   return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight];
+  // };
 
   // Split a .ipynb into a series of SageCells
   const explodeCells = () => {
@@ -141,6 +133,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
     // Look for the file in the asset store
     const localurl = '/api/assets/static/' + file.filename;
+    const randomColor: string = getRandomHexColor();
     // Get the content of the file
     fetch(localurl, {
       headers: {
@@ -160,15 +153,15 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         const height = 300;
         const width = 800;
         const spacing = 40;
-        const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(
-          cells,
-          columnHeight,
-          xDrop,
-          yDrop,
-          width,
-          height,
-          spacing
-        );
+        // const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(
+        //   cells,
+        //   columnHeight,
+        //   xDrop,
+        //   yDrop,
+        //   width,
+        //   height,
+        //   spacing
+        // );
         // createApp(
         //   setupApp(
         //     '',
@@ -185,72 +178,52 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         //   )
         // );
         cells.forEach((cell: any) => {
+          let output: any = null;
+          let source: string = '';
           if (cell.cell_type === 'code') {
-            const sourceCode = (cell.source as []).join('');
-            let result: any;
+            source = (cell.source as []).join('');
             const outputs = cell.outputs[0];
             if (outputs) {
-              result = { [outputs['output_type']]: outputs };
+              output = { [outputs['output_type']]: outputs };
               // need to convert all the arrays to strings
-              Object.keys(result).forEach((key) => {
-                if (key === 'stream' && result[key].text instanceof Array) {
-                  result[key].text = result[key].text.join('');
+              Object.keys(output).forEach((key) => {
+                if (key === 'stream' && output[key].text instanceof Array) {
+                  output[key].text = output[key].text.join('');
                 }
                 if (key === 'execute_result' || key === 'display_data') {
-                  Object.keys(result[key].data).forEach((dataKey) => {
-                    if (result[key].data[dataKey] instanceof Array) {
-                      result[key].data[dataKey] = result[key].data[dataKey].join('');
+                  Object.keys(output[key].data).forEach((dataKey) => {
+                    if (output[key].data[dataKey] instanceof Array) {
+                      output[key].data[dataKey] = output[key].data[dataKey].join('');
                     }
                   });
                 }
                 if (key === 'error') {
-                  result[key].traceback = result[key].traceback.join('');
+                  output[key].traceback = output[key].traceback.join('');
                 }
               });
-              result = JSON.stringify(result);
             }
-            createApp(
-              setupApp(
-                '',
-                'SageCell',
-                x,
-                y,
-                roomId,
-                boardId,
-                {
-                  w: width,
-                  h: height,
-                },
-                {
-                  code: sourceCode,
-                  output: result,
-                  groupColor: groupColor + '.400',
-                }
-              )
-            );
+          } else if (cell.cell_type === 'markdown') {
+            output = { display_data: { data: { 'text/markdown': cell.source.join('') } } };
           }
-          if (cell.cell_type === 'markdown') {
-            console.log(cell.source);
-            createApp(
-              setupApp(
-                '',
-                'SageCell',
-                x,
-                y,
-                roomId,
-                boardId,
-                {
-                  w: width,
-                  h: height,
-                },
-                {
-                  code: '',
-                  output: JSON.stringify({ display_data: { data: { 'text/markdown': cell.source.join('') } } }),
-                  groupColor: groupColor + '.400',
-                }
-              )
-            );
-          }
+          createApp(
+            setupApp(
+              '',
+              'SageCell',
+              x,
+              y,
+              roomId,
+              boardId,
+              {
+                w: width,
+                h: height,
+              },
+              {
+                code: source ? source : '',
+                output: output ? JSON.stringify(output) : '',
+                groupColor: randomColor,
+              }
+            )
+          );
           y = y + height + spacing;
           columnCount++;
           if (columnCount >= columnHeight) {
@@ -476,4 +449,10 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       </Modal>
     </div>
   );
+}
+
+function getRandomHexColor(): string {
+  const colors: string[] = ['#FF5733', '#FFC300', '#DAF7A6', '#C70039', '#900C3F', '#581845', '#7D3C98', '#2E86C1'];
+  const randomIndex: number = Math.floor(Math.random() * colors.length);
+  return colors[randomIndex];
 }
