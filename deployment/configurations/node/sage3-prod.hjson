@@ -103,6 +103,6 @@
       "callbackURL": "/auth/cilogon/redirect"
     }
   },
-  // Namespace for signing uuid v5 keys. Change to a unique value.
-  "namespace": "XXX"
+  // Namespace for signing UUID v5 keys: generate yours or https://www.uuidtools.com/generate/v4
+  "namespace": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 }
