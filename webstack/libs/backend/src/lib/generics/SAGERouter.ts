@@ -19,20 +19,22 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   //  Check permissions on collections
   router.use(checkPermissionsREST(collection.name as AuthSubject));
 
-  // POST: Add new document or documents
+  // POST: Add new documents with a batch
+  router.post('/batch', async ({ body, user }, res) => {
+    const auth = user as SBAuthSchema;
+    const userId = auth?.id || '-';
+    const docs = await collection.addBatch(body, userId);
+    if (docs) res.status(200).send({ success: true, data: docs });
+    else res.status(500).send({ success: false, message: 'Failed to create documents.' });
+  });
+
+  // POST: Add new document
   router.post('/', async ({ body, user }, res) => {
-    // @ts-ignore
-    const userId = user.id;
-    // Check if body is an array, if so this is a batch post
-    if (Array.isArray(body)) {
-      const docs = await collection.addBatch(body, userId);
-      if (docs) res.status(200).send({ success: true, data: docs });
-      else res.status(500).send({ success: false, message: 'Failed to create documents.' });
-    } else {
-      const doc = await collection.add(body, userId);
-      if (doc) res.status(200).send({ success: true, data: [doc] });
-      else res.status(500).send({ success: false, message: 'Failed to create document.' });
-    }
+    const auth = user as SBAuthSchema;
+    const userId = auth?.id || '-';
+    const doc = await collection.add(body, userId);
+    if (doc) res.status(200).send({ success: true, data: [doc] });
+    else res.status(500).send({ success: false, message: 'Failed to create document.' });
   });
 
   // GET: Get all the docs or Query
@@ -58,34 +60,37 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
     else res.status(500).send({ success: false, message: 'Failed to get document.' });
   });
 
+  // PUT: Update multiple docs with a batch
+  router.put('/batch', async ({ body, user }, res) => {
+    const auth = user as SBAuthSchema;
+    const userId = auth?.id || '-';
+    const docs = await collection.updateBatch(body, userId);
+    if (docs) res.status(200).send({ success: true, data: docs });
+    else res.status(500).send({ success: false, message: 'Failed to update documents.' });
+  });
+
   // PUT: Update one or multiple docs
   router.put('/:id', async ({ params, body, user }, res) => {
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
     // Check if body is an array, if so this is a batch put
-    if (Array.isArray(body)) {
-      const docs = await collection.updateBatch(body, userId);
-      if (docs) res.status(200).send({ success: true, data: docs });
-      else res.status(500).send({ success: false, message: 'Failed to update documents.' });
-    } else {
-      const update = await collection.update(params.id, userId, body);
-      if (update) res.status(200).send({ success: true });
-      else res.status(500).send({ success: false, message: 'Failed to update document.' });
-    }
+    const update = await collection.update(params.id, userId, body);
+    if (update) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false, message: 'Failed to update document.' });
   });
 
-  // DELETE: Delete one or multiple docs.
-  router.delete('/:id', async ({ params, body }, res) => {
-    // Check if pararms.id is an array, if so this is a batch delete
-    if (Array.isArray(body)) {
-      const docs = await collection.deleteBatch(body);
-      if (docs) res.status(200).send({ success: true, data: docs });
-      else res.status(500).send({ success: false, message: 'Failed to delete documents.' });
-    } else {
-      const del = await collection.delete(params.id);
-      if (del) res.status(200).send({ success: true });
-      else res.status(500).send({ success: false, message: 'Failed to delete document.' });
-    }
+  // DELETE: Delete multiple docs with batch
+  router.delete('/batch', async ({ body }, res) => {
+    const docs = await collection.deleteBatch(body);
+    if (docs) res.status(200).send({ success: true, data: docs });
+    else res.status(500).send({ success: false, message: 'Failed to delete documents.' });
+  });
+
+  // DELETE: Delete one doc
+  router.delete('/:id', async ({ params }, res) => {
+    const del = await collection.delete(params.id);
+    if (del) res.status(200).send({ success: true });
+    else res.status(500).send({ success: false, message: 'Failed to delete document.' });
   });
 
   return router;
