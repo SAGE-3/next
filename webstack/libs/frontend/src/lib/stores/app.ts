@@ -80,9 +80,9 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     delete: async (id: string | string[]) => {
       if (Array.isArray(id)) {
-        const res = await SocketAPI.sendRESTMessage('/apps', 'DELETE', id);
+        const res = await APIHttp.DELETE('/apps/batch', id);
         if (!res.success) {
-          set({ error: { msg: res.message } });
+          set({ error: { msg: res.message ? res.message : '' } });
         }
       } else {
         const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'DELETE');

@@ -10,5 +10,5 @@ export type APIClientWSMessage = {
   id: string;
   route: string;
   method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
-  body?: Record<string, unknown> | [];
+  body?: Record<string, unknown> | any[];
 };
