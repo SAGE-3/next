@@ -160,7 +160,6 @@ export function BoardCard(props: BoardCardProps) {
               aria-label="Board Edit"
               fontSize="2xl"
               variant="unstlyed"
-              // disabled={!yours}
               marginLeft={-3} // Weird margin on the icon
               icon={<MdSettings />}
             />

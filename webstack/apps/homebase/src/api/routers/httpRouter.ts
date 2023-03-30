@@ -17,7 +17,6 @@
 import * as express from 'express';
 
 // Asset imports
-import { FilesRouter } from './custom/files';
 
 // Collection Imports
 import {
@@ -28,12 +27,16 @@ import {
   RoomsCollection,
   UsersCollection,
   MessageCollection,
+  PluginsCollection,
 } from '../collections';
-import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
-import { NLPRouter } from './custom/nlp';
+
+// Custom Routes
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter } from './custom';
+
+import { config } from '../../config';
 
 /**
  * API Loader function
@@ -65,7 +68,15 @@ export function expressAPIRouter(): express.Router {
   router.use('/presence', PresenceCollection.router());
   router.use('/message', MessageCollection.router());
 
+  // Check to see if plugins module is enabled.
+  if (config.features.plugins) {
+    router.use('/plugins', PluginsCollection.router());
+  }
+
+  // Configuration Route
   router.use('/configuration', ConfigRouter());
+
+  // Experimental NLP route
   router.use('/nlp', NLPRouter());
 
   return router;

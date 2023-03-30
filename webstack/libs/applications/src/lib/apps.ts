@@ -20,9 +20,11 @@ import { name as LinkerName } from './apps/Linker';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
+import { name as PluginAppName } from './apps/PluginApp';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
+import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { name as VegaLiteName } from './apps/VegaLite';
@@ -50,9 +52,11 @@ import Linker from './apps/Linker/Linker';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
+import PluginApp from './apps/PluginApp/PluginApp';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
+import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import VegaLite from './apps/VegaLite/VegaLite';
@@ -82,9 +86,11 @@ export const Applications = {
   [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent },
   [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent },
+  [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent },
   [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent },
   [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent },
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent },
+  [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent },
   [TwilioScreenshareName]: {
     AppComponent: React.memo(TwilioScreenshare.AppComponent),

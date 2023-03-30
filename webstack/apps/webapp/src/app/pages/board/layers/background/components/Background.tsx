@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react';
 import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
 
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
+import { isValidURL } from '@sage3/frontend';
 
 // To do upload with progress bar
 import axios, { AxiosProgressEvent } from 'axios';
@@ -251,7 +252,11 @@ export function Background(props: BackgroundProps) {
 
   const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
-    createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+    if (type === 'Screenshare') {
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }));
+    } else {
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+    }
   };
 
   // Create an app for a file
@@ -330,7 +335,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
+              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 420 }, { text: text }));
             });
         }
       });
@@ -351,7 +356,7 @@ export function Background(props: BackgroundProps) {
             })
             .then(async function (text) {
               // Create a note from the text
-              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
+              createApp(setupApp('SageCell', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
             });
         }
       });
@@ -519,17 +524,22 @@ export function Background(props: BackgroundProps) {
             // it's a base64 image
             createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
           } else {
-            const final_url = processContentURL(pastedText);
-            let w, h;
-            if (final_url !== pastedText) {
-              // it must be a video
-              w = 1280;
-              h = 720;
-            } else {
-              w = 800;
-              h = 800;
+            // is it a valid URL
+            const valid = isValidURL(pastedText);
+            if (valid) {
+              // process url to be embeddable
+              const final_url = processContentURL(pastedText);
+              let w, h;
+              if (final_url !== pastedText) {
+                // it must be a video
+                w = 1280;
+                h = 720;
+              } else {
+                w = 800;
+                h = 800;
+              }
+              createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
             }
-            createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
           }
         }
       } else {
@@ -541,12 +551,15 @@ export function Background(props: BackgroundProps) {
           // Get information from the drop
           const ids = event.dataTransfer.getData('file');
           const types = event.dataTransfer.getData('type');
-          const fileIDs = JSON.parse(ids);
-          const fileTypes = JSON.parse(types);
-          // Open the file at the drop location
-          const num = fileIDs.length;
-          for (let i = 0; i < num; i++) {
-            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+          if (ids && types) {
+            // if it's files from the asset manager
+            const fileIDs = JSON.parse(ids);
+            const fileTypes = JSON.parse(types);
+            // Open the file at the drop location
+            const num = fileIDs.length;
+            for (let i = 0; i < num; i++) {
+              OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+            }
           }
         }
       }
@@ -621,7 +634,7 @@ export function Background(props: BackgroundProps) {
       const x = cursorPosition.x;
       const y = cursorPosition.y;
       createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
       );
 
       // Returning false stops the event and prevents default browser events

@@ -683,10 +683,10 @@ electron-winstaller@latest:
     lodash.template "^4.2.2"
     temp "^0.9.0"
 
-electron@21.3.3:
-  version "21.3.3"
-  resolved "https://registry.npmjs.org/electron/-/electron-21.3.3.tgz"
-  integrity sha512-2a9l8mUQlzXH/9WZrGYDJTyJOliLKbmEuCrQ8bfX1McAQOmI6PDQxfHV4qFUtyCDUp5SHrq5nuvg0c1pIkDBhg==
+electron@21.4.3:
+  version "21.4.3"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-21.4.3.tgz#babb28989f321d275d35f66ee2635e96de7344f5"
+  integrity sha512-FB3yJom48sqOA2WXvneId3Y7Hp4YAPSdKH3l+UYDdD3d8SjcufBCPSZVipaxfLQhh54NqnuF+p0BRosX9+VibA==
   dependencies:
     "@electron/get" "^1.14.1"
     "@types/node" "^16.11.26"

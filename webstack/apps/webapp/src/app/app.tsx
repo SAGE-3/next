@@ -12,9 +12,8 @@ import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
 import { theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId, SocketAPI, useHexColor, useData } from '@sage3/frontend';
 
-import { serverConfiguration } from '@sage3/frontend';
-
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage } from './pages';
+import { OpenConfiguration } from '@sage3/shared/types';
 
 /**
  * Tries to connect for a length of time, then gives up.
@@ -194,7 +193,7 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   if (!user || loading || !data) {
     return <div>Loading...</div>;
   } else {
-    const config = data as serverConfiguration;
+    const config = data as OpenConfiguration;
     // in dev mode, everybody can access the route
     if (!config.production) {
       return <> {props.children}</>;

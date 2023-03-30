@@ -78,7 +78,9 @@ function AppComponent(props: App): JSX.Element {
         // change local number of rows
         setRows(numlines);
         // update size of the window
-        updateApp(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        if (props.data.size.height !== numlines * s.fontSize) {
+          updateStateApp(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        }
       }
     }
   }, [s.fontSize]);
@@ -249,24 +251,25 @@ function ToolbarComponent(props: App): JSX.Element {
       <HStack>
         <ButtonGroup isAttached size="xs" colorScheme="teal">
           <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize > 128} onClick={() => handleIncreaseFont()} disabled={locked || !canApp('modify')}>
+            <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()} disabled={locked || !canApp('modify')}>
               <MdAdd />
             </Button>
           </Tooltip>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize <= 8} onClick={() => handleDecreaseFont()} disabled={locked || !canApp('modify')}>
+            <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()} disabled={locked || !canApp('modify')}>
               <MdRemove />
             </Button>
           </Tooltip>
-        </ButtonGroup>
+        </ButtonGroup >
         {yours && (
           <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
             <Button onClick={lockUnlock} colorScheme="teal" size="xs" disabled={!canApp('modify')}>
               {locked ? <MdLock /> : <MdLockOpen />}
             </Button>
           </Tooltip>
-        )}
+        )
+        }
         <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked || !canApp('modify')} />
 
         <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -281,7 +284,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </Button>
           </Tooltip>
         </ButtonGroup>
-      </HStack>
+      </HStack >
     </>
   );
 }

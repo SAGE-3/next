@@ -149,7 +149,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
             roomId: board.data.roomId,
             boardId: board._id,
             position: { ...{ x: topCorner.x - 450, y: topCorner.y }, z: 0 },
-            size: { width: 400, height: 400, depth: 0 },
+            size: { width: 400, height: 420, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
             state: {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -25,7 +25,12 @@ export const schema = z.object({
   labelName: z.string(),
   datasets: z
     .object({
-      yDataName: z.string(),
+      label: z.string(),
+      yDataName: z.any(),
+      minYValue: z.number(),
+      yAxisID: z.string(),
+      borderColor: z.string(),
+      backgroundColor: z.string(),
       chartType: z.any(),
     })
     .array(),

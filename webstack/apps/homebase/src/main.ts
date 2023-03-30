@@ -27,6 +27,8 @@ import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 
 // YJS
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as Y from 'yjs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const YUtils = require('y-websocket/bin/utils');
 
@@ -46,11 +48,12 @@ import { expressAPIRouter, wsAPIRouter } from './api/routers';
 import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
 
-import { APIClientWSMessage, serverConfiguration } from '@sage3/shared/types';
+import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
 import { SAGETwilio } from '@sage3/backend';
+import * as express from 'express';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -63,7 +66,7 @@ process.on('unhandledRejection', (reason: Error) => {
  */
 async function startServer() {
   // Load the right configuration file
-  const config: serverConfiguration = await loadConfig();
+  const config: ServerConfiguration = await loadConfig();
 
   // Reverts the old DNS order, from v17 and up
   dns.setDefaultResultOrder('ipv4first');
@@ -103,7 +106,7 @@ async function startServer() {
 
   // Twilio Setup
   const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
-  const twilio = new SAGETwilio(config.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
+  const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
   app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
     if (authId === undefined) {
@@ -306,6 +309,7 @@ async function startServer() {
 
   // Serves the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
+  app.use('/plugins', express.static(path.join(__dirname, 'plugins')));
 
   // Handle termination
   function exitHandler() {
