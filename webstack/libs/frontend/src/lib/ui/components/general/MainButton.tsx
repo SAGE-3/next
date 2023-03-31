@@ -59,7 +59,9 @@ export function MainButton(props: MainButtonProps) {
 
   useEffect(() => {
     if (user && props.config) {
-      setIsAdmin(props.config.admins.includes(user.data.email));
+      if (props.config.admins) {
+        setIsAdmin(props.config.admins.includes(user.data.email));
+      }
     }
   }, [user, props.config]);
 

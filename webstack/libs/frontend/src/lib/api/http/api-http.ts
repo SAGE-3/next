@@ -7,26 +7,26 @@
  */
 
 type POSTResponse<T> = {
-  success: boolean,
-  message?: string;
-  data?: T[]
-}
-
-type GETResponse<T> = {
-  success: boolean,
+  success: boolean;
   message?: string;
   data?: T[];
-}
+};
+
+type GETResponse<T> = {
+  success: boolean;
+  message?: string;
+  data?: T[];
+};
 
 type PUTResponse = {
-  success: boolean,
+  success: boolean;
   message?: string;
-}
+};
 
 type DELResponse = {
   success: boolean;
   message?: string;
-}
+};
 
 async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
   const response = await fetch('/api' + url, {
@@ -43,15 +43,28 @@ async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
 
 async function GET<T, K>(url: string, query?: Partial<T>): Promise<GETResponse<K>> {
   if (query) url = url + '?' + new URLSearchParams(query as any);
-  const response = await fetch('/api' + url, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  try {
+    const response = await fetch('/api' + url, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    if (data.success === false) {
+      console.log('GET> failed', data);
+      if (data.authentication === false) {
+        window.location.replace('/#/');
+        console.log('GET> auth failed', data);
+      }
     }
-  });
-  return await response.json();
+    return data;
+  } catch (error) {
+    console.log('GET error', error);
+    return { success: false, message: 'error' };
+  }
 }
 
 async function PUT<T>(url: string, body: Partial<T>): Promise<PUTResponse> {
@@ -83,5 +96,5 @@ export const APIHttp = {
   POST,
   GET,
   PUT,
-  DELETE
-}
+  DELETE,
+};
