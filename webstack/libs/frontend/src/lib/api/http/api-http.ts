@@ -29,16 +29,26 @@ type DELResponse = {
 };
 
 async function POST<T, K>(url: string, body: T): Promise<POSTResponse<K>> {
-  const response = await fetch('/api' + url, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ ...body }),
-  });
-  return await response.json();
+  try {
+    const response = await fetch('/api' + url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...body }),
+    });
+    const data = await response.json();
+    if (data.success === false) {
+      if (data.authentication === false) {
+        window.location.replace('/#/');
+      }
+    }
+    return data;
+  } catch (error) {
+    return { success: false, message: 'error' };
+  }
 }
 
 async function GET<T, K>(url: string, query?: Partial<T>): Promise<GETResponse<K>> {
@@ -54,42 +64,59 @@ async function GET<T, K>(url: string, query?: Partial<T>): Promise<GETResponse<K
     });
     const data = await response.json();
     if (data.success === false) {
-      console.log('GET> failed', data);
       if (data.authentication === false) {
         window.location.replace('/#/');
-        console.log('GET> auth failed', data);
       }
     }
     return data;
   } catch (error) {
-    console.log('GET error', error);
     return { success: false, message: 'error' };
   }
 }
 
 async function PUT<T>(url: string, body: Partial<T>): Promise<PUTResponse> {
-  const response = await fetch('/api' + url, {
-    method: 'PUT',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ ...body }),
-  });
-  return await response.json();
+  try {
+    const response = await fetch('/api' + url, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...body }),
+    });
+    const data = await response.json();
+    if (data.success === false) {
+      if (data.authentication === false) {
+        window.location.replace('/#/');
+      }
+    }
+    return data;
+  } catch (error) {
+    return { success: false, message: 'error' };
+  }
 }
 
 async function DELETE(url: string): Promise<DELResponse> {
-  const response = await fetch('/api' + url, {
-    method: 'DELETE',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  });
-  return await response.json();
+  try {
+    const response = await fetch('/api' + url, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    if (data.success === false) {
+      if (data.authentication === false) {
+        window.location.replace('/#/');
+      }
+    }
+    return data;
+  } catch (error) {
+    return { success: false, message: 'error' };
+  }
 }
 
 export const APIHttp = {
