@@ -21,6 +21,7 @@ import {
   useUser,
   Clock,
   usePluginStore,
+  useConfigStore,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration, Room } from '@sage3/shared/types';
 
@@ -30,8 +31,8 @@ export function HomePage() {
   // URL Params
   const { roomId } = useParams();
 
-  // Config file
-  const config = useData('/api/configuration') as OpenConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   // Room Store
   const [selectedRoomId] = useState<string | undefined>(roomId);
