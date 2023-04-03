@@ -19,7 +19,6 @@ import {
   useUsersStore,
   PasteHandler,
   useUIStore,
-  useData,
   useUser,
   usePluginListener,
   usePluginStore,
