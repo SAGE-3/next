@@ -55,7 +55,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Drag start of the board
   function handleDragBoardStart() {
     if (divRef.current) {
-      divRef.current.style.willChange = 'transform';
+      // divRef.current.style.willChange = 'transform';
     }
     setBoardDragging(true);
   }
@@ -70,7 +70,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
     if (divRef.current) {
-      divRef.current.style.willChange = 'auto';
+      // divRef.current.style.willChange = 'auto';
     }
     const x = data.x;
     const y = data.y;

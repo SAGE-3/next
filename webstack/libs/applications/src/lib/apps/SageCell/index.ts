@@ -14,8 +14,14 @@ import { z } from 'zod';
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
-  params: z.record(z.any()),
+  params: z.any(),
 });
+const availableKernelsSchema = z.array(
+  z.object({
+    key: z.string(),
+    value: z.any(),
+  })
+);
 
 export const schema = z.object({
   code: z.string(),
@@ -29,26 +35,22 @@ export const schema = z.object({
       message: z.string(),
     })
   ),
-  availableKernels: z.array(
-    z.object({
-      key: z.string(),
-      value: z.record(z.string(), z.any()),
-    })
-  ),
+  availableKernels: availableKernelsSchema,
   output: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
+export type availableKernelsType = z.infer<typeof availableKernelsSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
   language: 'python',
-  fontSize: 14,
+  fontSize: 16,
   theme: 'xcode',
   kernel: '',
   output: '',

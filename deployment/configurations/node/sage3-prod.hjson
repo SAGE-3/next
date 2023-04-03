@@ -44,8 +44,8 @@
     // Enable Plugins
     plugins: true, 
     // Which Apps to enable.  Available Apps: 
-    // AIPane, ChartMaker, Leaflet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["AIPane", "ChartMaker", "Leaflet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
+    // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
+    apps: ["ChartMaker", "LeafLet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview", "Hawaii Mesonet"],
   },
 
   // Auth Configuration
@@ -103,6 +103,6 @@
       "callbackURL": "/auth/cilogon/redirect"
     }
   },
-  // Namespace for signing uuid v5 keys. Change to a unique value.
-  "namespace": "XXX"
+  // Namespace for signing UUID v5 keys: generate yours or https://www.uuidtools.com/generate/v4
+  "namespace": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 }

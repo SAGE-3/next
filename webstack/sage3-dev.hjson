@@ -44,14 +44,14 @@
     // Enable Plugins
     plugins: true, 
     // Which Apps to enable.  Available Apps: 
-    // AIPane, ChartMaker, Leaflet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["AIPane", "ChartMaker", "Leaflet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
+    //  ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
+    apps: ["ChartMaker", "LeafLet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
   },
 
   // Auth Configuration
   "auth": {
     // Secret HASH for the sessions. Change this to something unique.
-    "sessionSecret": "SUPERSECRET!!$$",
+    "sessionSecret": "SUPERSECRETaa!!$$",
     // Max age for a session per user. In milliseconds. 7 days
     "sessionMaxAge": 604800000,
     // Which login strategies to enable for the server. Available: guest, jwt, google, cilogon

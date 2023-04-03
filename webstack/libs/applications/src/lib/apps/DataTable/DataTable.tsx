@@ -225,7 +225,7 @@ const Pagination = (props: App): JSX.Element => {
           icon={<FiArrowRight />}
           variant='link'
           onClick={() => handleRightArrow()}
-          disabled={rightButtonDisable}
+          isDisabled={rightButtonDisable}
         />
       </HStack>
       <HStack justify='right'>

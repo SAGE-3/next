@@ -28,5 +28,10 @@ class TaskScheduler:
             time.sleep(check_every)
 
     def clean_up(self):
+        print("I am trying to clean up the task scheduler")
+        for j in self.jobs:
+            schedule.cancel_job(j)
+        self.jobs = []
         self.stop_thread = True
         self.runner.join()
+

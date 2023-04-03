@@ -117,21 +117,30 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
             <RadioGroup onChange={handleTypeChange} value={type}>
               <Stack direction="row">
                 {['client', 'wall'].map((value, i) => (
-                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                  <Radio value={value} key={i}>
+                    {value[0].toUpperCase() + value.substring(1)}
+                  </Radio>
                 ))}
               </Stack>
             </RadioGroup>{' '}
           </FormControl>
           <Text mt={5} fontSize={'md'}>
-            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
+            Authentication:{' '}
+            <em>
+              {auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}
+            </em>
           </Text>
-          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
+          {auth?.provider === 'guest' && (
+            <Text mt={1} fontSize={'md'}>
+              Limited functionality as Guest
+            </Text>
+          )}
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mx={2} onClick={logout}>
             Cancel
           </Button>
-          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name}>
+          <Button colorScheme="green" onClick={() => createAccount()} isDisabled={!name}>
             Create Account
           </Button>
         </ModalFooter>

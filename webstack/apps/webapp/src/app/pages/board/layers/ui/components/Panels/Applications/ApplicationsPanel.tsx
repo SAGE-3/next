@@ -69,13 +69,16 @@ export function ApplicationsPanel(props: ApplicationProps) {
 
     // Setup initial size
     let w = 400;
-    let h = 400;
+    let h = 420;
     if (appName === 'SageCell') {
       w = 650;
       h = 400;
     } else if (appName === 'KernelDashboard') {
       w = 800;
       h = 300;
+    } else if (appName === 'Screenshare') {
+      w = 1280;
+      h = 720;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross

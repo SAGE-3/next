@@ -124,9 +124,13 @@ export function BoardContextMenu(props: ContextProps) {
     if (appName === 'SageCell' && appsList.includes('cell')) return;
     if (appName === 'Screenshare' && appsList.includes('twilio')) return;
     let width = 400;
-    let height = 400;
+    let height = 420;
     if (appName === 'SageCell') {
       width = 650;
+    }
+    if (appName === 'Screenshare') {
+      width = 1280;
+      height = 720;
     }
     if (appName === 'Webview') {
       height = 650;
@@ -134,7 +138,7 @@ export function BoardContextMenu(props: ContextProps) {
     // Create the app
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
     createApp({
-      title: title ? title : '',
+      title: title ? title : appName,
       roomId: props.roomId,
       boardId: props.boardId,
       position: { ...position, z: 0 },
@@ -157,7 +161,7 @@ export function BoardContextMenu(props: ContextProps) {
     const height = 700;
     // Open a webview into the SAGE3 builtin Jupyter instance
     createApp({
-      title: '',
+      title: 'JupyterLab',
       roomId: props.roomId,
       boardId: props.boardId,
       position: { ...position, z: 0 },
@@ -282,7 +286,7 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => openJupyter()}
-            disabled={!appsList.includes('JupyterLab')}
+            isDisabled={!appsList.includes('JupyterLab')}
           >
             Jupyter
           </Button>
@@ -297,7 +301,7 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => newApplication('SageCell')}
-            disabled={!appsList.includes('SageCell')}
+            isDisabled={!appsList.includes('SageCell')}
           >
             SageCell
           </Button>
@@ -312,7 +316,7 @@ export function BoardContextMenu(props: ContextProps) {
             color={textColor}
             justifyContent="flex-start"
             onClick={() => newApplication('Screenshare')}
-            disabled={!appsList.includes('Screenshare')}
+            isDisabled={!appsList.includes('Screenshare')}
           >
             Screenshare
           </Button>
@@ -326,7 +330,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            disabled={!appsList.includes('Stickie')}
+            isDisabled={!appsList.includes('Stickie')}
             onClick={() => newApplication('Stickie', user?.data.name)}
           >
             Stickie
@@ -340,7 +344,7 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            disabled={!appsList.includes('Webview')}
+            isDisabled={!appsList.includes('Webview')}
             onClick={() => newApplication('Webview')}
           >
             Webview

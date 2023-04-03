@@ -44,8 +44,8 @@
     // Enable Plugins
     plugins: true, 
     // Which Apps to enable.  Available Apps: 
-    // AIPane, ChartMaker, Leaflet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["AIPane", "ChartMaker", "Leaflet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
+    // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
+    apps: ["ChartMaker", "LeafLet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
   },
 
   // Auth Configuration

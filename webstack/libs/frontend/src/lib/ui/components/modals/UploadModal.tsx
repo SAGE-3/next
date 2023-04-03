@@ -123,7 +123,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
                   padding={'4px 35px'}
                   id="files"
                   type="file"
-                  accept={'image/*, video/*, application/pdf, application/json, text/csv, text/plain'}
+                  accept={'image/*, video/*, application/pdf, application/json, text/csv, text/plain, .ipynb'}
                   multiple
                   onChange={handleInputChange}
                   onClick={() => setInput([])}
