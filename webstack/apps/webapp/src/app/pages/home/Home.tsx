@@ -13,7 +13,6 @@ import {
   JoinBoardCheck,
   RoomList,
   useBoardStore,
-  useData,
   usePresenceStore,
   useRoomStore,
   useUsersStore,
