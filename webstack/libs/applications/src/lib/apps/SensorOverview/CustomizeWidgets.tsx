@@ -31,7 +31,8 @@ import WidgetCreator from './WidgetCreator';
 
 function CustomizeWidgets(props: {
   widgetsEnabled: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] }[];
-  handleEnableWidget: (index: number) => void;
+  handleDeleteWidget: (index: number) => void;
+  handleAddWidget: (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => void;
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -59,18 +60,28 @@ function CustomizeWidgets(props: {
                       switch (widget.visualizationType) {
                         case 'variableCard':
                           return (
-                            <WrapItem>
-                              <VariableCard variableName={widget.yAxisNames[0]} variableValue={'99'} />
+                            <WrapItem key={index}>
+                              <VariableCard
+                                variableName={widget.yAxisNames[0]}
+                                variableValue={'99'}
+                                showDeleteButton={true}
+                                handleDeleteWidget={props.handleDeleteWidget}
+                                index={index}
+                              />
                             </WrapItem>
                           );
                         case 'line':
                           return (
-                            <WrapItem>
+                            <WrapItem key={index}>
                               <EChartsViewer
                                 stationNames={['005HI']}
                                 visualizationType={widget.visualizationType}
                                 dateRange={''}
-                                variableType={widget.yAxisNames[0]}
+                                yAxisNames={widget.yAxisNames}
+                                xAxisNames={widget.xAxisNames}
+                                showDeleteButton={true}
+                                handleDeleteWidget={props.handleDeleteWidget}
+                                index={index}
                               />
                             </WrapItem>
                           );
@@ -113,7 +124,7 @@ function CustomizeWidgets(props: {
                 >
                   Go Back
                 </Button>
-                <WidgetCreator />
+                <WidgetCreator handleAddWidget={props.handleAddWidget} />
               </TabPanel>
               <TabPanel>
                 <p>three!</p>

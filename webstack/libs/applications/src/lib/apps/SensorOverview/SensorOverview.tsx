@@ -55,12 +55,19 @@ function AppComponent(props: App): JSX.Element {
     });
   }, []);
 
-  const handleEnableWidget = (widgetIndex: number) => {
+  const handleDeleteWidget = (widgetIndex: number) => {
     const tmpWidgetsEnabled = [...s.widgetsEnabled];
     tmpWidgetsEnabled.splice(widgetIndex, 1);
     updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
   };
-  console.log(s.widgetsEnabled);
+
+  const handleAddWidget = (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => {
+    const tmpWidgetsEnabled = [...s.widgetsEnabled];
+    tmpWidgetsEnabled.push({ visualizationType: visualizationType, yAxisNames: yAxisNames, xAxisNames: xAxisNames });
+    console.log(tmpWidgetsEnabled);
+    updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
+  };
+
   return (
     <AppWindow app={props}>
       <Box overflowY="scroll" p={'1rem'} bg={bgColor} h="100%">
@@ -68,56 +75,21 @@ function AppComponent(props: App): JSX.Element {
           {stationMetadata.length > 0 ? (
             stationMetadata.map((station, index) => {
               return (
-                <WrapItem>
+                <WrapItem key={index}>
                   <Box bgColor={bgColor} color={textColor} fontSize="lg" key={index} p="1rem" border="solid black 1px">
                     <Text textAlign="center" fontSize={'4rem'}>
                       {station['NAME']}
                     </Text>
                     <HStack>
-                      {/* <Box>
-                    <Box h="25rem" w={props.data.size.width / 2} border="black solid 1px">
-                      <Text textAlign="center">This is where the leaflet map is going</Text>
-                    </Box>
-                    <Box p="1rem" h="10rem" w={props.data.size.width / 4} border="solid black 1px">
-                      <HStack>
-                        <Box>
-                          <Text>
-                            <strong>Island: </strong>
-                          </Text>
-                          <Text>
-                            <strong>Status: </strong>
-                          </Text>
-                          <Text>
-                            <strong>Elevation: </strong>
-                          </Text>
-                          <Text>
-                            <strong>Latitude: </strong>
-                          </Text>
-                          <Text>
-                            <strong>Longitude: </strong>
-                          </Text>
-                        </Box>
-                        <Box>
-                          <Text> &nbsp; {station['COUNTY']}</Text>
-                          <Text> &nbsp; {station['STATUS']}</Text>
-                          <Text> &nbsp; {station['ELEVATION']}</Text>
-                          <Text> &nbsp; {station['LATITUDE']}</Text>
-                          <Text>{station['LONGITUDE']}</Text>
-                        </Box>
-                      </HStack>
-                    </Box>
-                  </Box> */}
-
                       <Box>
                         <Wrap maxW={'1500px'}>
                           {s.widgetsEnabled.map(
                             (widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[] }, index: any) => {
                               const observations: any = station['OBSERVATIONS'];
-                              console.log(widget);
                               switch (widget.visualizationType) {
                                 case 'variableCard':
                                   return (
-                                    <WrapItem>
+                                    <WrapItem key={index}>
                                       <VariableCard
                                         variableName={widget.yAxisNames[0]}
                                         variableValue={
@@ -130,12 +102,13 @@ function AppComponent(props: App): JSX.Element {
                                   );
                                 case 'line':
                                   return (
-                                    <WrapItem>
+                                    <WrapItem key={index}>
                                       <EChartsViewer
                                         stationNames={[station['STID']]}
                                         visualizationType={'line'}
                                         dateRange={''}
-                                        variableType={widget.yAxisNames[0]}
+                                        yAxisNames={widget.yAxisNames}
+                                        xAxisNames={widget.xAxisNames}
                                       />
                                     </WrapItem>
                                   );
@@ -162,7 +135,7 @@ function AppComponent(props: App): JSX.Element {
             />
           )}
           <WrapItem>
-            <CustomizeWidgets widgetsEnabled={s.widgetsEnabled} handleEnableWidget={handleEnableWidget} />
+            <CustomizeWidgets widgetsEnabled={s.widgetsEnabled} handleDeleteWidget={handleDeleteWidget} handleAddWidget={handleAddWidget} />
           </WrapItem>
         </Wrap>
       </Box>

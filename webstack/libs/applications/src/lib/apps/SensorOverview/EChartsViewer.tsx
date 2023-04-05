@@ -7,20 +7,26 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useColorMode } from '@chakra-ui/react';
+import { Box, Button, Spinner, useColorMode } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 import { ChartManager } from '../EChartsViewer/ChartManager';
 
-const EChartsViewer = (props: { stationNames: string[]; visualizationType: string; dateRange: string; variableType: string }) => {
+const EChartsViewer = (props: {
+  stationNames: string[];
+  visualizationType: string;
+  dateRange: string;
+  yAxisNames: string[];
+  xAxisNames: string[];
+  showDeleteButton?: boolean;
+  handleDeleteWidget?: (index: number) => void;
+  index?: number;
+}) => {
   const chartRef = useRef<any>(null);
 
   const [chartStateInstance, setChartStateInstance] = useState<echarts.ECharts | null>(null);
   const { colorMode } = useColorMode();
 
   useEffect(() => {
-    if (chartStateInstance) {
-      echarts.dispose(chartStateInstance);
-    }
     if (!chartRef.current) return;
     let chartInstance: echarts.ECharts | null = null;
     const renderInstance = echarts.getInstanceByDom(chartRef.current);
@@ -31,25 +37,41 @@ const EChartsViewer = (props: { stationNames: string[]; visualizationType: strin
     }
 
     async function callToChartMangaer() {
-      const options = await ChartManager(props.stationNames, 'line', [props.variableType], ['date_time']);
+      const options = await ChartManager(props.stationNames, 'line', props.yAxisNames, props.xAxisNames);
       if (chartInstance) chartInstance.setOption(options);
     }
+    console.log(props);
     const options = callToChartMangaer();
     setChartStateInstance(chartInstance);
-  }, [chartRef, colorMode, props.variableType]);
+  }, [chartRef, props.yAxisNames, props.xAxisNames]);
 
+  useEffect(() => {
+    if (chartStateInstance) {
+      echarts.dispose(chartStateInstance);
+    }
+  }, [colorMode]);
   return (
-    <div
-      ref={chartRef}
-      style={{
-        height: '400px',
-        width: '1200px',
-        // transform: 'translate(-400px, 0px)',
-        margin: '1rem',
-        border: '10px grey solid',
-        borderRadius: '1rem',
-      }}
-    ></div>
+    <Box border={'white solid 3px'} rounded="1rem">
+      {props.showDeleteButton ? (
+        <Button
+          onClick={() => {
+            if (props.handleDeleteWidget) props.handleDeleteWidget(props.index ? props.index : 0);
+          }}
+        >
+          Delete
+        </Button>
+      ) : null}
+      <div
+        ref={chartRef}
+        style={{
+          height: '400px',
+          width: '1000px',
+          // transform: 'translate(-400px, 0px)',
+          margin: '1rem',
+          borderRadius: '1rem',
+        }}
+      ></div>
+    </Box>
   );
 };
 

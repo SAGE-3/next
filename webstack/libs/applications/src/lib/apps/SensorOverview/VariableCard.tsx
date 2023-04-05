@@ -8,12 +8,29 @@
 
 import React from 'react';
 
-import { Box, Text } from '@chakra-ui/react';
+import { Box, Button, Text } from '@chakra-ui/react';
 
-export default function VariableCard(props: { variableName: string; variableValue: string; isEnabled?: boolean }) {
+export default function VariableCard(props: {
+  variableName: string;
+  variableValue: string;
+  isEnabled?: boolean;
+  showDeleteButton?: boolean;
+  handleDeleteWidget?: (index: number) => void;
+  index?: number;
+}) {
   return (
     <>
       <Box p="1rem" w="300px" h="300px" border="solid white 1px" bgColor={props.isEnabled ? 'blackAlpha.200' : 'blackAlpha.700'}>
+        {props.showDeleteButton ? (
+          <Button
+            onClick={() => {
+              if (props.handleDeleteWidget) props.handleDeleteWidget(props.index ? props.index : 0);
+            }}
+          >
+            Delete
+          </Button>
+        ) : null}
+
         <Text textAlign={'center'}>
           <strong>{props.variableName}</strong>
         </Text>
