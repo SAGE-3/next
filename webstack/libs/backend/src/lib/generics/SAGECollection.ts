@@ -114,6 +114,21 @@ export class SAGE3Collection<T extends SBJSON> {
   }
 
   /**
+   * Get mulitple docs by id from the collection
+   * @param ids The ids of the items to get
+   * @returns The items if successful. Otherwise undefined
+   */
+  public async getBatch(ids: string[]): Promise<SBDocument<T>[] | undefined> {
+    try {
+      const docs = await Promise.all(ids.map((id) => this._collection.docRef(id).read()));
+      return docs.filter((doc) => doc !== undefined) as SBDocument<T>[];
+    } catch (error) {
+      this.printError(error);
+      return undefined;
+    }
+  }
+
+  /**
    * Get all documents from the collection
    * @returns All documents if successful. Otherwise undefined
    */
@@ -160,14 +175,14 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async updateBatch(updates: { id: string; update: SBDocumentUpdate<T> }[], by: string): Promise<boolean[] | boolean> {
+  public async updateBatch(updates: { id: string; update: SBDocumentUpdate<T> }[], by: string): Promise<boolean> {
     try {
       // Create a promise for each update
       const promises = updates.map((u) => this._collection.docRef(u.id).update(u.update, by));
       // Wait for all promises to resolve
       const responses = await Promise.all(promises);
       // Check if all responses are successful
-      const success = responses.map((r) => r.success);
+      const success = responses.every((r) => r.success == true);
       return success;
     } catch (error) {
       this.printError(error);
@@ -185,14 +200,14 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async deleteBatch(id: string[]): Promise<boolean[] | boolean> {
+  public async deleteBatch(id: string[]): Promise<boolean> {
     try {
       // Create a promise for each delete
       const promises = id.map((i) => this._collection.docRef(i).delete());
       // Wait for all promises to resolve
       const responses = await Promise.all(promises);
       // Check if all responses are successful
-      const success = responses.map((r) => r.success);
+      const success = responses.every((r) => r.success == true);
       return success;
     } catch (error) {
       this.printError(error);

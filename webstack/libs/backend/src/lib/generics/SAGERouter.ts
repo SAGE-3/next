@@ -19,71 +19,81 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   //  Check permissions on collections
   router.use(checkPermissionsREST(collection.name as AuthSubject));
 
-  // POST: Add new documents with a batch
-  router.post('/batch', async ({ body, user }, res) => {
-    const auth = user as SBAuthSchema;
-    const userId = auth?.id || '-';
-    const docs = await collection.addBatch(body, userId);
-    if (docs) res.status(200).send({ success: true, data: docs });
-    else res.status(500).send({ success: false, message: 'Failed to create documents.' });
-  });
-
-  // POST: Add new document
+  // POST: Add new document or multiple docs with a batch request
   router.post('/', async ({ body, user }, res) => {
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
-    const doc = await collection.add(body, userId);
-    if (doc) res.status(200).send({ success: true, data: [doc] });
-    else res.status(500).send({ success: false, message: 'Failed to create document.' });
+    // Check if body has property 'batch', if so this is a batch request
+    if (body.batch) {
+      const docs = await collection.addBatch(body, userId);
+      if (docs) res.status(200).send({ success: true, message: 'Successfully created the documents.', data: docs });
+      else res.status(500).send({ success: false, message: 'Failed to create the documents.', data: undefined });
+    } else {
+      const doc = await collection.add(body, userId);
+      if (doc) res.status(200).send({ success: true, message: 'Successfully created the document.', data: [doc] });
+      else res.status(500).send({ success: false, message: 'Failed to create the document.' });
+    }
   });
 
-  // GET: Get all the docs or Query
-  router.get('/', async ({ query }, res) => {
+  // GET: Get all the docs, multiple docs by id, or query
+  router.get('/', async ({ query, body }, res) => {
     let docs = null;
-    if (Object.keys(query).length === 0) {
+    // If body has property 'batch', this is a batch request
+    if (body && body.batch) {
+      docs = await collection.getBatch(body.batch);
+    }
+    // Check for a query, if not query get all the docs
+    else if (Object.keys(query).length === 0) {
       docs = await collection.getAll();
     } else if (Object.keys(query).length === 1) {
       const field = Object.keys(query)[0];
       const q = query[field] as string | number;
       docs = await collection.query(field, q);
     } else {
-      res.status(500).send({ success: false, message: 'Too many query parameters. Only one query parameter currently allowed.' });
+      res.status(500).send({ success: false, message: 'Too many query parameters. Only one query parameter allowed.' });
     }
-    if (docs) res.status(200).send({ success: true, data: docs });
-    else res.status(500).send({ success: false, message: 'Failed to get documents.' });
+    if (docs) res.status(200).send({ success: true, message: 'Successfully retrieved documents.', data: docs });
+    else res.status(500).send({ success: false, message: 'Failed to retrieve documents.', data: undefined });
   });
 
   // GET: Get one doc.
   router.get('/:id', async ({ params }, res) => {
     const doc = await collection.get(params.id);
-    if (doc) res.status(200).send({ success: true, data: [doc] });
-    else res.status(500).send({ success: false, message: 'Failed to get document.' });
+    if (doc) res.status(200).send({ success: true, message: 'Successfully retrieved the documents.', data: [doc] });
+    else res.status(500).send({ success: false, message: 'Failed to retrieve the document.' });
   });
 
   // PUT: Update multiple docs with a batch
-  router.put('/batch', async ({ body, user }, res) => {
+  router.put('', async ({ body, user }, res) => {
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
-    const docs = await collection.updateBatch(body, userId);
-    if (docs) res.status(200).send({ success: true, data: docs });
-    else res.status(500).send({ success: false, message: 'Failed to update documents.' });
+    if (body && body.batch) {
+      const success = await collection.updateBatch(body, userId);
+      if (success) res.status(200).send({ success: true, message: 'Successfully updated documents.', data: success });
+      else res.status(500).send({ success: false, message: 'Failed to update documents.', data: false });
+    } else {
+      res.status(500).send({ success: false, message: 'No batch property on body.' });
+    }
   });
 
-  // PUT: Update one or multiple docs
+  // PUT: Update one doc
   router.put('/:id', async ({ params, body, user }, res) => {
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
-    // Check if body is an array, if so this is a batch put
     const update = await collection.update(params.id, userId, body);
-    if (update) res.status(200).send({ success: true });
+    if (update) res.status(200).send({ success: true, message: 'Successfully updated the document.', data: update });
     else res.status(500).send({ success: false, message: 'Failed to update document.' });
   });
 
   // DELETE: Delete multiple docs with batch
-  router.delete('/batch', async ({ body }, res) => {
-    const docs = await collection.deleteBatch(body);
-    if (docs) res.status(200).send({ success: true, data: docs });
-    else res.status(500).send({ success: false, message: 'Failed to delete documents.' });
+  router.delete('', async ({ body }, res) => {
+    if (body && body.batch) {
+      const success = await collection.deleteBatch(body);
+      if (success) res.status(200).send({ success: true, message: 'Successfully deleted the documents.', data: success });
+      else res.status(500).send({ success: false, message: 'Failed to delete the documents.', data: false });
+    } else {
+      res.status(500).send({ success: false, message: 'No batch property on body.', data: false });
+    }
   });
 
   // DELETE: Delete one doc
