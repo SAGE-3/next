@@ -20,8 +20,8 @@ import {
   useBoardStore,
   MainButton,
   useRouteNav,
-  useData,
   useRoomStore,
+  useConfigStore,
   Clock,
 } from '@sage3/frontend';
 
@@ -40,33 +40,26 @@ import {
   AnnotationsPanel,
   PluginsPanel,
 } from './components';
-import { OpenConfiguration } from '@sage3/shared/types';
 
 type UILayerProps = {
   boardId: string;
   roomId: string;
-  config: OpenConfiguration;
 };
 
 export function UILayer(props: UILayerProps) {
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
-
-  // Configuration
-  const config = useData('/api/configuration') as OpenConfiguration;
-
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
-
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === props.boardId);
-
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
   // Room Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
-
   // Apps
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);

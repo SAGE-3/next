@@ -102,7 +102,7 @@ export function LassoToolbar() {
                 </Button>
               </Tooltip>
 
-              <Menu>
+              <Menu preventOverflow={false} placement={"top"}>
                 <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps to a different Board'} openDelay={400}>
                   <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'}>
                     <MdSend />

@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useColorModeValue, VStack } from '@chakra-ui/react';
 
-import { useAppStore, useUIStore, useUser, useData, GetConfiguration } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, GetConfiguration } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName } from '@sage3/applications/schema';

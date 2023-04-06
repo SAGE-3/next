@@ -24,6 +24,9 @@ export function useData(url: string) {
         if (!ignore) {
           setResult(json);
         }
+      })
+      .catch(() => {
+        window.location.replace('/');
       });
     return () => {
       ignore = true;

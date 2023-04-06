@@ -18,10 +18,10 @@ import {
   useData,
   useCursorBoardPosition,
   usePanelStore,
+  useConfigStore,
   GetConfiguration,
 } from '@sage3/frontend';
 import { AppName } from '@sage3/applications/schema';
-import { OpenConfiguration } from '@sage3/shared/types';
 import { Applications } from '@sage3/applications/apps';
 
 // Development or production
@@ -39,7 +39,8 @@ type ContextProps = {
 const savedRadios = [false, true];
 
 export function BoardContextMenu(props: ContextProps) {
-  const data = useData('/api/configuration') as OpenConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const [appsList, setAppsList] = useState<string[]>([]);
 
@@ -54,14 +55,13 @@ export function BoardContextMenu(props: ContextProps) {
   // Get apps list
   useEffect(() => {
     const updateAppList = async () => {
-      const data = await GetConfiguration();
       // If development show all apps
       if (development) {
         const apps = Object.keys(Applications).sort((a, b) => a.localeCompare(b));
         setAppsList(apps);
         // If Production show only the apps in the config file. config.features.apps
-      } else if (!development && data) {
-        const apps = data.features.apps.sort((a, b) => a.localeCompare(b));
+      } else if (!development && config) {
+        const apps = config.features.apps.sort((a, b) => a.localeCompare(b));
         setAppsList(apps);
       } else {
         setAppsList([]);
@@ -153,8 +153,6 @@ export function BoardContextMenu(props: ContextProps) {
   const openJupyter = () => {
     // Not logged in
     if (!user) return;
-    // jupyter disabled
-    if (data.features && appsList.includes('jupyter')) return;
 
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
     const width = 700;
