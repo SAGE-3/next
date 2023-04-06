@@ -19,7 +19,6 @@ import {
   useUsersStore,
   PasteHandler,
   useUIStore,
-  useData,
   useUser,
   usePluginListener,
   usePluginStore,
@@ -27,7 +26,6 @@ import {
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
-import { OpenConfiguration } from '@sage3/shared/types';
 
 /**
  * The board page which displays the board and its apps.
@@ -36,9 +34,6 @@ export function BoardPage() {
   // Navigation and routing
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
-
-  // Config file
-  const config = useData('/api/configuration') as OpenConfiguration;
 
   if (!roomId || !boardId) {
     toHome(roomId);
@@ -123,7 +118,7 @@ export function BoardPage() {
       <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer>
 
       {/* Upper layer for local UI stuff */}
-      <UILayer boardId={boardId} roomId={roomId} config={config}></UILayer>
+      <UILayer boardId={boardId} roomId={roomId}></UILayer>
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />
