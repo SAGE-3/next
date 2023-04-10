@@ -31,7 +31,7 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
     } else {
       const doc = await collection.add(body, userId);
       if (doc) res.status(200).send({ success: true, message: 'Successfully created the document.', data: [doc] });
-      else res.status(500).send({ success: false, message: 'Failed to create the document.' });
+      else res.status(500).send({ success: false, message: 'Failed to create the document.', data: undefined });
     }
   });
 
@@ -50,7 +50,7 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
       const q = query[field] as string | number;
       docs = await collection.query(field, q);
     } else {
-      res.status(500).send({ success: false, message: 'Too many query parameters. Only one query parameter allowed.' });
+      res.status(500).send({ success: false, message: 'Too many query parameters. Only one query parameter allowed.', data: undefined });
     }
     if (docs) res.status(200).send({ success: true, message: 'Successfully retrieved documents.', data: docs });
     else res.status(500).send({ success: false, message: 'Failed to retrieve documents.', data: undefined });
@@ -60,7 +60,7 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   router.get('/:id', async ({ params }, res) => {
     const doc = await collection.get(params.id);
     if (doc) res.status(200).send({ success: true, message: 'Successfully retrieved the documents.', data: [doc] });
-    else res.status(500).send({ success: false, message: 'Failed to retrieve the document.' });
+    else res.status(500).send({ success: false, message: 'Failed to retrieve the document.', data: undefined });
   });
 
   // PUT: Update multiple docs with a batch
@@ -70,9 +70,9 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
     if (body && body.batch) {
       const success = await collection.updateBatch(body, userId);
       if (success) res.status(200).send({ success: true, message: 'Successfully updated documents.', data: success });
-      else res.status(500).send({ success: false, message: 'Failed to update documents.', data: false });
+      else res.status(500).send({ success: false, message: 'Failed to update documents.', data: undefined });
     } else {
-      res.status(500).send({ success: false, message: 'No batch property on body.' });
+      res.status(500).send({ success: false, message: 'No batch property on body.', data: undefined });
     }
   });
 
@@ -81,8 +81,8 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
     const update = await collection.update(params.id, userId, body);
-    if (update) res.status(200).send({ success: true, message: 'Successfully updated the document.', data: update });
-    else res.status(500).send({ success: false, message: 'Failed to update document.' });
+    if (update) res.status(200).send({ success: true, message: 'Successfully updated the document.', data: [update] });
+    else res.status(500).send({ success: false, message: 'Failed to update document.', data: undefined });
   });
 
   // DELETE: Delete multiple docs with batch
@@ -90,17 +90,17 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
     if (body && body.batch) {
       const success = await collection.deleteBatch(body);
       if (success) res.status(200).send({ success: true, message: 'Successfully deleted the documents.', data: success });
-      else res.status(500).send({ success: false, message: 'Failed to delete the documents.', data: false });
+      else res.status(500).send({ success: false, message: 'Failed to delete the documents.', data: undefined });
     } else {
-      res.status(500).send({ success: false, message: 'No batch property on body.', data: false });
+      res.status(500).send({ success: false, message: 'No batch property on body.', data: undefined });
     }
   });
 
   // DELETE: Delete one doc
   router.delete('/:id', async ({ params }, res) => {
     const del = await collection.delete(params.id);
-    if (del) res.status(200).send({ success: true });
-    else res.status(500).send({ success: false, message: 'Failed to delete document.' });
+    if (del) res.status(200).send({ success: true, message: 'Successfully deleted the document.', data: [del] });
+    else res.status(500).send({ success: false, message: 'Failed to delete document.', data: undefined });
   });
 
   return router;

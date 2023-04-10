@@ -165,53 +165,69 @@ export class SAGE3Collection<T extends SBJSON> {
    * @param update The update to apply
    * @returns True if successful. Otherwise false
    */
-  public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<boolean> {
+  public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<SBDocument<T> | undefined> {
     try {
       const response = await this._collection.docRef(id).update(update, by);
-      return response.success;
+      return response.doc;
     } catch (error) {
       this.printError(error);
-      return false;
+      return undefined;
     }
   }
 
-  public async updateBatch(updates: { id: string; update: SBDocumentUpdate<T> }[], by: string): Promise<boolean> {
+  public async updateBatch(updates: { id: string; update: SBDocumentUpdate<T> }[], by: string): Promise<SBDocument<T>[] | undefined> {
     try {
       // Create a promise for each update
       const promises = updates.map((u) => this._collection.docRef(u.id).update(u.update, by));
       // Wait for all promises to resolve
       const responses = await Promise.all(promises);
-      // Check if all responses are successful
-      const success = responses.every((r) => r.success == true);
-      return success;
+      // Filter out all the responses with success = true
+      const docs = responses.map((r) => r.doc).filter((d) => d !== undefined) as SBDocument<T>[];
+      return docs;
     } catch (error) {
       this.printError(error);
-      return false;
+      return undefined;
     }
   }
 
-  public async delete(id: string): Promise<boolean> {
+  public async delete(id: string): Promise<string | undefined> {
     try {
       const response = await this._collection.docRef(id).delete();
-      return response.success;
+      if (response.success && response.doc) {
+        return response.doc._id;
+      } else {
+        return undefined;
+      }
     } catch (error) {
       this.printError(error);
-      return false;
+      return undefined;
     }
   }
 
-  public async deleteBatch(id: string[]): Promise<boolean> {
+  public async deleteBatch(id: string[]): Promise<string[] | undefined> {
     try {
       // Create a promise for each delete
       const promises = id.map((i) => this._collection.docRef(i).delete());
       // Wait for all promises to resolve
       const responses = await Promise.all(promises);
-      // Check if all responses are successful
-      const success = responses.every((r) => r.success == true);
-      return success;
+      // Get all the ids of the deleted documents
+      const deletedIds = responses
+        .map((r) => {
+          if (r.success && r.doc) {
+            return r.doc._id;
+          } else {
+            return undefined;
+          }
+        })
+        .filter((id) => id !== undefined) as string[];
+      if (deletedIds.length > 0) {
+        return deletedIds;
+      } else {
+        return undefined;
+      }
     } catch (error) {
       this.printError(error);
-      return false;
+      return undefined;
     }
   }
 
