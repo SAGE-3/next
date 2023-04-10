@@ -22,6 +22,8 @@ const validChannels = [
   'paint',
   'load-landing',
   'store-interface',
+  'scroll-up',
+  'scroll-down',
 ];
 
 contextBridge.exposeInMainWorld('electron', {

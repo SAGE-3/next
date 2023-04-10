@@ -711,6 +711,36 @@ function createWindow() {
     updater.checkForUpdates(parsedURL.origin, true);
   });
 
+  ipcMain.on('scroll-up', (e, args) => {
+    console.log('scroll-up', args);
+    const viewContent = electron.webContents.fromId(args.id);
+    viewContent.sendInputEvent({
+      type: 'keyDown',
+      keyCode: 'PageUp',
+      // type: 'mouseWheel',
+      // x: 200,
+      // y: 200,
+      // deltaX: 0,
+      // deltaY: 5,
+      // canScroll: true,
+    });
+  });
+  ipcMain.on('scroll-down', (e, args) => {
+    console.log('scroll-down', args);
+    const viewContent = electron.webContents.fromId(args.id);
+    viewContent.sendInputEvent({
+      type: 'keyDown',
+      keyCode: 'PageDown',
+
+      // type: 'mouseWheel',
+      // x: 200,
+      // y: 200,
+      // deltaX: 0,
+      // deltaY: -5,
+      // canScroll: true,
+    });
+  });
+
   // Request from the renderer process
   // ipcMain.on('streamview', (event, arg) => {
   //   console.log('streamview>', arg.url, arg.id);

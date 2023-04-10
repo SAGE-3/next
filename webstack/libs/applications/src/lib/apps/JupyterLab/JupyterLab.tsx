@@ -9,13 +9,13 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
 
-import { Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+import { Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // UUID generation
 import { v1 as uuidv1 } from 'uuid';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 // Icons
-import { MdFileDownload } from 'react-icons/md';
+import { MdFileDownload, MdKeyboardDoubleArrowDown, MdKeyboardDoubleArrowUp } from 'react-icons/md';
 
 import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
 
@@ -27,6 +27,13 @@ import { App } from '../../schema';
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
+import create from 'zustand';
+
+export const useStore = create((set: any) => ({
+  view: {} as { [key: string]: WebviewTag },
+  setView: (id: string, view: WebviewTag) => set((state: any) => ({ view: { ...state.view, ...{ [id]: view } } })),
+}));
+
 
 /* App component for JupyterApp */
 
@@ -41,6 +48,8 @@ function AppComponent(props: App): JSX.Element {
 
   // Room and board
   const { boardId, roomId } = useParams();
+  // Webview
+  const setView = useStore((state: any) => state.setView);
 
   useEffect(() => {
     GetConfiguration().then((conf) => {
@@ -206,6 +215,8 @@ function AppComponent(props: App): JSX.Element {
       if (node) {
         webviewNode.current = node;
         const webview = webviewNode.current;
+        // save the webview for the toolbar
+        setView(props._id, webview);
 
         // Callback when the webview is ready
         webview.addEventListener('dom-ready', domReadyCallback);
@@ -237,7 +248,11 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       {isElectron() ? (
-        <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
+        <Box
+          pointerEvents="none"
+        >
+          <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
+        </Box>
       ) : (
         <ElectronRequired
           appName={props.data.type}
@@ -254,6 +269,7 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // const updateState = useAppStore((state) => state.updateState);
+  const view = useStore((state: any) => state.view[props._id]);
 
   // Board store
   const boards = useBoardStore((state) => state.boards);
@@ -298,16 +314,37 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }
 
+  function upEvent() {
+    console.log('up');
+    const id = view.getWebContentsId();
+    console.log('ID', id, window.electron);
+    window.electron.send('scroll-up', { id });
+  }
+  function downEvent() {
+    console.log('down');
+    const id = view.getWebContentsId();
+    console.log('ID', id, window.electron);
+    window.electron.send('scroll-down', { id });
+  }
+
   return (
-    <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Notebook'} openDelay={400}>
-          <Button onClick={downloadNotebook}>
-            <MdFileDownload />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-    </>
+    <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <Tooltip placement="top-start" hasArrow={true} label={'Download Notebook'} openDelay={400}>
+        <Button onClick={downloadNotebook}>
+          <MdFileDownload />
+        </Button>
+      </Tooltip>
+      <Tooltip placement="top-start" hasArrow={true} label={'Up'} openDelay={400}>
+        <Button onClick={upEvent}>
+          <MdKeyboardDoubleArrowUp />
+        </Button>
+      </Tooltip>
+      <Tooltip placement="top-start" hasArrow={true} label={'Down'} openDelay={400}>
+        <Button onClick={downEvent}>
+          <MdKeyboardDoubleArrowDown />
+        </Button>
+      </Tooltip>
+    </ButtonGroup>
   );
 }
 
