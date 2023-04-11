@@ -50,7 +50,7 @@ export type SBDocumentUpdateMessage<Type extends SBJSON> = {
 export type SBDocumentDeleteMessage<Type extends SBJSON> = {
   type: 'DELETE';
   col: string;
-  doc: SBDocument<Type>;
+  doc: SBDocument<Type> | SBDocument<Type>[];
 };
 
 export type SBDocumentMessage<Type extends SBJSON> =
@@ -191,7 +191,7 @@ export class SBDocumentRef<Type extends SBJSON> {
     }
   }
 
-  public async delete(): Promise<SBDocWriteResult<Type>> {
+  public async delete(dontPublish?: boolean): Promise<SBDocWriteResult<Type>> {
     try {
       const oldValue = await this.read();
       if (oldValue == undefined) {
@@ -199,7 +199,7 @@ export class SBDocumentRef<Type extends SBJSON> {
       }
       const redisRes = await this._redisClient.json.del(`${this.path}`);
       const res = redisRes === undefined || redisRes === 0 ? false : true;
-      if (res === true) {
+      if (res === true && !dontPublish) {
         await this.publishDeleteAction(oldValue);
       }
       return generateWriteResult(res, oldValue);
@@ -228,6 +228,7 @@ export class SBDocumentRef<Type extends SBJSON> {
   private async publishCreateAction(doc: SBDocument<Type>): Promise<void> {
     const action = {
       type: 'CREATE',
+      col: this._colName,
       doc: doc,
     } as SBDocumentCreateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
@@ -237,6 +238,7 @@ export class SBDocumentRef<Type extends SBJSON> {
   private async publishUpdateAction(doc: SBDocument<Type>, updates: Partial<Type>): Promise<void> {
     const action = {
       type: 'UPDATE',
+      col: this._colName,
       doc: doc,
       updates,
     } as SBDocumentUpdateMessage<Type>;
@@ -246,8 +248,11 @@ export class SBDocumentRef<Type extends SBJSON> {
   private async publishDeleteAction(doc: SBDocument<Type>): Promise<void> {
     const action = {
       type: 'DELETE',
+      col: this._colName,
       doc: doc,
     } as SBDocumentDeleteMessage<Type>;
+    console.log('PUBLISHING DELETE DOC ACTION', this._path);
+
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }

@@ -204,12 +204,10 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async deleteBatch(id: string[]): Promise<string[] | undefined> {
+  public async deleteBatch(ids: string[]): Promise<string[] | undefined> {
     try {
-      // Create a promise for each delete
-      const promises = id.map((i) => this._collection.docRef(i).delete());
       // Wait for all promises to resolve
-      const responses = await Promise.all(promises);
+      const responses = await this.collection.deleteDocs(ids);
       // Get all the ids of the deleted documents
       const deletedIds = responses
         .map((r) => {

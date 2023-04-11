@@ -80,7 +80,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     delete: async (id: string | string[]) => {
       if (Array.isArray(id)) {
-        const res = await APIHttp.DELETE('/apps/batch', id);
+        const res = await APIHttp.DELETE('/apps', id);
         if (!res.success) {
           set({ error: { msg: res.message ? res.message : '' } });
         }
@@ -216,13 +216,14 @@ const AppStore = createVanilla<Applications>((set, get) => {
       // Socket Listenting to updates from server about the current user
       appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
         if (message.col !== 'APPS') return;
-        const doc = message.doc as App;
         switch (message.type) {
           case 'CREATE': {
+            const doc = message.doc as App;
             set({ apps: [...get().apps, doc] });
             break;
           }
           case 'UPDATE': {
+            const doc = message.doc as App;
             const apps = [...get().apps];
             const idx = apps.findIndex((el) => el._id === doc._id);
             if (idx > -1) {
@@ -232,12 +233,21 @@ const AppStore = createVanilla<Applications>((set, get) => {
             break;
           }
           case 'DELETE': {
-            const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              apps.splice(idx, 1);
+            const doc = message.doc as App | App[];
+            const docs = [];
+            if (Array.isArray(doc)) {
+              docs.push(...doc);
+            } else {
+              docs.push(doc);
             }
-            set({ apps: apps });
+            const ids = docs.map((d) => d._id);
+            const apps = [...get().apps];
+            const remainingApps = apps.filter((a) => !ids.includes(a._id));
+            // const idx = apps.findIndex((el) => el._id === doc._id);
+            // if (idx > -1) {
+            //   apps.splice(idx, 1);
+            // }
+            set({ apps: remainingApps });
           }
         }
       });

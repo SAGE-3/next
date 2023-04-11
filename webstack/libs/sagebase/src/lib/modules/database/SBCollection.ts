@@ -7,7 +7,15 @@
  */
 
 import { RedisClientType, SchemaFieldTypes, SearchOptions } from 'redis';
-import { generateSBDocumentTemplate, SBDocument, SBDocumentMessage, SBDocumentRef, SBJSON } from './SBDocument';
+import {
+  generateSBDocumentTemplate,
+  SBDocument,
+  SBDocumentDeleteMessage,
+  SBDocumentMessage,
+  SBDocumentRef,
+  SBDocWriteResult,
+  SBJSON,
+} from './SBDocument';
 
 /**
  * Conversion from JS primitive names to RedisSearch SchmeField Types
@@ -115,10 +123,20 @@ export class SBCollectionRef<Type extends SBJSON> {
 
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      parseMsg.col = this._name;
-      const propValue = parseMsg.doc.data[propertyName];
-      if (propValue === value) {
-        callback(parseMsg);
+      console.log(parseMsg);
+      // Check if the doc is an array or not
+      if (Array.isArray(parseMsg.doc)) {
+        const queryDocs = parseMsg.doc.filter((doc) => doc.data[propertyName] === value);
+        if (queryDocs.length > 0) {
+          parseMsg.doc = queryDocs;
+          callback(parseMsg);
+        }
+      } else {
+        parseMsg.col = this._name;
+        const propValue = parseMsg.doc.data[propertyName];
+        if (propValue === value) {
+          callback(parseMsg);
+        }
       }
     });
 
@@ -255,6 +273,32 @@ export class SBCollectionRef<Type extends SBJSON> {
       this.ERRORLOG(error);
       return [];
     }
+  }
+
+  /**
+   * Delete an array of documents from the collection.
+   * Send only one publish event for all the documents.
+   */
+  public async deleteDocs(ids: string[]): Promise<SBDocWriteResult<Type>[]> {
+    const docRefs = ids.map((id) => this.docRef(id));
+    const promises = docRefs.map((docRef) => docRef.delete(true));
+    const res = await Promise.all(promises);
+    // Filter out the docs that were successfully deleted and publish to subscribers
+    const publishDocs = res.filter((el) => el.success === true && el.doc).map((el) => el.doc) as SBDocument<Type>[];
+    this.publishDeleteAction(publishDocs);
+    return res;
+  }
+
+  // publish the delete action to the subscribers
+  private async publishDeleteAction(docs: SBDocument<Type>[]): Promise<void> {
+    const action = {
+      type: 'DELETE',
+      col: this._name,
+      doc: docs,
+    } as SBDocumentDeleteMessage<Type>;
+
+    await this._redisClient.publish(`${this._path}:`, JSON.stringify(action));
+    return;
   }
 
   /**
