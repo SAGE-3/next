@@ -66,7 +66,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
       set({ boards: [], fetched: false });
-      const boards = await APIHttp.GET<BoardSchema, Board>('/boards', { roomId });
+      const boards = await APIHttp.QUERY<Board>('/boards', { roomId });
       if (boards.success) {
         set({ boards: boards.data, fetched: true });
       } else {

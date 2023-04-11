@@ -61,7 +61,7 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
     subscribeToPlugins: async () => {
       set({ ...get(), plugins: [], fetched: false });
 
-      const plugins = await APIHttp.GET<PluginSchema, Plugin>('/plugins');
+      const plugins = await APIHttp.GET<Plugin>('/plugins');
       if (plugins.success) {
         set({ plugins: plugins.data, fetched: true });
       } else {

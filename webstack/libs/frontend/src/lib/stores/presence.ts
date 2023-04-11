@@ -31,7 +31,7 @@ interface PresenceState {
  * The PresenceStore.
  */
 const PresenceStore = createVanilla<PresenceState>((set, get) => {
-  APIHttp.GET<PresenceSchema, Presence>('/presence').then((response) => {
+  APIHttp.GET<Presence>('/presence').then((response) => {
     if (response.success) {
       set({ presences: response.data });
     }
@@ -51,7 +51,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
     },
     subscribe: async () => {
       set({ presences: [] });
-      const reponse = await APIHttp.GET<PresenceSchema, Presence>('/presence');
+      const reponse = await APIHttp.GET<Presence>('/presence');
       if (reponse.success) {
         set({ presences: reponse.data });
       } else {

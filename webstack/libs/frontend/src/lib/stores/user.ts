@@ -44,7 +44,7 @@ const UsersStore = createVanilla<UserState>((set, get) => {
       if (user) {
         return user;
       } else {
-        const response = await APIHttp.GET<UserSchema, User>('/users/' + id);
+        const response = await APIHttp.GET<User>('/users/' + id);
         if (response.success && response.data) {
           const user = response.data[0] as User;
           set({ users: [...get().users, user] });
@@ -57,7 +57,7 @@ const UsersStore = createVanilla<UserState>((set, get) => {
     },
 
     subscribeToUsers: async () => {
-      const response = await APIHttp.GET<UserSchema, User>('/users');
+      const response = await APIHttp.GET<User>('/users');
       if (response.success) {
         set({ users: response.data });
       } else {

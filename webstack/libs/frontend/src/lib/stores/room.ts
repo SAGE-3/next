@@ -66,7 +66,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
     subscribeToAllRooms: async () => {
       set({ ...get(), rooms: [], fetched: false });
 
-      const rooms = await APIHttp.GET<RoomSchema, Room>('/rooms');
+      const rooms = await APIHttp.GET<Room>('/rooms');
       if (rooms.success) {
         set({ rooms: rooms.data, fetched: true });
       } else {

@@ -70,7 +70,7 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
     subscribe: async () => {
       set({ ...get(), messages: [] });
 
-      const msg = await APIHttp.GET<MessageSchema, Message>('/message');
+      const msg = await APIHttp.GET<Message>('/message');
       if (msg.success) {
         set({ messages: msg.data });
       } else {

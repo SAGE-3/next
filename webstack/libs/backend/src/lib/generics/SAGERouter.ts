@@ -24,7 +24,7 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
     // Check if body has property 'batch', if so this is a batch request
-    if (body.batch) {
+    if (body && body.batch) {
       const docs = await collection.addBatch(body, userId);
       if (docs) res.status(200).send({ success: true, message: 'Successfully created the documents.', data: docs });
       else res.status(500).send({ success: false, message: 'Failed to create the documents.', data: undefined });

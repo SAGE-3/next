@@ -111,7 +111,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
 
       // Duplicate to another board
       if (board) {
-        const otherBoardsApps = await APIHttp.GET<AppSchema, App>('/apps', { boardId: board._id });
+        const otherBoardsApps = await APIHttp.QUERY<App>('/apps', { boardId: board._id });
         if (otherBoardsApps.data && otherBoardsApps.data.length > 0) {
           // If other board has apps try to copy smartly
           // Right now it just places them in the bottom right corner of all the other board's apps
@@ -197,7 +197,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
       set({ apps: [], fetched: false });
-      const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
+      const apps = await APIHttp.QUERY<App>('/apps', { boardId });
       if (apps.success) {
         set({ apps: apps.data, fetched: true });
       } else {
@@ -243,7 +243,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       });
     },
     async fetchBoardApps(boardId: AppSchema['boardId']) {
-      const apps = await APIHttp.GET<AppSchema, App>('/apps', { boardId });
+      const apps = await APIHttp.QUERY<App>('/apps', { boardId });
       if (apps.success) {
         return apps.data;
       } else {
