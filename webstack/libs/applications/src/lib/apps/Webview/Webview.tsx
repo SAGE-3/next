@@ -7,7 +7,10 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
+import {
+  Button, ButtonGroup, Tooltip, Input, InputGroup, HStack,
+  Menu, MenuButton, MenuList, MenuItem
+} from '@chakra-ui/react';
 
 import {
   MdArrowBack,
@@ -18,6 +21,8 @@ import {
   MdVolumeOff,
   MdOutlineSubdirectoryArrowLeft,
   MdVolumeUp,
+  MdMenu,
+  MdTipsAndUpdates,
 } from 'react-icons/md';
 
 import { App } from '../../schema';
@@ -237,7 +242,6 @@ function AppComponent(props: App): JSX.Element {
 
     // When the webview tries to open a new window
     const newWindow = (event: any) => {
-      // console.log('new-window', event);
       if (event.url.includes(window.location.hostname)) {
         // Allow jupyter to stay within the same window
         setUrl(event.url);
@@ -284,6 +288,52 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [props.data.position, domReady]);
 
+
+  useEffect(() => {
+    // Got a result from the smartbit function
+    if (s.executeResult) {
+      const struct = JSON.parse(s.executeResult);
+      if (struct.metadata && struct.metadata.keywords) {
+        const keywords = struct.metadata.keywords;
+        // sort by rating
+        keywords.sort((a: number[], b: number[]) => { return a[1] - b[1] });
+        // top 10 keywords
+        const topKeywords = keywords.slice(0, 10);
+        // update keywords
+        struct.metadata.keywords = topKeywords.map((k: number[]) => { return k[0] });
+      }
+      if (struct.metadata && struct.metadata.entities) {
+        const entities = struct.metadata.entities;
+        // update entities
+        struct.metadata.entities = entities.map((k: any) => { return k.entity_text });
+      }
+      // Clear the executeResult
+      updateState(props._id, {
+        executeResult: '',
+        executeInfo: { executeFunc: '', params: {} },
+      });
+      // Create the JSONViewer app wih the transcript, summary, keywords and entities
+      createApp({
+        title: 'JSONViewer',
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: 800, height: props.data.size.height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'JSONViewer',
+        state: {
+          content: JSON.stringify({
+            transcript: struct.transcript,
+            summary: struct.metadata.summary,
+            keywords: struct.metadata.keywords,
+            entities: struct.metadata.entities,
+          })
+        },
+        raised: true,
+      });
+    }
+  }, [s.executeResult]);
+
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
     height: props.data.size.height + 'px',
@@ -315,6 +365,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const mute = useStore((state: any) => state.mute[props._id]);
   const setMute = useStore((state: any) => state.setMute);
   const view = useStore((state: any) => state.view[props._id]);
+  // User information
+  const { user } = useUser();
 
   // from the UI to the react state
   const handleUrlChange = (event: any) => setUrlValue(event.target.value);
@@ -368,6 +420,19 @@ function ToolbarComponent(props: App): JSX.Element {
     }
     updateState(props._id, { zoom: v.zoomFactor });
   };
+
+  // Analyze the content
+  function analyzeContent() {
+    console.log('Analyzing Content');
+    if (user && urlValue.includes('youtube')) {
+      console.log('--> youtube', urlValue);
+      updateState(props._id, {
+        executeInfo: { executeFunc: 'analyze_youtube', params: { user: user._id } },
+        executeResult: '',
+      });
+    }
+  }
+
 
   return (
     <HStack>
@@ -429,6 +494,23 @@ function ToolbarComponent(props: App): JSX.Element {
             <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
               <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
             </Tooltip>
+          </ButtonGroup>
+
+
+          {/* Remote Action in Python */}
+          <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+            <Menu placement="top-start">
+              <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+                <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+                  <MdMenu />
+                </MenuButton>
+              </Tooltip>
+              <MenuList minWidth="150px" p={0} m={0} fontSize="sm">
+                <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzeContent}>
+                  Analyze
+                </MenuItem>
+              </MenuList>
+            </Menu>
           </ButtonGroup>
         </>
       )}
