@@ -248,44 +248,42 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { lock: !locked });
   };
   return (
-    <>
-      <HStack>
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
-              <MdAdd />
-            </Button>
-          </Tooltip>
+    <HStack>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
 
-          <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
-              <MdRemove />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
-        {yours && (
-          <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
-            <Button onClick={lockUnlock} colorScheme="teal" size="xs">
-              {locked ? <MdLock /> : <MdLockOpen />}
-            </Button>
-          </Tooltip>
-        )}
-        <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      {yours && (
+        <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
+          <Button onClick={lockUnlock} colorScheme="teal" size="xs">
+            {locked ? <MdLock /> : <MdLockOpen />}
+          </Button>
+        </Tooltip>
+      )}
+      <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
 
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
-            <Button onClick={downloadTxt}>
-              <MdFileDownload />
-            </Button>
-          </Tooltip>
-          <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
-            <Button onClick={downloadMd} colorScheme="pink">
-              <MdFileDownload />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
-      </HStack>
-    </>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
+          <Button onClick={downloadTxt}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
+          <Button onClick={downloadMd} colorScheme="pink">
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </HStack>
   );
 }
 
