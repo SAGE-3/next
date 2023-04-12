@@ -99,7 +99,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             size: { width: w, height: h, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'Webview',
-            state: { webviewurl: final_url },
+            state: { webviewurl: final_url, zoom: 1.0, executeResult: '', executeInfo: { executeFunc: '', params: {} } },
             raised: true,
           });
         } else {
