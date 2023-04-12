@@ -20,7 +20,8 @@ class SmartBitFactory:
     class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note", "Stickie": "stickie",
                    "DataTable": "data_table", "CodeCell": "codecell",
                    "KernelDashboard": "kerneldashboard", "SageCell": "sagecell",
-                   "Slider": "slider", "VegaLite": "vegalite", "PDFViewer": "pdfviewer",
+                   "Slider": "slider", "VegaLite": "vegalite",
+                   "PDFViewer": "pdfviewer", "Webview": "webview",
                    "VegaLiteViewer": "vegaliteviewer", "ImageViewer": "imageviewer", "Seer": "seer"}
 
     @classmethod
@@ -28,14 +29,12 @@ class SmartBitFactory:
         smartbit_class = None
         smartbit_type = doc["data"]["type"]
         smartbit_instance = None
-        # print(f"class path is {cls_path}")
         try:
             if smartbit_type in cls.class_names:
                 cls_path = ".".join([cls.cls_root, smartbit_type.lower()])
             else:
                 cls_path = "smartbits.genericsmartbit"
                 smartbit_type = "GenericSmartBit"
-
             smartbit_class = import_cls(cls_path, smartbit_type)
         except Exception as e: # eror in the import
             logger.error(f"Couldn't not import {smartbit_type} from {cls_path} {e}")

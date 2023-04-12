@@ -23,3 +23,4 @@ PyExifTool==0.5.4
 treelib==1.6.1
 crossrefapi==1.5.0
 PyPDF2==2.11.2
+celery==5.2.7

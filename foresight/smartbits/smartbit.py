@@ -38,7 +38,6 @@ class TrackedBaseModel(BaseModel):
         try:
             if self.path is not None:
                 if name[0] != "_":
-                    # print(f"in setting __setattr__ {name} to {value}")
                     self.touched.add(f"{self.path}.{name}"[1:])
             super().__setattr__(name, value)
         except:
@@ -111,7 +110,6 @@ class TrackedBaseModel(BaseModel):
                 attrsetter(updated_field_id)(self, updated_field_val)
             else:
                 for dotted_path, val in recursive_iter(update_data):
-                    # print(f"working on {dotted_path} and {val}")
                     attrsetter(dotted_path)(self, val)
 
     def copy_touched(self):
@@ -186,6 +184,7 @@ class AppTypes(Enum):
     stickie = "Stickie"
     vegalite = "VegaLite"
     vegaliteviewer = "VegaLiteViewer"
+    webview = "Webview"
     genericsmartbit = "GenericSmartBit"
 
 class Data(TrackedBaseModel):

@@ -179,9 +179,7 @@ class SAGEProxy:
             board_id = doc['data']["boardId"]
             room_id = doc['data']['roomId']
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
-
             if type(sb) is GenericSmartBit:
-
                 logger.debug("not handling generic smartbit update")
                 logger.debug(f"\t\tmessage was {doc}")
                 return
