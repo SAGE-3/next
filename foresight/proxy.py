@@ -28,6 +28,10 @@ from utils.sage_communication import SageCommunication
 from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
+from celery import Celery
+
+from celery.result import AsyncResult
+
 
 def setup_logger():
     debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
@@ -293,6 +297,39 @@ class SAGEProxy:
 #     logger.debug("Cleaning up before terminating")
 #     sage_proxy.clean_up()
 
+def task_monitor(app):
+    state = app.events.State()
+
+    def announce_tasks(event):
+        state.event(event)
+        # task name is sent only with -received event, and state
+        # will keep track of this for us.
+        task = state.tasks.get(event['uuid'])
+        args = eval(task.kwargs)
+        app_id = args['id']
+        result = AsyncResult(id=task.uuid)
+        res = result.get()
+        if res:
+          for room_id in sage_proxy.rooms.keys():
+              for board_id in sage_proxy.rooms[room_id].boards.keys():
+                  # smartbits in the board
+                  sms = sage_proxy.rooms[room_id].boards[board_id].smartbits
+                  # That smartbit
+                  sm = sms[app_id]
+                  if sm:
+                      # Return the result to the app
+                      sm.state.executeInfo.executeFunc = ""
+                      sm.state.executeInfo.params = {}
+                      sm.state.executeResult = json.dumps(res)
+                      sm.send_updates()
+
+    with app.connection() as connection:
+        # monitor the successfull tasks
+        recv = app.events.Receiver(connection, handlers={
+                'task-succeeded': announce_tasks,
+                '*': state.event,
+        })
+        recv.capture(limit=None, timeout=None, wakeup=True)
 
 if __name__ == "__main__":
 
@@ -301,6 +338,9 @@ if __name__ == "__main__":
     # signal.signal(signal.SIGTERM, clean_up_terminate)
     # signal.signal(signal.SIGHUP, clean_up_terminate)
     sage_proxy = SAGEProxy(conf, prod_type)
+
+    app = Celery('smartbits', broker='redis://localhost:6379/0', backend='redis://localhost:6379/1')
+    task_monitor(app)
 
     while True:
         try:

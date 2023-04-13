@@ -11,7 +11,7 @@ from smartbits.smartbit import TrackedBaseModel
 # JSON lib
 import json
 # Task queue
-from smartbits.celery_tasks import process
+from smartbits.celery import process
 
 class WebviewState(TrackedBaseModel):
     webviewurl: str
@@ -43,15 +43,10 @@ class Webview(SmartBit):
 
     def analyze_youtube(self, user):
         url = self.state.webviewurl
-        print("analyze_youtube by the user", user, url)
         url = url.replace("?autoplay=0", "")
-        print("URL", url)
-
-        # res = process.delay(url)
-        res = process(url)
-        if res:
-            print("ready", res)
-            self.returnData(res)
+        # Send the task to the queue
+        process.delay(url=url)
+        # results will be collected by the proxy
 
         # response = requests.post(service, json={'url': url})
         # if response.status_code != 200:
