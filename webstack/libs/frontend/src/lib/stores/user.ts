@@ -73,29 +73,31 @@ const UsersStore = createVanilla<UserState>((set, get) => {
       // Socket Subscribe Message
       const route = '/users';
       // Socket Listenting to updates from server about the current users
-      usersSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-        const doc = message.doc as User;
+      usersSub = await SocketAPI.subscribe<User>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ users: [...get().users, doc] });
+            const docs = message.doc as User[];
+            set({ users: [...get().users, ...docs] });
             break;
           }
           case 'UPDATE': {
+            const docs = message.doc as User[];
             const users = [...get().users];
-            const idx = users.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              users[idx] = doc;
-            }
-            set({ users: users });
+            docs.forEach((doc) => {
+              const idx = users.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                users[idx] = doc;
+              }
+            });
+            set({ users });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as User[];
+            const ids = docs.map((d) => d._id);
             const users = [...get().users];
-            const idx = users.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              users.splice(idx, 1);
-            }
-            set({ users: users });
+            const remainingUsers = users.filter((a) => !ids.includes(a._id));
+            set({ users: remainingUsers });
           }
         }
       });

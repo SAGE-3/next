@@ -82,29 +82,31 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // Socket Subscribe Message
       const route = '/rooms';
       // Socket Listenting to updates from server about the current rooms
-      roomSub = await SocketAPI.subscribe<RoomSchema>(route, (message) => {
-        const doc = message.doc as Room;
+      roomSub = await SocketAPI.subscribe<Room>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ rooms: [...get().rooms, doc] });
+            const docs = message.doc as Room[];
+            set({ rooms: [...get().rooms, ...docs] });
             break;
           }
           case 'UPDATE': {
+            const docs = message.doc as Room[];
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              rooms[idx] = doc;
-            }
-            set({ rooms: rooms });
+            docs.forEach((doc) => {
+              const idx = rooms.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                rooms[idx] = doc;
+              }
+            });
+            set({ rooms });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as Room[];
+            const ids = docs.map((d) => d._id);
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              rooms.splice(idx, 1);
-            }
-            set({ rooms: rooms });
+            const remainingRooms = rooms.filter((a) => !ids.includes(a._id));
+            set({ rooms: remainingRooms });
           }
         }
       });

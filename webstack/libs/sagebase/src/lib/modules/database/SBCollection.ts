@@ -104,15 +104,16 @@ export class SBCollectionRef<Type extends SBJSON> {
    * Update an array of documents in the collection.
    * Send only one publish event for all updated documents.
    */
-  public async updateDocs(updates: { id: string; update: SBDocumentUpdate<Type> }[], by: string): Promise<SBDocument<Type>[] | undefined> {
+  public async updateDocs(updates: { id: string; updates: SBDocumentUpdate<Type> }[], by: string): Promise<SBDocument<Type>[] | undefined> {
     try {
       // Create a promise for each update
-      const promises = updates.map((u) => this.docRef(u.id).update(u.update, by, false));
+      const promises = updates.map((u) => this.docRef(u.id).update(u.updates, by, false));
       // Wait for all promises to resolve
       const responses = await Promise.all(promises);
       // Filter out the docs that were successfully updated and publish to subscribers
       const publishDocs = responses.filter((el) => el.success === true && el.doc).map((el) => el.doc) as SBDocument<Type>[];
-      this.publishUpdateAction(publishDocs);
+      const publishUpdates = updates.filter((u) => publishDocs.find((d) => d._id === u.id));
+      this.publishUpdateAction(publishDocs, publishUpdates);
       return publishDocs;
     } catch (error) {
       this.ERRORLOG(error);
@@ -169,20 +170,10 @@ export class SBCollectionRef<Type extends SBJSON> {
 
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      console.log(parseMsg);
-      // Check if the doc is an array or not
-      if (Array.isArray(parseMsg.doc)) {
-        const queryDocs = parseMsg.doc.filter((doc) => doc.data[propertyName] === value);
-        if (queryDocs.length > 0) {
-          parseMsg.doc = queryDocs;
-          callback(parseMsg);
-        }
-      } else {
-        parseMsg.col = this._name;
-        const propValue = parseMsg.doc.data[propertyName];
-        if (propValue === value) {
-          callback(parseMsg);
-        }
+      const queryDocs = parseMsg.doc.filter((doc) => doc.data[propertyName] === value);
+      if (queryDocs.length > 0) {
+        parseMsg.doc = queryDocs;
+        callback(parseMsg);
       }
     });
 
@@ -237,7 +228,7 @@ export class SBCollectionRef<Type extends SBJSON> {
    */
   public async deleteDocs(ids: string[]): Promise<SBDocWriteResult<Type>[]> {
     const docRefs = ids.map((id) => this.docRef(id));
-    const promises = docRefs.map((docRef) => docRef.delete(true));
+    const promises = docRefs.map((docRef) => docRef.delete(false));
     const res = await Promise.all(promises);
     // Filter out the docs that were successfully deleted and publish to subscribers
     const publishDocs = res.filter((el) => el.success === true && el.doc).map((el) => el.doc) as SBDocument<Type>[];
@@ -347,11 +338,12 @@ export class SBCollectionRef<Type extends SBJSON> {
   }
 
   // publish the delete action to the subscribers
-  private async publishUpdateAction(docs: SBDocument<Type>[]): Promise<void> {
+  private async publishUpdateAction(docs: SBDocument<Type>[], updates: { id: string; updates: Partial<Type> }[]): Promise<void> {
     const action = {
       type: 'UPDATE',
       col: this._name,
       doc: docs,
+      updates,
     } as SBDocumentUpdateMessage<Type>;
     await this._redisClient.publish(`${this._path}:`, JSON.stringify(action));
     return;

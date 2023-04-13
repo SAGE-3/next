@@ -13,11 +13,10 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { Board, BoardSchema } from '@sage3/shared/types';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
-import { AppSchema } from '@sage3/applications/schema';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -84,31 +83,33 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       // Subscribe to the boards with property 'roomId' matching the given id
       // const route = `/subscription/rooms/${roomId}`;
       const route = `/boards?roomId=${roomId}`;
-      // Socket Listenting to updates from server about the current user
-      boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema>(route, (message) => {
+      // Socket Listenting to updates from server about the current board
+      boardsSub = await SocketAPI.subscribe<Board>(route, (message) => {
         if (message.col !== 'BOARDS') return;
-        const doc = message.doc as Board;
         switch (message.type) {
           case 'CREATE': {
-            set({ boards: [...get().boards, doc] });
+            const docs = message.doc as Board[];
+            set({ boards: [...get().boards, ...docs] });
             break;
           }
           case 'UPDATE': {
+            const docs = message.doc as Board[];
             const boards = [...get().boards];
-            const idx = boards.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              boards[idx] = doc;
-            }
-            set({ boards: boards });
+            docs.forEach((doc) => {
+              const idx = boards.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                boards[idx] = doc;
+              }
+            });
+            set({ boards });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as Board[];
+            const ids = docs.map((d) => d._id);
             const boards = [...get().boards];
-            const idx = boards.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              boards.splice(idx, 1);
-            }
-            set({ boards: boards });
+            const remainingBoards = boards.filter((a) => !ids.includes(a._id));
+            set({ boards: remainingBoards });
           }
         }
       });

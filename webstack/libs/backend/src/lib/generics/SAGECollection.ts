@@ -170,7 +170,7 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async updateBatch(updates: { id: string; update: SBDocumentUpdate<T> }[], by: string): Promise<SBDocument<T>[] | undefined> {
+  public async updateBatch(updates: { id: string; updates: SBDocumentUpdate<T> }[], by: string): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.updateDocs(updates, by);
       return docs;

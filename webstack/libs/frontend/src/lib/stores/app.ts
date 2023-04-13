@@ -30,8 +30,11 @@ interface Applications {
   fetched: boolean;
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<any>;
+  createBatch: (newApps: AppSchema[]) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
+  updateBatch: (updates: { id: string; updates: Partial<AppSchema> }[]) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
+  updateStateBatch: (updates: { id: string; updates: Partial<AppState> }[]) => Promise<void>;
   delete: (id: string | string[]) => Promise<void>;
   unsubToBoard: (uid: string) => void;
   subToBoard: (boardId: AppSchema['boardId']) => Promise<void>;
@@ -59,10 +62,22 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
       return app;
     },
+    createBatch: async (newApps: AppSchema[]) => {
+      const res = await SocketAPI.sendRESTMessage('/apps', 'POST', { batch: newApps });
+      if (!res.success) {
+        set({ error: { msg: res.message } });
+      }
+    },
     update: async (id: string, updates: Partial<AppSchema>) => {
       const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
       if (!res.success) {
         set({ error: { id, msg: res.message } });
+      }
+    },
+    updateBatch: async (updates: { id: string; updates: Partial<AppSchema> }[]) => {
+      const res = await SocketAPI.sendRESTMessage('/apps', 'PUT', { batch: updates });
+      if (!res.success) {
+        set({ error: { id: updates[0].id, msg: res.message } });
       }
     },
     updateState: async (id: string, state: Partial<AppState>) => {
@@ -70,10 +85,24 @@ const AppStore = createVanilla<Applications>((set, get) => {
       // Not really type safe and I need to figure out a way to do nested props properly.
       const update = {} as any;
       for (const key in state) {
-        const value = (state as any)[key];
         update[`state.${key}`] = (state as any)[key];
       }
       const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', update);
+      if (!res.success) {
+        set({ error: { msg: res.message } });
+      }
+    },
+    updateStateBatch: async (updates: { id: string; updates: Partial<AppState> }[]) => {
+      // HOT FIX: This is a hack to make the app state update work.
+      // Not really type safe and I need to figure out a way to do nested props properly.
+      updates.forEach((u) => {
+        const revisedUpdates = {} as any;
+        for (const key in u.updates) {
+          revisedUpdates[`state.${key}`] = (u.updates as any)[key];
+        }
+        u.updates = revisedUpdates;
+      });
+      const res = await SocketAPI.sendRESTMessage('/apps', 'PUT', { batch: updates });
       if (!res.success) {
         set({ error: { msg: res.message } });
       }
@@ -108,7 +137,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       const apps = get().apps;
       // Find the apps to copy
       const appsToCopy = apps.filter((a) => appIds.includes(a._id));
-
+      console.log('appsToCopy', appsToCopy);
       // Duplicate to another board
       if (board) {
         const otherBoardsApps = await APIHttp.QUERY<App>('/apps', { boardId: board._id });
@@ -162,13 +191,15 @@ const AppStore = createVanilla<Applications>((set, get) => {
             raised: true,
           });
         } else {
+          const newApps = [] as AppSchema[];
           // If the other board has no apps, just copy them over
           appsToCopy.forEach((app) => {
             // Deep Copy
             const state = structuredClone(app.data);
             state.boardId = board._id;
-            get().create(state);
+            newApps.push(state);
           });
+          get().createBatch(newApps);
         }
       } else {
         // Duplicate on same board
@@ -187,12 +218,15 @@ const AppStore = createVanilla<Applications>((set, get) => {
         });
         xShift = xmax - xmin + 40;
         // Duplicate all the apps
+        const newApps = [] as AppSchema[];
         appsToCopy.forEach((app) => {
           // Deep Copy
           const state = structuredClone(app.data);
           state.position.x += xShift;
-          get().create(state);
+
+          newApps.push(state);
         });
+        get().createBatch(newApps);
       }
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
@@ -214,39 +248,31 @@ const AppStore = createVanilla<Applications>((set, get) => {
       // const route = `/subscription/boards/${boardId}`;
       const route = `/apps?boardId=${boardId}`;
       // Socket Listenting to updates from server about the current user
-      appsSub = await SocketAPI.subscribe<AppSchema>(route, (message) => {
+      appsSub = await SocketAPI.subscribe<App>(route, (message) => {
         if (message.col !== 'APPS') return;
         switch (message.type) {
           case 'CREATE': {
-            const doc = message.doc as App;
-            set({ apps: [...get().apps, doc] });
+            const docs = message.doc as App[];
+            set({ apps: [...get().apps, ...docs] });
             break;
           }
           case 'UPDATE': {
-            const doc = message.doc as App;
+            const docs = message.doc as App[];
             const apps = [...get().apps];
-            const idx = apps.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              apps[idx] = doc;
-            }
+            docs.forEach((doc) => {
+              const idx = apps.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                apps[idx] = doc;
+              }
+            });
             set({ apps: apps });
             break;
           }
           case 'DELETE': {
-            const doc = message.doc as App | App[];
-            const docs = [];
-            if (Array.isArray(doc)) {
-              docs.push(...doc);
-            } else {
-              docs.push(doc);
-            }
+            const docs = message.doc as App[];
             const ids = docs.map((d) => d._id);
             const apps = [...get().apps];
             const remainingApps = apps.filter((a) => !ids.includes(a._id));
-            // const idx = apps.findIndex((el) => el._id === doc._id);
-            // if (idx > -1) {
-            //   apps.splice(idx, 1);
-            // }
             set({ apps: remainingApps });
           }
         }

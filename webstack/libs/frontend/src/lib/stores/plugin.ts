@@ -77,29 +77,31 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
       // Socket Subscribe Message
       const route = '/plugins';
       // Socket Listenting to updates from server about the current rooms
-      pluginSub = await SocketAPI.subscribe<PluginSchema>(route, (message) => {
-        const doc = message.doc as Plugin;
+      pluginSub = await SocketAPI.subscribe<Plugin>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ plugins: [...get().plugins, doc] });
+            const docs = message.doc as Plugin[];
+            set({ plugins: [...get().plugins, ...docs] });
             break;
           }
           case 'UPDATE': {
-            const rooms = [...get().plugins];
-            const idx = rooms.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              rooms[idx] = doc;
-            }
-            set({ plugins: rooms });
+            const docs = message.doc as Plugin[];
+            const plugins = [...get().plugins];
+            docs.forEach((doc) => {
+              const idx = plugins.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                plugins[idx] = doc;
+              }
+            });
+            set({ plugins });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as Plugin[];
+            const ids = docs.map((d) => d._id);
             const plugins = [...get().plugins];
-            const idx = plugins.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              plugins.splice(idx, 1);
-            }
-            set({ plugins: plugins });
+            const remainingPlugins = plugins.filter((a) => !ids.includes(a._id));
+            set({ plugins: remainingPlugins });
           }
         }
       });

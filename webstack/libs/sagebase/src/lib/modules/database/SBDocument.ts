@@ -37,20 +37,20 @@ export type SBDocWriteResult<Type extends SBJSON> = {
 export type SBDocumentCreateMessage<Type extends SBJSON> = {
   type: 'CREATE';
   col: string;
-  doc: SBDocument<Type> | SBDocument<Type>[];
+  doc: SBDocument<Type>[];
 };
 
 export type SBDocumentUpdateMessage<Type extends SBJSON> = {
   type: 'UPDATE';
   col: string;
-  doc: SBDocument<Type> | SBDocument<Type>[];
-  updates: Partial<Type>;
+  doc: SBDocument<Type>[];
+  updates: { id: string; updates: Partial<Type> }[];
 };
 
 export type SBDocumentDeleteMessage<Type extends SBJSON> = {
   type: 'DELETE';
   col: string;
-  doc: SBDocument<Type> | SBDocument<Type>[];
+  doc: SBDocument<Type>[];
 };
 
 export type SBDocumentMessage<Type extends SBJSON> =
@@ -232,7 +232,7 @@ export class SBDocumentRef<Type extends SBJSON> {
     const action = {
       type: 'CREATE',
       col: this._colName,
-      doc: doc,
+      doc: [doc],
     } as SBDocumentCreateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
@@ -242,8 +242,8 @@ export class SBDocumentRef<Type extends SBJSON> {
     const action = {
       type: 'UPDATE',
       col: this._colName,
-      doc: doc,
-      updates,
+      doc: [doc],
+      updates: [{ id: doc._id, updates }],
     } as SBDocumentUpdateMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
@@ -252,7 +252,7 @@ export class SBDocumentRef<Type extends SBJSON> {
     const action = {
       type: 'DELETE',
       col: this._colName,
-      doc: doc,
+      doc: [doc],
     } as SBDocumentDeleteMessage<Type>;
     console.log('PUBLISHING DELETE DOC ACTION', this._path);
 

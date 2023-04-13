@@ -66,29 +66,31 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
 
       // Socket Subscribe Message
       const route = `/presence`;
-      presenceSub = await SocketAPI.subscribe<PresenceSchema>(route, (message) => {
-        const doc = message.doc as Presence;
+      presenceSub = await SocketAPI.subscribe<Presence>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ presences: [...get().presences, doc] });
+            const docs = message.doc as Presence[];
+            set({ presences: [...get().presences, ...docs] });
             break;
           }
           case 'UPDATE': {
+            const docs = message.doc as Presence[];
             const presences = [...get().presences];
-            const idx = presences.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              presences[idx] = doc;
-            }
-            set({ presences: presences });
+            docs.forEach((doc) => {
+              const idx = presences.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                presences[idx] = doc;
+              }
+            });
+            set({ presences });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as Presence[];
+            const ids = docs.map((d) => d._id);
             const presences = [...get().presences];
-            const idx = presences.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              presences.splice(idx, 1);
-            }
-            set({ presences: presences });
+            const remainingPresences = presences.filter((a) => !ids.includes(a._id));
+            set({ presences: remainingPresences });
           }
         }
       });
