@@ -37,13 +37,13 @@ export type SBDocWriteResult<Type extends SBJSON> = {
 export type SBDocumentCreateMessage<Type extends SBJSON> = {
   type: 'CREATE';
   col: string;
-  doc: SBDocument<Type>;
+  doc: SBDocument<Type> | SBDocument<Type>[];
 };
 
 export type SBDocumentUpdateMessage<Type extends SBJSON> = {
   type: 'UPDATE';
   col: string;
-  doc: SBDocument<Type>;
+  doc: SBDocument<Type> | SBDocument<Type>[];
   updates: Partial<Type>;
 };
 
@@ -108,7 +108,7 @@ export class SBDocumentRef<Type extends SBJSON> {
    * @param data The data
    * @returns
    */
-  public async set(data: Type, by: string, ttl: number): Promise<SBDocWriteResult<Type>> {
+  public async set(data: Type, by: string, ttl: number, publish = true): Promise<SBDocWriteResult<Type>> {
     try {
       const doc = generateSBDocumentTemplate<Type>(data, by);
       doc._id = this.id;
@@ -118,7 +118,9 @@ export class SBDocumentRef<Type extends SBJSON> {
         this._redisClient.expire(this.path, ttl);
       }
       const response = redisRes == 'OK' ? generateWriteResult<Type>(true, doc) : generateWriteResult<Type>(false);
-      await this.publishCreateAction(doc);
+      if (publish) {
+        await this.publishCreateAction(doc);
+      }
       return response;
     } catch (error) {
       this.ERRORLOG(error);
@@ -131,8 +133,9 @@ export class SBDocumentRef<Type extends SBJSON> {
    * @param update
    * @returns
    */
-  public async update(update: SBDocumentUpdate<Type>, by?: string): Promise<SBDocWriteResult<Type>> {
+  public async update(update: SBDocumentUpdate<Type>, by: string, publish = true): Promise<SBDocWriteResult<Type>> {
     if (update === undefined) return generateWriteResult(false);
+    const pub = publish === undefined ? true : publish;
     // Check if Doc exists
     const exists = await this._redisClient.exists(`${this.path}`);
     if (exists === 0) {
@@ -162,7 +165,7 @@ export class SBDocumentRef<Type extends SBJSON> {
         // Get the new document value
         const newValue = await this.read();
         // Publish the new document value
-        if (newValue) {
+        if (newValue && pub) {
           await this.publishUpdateAction(newValue, update);
         }
         // Generate the response and return it
@@ -191,7 +194,7 @@ export class SBDocumentRef<Type extends SBJSON> {
     }
   }
 
-  public async delete(dontPublish?: boolean): Promise<SBDocWriteResult<Type>> {
+  public async delete(publish = true): Promise<SBDocWriteResult<Type>> {
     try {
       const oldValue = await this.read();
       if (oldValue == undefined) {
@@ -199,7 +202,7 @@ export class SBDocumentRef<Type extends SBJSON> {
       }
       const redisRes = await this._redisClient.json.del(`${this.path}`);
       const res = redisRes === undefined || redisRes === 0 ? false : true;
-      if (res === true && !dontPublish) {
+      if (res === true && publish) {
         await this.publishDeleteAction(oldValue);
       }
       return generateWriteResult(res, oldValue);

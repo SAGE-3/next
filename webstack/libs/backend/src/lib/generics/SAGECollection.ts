@@ -80,18 +80,13 @@ export class SAGE3Collection<T extends SBJSON> {
    * @param by The id of the user adding the item
    * @returns An array of the succcesully added items
    */
-  public async addBatch(item: T[], by: string): Promise<SBDocument<T>[] | undefined> {
+  public async addBatch(items: T[], by: string): Promise<SBDocument<T>[] | undefined> {
     try {
-      // Create promise for each item
-      const promises = item.map((i) => this._collection.addDoc(i, by));
-      // Wait for all promises to resolve
-      const docRefs = await Promise.all(promises);
-      // Read all documents
-      const docs = await Promise.all(docRefs.map((ref) => ref?.read()));
-      // Remove undefined values
-      const filteredDocs = docs.filter((doc) => doc !== undefined) as SBDocument<T>[];
+      // Add a batch of items to the collection
+      // This will partially add if some are 'adds' are not successful
+      const docs = await this.collection.addDocs(items, by);
       // Return docs
-      return filteredDocs;
+      return docs;
     } catch (error) {
       this.printError(error);
       return undefined;
@@ -177,12 +172,7 @@ export class SAGE3Collection<T extends SBJSON> {
 
   public async updateBatch(updates: { id: string; update: SBDocumentUpdate<T> }[], by: string): Promise<SBDocument<T>[] | undefined> {
     try {
-      // Create a promise for each update
-      const promises = updates.map((u) => this._collection.docRef(u.id).update(u.update, by));
-      // Wait for all promises to resolve
-      const responses = await Promise.all(promises);
-      // Filter out all the responses with success = true
-      const docs = responses.map((r) => r.doc).filter((d) => d !== undefined) as SBDocument<T>[];
+      const docs = await this._collection.updateDocs(updates, by);
       return docs;
     } catch (error) {
       this.printError(error);
