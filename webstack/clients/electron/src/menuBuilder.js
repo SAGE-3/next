@@ -13,6 +13,9 @@ const shell = electron.shell;
 // Store
 const bookmarkStore = require('./bookmarkstore');
 
+// main script
+var main = require('../electron.js');
+
 // Utils
 const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
 const updater = require('./updater');
@@ -253,6 +256,15 @@ function buildSageMenu(window) {
             if (focusedWindow) {
               focusedWindow.toggleDevTools();
             }
+          },
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Open a Second Window',
+          click() {
+            main.createSecondWindow();
           },
         },
         {

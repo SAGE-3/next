@@ -218,14 +218,22 @@ app.setAboutPanelOptions({
  * be closed automatically when the JavaScript object is garbage collected.
  */
 var mainWindow;
+var secondWindow;
+
+module.exports.createSecondWindow = function () {
+  // Create another browser window
+  if (!secondWindow) {
+    secondWindow = createWindow();
+  }
+};
 
 /**
  * Opens a window.
  *
  * @method     openWindow
  */
-function openWindow() {
-  mainWindow.show();
+function openWindow(win) {
+  win.show();
 
   // if server is specified, used the URL
   if (commander.server) {
@@ -233,19 +241,19 @@ function openWindow() {
     var location = commander.server;
     currentServer = location;
 
-    if (gotoURL) mainWindow.loadURL(gotoURL);
-    else mainWindow.loadURL(location);
+    if (gotoURL) win.loadURL(gotoURL);
+    else win.loadURL(location);
 
     if (commander.monitor !== null) {
-      mainWindow.on('show', function () {
-        mainWindow.setFullScreen(true);
-        mainWindow.setMenuBarVisibility(false);
+      win.on('show', function () {
+        win.setFullScreen(true);
+        win.setMenuBarVisibility(false);
         // Once all done, prevent changing the fullscreen state
-        mainWindow.fullScreenable = false;
+        win.fullScreenable = false;
       });
     } else {
       // Once all done, prevent changing the fullscreen state
-      mainWindow.fullScreenable = false;
+      win.fullScreenable = false;
     }
   }
 }
@@ -286,12 +294,14 @@ const defaultSize = {
 
 // Function to save the state in the data store
 const saveState = async () => {
-  if (!mainWindow.isMinimized()) {
-    Object.assign(state, getCurrentPosition());
+  if (mainWindow) {
+    if (!mainWindow.isMinimized()) {
+      Object.assign(state, getCurrentPosition());
+    }
+    state.fullscreen = mainWindow.isFullScreen();
+    state.server = mainWindow.webContents.getURL();
+    windowStore.setWindow(state);
   }
-  state.fullscreen = mainWindow.isFullScreen();
-  state.server = mainWindow.webContents.getURL();
-  windowStore.setWindow(state);
   if (commander.clear) {
     console.log('Preferences> clear all');
     windowStore.clear();
@@ -410,10 +420,10 @@ function createWindow() {
   }
 
   // Create the browser window with state and options mixed in
-  mainWindow = new BrowserWindow({ ...state, ...options });
+  const newWindow = new BrowserWindow({ ...state, ...options });
 
   // Build a menu
-  buildMenu(mainWindow);
+  buildMenu(newWindow);
 
   // Analytics on start
   if (!commander.server.includes('localhost') && analytics_enabled) {
@@ -431,10 +441,10 @@ function createWindow() {
       })
       .then(() => {
         console.log('Electron>	Caches cleared');
-        openWindow();
+        openWindow(newWindow);
       });
   } else {
-    openWindow();
+    openWindow(newWindow);
   }
 
   // When the webview tries to download something
@@ -484,55 +494,62 @@ function createWindow() {
       case 'redirect':
         const url = args.url;
         if (!checkServerIsSage(url)) return;
-        mainWindow.loadURL(url);
+        newWindow.loadURL(url);
         break;
       case 'get-list':
-        updateLandingPage(mainWindow);
+        updateLandingPage(newWindow);
         break;
     }
   });
 
   // Mute the audio (just in case)
   // var playAudio = commander.audio || commander.display === 0;
-  // mainWindow.webContents.audioMuted = !playAudio;
+  // newWindow.webContents.audioMuted = !playAudio;
 
   // Open the DevTools.
   if (commander.console) {
-    mainWindow.webContents.openDevTools();
+    newWindow.webContents.openDevTools();
   }
 
   // mainWindow.on('close', saveState);
   // Emitted when the window is closed.
-  mainWindow.on('closed', function () {
-    // Dereference the window object
-    mainWindow = null;
+  newWindow.on('closed', function (e) {
+    console.log('Electron> Window closed');
+    if (e.sender == mainWindow) {
+      // Dereference the window object
+      console.log('Closing main window');
+      mainWindow = null;
+    } else {
+      console.log('Closing second window');
+      secondWindow = null;
+    }
   });
 
   // show/hide menubar when going fullscreen
-  mainWindow.on('enter-full-screen', function () {
-    mainWindow.setMenuBarVisibility(false);
+  newWindow.on('enter-full-screen', function () {
+    newWindow.setMenuBarVisibility(false);
   });
-  mainWindow.on('leave-full-screen', function () {
-    mainWindow.setMenuBarVisibility(true);
+  newWindow.on('leave-full-screen', function () {
+    newWindow.setMenuBarVisibility(true);
   });
 
   // when the display client is loaded
-  mainWindow.webContents.on('did-finish-load', function () {
-    if (mainWindow.isFullScreen()) {
-      mainWindow.setMenuBarVisibility(false);
+  newWindow.webContents.on('did-finish-load', function () {
+    if (newWindow.isFullScreen()) {
+      newWindow.setMenuBarVisibility(false);
     }
 
     // Check for updates
     if (firstRun) {
-      const currentURL = mainWindow.webContents.getURL();
+      const currentURL = newWindow.webContents.getURL();
       const parsedURL = new URL(currentURL);
       updater.checkForUpdates(parsedURL.origin, false);
       firstRun = false;
     }
   });
 
-  mainWindow.webContents.on('did-stop-loading', function () {
-    let aURL = mainWindow.webContents.getURL();
+  newWindow.webContents.on('did-stop-loading', function () {
+    let aURL = newWindow.webContents.getURL();
     // Need to use did-stop-loading, react router does not trigger
     //   did-finish-load or will-navigate
     if (aURL.includes(currentDomain) && aURL.includes('/board/board')) {
@@ -545,11 +562,11 @@ function createWindow() {
   // If the window opens before the server is ready,
   // wait 1 sec. and try again 4 times
   // Finally, redirect to the main server
-  mainWindow.webContents.on('did-fail-load', function () {
-    mainWindow.loadFile('./html/landing.html');
+  newWindow.webContents.on('did-fail-load', function () {
+    newWindow.loadFile('./html/landing.html');
   });
 
-  mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
+  newWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
     const aURL = new URL(destinationUrl);
     const destinationHostname = aURL.hostname;
 
@@ -561,7 +578,7 @@ function createWindow() {
   });
 
   // New webview going to be added
-  mainWindow.webContents.on('will-attach-webview', function (event, webPreferences, params) {
+  newWindow.webContents.on('will-attach-webview', function (event, webPreferences, params) {
     console.log('will-attach-webview');
     // Disable alert and confirm dialogs
     webPreferences.disableDialogs = true;
@@ -590,7 +607,7 @@ function createWindow() {
           neww = dirty.width;
           newh = dirty.height;
         }
-        mainWindow.webContents.send('paint', {
+        newWindow.webContents.send('paint', {
           buf: dataenc.toString('base64'),
           dirty: { ...dirty, width: neww, height: newh },
         });
@@ -618,7 +635,7 @@ function createWindow() {
   });
 
   // Handle the new window event now
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  newWindow.webContents.setWindowOpenHandler((details) => {
     if (details.frameName === 'sage3') {
       shell.openExternal(details.url);
     }
@@ -626,13 +643,13 @@ function createWindow() {
   });
 
   // New webview added
-  mainWindow.webContents.on('did-attach-webview', function (event, webContents) {
+  newWindow.webContents.on('did-attach-webview', function (event, webContents) {
     disableGeolocation(webContents.session);
   });
 
   // Block the zoom limits
   // i.e. pinch-to-zoom events now scale the board like a scroll event
-  mainWindow.webContents.setVisualZoomLevelLimits(1, 1);
+  newWindow.webContents.setVisualZoomLevelLimits(1, 1);
 
   // Request from the renderer process
   ipcMain.on('asynchronous-message', (event, arg) => {
@@ -648,8 +665,8 @@ function createWindow() {
     // Update current domain
     currentDomain = parsedURL.hostname;
 
-    if (mainWindow) {
-      mainWindow.loadURL(location);
+    if (newWindow) {
+      newWindow.loadURL(location);
     }
   });
 
@@ -682,17 +699,17 @@ function createWindow() {
         values.push(value);
       }
       // Send the array of sources to the renderer
-      mainWindow.webContents.send('set-source', values);
+      newWindow.webContents.send('set-source', values);
     });
   });
 
   ipcMain.on('load-landing', () => {
-    mainWindow.loadFile('./html/landing.html');
+    newWindow.loadFile('./html/landing.html');
   });
 
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
-    takeScreenshot(mainWindow);
+    takeScreenshot(newWindow);
   });
 
   // Request from user for Client Info
@@ -700,12 +717,12 @@ function createWindow() {
     const info = {
       version: version,
     };
-    mainWindow.webContents.send('client-info-response', info);
+    newWindow.webContents.send('client-info-response', info);
   });
 
   // Request from user to check for updates to the client
   ipcMain.on('client-update-check', () => {
-    const currentURL = mainWindow.webContents.getURL();
+    const currentURL = newWindow.webContents.getURL();
     const parsedURL = new URL(currentURL);
     updater.checkForUpdates(parsedURL.origin, true);
   });
@@ -718,6 +735,8 @@ function createWindow() {
   //   //   console.log('web>', web.id, web);
   //   // });
   // });
+
+  return newWindow;
 }
 
 /**
@@ -822,7 +841,7 @@ app.on('window-all-closed', function () {
  */
 app.on('activate', function () {
   if (mainWindow === null) {
-    createWindow();
+    mainWindow = createWindow();
   }
 });
 
@@ -840,4 +859,6 @@ app.on('before-quit', async function (event) {
  * This method will be called when Electron has finished
  * initialization and is ready to create a browser window.
  */
-app.on('ready', createWindow);
+app.on('ready', function () {
+  mainWindow = createWindow();
+});
