@@ -109,7 +109,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
     },
     delete: async (id: string | string[]) => {
       if (Array.isArray(id)) {
-        const res = await APIHttp.DELETE('/apps', id);
+        const res = await SocketAPI.sendRESTMessage('/apps', 'DELETE', { batch: id });
         if (!res.success) {
           set({ error: { msg: res.message ? res.message : '' } });
         }
@@ -137,7 +137,6 @@ const AppStore = createVanilla<Applications>((set, get) => {
       const apps = get().apps;
       // Find the apps to copy
       const appsToCopy = apps.filter((a) => appIds.includes(a._id));
-      console.log('appsToCopy', appsToCopy);
       // Duplicate to another board
       if (board) {
         const otherBoardsApps = await APIHttp.QUERY<App>('/apps', { boardId: board._id });
@@ -165,6 +164,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
           // Add some buffer
           deltaY += 50;
           topCorner.y += 50;
+          const newApps = [] as AppSchema[];
           appsToCopy.forEach((app) => {
             // Deep Copy those apps
             const state = structuredClone(app.data);
@@ -172,8 +172,10 @@ const AppStore = createVanilla<Applications>((set, get) => {
             state.boardId = board._id;
             state.position.x += deltaX;
             state.position.y += deltaY;
-            get().create(state);
+            newApps.push(state);
           });
+          // Create the apps
+          await get().createBatch(newApps);
           // Create Stickie To label where the apps came from.
           await get().create({
             title: `Apps Copied From ${board.data.name}`,

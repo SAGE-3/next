@@ -10,7 +10,7 @@ import { useEffect, useState, useRef } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 import { Box, useToast, Text, Spinner, useColorModeValue, ToastId } from '@chakra-ui/react';
 
-import { App } from '../schema';
+import { App, AppSchema } from '../schema';
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
 
 type WindowProps = {
@@ -92,6 +92,7 @@ export function AppWindow(props: WindowProps) {
   const update = useAppStore((state) => state.update);
   const storeError = useAppStore((state) => state.error);
   const clearError = useAppStore((state) => state.clearError);
+  const updateBatch = useAppStore((state) => state.updateBatch);
 
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
@@ -171,19 +172,15 @@ export function AppWindow(props: WindowProps) {
       },
     });
     if (isGrouped) {
+      const updates = [] as { id: string; updates: Partial<AppSchema> }[];
       selectedApps.forEach((appId) => {
         if (appId === props.app._id) return;
         const app = apps.find((el) => el._id == appId);
         if (!app) return;
         const p = app.data.position;
-        update(appId, {
-          position: {
-            x: p.x + dx,
-            y: p.y + dy,
-            z: p.z,
-          },
-        });
+        updates.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
       });
+      updateBatch(updates);
     }
 
     // Trying to optimize performance

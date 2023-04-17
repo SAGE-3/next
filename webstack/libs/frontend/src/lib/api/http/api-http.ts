@@ -10,25 +10,25 @@ import { CollectionDocs } from '../index';
 
 type POSTResponse<T> = {
   success: boolean;
-  message?: string;
+  message: string;
   data?: T[];
 };
 
 type GETResponse<T> = {
   success: boolean;
-  message?: string;
+  message: string;
   data?: T[] | undefined;
 };
 
 type PUTResponse<T> = {
   success: boolean;
-  message?: string;
+  message: string;
   data?: T[] | undefined;
 };
 
 type DELResponse = {
   success: boolean;
-  message?: string;
+  message: string;
   data?: string[] | undefined;
 };
 
@@ -104,7 +104,7 @@ async function QUERY<T extends CollectionDocs>(url: string, query: Partial<T['da
 
 async function PUT<T extends CollectionDocs>(
   url: string,
-  body: Partial<T['data']> | { id: string; update: Partial<T['data']> }[]
+  body: Partial<T['data']> | { id: string; updates: Partial<T['data']> }[]
 ): Promise<PUTResponse<T>> {
   try {
     const response = await fetch('/api' + url, {
