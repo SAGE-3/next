@@ -305,8 +305,14 @@ export function Background(props: BackgroundProps) {
       assets.forEach((a) => {
         if (a._id === fileID) {
           const extras = a.data.derived as ExtraImageType;
-          const vw = 800;
-          const vh = vw / (extras.aspectRatio || 1);
+          let vw = 800;
+          let vh = 450;
+          const ar = extras.aspectRatio || 1;
+          if (ar > 1) {
+            vh = Math.round(vw / ar);
+          } else {
+            vw = Math.round(vh * ar);
+          }
           createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, { w: vw, h: vh }, { assetid: fileID }));
         }
       });
