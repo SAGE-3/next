@@ -16,6 +16,9 @@ import { useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
+// Debounce updates to the editor
+import { debounce } from 'throttle-debounce';
+
 type CodeEditorProps = {
   app: App;
   access: boolean; // Does this user have access to the sagecell's selected kernel
@@ -45,6 +48,46 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const [kernel, setKernel] = useState(s.kernel);
   const roomId = props.app.data.roomId;
   const boardId = props.app.data.boardId;
+
+  // Saving the text after 1sec of inactivity
+  const debounceSave = debounce(200, (val) => {
+    updateState(props.app._id, { code: val });
+  });
+
+  // Keep a copy of the function
+  const debounceFunc = useRef(debounceSave);
+
+  const handleCodeChange = (value: string | undefined) => {
+    if (value) {
+      setCode(value);
+      // Update the text when not typing
+      debounceFunc.current(value);
+    }
+  };
+
+  // set isTyping to true if anyone begins typing, and false after 1 second of inactivity
+  const handleIsTyping = () => {
+    if (s.isTyping) return;
+    updateState(props.app._id, { isTyping: true });
+    debounce(1000, () => {
+      updateState(props.app._id, { isTyping: false });
+    })();
+  };
+
+  const debounceIsTyping = useRef(handleIsTyping);
+
+  useEffect(() => {
+    if (code !== s.code) {
+      // handleIsTyping();
+      debounceIsTyping.current();
+    }
+  }, [code]);
+
+  useEffect(() => {
+    if (s.code !== code) {
+      setCode(s.code);
+    }
+  }, [s.code]);
 
   useEffect(() => {
     // Get all kernels that I'm available to see
@@ -120,12 +163,6 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     editor.current?.setValue('');
   };
 
-  useEffect(() => {
-    if (s.code !== code) {
-      setCode(s.code);
-    }
-  }, [s.code]);
-
   // Handle interrupt
   const handleInterrupt = () => {
     if (!user) return;
@@ -183,8 +220,6 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     },
     find: {
       addExtraSpaceOnTop: false,
-      seedSearchStringFromSelection: 'always', // default is "always"
-      autoFindInSelection: 'never', // default is "never"
     },
   };
 
@@ -199,7 +234,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
           language={'python'}
           theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
           options={options}
-          onChange={() => setCode(editor.current?.getValue() || '')}
+          onChange={handleCodeChange}
           onMount={handleEditorDidMount}
         />
         <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
@@ -226,12 +261,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
             />
           </Tooltip>
           <Tooltip hasArrow label="Clear All" placement="right-start">
-            <IconButton
-              onClick={handleClear}
-              aria-label={''}
-              isDisabled={!s.kernel}
-              icon={<MdClearAll size={'1.5em'} color="#008080" />}
-            />
+            <IconButton onClick={handleClear} aria-label={''} isDisabled={!s.kernel} icon={<MdClearAll size={'1.5em'} color="#008080" />} />
           </Tooltip>
         </ButtonGroup>
       </HStack>
