@@ -58,7 +58,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const debounceFunc = useRef(debounceSave);
 
   const handleCodeChange = (value: string | undefined) => {
-    if (value) {
+    if (value != undefined) {
       setCode(value);
       // Update the text when not typing
       debounceFunc.current(value);
