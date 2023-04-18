@@ -1,13 +1,15 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-// File information
+import { useRef } from 'react';
 import { ToastId, useToast } from '@chakra-ui/react';
+
+// File information
 import {
   getMime,
   isValid,
@@ -24,10 +26,10 @@ import {
   isGIF,
   isPythonNotebook,
 } from '@sage3/shared';
-import { useRef } from 'react';
 
-// To do upload with progress bar
+// Upload with axios and progress event
 import axios, { AxiosProgressEvent } from 'axios';
+
 import { useAppStore, useAssetStore } from '../stores';
 import { useUser } from './useUser';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
@@ -83,14 +85,11 @@ export function useFiles(): UseFiles {
   const toast = useToast();
   // Handle to a toast
   const toastIdRef = useRef<ToastId>();
-
-  // User
+  // User store
   const { user } = useUser();
-
-  // App
+  // App store
   const { create: createApp } = useAppStore((state) => state);
-
-  // Assets
+  // Assets store
   const assets = useAssetStore((state) => state.assets);
 
   const uploadFiles = (input: File[], dx: number, dy: number, roomId: string, boardId: string) => {
