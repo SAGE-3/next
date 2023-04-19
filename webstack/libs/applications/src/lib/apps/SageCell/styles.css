@@ -15,7 +15,7 @@
   * It is a modified version of the css file from SageCell.
   */
 
-.sc *,
+/* .sc *,
 .sc *::before,
 .sc *::after {
   box-sizing: border-box;
@@ -57,7 +57,7 @@
 .sc #root,
 .sc #__next {
   isolation: isolate;
-}
+} */
 
 .arrow-top {
   -webkit-transform: rotate(45deg);

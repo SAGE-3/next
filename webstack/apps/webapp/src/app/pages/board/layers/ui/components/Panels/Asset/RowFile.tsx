@@ -40,6 +40,8 @@ import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
 import { setupApp } from '../../../../background/components';
 import './menu.scss';
+import { AppSchema } from '@sage3/applications/schema';
+import { User } from '@sage3/shared/types';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -82,8 +84,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const scale = useUIStore((state) => state.scale);
 
   const [groupIndex, setGroupIndex] = useState(0);
-  // const [groupColor, setGroupColor] = useState('gray');
-  // const [groupHexColor, setGroupHexColor] = useState('#A0AEC0');
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -99,142 +99,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     // hide context menu
     setShowMenu(false);
   }, [file]);
-
-  // Generate a random color that is never the same as the last
-  // const randColor = (current: string) => {
-  //   const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'teal', 'gray'];
-  //   let newColor = null;
-  //   do {
-  //     newColor = colors[Math.floor(Math.random() * colors.length)];
-  //   } while (newColor === current);
-  //   return newColor;
-  // };
-
-  // const getPinBoardDims = (n: any, columnHeight: number, x: number, y: number, width: number, height: number, spacing: number) => {
-  //   let pinBoardHeight = 0;
-  //   const pinBoardX = x - width / 2;
-  //   const pinBoardY = y - height / 2;
-  //   const colNum = Math.ceil(n.length / columnHeight);
-  //   const pinBoardWidth = Math.ceil((width + spacing) * (colNum + 1));
-
-  //   if (n.length < columnHeight) {
-  //     pinBoardHeight = (height + spacing) * (n.length + 1);
-  //   } else {
-  //     pinBoardHeight = (height + spacing) * (columnHeight + 1);
-  //   }
-
-  //   return [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight];
-  // };
-
-  // Split a .ipynb into a series of SageCells
-  const explodeCells = () => {
-    if (!user) return;
-    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
-    // Look for the file in the asset store
-    const localurl = '/api/assets/static/' + file.filename;
-    const randomColor: string = getRandomHexColor();
-    // Get the content of the file
-    fetch(localurl, {
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-    })
-      .then(function (response) {
-        return response.json();
-      })
-      .then(function (spec) {
-        const cells = spec.cells;
-        let columnCount = 0;
-        const columnHeight = 5;
-        let x = xDrop;
-        let y = yDrop;
-        const height = 300;
-        const width = 800;
-        const spacing = 40;
-        // const [pinBoardX, pinBoardY, pinBoardWidth, pinBoardHeight] = getPinBoardDims(
-        //   cells,
-        //   columnHeight,
-        //   xDrop,
-        //   yDrop,
-        //   width,
-        //   height,
-        //   spacing
-        // );
-        // createApp(
-        //   setupApp(
-        //     '',
-        //     'PinBoard',
-        //     pinBoardX,
-        //     pinBoardY,
-        //     roomId,
-        //     boardId,
-        //     {
-        //       w: pinBoardWidth,
-        //       h: pinBoardHeight,
-        //     },
-        //     { items: cells }
-        //   )
-        // );
-        cells.forEach((cell: any) => {
-          let output: any = null;
-          let source: string = '';
-          if (cell.cell_type === 'code') {
-            source = (cell.source as []).join('');
-            const outputs = cell.outputs[0];
-            if (outputs) {
-              output = { [outputs['output_type']]: outputs };
-              // need to convert all the arrays to strings
-              Object.keys(output).forEach((key) => {
-                if (key === 'stream' && output[key].text instanceof Array) {
-                  output[key].text = output[key].text.join('');
-                }
-                if (key === 'execute_result' || key === 'display_data') {
-                  Object.keys(output[key].data).forEach((dataKey) => {
-                    if (output[key].data[dataKey] instanceof Array) {
-                      output[key].data[dataKey] = output[key].data[dataKey].join('');
-                    }
-                  });
-                }
-                if (key === 'error') {
-                  output[key].traceback = output[key].traceback.join('');
-                }
-              });
-            }
-          } else if (cell.cell_type === 'markdown') {
-            output = { display_data: { data: { 'text/markdown': cell.source.join('') } } };
-          }
-          createApp(
-            setupApp(
-              '',
-              'SageCell',
-              x,
-              y,
-              roomId,
-              boardId,
-              {
-                w: width,
-                h: height,
-              },
-              {
-                code: source ? source : '',
-                output: output ? JSON.stringify(output) : '',
-                groupColor: randomColor,
-              }
-            )
-          );
-          y = y + height + spacing;
-          columnCount++;
-          if (columnCount >= columnHeight) {
-            columnCount = 0;
-            x = x + width + spacing;
-            y = yDrop;
-          }
-        });
-      });
-    setGroupIndex(groupIndex + 1);
-  };
 
   // Context menu selection handler
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
@@ -267,7 +131,9 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         });
       }
     } else if (id === 'cells') {
-      explodeCells();
+      if (!user) return;
+      ExplodedNotebook({ file, boardPosition, scale, roomId, boardId, groupIndex, createApp, setGroupIndex });
+      // explodeCells();
     }
     // deselect file selection
     setSelected(false);
@@ -456,3 +322,109 @@ function getRandomHexColor(): string {
   const randomIndex: number = Math.floor(Math.random() * colors.length);
   return colors[randomIndex];
 }
+
+interface ExplodedNotebookProps {
+  file: FileEntry;
+  boardPosition: { x: number; y: number };
+  scale: number;
+  roomId: string;
+  boardId: string;
+  groupIndex: number;
+  createApp: (app: AppSchema) => void;
+  setGroupIndex: (index: number) => void; // TODO: change this to a file id or kernel id
+}
+
+const ExplodedNotebook: React.FC<ExplodedNotebookProps> = ({
+  file,
+  boardPosition,
+  scale,
+  roomId,
+  boardId,
+  groupIndex,
+  createApp,
+  setGroupIndex,
+}) => {
+  const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+  const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+  // Look for the file in the asset store
+  const localurl = '/api/assets/static/' + file.filename;
+  const randomColor: string = getRandomHexColor();
+  // Get the content of the file
+  fetch(localurl, {
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  })
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (spec) {
+      const cells = spec.cells;
+      let columnCount = 0;
+      const columnHeight = 5;
+      let x = xDrop;
+      let y = yDrop;
+      const height = 300;
+      const width = 800;
+      const spacing = 40;
+
+      cells.forEach((cell: any) => {
+        let output: any = null;
+        let source: string = '';
+        if (cell.cell_type === 'code') {
+          source = (cell.source as []).join('');
+          const outputs = cell.outputs[0];
+          if (outputs) {
+            output = { [outputs['output_type']]: outputs };
+            // need to convert all the arrays to strings
+            Object.keys(output).forEach((key) => {
+              if (key === 'stream' && output[key].text instanceof Array) {
+                output[key].text = output[key].text.join('');
+              }
+              if (key === 'execute_result' || key === 'display_data') {
+                Object.keys(output[key].data).forEach((dataKey) => {
+                  if (output[key].data[dataKey] instanceof Array) {
+                    output[key].data[dataKey] = output[key].data[dataKey].join('');
+                  }
+                });
+              }
+              if (key === 'error') {
+                output[key].traceback = output[key].traceback.join('');
+              }
+            });
+          }
+        } else if (cell.cell_type === 'markdown') {
+          output = { display_data: { data: { 'text/markdown': cell.source.join('') } } };
+        }
+        createApp(
+          setupApp(
+            '',
+            'SageCell',
+            x,
+            y,
+            roomId,
+            boardId,
+            {
+              w: width,
+              h: height,
+            },
+            {
+              code: source ? source : '',
+              output: output ? JSON.stringify(output) : '',
+              groupColor: randomColor,
+            }
+          )
+        );
+        y = y + height + spacing;
+        columnCount++;
+        if (columnCount >= columnHeight) {
+          columnCount = 0;
+          x = x + width + spacing;
+          y = yDrop;
+        }
+      });
+    });
+  setGroupIndex(groupIndex + 1);
+  return null;
+};

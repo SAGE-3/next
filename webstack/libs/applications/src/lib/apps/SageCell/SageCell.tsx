@@ -7,7 +7,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Divider, Badge, Spacer, Stack } from '@chakra-ui/react';
+import { Box, useColorModeValue, Divider, Badge, Spacer, Stack, Text } from '@chakra-ui/react';
+import * as d3 from 'd3';
 
 // SAGE3 imports
 import { useAppStore, useUIStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
@@ -39,7 +40,7 @@ const AppComponent = (props: App): JSX.Element => {
 
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
-  // const [borderColor, setBorderColor] = useState(s.groupColor);
+  const [isTyping, setIsTyping] = useState(false);
 
   const [hasMarkdown, setHasMarkdown] = useState(false);
   const scale = useUIStore((state) => state.scale);
@@ -127,6 +128,15 @@ const AppComponent = (props: App): JSX.Element => {
     }
   }, [s.output]);
 
+  useEffect(() => {
+    if (s.code === '') return setIsTyping(false);
+    setIsTyping(true);
+    const timer = setTimeout(() => {
+      setIsTyping(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [s.code]);
+
   return (
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
@@ -142,6 +152,9 @@ const AppComponent = (props: App): JSX.Element => {
           <Badge variant="outline" colorScheme="blue">
             {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
           </Badge>
+          <Text hidden={!isTyping} color="gray.500">
+            active
+          </Text>
           <Spacer />
           {!s.kernel && !access ? ( // no kernel selected and no access
             <Badge variant="outline" colorScheme="red">
