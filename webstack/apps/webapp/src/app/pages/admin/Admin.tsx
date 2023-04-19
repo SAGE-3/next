@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabList, TabPanel, TabPanels, Tabs, useToast } from '@chakra-ui/react';
 
-import { JoinBoardCheck, useData, MainButton, Clock } from '@sage3/frontend';
+import { JoinBoardCheck, useConfigStore, MainButton, Clock } from '@sage3/frontend';
 
 import { Link } from 'react-router-dom';
 
@@ -29,7 +29,6 @@ import {
   Presence,
   MessageSchema,
   PresenceSchema,
-  OpenConfiguration,
 } from '@sage3/shared/types';
 
 import { APIHttp } from '@sage3/frontend';
@@ -39,8 +38,8 @@ export function AdminPage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
-  // Config File
-  const config = useData('/api/configuration') as OpenConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   // Collections
   const [boards, setBoards] = useState<Board[]>([]);

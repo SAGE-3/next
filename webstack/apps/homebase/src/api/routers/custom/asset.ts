@@ -97,8 +97,14 @@ export function uploadHandler(req: express.Request, res: express.Response): void
     // Send message to clients
     MessageCollection.add({ type: 'upload', payload: `Upload done` }, user.id);
 
+    let step: number;
     // Do something with the files
-    files.forEach(async (elt) => {
+    files.forEach(async (elt, idx) => {
+      if (idx === 0) {
+        step = 1;
+      } else {
+        step = 0;
+      }
       elt.originalname = decode8(elt.originalname);
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Normalize mime types using the mime package
@@ -147,7 +153,7 @@ export function uploadHandler(req: express.Request, res: express.Response): void
                 title: elt.originalname,
                 roomId: req.body.room,
                 boardId: req.body.board,
-                position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
+                position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
                 size: { width, height, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'ImageViewer',
@@ -168,7 +174,7 @@ export function uploadHandler(req: express.Request, res: express.Response): void
                 title: elt.originalname,
                 roomId: req.body.room,
                 boardId: req.body.board,
-                position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
+                position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
                 size: { width, height, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'ImageViewer',
@@ -191,7 +197,7 @@ export function uploadHandler(req: express.Request, res: express.Response): void
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - width / 2, y: ty - height / 2, z: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
               size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'PDFViewer',
@@ -202,15 +208,15 @@ export function uploadHandler(req: express.Request, res: express.Response): void
           );
           posx += width + 10;
         } else if (isCSV(elt.mimetype)) {
-          const w = tw || 800;
-          const h = th || 400;
+          const width = tw || 800;
+          const height = th || 400;
           AppsCollection.add(
             {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'CSVViewer',
               state: { ...initialValues['CSVViewer'], assetid: newAsset._id },
@@ -218,18 +224,25 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 800;
-          posx += 10;
+          posx += width + 10;
         } else if (isVideo(elt.mimetype)) {
-          const w = tw || 800;
-          const h = th || 450;
+          const derived = newdata.derived as ExtraImageType;
+          let width = tw || 800;
+          let height = th || 450;
+          if (derived.aspectRatio) {
+            if (derived.aspectRatio > 1) {
+              height = Math.round(width / derived.aspectRatio);
+            } else {
+              width = Math.round(height * derived.aspectRatio);
+            }
+          }
           AppsCollection.add(
             {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'VideoViewer',
               state: { ...initialValues['VideoViewer'], assetid: newAsset._id },
@@ -237,18 +250,17 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 800;
-          posx += 10;
+          posx += width + 10;
         } else if (isDZI(elt.mimetype)) {
-          const w = tw || 800;
-          const h = th || 400;
+          const width = tw || 800;
+          const height = th || 400;
           AppsCollection.add(
             {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'DeepZoomImage',
               state: { assetid: newAsset._id, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
@@ -256,18 +268,17 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 800;
-          posx += 10;
+          posx += width + 10;
         } else if (isGLTF(elt.mimetype)) {
-          const w = tw || 600;
-          const h = th || 600;
+          const width = tw || 600;
+          const height = th || 600;
           AppsCollection.add(
             {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'GLTFViewer',
               state: { assetid: newAsset._id },
@@ -275,18 +286,17 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 800;
-          posx += 10;
+          posx += width + 10;
         } else if (isGeoJSON(elt.mimetype)) {
-          const w = tw || 500;
-          const h = th || 500;
+          const width = tw || 500;
+          const height = th || 500;
           AppsCollection.add(
             {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'LeafLet',
               state: { assetid: newAsset._id, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
@@ -294,20 +304,19 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 800;
-          posx += 10;
+          posx += width + 10;
         } else if (isMD(elt.mimetype)) {
           const text = fs.readFileSync(elt.path);
-          const w = tw || 400;
-          const h = th || 420;
+          const width = tw || 400;
+          const height = th || 420;
           const u = await UsersCollection.get(req.user.id);
           AppsCollection.add(
             {
               title: u ? u.data.name : 'Unknown',
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'Stickie',
               state: {
@@ -321,19 +330,18 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 400;
-          posx += 10;
+          posx += width + 10;
         } else if (isPython(elt.mimetype)) {
           const text = fs.readFileSync(elt.path);
-          const w = tw || 400;
-          const h = th || 400;
+          const width = tw || 400;
+          const height = th || 400;
           AppsCollection.add(
             {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'SageCell',
               state: {
@@ -344,208 +352,81 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 400;
-          posx += 10;
+          posx += width + 10;
         } else if (isPythonNotebook(elt.mimetype)) {
-          // TODO: Add a prompt to ask if the user wants to open the notebook in Jupyter
-          // or open it as individual cells in the board
-
           // Read the file
           const text = fs.readFileSync(elt.path);
-          const cells = JSON.parse(text.toString()).cells;
-          const cellCount = cells.length;
-          const w = tw || 400;
-          const h = th || 400;
-          const u = await UsersCollection.get(req.user.id);
-          let xx = posx;
-          let yy = ty;
-          for (let i = 0; i < cellCount; i++) {
-            const cell = cells[i];
-            if (cell.cell_type === 'code') {
-              AppsCollection.add(
-                {
-                  title: u ? u.data.name : 'Unknown',
-                  roomId: req.body.room,
-                  boardId: req.body.board,
-                  position: { x: xx - w / 2, y: yy - h / 2, z: 0 },
-                  size: { width: w, height: h, depth: 0 },
-                  rotation: { x: 0, y: 0, z: 0 },
-                  type: 'SageCell',
-                  state: {
-                    ...initialValues['SageCell'],
-                    code: cell.source.join(''),
-                  },
-                  raised: false,
-                },
-                user.id
-              );
-              xx += tw || 400;
-              xx += 10;
-            } else if (cell.cell_type === 'markdown') {
-              AppsCollection.add(
-                {
-                  title: u ? u.data.name : 'Unknown',
-                  roomId: req.body.room,
-                  boardId: req.body.board,
-                  position: { x: xx - w / 2, y: yy - h / 2, z: 0 },
-                  size: { width: w, height: h, depth: 0 },
-                  rotation: { x: 0, y: 0, z: 0 },
-                  type: 'Stickie',
-                  state: {
-                    ...initialValues['Stickie'],
-                    fontSize: 48,
-                    color: '#63B3ED',
-                    text: cell.source.join(''),
-                    executeInfo: { executeFunc: '', params: {} },
-                  },
-                  raised: false,
-                },
-                user.id
-              );
-              xx += tw || 400;
-              xx += 10;
-            }
-            if (i % 10 === 0) {
-              yy += th || 400;
-              yy += 10;
-              xx = posx;
-            }
-          }
-
-          // const w = tw || 700;
-          // const h = th || 700;
+          const width = tw || 700;
+          const height = th || 700;
 
           // Open the redis connection
-          // const client = createClient({ url: config.redis.url });
-          // await client.connect();
-          // const token = await client.get('config:jupyter:token');
+          const client = createClient({ url: config.redis.url });
+          await client.connect();
+          const token = await client.get('config:jupyter:token');
 
           // Create a notebook file in Jupyter with the content of the file
-          // if (token) {
-          // Create a new notebook
-          // let base: string;
-          // if (config.production) {
-          //   base = 'https://jupyter:8888';
-          // } else {
-          //   base = 'http://localhost';
-          // }
-          // Talk to the jupyter server API
-          // const j_url = base + '/api/contents/notebooks/' + elt.originalname;
-          // const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: JSON.parse(text.toString()) };
-          // const agent = new https.Agent({ rejectUnauthorized: false });
-          // Create a new notebook
-          // axios({
-          //   url: j_url,
-          //   method: 'PUT',
-          //   headers: {
-          //     'Content-Type': 'application/json',
-          //     Authorization: 'Token ' + token,
-          //   },
-          //   httpsAgent: agent,
-          //   data: JSON.stringify(payload),
-          // })
-
-          // Create stickies for each cell
-          // const cells = payload.content.cells;
-          //   for (let i = 0; i < cells.length; i++) {
-          //     const cell = cells[i];
-          //     const w = tw || 500;
-          //     const h = th || 400;
-
-          //     const u = await UsersCollection.get(req.user.id);
-          //     // calculate the width and height of the entire space needed by the number of cells
-          //     // const ty = ty - (cells.length - 1) * h / 2;
-
-          //     if (cell.cell_type === 'markdown') {
-          //       AppsCollection.add(
-          //         {
-          //           title: u ? u.data.name : 'Unknown',
-          //           roomId: req.body.room,
-          //           boardId: req.body.board,
-          //           position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-          //           size: { width: w, height: h, depth: 0 },
-          //           rotation: { x: 0, y: 0, z: 0 },
-          //           type: 'Stickie',
-          //           state: {
-          //             ...initialValues['Stickie'],
-          //             fontSize: 48,
-          //             color: '#63B3ED',
-          //             text: cell.source.join(''),
-          //             executeInfo: { executeFunc: '', params: {} },
-          //           },
-          //           raised: false,
-          //         },
-          //         user.id
-          //       );
-          //     }
-          //     if (cell.cell_type === 'code') {
-          //       AppsCollection.add(
-          //         {
-          //           title: elt.originalname,
-          //           roomId: req.body.room,
-          //           boardId: req.body.board,
-          //           position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-          //           size: { width: w, height: h, depth: 0 },
-          //           rotation: { x: 0, y: 0, z: 0 },
-          //           type: 'SageCell',
-          //           state: {
-          //             ...initialValues['SageCell'],
-          //             code: cell.source.join(''),
-          //           },
-          //           raised: false,
-          //         },
-          //         user.id
-          //       );
-          //     }
-          //     posx += tw || 400;
-          //     posx += 10;
-
-          //     if (i === cells.length - 1) {
-          //       ty += th || 400;
-          //       ty += 10;
-          //     }
-          //   }
-          // }
-
-          //     // .then((response) => response.json())
-          //     .then((data) => {
-          //       console.log('Jupyter> notebook created', data.statusText);
-          //       // Create the app
-          //       AppsCollection.add(
-          //         {
-          //           title: elt.originalname,
-          //           roomId: req.body.room,
-          //           boardId: req.body.board,
-          //           position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-          //           size: { width: w, height: h, depth: 0 },
-          //           rotation: { x: 0, y: 0, z: 0 },
-          //           type: 'JupyterLab',
-          //           state: {
-          //             ...initialValues['JupyterLab'],
-          //             notebook: elt.originalname,
-          //           },
-          //           raised: false,
-          //         },
-          //         user.id
-          //       );
-          //       posx += tw || 400;
-          //       posx += 10;
-          //     })
-          //     .catch((e: Error) => {
-          //       console.log('Jupyter> error', e);
-          //     });
-          // }
+          if (token) {
+            // Create a new notebook
+            let base: string;
+            if (config.production) {
+              base = 'https://jupyter:8888';
+            } else {
+              base = 'http://localhost';
+            }
+            // Talk to the jupyter server API
+            const j_url = base + '/api/contents/notebooks/' + elt.originalname;
+            const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: JSON.parse(text.toString()) };
+            const agent = new https.Agent({ rejectUnauthorized: false });
+            // Create a new notebook
+            axios({
+              url: j_url,
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Token ' + token,
+              },
+              httpsAgent: agent,
+              data: JSON.stringify(payload),
+            })
+              // .then((response) => response.json())
+              .then((data) => {
+                console.log('Jupyter> notebook created', data.statusText);
+                // Create the app
+                AppsCollection.add(
+                  {
+                    title: elt.originalname,
+                    roomId: req.body.room,
+                    boardId: req.body.board,
+                    position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+                    size: { width, height, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'JupyterLab',
+                    state: {
+                      ...initialValues['JupyterLab'],
+                      notebook: elt.originalname,
+                    },
+                    raised: false,
+                  },
+                  user.id
+                );
+                posx += tw || 400;
+                posx += 10;
+              })
+              .catch((e: Error) => {
+                console.log('Jupyter> error', e);
+              });
+          }
         } else if (isJSON(elt.mimetype)) {
           const text = fs.readFileSync(elt.path);
-          const w = tw || 500;
-          const h = th || 600;
+          const width = tw || 500;
+          const height = th || 600;
           AppsCollection.add(
             {
               title: elt.originalname,
               roomId: req.body.room,
               boardId: req.body.board,
-              position: { x: posx - w / 2, y: ty - h / 2, z: 0 },
-              size: { width: w, height: h, depth: 0 },
+              position: { x: posx - (step * width) / 2, y: ty - height / 2, z: 0 },
+              size: { width, height, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'VegaLite',
               state: { ...initialValues['VegaLite'], spec: text.toString() },
@@ -553,8 +434,7 @@ export function uploadHandler(req: express.Request, res: express.Response): void
             },
             user.id
           );
-          posx += tw || 500;
-          posx += 10;
+          posx += width + 10;
         }
       }
     });
