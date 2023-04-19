@@ -8,7 +8,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
-import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
+import { Box, useToast, Text, Spinner, useColorModeValue, ToastId } from '@chakra-ui/react';
 
 import { App } from '../schema';
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
@@ -73,7 +73,8 @@ export function AppWindow(props: WindowProps) {
 
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
-  const borderWidth = Math.min(Math.max(4 / scale, 2), 20);
+  const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
+
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const outerBorderRadius = 12;
   const innerBorderRadius = outerBorderRadius - borderWidth;
@@ -85,6 +86,7 @@ export function AppWindow(props: WindowProps) {
 
   // Display messages
   const toast = useToast();
+  const toastID = 'error-toast';
 
   // App Store
   const apps = useAppStore((state) => state.apps);
@@ -110,8 +112,15 @@ export function AppWindow(props: WindowProps) {
   useEffect(() => {
     if (storeError) {
       // Display a message'
-      if (storeError.id && storeError.id === props.app._id)
-        toast({ description: 'Error - ' + storeError.msg, status: 'warning', duration: 3000, isClosable: true });
+      if (storeError.id && storeError.id === props.app._id) {
+        // open new toast if the previous one is not active
+        if (!toast.isActive(toastID)) {
+          toast({ id: toastID, description: 'Error - ' + storeError.msg, status: 'warning', duration: 3000, isClosable: true });
+        } else {
+          // or update the existing one
+          toast.update(toastID, { description: 'Error - ' + storeError.msg, status: 'warning', duration: 3000, isClosable: true });
+        }
+      }
       // Clear the error
       clearError();
     }

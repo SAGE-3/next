@@ -7,27 +7,13 @@
  */
 
 // File information
-import {FileEntry} from './types';
-import {
-  isImage,
-  isPDF,
-  isCSV,
-  isMD,
-  isJSON,
-  isVideo,
-  isDZI,
-  isGeoJSON,
-  isPython,
-  isGLTF,
-  isGIF,
-  isPythonNotebook
-} from '@sage3/shared';
+import { FileEntry } from './types';
+import { isImage, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
 
-import {GetConfiguration} from '@sage3/frontend';
-import {ExtraImageType, ExtraPDFType, User} from '@sage3/shared/types';
-import {initialValues} from '@sage3/applications/initialValues';
-import {AppState, AppSchema} from '@sage3/applications/schema';
-import {setupApp} from "../../../../background/components";
+import { GetConfiguration } from '@sage3/frontend';
+import { ExtraImageType, ExtraPDFType, User } from '@sage3/shared/types';
+import { initialValues } from '@sage3/applications/initialValues';
+import { AppState, AppSchema } from '@sage3/applications/schema';
 
 /**
  * Setup an application for a given file type
@@ -47,7 +33,7 @@ export async function setupAppForFile(
   yDrop: number,
   roomId: string,
   boardId: string,
-  user: User,
+  user: User
 ): Promise<AppSchema> {
   return new Promise((resolve) => {
     const w = 400;
@@ -56,11 +42,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: w, height: w, depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: w, height: w, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'ImageViewer',
-        state: {...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename},
+        state: { ...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename },
         raised: true,
       });
     } else if (isImage(file.type)) {
@@ -70,23 +56,32 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: w, height: w / (extras.aspectRatio || 1), depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: w, height: w / (extras.aspectRatio || 1), depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'ImageViewer',
-        state: {...initialValues['ImageViewer'], assetid: file.id},
+        state: { ...initialValues['ImageViewer'], assetid: file.id },
         raised: true,
       });
     } else if (isVideo(file.type)) {
+      const extras = file.derived as ExtraImageType;
+      let vw = 800;
+      let vh = 450;
+      const ar = extras.aspectRatio || 1;
+      if (ar > 1) {
+        vh = Math.round(vw / ar);
+      } else {
+        vw = Math.round(vh * ar);
+      }
       resolve({
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: 800, height: 450, depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: vw, height: vh, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'VideoViewer',
-        state: {...(initialValues['VideoViewer'] as AppState), assetid: file.id},
+        state: { ...(initialValues['VideoViewer'] as AppState), assetid: file.id },
         raised: true,
       });
     } else if (isCSV(file.type)) {
@@ -94,11 +89,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: 800, height: 400, depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 800, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'CSVViewer',
-        state: {...initialValues['CSVViewer'], assetid: file.id},
+        state: { ...initialValues['CSVViewer'], assetid: file.id },
         raised: true,
       });
     } else if (isGLTF(file.type)) {
@@ -106,11 +101,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: 600, height: 600, depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 600, height: 600, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'GLTFViewer',
-        state: {...initialValues['GLTFViewer'], assetid: file.id},
+        state: { ...initialValues['GLTFViewer'], assetid: file.id },
         raised: true,
       });
     } else if (isDZI(file.type)) {
@@ -118,11 +113,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: 800, height: 400, depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 800, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'DeepZoomImage',
-        state: {...(initialValues['DeepZoomImage'] as AppState), assetid: file.id},
+        state: { ...(initialValues['DeepZoomImage'] as AppState), assetid: file.id },
         raised: true,
       });
     } else if (isGeoJSON(file.type)) {
@@ -130,11 +125,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: 800, height: 400, depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 800, height: 400, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'LeafLet',
-        state: {...(initialValues['LeafLet'] as AppState), assetid: file.id},
+        state: { ...(initialValues['LeafLet'] as AppState), assetid: file.id },
         raised: true,
       });
     } else if (isMD(file.type)) {
@@ -156,11 +151,11 @@ export async function setupAppForFile(
             title: user.data.name,
             roomId: roomId,
             boardId: boardId,
-            position: {x: xDrop, y: yDrop, z: 0},
-            size: {width: 400, height: 400, depth: 0},
-            rotation: {x: 0, y: 0, z: 0},
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 400, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
             type: 'Stickie',
-            state: {...(initialValues['Stickie'] as AppState), text: text},
+            state: { ...(initialValues['Stickie'] as AppState), text: text },
             raised: true,
           });
         });
@@ -182,11 +177,11 @@ export async function setupAppForFile(
             title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            position: {x: xDrop, y: yDrop, z: 0},
-            size: {width: 400, height: 400, depth: 0},
-            rotation: {x: 0, y: 0, z: 0},
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 400, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
             type: 'SageCell',
-            state: {...(initialValues['SageCell'] as AppState), code: text},
+            state: { ...(initialValues['SageCell'] as AppState), code: text },
             raised: true,
           });
         });
@@ -209,11 +204,11 @@ export async function setupAppForFile(
             title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            position: {x: xDrop, y: yDrop, z: 0},
-            size: {width: 500, height: 600, depth: 0},
-            rotation: {x: 0, y: 0, z: 0},
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 500, height: 600, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
             type: 'VegaLite',
-            state: {...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2)},
+            state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
             raised: true,
           });
         });
@@ -243,7 +238,7 @@ export async function setupAppForFile(
               }
               // Talk to the jupyter server API
               const j_url = base + '/api/contents/notebooks/' + file.originalfilename;
-              const payload = {type: 'notebook', path: '/notebooks', format: 'json', content: spec};
+              const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };
               // Create a new notebook
               fetch(j_url, {
                 method: 'PUT',
@@ -261,11 +256,11 @@ export async function setupAppForFile(
                     title: file.originalfilename,
                     roomId: roomId,
                     boardId: boardId,
-                    position: {x: xDrop, y: yDrop, z: 0},
-                    size: {width: 700, height: 700, depth: 0},
-                    rotation: {x: 0, y: 0, z: 0},
+                    position: { x: xDrop, y: yDrop, z: 0 },
+                    size: { width: 700, height: 700, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
                     type: 'JupyterLab',
-                    state: {...(initialValues['JupyterLab'] as any), notebook: file.originalfilename},
+                    state: { ...(initialValues['JupyterLab'] as any), notebook: file.originalfilename },
                     raised: true,
                   });
                 });
@@ -286,11 +281,11 @@ export async function setupAppForFile(
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
-        position: {x: xDrop, y: yDrop, z: 0},
-        size: {width: 400, height: 400 / aspectRatio, depth: 0},
-        rotation: {x: 0, y: 0, z: 0},
+        position: { x: xDrop, y: yDrop, z: 0 },
+        size: { width: 400, height: 400 / aspectRatio, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
         type: 'PDFViewer',
-        state: {...initialValues['PDFViewer'], assetid: file.id},
+        state: { ...initialValues['PDFViewer'], assetid: file.id },
         raised: true,
       });
     }

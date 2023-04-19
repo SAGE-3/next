@@ -9,7 +9,6 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { App } from '@sage3/applications/schema';
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
 import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
 
@@ -92,13 +91,27 @@ export function Apps() {
             const y2 = y1 + el.data.size.height;
             // If the cursor is inside the app, delete it. Only delete the top one
             if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-              found = true;
-              fitApps([el]);
+              if (previousLocation.set) {
+                setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
+                setScale(previousLocation.s);
+                setPreviousLocation((prev) => ({ ...prev, set: false }));
+              } else {
+                setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true }));
+                found = true;
+                fitApps([el]);
+              }
             }
           });
+        if (!found) {
+          if (previousLocation.set) {
+            setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
+            setScale(previousLocation.s);
+            setPreviousLocation((prev) => ({ ...prev, set: false }));
+          }
+        }
       }
     },
-    { dependencies: [position.x, position.y, JSON.stringify(apps)] }
+    { dependencies: [previousLocation.set, position.x, position.y, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)] }
   );
 
   // Un-Zoom with shift+z
@@ -116,7 +129,7 @@ export function Apps() {
 
   return (
     <>
-      {/* Apps */}
+      {/* Apps array */}
       {apps.map((app) => {
         if (app.data.type in Applications) {
           const Component = Applications[app.data.type].AppComponent;

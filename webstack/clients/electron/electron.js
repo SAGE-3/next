@@ -72,7 +72,6 @@ const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 // with Electron version >= 17, sources available in the main process
 const desktopCapturer = electron.desktopCapturer;
-const Menu = electron.Menu;
 const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
