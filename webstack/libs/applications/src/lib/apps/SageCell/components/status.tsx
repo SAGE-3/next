@@ -1,6 +1,5 @@
-import { Badge, Stack, Spacer, Box } from '@chakra-ui/react';
+import { Badge, Stack, Spacer } from '@chakra-ui/react';
 import { truncateWithEllipsis } from '@sage3/frontend';
-// import '../styles.css';
 
 interface StatusBarProps {
   kernel: string;
@@ -16,15 +15,8 @@ export const StatusBar = (props: StatusBarProps) => {
         {props.kernel ? `Kernel: ${truncateWithEllipsis(props.kernel, 8)}` : 'No Kernel Selected'}
       </Badge>
       <Badge variant="ghost" colorScheme="red">
-        {props.isTyping ? 'typing...' : ''}
+        {props.isTyping ? `typing...` : ''}
       </Badge>
-      {props.isTyping ? (
-        <Box className="col-3">
-          <Box className="snippet" data-title="dot-flashing">
-            <Box className="stage"></Box>
-          </Box>
-        </Box>
-      ) : null}
       <Spacer />
       {!props.kernel && !props.access ? ( // no kernel selected and no access
         <Badge variant="outline" colorScheme="red">
@@ -32,7 +24,6 @@ export const StatusBar = (props: StatusBarProps) => {
         </Badge>
       ) : !props.kernel && props.access ? ( // no kernel selected but access
         <Badge variant="outline" colorScheme="yellow">
-          {/* {setAccess(false)} somewhere ?? */}
           Online{' '}
         </Badge>
       ) : props.kernel && !props.access ? ( // kernel selected but no access

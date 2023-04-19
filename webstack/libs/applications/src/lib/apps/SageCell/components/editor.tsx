@@ -50,18 +50,23 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const boardId = props.app.data.boardId;
 
   // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(200, (val) => {
-    updateState(props.app._id, { code: val });
-  });
+  const debounceSave = useRef(
+    debounce(500, (val) => {
+      updateState(props.app._id, { code: val });
+    })
+  );
 
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
+  const debounceIsTyping = useRef(
+    debounce(1000, () => {
+      updateState(props.app._id, { isTyping: false });
+    })
+  );
 
   const handleCodeChange = (value: string | undefined) => {
     if (value != undefined) {
       setCode(value);
       // Update the text when not typing
-      debounceFunc.current(value);
+      debounceSave.current(value);
     }
   };
 
@@ -69,17 +74,12 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const handleIsTyping = () => {
     if (s.isTyping) return;
     updateState(props.app._id, { isTyping: true });
-    debounce(1000, () => {
-      updateState(props.app._id, { isTyping: false });
-    })();
+    debounceIsTyping.current();
   };
-
-  const debounceIsTyping = useRef(handleIsTyping);
 
   useEffect(() => {
     if (code !== s.code) {
-      // handleIsTyping();
-      debounceIsTyping.current();
+      handleIsTyping();
     }
   }, [code]);
 
