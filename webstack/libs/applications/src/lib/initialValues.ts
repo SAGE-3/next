@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { name as AIDrawName, init as defaultAIDraw } from './apps/AIDraw';
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
@@ -33,6 +34,7 @@ import { name as VideoViewerName, init as defaultVideoViewer } from './apps/Vide
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 
 export const initialValues = {
+  [AIDrawName]: defaultAIDraw,
   [AIPaneName]: defaultAIPane,
   [CSVViewerName]: defaultCSVViewer,
   [ChartGeneratorName]: defaultChartGenerator,
@@ -65,3 +67,4 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebviewName]: defaultWebview,
 };
+

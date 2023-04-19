@@ -34,7 +34,7 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter } from './custom';
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, StableDiffRouter } from './custom';
 
 import { config } from '../../config';
 
@@ -76,8 +76,9 @@ export function expressAPIRouter(): express.Router {
   // Configuration Route
   router.use('/configuration', ConfigRouter());
 
-  // Experimental NLP route
+  // Experimental routes
   router.use('/nlp', NLPRouter());
+  router.use('/stablediff', StableDiffRouter());
 
   return router;
 }
