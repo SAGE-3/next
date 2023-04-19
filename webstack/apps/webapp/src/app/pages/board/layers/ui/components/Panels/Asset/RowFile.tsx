@@ -38,7 +38,7 @@ import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore,
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
-import { setupApp } from '../../../../background/components';
+import { setupApp } from '@sage3/frontend';
 import './menu.scss';
 import { AppSchema } from '@sage3/applications/schema';
 import { User } from '@sage3/shared/types';
