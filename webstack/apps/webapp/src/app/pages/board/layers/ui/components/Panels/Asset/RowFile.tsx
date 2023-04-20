@@ -40,7 +40,7 @@ import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
 import { setupApp } from '@sage3/frontend';
 import './menu.scss';
-import { AppSchema } from '@sage3/applications/schema';
+import { AppName, AppSchema } from '@sage3/applications/schema';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -81,6 +81,9 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const { position: cursorPosition } = useCursorBoardPosition();
 
   const scale = useUIStore((state) => state.scale);
+
+  // // Fitapps
+  // const fitApps = useUIStore((state) => state.fitApps);
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -135,6 +138,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         roomId,
         boardId,
         createApp,
+        // fitApps,
       });
     }
     // deselect file selection
@@ -331,6 +335,7 @@ interface ExplodedNotebookProps {
   roomId: string;
   boardId: string;
   createApp: (app: AppSchema) => void;
+  // fitApps: () => void;
 }
 
 async function ExplodedNotebook({ file, boardPosition, roomId, boardId, createApp }: ExplodedNotebookProps): Promise<JSX.Element> {
@@ -341,6 +346,8 @@ async function ExplodedNotebook({ file, boardPosition, roomId, boardId, createAp
   const spacing = 40;
   const xDrop = -boardPosition.x + 40;
   const yDrop = -boardPosition.y + 1400;
+  // list to store apps to create
+  const appsToCreate: AppSchema[] = [];
 
   // Look for the file in the asset store
   const localurl = '/api/assets/static/' + file.filename;
@@ -396,6 +403,22 @@ async function ExplodedNotebook({ file, boardPosition, roomId, boardId, createAp
           output: output ? JSON.stringify(output) : '',
           groupColor: randomColor,
         });
+        // const appToCreate = {
+        //   title: '',
+        //   type: 'SageCell' as AppName,
+        //   position: { x: x, y: y, z: 0 },
+        //   size: { width: appWidth, height: appHeight, depth: 0 },
+        //   rotation: { x: 0, y: 0, z: 0 },
+        //   roomId: roomId,
+        //   boardId: boardId,
+        //   state: {
+        //     code: source ? source : '',
+        //     output: output ? JSON.stringify(output) : '',
+        //     groupColor: randomColor,
+        //   },
+        //   raised: false,
+        // };
+        appsToCreate.push(appToCreate);
         createApp(appToCreate);
         y = y + appHeight + spacing;
         columnCount++;
@@ -406,5 +429,17 @@ async function ExplodedNotebook({ file, boardPosition, roomId, boardId, createAp
         }
       });
     });
+  // const appPromises = appsToCreate.map((app) => createApp(app));
+  // await Promise.allSettled(appPromises)
+  //   .then((results) => {
+  //     const appsToFit = results.map((result) => result);
+  //     fitApps(appsToFit);
+  //   })
+  //   .catch((err) => {
+  //     console.error('Error while creating apps:', err);
+  //   });
+  // for (const appPromise of appPromises) {
+  //   await appPromise;
+  // }
   return <></>;
 }
