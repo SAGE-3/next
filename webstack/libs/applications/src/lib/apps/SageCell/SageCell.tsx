@@ -8,7 +8,6 @@
 
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Divider, Badge, Spacer, Stack, Text } from '@chakra-ui/react';
-import * as d3 from 'd3';
 
 // SAGE3 imports
 import { useAppStore, useUIStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
@@ -128,15 +127,6 @@ const AppComponent = (props: App): JSX.Element => {
     }
   }, [s.output]);
 
-  useEffect(() => {
-    if (s.code === '') return setIsTyping(false);
-    setIsTyping(true);
-    const timer = setTimeout(() => {
-      setIsTyping(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [s.code]);
-
   return (
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
@@ -152,9 +142,6 @@ const AppComponent = (props: App): JSX.Element => {
           <Badge variant="outline" colorScheme="blue">
             {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
           </Badge>
-          <Text hidden={!isTyping} color="gray.500">
-            active
-          </Text>
           <Spacer />
           {!s.kernel && !access ? ( // no kernel selected and no access
             <Badge variant="outline" colorScheme="red">

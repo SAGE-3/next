@@ -6,12 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
-import { AssetHTTPService, useHexColor } from '@sage3/frontend';
+import { AssetHTTPService } from '@sage3/frontend';
 
 import {
   Modal,
@@ -41,7 +41,6 @@ import { setupAppForFile } from './CreateApp';
 import { setupApp } from '@sage3/frontend';
 import './menu.scss';
 import { AppSchema } from '@sage3/applications/schema';
-import { User } from '@sage3/shared/types';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -82,8 +81,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const { position: cursorPosition } = useCursorBoardPosition();
 
   const scale = useUIStore((state) => state.scale);
-
-  const [groupIndex, setGroupIndex] = useState(0);
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -132,8 +129,13 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       }
     } else if (id === 'cells') {
       if (!user) return;
-      ExplodedNotebook({ file, boardPosition, scale, roomId, boardId, groupIndex, createApp, setGroupIndex });
-      // explodeCells();
+      ExplodedNotebook({
+        file,
+        boardPosition,
+        roomId,
+        boardId,
+        createApp,
+      });
     }
     // deselect file selection
     setSelected(false);
@@ -224,7 +226,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   };
 
   return (
-    <div ref={divRef}>
+    <Box ref={divRef}>
       <Flex
         bg={highlight}
         _hover={{ background: hover }}
@@ -313,7 +315,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </div>
+    </Box>
   );
 }
 
@@ -326,29 +328,24 @@ function getRandomHexColor(): string {
 interface ExplodedNotebookProps {
   file: FileEntry;
   boardPosition: { x: number; y: number };
-  scale: number;
   roomId: string;
   boardId: string;
-  groupIndex: number;
   createApp: (app: AppSchema) => void;
-  setGroupIndex: (index: number) => void; // TODO: change this to a file id or kernel id
 }
 
-const ExplodedNotebook: React.FC<ExplodedNotebookProps> = ({
-  file,
-  boardPosition,
-  scale,
-  roomId,
-  boardId,
-  groupIndex,
-  createApp,
-  setGroupIndex,
-}) => {
-  const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-  const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+async function ExplodedNotebook({ file, boardPosition, roomId, boardId, createApp }: ExplodedNotebookProps): Promise<JSX.Element> {
+  // calculate the size required for the notebook
+  const appWidth = 800;
+  const appHeight = 300;
+  const appSize = { w: appWidth, h: appHeight };
+  const spacing = 40;
+  const xDrop = -boardPosition.x + 40;
+  const yDrop = -boardPosition.y + 1400;
+
   // Look for the file in the asset store
   const localurl = '/api/assets/static/' + file.filename;
   const randomColor: string = getRandomHexColor();
+
   // Get the content of the file
   fetch(localurl, {
     headers: {
@@ -365,9 +362,6 @@ const ExplodedNotebook: React.FC<ExplodedNotebookProps> = ({
       const columnHeight = 5;
       let x = xDrop;
       let y = yDrop;
-      const height = 300;
-      const width = 800;
-      const spacing = 40;
 
       cells.forEach((cell: any) => {
         let output: any = null;
@@ -397,34 +391,20 @@ const ExplodedNotebook: React.FC<ExplodedNotebookProps> = ({
         } else if (cell.cell_type === 'markdown') {
           output = { display_data: { data: { 'text/markdown': cell.source.join('') } } };
         }
-        createApp(
-          setupApp(
-            '',
-            'SageCell',
-            x,
-            y,
-            roomId,
-            boardId,
-            {
-              w: width,
-              h: height,
-            },
-            {
-              code: source ? source : '',
-              output: output ? JSON.stringify(output) : '',
-              groupColor: randomColor,
-            }
-          )
-        );
-        y = y + height + spacing;
+        const appToCreate = setupApp('', 'SageCell', x, y, roomId, boardId, appSize, {
+          code: source ? source : '',
+          output: output ? JSON.stringify(output) : '',
+          groupColor: randomColor,
+        });
+        createApp(appToCreate);
+        y = y + appHeight + spacing;
         columnCount++;
         if (columnCount >= columnHeight) {
           columnCount = 0;
-          x = x + width + spacing;
+          x = x + appWidth + spacing;
           y = yDrop;
         }
       });
     });
-  setGroupIndex(groupIndex + 1);
-  return null;
-};
+  return <></>;
+}
