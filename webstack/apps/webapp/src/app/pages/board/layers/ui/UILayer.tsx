@@ -19,6 +19,7 @@ import {
   useUIStore,
   useBoardStore,
   MainButton,
+  FunctionButtons,
   useRouteNav,
   useRoomStore,
   useConfigStore,
@@ -170,6 +171,11 @@ export function UILayer(props: UILayerProps) {
           boardInfo={{ boardId: props.boardId, roomId: props.roomId }}
           config={config}
         />
+      </Box>
+
+      {/* Buttons Middle Bottom */}
+      <Box position="absolute" left="calc(50% - 110px)" bottom="2" >
+        <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
       </Box>
 
       {/* ServerName Top Left */}

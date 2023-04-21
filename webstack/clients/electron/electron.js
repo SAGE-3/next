@@ -639,6 +639,12 @@ function createWindow() {
     if (arg === 'version') event.reply('version', version);
   });
 
+  // Request from the renderer process
+  ipcMain.on('hide-window', () => {
+    console.log('HIHIHIIIHHI');
+    mainWindow.hide();
+  });
+
   // Catch remote URL to connect to
   ipcMain.on('connect-url', (e, aURL) => {
     var location = aURL;
@@ -688,6 +694,19 @@ function createWindow() {
 
   ipcMain.on('load-landing', () => {
     mainWindow.loadFile('./html/landing.html');
+  });
+
+  // Request from the renderer process
+  ipcMain.on('hide-main-window', () => {
+    mainWindow.blur();
+  });
+  ipcMain.on('show-main-window', () => {
+    mainWindow.show();
+  });
+  ipcMain.on('request-current-display', () => {
+    const winBounds = mainWindow.getBounds();
+    const whichScreen = electron.screen.getDisplayNearestPoint({ x: winBounds.x, y: winBounds.y });
+    mainWindow.webContents.send('current-display', whichScreen.id);
   });
 
   // Request for a screenshot from the web client
