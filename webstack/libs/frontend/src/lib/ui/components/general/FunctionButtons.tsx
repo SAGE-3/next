@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { HStack, Button, Tooltip, ButtonGroup } from '@chakra-ui/react';
+import { Button, Tooltip, ButtonGroup, useColorModeValue } from '@chakra-ui/react';
 import { MdIosShare, MdOutlineStickyNote2, MdCode, MdWeb } from 'react-icons/md';
+import { motion } from 'framer-motion'
 
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -31,16 +32,20 @@ export function FunctionButtons(props: FunctionButtonsProps) {
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const createApp = useAppStore((state) => state.create);
+  // Colors for the buttons in light and dark mode
+  const bgColor = useColorModeValue('#DBDBD1', '#3B4B59');
+  const btColor = useColorModeValue('#AF2E1B', '#D9C3B0');
 
   /**
   * Create a new application
   * @param appName
   */
   const newApplication = (appName: AppName, title?: string) => {
-    if (!user) return;
-    // features disabled
     let width = 400;
     let height = 420;
+
+    if (!user) return;
+
     if (appName === 'SageCell') {
       width = 650;
     }
@@ -52,6 +57,7 @@ export function FunctionButtons(props: FunctionButtonsProps) {
       width = 500;
       height = 650;
     }
+
     // Get  the center of the board
     const x = Math.floor(-boardPosition.x - width / 2 + window.innerWidth / scale / 2);
     const y = Math.floor(-boardPosition.y - height / 2 + window.innerHeight / scale / 2);
@@ -69,29 +75,31 @@ export function FunctionButtons(props: FunctionButtonsProps) {
     });
   };
 
-
   return (
-    <ButtonGroup gap={2} size="sm" variant={'solid'} background={"orange.100"} rounded={"md"}>
+    <ButtonGroup id={"functionbuttons"} p={1} gap={1} size="xs" variant={'solid'}
+      background={bgColor} rounded={"md"}
+      as={motion.div} whileHover={{ scale: 1.5 }}>
+
       <Tooltip placement="top" hasArrow={true} label={'Share Your Screen'} openDelay={400} ml="1">
-        <Button colorScheme={'orange'} onClick={() => newApplication('Screenshare')}>
+        <Button color={btColor} onClick={() => newApplication('Screenshare')}>
           <MdIosShare fontSize="18px" />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top" hasArrow={true} label={'Create a Stickie'} openDelay={400} ml="1">
-        <Button colorScheme={'orange'} onClick={() => newApplication('Stickie', user?.data.name)}>
+        <Button color={btColor} onClick={() => newApplication('Stickie', user?.data.name)}>
           <MdOutlineStickyNote2 fontSize="18px" />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top" hasArrow={true} label={'Create a SageCell'} openDelay={400} ml="1">
-        <Button colorScheme={'orange'} onClick={() => newApplication('SageCell')}>
+        <Button color={btColor} onClick={() => newApplication('SageCell')}>
           <MdCode fontSize="18px" />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top" hasArrow={true} label={'Open a Webview'} openDelay={400} ml="1">
-        <Button colorScheme={'orange'} onClick={() => newApplication('Webview')}>
+        <Button color={btColor} onClick={() => newApplication('Webview')}>
           <MdWeb fontSize="18px" />
         </Button>
       </Tooltip>
