@@ -7,7 +7,7 @@
  */
 
 import { setupApp, useAppStore, useUIStore } from '@sage3/frontend';
-import { AppName, AppSchema } from '@sage3/applications/schema';
+import { AppSchema } from '@sage3/applications/schema';
 import { randomSAGEColor } from '@sage3/shared';
 
 export function useNotebookUtils(): {

@@ -20,6 +20,7 @@ import {
   useUIStore,
   useUser,
   useUsersStore,
+  useBoardUtils,
 } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
@@ -44,7 +45,7 @@ export function NavigationPanel(props: NavProps) {
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
-
+  const { organizeApps } = useBoardUtils();
   // Clear board modal
   const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
 
@@ -113,27 +114,10 @@ export function NavigationPanel(props: NavProps) {
     setScale(zoom);
   };
 
-  // Organize board using python function
-  function organizeApps() {
-    // get presence of current user for its viewport
-    const presence = presences.filter((el) => el.data.boardId === props.boardId).filter((el) => el.data.userId === user?._id)[0];
-    // Trigger the smart function
-    updateBoard(props.boardId, {
-      executeInfo: {
-        executeFunc: 'reorganize_layout',
-        params: {
-          viewport_position: presence.data.viewport.position,
-          viewport_size: presence.data.viewport.size,
-          by: 'app_type',
-          mode: 'tiles',
-        },
-      },
-    });
-  }
-
   // Result the confirmation modal
   const onOrganizeConfirm = () => {
-    organizeApps();
+    if (!user) return;
+    organizeApps('app_type', 'tiles', props.boardId, user._id);
     organizeOnClose();
   };
 

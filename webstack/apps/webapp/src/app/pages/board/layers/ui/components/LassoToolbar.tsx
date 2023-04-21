@@ -7,12 +7,27 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
+import {
+  Box,
+  useColorModeValue,
+  Text,
+  Button,
+  Tooltip,
+  useDisclosure,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  ButtonGroup,
+} from '@chakra-ui/react';
 import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
 
 import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore } from '@sage3/frontend';
 import { HiOutlineTrash } from 'react-icons/hi';
 
+import { BsLayoutWtf, BsWindowStack } from 'react-icons/bs';
+import { AiOutlineAppstore } from 'react-icons/ai';
+import { CiAlignBottom, CiAlignCenterH, CiAlignLeft, CiAlignCenterV, CiAlignRight, CiAlignTop } from 'react-icons/ci';
 /**
  * Lasso Toolbar Component
  *
@@ -62,6 +77,63 @@ export function LassoToolbar() {
     fitApps(selectedApps);
   };
 
+  // send the lassoed apps to the function that will align them
+  interface AlignSelectedAppsProps {
+    align: 'left' | 'right' | 'top' | 'bottom' | 'even' | 'stack';
+    lassoApps: string[];
+    boardId: string;
+  }
+
+  const alignSelectedApps = (align: 'left' | 'right' | 'top' | 'bottom' | 'even' | 'stack') => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    // get the furthest left app
+    const leftApp = selectedApps.reduce((prev, current) => (prev.data.position.x < current.data.position.x ? prev : current));
+    // get the furthest right app
+    const rightApp = selectedApps.reduce((prev, current) => (prev.data.position.x > current.data.position.x ? prev : current));
+    const rightX = rightApp.data.position.x + rightApp.data.size.width;
+    // get the furthest top app
+    const topApp = selectedApps.reduce((prev, current) => (prev.data.position.y < current.data.position.y ? prev : current));
+    // get the furthest bottom app
+    const bottomApp = selectedApps.reduce((prev, current) => (prev.data.position.y > current.data.position.y ? prev : current));
+    const bottomY = bottomApp.data.position.y + bottomApp.data.size.height;
+
+    selectedApps.forEach((app) => {
+      switch (align) {
+        case 'left':
+          app.data.position.x = leftApp.data.position.x;
+          break;
+        case 'right':
+          app.data.position.x = rightX - app.data.size.width;
+          break;
+        case 'top':
+          app.data.position.y = topApp.data.position.y;
+          break;
+        case 'bottom':
+          app.data.position.y = bottomY - app.data.size.height;
+          break;
+        case 'even':
+          // evenly space the apps in a grid
+          const numCols = Math.ceil(Math.sqrt(selectedApps.length));
+          const numRows = Math.ceil(selectedApps.length / numCols);
+          const col = selectedApps.indexOf(app) % numCols;
+          const row = Math.floor(selectedApps.indexOf(app) / numCols);
+          const width = rightX - leftApp.data.position.x;
+          const height = bottomY - topApp.data.position.y;
+          const colWidth = width / numCols;
+          const rowHeight = height / numRows;
+          app.data.position.x = leftApp.data.position.x + col * colWidth;
+          app.data.position.y = topApp.data.position.y + row * rowHeight;
+          break;
+        case 'stack':
+          // stack the apps on top of each other with a small gap to show they are stacked (diagonally)
+          const gap = 10;
+          app.data.position.x = leftApp.data.position.x + gap * selectedApps.indexOf(app);
+          app.data.position.y = topApp.data.position.y + gap * selectedApps.indexOf(app);
+          break;
+      }
+    });
+  };
+
   return (
     <>
       {showLasso && (
@@ -90,6 +162,40 @@ export function LassoToolbar() {
             >
               {'Actions'}
             </Text>
+            {/* Button Group for all the layout options */}
+            <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
+              <Tooltip placement="top" hasArrow={true} label={'Align Left'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('left')} size="xs" p="0" mx="2px">
+                  <CiAlignLeft />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Align Right'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('right')} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                  <CiAlignRight />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Align Top'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('top')} size="xs" p="0" mx="2px">
+                  <CiAlignTop />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Align Bottom'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('bottom')} size="xs" p="0" mx="2px">
+                  <CiAlignBottom />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Align Evenly'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('even')} size="xs" p="0" mx="2px">
+                  <AiOutlineAppstore />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Stack Apps'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('stack')} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                  <BsWindowStack />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
@@ -102,7 +208,7 @@ export function LassoToolbar() {
                 </Button>
               </Tooltip>
 
-              <Menu preventOverflow={false} placement={"top"}>
+              <Menu preventOverflow={false} placement={'top'}>
                 <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps to a different Board'} openDelay={400}>
                   <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'}>
                     <MdSend />

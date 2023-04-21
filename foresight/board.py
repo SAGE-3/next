@@ -8,12 +8,12 @@
 
 from smartbitcollection import SmartBitsCollection
 from utils.layout import Layout
+
 # from utils.generic_utils import import_cls
 # from utils.wall_utils import Sage3Communication
 
 
-class Board():
-
+class Board:
     def __init__(self, doc):
         # TODO: since this happens first and it's a a singleon, should we move it to proxy?
         # self.communication = Sage3Communication.instance(config)
@@ -27,13 +27,21 @@ class Board():
         self.layout = None
         self.whiteboard_lines = None
         self.smartbits = SmartBitsCollection()
+        self.stored_app_dims = {}
 
         if "executeInfo" in doc["data"]:
             self.executeInfo = doc["data"]["executeInfo"]
         else:
-            self.executeInfo = {'executeFunc': '', 'params': {}}
+            self.executeInfo = {"executeFunc": "", "params": {}}
 
-    def reorganize_layout(self, viewport_position, viewport_size, buffer_size=100, by="combined", mode="graphviz"):
+    def reorganize_layout(
+        self,
+        viewport_position,
+        viewport_size,
+        buffer_size=100,
+        by="combined",
+        mode="graphviz",
+    ):
         if by not in ["app_type", "semantic"]:
             print(f"{by} not a valid by option to organize layout. Not executing")
             return
@@ -41,18 +49,29 @@ class Board():
             print(f"{mode} not a valid mode to organize layout. Not executing")
             return
         viewport_position = (
-            float(viewport_position["x"]), float(viewport_position["y"]))
-        viewport_size = (float(viewport_size["width"]), float(
-            viewport_size["height"]))
+            float(viewport_position["x"]),
+            float(viewport_position["y"]),
+        )
+        viewport_size = (float(viewport_size["width"]), float(viewport_size["height"]))
 
         print("Started executing organize_layout on the baord")
         print(f"viewport position is {viewport_position}")
         print(f"viewport size  is {viewport_size}")
+        print(f"buffer size  is {buffer_size}")
 
-        app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size)
-                    for x in self.smartbits.smartbits_collection.values()}
-        app_to_type = {
-            x: type(self.smartbits[x]).__name__ for x in app_dims.keys()}
+        app_dims = {
+            x.app_id: (
+                x.data.size.width + buffer_size,
+                x.data.size.height + buffer_size,
+            )
+            for x in self.smartbits.smartbits_collection.values()
+        }
+
+        self.stored_app_dims = app_dims
+        # print(f"app_dims is {app_dims}")
+
+        app_to_type = {x: type(self.smartbits[x]).__name__ for x in app_dims.keys()}
+        # print(f"app_to_type is {app_to_type}")
 
         self.layout = Layout(app_dims, viewport_position, viewport_size)
         # self.layout = Layout(app_dims, viewport_position, viewport_size)
@@ -64,9 +83,17 @@ class Board():
             sb.data.position.x = coords[0]
             sb.data.position.y = coords[1]
             sb.send_updates()
-        print("Done executing organize_layout on the baord")
+        print("Done executing organize_layout on the board")
 
-        self.executeInfo = {'executeFunc': '', 'params': {}}
+        self.executeInfo = {"executeFunc": "", "params": {}}
+
+    def restore_layout(self):
+        for app_id, coords in self.stored_app_dims.items():
+            sb = self.smartbits[app_id]
+            sb.data.size.width = coords[0]
+            sb.data.size.height = coords[1]
+            sb.send_updates()
+        self.executeInfo = {"executeFunc": "", "params": {}}
 
     # def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
     #     # intentionally not providing a default to x and y. Easy to get lazy with things that overlap
