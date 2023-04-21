@@ -11,7 +11,7 @@ import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
-import { AssetHTTPService } from '@sage3/frontend';
+import { AssetHTTPService, useNotebookUtils } from '@sage3/frontend';
 
 import {
   Modal,
@@ -40,7 +40,6 @@ import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
 import { setupApp } from '@sage3/frontend';
 import './menu.scss';
-import { AppName, AppSchema } from '@sage3/applications/schema';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -82,8 +81,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   const scale = useUIStore((state) => state.scale);
 
-  // // Fitapps
-  // const fitApps = useUIStore((state) => state.fitApps);
+  const { explodeNotebook } = useNotebookUtils();
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -132,14 +130,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       }
     } else if (id === 'cells') {
       if (!user) return;
-      ExplodedNotebook({
-        file,
-        boardPosition,
-        roomId,
-        boardId,
-        createApp,
-        // fitApps,
-      });
+      explodeNotebook(file.filename, boardPosition, roomId, boardId);
     }
     // deselect file selection
     setSelected(false);
@@ -323,123 +314,32 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   );
 }
 
-function getRandomHexColor(): string {
-  const colors: string[] = ['#FF5733', '#FFC300', '#DAF7A6', '#C70039', '#900C3F', '#581845', '#7D3C98', '#2E86C1'];
-  const randomIndex: number = Math.floor(Math.random() * colors.length);
-  return colors[randomIndex];
-}
+// interface SmartFunctionProps {
+//   cells: any[];
+//   groupColor: string;
+//   boardId: string;
+//   userId: string;
+// }
 
-interface ExplodedNotebookProps {
-  file: FileEntry;
-  boardPosition: { x: number; y: number };
-  roomId: string;
-  boardId: string;
-  createApp: (app: AppSchema) => void;
-  // fitApps: () => void;
-}
+// export function ParseInPython(props: SmartFunctionProps): JSX.Element {
+//   // get presence of current user for its viewport
+//   const presences = usePresenceStore((state) => state.presences);
+//   const presence = presences.filter((el) => el.data.boardId === props.boardId).filter((el) => el.data.userId === props.userId)[0];
+//   const updateBoard = useBoardStore((state) => state.update);
 
-async function ExplodedNotebook({ file, boardPosition, roomId, boardId, createApp }: ExplodedNotebookProps): Promise<JSX.Element> {
-  // calculate the size required for the notebook
-  const appWidth = 800;
-  const appHeight = 300;
-  const appSize = { w: appWidth, h: appHeight };
-  const spacing = 40;
-  const xDrop = -boardPosition.x + 40;
-  const yDrop = -boardPosition.y + 1400;
-  // list to store apps to create
-  const appsToCreate: AppSchema[] = [];
-
-  // Look for the file in the asset store
-  const localurl = '/api/assets/static/' + file.filename;
-  const randomColor: string = getRandomHexColor();
-
-  // Get the content of the file
-  fetch(localurl, {
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-  })
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (spec) {
-      const cells = spec.cells;
-      let columnCount = 0;
-      const columnHeight = 5;
-      let x = xDrop;
-      let y = yDrop;
-
-      cells.forEach((cell: any) => {
-        let output: any = null;
-        let source: string = '';
-        if (cell.cell_type === 'code') {
-          source = (cell.source as []).join('');
-          const outputs = cell.outputs[0];
-          if (outputs) {
-            output = { [outputs['output_type']]: outputs };
-            // need to convert all the arrays to strings
-            Object.keys(output).forEach((key) => {
-              if (key === 'stream' && output[key].text instanceof Array) {
-                output[key].text = output[key].text.join('');
-              }
-              if (key === 'execute_result' || key === 'display_data') {
-                Object.keys(output[key].data).forEach((dataKey) => {
-                  if (output[key].data[dataKey] instanceof Array) {
-                    output[key].data[dataKey] = output[key].data[dataKey].join('');
-                  }
-                });
-              }
-              if (key === 'error') {
-                output[key].traceback = output[key].traceback.join('');
-              }
-            });
-          }
-        } else if (cell.cell_type === 'markdown') {
-          output = { display_data: { data: { 'text/markdown': cell.source.join('') } } };
-        }
-        const appToCreate = setupApp('', 'SageCell', x, y, roomId, boardId, appSize, {
-          code: source ? source : '',
-          output: output ? JSON.stringify(output) : '',
-          groupColor: randomColor,
-        });
-        // const appToCreate = {
-        //   title: '',
-        //   type: 'SageCell' as AppName,
-        //   position: { x: x, y: y, z: 0 },
-        //   size: { width: appWidth, height: appHeight, depth: 0 },
-        //   rotation: { x: 0, y: 0, z: 0 },
-        //   roomId: roomId,
-        //   boardId: boardId,
-        //   state: {
-        //     code: source ? source : '',
-        //     output: output ? JSON.stringify(output) : '',
-        //     groupColor: randomColor,
-        //   },
-        //   raised: false,
-        // };
-        appsToCreate.push(appToCreate);
-        createApp(appToCreate);
-        y = y + appHeight + spacing;
-        columnCount++;
-        if (columnCount >= columnHeight) {
-          columnCount = 0;
-          x = x + appWidth + spacing;
-          y = yDrop;
-        }
-      });
-    });
-  // const appPromises = appsToCreate.map((app) => createApp(app));
-  // await Promise.allSettled(appPromises)
-  //   .then((results) => {
-  //     const appsToFit = results.map((result) => result);
-  //     fitApps(appsToFit);
-  //   })
-  //   .catch((err) => {
-  //     console.error('Error while creating apps:', err);
-  //   });
-  // for (const appPromise of appPromises) {
-  //   await appPromise;
-  // }
-  return <></>;
-}
+//   // Trigger the smart function
+//   updateBoard(props.boardId, {
+//     executeInfo: {
+//       executeFunc: 'parse_notebook',
+//       params: {
+//         viewport_position: presence.data.viewport.position,
+//         viewport_size: presence.data.viewport.size,
+//         code: props.code,
+//         output: props.output,
+//         groupColor: props.groupColor,
+//         mode: 'tiled',
+//       },
+//     },
+//   });
+//   return <></>; // maybe return a loading spinner or a toast?
+// }

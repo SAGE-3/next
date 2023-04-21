@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Divider, Badge, Spacer, Stack, Text } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useAppStore, useUIStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
 
 import { state as AppState, availableKernelsType } from './index';
 import { AppWindow } from '../../components';
@@ -43,6 +43,8 @@ const AppComponent = (props: App): JSX.Element => {
 
   const [hasMarkdown, setHasMarkdown] = useState(false);
   const scale = useUIStore((state) => state.scale);
+
+  const gColor = useHexColor(s.groupColor);
 
   function getKernels() {
     if (!user) return;
@@ -131,7 +133,7 @@ const AppComponent = (props: App): JSX.Element => {
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
       <Box
-        border={`${4 / scale}px solid ${s.groupColor}`}
+        border={`${4 / scale}px solid ${gColor}`}
         borderRadius="inherit"
         h={'calc(100% - 1px)'}
         w={'100%'}
