@@ -10,6 +10,7 @@
 const electron = require('electron');
 const { app, Menu, Tray, nativeImage } = require('electron');
 const shell = electron.shell;
+const path = require('path');
 
 // Store
 const bookmarkStore = require('./bookmarkstore');
@@ -26,7 +27,7 @@ const updater = require('./updater');
 function buildSageMenu(window) {
   let tray = null;
   app.whenReady().then(() => {
-    tray = new Tray(nativeImage.createFromPath('images/trayTemplate.png'));
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
     const contextMenu = Menu.buildFromTemplate([
       {
         label: 'Show Main Window',

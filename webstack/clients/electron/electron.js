@@ -219,6 +219,23 @@ app.setAboutPanelOptions({
  */
 var mainWindow;
 
+function showHidingWindow() {
+  const res = electron.dialog.showMessageBoxSync(mainWindow, {
+    title: 'Notification from SAGE3',
+    message: 'Do you want to hide the SAGE3 window ?',
+    detail: 'SAGE3 will keep running in the menu bar during screen sharing.',
+    type: 'question',
+    defaultId: 0,
+    cancelId: 1,
+    // icon: path.join(__dirname, 'images/s3.png'),
+    buttons: ['OK', 'Cancel'],
+  });
+  if (!res) {
+    // Hide the window
+    mainWindow.blur();
+  }
+}
+
 /**
  * Opens a window.
  *
@@ -515,6 +532,12 @@ function createWindow() {
   mainWindow.on('leave-full-screen', function () {
     mainWindow.setMenuBarVisibility(true);
   });
+  mainWindow.on('blur', function () {
+    console.log('Electron>	Window blurred');
+  });
+  mainWindow.on('focus', function () {
+    console.log('Electron>	Window show');
+  });
 
   // when the display client is loaded
   mainWindow.webContents.on('did-finish-load', function () {
@@ -639,12 +662,6 @@ function createWindow() {
     if (arg === 'version') event.reply('version', version);
   });
 
-  // Request from the renderer process
-  ipcMain.on('hide-window', () => {
-    console.log('HIHIHIIIHHI');
-    mainWindow.hide();
-  });
-
   // Catch remote URL to connect to
   ipcMain.on('connect-url', (e, aURL) => {
     var location = aURL;
@@ -698,7 +715,7 @@ function createWindow() {
 
   // Request from the renderer process
   ipcMain.on('hide-main-window', () => {
-    mainWindow.blur();
+    showHidingWindow();
   });
   ipcMain.on('show-main-window', () => {
     mainWindow.show();
