@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 
 type useBoardUtils = {
   organizeApps: (by: 'app_type' | 'app_id', mode: 'tiles' | 'grid', lassoApps?: string[]) => void;
-  // organizeSelectedApps: (by: 'app_type' | 'app_id', mode: 'tiles' | 'grid', userId: string, lassoApps: string[]) => void;
   storeLayout: () => void;
   restoreLayout: () => void;
   alignSelectedApps: (align: 'left' | 'right' | 'top' | 'bottom' | 'even' | 'stack', lassoApps: string[]) => void;
@@ -111,8 +110,8 @@ export function useBoardUtils(): useBoardUtils {
           const numRows = Math.ceil(selectedApps.length / numCols);
           const col = selectedApps.indexOf(app) % numCols;
           const row = Math.floor(selectedApps.indexOf(app) / numCols);
-          const width = rightX - leftApp.data.position.x + leftApp.data.size.width * 2;
-          const height = bottomY - topApp.data.position.y + topApp.data.size.height * 2;
+          const width = rightX - leftApp.data.position.x + leftApp.data.size.width;
+          const height = bottomY - topApp.data.position.y + topApp.data.size.height;
           const colWidth = width / numCols;
           const rowHeight = height / numRows;
           change.data.position.x = leftApp.data.position.x + col * colWidth;

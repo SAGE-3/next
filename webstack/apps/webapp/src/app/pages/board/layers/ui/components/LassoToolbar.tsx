@@ -52,7 +52,7 @@ export function LassoToolbar() {
 
   // Board Utils
   const { alignSelectedApps } = useBoardUtils();
-  // const { organizeApps } = useBoardUtils();
+  const { organizeApps } = useBoardUtils();
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
@@ -148,11 +148,11 @@ export function LassoToolbar() {
             </ButtonGroup>
 
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
-              {/* <Tooltip placement="top" hasArrow={true} label={'Organize Selected Apps'} openDelay={400}>
-                <Button onClick={organizeApps('app_id', 'grid', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+              <Tooltip placement="top" hasArrow={true} label={'Organize Selected Apps'} openDelay={400}>
+                <Button onClick={() => organizeApps('app_type', 'tiles', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
                   <BsLayoutWtf />
                 </Button>
-              </Tooltip> */}
+              </Tooltip>
 
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
