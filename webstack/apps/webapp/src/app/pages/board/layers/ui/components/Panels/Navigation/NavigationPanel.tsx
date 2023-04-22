@@ -117,7 +117,7 @@ export function NavigationPanel(props: NavProps) {
   // Result the confirmation modal
   const onOrganizeConfirm = () => {
     if (!user) return;
-    organizeApps('app_type', 'tiles', props.boardId, user._id);
+    organizeApps('app_type', 'tiles');
     organizeOnClose();
   };
 

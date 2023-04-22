@@ -174,7 +174,7 @@ export function Alfred(props: props) {
         apps.forEach((a) => deleteApp(a._id));
       } else if (terms[0] === 'restore') {
         // call the restore function for the layout
-        restoreLayout(props.boardId);
+        restoreLayout();
       }
     },
     [user, apps, props.boardId, presences, colorMode]

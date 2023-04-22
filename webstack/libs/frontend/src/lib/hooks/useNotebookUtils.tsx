@@ -82,7 +82,6 @@ export function useNotebookUtils(): {
         groupColor: randomColor,
       });
       appsToCreate.push(appToCreate);
-      // createApp(appToCreate);
       y = y + appHeight + spacing;
       columnCount++;
       if (columnCount >= columnHeight) {

@@ -41,6 +41,7 @@ class Board:
         buffer_size=100,
         by="combined",
         mode="graphviz",
+        selected_apps = None,
     ):
         if by not in ["app_type", "semantic"]:
             print(f"{by} not a valid by option to organize layout. Not executing")
@@ -66,6 +67,9 @@ class Board:
             )
             for x in self.smartbits.smartbits_collection.values()
         }
+
+        if selected_apps is not None:
+            app_dims = {x: app_dims[x] for x in selected_apps}
 
         self.stored_app_dims = app_dims
         # print(f"app_dims is {app_dims}")

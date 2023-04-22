@@ -11,7 +11,6 @@ import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
-import { AssetHTTPService, useNotebookUtils } from '@sage3/frontend';
 
 import {
   Modal,
@@ -34,7 +33,17 @@ import {
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
-import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore, useCursorBoardPosition } from '@sage3/frontend';
+import {
+  AssetHTTPService,
+  useNotebookUtils,
+  humanFileSize,
+  downloadFile,
+  useUser,
+  useAuth,
+  useAppStore,
+  useUIStore,
+  useCursorBoardPosition,
+} from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
