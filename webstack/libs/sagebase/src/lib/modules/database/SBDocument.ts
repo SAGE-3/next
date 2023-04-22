@@ -254,8 +254,6 @@ export class SBDocumentRef<Type extends SBJSON> {
       col: this._colName,
       doc: [doc],
     } as SBDocumentDeleteMessage<Type>;
-    console.log('PUBLISHING DELETE DOC ACTION', this._path);
-
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }

@@ -129,7 +129,6 @@ class SAGEProxy:
                 if update:
                     msg['event']['updates'] = update['updates']
         # End of duplicating messages so old code can work
-            print(msg)
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 pass
             logger.debug(msg)
