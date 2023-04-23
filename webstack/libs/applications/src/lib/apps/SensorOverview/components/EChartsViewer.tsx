@@ -4,12 +4,13 @@
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
+ *
  */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Button, Spinner, useColorMode } from '@chakra-ui/react';
 import * as echarts from 'echarts';
-import { ChartManager } from '../EChartsViewer/ChartManager';
+import { ChartManager } from '../../EChartsViewer/ChartManager';
 
 const EChartsViewer = (props: {
   stationNames: string[];
@@ -40,7 +41,6 @@ const EChartsViewer = (props: {
       const options = await ChartManager(props.stationNames, 'line', props.yAxisNames, props.xAxisNames);
       if (chartInstance) chartInstance.setOption(options);
     }
-    console.log(props);
     const options = callToChartMangaer();
     setChartStateInstance(chartInstance);
   }, [chartRef, props.yAxisNames, props.xAxisNames]);

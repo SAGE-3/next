@@ -9,10 +9,10 @@
 import { z } from 'zod';
 
 const widgets = [
-  { visualizationType: 'variableCard', yAxisNames: ['wind_speed_set_1'], xAxisNames: [''] },
-  { visualizationType: 'variableCard', yAxisNames: ['relative_humidity_set_1'], xAxisNames: [''] },
-  { visualizationType: 'variableCard', yAxisNames: ['air_temp_set_1'], xAxisNames: [''] },
-  { visualizationType: 'line', yAxisNames: ['soil_moisture_set_1'], xAxisNames: ['date_time'] },
+  { visualizationType: 'variableCard', yAxisNames: ['wind_speed_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
+  { visualizationType: 'variableCard', yAxisNames: ['relative_humidity_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
+  { visualizationType: 'variableCard', yAxisNames: ['air_temp_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
+  { visualizationType: 'line', yAxisNames: ['soil_moisture_set_1'], xAxisNames: ['date_time'], layout: { x: 0, y: 0, w: 11, h: 130 } },
 ];
 
 /**

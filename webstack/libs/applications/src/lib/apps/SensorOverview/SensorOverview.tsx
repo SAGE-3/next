@@ -6,20 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { Box, HStack, Text, Spinner, useColorModeValue, Wrap, WrapItem } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import GridLayout from 'react-grid-layout';
+
+import ChartLayout from './components/ChartLayout';
 
 // Styling
 import './styling.css';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import VariableCard from './VariableCard';
-import CustomizeWidgets from './CustomizeWidgets';
-import EChartsViewer from './EChartsViewer';
+import VariableCard from './components/VariableCard';
+import CustomizeWidgets from './components/CustomizeWidgets';
+import EChartsViewer from './components/EChartsViewer';
 
 /* App component for Sensor Overview */
 
@@ -28,9 +31,17 @@ function AppComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
   const [stationMetadata, setStationMetadata] = useState([]);
+  const scale = useUIStore((state) => state.scale);
 
   const bgColor = useColorModeValue('gray.100', 'gray.900');
   const textColor = useColorModeValue('gray.700', 'gray.100');
+
+  const layout = [
+    { i: '0', x: 0, y: 0, w: 1, h: 2 },
+    { i: '1', x: 1, y: 0, w: 3, h: 2 },
+    { i: '2', x: 4, y: 0, w: 1, h: 2 },
+    { i: '3', x: 4, y: 0, w: 1, h: 2 },
+  ];
 
   useEffect(() => {
     const fetchStationData = async () => {
@@ -54,29 +65,71 @@ function AppComponent(props: App): JSX.Element {
       setStationMetadata(data);
     });
   }, []);
-
-  const handleDeleteWidget = (widgetIndex: number) => {
-    const tmpWidgetsEnabled = [...s.widgetsEnabled];
-    tmpWidgetsEnabled.splice(widgetIndex, 1);
-    updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
-  };
-
-  const handleAddWidget = (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => {
-    const tmpWidgetsEnabled = [...s.widgetsEnabled];
-    tmpWidgetsEnabled.push({ visualizationType: visualizationType, yAxisNames: yAxisNames, xAxisNames: xAxisNames });
-    console.log(tmpWidgetsEnabled);
-    updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
-  };
+  const createApp = useAppStore((state) => state.create);
+  const userCursor = useCursorBoardPosition();
 
   return (
     <AppWindow app={props}>
-      <Box overflowY="scroll" p={'1rem'} bg={bgColor} h="100%">
-        <Wrap>
+      <Box overflowY="hidden" p={'1rem'} bg={bgColor} h="100%">
+        <GridLayout
+          style={{ overflowY: 'hidden' }}
+          className="layout"
+          rowHeight={4}
+          cols={(props.data.size.width / 1000) * 10}
+          width={props.data.size.width}
+          transformScale={scale}
+          autoSize={true}
+          useCSSTransforms={true}
+          preventCollision={true}
+          onDragStop={async (item) => {
+            console.log(item);
+            console.log(userCursor);
+            // const app = await createApp({
+            //   title: 'SensorOverview',
+            //   roomId: props.data.roomId!,
+            //   boardId: props.data.boardId!,
+            //   position: { x: userCursor.position.x, y: userCursor.position.y, z: 0 },
+            //   size: { width: 1000, height: 1000, depth: 0 },
+            //   rotation: { x: 0, y: 0, z: 0 },
+            //   type: 'SensorOverview',
+            //   state: {
+            //     listOfStationNames: ['001HI', '002HI', '001HI', '009HI'],
+            //     widgetsEnabled: [
+            //       {
+            //         visualizationType: 'variableCard',
+            //         yAxisNames: ['wind_speed_set_1'],
+            //         xAxisNames: [''],
+            //         layout: { x: 0, y: 0, w: 11, h: 130 },
+            //       },
+            //       {
+            //         visualizationType: 'variableCard',
+            //         yAxisNames: ['relative_humidity_set_1'],
+            //         xAxisNames: [''],
+            //         layout: { x: 0, y: 0, w: 11, h: 130 },
+            //       },
+            //       {
+            //         visualizationType: 'variableCard',
+            //         yAxisNames: ['air_temp_set_1'],
+            //         xAxisNames: [''],
+            //         layout: { x: 0, y: 0, w: 11, h: 130 },
+            //       },
+            //       {
+            //         visualizationType: 'line',
+            //         yAxisNames: ['soil_moisture_set_1'],
+            //         xAxisNames: ['date_time'],
+            //         layout: { x: 0, y: 0, w: 11, h: 130 },
+            //       },
+            //     ],
+            //   },
+            //   raised: true,
+            // });
+          }}
+        >
           {stationMetadata.length > 0 ? (
             stationMetadata.map((station, index) => {
               return (
-                <WrapItem key={index}>
-                  <Box bgColor={bgColor} color={textColor} fontSize="lg" key={index} p="1rem" border="solid black 1px">
+                <div className="droppable-element" key={index} data-grid={{ x: 11 * index, y: 0, w: 11, h: 130 }}>
+                  <Box bgColor={bgColor} color={textColor} fontSize="lg" key={index} p="1rem" border="solid white 1px">
                     <Text textAlign="center" fontSize={'4rem'}>
                       {station['NAME']}
                     </Text>
@@ -122,7 +175,7 @@ function AppComponent(props: App): JSX.Element {
                       </Box>
                     </HStack>
                   </Box>
-                </WrapItem>
+                </div>
               );
             })
           ) : (
@@ -134,10 +187,7 @@ function AppComponent(props: App): JSX.Element {
               emptyColor="gray.200"
             />
           )}
-          <WrapItem>
-            <CustomizeWidgets widgetsEnabled={s.widgetsEnabled} handleDeleteWidget={handleDeleteWidget} handleAddWidget={handleAddWidget} />
-          </WrapItem>
-        </Wrap>
+        </GridLayout>
       </Box>
     </AppWindow>
   );
@@ -146,7 +196,27 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app Sensor Overview */
 
 function ToolbarComponent(props: App): JSX.Element {
-  return <></>;
+  const s = props.data.state as AppState;
+
+  const updateState = useAppStore((state) => state.updateState);
+
+  const handleDeleteWidget = (widgetIndex: number) => {
+    const tmpWidgetsEnabled = [...s.widgetsEnabled];
+    tmpWidgetsEnabled.splice(widgetIndex, 1);
+    updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
+  };
+
+  const handleAddWidget = (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => {
+    const tmpWidgetsEnabled = [...s.widgetsEnabled];
+    tmpWidgetsEnabled.push({ visualizationType: visualizationType, yAxisNames: yAxisNames, xAxisNames: xAxisNames });
+    console.log(tmpWidgetsEnabled);
+    updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
+  };
+  return (
+    <>
+      <CustomizeWidgets widgetsEnabled={s.widgetsEnabled} handleDeleteWidget={handleDeleteWidget} handleAddWidget={handleAddWidget} />
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };

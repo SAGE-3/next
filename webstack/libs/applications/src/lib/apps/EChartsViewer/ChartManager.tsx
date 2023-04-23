@@ -30,7 +30,6 @@ export const ChartManager = async (
   const options: EChartsOption = {};
   const yAxisData: any[] = [];
   let xAxisData: any[] = [];
-  console.log(yAxisAttributes, stationName, chartType, 'hllo');
   const response = await fetch(
     `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
   );
@@ -49,13 +48,11 @@ export const ChartManager = async (
   }
 
   createTitle(options, yAxisAttributes);
-  console.log(options);
   return options;
 };
 
 function createLineChart(options: EChartsOption, yAxisData: string | any[], xAxisData: any[]) {
   options.series = [];
-  console.log(xAxisData.length);
   for (let i = 0; i < yAxisData.length; i++) {
     options.series.push({
       type: 'line',

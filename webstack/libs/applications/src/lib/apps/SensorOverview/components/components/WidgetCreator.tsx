@@ -8,9 +8,9 @@
 
 import React, { ChangeEvent, useState } from 'react';
 import { Center, Box, Text, VStack, Select, Input, Button, HStack } from '@chakra-ui/react';
-import VariableCard from './VariableCard';
-import EChartsViewer from './EChartsViewer';
-import { variableNames } from './data';
+import VariableCard from '../VariableCard';
+import EChartsViewer from '../EChartsViewer';
+import { variableNames } from '../../data';
 
 const WidgetCreator = (props: { handleAddWidget: (visualizationType: string, xAXisNames: string[], yAxisNames: string[]) => void }) => {
   const [input, setInput] = useState('');

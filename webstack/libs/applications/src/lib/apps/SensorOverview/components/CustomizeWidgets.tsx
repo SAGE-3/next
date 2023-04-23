@@ -27,7 +27,7 @@ import {
 import React, { useState } from 'react';
 import EChartsViewer from './EChartsViewer';
 import VariableCard from './VariableCard';
-import WidgetCreator from './WidgetCreator';
+import WidgetCreator from './components/WidgetCreator';
 
 function CustomizeWidgets(props: {
   widgetsEnabled: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] }[];
@@ -44,7 +44,9 @@ function CustomizeWidgets(props: {
 
   return (
     <>
-      <Button onClick={onOpen}>Open Modal</Button>
+      <Button colorScheme={'green'} size="xs" onClick={onOpen}>
+        Edit Widgets
+      </Button>
 
       <Modal scrollBehavior={'inside'} size="xl" isCentered motionPreset="slideInBottom" isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />

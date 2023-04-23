@@ -11,7 +11,7 @@ import { useEffect, useState, useRef } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 
 import { Background, Apps, Cursors, Viewports, Whiteboard, UserPresenceUpdate, Lasso } from './components';
 
@@ -36,6 +36,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const fitApps = useUIStore((state) => state.fitApps);
   const boardLocked = useUIStore((state) => state.boardLocked);
+
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
   const divRef = useRef<HTMLDivElement>(null);
