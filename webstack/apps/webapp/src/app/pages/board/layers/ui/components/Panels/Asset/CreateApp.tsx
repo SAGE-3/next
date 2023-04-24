@@ -64,12 +64,21 @@ export async function setupAppForFile(
         raised: true,
       });
     } else if (isVideo(file.type)) {
+      const extras = file.derived as ExtraImageType;
+      let vw = 800;
+      let vh = 450;
+      const ar = extras.aspectRatio || 1;
+      if (ar > 1) {
+        vh = Math.round(vw / ar);
+      } else {
+        vw = Math.round(vh * ar);
+      }
       resolve({
         title: file.originalfilename,
         roomId: roomId,
         boardId: boardId,
         position: { x: xDrop, y: yDrop, z: 0 },
-        size: { width: 800, height: 450, depth: 0 },
+        size: { width: vw, height: vh, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'VideoViewer',
         state: { ...(initialValues['VideoViewer'] as AppState), assetid: file.id },

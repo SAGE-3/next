@@ -69,6 +69,7 @@ export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'port' 
   token: string;
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];
+  features: ServerConfiguration['features'];
 };
 
 /**

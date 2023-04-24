@@ -73,7 +73,8 @@ export function AppWindow(props: WindowProps) {
 
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
-  const borderWidth = Math.min(Math.max(4 / scale, 2), 20);
+  const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
+
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const outerBorderRadius = 12;
   const innerBorderRadius = outerBorderRadius - borderWidth;
