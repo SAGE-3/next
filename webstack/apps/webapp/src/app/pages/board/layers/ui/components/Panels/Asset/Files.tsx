@@ -32,7 +32,7 @@ import {
 } from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
-
+import { AppSchema } from '@sage3/applications/schema';
 import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/frontend';
 import { FileEntry } from './types';
 import { RowFile } from './RowFile';
@@ -70,7 +70,7 @@ export function Files(props: FilesProps): JSX.Element {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
   // How to create some applications
-  const createApp = useAppStore((state) => state.create);
+  const createBatch = useAppStore((state) => state.createBatch);
 
   // Update the file list to the list passed through props
   useEffect(() => {
@@ -405,14 +405,19 @@ export function Files(props: FilesProps): JSX.Element {
       const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
       // Get the selected files
       const selected = filesList.filter((k) => k.selected);
-      selected.forEach((k, i) => {
+      // Array for batch creation
+      const setupArray: AppSchema[] = [];
+      let xpos = xDrop;
+      for (let k in selected) {
         // Create the apps, 400 pixels + 20 padding
-        setupAppForFile(k, xDrop + i * 420, yDrop, roomId, boardId, user).then((setup) => {
-          if (setup) {
-            createApp(setup);
-          }
-        });
-      });
+        const setup = await setupAppForFile(selected[k], xpos, yDrop, roomId, boardId, user);
+        if (setup) {
+          setupArray.push(setup);
+          xpos += setup.size.width + 10;
+        }
+      }
+      // Create all the apps in batch
+      createBatch(setupArray);
     }
   };
 
