@@ -407,14 +407,15 @@ export function Files(props: FilesProps): JSX.Element {
       const selected = filesList.filter((k) => k.selected);
       // Array for batch creation
       const setupArray: AppSchema[] = [];
-      selected.forEach((k, i) => {
+      let xpos = xDrop;
+      for (let k in selected) {
         // Create the apps, 400 pixels + 20 padding
-        setupAppForFile(k, xDrop + i * 420, yDrop, roomId, boardId, user).then((setup) => {
-          if (setup) {
-            setupArray.push(setup);
-          }
-        });
-      });
+        const setup = await setupAppForFile(selected[k], xpos, yDrop, roomId, boardId, user);
+        if (setup) {
+          setupArray.push(setup);
+          xpos += setup.size.width + 10;
+        }
+      }
       // Create all the apps in batch
       createBatch(setupArray);
     }
