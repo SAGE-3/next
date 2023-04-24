@@ -170,6 +170,7 @@ function AppComponent(props: App): JSX.Element {
           onKeyDown={handleKeyDown}
           readOnly={locked} // Only the creator can edit
           zIndex={1}
+          name={'stickie' + props._id}
         />
         {locked && (
           <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>

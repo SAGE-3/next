@@ -107,6 +107,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
     } else {
       const sharpStream = sharp({
         failOnError: false,
+        limitInputPixels: 4294836225, // 65k x 65k
       });
 
       // Read the Image and pipe it into Sharp

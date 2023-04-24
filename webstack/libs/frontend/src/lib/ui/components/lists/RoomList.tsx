@@ -159,6 +159,7 @@ export function RoomList(props: RoomListProps) {
                   onChange={handleFilterBoards}
                   placeholder="Find Room..."
                   _placeholder={{ opacity: 1 }}
+                  name="findRoom"
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />{' '}
               </InputGroup>
@@ -166,7 +167,7 @@ export function RoomList(props: RoomListProps) {
           </Box>
           <Box pr="4">
             <InputGroup>
-              <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
+              <Select name="sortRoom" mt="2" onChange={handleSortChange} icon={<MdSort />}>
                 <option value="Name"> Name</option>
                 <option value="Users">Users</option>
                 <option value="Created">Created</option>
