@@ -13,7 +13,7 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
-import { Position } from '@sage3/shared/types';
+import { Position, Size } from '@sage3/shared/types';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -36,6 +36,9 @@ interface UIState {
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
+
+  viewport: { position: Omit<Position, 'z'>; size: Omit<Size, 'depth'> };
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => void;
 
   // Selected Apps
   selectedApps: string[];
@@ -121,6 +124,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
