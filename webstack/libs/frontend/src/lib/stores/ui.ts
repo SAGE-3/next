@@ -37,6 +37,7 @@ interface UIState {
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
 
+  // The user's local viewport.
   viewport: { position: Omit<Position, 'z'>; size: Omit<Size, 'depth'> };
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => void;
 
