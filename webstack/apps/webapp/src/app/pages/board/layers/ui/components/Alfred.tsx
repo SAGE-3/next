@@ -8,7 +8,18 @@
 
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 // Import Chakra UI elements
-import { useDisclosure, Modal, ModalOverlay, ModalContent, InputGroup, Input, VStack, Button, useColorMode } from '@chakra-ui/react';
+import {
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  InputGroup,
+  Input,
+  VStack,
+  Button,
+  useColorMode,
+  useToast,
+} from '@chakra-ui/react';
 
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
@@ -62,6 +73,8 @@ export function Alfred(props: props) {
   // User
   const { user } = useUser();
   const presences = usePresenceStore((state) => state.presences);
+
+  const toast = useToast();
 
   // Layout
   const { restoreLayout } = useBoardUtils();
@@ -175,6 +188,17 @@ export function Alfred(props: props) {
       } else if (terms[0] === 'restore') {
         // call the restore function for the layout
         restoreLayout();
+
+        // } else if (terms[0] === 'hey') {
+        //   // everything after hey is a message to send as a toast
+        //   const message = terms.slice(1).join(' ');
+        //   toast({
+        //     title: 'Hey!',
+        //     description: message,
+        //     status: 'info',
+        //     duration: 5000,
+        //     isClosable: true,
+        //   });
       }
     },
     [user, apps, props.boardId, presences, colorMode]

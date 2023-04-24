@@ -6,6 +6,7 @@ type useBoardUtils = {
   storeLayout: () => void;
   restoreLayout: () => void;
   alignSelectedApps: (align: 'left' | 'right' | 'top' | 'bottom' | 'even' | 'stack', lassoApps: string[]) => void;
+  // sendToastMessage: (message: string, status: 'info' | 'warning' | 'success' | 'error') => void;
 };
 
 export function useBoardUtils(): useBoardUtils {
@@ -42,6 +43,21 @@ export function useBoardUtils(): useBoardUtils {
     });
   }
 
+  // function sendToastMessage(message: string, status: 'info' | 'warning' | 'success' | 'error') {
+  //   if (boardId === undefined) {
+  //     return;
+  //   }
+  //   updateBoard(boardId, {
+  //     executeInfo: {
+  //       executeFunc: 'send_toast_message',
+  //       params: {
+  //         message: message,
+  //         status: status,
+  //       },
+  //     },
+  //   });
+  // }
+
   function organizeApps(by: 'app_type' | 'app_id', mode: 'tiles' | 'grid', lassoApps?: string[]) {
     if (boardId === undefined) {
       return;
@@ -50,7 +66,7 @@ export function useBoardUtils(): useBoardUtils {
     const viewportPosition = presence.data.viewport.position;
     const viewportSize = presence.data.viewport.size;
 
-    // storeLayout(boardId);
+    storeLayout();
     // Trigger the smart function
     updateBoard(boardId, {
       executeInfo: {
@@ -85,6 +101,7 @@ export function useBoardUtils(): useBoardUtils {
     const bottomY = bottomApp.data.position.y + bottomApp.data.size.height;
     const changes = [] as { _id: string; data: { position: { x: number; y: number; z: number } } }[];
 
+    storeLayout();
     selectedApps.forEach((app) => {
       let change = { _id: app._id, data: { position: { ...app.data.position } } };
 

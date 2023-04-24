@@ -12,6 +12,9 @@ import { randomSAGEColor } from '@sage3/shared';
 
 export function useNotebookUtils(): {
   explodeNotebook: (file: string, boardPosition: { x: number; y: number }, roomId: string, boardId: string) => void;
+  openInJupyterLab: (file: string, boardPosition: { x: number; y: number }, roomId: string, boardId: string) => void;
+  openInGoogleColab: (file: string, boardPosition: { x: number; y: number }, roomId: string, boardId: string) => void;
+  openInBinder: (file: string, boardPosition: { x: number; y: number }, roomId: string, boardId: string) => void;
 } {
   // Appstore create app
   const createApp = useAppStore((state) => state.create);
@@ -98,5 +101,49 @@ export function useNotebookUtils(): {
     console.log('appsToFit', appsToFit);
     fitApps(appsToFit);
   }
-  return { explodeNotebook };
+
+  function openInJupyterLab(filename: string, boardPosition: { x: number; y: number }, roomId: string, boardId: string) {
+    const url = '/api/assets/static/' + filename;
+    // open in jupyter lab app
+    const appToCreate = setupApp(
+      '',
+      'JupyterLab',
+      boardPosition.x,
+      boardPosition.y,
+      roomId,
+      boardId,
+      { w: 800, h: 600 },
+      {
+        url,
+      }
+    );
+    createApp(appToCreate);
+  }
+
+  function openInGoogleColab(filename: string, boardPosition: { x: number; y: number }, roomId: string, boardId: string) {
+    const sample = '04.12-Three-Dimensional-Plotting.ipynb';
+    const url = 'https://colab.research.google.com/github/sage-3/next/blob/master/webstack/apps/homebase/src/assets/' + sample;
+    // open in webview app
+    const appToCreate = setupApp(
+      '',
+      'Webview',
+      boardPosition.x,
+      boardPosition.y,
+      roomId,
+      boardId,
+      { w: 800, h: 600 },
+      {
+        url,
+      }
+    );
+    createApp(appToCreate);
+  }
+
+  function openInBinder(filename: string, boardPosition: { x: number; y: number }, roomId: string, boardId: string) {
+    const url = 'https://mybinder.org/v2/gh/sage-3/next/master?urlpath=apps/notebook/assets/' + filename;
+    const win = window.open(url, '_blank');
+    win?.focus();
+  }
+
+  return { explodeNotebook, openInJupyterLab, openInGoogleColab, openInBinder };
 }

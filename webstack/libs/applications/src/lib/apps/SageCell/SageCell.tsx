@@ -42,7 +42,7 @@ const AppComponent = (props: App): JSX.Element => {
   const [isTyping, setIsTyping] = useState(false);
 
   const [hasMarkdown, setHasMarkdown] = useState(false);
-  const scale = useUIStore((state) => state.scale);
+  // const scale = useUIStore((state) => state.scale);
 
   const gColor = useHexColor(s.groupColor);
 
@@ -133,7 +133,8 @@ const AppComponent = (props: App): JSX.Element => {
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
       <Box
-        border={`${4 / scale}px solid ${gColor}`}
+        // border={`${4 / scale}px solid ${gColor}`}
+        border={`${4}px solid ${gColor}`}
         borderRadius="inherit"
         h={'calc(100% - 1px)'}
         w={'100%'}

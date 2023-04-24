@@ -89,7 +89,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   const scale = useUIStore((state) => state.scale);
 
-  const { explodeNotebook } = useNotebookUtils();
+  const { explodeNotebook, openInJupyterLab, openInGoogleColab, openInBinder } = useNotebookUtils();
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -139,7 +139,17 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     } else if (id === 'cells') {
       if (!user) return;
       explodeNotebook(file.filename, boardPosition, roomId, boardId);
+    } else if (id === 'lab') {
+      if (!user) return;
+      openInJupyterLab(file.filename, boardPosition, roomId, boardId);
+    } else if (id === 'colab') {
+      if (!user) return;
+      openInGoogleColab(file.filename, boardPosition, roomId, boardId);
+    } else if (id === 'binder') {
+      if (!user) return;
+      openInBinder(file.filename, boardPosition, roomId, boardId);
     }
+
     // deselect file selection
     setSelected(false);
     // hide context menu
@@ -290,6 +300,30 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
               onClick={actionClick}
             >
               Open in SageCells
+            </li>
+            <li
+              style={{ display: extension === 'ipynb' ? 'block' : 'none' }}
+              className="s3contextmenuitem"
+              id={'lab'}
+              onClick={actionClick}
+            >
+              Open in JupyterLab
+            </li>
+            <li
+              style={{ display: extension === 'ipynb' ? 'block' : 'none' }}
+              className="s3contextmenuitem"
+              id={'colab'}
+              onClick={actionClick}
+            >
+              Open in Google Colab
+            </li>
+            <li
+              style={{ display: extension === 'ipynb' ? 'block' : 'none' }}
+              className="s3contextmenuitem"
+              id={'binder'}
+              onClick={actionClick}
+            >
+              Open in Binder
             </li>
           </ul>
         </Portal>
