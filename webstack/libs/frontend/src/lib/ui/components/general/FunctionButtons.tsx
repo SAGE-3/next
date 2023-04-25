@@ -84,23 +84,36 @@ export function FunctionButtons(props: FunctionButtonsProps) {
       background={bgColor} rounded={"md"}
       display={showUI ? 'flex' : 'none'}
       as={motion.div}
+      opacity={0.0}
       // pass the animation controller
       animate={controls}
       onHoverStart={() => {
         // Stop previous animation
         controls.stop();
         // Set initial opacity
-        controls.set({ opacity: 1.0, scale: 1.4 });
+        controls.set({ opacity: 1.0, scale: 1 });
+        controls.start({
+          scale: 1.4,
+          transition: {
+            ease: 'easeIn',
+            duration: 0.25,
+            delay: 0,
+          },
+        });
+      }}
+      onHoverEnd={() => {
+        // Stop previous animation
+        controls.stop();
         // Start animation
         controls.start({
           // final opacity
           opacity: 0.0,
           scale: 1.0,
           transition: {
-            ease: 'easeIn',
+            ease: 'easeOut',
             // duration in sec.
             duration: 2,
-            delay: 4,
+            delay: 2,
           },
         });
       }}
