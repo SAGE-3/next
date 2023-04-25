@@ -15,9 +15,16 @@ import json
 import os
 
 class SeerState(TrackedBaseModel):
+    prompt: str = ""
+    execCount: int = 0
     code: str = ""
     output: str = ""
+    isTyping: bool = False
+    fontSize: int = 24
+    kernel: str = ""
+    kernels: list = []
     executeInfo: ExecuteInfo
+
 
 
 class Seer(SmartBit):

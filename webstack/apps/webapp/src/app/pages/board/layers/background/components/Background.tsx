@@ -118,6 +118,8 @@ export function Background(props: BackgroundProps) {
     if (!user) return;
     if (type === 'Screenshare') {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }));
+    } else if (type === 'Seer') {
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1000, h: 525 }));
     } else {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId));
     }
@@ -318,8 +320,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'50px 50px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
