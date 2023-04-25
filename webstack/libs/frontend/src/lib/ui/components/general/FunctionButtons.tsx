@@ -8,7 +8,7 @@
 
 import { Button, Tooltip, ButtonGroup, useColorModeValue } from '@chakra-ui/react';
 import { MdIosShare, MdOutlineStickyNote2, MdCode, MdWeb } from 'react-icons/md';
-import { motion } from 'framer-motion'
+import { motion, useAnimation } from 'framer-motion';
 
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -32,6 +32,9 @@ export function FunctionButtons(props: FunctionButtonsProps) {
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const createApp = useAppStore((state) => state.create);
+  // When to show the UI or not
+  const showUI = useUIStore((state) => state.showUI);
+
   // Colors for the buttons in light and dark mode
   const bgColor = useColorModeValue('#DBDBD1', '#3B4B59');
   const btColor = useColorModeValue('#AF2E1B', '#D9C3B0');
@@ -74,11 +77,34 @@ export function FunctionButtons(props: FunctionButtonsProps) {
       raised: true,
     });
   };
+  const controls = useAnimation();
 
   return (
     <ButtonGroup id={"functionbuttons"} p={1} gap={1} size="xs" variant={'solid'}
       background={bgColor} rounded={"md"}
-      as={motion.div} whileHover={{ scale: 1.5 }}>
+      display={showUI ? 'flex' : 'none'}
+      as={motion.div}
+      // pass the animation controller
+      animate={controls}
+      onHoverStart={() => {
+        // Stop previous animation
+        controls.stop();
+        // Set initial opacity
+        controls.set({ opacity: 1.0, scale: 1.4 });
+        // Start animation
+        controls.start({
+          // final opacity
+          opacity: 0.0,
+          scale: 1.0,
+          transition: {
+            ease: 'easeIn',
+            // duration in sec.
+            duration: 2,
+            delay: 4,
+          },
+        });
+      }}
+    >
 
       <Tooltip placement="top" hasArrow={true} label={'Share Your Screen'} openDelay={400} ml="1">
         <Button color={btColor} onClick={() => newApplication('Screenshare')}>
