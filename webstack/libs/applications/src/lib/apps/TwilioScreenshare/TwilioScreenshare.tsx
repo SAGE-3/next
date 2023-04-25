@@ -227,7 +227,7 @@ function AppComponent(props: App): JSX.Element {
       videoRef.current.srcObject = null;
     }
     // Hide Electron window
-    if (isElectron()) window.electron.send('show-main-window', {});
+    // if (isElectron()) window.electron.send('show-main-window', {});
   };
 
   useEffect(() => {
@@ -322,9 +322,9 @@ function AppComponent(props: App): JSX.Element {
       onClose();
 
       // Hide Electron window if on same screen
-      if (selectedSource.display_id === currentDisplay) {
-        if (isElectron()) window.electron.send('hide-main-window', {});
-      }
+      // if (selectedSource.display_id === currentDisplay) {
+      //   if (isElectron()) window.electron.send('hide-main-window', {});
+      // }
 
       // Show a notification
       goToScreenshare();
