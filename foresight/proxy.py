@@ -120,6 +120,17 @@ class SAGEProxy:
         message = json.loads(msg)
 
         # Duplicate messages for the time being to allow python to work
+        # event.doc is now an array of docs
+        # {
+        #     "event": 'CREATE',
+        #     "col": 'APPS',
+        #     "doc": {}
+        # }
+        # {
+        #     "event": 'CREATE',
+        #     "col": 'APPS',
+        #     "doc": [{}]
+        # }
         for doc in message['event']['doc']:
             msg = message.copy()
             msg['event']['doc'] = doc
@@ -129,16 +140,18 @@ class SAGEProxy:
                 if update:
                     msg['event']['updates'] = update['updates']
         # End of duplicating messages so old code can work
+
             if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
                 pass
+
             logger.debug(msg)
 
             collection = msg["event"]['col']
             doc = msg['event']['doc']
-
             msg_type = msg["event"]["type"]
+
             if msg_type == "UPDATE":
-                app_id = msg["event"]["doc"]["_id"]
+                app_id = doc["_id"]
                 if app_id in self.callbacks:
                     self.handle_linked_app(app_id, msg)
 
@@ -197,7 +210,6 @@ class SAGEProxy:
             board_id = doc['data']["boardId"]
             room_id = doc['data']['roomId']
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
-
             if type(sb) is GenericSmartBit:
 
                 logger.debug("not handling generic smartbit update")
