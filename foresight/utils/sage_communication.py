@@ -72,12 +72,10 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        print('hwhath')
         # print(logging.getLogger().handlers)
         logger.debug(f"sending following update: {data}")
         route = self.conf[self.prod_type]['web_server'] + \
             self.routes["send_batch_update"]
-        print("sending batch update", route)
         r = self.httpx_client.put(route,
                                   headers=self.__headers,
                                   json=data)
