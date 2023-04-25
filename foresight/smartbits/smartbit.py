@@ -65,7 +65,6 @@ class TrackedBaseModel(BaseModel):
         do_not_modify = ["_id", "_createdAt",
                          '_updatedAt', '_createdBy', '_updatedBy']
         _ = [update_data.pop(key) for key in do_not_modify]
-        print(f"refreshing data from update {update_data}")
 
         def attrsetter(name):
             def setter(obj, val):
@@ -221,6 +220,12 @@ class SmartBit(TrackedBaseModel):
         new_data = self.get_all_touched_fields_dict()
         self.touched.clear()
         self._s3_comm.send_app_update(self.app_id, new_data)
+
+    def get_updates_for_batch(self):
+        new_data = self.get_all_touched_fields_dict()
+        self.touched.clear()
+        obj = {'id': self.app_id, 'updates': new_data}
+        return obj
 
     @abstractmethod
     def clean_up(self):

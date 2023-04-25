@@ -9,7 +9,7 @@
 from smartbitcollection import SmartBitsCollection
 from utils.layout import Layout
 # from utils.generic_utils import import_cls
-# from utils.wall_utils import Sage3Communication
+from utils.wall_utils import Sage3Communication
 
 
 class Board():
@@ -59,11 +59,21 @@ class Board():
         # self.layout.graphviz_layout()
         self.layout.fdp_graphviz_layout(app_to_type)
 
+        updates = []
+        # Highjack quick test
+        sb_leech = None
+
         for app_id, coords in self.layout._layout_dict.items():
             sb = self.smartbits[app_id]
             sb.data.position.x = coords[0]
             sb.data.position.y = coords[1]
-            sb.send_updates()
+            sb_leech = sb
+            u = sb.get_updates_for_batch()
+            updates.append(u)
+
+        print(f"updates are {updates}")
+        # Using the highjack, but board should have its own commmuncation object
+        sb_leech._s3_comm.send_app_batch_update({'batch': updates})
         print("Done executing organize_layout on the baord")
 
         self.executeInfo = {'executeFunc': '', 'params': {}}
