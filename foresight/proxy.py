@@ -29,6 +29,7 @@ from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
 
+
 def setup_logger():
     debug_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(filename)s | %(message)s'
     devel_fmt = '%(asctime)s  | %(levelname)s | %(module)s | %(message)s'
@@ -46,9 +47,12 @@ def setup_logger():
     logger.root.handlers[0].setFormatter(formatter)
     return logger
 
+
 logger = setup_logger()
 
 # TODO: Find another spot for this.
+
+
 class LinkedInfo(BaseModel):
     board_id: str
     src_app: str
@@ -91,44 +95,57 @@ class SAGEProxy:
         self.populate_existing()
         self.done_init = True
 
-
     def populate_existing(self):
         # Populate existing rooms
 
         rooms_info = self.s3_comm.get_rooms()
+        print(rooms_info)
         for room_info in rooms_info:
             self.__handle_create("ROOMS", room_info)
 
         # Populate existing boards
         boards_info = self.s3_comm.get_boards()
+        print(boards_info)
         for board_info in boards_info:
             self.__handle_create("BOARDS", board_info)
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
+        print(apps_info)
         for app_info in apps_info:
             self.__handle_create("APPS", app_info)
 
     def process_messages(self, ws, msg):
         logger.debug("received and processing a new message")
 
-        msg = json.loads(msg)
-        if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-            pass
-        logger.debug(msg)
+        message = json.loads(msg)
 
-        collection = msg["event"]['col']
-        doc = msg['event']['doc']
+        # Duplicate messages for the time being to allow python to work
+        for doc in message['event']['doc']:
+            msg = message.copy()
+            msg['event']['doc'] = doc
+            if msg['event']['updates']:
+                update = next(x for x in msg['event']
+                              ['updates'] if x['id'] == doc['_id'])
+                if update:
+                    msg['event']['updates'] = update['updates']
+        # End of duplicating messages so old code can work
+            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                pass
+            logger.debug(msg)
 
-        msg_type = msg["event"]["type"]
-        if msg_type == "UPDATE":
-            app_id = msg["event"]["doc"]["_id"]
-            if app_id in self.callbacks:
-                self.handle_linked_app(app_id, msg)
+            collection = msg["event"]['col']
+            doc = msg['event']['doc']
 
-            updates = msg['event']['updates']
-            self.__MSG_METHODS[msg_type](collection, doc, updates)
-        else:
-            self.__MSG_METHODS[msg_type](collection, doc)
+            msg_type = msg["event"]["type"]
+            if msg_type == "UPDATE":
+                app_id = msg["event"]["doc"]["_id"]
+                if app_id in self.callbacks:
+                    self.handle_linked_app(app_id, msg)
+
+                updates = msg['event']['updates']
+                self.__MSG_METHODS[msg_type](collection, doc, updates)
+            else:
+                self.__MSG_METHODS[msg_type](collection, doc)
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
@@ -169,7 +186,8 @@ class SAGEProxy:
                     _func = getattr(board, func_name)
                     _params = updates["executeInfo"]["params"]
 
-                    logger.debug(f"About to execute board function --{func_name}-- with params --{_params}--")
+                    logger.debug(
+                        f"About to execute board function --{func_name}-- with params --{_params}--")
                     _func(**_params)
                 except Exception as e:
                     logger.error(
@@ -200,9 +218,11 @@ class SAGEProxy:
                             # TODO: validate the params are valid
                             _func(**_params)
                         except Exception as e:
-                            logger.error(f"Exception trying to execute function `{func_name}` on sb `{sb}`. \n{e}")
+                            logger.error(
+                                f"Exception trying to execute function `{func_name}` on sb `{sb}`. \n{e}")
                 else:
-                    logger.error("\n\n\nTried to update non existent smartbit\n\n\n")
+                    logger.error(
+                        "\n\n\nTried to update non existent smartbit\n\n\n")
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
@@ -251,7 +271,8 @@ class SAGEProxy:
                         dest_app = self.room.boards[board_id].smartbits[dest_id]
                         linked_info.callback(src_val, dest_app, dest_field)
                     except Exception as e:
-                        logger.error(f"Error happened during callback for linked app {app_id}.\n {e}")
+                        logger.error(
+                            f"Error happened during callback for linked app {app_id}.\n {e}")
 
     def handle_exec_function(self):
         pass

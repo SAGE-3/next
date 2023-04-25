@@ -20,6 +20,7 @@ export function UserPresenceUpdate() {
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardDragging = useUIStore((state) => state.boardDragging);
+  const setViewport = useUIStore((state) => state.setViewport);
 
   // Window resize hook
   const { width: winWidth, height: winHeight } = useWindowResize();
@@ -42,6 +43,13 @@ export function UserPresenceUpdate() {
   // Board Pan, zoom, or Window resize
   useEffect(() => {
     throttleUpdateFunc(-boardPosition.x, -boardPosition.y, winWidth / scale, winHeight / scale);
+
+    // Update the local user's viewport value as fast as possible
+    const viewport = {
+      position: { x: -boardPosition.x, y: -boardPosition.y },
+      size: { width: winWidth / scale, height: winHeight / scale },
+    };
+    setViewport(viewport.position, viewport.size);
   }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight]);
 
   // Mouse Move
