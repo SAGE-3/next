@@ -51,6 +51,13 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Add a single item to the collection
+   * @param item The item to add
+   * @param by Who added the item
+   * @param id Force an id for the item
+   * @returns The added item if succesfull. Otherwise underfined
+   */
   public async add(item: T, by: string, id?: string): Promise<SBDocument<T> | undefined> {
     try {
       const docRef = await this._collection.addDoc(item, by, id);
@@ -66,6 +73,31 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Add a batch of items to the collection
+   * This will partially add if some are 'adds' are not successful
+   * @param item Item to add
+   * @param by The id of the user adding the item
+   * @returns An array of the succcesully added items
+   */
+  public async addBatch(items: T[], by: string): Promise<SBDocument<T>[] | undefined> {
+    try {
+      // Add a batch of items to the collection
+      // This will partially add if some are 'adds' are not successful
+      const docs = await this.collection.addDocs(items, by);
+      // Return docs
+      return docs;
+    } catch (error) {
+      this.printError(error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get an item by id from the collection
+   * @param id The id of the item to get
+   * @returns The item if successful. Otherwise undefined
+   */
   public async get(id: string): Promise<SBDocument<T> | undefined> {
     try {
       const doc = await this._collection.docRef(id).read();
@@ -76,6 +108,25 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Get mulitple docs by id from the collection
+   * @param ids The ids of the items to get
+   * @returns The items if successful. Otherwise undefined
+   */
+  public async getBatch(ids: string[]): Promise<SBDocument<T>[] | undefined> {
+    try {
+      const docs = await Promise.all(ids.map((id) => this._collection.docRef(id).read()));
+      return docs.filter((doc) => doc !== undefined) as SBDocument<T>[];
+    } catch (error) {
+      this.printError(error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get all documents from the collection
+   * @returns All documents if successful. Otherwise undefined
+   */
   public async getAll(): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.getAllDocs();
@@ -86,6 +137,12 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  /**
+   * Query the collection for a specific value
+   * @param field The property field to query
+   * @param query The value to query
+   * @returns The documents that match the query if successful. Otherwise undefined
+   */
   public async query(field: keyof T, query: string | number): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.query(field, query);
@@ -96,23 +153,69 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<boolean> {
+  /**
+   * Update a document in the collection
+   * @param id The id of the document to update
+   * @param by Who is updating the document
+   * @param update The update to apply
+   * @returns True if successful. Otherwise false
+   */
+  public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<SBDocument<T> | undefined> {
     try {
       const response = await this._collection.docRef(id).update(update, by);
-      return response.success;
+      return response.doc;
     } catch (error) {
       this.printError(error);
-      return false;
+      return undefined;
     }
   }
 
-  public async delete(id: string): Promise<boolean> {
+  public async updateBatch(updates: { id: string; updates: SBDocumentUpdate<T> }[], by: string): Promise<SBDocument<T>[] | undefined> {
     try {
-      const response = await this._collection.docRef(id).delete();
-      return response.success;
+      const docs = await this._collection.updateDocs(updates, by);
+      return docs;
     } catch (error) {
       this.printError(error);
-      return false;
+      return undefined;
+    }
+  }
+
+  public async delete(id: string): Promise<string | undefined> {
+    try {
+      const response = await this._collection.docRef(id).delete();
+      if (response.success && response.doc) {
+        return response.doc._id;
+      } else {
+        return undefined;
+      }
+    } catch (error) {
+      this.printError(error);
+      return undefined;
+    }
+  }
+
+  public async deleteBatch(ids: string[]): Promise<string[] | undefined> {
+    try {
+      // Wait for all promises to resolve
+      const responses = await this.collection.deleteDocs(ids);
+      // Get all the ids of the deleted documents
+      const deletedIds = responses
+        .map((r) => {
+          if (r.success && r.doc) {
+            return r.doc._id;
+          } else {
+            return undefined;
+          }
+        })
+        .filter((id) => id !== undefined) as string[];
+      if (deletedIds.length > 0) {
+        return deletedIds;
+      } else {
+        return undefined;
+      }
+    } catch (error) {
+      this.printError(error);
+      return undefined;
     }
   }
 

@@ -36,7 +36,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
 
   const fetchUser = useCallback(async () => {
     if (auth) {
-      const userResponse = await APIHttp.GET<UserSchema, User>(`/users/${auth.id}`);
+      const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
         setUser(userResponse.data[0]);
       } else {
@@ -60,7 +60,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const create = useCallback(
     async (user: UserSchema): Promise<void> => {
       if (auth) {
-        const userResponse = await APIHttp.POST<UserSchema, User>('/users/create', user);
+        const userResponse = await APIHttp.POST<User>('/users/create', user);
         if (userResponse.data) {
           setUser(userResponse.data[0]);
         }
@@ -77,8 +77,10 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const update = useCallback(
     async (updates: Partial<UserSchema>): Promise<void> => {
       if (user) {
-        await APIHttp.PUT<UserSchema>(`/users/${user._id}`, updates);
-        fetchUser();
+        const response = await APIHttp.PUT<User>(`/users/${user._id}`, updates);
+        if (response.success && response.data) {
+          setUser(response.data[0]);
+        }
         return;
       }
       return;
