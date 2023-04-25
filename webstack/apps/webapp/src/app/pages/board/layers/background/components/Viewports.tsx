@@ -60,11 +60,12 @@ function UserViewport(props: UserViewportProps) {
   const color = useHexColor(props.color);
   const titleBarHeight = 30 / props.scale;
   const fontSize = 20 / props.scale;
-  const br = 8 / props.scale;
+  const borderRadius = 6 / props.scale;
+  const borderWidth = 4 / props.scale;
   return (
     <Box
       borderStyle="solid"
-      borderWidth={4 / props.scale}
+      borderWidth={borderWidth}
       borderColor={color}
       borderTop={'none'}
       position="absolute"
@@ -74,7 +75,7 @@ function UserViewport(props: UserViewportProps) {
       width={props.viewport.size.width + 'px'}
       height={props.viewport.size.height + titleBarHeight + 'px'}
       opacity={0.65}
-      borderRadius={`${br}px`}
+      borderRadius={borderRadius}
       transitionProperty="left, top, width, height"
       transitionDuration={'0.5s'}
       color="white"
