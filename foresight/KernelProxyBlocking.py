@@ -7,7 +7,7 @@ from collections import defaultdict
 import websockets
 
 
-class WebSocketManager:
+class KernelProxyBlocking:
     def __init__(self, token):
         self.session_id = uuid.uuid4().hex
         self.token = token
@@ -91,24 +91,24 @@ class WebSocketManager:
 
 kernel_id = "87609736-d882-41c3-8bc1-898a32f54aec"
 token = "da792de798fb2b96"
-websocket_manager = WebSocketManager(token)
+kernel_proxy = KernelProxyBlocking(token)
 
-await websocket_manager.connect(kernel_id)
+await kernel_proxy.connect(kernel_id)
 
 code = "print(a)"
-await websocket_manager.run_code(kernel_id, code)
+await kernel_proxy.run_code(kernel_id, code)
 
 # if __name__ == "__main__":
 #     kernel_id = "87609736-d882-41c3-8bc1-898a32f54aec"
 #     token = "da792de798fb2b96"
-#     websocket_manager = WebSocketManager(token)
+#     kernel_proxy = KernelProxyBlocking(token)
 #     code = "print(a)"
 #
 #
 #     async def main():
-#         await websocket_manager.connect(kernel_id)
-#         await websocket_manager.run_code(kernel_id, code)
-#         await websocket_manager.close(kernel_id)
+#         await kernel_proxy.connect(kernel_id)
+#         await kernel_proxy.run_code(kernel_id, code)
+#         await websockekernel_proxyt_manager.close(kernel_id)
 #
 #     import asyncio
 #     asyncio.run(main())
