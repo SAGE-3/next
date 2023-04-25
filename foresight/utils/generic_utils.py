@@ -64,6 +64,29 @@ def say_hi(first_name=None, last_name=None):
     return f"Hi {first_name} {last_name}"
 
 
+def create_kernel_message(session_id, msg_type='execute_request'):
+    return {
+        'header': {
+            'msg_id': None,
+            'username': 'tests',
+            'session': session_id,
+            'msg_type': msg_type,
+            'version': '5.0'
+        },
+        'parent_header': {},
+        'metadata': {},
+        'content': {
+            'code': "code",
+            'silent': False,
+            'store_history': True,
+            'user_expressions': {},
+            'allow_stdin': True,
+            'allow_stdout': True,
+            'stop_on_error': True
+        },
+        'buffers': {}
+    }
+
 
 # def __format_create_up(func, smartbit_id, client_id, params):
 #         protocol = json.load(open("Python_code/protocols/create_up.json"))
