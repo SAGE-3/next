@@ -24,7 +24,6 @@ if prod_type == "development":
     import dropbox
     import requests
 
-
 class RunStatus(Enum):
     READY = 0
     RUNNING = 1
