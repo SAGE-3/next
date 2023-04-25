@@ -8,7 +8,9 @@
 
 // Electron
 const electron = require('electron');
+const { app, Menu, Tray, nativeImage } = require('electron');
 const shell = electron.shell;
+const path = require('path');
 
 // Store
 const bookmarkStore = require('./bookmarkstore');
@@ -23,6 +25,34 @@ const updater = require('./updater');
  * @returns
  */
 function buildSageMenu(window) {
+  let tray = null;
+  app.whenReady().then(() => {
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show Main Window',
+        click: function () {
+          window.show();
+        },
+      },
+      {
+        label: 'Hide Main Window',
+        click: function () {
+          window.blur();
+        },
+      },
+      {
+        label: 'Quit SAGE3',
+        accelerator: 'CommandOrControl+Q',
+        click: function () {
+          electron.app.quit();
+        },
+      },
+    ]);
+    tray.setToolTip('SAGE3 controls');
+    tray.setContextMenu(contextMenu);
+  });
+
   // Clear Bookmarks button
   const clearBookmarks = {
     label: 'Restore Original Bookmarks',
@@ -307,7 +337,7 @@ function buildSageMenu(window) {
         {
           label: 'Quick Start Guide',
           click: function () {
-            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-2023a.pdf');
+            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-2023b.pdf');
           },
         },
         {

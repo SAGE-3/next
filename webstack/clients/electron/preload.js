@@ -22,6 +22,10 @@ const validChannels = [
   'paint',
   'load-landing',
   'store-interface',
+  'hide-main-window',
+  'show-main-window',
+  'request-current-display',
+  'current-display',
 ];
 
 contextBridge.exposeInMainWorld('electron', {
