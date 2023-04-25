@@ -51,6 +51,7 @@ export function UILayer(props: UILayerProps) {
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
+  const showUI = useUIStore((state) => state.showUI);
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
@@ -163,10 +164,10 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* The clock Top Right */}
-      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
+      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px', display: showUI ? 'flex' : 'none', }} opacity={0.7} />
 
       {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101}>
+      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
         <MainButton
           buttonStyle="solid"
           backToRoom={() => toHome(props.roomId)}
@@ -176,12 +177,12 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* Buttons Middle Bottom */}
-      <Box position="absolute" left="calc(50% - 110px)" bottom="2" >
+      <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
         <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
       </Box>
 
       {/* ServerName Top Left */}
-      <HStack position="absolute" left="2">
+      <HStack position="absolute" left="2" display={showUI ? 'flex' : 'none'}>
         <MdCloudQueue fontSize={'18px'} color={'darkgray'} />
         <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
           {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
