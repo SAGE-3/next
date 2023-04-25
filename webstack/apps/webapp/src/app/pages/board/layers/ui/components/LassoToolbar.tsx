@@ -49,9 +49,7 @@ export function LassoToolbar() {
 
   // Close all the selected apps
   const closeSelectedApps = () => {
-    lassoApps.forEach((app) => {
-      deleteApp(app);
-    });
+    deleteApp(lassoApps);
     deleteOnClose();
     setShowLasso(false);
   };
@@ -102,7 +100,7 @@ export function LassoToolbar() {
                 </Button>
               </Tooltip>
 
-              <Menu>
+              <Menu preventOverflow={false} placement={'top'}>
                 <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps to a different Board'} openDelay={400}>
                   <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'}>
                     <MdSend />

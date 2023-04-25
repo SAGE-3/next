@@ -6,14 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Electorn
+// Electron
 const electron = require('electron');
+const shell = electron.shell;
 
 // Store
 const bookmarkStore = require('./bookmarkstore');
 
 // Utils
-const { updateLandingPage, dialogUserTextInput, checkServerIsSage } = require('./utils');
+const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
 const updater = require('./updater');
 
 /**
@@ -109,7 +110,7 @@ function buildSageMenu(window) {
         {
           label: 'Take Screenshot',
           click() {
-            TakeScreenshot();
+            takeScreenshot(window);
           },
         },
         {
@@ -304,7 +305,25 @@ function buildSageMenu(window) {
       role: 'help',
       submenu: [
         {
-          label: 'Learn More',
+          label: 'Quick Start Guide',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-2023a.pdf');
+          },
+        },
+        {
+          label: 'Keyboard Shortcuts',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/Shortcuts');
+          },
+        },
+        {
+          label: 'Developer Site',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/intro');
+          },
+        },
+        {
+          label: 'Main Site',
           click: function () {
             shell.openExternal('http://sage3.sagecommons.org/');
           },

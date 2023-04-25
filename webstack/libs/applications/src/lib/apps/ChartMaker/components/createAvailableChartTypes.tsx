@@ -55,7 +55,7 @@ export default function (
       available: false,
     },
     {
-      key: 'scatter',
+      key: 'point',
       mark: 'point',
       available: false,
     },

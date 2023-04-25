@@ -49,6 +49,7 @@ export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
   const { logout } = useAuth();
   const { toggleColorMode, colorMode } = useColorMode();
+  // Modal panels
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
@@ -59,7 +60,9 @@ export function MainButton(props: MainButtonProps) {
 
   useEffect(() => {
     if (user && props.config) {
-      setIsAdmin(props.config.admins.includes(user.data.email));
+      if (props.config.admins) {
+        setIsAdmin(props.config.admins.includes(user.data.email));
+      }
     }
   }, [user, props.config]);
 

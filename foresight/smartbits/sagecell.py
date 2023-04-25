@@ -20,10 +20,14 @@ logger = logging.getLogger(__name__)
 
 class SageCellState(TrackedBaseModel):
     code: str = ""
-    output: str = ""
+    language: str = ""
+    isTyping: bool = False
+    fontSize: int = 16
+    theme: str = "xcode"
     kernel: str = ""
-    availableKernels: list = []
     privateMessage: list = []
+    availableKernels: list = []
+    output: str = ""
     executeInfo: ExecuteInfo
 
 class SageCell(SmartBit):
@@ -55,7 +59,7 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def get_available_kernels(self, user_uuid=None):
+    def get_available_kernels(self, _uuid=None):
         """
         This function will get the kernels from the redis server
         """
@@ -67,8 +71,6 @@ class SageCell(SmartBit):
         [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
         available_kernels = []
         for kernel in kernels.keys():
-            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
-                continue
             if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})
@@ -77,7 +79,7 @@ class SageCell(SmartBit):
         self.state.executeInfo.params = {}
         self.send_updates()
 
-    def execute(self, user_uuid):
+    def execute(self, _uuid):
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
         and to call a call_back function which know how to handle the results message
@@ -86,7 +88,7 @@ class SageCell(SmartBit):
         :return:
         """
         command_info = {
-            "uuid": user_uuid,
+            "uuid": _uuid,
             "call_fn": self.handle_exec_result,
             "code": self.state.code,
             "kernel": self.state.kernel,
@@ -95,16 +97,14 @@ class SageCell(SmartBit):
         if self.state.kernel:
             self._jupyter_client.execute(command_info)
         else:
-            # TODO: MLR fix to solve issue #339
-            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
             self.send_updates()
 
-    def interrupt(self, user_uuid):
+    def interrupt(self, _uuid=None):
 
         command_info = {
-            "uuid": user_uuid,
+            "uuid": _uuid,
             "call_fn": self.handle_exec_result,
             "code": "",
             "kernel": self.state.kernel,

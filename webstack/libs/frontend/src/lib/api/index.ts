@@ -6,5 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { App } from '@sage3/applications/schema';
+import { Asset, Board, Message, Plugin, Presence, Room, User } from '@sage3/shared/types';
+
 export * from './http/index';
 export * from './ws/api-socket';
+
+export type CollectionDocs = App | Asset | Board | Message | Plugin | Presence | Room | User;

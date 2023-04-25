@@ -7,74 +7,24 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast, ToastId, Modal, useDisclosure } from '@chakra-ui/react';
 
-import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
-
-// To do upload with progress bar
-import axios, { AxiosProgressEvent } from 'axios';
-
+import { isValidURL, setupApp } from '@sage3/frontend';
 import {
   useUIStore,
   useAppStore,
   useUser,
-  useAssetStore,
   useHexColor,
-  GetConfiguration,
   useMessageStore,
   processContentURL,
   useHotkeys,
   useCursorBoardPosition,
   useKeyPress,
   useAuth,
+  useFiles,
 } from '@sage3/frontend';
-import { AppName } from '@sage3/applications/schema';
-
-// File information
-import {
-  getMime,
-  isValid,
-  isImage,
-  isPDF,
-  isCSV,
-  isMD,
-  isJSON,
-  isDZI,
-  isGeoJSON,
-  isVideo,
-  isPython,
-  isGLTF,
-  isGIF,
-  isPythonNotebook,
-} from '@sage3/shared';
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
-import { setupApp } from './Drops';
-
-import imageHelp from './sage3-help.jpg';
-
-type HelpProps = {
-  onClose: () => void;
-  isOpen: boolean;
-};
-
-export function HelpModal(props: HelpProps) {
-  return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="5xl">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>SAGE3 Help</ModalHeader>
-        <ModalBody>
-          <img src={imageHelp} alt="SAGE3 Help" />
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
-            Close
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
-}
+import { AppName, AppSchema } from '@sage3/applications/schema';
+import { HelpModal } from './HelpModal';
 
 type BackgroundProps = {
   roomId: string;
@@ -89,8 +39,9 @@ export function Background(props: BackgroundProps) {
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
-  // Assets
-  const assets = useAssetStore((state) => state.assets);
+  // Hooks
+  const { uploadFiles, openAppForFile } = useFiles();
+
   // Messsages
   const subMessage = useMessageStore((state) => state.subscribe);
   const unsubMessage = useMessageStore((state) => state.unsubscribe);
@@ -98,6 +49,8 @@ export function Background(props: BackgroundProps) {
 
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
+  const createBatch = useAppStore((state) => state.createBatch);
+
   // User
   const { user } = useUser();
   const { auth } = useAuth();
@@ -120,94 +73,6 @@ export function Background(props: BackgroundProps) {
   const isShiftPressed = useKeyPress('Shift');
 
   // Perform the actual upload
-  const uploadFunction = (input: File[], dx: number, dy: number) => {
-    if (input) {
-      let filenames = '';
-      // Uploaded with a Form object
-      const fd = new FormData();
-      // Add each file to the form
-      const fileListLength = input.length;
-      for (let i = 0; i < fileListLength; i++) {
-        // check the mime type we got from the browser, and check with mime lib. if needed
-        const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
-
-        if (isValid(filetype)) {
-          if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
-            // 100MB
-            toast({
-              title: 'File too large',
-              description: 'PDF files must be smaller than 100MB - Flatten or Optimize your PDF',
-              status: 'error',
-              duration: 6000,
-              isClosable: true,
-            });
-          } else {
-            fd.append('files', input[i]);
-            if (filenames) filenames += ', ' + input[i].name;
-            else filenames = input[i].name;
-          }
-        } else {
-          toast({
-            title: 'Invalid file type',
-            description: `Type not recognized: ${input[i].type} for file ${input[i].name}`,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-        }
-      }
-
-      // Add fields to the upload form
-      fd.append('room', props.roomId);
-      fd.append('board', props.boardId);
-
-      // Position to open the asset
-      fd.append('targetX', dx.toString());
-      fd.append('targetY', dy.toString());
-
-      toastIdRef.current = toast({
-        title: 'Upload',
-        description: 'Starting upload of ' + filenames,
-        status: 'info',
-        // no duration, so it doesn't disappear
-        duration: null,
-        isClosable: true,
-      });
-
-      // Upload with a POST request
-      axios({
-        method: 'post',
-        url: '/api/assets/upload',
-        data: fd,
-        onUploadProgress: (p: AxiosProgressEvent) => {
-          if (toastIdRef.current && p.progress) {
-            const progress = (p.progress * 100).toFixed(0);
-            toast.update(toastIdRef.current, {
-              title: 'Upload',
-              description: 'Progress: ' + progress + '%',
-              isClosable: true,
-            });
-          }
-        },
-      })
-        .catch((error: Error) => {
-          console.log('Upload> Error: ', error);
-        })
-        .finally(() => {
-          // Close the modal UI
-          // props.onClose();
-
-          if (!filenames) {
-            toast({
-              title: 'Upload with Errors',
-              status: 'warning',
-              duration: 4000,
-              isClosable: true,
-            });
-          }
-        });
-    }
-  };
 
   // Subscribe to messages
   useEffect(() => {
@@ -258,222 +123,8 @@ export function Background(props: BackgroundProps) {
     }
   };
 
-  // Create an app for a file
-  function OpenFile(fileID: string, fileType: string, xDrop: number, yDrop: number) {
-    if (!user) return;
-    const w = 400;
-    if (isGIF(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          createApp(
-            setupApp(
-              a.data.originalfilename,
-              'ImageViewer',
-              xDrop,
-              yDrop,
-              props.roomId,
-              props.boardId,
-              { w: w, h: w },
-              { assetid: '/api/assets/static/' + a.data.file }
-            )
-          );
-        }
-      });
-    } else if (isImage(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const extras = a.data.derived as ExtraImageType;
-          createApp(
-            setupApp(
-              a.data.originalfilename,
-              'ImageViewer',
-              xDrop,
-              yDrop,
-              props.roomId,
-              props.boardId,
-              { w: w, h: w / (extras.aspectRatio || 1) },
-              { assetid: fileID }
-            )
-          );
-        }
-      });
-    } else if (isVideo(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const extras = a.data.derived as ExtraImageType;
-          const vw = 800;
-          const vh = vw / (extras.aspectRatio || 1);
-          createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, { w: vw, h: vh }, { assetid: fileID }));
-        }
-      });
-    } else if (isCSV(fileType)) {
-      createApp(setupApp('', 'CSVViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isDZI(fileType)) {
-      createApp(setupApp('', 'DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isGLTF(fileType)) {
-      createApp(setupApp('', 'GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 600, h: 600 }, { assetid: fileID }));
-    } else if (isGeoJSON(fileType)) {
-      createApp(setupApp('', 'LeafLet', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isMD(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'text/plain',
-              Accept: 'text/plain',
-            },
-          })
-            .then(function (response) {
-              return response.text();
-            })
-            .then(async function (text) {
-              // Create a note from the text
-              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 420 }, { text: text }));
-            });
-        }
-      });
-    } else if (isPython(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'text/plain',
-              Accept: 'text/plain',
-            },
-          })
-            .then(function (response) {
-              return response.text();
-            })
-            .then(async function (text) {
-              // Create a note from the text
-              createApp(setupApp('SageCell', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
-            });
-        }
-      });
-    } else if (isPythonNotebook(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (json) {
-              // Create a notebook file in Jupyter with the content of the file
-              GetConfiguration().then((conf) => {
-                if (conf.token) {
-                  // Create a new notebook
-                  let base: string;
-                  if (conf.production) {
-                    base = `https://${window.location.hostname}:4443`;
-                  } else {
-                    base = `http://${window.location.hostname}`;
-                  }
-                  // Talk to the jupyter server API
-                  const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
-                  const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-                  // Create a new notebook
-                  fetch(j_url, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Token ' + conf.token,
-                    },
-                    body: JSON.stringify(payload),
-                  })
-                    .then((response) => response.json())
-                    .then((res) => {
-                      console.log('Jupyter> notebook created', res);
-                      // Create a note from the json
-                      createApp(
-                        setupApp(
-                          '',
-                          'JupyterLab',
-                          xDrop,
-                          yDrop,
-                          props.roomId,
-                          props.boardId,
-
-                          { w: 700, h: 700 },
-                          { notebook: a.data.originalfilename }
-                        )
-                      );
-                    });
-                }
-              });
-            });
-        }
-      });
-    } else if (isJSON(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (spec) {
-              // Create a vis from the json spec
-              createApp(
-                setupApp(
-                  '',
-                  'VegaLite',
-                  xDrop,
-                  yDrop,
-                  props.roomId,
-                  props.boardId,
-                  { w: 500, h: 600 },
-                  { spec: JSON.stringify(spec, null, 2) }
-                )
-              );
-            });
-        }
-      });
-    } else if (isPDF(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const pages = a.data.derived as ExtraPDFType;
-          let aspectRatio = 1;
-          if (pages) {
-            // First page
-            const page = pages[0];
-            // First image of the page
-            aspectRatio = page[0].width / page[0].height;
-          }
-          createApp(
-            setupApp('', 'PDFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
-          );
-        }
-      });
-    }
-  }
-
   // Drop event
-  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+  async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
 
     // Get the position of the drop
@@ -498,7 +149,7 @@ export function Background(props: BackgroundProps) {
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer).then((files) => {
         // do the actual upload
-        uploadFunction(Array.from(files), xdrop, ydrop);
+        uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
       });
     } else {
       // Drag/Drop a URL
@@ -523,17 +174,22 @@ export function Background(props: BackgroundProps) {
             // it's a base64 image
             createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
           } else {
-            const final_url = processContentURL(pastedText);
-            let w, h;
-            if (final_url !== pastedText) {
-              // it must be a video
-              w = 1280;
-              h = 720;
-            } else {
-              w = 800;
-              h = 800;
+            // is it a valid URL
+            const valid = isValidURL(pastedText);
+            if (valid) {
+              // process url to be embeddable
+              const final_url = processContentURL(pastedText);
+              let w, h;
+              if (final_url !== pastedText) {
+                // it must be a video
+                w = 1280;
+                h = 720;
+              } else {
+                w = 800;
+                h = 800;
+              }
+              createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
             }
-            createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
           }
         }
       } else {
@@ -545,12 +201,22 @@ export function Background(props: BackgroundProps) {
           // Get information from the drop
           const ids = event.dataTransfer.getData('file');
           const types = event.dataTransfer.getData('type');
-          const fileIDs = JSON.parse(ids);
-          const fileTypes = JSON.parse(types);
-          // Open the file at the drop location
-          const num = fileIDs.length;
-          for (let i = 0; i < num; i++) {
-            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+          if (ids && types) {
+            // if it's files from the asset manager
+            const fileIDs = JSON.parse(ids);
+            const fileTypes = JSON.parse(types);
+            // Open the file at the drop location
+            const num = fileIDs.length;
+            const batch: AppSchema[] = [];
+            let xpos = xdrop;
+            for (let i = 0; i < num; i++) {
+              const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
+              if (res) {
+                batch.push(res);
+                xpos += res.size.width + 10;
+              }
+            }
+            createBatch(batch);
           }
         }
       }
@@ -651,9 +317,9 @@ export function Background(props: BackgroundProps) {
       className="board-handle"
       width="100%"
       height="100%"
-      backgroundSize={`50px 50px`}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px),
-               linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      backgroundSize={'50px 50px'}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}

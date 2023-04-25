@@ -243,7 +243,7 @@ function AppComponent(props: App): JSX.Element {
         track.attach(videoRef.current);
         // Show a notification
         toast({
-          title: 'Screensharing1 started for ' + props.data.title,
+          title: 'Screensharing started for ' + props.data.title,
           description: (
             <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
               Zoom to Window
@@ -306,7 +306,7 @@ function AppComponent(props: App): JSX.Element {
       onClose();
       // Show a notification
       toast({
-        title: 'Screensharing2 started for ' + props.data.title,
+        title: 'Screensharing started for ' + props.data.title,
         description: (
           <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
             Zoom to Window
