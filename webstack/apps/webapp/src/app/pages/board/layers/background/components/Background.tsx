@@ -7,7 +7,10 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Box, useColorModeValue, useToast, ToastId, Modal, useDisclosure } from '@chakra-ui/react';
+import {
+  Box, useColorModeValue, useToast, ToastId, Modal, useDisclosure,
+  ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button,
+} from '@chakra-ui/react';
 
 import { isValidURL, setupApp } from '@sage3/frontend';
 import {
@@ -38,6 +41,8 @@ export function Background(props: BackgroundProps) {
   const toastIdRef = useRef<ToastId>();
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  // Modal for opening lots of files
+  const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
 
   // Hooks
   const { uploadFiles, openAppForFile } = useFiles();
@@ -207,16 +212,21 @@ export function Background(props: BackgroundProps) {
             const fileTypes = JSON.parse(types);
             // Open the file at the drop location
             const num = fileIDs.length;
-            const batch: AppSchema[] = [];
-            let xpos = xdrop;
-            for (let i = 0; i < num; i++) {
-              const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
-              if (res) {
-                batch.push(res);
-                xpos += res.size.width + 10;
+            if (num < 20) {
+              const batch: AppSchema[] = [];
+              let xpos = xdrop;
+              for (let i = 0; i < num; i++) {
+                const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
+                if (res) {
+                  batch.push(res);
+                  xpos += res.size.width + 10;
+                }
               }
+              createBatch(batch);
+            } else {
+              // Too many assets selected, not doing it.
+              lotsOnOpen();
             }
-            createBatch(batch);
           }
         }
       }
@@ -340,6 +350,21 @@ export function Background(props: BackgroundProps) {
       <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
         <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       </Modal>
+
+      {/* Too many assets selected */}
+      <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Opening Assets</ModalHeader>
+          <ModalBody>Too many assets selected</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" size="sm" mr={3} onClick={lotsOnClose}>
+              OK
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
     </Box>
   );
 }
