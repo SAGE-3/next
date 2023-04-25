@@ -99,55 +99,61 @@ class SAGEProxy:
         # Populate existing rooms
 
         rooms_info = self.s3_comm.get_rooms()
-        print(rooms_info)
+        # print(rooms_info)
         for room_info in rooms_info:
             self.__handle_create("ROOMS", room_info)
 
         # Populate existing boards
         boards_info = self.s3_comm.get_boards()
-        print(boards_info)
+        # print(boards_info)
         for board_info in boards_info:
             self.__handle_create("BOARDS", board_info)
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
-        print(apps_info)
+        # print(apps_info)
         for app_info in apps_info:
             self.__handle_create("APPS", app_info)
 
     def process_messages(self, ws, msg):
         logger.debug("received and processing a new message")
-
         message = json.loads(msg)
-
         # Duplicate messages for the time being to allow python to work
+        # event.doc is now an array of docs
         for doc in message['event']['doc']:
             msg = message.copy()
             msg['event']['doc'] = doc
-            if msg['event']['updates']:
-                update = next(x for x in msg['event']
-                              ['updates'] if x['id'] == doc['_id'])
-                if update:
-                    msg['event']['updates'] = update['updates']
-        # End of duplicating messages so old code can work
-            if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-                pass
             logger.debug(msg)
-
+        # End of duplicating messages so old code can work
             collection = msg["event"]['col']
             doc = msg['event']['doc']
-
             msg_type = msg["event"]["type"]
-            if msg_type == "UPDATE":
-                app_id = msg["event"]["doc"]["_id"]
+            app_id = doc["_id"]
+
+            # Its a create message
+            if msg_type == "CREATE":
+                self.__MSG_METHODS[msg_type](collection, doc)
+            # Its a delete message
+            elif msg_type == "DELETE":
+                self.__MSG_METHODS[msg_type](collection, doc)
+            # Its an update message
+            elif msg_type == "UPDATE":
+                # all updates for this message [{id: string, updates: {}}, {id:string, updates: {}}...]
+                all_updates = msg['event']['updates']
+                msg_updates = {}
+                # find the updates for this specific app
+                for u in all_updates:
+                    if u['id'] == app_id:
+                        msg_updates = u['updates']
+                        break
+                msg['event']['updates'] = msg_updates
+
+                if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                    pass
+
                 if app_id in self.callbacks:
                     self.handle_linked_app(app_id, msg)
+                self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
 
-                updates = msg['event']['updates']
-                self.__MSG_METHODS[msg_type](collection, doc, updates)
-            else:
-                self.__MSG_METHODS[msg_type](collection, doc)
-
-    # Handle Create Messages
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
         if collection == "ROOMS":
@@ -197,7 +203,6 @@ class SAGEProxy:
             board_id = doc['data']["boardId"]
             room_id = doc['data']['roomId']
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
-
             if type(sb) is GenericSmartBit:
 
                 logger.debug("not handling generic smartbit update")
