@@ -532,12 +532,12 @@ function createWindow() {
   mainWindow.on('leave-full-screen', function () {
     mainWindow.setMenuBarVisibility(true);
   });
-  mainWindow.on('blur', function () {
-    console.log('Electron>	Window blurred');
-  });
-  mainWindow.on('focus', function () {
-    console.log('Electron>	Window show');
-  });
+  // mainWindow.on('blur', function () {
+  //   console.log('Electron>	Window blurred');
+  // });
+  // mainWindow.on('focus', function () {
+  //   console.log('Electron>	Window show');
+  // });
 
   // when the display client is loaded
   mainWindow.webContents.on('did-finish-load', function () {

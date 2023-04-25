@@ -49,7 +49,7 @@ function buildSageMenu(window) {
         },
       },
     ]);
-    tray.setToolTip('This is my application.');
+    tray.setToolTip('SAGE3 controls');
     tray.setContextMenu(contextMenu);
   });
 
@@ -337,7 +337,7 @@ function buildSageMenu(window) {
         {
           label: 'Quick Start Guide',
           click: function () {
-            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-2023a.pdf');
+            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-2023b.pdf');
           },
         },
         {
