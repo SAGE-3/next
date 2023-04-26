@@ -43,6 +43,9 @@ class Seer(SmartBit):
         super(Seer, self).__init__(**kwargs)
         self._jupyter_client = JupyterKernelProxy()
         self._inferred_code  = None
+        valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        if valid_kernel_list:
+            self._kernel = valid_kernel_list[0]
         self._token = {'Authorization': 'Bearer ' + os.getenv("TOKEN")}
         if self._jupyter_client.redis_server.json().get('JUPYTER:KERNELS') is None:
             self._jupyter_client.redis_server.json().set('JUPYTER:KERNELS', '.', {})

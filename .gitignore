@@ -28,3 +28,7 @@ webstack/package-lock.json
 
 # logs
 *.log
+
+
+# temp
+foresight/SeerProxy.py
