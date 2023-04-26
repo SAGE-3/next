@@ -71,7 +71,6 @@ class Board():
             u = sb.get_updates_for_batch()
             updates.append(u)
 
-        print(f"updates are {updates}")
         # Using the highjack, but board should have its own commmuncation object
         sb_leech._s3_comm.send_app_batch_update({'batch': updates})
         print("Done executing organize_layout on the baord")
