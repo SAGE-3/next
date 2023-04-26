@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ButtonGroup, HStack, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
+import { Box, ButtonGroup, HStack, IconButton, Spacer, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 import { v4 as getUUID } from 'uuid';
@@ -22,7 +22,6 @@ import { debounce } from 'throttle-debounce';
 type CodeEditorProps = {
   app: App;
   access: boolean; // Does this user have access to the sagecell's selected kernel
-  editorHeight?: number;
 };
 
 /**
@@ -44,7 +43,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   // Handle to the Monoco API
   const monaco = useMonaco();
   // const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
-  const [myKernels, setMyKernels] = useState(s.kernels);
+  const [myKernels, setMyKernels] = useState(s.availableKernels);
   const [access, setAccess] = useState<boolean>(false);
   const [kernel, setKernel] = useState(s.kernel);
   const roomId = props.app.data.roomId;
@@ -93,7 +92,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   useEffect(() => {
     // Get all kernels that I'm available to see
     const kernels: any[] = [];
-    s.kernels
+    s.availableKernels
       // filter kernels to show this board kernels only
       .filter((kernel) => kernel.value.board === boardId)
       // filter kernels to show pulic or private kernels that I own
@@ -107,7 +106,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
         }
       });
     setMyKernels(kernels);
-  }, [JSON.stringify(s.kernels)]);
+  }, [JSON.stringify(s.availableKernels)]);
 
   // Check if I have access to the selected kernel
   useEffect(() => {
@@ -190,18 +189,11 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
 
   const options = {
     fontSize: fontSize,
-    fontFamily: 'monaco, monospace',
     minimap: { enabled: false },
-    lineNumbers: 'on',
+    lineNumbers: 'off',
     automaticLayout: true,
     quickSuggestions: false,
-    scrollBeyondLastLine: false,
-    lineDecorationsWidth: 0,
-    wordBasedSuggestions: false,
-    lineNumbersMinChars: 3,
     glyphMargin: false,
-    autoIndent: 'advanced', // 'none' | 'keep' | 'brackets' | 'advanced' | 'full'
-    fixedOverflowWidgets: true,
     readOnlyMessage: 'You do not have access to this kernel',
     readOnly: !access,
     padding: {
@@ -213,9 +205,9 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
       useShadows: false,
       verticalHasArrows: false,
       horizontalHasArrows: false,
-      vertical: 'hidden', // 'scroll' | 'hidden' | 'visible' | 'auto'
+      vertical: 'auto', // 'scroll' | 'hidden' | 'visible' | 'auto'
       horizontal: 'scroll',
-      verticalScrollbarSize: 0,
+      verticalScrollbarSize: 10,
       horizontalScrollbarSize: 10,
       arrowSize: 30,
     },
@@ -226,19 +218,19 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
 
   return (
     <>
-      <HStack pr={2}>
+      <HStack mr={2}>
         <Editor
           value={code}
           defaultLanguage="python"
-          height={props.editorHeight && props.editorHeight > 100 ? props.editorHeight : 100}
-          width={`calc(100% - ${access ? 50 : 0}px)`}
+          width={'100%'}
+          height={'10vh'}
           language={'python'}
           theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
           options={options}
           onChange={handleCodeChange}
           onMount={handleEditorDidMount}
         />
-        <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+        <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical" p={1}>
           <Tooltip hasArrow label="Execute" placement="right-start">
             <IconButton
               onClick={() => handleExecute(s.kernel)}

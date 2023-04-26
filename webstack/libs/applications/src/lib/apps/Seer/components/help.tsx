@@ -10,7 +10,9 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Flex,
   IconButton,
+  Image,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -21,6 +23,7 @@ import {
   Kbd,
   HStack,
   Container,
+  Spacer,
 } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
@@ -47,33 +50,34 @@ export function HelpModal(props: HelpProps) {
       <ModalContent>
         <ModalHeader>
           <HStack>
-            <AppIcon height={'50px'} />
             <Text fontSize={'48px'}>Welcome to Seer</Text>
+            <Spacer />
+            {/* <AppIcon height={'50px'} /> */}
+            <Image src={imgSource} alt="Image" boxSize="64px" />
           </HStack>
         </ModalHeader>
         <ModalBody>
           <Box mb={4}>
-            <Text fontSize="lg">
-              Welcome to <b>Seer</b> - an AI-agent to assist with Python operations.
-            </Text>
+            <Flex alignItems="center">
+              <Text fontSize="xl">
+                The SAGE3 application, <b>Seer</b>, is a powerful tool for generating code that currently focuses on working with Pandas
+                dataframes.
+              </Text>
+            </Flex>
             <Text mt={2}>
-              {/* <b>SAGECells</b> allow for real-time interaction between users, Jupyter notebooks, and application "Smartbits" within SAGE3.
-              <br />
-              <b>Smartbits</b> are the objects created each time you run an app on the board. We can access the app info and
-              programmatically perform actions on the board. For example, we can create a new Smartbit, or we can update an existing
-              Smartbit. We can also access the board's state, which is a JSON object that contains all the information about the board,
-              including the Smartbits and their properties. We can perform machine learning tasks on the board, or we can create a new
-              Smartbit based on the results of a given task. You can also use Python SAGECells to create automated workflows that can be
-              triggered by events on the board. */}
+              Whether you're a seasoned programmer or have little to no experience, <b>Seer</b> is designed to be flexible and extensible,
+              allowing you to start wrangling and analyzing data right away.
             </Text>
           </Box>
           <Box mb={4}>
-            <Text>
-              {/* You can drop a .py script onto the board to create a SAGECell, or just start typing. Edit the code to fit your needs, and then
-              run it using the <b>play button</b> or <Kbd>Shift</Kbd> + <Kbd>Enter</Kbd>. If you change your mind or want to stop the
-              process, simply press the <b>stop button</b>. If the code is running and there is an error, the code will stop and the error
-              will be displayed in the <b>output box</b>. If you want to clear the code editor, press the <b>clear button</b>. We recently
-              added split-pane support, so you can now view adjust how much of the screen is dedicated to the code editor and output box. */}
+            <Text fontSize="md">
+              To generate code, simply enter a natural language prompt in the first input box, and then press <Kbd>Shift</Kbd> +{' '}
+              <Kbd>Enter</Kbd> or the play button from within the <i>Prompt Editor</i> to begin the process.
+            </Text>
+            <Text fontSize="md" mt={2}>
+              The generated code will appear in the second input box, which is a code editor. You can edit the code to fit your needs, and
+              then run it again using the play button or <Kbd>Shift</Kbd> + <Kbd>Enter</Kbd> from within the <i>Code Editor</i>. If you
+              change your mind or want to stop the process, simply press the stop button.
             </Text>
             <Text mt={2}>Let's work together to create something amazing!</Text>
             <Text fontSize="md" color="gray.500" mt={2}>
@@ -92,9 +96,9 @@ export function HelpModal(props: HelpProps) {
           </Container>
           <Box>
             <Text fontSize="md">
-              {/* The output of the code will be displayed below. Some of the generated images can be dragged onto the board. We are working to
-              add this feature to more output types soon. Use the toolbar at the bottom of the page to select from one of the available
-              kernels to get started! */}
+              Just like in SAGECells, the output of the code will be displayed in the <i>Output Box</i>. Some of the generated images can be
+              dragged onto the board. We are working to add this feature to more output types soon. Use the toolbar at the bottom of the
+              page to select from one of the available kernels to get started!
             </Text>
           </Box>
           <Box mt={4}>
@@ -103,6 +107,10 @@ export function HelpModal(props: HelpProps) {
               to reach out to the SAGE3 team. We're always here to help and eager to hear your feedback!
             </Text>
           </Box>
+          <Box mt={4}></Box>
+          <Flex justifyContent="center" alignItems="center">
+            <Image boxSize={'48px'} src={docsImageSource} alt="SAGE3 Docs" />
+          </Flex>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>

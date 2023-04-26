@@ -61,7 +61,7 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   function setStates() {
     // get all the kernels in the wild
-    const kernels = s.kernels;
+    const kernels = s.availableKernels;
     const b = kernels.filter((el) => el.value.board === boardId);
     // if there are no kernels for the board, or at all, reset the local state
     if (!kernels || kernels.length === 0 || b.length === 0) {
@@ -133,7 +133,7 @@ export function ToolbarComponent(props: App): JSX.Element {
     // rebuild the state to reflect any changes affected
     // by the global state change
     setStates();
-  }, [s.kernel, JSON.stringify(s.kernels)]);
+  }, [s.kernel, JSON.stringify(s.availableKernels)]);
 
   /**
    * This is called when the user selects a kernel from the dropdown
@@ -178,11 +178,11 @@ export function ToolbarComponent(props: App): JSX.Element {
           {/* check if there are kernels avaible. if none show offline, if available but no access show online with no kernels,
            if available and access show online with kernels
           */}
-          {s.kernels.length === 0 ? (
+          {s.availableKernels.length === 0 ? (
             <Badge colorScheme="red" rounded="sm" size="lg">
               Offline
             </Badge>
-          ) : s.kernels.length > 0 && !selected ? (
+          ) : s.availableKernels.length > 0 && !selected ? (
             <Badge colorScheme="yellow" rounded="sm" size="lg">
               Online
             </Badge>

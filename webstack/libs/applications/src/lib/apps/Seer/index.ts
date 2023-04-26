@@ -13,39 +13,38 @@ import { z } from 'zod';
  * created by: Mahdi
  */
 
+export const name = 'Seer';
+
 export const schema = z.object({
-  fontSize: z.number(),
-  execCount: z.number(),
-  isTyping: z.boolean(),
-  prompt: z.string(),
-  code: z.string(),
-  output: z.string(),
-  kernel: z.string(),
-  kernels: z.array(
+  availableKernels: z.array(
     z.object({
       key: z.string(),
       value: z.record(z.string(), z.any()),
     })
   ),
+  code: z.string(),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.record(z.any()),
   }),
+  execCount: z.number(),
+  fontSize: z.number(),
+  isTyping: z.boolean(),
+  kernel: z.string(),
+  output: z.string(),
+  prompt: z.string(),
 });
 
-// export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  prompt: '',
-  execCount: 0,
-  isTyping: false,
+  availableKernels: [],
   code: '',
-  output: '',
-  kernel: '',
-  kernels: [],
   executeInfo: { executeFunc: '', params: {} },
+  execCount: 0,
   fontSize: 24,
+  isTyping: false,
+  kernel: '',
+  output: '',
+  prompt: '',
 };
-
-export const name = 'Seer';

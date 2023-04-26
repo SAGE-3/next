@@ -142,7 +142,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   // Get the color of the kernel owner
   useEffect(() => {
     if (s.kernel && users) {
-      const kernels = s.kernels;
+      const kernels = s.availableKernels;
       const owner = kernels.find((el) => el.key === s.kernel)?.value.owner_uuid;
       const ownerColor = users.find((el) => el._id === owner)?.data.color;
       setOwnerColor(ownerColor || '#000000');
