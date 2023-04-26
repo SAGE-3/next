@@ -161,7 +161,6 @@ const AppComponent = (props: App): JSX.Element => {
           height={'100%'}
           width={'100%'}
           position={'absolute'}
-          zIndex={1000}
         >
           {/* put a massive Jupyter icon as a faded background image */}
           <Box
