@@ -34,9 +34,10 @@ import { Outputs } from './components/outputs';
 import { ToolbarComponent } from './components/toolbar';
 import { SageCellInput } from './components/input';
 import './styles.css';
-import { FaUserFriends } from 'react-icons/fa';
-import { use } from 'passport';
 
+const rootStyle = { display: 'flex', justifyContent: 'center' };
+const rowStyle = { margin: '200px 0', display: 'flex', justifyContent: 'space-between' };
+const boxStyle = { padding: '10px', border: '1px solid black' };
 /**
  * SageCell - SAGE3 application
  *
@@ -141,6 +142,10 @@ const AppComponent = (props: App): JSX.Element => {
     }
   }, [s.kernel]);
 
+  /**
+   *
+   */
+
   return (
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
@@ -213,43 +218,7 @@ const AppComponent = (props: App): JSX.Element => {
                 <Box className="arrow-down" />
               </Box>
             </Box>
-            {/* {awaitingInput ? null : (
-              // <SageCellInput />
-              <Box>
-                <Input
-                  placeholder="Enter input"
-                  _placeholder={{ color: useColorModeValue('gray.800', 'gray.200') }}
-                  _focus={{ borderColor: 'teal.600', boxShadow: '0 0 0 1px teal.600' }}
-                  _hover={{ borderColor: 'teal.600' }}
-                  size="lg"
-                  variant="filled"
-                  fontFamily="Menlo, Consolas"
-                  fontSize={s.fontSize + 'px'}
-                  rounded="none"
-                  // borderColor={bgColor}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                  }}
-                  value={input}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      updateState(props._id, {
-                        code: input,
-                        output: '',
-                        executeInfo: {
-                          executeFunc: 'execute',
-                          params: {
-                            _uuid: user!._id,
-                          },
-                        },
-                      });
-                      setInput('');
-                      setAwaitingInput(false);
-                    }
-                  }}
-                />
-              </Box>
-            )} */}
+
             {/* The output */}
             <Box flex="1" overflow="auto" w={'100%'} h={'100%'}>
               {!s.output ? null : <Outputs output={s.output} app={props} />}

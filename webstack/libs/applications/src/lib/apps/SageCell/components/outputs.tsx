@@ -118,7 +118,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
     if (p.execute_result || p.display_data) {
       const metadata = p.execute_result?.metadata || p.display_data?.metadata;
       const data = p.execute_result?.data || p.display_data?.data;
-      if (data) {
+      if (data && metadata) {
         for (const [key, value] of Object.entries(data)) {
           const width = metadata[key] ? metadata[key]['width'] : 'auto';
           const height = metadata[key] ? metadata[key]['height'] : 'auto';
@@ -126,26 +126,25 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
           switch (key) {
             case 'text/html':
             case 'image/svg+xml':
-              let html_template = `<!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1">
-                  <script src="https://unpkg.com/jupyter-js-widgets@2.0.*/dist/embed.js"></script>
-                  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
-                  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-                </head>
-                <body>
-                  <div tabindex="-1" id="notebook" className="border-box-sizing">
-                    <div className="container" id="notebook-container">
-                      ${value}
-                    </div>
-                  </div>
-                </body>
-              </html>`;
-              setOutput((prev) => [...prev, <Markdown key={uuid} markdown={`${value}`} openInWebview={openInWebview} />]);
-
-              // setOutput((prev) => [...prev, <Box key={uuid} dangerouslySetInnerHTML={{ __html: value }} width={width} height={height} />]);
+              // let html_template = `<!DOCTYPE html>
+              // <html>
+              //   <head>
+              //     <meta charset="utf-8">
+              //     <meta name="viewport" content="width=device-width, initial-scale=1">
+              //     <script src="https://unpkg.com/jupyter-js-widgets@2.0.*/dist/embed.js"></script>
+              //     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+              //     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+              //   </head>
+              //   <body>
+              //     <div tabindex="-1" id="notebook" className="border-box-sizing">
+              //       <div className="container" id="notebook-container">
+              //         ${value}
+              //       </div>
+              //     </div>
+              //   </body>
+              // </html>`;
+              // setOutput((prev) => [...prev, <Markdown key={uuid} markdown={`${value}`} openInWebview={openInWebview} />]);
+              setOutput((prev) => [...prev, <Box key={uuid} dangerouslySetInnerHTML={{ __html: value }} width={width} height={height} />]);
               break;
             case 'text/plain':
               /**
