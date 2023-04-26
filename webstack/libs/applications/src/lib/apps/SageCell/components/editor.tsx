@@ -7,12 +7,12 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ButtonGroup, HStack, Icon, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
+import { ButtonGroup, HStack, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 import { v4 as getUUID } from 'uuid';
 
-import { useAppStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
@@ -37,13 +37,13 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const editor = useRef<Monaco>();
   const [code, setCode] = useState<string>(s.code);
   const { user } = useUser();
-  const { users } = useUsersStore();
   const { colorMode } = useColorMode();
   const [fontSize, setFontSize] = useState(s.fontSize);
   // Make a toast to show errors
   const toast = useToast();
   // Handle to the Monoco API
   const monaco = useMonaco();
+  // Local state for the kernels (each user may access different kernels)
   const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
   const [access, setAccess] = useState<boolean>(false);
   const [kernel, setKernel] = useState(s.kernel);
@@ -152,7 +152,6 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
         code: code,
         output: '',
         executeInfo: { executeFunc: 'execute', params: { _uuid: requestId } },
-        activeUsers: new Set(),
       });
     }
   };

@@ -34,6 +34,33 @@ def format_execute_request_msg(exec_uuid, code, msg_type='execute_request'):
            'content': content}
     return msg
 
+def format_inspect_request_msg(exec_uuid, code, cursor_pos, detail_level, msg_type='inspect_request'):
+    content = {'code': code, 'cursor_pos': cursor_pos, 'detail_level': detail_level}
+    hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
+           'username': 'tests',
+           'data': datetime.datetime.now().isoformat(),
+           'msg_type': msg_type,
+           'version': '5.0'}
+    msg = {'header': hdr,
+           'parent_header': hdr,
+           'metadata': {},
+           'channel': 'shell',
+           'content': content}
+    return msg
+
+def format_complete_request_msg(exec_uuid, code, cursor_pos, msg_type='complete_request'):
+    content = {'code': code, 'cursor_pos': cursor_pos}
+    hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
+           'username': 'tests',
+           'data': datetime.datetime.now().isoformat(),
+           'msg_type': msg_type,
+           'version': '5.0'}
+    msg = {'header': hdr,
+           'parent_header': hdr,
+           'metadata': {},
+           'channel': 'shell',
+           'content': content}
+    return msg
 
 class TestiongJupyterClient(WebSocketBaseClient):
     def __init__(self, address, headers):
@@ -138,6 +165,32 @@ class JupyterKernelProxy:
             # TODO something happened and code couldn't be run
             #  send error back to the user
             del self.callback_info[user_passed_uuid]
+
+    def inspect(self, command_info):
+        """
+        Send an inspect to the kernel defined in the command info
+        """
+        kernel_id = command_info['kernel']
+        code = command_info["code"]
+        cursor_pos = command_info["cursor_pos"]
+        detail_level = command_info["detail_level"]
+
+        if kernel_id in self.connections:
+            msg = format_inspect_request_msg(code, cursor_pos, detail_level)
+            self.connections[kernel_id].send(json.dumps(msg), binary=False)
+
+
+    def complete(self, command_info):
+        """
+        Send an complete to the kernel defined in the command info
+        """
+        kernel_id = command_info['kernel']
+        code = command_info["code"]
+        cursor_pos = command_info["cursor_pos"]
+
+        if kernel_id in self.connections:
+            msg = format_complete_request_msg(code, cursor_pos)
+            self.connections[kernel_id].send(json.dumps(msg), binary=False)
 
 
     def interrupt(self, command_info):

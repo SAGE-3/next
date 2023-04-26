@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React imports
 import { useEffect, useState } from 'react';
-
-import { Box, Image, Text, useColorModeValue } from '@chakra-ui/react';
-
-// Ansi library
+// Chakra UI
+import { Box, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react';
+// Ansi library for terminal colors
 import Ansi from 'ansi-to-react';
 // Markdown library
 import { Markdown } from './markdown';
@@ -22,12 +22,13 @@ import { Vega } from 'react-vega';
 import { VegaLite } from 'react-vega';
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
-
+// SAGE3 imports
 import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
-
+// Schema (for types)
 import { App } from '../../../schema';
+// Output type (for types)
 import { Output, state as AppState } from '../index';
-
+// UUID library
 import { v4 as getUUID } from 'uuid';
 
 type OutputBoxProps = {
@@ -82,7 +83,6 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   }, [p.request_id]);
 
   useEffect(() => {
-    // if (!p) return;
     if (p.execute_result) {
       setCount(p.execute_result.execution_count);
     }
@@ -217,12 +217,14 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
         borderLeft={`0.2em solid ${useHexColor(ownerColor)}`}
         fontSize={s.fontSize + 'px'}
       >
-        {count && (
-          <Text color={'red'} fontSize="sm">
-            Out[{count}]:
-          </Text>
-        )}
-        {!output ? null : output}
+        <Flex direction="row" justify="left" align="center">
+          {!count ? null : (
+            <Text color={'red'} fontSize="sm">
+              [{count}]:
+            </Text>
+          )}
+          {!output ? null : output}
+        </Flex>
       </Box>
     </>
   );

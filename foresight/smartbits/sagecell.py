@@ -21,8 +21,11 @@ logger = logging.getLogger(__name__)
 class SageCellState(TrackedBaseModel):
     code: str = ""
     language: str = ""
+    summary: str = "",
+    notebookUrl: str = "",
+    cellNumber: int = 0,
     isTyping: bool = False
-    fontSize: int = 16
+    fontSize: int = 24
     theme: str = "xcode"
     kernel: str = ""
     privateMessage: list = []
