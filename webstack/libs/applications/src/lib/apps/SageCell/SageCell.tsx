@@ -28,6 +28,20 @@ import {
   IconButton,
   Input,
   useEditableControls,
+  PopoverTrigger,
+  FocusLock,
+  FormControl,
+  FormLabel,
+  Popover,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverContent,
+  Stack,
+  PopoverBody,
+  PopoverHeader,
+  PopoverFooter,
+  Portal,
+  CircularProgress,
 } from '@chakra-ui/react';
 
 // SAGE3 imports
@@ -44,6 +58,7 @@ import { StatusBar } from './components/status';
 import './styles.css';
 import React from 'react';
 import { MdCheck, MdClose, MdCode, MdEdit } from 'react-icons/md';
+import { render } from '@react-three/fiber';
 
 // const rootStyle = { display: 'flex', justifyContent: 'center' };
 // const rowStyle = { margin: '200px 0', display: 'flex', justifyContent: 'space-between' };
@@ -162,6 +177,44 @@ const AppComponent = (props: App): JSX.Element => {
           width={'100%'}
           position={'absolute'}
         >
+          <Box color={'white'} fontWeight="extrabold" position={'absolute'} top={'-25'} left={'-25'}>
+            {/* <svg width="800" height="800">
+              <g>
+                <text x="30" y="60" fill="white">
+                  Circle #1: Without opacity.
+                </text>
+                <circle cx="100" cy="100" r="50" stroke="black" stroke-width="3" fill="rgb(121,0,121)"></circle>
+              </g>
+            </svg> */}
+            {/* <CircularProgress isIndeterminate color="green.300" thickness="10px" size="100px" /> */}
+            {/* <IconButton
+              aria-label="Edit"
+              icon={<MdEdit size={scaledFontSize * 2} />}
+              onClick={getKernels}
+              // position should be in the upper right corner
+              position={'absolute'}
+              // right={'5'}
+              // padding should be 10px
+              padding={'10px'}
+            /> */}
+            {/* <Popover isLazy>
+              <PopoverTrigger>
+                <Button>
+                  <MdEdit size={scaledFontSize * 2} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <PopoverHeader fontSize={`${scaledFontSize * 2}px`}>Popover placement</PopoverHeader>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverBody>
+                  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore.
+                </PopoverBody>
+              </PopoverContent>
+            </Popover> */}
+          </Box>
+
+          {/* </Box> */}
           {/* put a massive Jupyter icon as a faded background image */}
           <Box
             position="absolute"
