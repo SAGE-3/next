@@ -79,6 +79,7 @@ class Seer(SmartBit):
         self.send_updates()
 
     def execute(self, _uuid):
+        print("I am in execute")
         """
         Non blocking function to execute code. The proxy has the responsibility to execute the code
         and to call a call_back function which know how to handle the results message
@@ -101,15 +102,20 @@ class Seer(SmartBit):
         print("I am in seer's execute.")
         # TODO: handle the posts as async instead
         if self.state.prompt:
-            payload = {"query": self.state.prompt}
+            print(f"here is the prompt: {self.state.prompt}")
+            payload = {"query": self.state.prompt.strip()}
             headers = {'Content-Type': 'application/json'}
             resp = httpx.post('http://127.0.0.1:5002/query', headers=headers, json=payload, timeout=15.0)
+
             if resp.status_code == 200 and resp.json()["status"] == "success":
+                print("I got some code from the seer server.")
                 code = resp.json()["code"]
                 print(f"GOT CODE FROM SEER SERVER AND IT's {code}")
                 self.state.code = code
+                #self.handle_exec_result()
                 self.execute(_uuid)
             else:
+                print("Something went wrong")
                 msg = {"request_id": _uuid,
                        "error": {
                            'ename': "SeerPromptError",  # Exception name, as a string
