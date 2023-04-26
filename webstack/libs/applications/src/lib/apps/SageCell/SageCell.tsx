@@ -77,6 +77,65 @@ const AppComponent = (props: App): JSX.Element => {
   const [access, setAccess] = useState(true);
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+  const [cellOrder, setCellOrder] = useState<string[]>([]);
+
+  const apps = useAppStore((state) => state.apps);
+
+  // get a list of all the cells on the current board that are assigned to the same kernel
+  useEffect(() => {
+    // get all the apps that are sagecells on the board and filter out the ones that are not the same kernel
+    const cells = apps.filter((app) => {
+      return app.data.type === 'SageCell' && app.data.state.kernel === s.kernel;
+    });
+    // find the last cell (bottom right)
+    const lastCell = cells.reduce((prev, current) => {
+      const prevPos = prev.data.position;
+      const currPos = current.data.position;
+      if (prevPos.x > currPos.x) {
+        return prev;
+      } else if (prevPos.x < currPos.x) {
+        return current;
+      } else {
+        if (prevPos.y > currPos.y) {
+          return prev;
+        } else if (prevPos.y < currPos.y) {
+          return current;
+        } else {
+          return prev;
+        }
+      }
+    });
+    if (lastCell) {
+      cells.sort((a, b) => {
+        const aPos = a.data.position;
+        const bPos = b.data.position;
+        if (aPos.x < bPos.x) {
+          return -1;
+        } else if (aPos.x > bPos.x) {
+          return 1;
+        } else {
+          if (aPos.y < bPos.y) {
+            return -1;
+          } else if (aPos.y > bPos.y) {
+            return 1;
+          } else {
+            return 0;
+          }
+        }
+      });
+      const order: string[] = [];
+      cells.forEach((cell) => {
+        const state = cell.data.state as AppState;
+        order.push(cell._id);
+      });
+      setCellOrder(order);
+    }
+  }, [JSON.stringify(apps), s.kernel]);
+
+  useEffect(() => {
+    const cellNumber = cellOrder.indexOf(props._id) + 1;
+    updateState(props._id, { cellNumber: cellNumber });
+  }, [JSON.stringify(cellOrder)]);
 
   // Needed for Div resizing
   const [editorHeight, setEditorHeight] = useState(150);
@@ -177,15 +236,25 @@ const AppComponent = (props: App): JSX.Element => {
           width={'100%'}
           position={'absolute'}
         >
-          <Box color={'white'} fontWeight="extrabold" position={'absolute'} top={'-25'} left={'-25'}>
-            {/* <svg width="800" height="800">
+          {/* <Box color={'white'} fontWeight="extrabold" position={'absolute'} top={'0'} left={'0'}> */}
+          <Box position={'absolute'} top={'-125px'} left={'-125px'}>
+            <svg width="250" height="250" viewBox="0 0 200 200">
               <g>
-                <text x="30" y="60" fill="white">
-                  Circle #1: Without opacity.
-                </text>
                 <circle cx="100" cy="100" r="50" stroke="black" stroke-width="3" fill="rgb(121,0,121)"></circle>
+                <text
+                  x="50%"
+                  y="50%"
+                  dominant-baseline="middle"
+                  text-anchor="middle"
+                  fill="white"
+                  font-size={`${scaledFontSize}px`}
+                  font-family="Arial, Helvetica, sans-serif"
+                  font-weight="bold"
+                >
+                  {props.data.state.cellNumber}
+                </text>
               </g>
-            </svg> */}
+            </svg>
             {/* <CircularProgress isIndeterminate color="green.300" thickness="10px" size="100px" /> */}
             {/* <IconButton
               aria-label="Edit"
