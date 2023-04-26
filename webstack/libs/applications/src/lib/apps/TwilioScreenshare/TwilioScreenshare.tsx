@@ -81,6 +81,7 @@ function AppComponent(props: App): JSX.Element {
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
   const [selectedSource, setSelectedSource] = useState<ElectronSource | null>(null);
+  const [currentDisplay, setCurrentDisplay] = useState<string | null>(null);
 
   // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -93,10 +94,10 @@ function AppComponent(props: App): JSX.Element {
   const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
 
   // UIStore
-  const scale = useUIStore((state) => state.scale);
-  const setScale = useUIStore((state) => state.setScale);
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  // const scale = useUIStore((state) => state.scale);
+  // const setScale = useUIStore((state) => state.setScale);
+  // const boardPosition = useUIStore((state) => state.boardPosition);
+  // const setBoardPosition = useUIStore((state) => state.setBoardPosition);
 
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
@@ -164,6 +165,11 @@ function AppComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       if (isElectron()) {
         try {
+          window.electron.on('current-display', (display: number) => {
+            setCurrentDisplay(display.toString());
+          });
+          window.electron.send('request-current-display');
+
           // Get sources from the main process
           window.electron.on('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
@@ -220,6 +226,8 @@ function AppComponent(props: App): JSX.Element {
       });
       videoRef.current.srcObject = null;
     }
+    // Hide Electron window
+    // if (isElectron()) window.electron.send('show-main-window', {});
   };
 
   useEffect(() => {
@@ -241,18 +249,26 @@ function AppComponent(props: App): JSX.Element {
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current) {
         track.attach(videoRef.current);
+        // Zoom to the window
+        goToScreenshare();
         // Show a notification
         toast({
-          title: 'Screensharing1 started for ' + props.data.title,
-          description: (
-            <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
-              Zoom to Window
-            </Button>
-          ),
+          title: 'Screensharing started for ' + props.data.title,
           status: 'success',
-          duration: 12000,
+          duration: 5000,
           isClosable: true,
         });
+        // toast({
+        //   title: 'Screensharing started for ' + props.data.title,
+        //   description: (
+        //     <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
+        //       Zoom to Window
+        //     </Button>
+        //   ),
+        //   status: 'success',
+        //   duration: 12000,
+        //   isClosable: true,
+        // });
       }
     });
   }, [tracks, s.videoId]);
@@ -304,18 +320,32 @@ function AppComponent(props: App): JSX.Element {
       await updateState(props._id, { videoId });
       setSelTrack(screenTrack);
       onClose();
+
+      // Hide Electron window if on same screen
+      // if (selectedSource.display_id === currentDisplay) {
+      //   if (isElectron()) window.electron.send('hide-main-window', {});
+      // }
+
       // Show a notification
+      goToScreenshare();
       toast({
-        title: 'Screensharing2 started for ' + props.data.title,
-        description: (
-          <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
-            Zoom to Window
-          </Button>
-        ),
+        title: 'Your screensharing started, ' + props.data.title,
         status: 'success',
-        duration: 12000,
+        duration: 3000,
         isClosable: true,
       });
+
+      // toast({
+      //   title: 'Your screensharing started, ' + props.data.title,
+      //   description: (
+      //     <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
+      //       Zoom to Window
+      //     </Button>
+      //   ),
+      //   status: 'success',
+      //   duration: 12000,
+      //   isClosable: true,
+      // });
     }
   };
 

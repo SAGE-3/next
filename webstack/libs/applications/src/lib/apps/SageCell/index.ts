@@ -53,6 +53,7 @@ const activeUsersSchema = z.array(z.string());
 export const schema = z.object({
   code: z.string(),
   language: z.string(),
+  isTyping: z.boolean(),
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
@@ -75,6 +76,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   code: '',
   language: 'python',
+  isTyping: false,
   fontSize: 16,
   theme: 'vs-dark',
   kernel: '',

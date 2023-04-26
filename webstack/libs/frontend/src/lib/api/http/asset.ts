@@ -13,7 +13,7 @@
  * @version 1.0.0
  */
 
-import { Asset, AssetSchema } from '@sage3/shared/types';
+import { Asset } from '@sage3/shared/types';
 import { APIHttp } from './api-http';
 
 // async function read(id: Asset['_id']): Promise<AssetType[] | undefined> {
@@ -22,7 +22,7 @@ import { APIHttp } from './api-http';
 // }
 
 async function readAll(): Promise<Asset[] | undefined> {
-  const response = await APIHttp.GET<AssetSchema, Asset>('/assets');
+  const response = await APIHttp.GET<Asset>('/assets');
   return response.data;
 }
 

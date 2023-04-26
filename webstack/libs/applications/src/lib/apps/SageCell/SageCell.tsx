@@ -7,21 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  Box,
-  useColorModeValue,
-  Divider,
-  Badge,
-  Spacer,
-  Stack,
-  Input,
-  Avatar,
-  AvatarBadge,
-  AvatarGroup,
-  Tooltip,
-  IconButton,
-  Icon,
-} from '@chakra-ui/react';
+import { Box, useColorModeValue, Divider } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore, useUser, useUsersStore, truncateWithEllipsis, useRoomStore } from '@sage3/frontend';
@@ -32,7 +18,8 @@ import { App } from '../../schema';
 import { CodeEditor } from './components/editor';
 import { Outputs } from './components/outputs';
 import { ToolbarComponent } from './components/toolbar';
-import { SageCellInput } from './components/input';
+import { StatusBar } from './components/status';
+
 import './styles.css';
 
 const rootStyle = { display: 'flex', justifyContent: 'center' };
@@ -55,7 +42,6 @@ const AppComponent = (props: App): JSX.Element => {
 
   // Needed for Div resizing
   const [editorHeight, setEditorHeight] = useState(150);
-
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
@@ -149,40 +135,8 @@ const AppComponent = (props: App): JSX.Element => {
   return (
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
-      <Box className="sc" h={'calc(100% - 1px)'} w={'calc(100% - 1px'}>
-        <Stack direction="row" bgColor={bgColor} p={1}>
-          <Badge variant="outline" colorScheme="blue">
-            {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
-          </Badge>
-          {!activeUsers ? null : (
-            <AvatarGroup size="xs" max={10}>
-              {typingUsers.map((user) => (
-                <Tooltip key={user._id} label={user.data.name} placement="top">
-                  <Avatar size={'2xs'} name={user.data.name} src={user.data.profilePicture} />
-                </Tooltip>
-              ))}
-            </AvatarGroup>
-          )}
-          <Spacer />
-          {!s.kernel && !access ? ( // no kernel selected and no access
-            <Badge variant="outline" colorScheme="red">
-              Offline{' '}
-            </Badge>
-          ) : !s.kernel && access ? ( // no kernel selected but access
-            <Badge variant="outline" colorScheme="yellow">
-              {/* {setAccess(false)} somewhere ?? */}
-              Online{' '}
-            </Badge>
-          ) : s.kernel && !access ? ( // kernel selected but no access
-            <Badge variant="outline" colorScheme="red">
-              No Access{' '}
-            </Badge>
-          ) : s.kernel && access ? ( // kernel selected and access
-            <Badge variant="outline" colorScheme="green">
-              Online{' '}
-            </Badge>
-          ) : null}
-        </Stack>
+      <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
+        <StatusBar kernel={s.kernel} access={access} isTyping={s.isTyping} bgColor={bgColor} />
         <Box
           w={'100%'}
           h={'100%'}

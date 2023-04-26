@@ -44,20 +44,37 @@ export async function sageWSRouter<T extends SBJSON>(
   switch (message.method) {
     case 'POST': {
       // POST: Add new document
-      const body = message.body as T;
-      if (body === undefined) {
+      // If body is undefined, return an error
+      if (message.body === undefined) {
         socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
         return;
       } else {
-        const doc = await collection.add(body, user.id);
-        if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
-        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
+        // If 'batch' is present on the body this is a batch post
+        if (message.body.batch) {
+          const body = message.body.batch as T[];
+          const docs = await collection.addBatch(body, user.id);
+          if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create docs.' }));
+        } else {
+          const body = message.body as T;
+          const doc = await collection.add(body, user.id);
+          if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
+        }
       }
       break;
     }
     case 'GET': {
+      // Batch GET: Get multiple docs.
+      const body = message.body;
+      if (body && body.batch) {
+        const ids = body.batch as string[];
+        const docs = await collection.getBatch(ids);
+        if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get docs' }));
+      }
       // GET: Get all the docs.
-      if (route === path) {
+      else if (route === path) {
         const docs = await collection.getAll();
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get docs' }));
@@ -77,27 +94,56 @@ export async function sageWSRouter<T extends SBJSON>(
     }
     // PUT: Update one doc.
     case 'PUT': {
-      const id = getIdFromRoute(route);
-      if (!id) {
-        socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+      // PUT: Update a document
+      // If body is undefined, return an error
+      if (message.body === undefined) {
+        socket.send(JSON.stringify({ id: message.id, success: false, message: 'No body provided' }));
         return;
+      } else {
+        // If path ends with /batch, this is a batch post
+        const body = message.body;
+        // Batch PUT: Update multiple docs.
+        if (body.batch) {
+          const batch = body.batch as { id: string; updates: SBDocumentUpdate<T> }[];
+          const docs = await collection.updateBatch(batch, user.id);
+          if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update docs.' }));
+        } else {
+          // This is a single update to a specific document
+          // Check for ID in route.
+          const id = getIdFromRoute(route);
+          if (!id) {
+            socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+            return;
+          }
+          // Get Body
+          const body = message.body as SBDocumentUpdate<T>;
+          const doc = await collection.update(id, user.id, body);
+          if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
+        }
       }
-      const body = message.body as SBDocumentUpdate<T>;
-      const update = await collection.update(id, user.id, body);
-      if (update) socket.send(JSON.stringify({ id: message.id, success: true }));
-      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update doc' }));
       break;
     }
     // DELETE: Delete one doc.
     case 'DELETE': {
-      const id = getIdFromRoute(route);
-      if (!id) {
-        socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
-        return;
+      // Check if body is an array, if so this is a batch delete
+      const body = message.body;
+      if (body && body.batch) {
+        const batch = body.batch as string[];
+        const docs = await collection.deleteBatch(batch);
+        if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete docs.' }));
+      } else {
+        const id = getIdFromRoute(route);
+        if (!id) {
+          socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
+          return;
+        }
+        const del = await collection.delete(id);
+        if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
+        else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete doc' }));
       }
-      const del = await collection.delete(id);
-      if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
-      else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete doc' }));
       break;
     }
     case 'SUB': {

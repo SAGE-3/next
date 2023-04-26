@@ -6,14 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Electorn
+// Electron
 const electron = require('electron');
+const { app, Menu, Tray, nativeImage } = require('electron');
+const shell = electron.shell;
+const path = require('path');
 
 // Store
 const bookmarkStore = require('./bookmarkstore');
 
 // Utils
-const { updateLandingPage, dialogUserTextInput, checkServerIsSage } = require('./utils');
+const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
 const updater = require('./updater');
 
 /**
@@ -22,6 +25,34 @@ const updater = require('./updater');
  * @returns
  */
 function buildSageMenu(window) {
+  let tray = null;
+  app.whenReady().then(() => {
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show Main Window',
+        click: function () {
+          window.show();
+        },
+      },
+      {
+        label: 'Hide Main Window',
+        click: function () {
+          window.blur();
+        },
+      },
+      {
+        label: 'Quit SAGE3',
+        accelerator: 'CommandOrControl+Q',
+        click: function () {
+          electron.app.quit();
+        },
+      },
+    ]);
+    tray.setToolTip('SAGE3 controls');
+    tray.setContextMenu(contextMenu);
+  });
+
   // Clear Bookmarks button
   const clearBookmarks = {
     label: 'Restore Original Bookmarks',
@@ -109,7 +140,7 @@ function buildSageMenu(window) {
         {
           label: 'Take Screenshot',
           click() {
-            TakeScreenshot();
+            takeScreenshot(window);
           },
         },
         {
@@ -304,7 +335,25 @@ function buildSageMenu(window) {
       role: 'help',
       submenu: [
         {
-          label: 'Learn More',
+          label: 'Quick Start Guide',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-2023b.pdf');
+          },
+        },
+        {
+          label: 'Keyboard Shortcuts',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/Shortcuts');
+          },
+        },
+        {
+          label: 'Developer Site',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/intro');
+          },
+        },
+        {
+          label: 'Main Site',
           click: function () {
             shell.openExternal('http://sage3.sagecommons.org/');
           },

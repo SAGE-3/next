@@ -39,12 +39,14 @@ function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
 
+  const { boardId, roomId } = useParams();
+
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
-  const { boardId, roomId } = useParams();
+  const selectedApp = useUIStore(state => state.selectedAppId)
 
   const backgroundColor = useHexColor(s.color + '.300');
 
@@ -116,10 +118,12 @@ function AppComponent(props: App): JSX.Element {
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!user) return;
-    if (e.repeat) {
-      return;
-    }
+    if (e.repeat) return;
+    // if not selected, don't do anything
+    if (props._id !== selectedApp) return;
+
     if (e.code === 'Tab') {
+      e.preventDefault();
       if (e.shiftKey) {
         // Create a new stickie
         createApp({
@@ -134,9 +138,6 @@ function AppComponent(props: App): JSX.Element {
           state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
           raised: true,
         });
-      } else {
-        e.preventDefault();
-        return;
       }
     }
   };
@@ -170,6 +171,7 @@ function AppComponent(props: App): JSX.Element {
           onKeyDown={handleKeyDown}
           readOnly={locked} // Only the creator can edit
           zIndex={1}
+          name={'stickie' + props._id}
         />
         {locked && (
           <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
