@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class Borg:
     _shared_state = {}
+
     def __init__(self):
         self.__dict__ = self._shared_state
 
@@ -42,6 +43,7 @@ class SageCommunication(Borg):
             "get_boards": "/api/boards/",
             "send_board": "/api/boards/{}",
             "send_update": "/api/apps/{}",
+            'send_batch_update': '/api/apps/',
             "create_app": "/api/apps/",
             "get_assets": "/api/assets/",
             "get_time": "/api/time",
@@ -55,7 +57,7 @@ class SageCommunication(Borg):
         :param data: data
         :return:
         """
-        #print(logging.getLogger().handlers)
+        # print(logging.getLogger().handlers)
         logger.debug(f"sending following update: {data}")
         r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_update"].format(app_id),
                                   headers=self.__headers,
@@ -65,16 +67,22 @@ class SageCommunication(Borg):
         #  will need to replace the print with a better solution
         return r
 
-    def send_board_update(self, app_id, data):
+    def send_app_batch_update(self, data):
         """
         :param app_id:
         :param data: data
         :return:
         """
-        logger.debug(f"sending following board update: {data}")
-        r = self.httpx_client.put(self.conf[self.prod_type]['web_server'] + self.routes["send_board"].format(app_id),
+        # print(logging.getLogger().handlers)
+        logger.debug(f"sending following update: {data}")
+        route = self.conf[self.prod_type]['web_server'] + \
+            self.routes["send_batch_update"]
+        r = self.httpx_client.put(route,
                                   headers=self.__headers,
                                   json=data)
+        # TODO temp fix for this: https://github.com/ipython/ipython/issues/13904
+        #  I assume it's an issue with the logging library since we're logging from a thread
+        #  will need to replace the print with a better solution
         return r
 
     def create_app(self, data):
@@ -193,4 +201,3 @@ class SageCommunication(Borg):
                 data = [app for app in data if app["data"]["roomId"] == room_id]
 
         return data
-

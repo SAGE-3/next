@@ -1,22 +1,23 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
 from typing import ClassVar
-from abc  import abstractmethod
+from abc import abstractmethod
 
 
 # from utils.generic_utils import create_dict
 from utils.sage_communication import SageCommunication
 from operator import attrgetter
 from config import config as conf, prod_type
+
 
 class TrackedBaseModel(BaseModel):
     path: Optional[str]
@@ -32,7 +33,6 @@ class TrackedBaseModel(BaseModel):
         # self._s3_comm = SageCommunication(conf, prod_type)
         # self._jupyter_client: JupyterKernelProxy = JupyterKernelProxy()
         # self._ai_client: AIClient  = AIClient()
-
 
     def __setattr__(self, name, value):
         try:
@@ -56,14 +56,14 @@ class TrackedBaseModel(BaseModel):
         else:
             return False
 
-
     def refresh_data_form_update(self, update_data, updates):
         # TODO replace this temp solution, which updates everything with a
         #  solution that updates only necessary fields
         update_data['state'] = update_data['data']['state']
         del (update_data['data']['state'])
         # we don't need to update the following keys:
-        do_not_modify = ["_id", "_createdAt", '_updatedAt', '_createdBy', '_updatedBy']
+        do_not_modify = ["_id", "_createdAt",
+                         '_updatedAt', '_createdBy', '_updatedBy']
         _ = [update_data.pop(key) for key in do_not_modify]
 
         def attrsetter(name):
@@ -91,7 +91,8 @@ class TrackedBaseModel(BaseModel):
                     error = False
                 finally:
                     if error:
-                        raise Exception(f"Error Happened updating {obj[fields[-1]]} ")
+                        raise Exception(
+                            f"Error Happened updating {obj[fields[-1]]} ")
             return setter
 
         def recursive_iter(u_data, path=[]):
@@ -157,6 +158,7 @@ class TrackedBaseModel(BaseModel):
     def cleanup(self):
         pass
 
+
 class Position(TrackedBaseModel):
     x: int
     y: int
@@ -188,13 +190,14 @@ class AppTypes(Enum):
     vegaliteviewer = "VegaLiteViewer"
     genericsmartbit = "GenericSmartBit"
 
+
 class Data(TrackedBaseModel):
     # name: str
     # description: str
     position: Position
     size: Size
     rotation: Rotation
-    #type: AppTypes
+    # type: AppTypes
     type: str
     # owner_id: str = Field(alias='ownerId')
     # owner_id: str = Field(alias='ownerId')
@@ -218,10 +221,17 @@ class SmartBit(TrackedBaseModel):
         self.touched.clear()
         self._s3_comm.send_app_update(self.app_id, new_data)
 
+    def get_updates_for_batch(self):
+        new_data = self.get_all_touched_fields_dict()
+        self.touched.clear()
+        obj = {'id': self.app_id, 'updates': new_data}
+        return obj
+
     @abstractmethod
     def clean_up(self):
         """cleans up any threads that are unused"""
         pass
+
 
 class ExecuteInfo(TrackedBaseModel):
     # executeFunc is not recognized duirng manual update in refresh_data_form_update
