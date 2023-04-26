@@ -42,7 +42,7 @@ export const init: Partial<state> = {
   code: '',
   executeInfo: { executeFunc: '', params: {} },
   execCount: 0,
-  fontSize: 24,
+  fontSize: 16,
   isTyping: false,
   kernel: '',
   output: '',
