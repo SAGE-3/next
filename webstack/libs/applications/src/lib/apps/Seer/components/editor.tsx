@@ -190,29 +190,21 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const options = {
     fontSize: fontSize,
     minimap: { enabled: false },
-    lineNumbers: 'off',
+    lineNumbers: 'on',
     automaticLayout: true,
     quickSuggestions: false,
     glyphMargin: false,
+    folding: false,
+    lineDecorationsWidth: 10,
+    lineNumbersMinChars: 3,
     readOnlyMessage: 'You do not have access to this kernel',
     readOnly: !access,
-    padding: {
-      top: 8,
-      bottom: 5,
-    },
-    renderLineHighlight: 'none', // 'none' | 'gutter' | 'line' | 'all'
+    renderLineHighlight: 'all', // 'none' | 'gutter' | 'line' | 'all'
     scrollbar: {
-      useShadows: false,
-      verticalHasArrows: false,
-      horizontalHasArrows: false,
       vertical: 'auto', // 'scroll' | 'hidden' | 'visible' | 'auto'
       horizontal: 'scroll',
       verticalScrollbarSize: 10,
       horizontalScrollbarSize: 10,
-      arrowSize: 30,
-    },
-    find: {
-      addExtraSpaceOnTop: false,
     },
   };
 
@@ -223,7 +215,7 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
           value={code}
           defaultLanguage="python"
           width={'100%'}
-          height={'10vh'}
+          height={'150px'}
           language={'python'}
           theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
           options={options}
