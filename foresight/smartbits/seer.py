@@ -36,7 +36,7 @@ class Seer(SmartBit):
         self._inferred_code  = None
         valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
         if valid_kernel_list:
-            self._kernel = jupvalid_kernel_list[0]
+            self._kernel = valid_kernel_list[0]
         self._token = {'Authorization': 'Bearer ' + os.getenv("TOKEN")}
 
     def handle_exec_result(self, msg):

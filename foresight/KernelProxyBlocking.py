@@ -1,3 +1,11 @@
+# Handling Streaming
+# First, we need a callback func. Then, when we get a message in handle_output and
+# The message is of type received_message["msg_type"] == "stream", then we call the callback func.
+# on the partially accumlated or on each message. (easier to do the partially accumulated).
+# At the end, if we called on the partially accumulated, we don't need to call at the return
+# if we call on each individual message, we need to make sure TypeScript  accumulates the results.
+
+
 from utils.generic_utils import create_kernel_message
 
 import json
@@ -40,8 +48,9 @@ class KernelProxyBlocking:
         msg_id = uuid.uuid4().hex
         message["header"]["msg_id"] = msg_id
         message["header"]["session"] = self.session_id
-        output = defaultdict(str)
 
+        if kernel_id in self.websockets:
+            print(f"is closed: {self.websockets[kernel_id].closed}")
         if kernel_id in self.websockets and self.websockets[kernel_id].closed:
             print("Disconnected. Reconnecting...")
             await self.connect(kernel_id)
@@ -64,6 +73,7 @@ class KernelProxyBlocking:
             if received_message["msg_type"] == "stream":
                 if not "text" in output:
                     output["text"] = ""
+                # print(f"Stream and received {received_message['content']['text']}")
                 output["text"] += received_message["content"]["text"]
                 output_received = True
             elif received_message["msg_type"] == "execute_result":
@@ -93,10 +103,9 @@ kernel_id = "87609736-d882-41c3-8bc1-898a32f54aec"
 token = "da792de798fb2b96"
 kernel_proxy = KernelProxyBlocking(token)
 
-await kernel_proxy.connect(kernel_id)
-
-code = "print(a)"
-await kernel_proxy.run_code(kernel_id, code)
+# await kernel_proxy.connect(kernel_id)
+# code = "print(a)"
+# await kernel_proxy.run_code(kernel_id, code)
 
 # if __name__ == "__main__":
 #     kernel_id = "87609736-d882-41c3-8bc1-898a32f54aec"
