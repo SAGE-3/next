@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 /**

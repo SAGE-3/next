@@ -51,6 +51,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
         setLoading(true);
         await timeout(600);
         toBoard(props.board.data.roomId, props.board._id);
+        props.onClose();
       }
     }
     attemptToEnter();
@@ -67,6 +68,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
       setLoading(true);
       await timeout(600);
       toBoard(props.board.data.roomId, props.board._id);
+      props.onClose();
     } else {
       toast({
         title: `The password you have entered is incorrect`,

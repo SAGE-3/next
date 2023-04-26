@@ -110,7 +110,7 @@ export function BoardPage() {
       document.removeEventListener('dragover', handleDragOver);
       document.removeEventListener('drop', handleDrop);
     };
-  }, []);
+  }, [roomId, boardId]);
 
   return (
     <>

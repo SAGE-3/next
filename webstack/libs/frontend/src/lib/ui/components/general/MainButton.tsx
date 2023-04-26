@@ -6,7 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useDisclosure, useColorMode, Menu, MenuButton, MenuList, MenuItem, Button, useToast, MenuDivider } from '@chakra-ui/react';
+import {
+  useDisclosure,
+  useColorMode,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Button,
+  useToast,
+  MenuDivider,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import {
   MdOutlineGridOn,
   MdAccountCircle,
@@ -17,6 +28,7 @@ import {
   MdOutlineLogout,
   MdOutlineVpnKey,
   MdHelp,
+  MdArrowForward,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 
@@ -29,9 +41,13 @@ import {
   copyBoardUrlToClipboard,
   useRouteNav,
   PluginModal,
+  useBoardStore,
+  EnterBoardModal,
+  useHexColor,
 } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
-import { OpenConfiguration } from '@sage3/shared/types';
+import { Board, OpenConfiguration } from '@sage3/shared/types';
+import { useParams } from 'react-router';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -56,7 +72,19 @@ export function MainButton(props: MainButtonProps) {
   const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
+  // Boards
+  const { boards } = useBoardStore((state) => state);
+  boards.sort((a, b) => a.data.name.localeCompare(b.data.name));
+  const { boardId } = useParams();
+  const bgColorName = useColorModeValue('blackAlpha.300', 'whiteAlpha.200');
+  const bgColor = useHexColor(bgColorName);
+
+  // Nav
   const { toAdmin } = useRouteNav();
+
+  // Enter Board Modal
+  const { isOpen: enterBoardIsOpen, onOpen: enterBoardOnOpen, onClose: enterBoardOnClose } = useDisclosure();
+  const [enterBoard, setEnterBoard] = useState<Board | undefined>(undefined);
 
   useEffect(() => {
     if (user && props.config) {
@@ -92,9 +120,36 @@ export function MainButton(props: MainButtonProps) {
     aboutOnOpen();
   };
 
+  const [boardListOpen, setBoardListOpen] = useState<boolean>(false);
+
+  const openBoardList = () => {
+    setBoardListOpen(true);
+  };
+
+  const closeBoardList = () => {
+    if (boardListOpen) {
+      setBoardListOpen(false);
+    }
+  };
+
+  const toggleBoardList = () => {
+    setBoardListOpen(!boardListOpen);
+  };
+
+  const goToBoard = (board: Board) => {
+    setEnterBoard(board);
+    enterBoardOnOpen();
+  };
+
+  const goToBoardFinish = () => {
+    enterBoardOnClose();
+  };
+
   return (
     <>
-      <Menu>
+      {enterBoard && <EnterBoardModal board={enterBoard} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
+
+      <Menu preventOverflow={false}>
         <MenuButton
           as={Button}
           size="sm"
@@ -104,7 +159,7 @@ export function MainButton(props: MainButtonProps) {
         >
           {user ? user.data.name : ''}
         </MenuButton>
-        <MenuList>
+        <MenuList maxHeight="50vh" overflowY={'scroll'}>
           <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>
@@ -127,6 +182,28 @@ export function MainButton(props: MainButtonProps) {
             <MenuItem onClick={handleCopyLink} icon={<MdLink fontSize="24px" />}>
               Copy Board Link
             </MenuItem>
+          )}
+          {props.boardInfo && (
+            <Menu isOpen={boardListOpen} placement="right-end" onClose={closeBoardList}>
+              <MenuButton
+                as={MenuItem}
+                icon={<MdArrowForward fontSize="24px" />}
+                onPointerEnter={toggleBoardList}
+                _hover={{ background: bgColor }}
+              >
+                Go To Board
+              </MenuButton>
+              <MenuList maxHeight="50vh" overflowY={'scroll'}>
+                {boards.map(
+                  (board) =>
+                    board._id !== boardId && (
+                      <MenuItem key={board._id} onClick={() => goToBoard(board)}>
+                        {board.data.name}
+                      </MenuItem>
+                    )
+                )}
+              </MenuList>
+            </Menu>
           )}
           {props.backToRoom && (
             <>
