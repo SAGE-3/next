@@ -64,15 +64,15 @@ function AppComponent(props: App): JSX.Element {
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
   // const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
-  useEffect(() => {
-    if (!s.output) return;
-    // set the parsed output if execute_result or display_data is present
-    const parsed = JSON.parse(s.output);
-    parsed['display_data'] && parsed['display_data']['data'] && parsed['display_data']['data']['text/markdown']
-      ? setIsMarkdown(true)
-      : setIsMarkdown(false);
-    console.log('markdown', isMarkdown);
-  }, [s.output]);
+  // useEffect(() => {
+  //   if (!s.output) return;
+  //   // set the parsed output if execute_result or display_data is present
+  //   const parsed = JSON.parse(s.output);
+  //   parsed['display_data'] && parsed['display_data']['data'] && parsed['display_data']['data']['text/markdown']
+  //     ? setIsMarkdown(true)
+  //     : setIsMarkdown(false);
+  //   console.log('markdown', isMarkdown);
+  // }, [s.output]);
 
   function getKernels() {
     if (!user) return;
@@ -367,8 +367,6 @@ function AppComponent(props: App): JSX.Element {
             </Badge>
             <Badge variant="outline" colorScheme="facebook" onClick={() => setIsMarkdown(!isMarkdown)}>
               {isMarkdown ? <MdCode aria-label="Show Code Editor" size="16px" /> : <MdCodeOff aria-label="Hide Code Editor" size="16px" />}
-
-              {/* {isMarkdown ? `Show Code Editor` : 'Hide Code Editor'} */}
             </Badge>
           </Stack>
           <Box // output section container
