@@ -9,6 +9,7 @@
 from utils.generic_utils import import_cls
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,11 +18,21 @@ class SmartBitFactory:
     cls_root = "smartbits"
 
     # TODO: read these names from some conf file; not hardcoded here
-    class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note", "Stickie": "stickie",
-                   "DataTable": "data_table", "CodeCell": "codecell",
-                   "KernelDashboard": "kerneldashboard", "SageCell": "sagecell",
-                   "Slider": "slider", "VegaLite": "vegalite", "PDFViewer": "pdfviewer",
-                   "VegaLiteViewer": "vegaliteviewer", "ImageViewer": "imageviewer", "Seer": "seer"}
+    class_names = {
+        "AIPane": "ai_pane",
+        "Counter": "counter",
+        "Note": "note",
+        "Stickie": "stickie",
+        "DataTable": "data_table",
+        "CodeCell": "codecell",
+        "SageCell": "sagecell",
+        "Slider": "slider",
+        "VegaLite": "vegalite",
+        "PDFViewer": "pdfviewer",
+        "VegaLiteViewer": "vegaliteviewer",
+        "ImageViewer": "imageviewer",
+        "Seer": "seer",
+    }
 
     @classmethod
     def create_smartbit(cls, doc):
@@ -37,12 +48,12 @@ class SmartBitFactory:
                 smartbit_type = "GenericSmartBit"
 
             smartbit_class = import_cls(cls_path, smartbit_type)
-        except Exception as e: # eror in the import
+        except Exception as e:  # eror in the import
             logger.error(f"Couldn't not import {smartbit_type} from {cls_path} {e}")
 
         try:
             smartbit_instance = smartbit_class(**doc)
-        except: #  issue with doc not compatible with current sb class. maybe too old.
+        except:  #  issue with doc not compatible with current sb class. maybe too old.
             try:
                 if smartbit_class is not None and smartbit_type != "GenericSmartBit":
                     cls_path = "smartbits.genericsmartbit"
@@ -50,7 +61,9 @@ class SmartBitFactory:
                     smartbit_class = import_cls(cls_path, smartbit_type)
                     smartbit_instance = smartbit_class(**doc)
                 else:
-                    logger.erorr(f"Couldn't convert following doc to actual smartbit: {doc}")
+                    logger.erorr(
+                        f"Couldn't convert following doc to actual smartbit: {doc}"
+                    )
                     # raise Exception("Couldn't conver doc to actual smartbit")
             except Exception as e:
                 logger.error(f"Couldn't create the class in the SmartbitFactory {e}")

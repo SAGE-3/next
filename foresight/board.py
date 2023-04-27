@@ -10,6 +10,7 @@ from smartbitcollection import SmartBitsCollection
 from smartbits.smartbit import ExecuteInfo
 from utils.layout import Layout
 from utils.sage_communication import SageCommunication
+
 # from utils.wall_utils import Sage3Communication
 
 import requests
@@ -18,10 +19,12 @@ from jupyterkernelproxy import JupyterKernelProxy
 from task_scheduler import TaskScheduler
 from typing import ClassVar
 
+
 class BoardState:
     """
     This class represents the state of a board
     """
+
     kernelSpecs: list = []
     availableKernels: list = []
     lastHeartBeat: int
@@ -57,14 +60,14 @@ class Board:
         if "executeInfo" in doc["data"]:
             self.state.executeInfo = doc["data"]["executeInfo"]
         else:
-            self.state.executeInfo = {'executeFunc': '', 'params': {}}
+            self.state.executeInfo = {"executeFunc": "", "params": {}}
 
         self._task_scheduler = TaskScheduler()
         self._jupyter_client = JupyterKernelProxy()
         self._headers = dict(self._jupyter_client.headers)
         self._r_json = self._jupyter_client.redis_server.json()
         if self._r_json.get(self._redis_space) is None:
-            self._r_json.set(self._redis_space, '.', {})
+            self._r_json.set(self._redis_space, ".", {})
         self.set_online()
         self.get_kernel_specs()
         self._task_scheduler.schedule_task(self.set_online, nb_secs=15)
@@ -72,7 +75,7 @@ class Board:
     def get_kernel_specs(self):
         print("getting kernel specs", self._base_url, self._headers)
         response = requests.get(self._base_url + "/kernelspecs", headers=self._headers)
-        kernel_specs = response.json()['kernelspecs']
+        kernel_specs = response.json()["kernelspecs"]
         self.state.kernelSpecs = list(kernel_specs.keys())
         print("kernel specs are ", self.state.kernelSpecs)
         self.get_available_kernels()
@@ -82,27 +85,42 @@ class Board:
         This function will get the kernels from the redis server
         """
         # get all valid kernel ids from jupyter server
-        valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        valid_kernel_list = [k["id"] for k in self._jupyter_client.get_kernels()]
         # get all kernels from redis server
         kernels = self._jupyter_client.redis_server.json().get(self._redis_space)
         # remove kernels the list of available kernels that are not in jupyter server
         [kernels.pop(k) for k in kernels if k not in valid_kernel_list]
         available_kernels = []
         for kernel in kernels.keys():
-            if user_uuid and kernels[kernel]["is_private"] and kernels[kernel]["owner_uuid"] != user_uuid:
+            if (
+                user_uuid
+                and kernels[kernel]["is_private"]
+                and kernels[kernel]["owner_uuid"] != user_uuid
+            ):
                 continue
-            if not kernels[kernel]['kernel_alias'] or kernels[kernel]['kernel_alias'] == kernels[kernel]['kernel_name']:
-                kernels[kernel]['kernel_alias'] = kernel[:8]
+            if (
+                not kernels[kernel]["kernel_alias"]
+                or kernels[kernel]["kernel_alias"] == kernels[kernel]["kernel_name"]
+            ):
+                kernels[kernel]["kernel_alias"] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})
         self.state.availableKernels = available_kernels
-        self.state.executeInfo['executeFunc'] = ""
-        self.state.executeInfo['params'] = {}
+        self.state.executeInfo["executeFunc"] = ""
+        self.state.executeInfo["params"] = {}
         self.send_updates()
 
-    def add_kernel(self, room_uuid, board_uuid, owner_uuid, is_private=False,
-                   kernel_name="python3", auth_users=(), kernel_alias="my_kernel"):
+    def add_kernel(
+        self,
+        room_uuid,
+        board_uuid,
+        owner_uuid,
+        is_private=False,
+        kernel_name="python3",
+        auth_users=(),
+        kernel_alias="my_kernel",
+    ):
         body = {"name": kernel_name}
-        j_url = f'{self._base_url}/kernels'
+        j_url = f"{self._base_url}/kernels"
         response = requests.post(j_url, headers=self._headers, json=body)
         if response.status_code == 201:
             response_data = response.json()
@@ -113,19 +131,18 @@ class Board:
                 "board": board_uuid,
                 "owner_uuid": owner_uuid,
                 "is_private": is_private,
-                "auth_users": auth_users
+                "auth_users": auth_users,
             }
-            self._r_json.set(self._redis_space, response_data['id'], kernel_info)
+            self._r_json.set(self._redis_space, response_data["id"], kernel_info)
             self.get_available_kernels(user_uuid=owner_uuid)
 
     def delete_kernel(self, kernel_id, user_uuid):
-        """ Shutdown a kernel
-        """
+        """Shutdown a kernel"""
         # get all valid kernel ids from jupyter server
-        kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        kernel_list = [k["id"] for k in self._jupyter_client.get_kernels()]
         if kernel_id in kernel_list:
             # shutdown kernel from jupyter server and remove from redis server
-            j_url = f'{self._base_url}/kernels/{kernel_id}'
+            j_url = f"{self._base_url}/kernels/{kernel_id}"
             response = requests.delete(j_url, headers=self._headers)
             if response.status_code == 204:
                 self.get_available_kernels(user_uuid=user_uuid)
@@ -138,9 +155,9 @@ class Board:
             self.get_available_kernels(user_uuid=user_uuid)
 
     def shudown_all_kernels(self):
-        kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
+        kernel_list = [k["id"] for k in self._jupyter_client.get_kernels()]
         for kernel_id in kernel_list:
-            j_url = f'{self._base_url}/kernels/{kernel_id}'
+            j_url = f"{self._base_url}/kernels/{kernel_id}"
             response = requests.delete(j_url, headers=self._headers)
             if response.status_code == 204:
                 print(f"Kernel {kernel_id} shutdown successfully")
@@ -148,7 +165,7 @@ class Board:
                 self.get_available_kernels()
 
     def restart_kernel(self, kernel_id, user_uuid):
-        j_url = f'{self._base_url}/kernels/{kernel_id}/restart'
+        j_url = f"{self._base_url}/kernels/{kernel_id}/restart"
         response = requests.post(j_url, headers=self._headers)
         if response.status_code == 200:
             self.get_available_kernels(user_uuid=user_uuid)
@@ -158,13 +175,13 @@ class Board:
         This function will send updates to the board
         """
         data = {
-          'kernelSpecs': self.state.kernelSpecs,
-          'availableKernels': self.state.availableKernels,
-          'lastHeartBeat': self.state.lastHeartBeat,
-          'online': self.state.online,
-          'executeInfo': self.state.executeInfo
+            "kernelSpecs": self.state.kernelSpecs,
+            "availableKernels": self.state.availableKernels,
+            "lastHeartBeat": self.state.lastHeartBeat,
+            "online": self.state.online,
+            "executeInfo": self.state.executeInfo,
         }
-        print('Sending board update', data)
+        print("Sending board update", self.id, data)
         self._s3_comm.send_board_update(self.id, data)
 
     def clean_up(self):
@@ -178,7 +195,14 @@ class Board:
         self.state.online = True
         self.send_updates()
 
-    def reorganize_layout(self, viewport_position, viewport_size, buffer_size=100, by="combined", mode="graphviz"):
+    def reorganize_layout(
+        self,
+        viewport_position,
+        viewport_size,
+        buffer_size=100,
+        by="combined",
+        mode="graphviz",
+    ):
         if by not in ["app_type", "semantic"]:
             print(f"{by} not a valid by option to organize layout. Not executing")
             return
@@ -186,18 +210,23 @@ class Board:
             print(f"{mode} not a valid mode to organize layout. Not executing")
             return
         viewport_position = (
-            float(viewport_position["x"]), float(viewport_position["y"]))
-        viewport_size = (float(viewport_size["width"]), float(
-            viewport_size["height"]))
+            float(viewport_position["x"]),
+            float(viewport_position["y"]),
+        )
+        viewport_size = (float(viewport_size["width"]), float(viewport_size["height"]))
 
         print("Started executing organize_layout on the baord")
         print(f"viewport position is {viewport_position}")
         print(f"viewport size  is {viewport_size}")
 
-        app_dims = {x.app_id: (x.data.size.width + buffer_size, x.data.size.height + buffer_size)
-                    for x in self.smartbits.smartbits_collection.values()}
-        app_to_type = {
-            x: type(self.smartbits[x]).__name__ for x in app_dims.keys()}
+        app_dims = {
+            x.app_id: (
+                x.data.size.width + buffer_size,
+                x.data.size.height + buffer_size,
+            )
+            for x in self.smartbits.smartbits_collection.values()
+        }
+        app_to_type = {x: type(self.smartbits[x]).__name__ for x in app_dims.keys()}
 
         self.layout = Layout(app_dims, viewport_position, viewport_size)
         # self.layout = Layout(app_dims, viewport_position, viewport_size)
@@ -217,9 +246,8 @@ class Board:
             updates.append(u)
 
         # Using the highjack, but board should have its own commmuncation object
-        sb_leech._s3_comm.send_app_batch_update({'batch': updates})
+        sb_leech._s3_comm.send_app_batch_update({"batch": updates})
         print("Done executing organize_layout on the baord")
-
 
     # def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
     #     # intentionally not providing a default to x and y. Easy to get lazy with things that overlap
