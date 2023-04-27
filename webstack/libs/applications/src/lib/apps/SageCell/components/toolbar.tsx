@@ -12,7 +12,7 @@ import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } f
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import { downloadFile, useAppStore, useUser, useUsersStore } from '@sage3/frontend';
+import { downloadFile, useAppStore, useUser, useUsersStore, useBoardStore } from '@sage3/frontend';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
@@ -32,7 +32,8 @@ export function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const boardId = props.data.boardId;
-  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
+  const [myKernels, setMyKernels] = useState(s.availableKernels);
+  const updateBoard = useBoardStore((state) => state.update);
   // set to global kernel if it exists
   const [selected, setSelected] = useState<string>(s.kernel);
   const [ownerId, setOwnerId] = useState<string>('');
@@ -46,12 +47,24 @@ export function ToolbarComponent(props: App): JSX.Element {
    * @memberof ToolbarComponent
    */
   function getKernels() {
-    updateState(props._id, {
+    if (!user) return;
+    if (!boardId) return;
+
+    // updateState(props._id, {
+    //   executeInfo: {
+    //     executeFunc: 'get_available_kernels',
+    //     params: { _uuid: user._id },
+    //   },
+    // });
+
+    console.log('Getting kernels2')
+    updateBoard(boardId, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
-        params: {},
+        params: { user_uuid: user._id },
       },
     });
+
   }
 
   /**
@@ -63,6 +76,7 @@ export function ToolbarComponent(props: App): JSX.Element {
     // get all the kernels in the wild
     const kernels = s.availableKernels;
     const b = kernels.filter((el) => el.value.board === boardId);
+    console.log('Setting states', kernels)
     // if there are no kernels for the board, or at all, reset the local state
     if (!kernels || kernels.length === 0 || b.length === 0) {
       // reset the local state
@@ -80,6 +94,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       // get the kernels for this board
       return;
     }
+    console.log('bbb', b)
     if (b.length > 0) {
       // if there are kernels for this board then
       // get the public kernels and the kernels owned by the user
@@ -122,7 +137,7 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   useEffect(() => {
     if (!user) return;
-    getKernels();
+    // getKernels();
     setStates();
   }, []);
 
@@ -130,6 +145,7 @@ export function ToolbarComponent(props: App): JSX.Element {
    * This happens when the global state changes
    */
   useEffect(() => {
+    console.log('Kernel changed 11111111')
     // rebuild the state to reflect any changes affected
     // by the global state change
     setStates();
@@ -210,7 +226,7 @@ export function ToolbarComponent(props: App): JSX.Element {
             px={0}
             colorScheme="teal"
             icon={<MdArrowDropDown />}
-            onChange={(e) => selectKernel(e as React.ChangeEvent<HTMLSelectElement>)}
+            onChange={(e) => selectKernel(e)}
             value={
               // if the selected kernel is not the same as the global state, set the selected to the global state
               // selected !== s.kernel ? s.kernel : selected
@@ -218,12 +234,12 @@ export function ToolbarComponent(props: App): JSX.Element {
             }
             variant={'outline'}
             isDisabled={
-              // disable the dropdown there is a active kernel and the user does not have access
+              // Disable the dropdown there is a active kernel and the user does not have access
               isPrivate && user && user._id !== ownerId ? true : false
             }
           >
             {
-              //filter only Python kernels at this time
+              // Filter only Python kernels at this time
               myKernels
                 .filter((el) => el.value.kernel_name === 'python3')
                 .map((el) => (

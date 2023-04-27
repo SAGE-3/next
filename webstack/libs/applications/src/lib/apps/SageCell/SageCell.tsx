@@ -8,9 +8,11 @@
 
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Divider } from '@chakra-ui/react';
+import { useParams } from 'react-router';
 
 // SAGE3 imports
-import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
+import { useAppStore, useUser, useBoardStore, truncateWithEllipsis } from '@sage3/frontend';
+import { BoardSchema } from '@sage3/shared/types';
 
 import { state as AppState, availableKernelsType } from './index';
 import { AppWindow } from '../../components';
@@ -34,20 +36,36 @@ const AppComponent = (props: App): JSX.Element => {
   const [myKernels, setMyKernels] = useState<availableKernelsType>(s.availableKernels);
   const [access, setAccess] = useState(true);
   const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
+  const updateBoard = useBoardStore((state) => state.update);
+  const { boardId } = useParams();
   // Needed for Div resizing
   const [editorHeight, setEditorHeight] = useState(150); // not beign used?
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
+  const boards = useBoardStore((state) => state.boards);
+  // Local state
+  const [board, setBoard] = useState<BoardSchema>();
+
+  useEffect(() => {
+    const b = boards.find((el) => el._id === boardId);
+    if (b) {
+      setBoard(b.data);
+    }
+  }, [boards]);
+
   function getKernels() {
     if (!user) return;
-    updateState(props._id, {
+    if (!boardId) return;
+
+    console.log('Getting kernels')
+    updateBoard(boardId, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
-        params: { _uuid: user._id },
+        params: { user_uuid: user._id },
       },
     });
+
   }
 
   // Set the title on start
@@ -60,9 +78,10 @@ const AppComponent = (props: App): JSX.Element => {
   }, []);
 
   useEffect(() => {
+    console.log('Board changed', board)
     // Get all kernels that I'm available to see
     const kernels: availableKernelsType = [];
-    s.availableKernels.forEach((kernel) => {
+    board?.availableKernels.forEach((kernel) => {
       if (kernel.value.is_private) {
         if (kernel.value.owner_uuid == user?._id) {
           kernels.push(kernel);
@@ -71,8 +90,12 @@ const AppComponent = (props: App): JSX.Element => {
         kernels.push(kernel);
       }
     });
+    console.log('Kernels in SageCell', kernels)
     setMyKernels(kernels);
-  }, [JSON.stringify(s.availableKernels)]);
+    // @ts-ignore
+    update(props._id, { availableKernels: kernels })
+  }, [board]);
+  // }, [JSON.stringify(s.availableKernels)]);
 
   useEffect(() => {
     if (s.kernel == '') {

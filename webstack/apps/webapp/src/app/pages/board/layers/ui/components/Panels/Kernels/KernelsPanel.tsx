@@ -17,34 +17,35 @@ import { MdRestartAlt, MdCode, MdDelete, MdLock, MdLockOpen } from 'react-icons/
 
 import { Panel } from '../Panel';
 import { useHexColor, useUser, useAppStore, useBoardStore, useUIStore, truncateWithEllipsis } from '@sage3/frontend';
+import { BoardSchema } from '@sage3/shared/types';
 
-import { z } from 'zod';
+// import { z } from 'zod';
 
-const Kschema = z.object({
-  kernelSpecs: z.array(z.string()),
-  availableKernels: z.array(
-    z.object({
-      key: z.string(),
-      value: z.record(z.string(), z.any()),
-    })
-  ),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.record(z.any()),
-  }),
-  lastHeartBeat: z.number(),
-  online: z.boolean(),
-});
+// const Kschema = z.object({
+//   kernelSpecs: z.array(z.string()),
+//   availableKernels: z.array(
+//     z.object({
+//       key: z.string(),
+//       value: z.record(z.string(), z.any()),
+//     })
+//   ),
+//   executeInfo: z.object({
+//     executeFunc: z.string(),
+//     params: z.record(z.any()),
+//   }),
+//   lastHeartBeat: z.number(),
+//   online: z.boolean(),
+// });
 
-type Kstate = z.infer<typeof Kschema>;
+// type Kstate = z.infer<typeof Kschema>;
 
-const initState: Kstate = {
-  kernelSpecs: [],
-  availableKernels: [],
-  executeInfo: { executeFunc: '', params: {} },
-  online: false,
-  lastHeartBeat: 0,
-};
+// const initState: Kstate = {
+//   kernelSpecs: [],
+//   availableKernels: [],
+//   executeInfo: { executeFunc: '', params: {} },
+//   online: false,
+//   lastHeartBeat: 0,
+// };
 
 /**
  * We check the status of the kernel every 15 seconds
@@ -61,16 +62,11 @@ export function KernelsPanel(props: KernelsProps) {
   // Board Store
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el._id === props.boardId);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
-  // State
-  const [s, update] = useState(initState);
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
-  const [myKernels, setMyKernels] = useState(s.availableKernels);
-
   // UI
   const red = useHexColor('red');
   const green = useHexColor('green');
@@ -80,55 +76,58 @@ export function KernelsPanel(props: KernelsProps) {
   const scrollColor = useHexColor(tableDividerColor);
   const scrollColorFix = useHexColor(tableBackground);
   const teal = useHexColor('teal');
-
   // Modal window to create a new kernel
   const { isOpen, onOpen, onClose } = useDisclosure();
-  // Checkbox private selection
   const [isPrivate, setIsPrivate] = useState(false);
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
+  // Local state
+  const [board, setBoard] = useState<BoardSchema>();
+  const [myKernels, setMyKernels] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!board) return;
-    const data = board.data;
+    const b = boards.find((el) => el._id === props.boardId);
+    if (b) {
+      setBoard(b.data);
+    }
+  }, [boards]);
 
-    // @ts-ignore
-    if (data.online && !s.online) {
-      update((prev) => ({ ...prev, online: true }));
-    }
-    // @ts-ignore
-    if (data.kernelSpecs && data.kernelSpecs.length > 0) {
-      // @ts-ignore
-      update((prev) => ({ ...prev, kernelSpecs: data.kernelSpecs }));
-    }
-    // @ts-ignore
-    if (data.lastHeartBeat) {
-      // @ts-ignore
-      update((prev) => ({ ...prev, lastHeartBeat: data.lastHeartBeat }));
-    }
-    // @ts-ignore
-    if (data.availableKernels && Array.isArray(data.availableKernels)) {
-      // @ts-ignore
-      update((prev) => ({ ...prev, availableKernels: data.availableKernels }));
-      // @ts-ignore
-      setMyKernels(data.availableKernels);
+  useEffect(() => {
+    if (board) {
+      // if (board.online && !board.online) {
+      //   update({ ...state, online: true });
+      // }
+      // if (data.kernelSpecs && data.kernelSpecs.length > 0) {
+      //   update({ ...state, kernelSpecs: data.kernelSpecs });
+      // }
+      // if (data.lastHeartBeat) {
+      //   update({ ...state, lastHeartBeat: data.lastHeartBeat });
+      // }
+      if (board.availableKernels && Array.isArray(board.availableKernels)) {
+        // update({ ...state, availableKernels: data.availableKernels });
+        setMyKernels(board.availableKernels);
+        console.log('Available kernels: ', board.availableKernels);
+      }
     }
   }, [board]);
 
   useEffect(() => {
     const checkHeartBeat = setInterval(async () => {
-      const response = await fetch('/api/time');
-      const time = await response.json();
-      const delta = Math.round(Math.abs(time.epoch - s.lastHeartBeat) / 1000);
+      if (board) {
+        const response = await fetch('/api/time');
+        const time = await response.json();
+        const delta = Math.round(Math.abs(time.epoch - board.lastHeartBeat) / 1000);
 
-      if (delta > heartBeatTimeCheck && s.online) {
-        update((prev) => ({ ...prev, online: false }));
+        if (delta > heartBeatTimeCheck && board.online) {
+          setBoard({ ...board, online: false });
+        }
       }
     }, 15000); // 15 Seconds
     return () => clearInterval(checkHeartBeat);
-  }, [s.lastHeartBeat, s.online]);
+  }, [board?.lastHeartBeat, board?.online]);
 
   const refreshList = () => {
+    console.log('Sending a get_available_kernels')
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'get_available_kernels',
@@ -221,6 +220,7 @@ export function KernelsPanel(props: KernelsProps) {
    */
   const addKernel = () => {
     if (!user) return;
+    console.log("🚀 ~ file: KernelsPanel.tsx:241 ~ addKernel")
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'add_kernel',
@@ -255,9 +255,9 @@ export function KernelsPanel(props: KernelsProps) {
 
   return (
     <>
-      <Panel title={'Kernels'} name="kernels" width={750} showClose={true}>
-        <Box alignItems="center" pb="1" width="100%" display="flex">
-          <VStack w={750} h={'100%'}>
+      <Panel title={'Kernels'} name="kernels" width={500} showClose={true}>
+        <Box alignItems="center" pb="1" width="100%" display="flex" fontSize={"xs"}>
+          <VStack w={500} h={'100%'}>
 
             {/* Header */}
             <VStack
@@ -270,19 +270,19 @@ export function KernelsPanel(props: KernelsProps) {
               borderBottom={`2px solid ${scrollColorFix}`}
             >
               <Flex w="100%" alignItems="center" justifyContent="center" userSelect={'none'}>
-                <Box justifyContent="center" display="flex" flexGrow={0.6} flexBasis={0} color="white">
+                <Box justifyContent="center" display="flex" flexGrow={0.4} flexBasis={'auto'} color="white">
                   Private
                 </Box>
-                <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0} color="white">
+                <Box justifyContent="left" display="flex" flexGrow={0.5} flexBasis={'auto'} color="white">
                   Alias
                 </Box>
-                <Box justifyContent="left" display="flex" flexGrow={1.2} flexBasis={0} color="white">
+                <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={'auto'} color="white">
                   Kernel Id
                 </Box>
-                <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0} color="white">
+                <Box justifyContent="left" display="flex" flexGrow={0.5} flexBasis={'auto'} color="white">
                   Type
                 </Box>
-                <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0} color="white">
+                <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={'auto'} color="white">
                   Actions
                 </Box>
               </Flex>
@@ -294,7 +294,7 @@ export function KernelsPanel(props: KernelsProps) {
               background={tableBackground}
               m={0} p={0}
               overflowY={'auto'}
-              maxHeight={150}
+              maxHeight={120}
               css={{
                 '&::-webkit-scrollbar': {
                   width: '12px',
@@ -315,34 +315,34 @@ export function KernelsPanel(props: KernelsProps) {
               {
                 // If there are kernels, display them
                 myKernels?.map((kernel, idx) => (
-                  <Box key={kernel.key} w="100%" height="fit-content">
+                  <Box key={kernel.key} w="100%" height="20px">
 
-                    <Flex w="100%" fontFamily="mono" alignItems={"center"} userSelect={'none'} key={kernel.key + idx}>
+                    <Flex h={'1.2em'} m={0} p={0} w="100%" fontFamily="mono" alignItems={"center"} userSelect={'none'} key={kernel.key + idx}>
                       {/* Status Icon */}
-                      <Box justifyContent="center" display="flex" flexGrow={0.6} flexBasis={0}>
+                      <Box justifyContent="center" display="flex" flexGrow={0.4} flexBasis={0}>
                         {kernel.value.is_private ? (
-                          <Icon as={MdLock} fontSize="20px" color={'red.500'} />
+                          <Icon as={MdLock} fontSize="sm" color={'red.500'} />
                         ) : (
-                          <Icon as={MdLockOpen} fontSize="20px" color="green.500" />
+                          <Icon as={MdLockOpen} fontSize="sm" color="green.500" />
                         )}
                       </Box>
                       {/* Kernel alias */}
-                      <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0}>
+                      <Box justifyContent="left" display="flex" flexGrow={0.5} flexBasis={0}>
                         <Text onClick={() => {
                           navigator.clipboard.writeText(kernel.value.kernel_alias);
                         }}
-                          fontSize="sm"
+                          fontSize="xs"
                         >
                           {kernel.value.kernel_alias}
                         </Text>
                       </Box>
                       {/* Kernel ID */}
-                      <Box justifyContent="left" display="flex" flexGrow={1.2} flexBasis={0}>
+                      <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0}>
                         <Text
                           onClick={() => {
                             navigator.clipboard.writeText(kernel.key);
                           }}
-                          fontSize="sm"
+                          fontSize="xs"
                         >
                           <Tooltip label={kernel.key} placement="top" fontSize="xs" hasArrow>
                             {truncateWithEllipsis(kernel.key, 15)}
@@ -350,8 +350,8 @@ export function KernelsPanel(props: KernelsProps) {
                         </Text>
                       </Box>
                       {/* Kernel Type */}
-                      <Box justifyContent="left" display="flex" flexGrow={0.7} flexBasis={0}>
-                        <Text fontSize="sm">
+                      <Box justifyContent="center" display="flex" flexGrow={0.5} flexBasis={0}>
+                        <Text fontSize="xs">
                           {
                             // show R for ir, Python for python3, etc.}
                             kernel.value.kernel_name === 'ir'
@@ -365,41 +365,42 @@ export function KernelsPanel(props: KernelsProps) {
                         </Text>
                       </Box>
                       {/* Actions */}
-                      <Box justifyContent="left" display="flex" flexGrow={1} flexBasis={0}>
-                        <Flex alignItems="right">
+                      <Box justifyContent="center" display="flex" flexGrow={0.7} flexBasis={0}>
+                        <Flex alignItems="center">
                           <Tooltip label={'Open a SageCell'} placement="top" fontSize="md" hasArrow>
                             <IconButton
+                              m={0} p={0}
                               variant="ghost"
                               size="sm"
                               onClick={() => {
                                 startSageCell(kernel.key, kernel.value.kernel_alias);
                               }}
                               aria-label="Open a SageCell"
-                              icon={<MdCode color={teal} size="22px" />}
+                              icon={<MdCode color={teal} fontSize="sm" />}
                             />
                           </Tooltip>
                           <Tooltip label={'Restart Kernel'} placement="top" fontSize="sm" hasArrow>
                             <IconButton
-                              mx={5} // this provides spacing between the buttons
+                              m={0} p={0}
                               variant="ghost"
                               size="sm"
                               onClick={() => {
                                 restartKernel(kernel.key);
                               }}
                               aria-label="Restart Kernel"
-                              icon={<MdRestartAlt color={teal} size="20px" />}
+                              icon={<MdRestartAlt color={teal} fontSize="sm" />}
                             />
                           </Tooltip>
                           <Tooltip label="Delete kernel" aria-label="Delete kernel" placement="top" fontSize="sm" hasArrow>
                             <IconButton
-                              m={0}
+                              m={0} p={0}
                               variant="ghost"
                               size="sm"
                               aria-label="Delete Kernel"
                               onClick={() => {
                                 removeKernel(kernel.key);
                               }}
-                              icon={<MdDelete color={red} size="20px" />}
+                              icon={<MdDelete color={red} fontSize="sm" />}
                             />
                           </Tooltip>
                         </Flex>
@@ -410,16 +411,16 @@ export function KernelsPanel(props: KernelsProps) {
               }
             </VStack>
 
-            <Tooltip label={s.online ? 'Python Online' : 'Python Offline'} aria-label="Proxy Status" placement="top" fontSize="md" hasArrow>
+            <Tooltip label={board?.online ? 'Python Online' : 'Python Offline'} aria-label="Proxy Status" placement="top" fontSize="md" hasArrow>
               <Box
-                width="20px"
-                height="20px"
+                width="16px"
+                height="16px"
                 position="absolute"
                 right="4"
-                top="8"
-                borderRadius="100%"
+                top="9"
+                borderRadius="20%"
                 zIndex={5}
-                backgroundColor={s.online ? green : red}
+                backgroundColor={board?.online ? green : red}
               ></Box>
             </Tooltip>
 
@@ -441,6 +442,7 @@ export function KernelsPanel(props: KernelsProps) {
         </Box>
       </Panel>
 
+      {/* Kernel creation modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="sm" isCentered>
         <ModalOverlay />
         <ModalContent>
@@ -457,8 +459,8 @@ export function KernelsPanel(props: KernelsProps) {
               }}
               mt="1"
             >
-              {s.online && s.kernelSpecs.length > 0 ? (
-                s.kernelSpecs.map((kernel) => (
+              {board?.online && board.kernelSpecs.length > 0 ? (
+                board?.kernelSpecs.map((kernel) => (
                   <option key={kernel} value={kernel}>
                     {kernel === 'ir' ? 'R' : kernel === 'python3' ? 'Python' : kernel === 'julia-1.8' ? 'Julia' : kernel}
                   </option>
