@@ -102,6 +102,19 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             state: { webviewurl: final_url },
             raised: true,
           });
+        } else if (pastedText.startsWith('sage3://')) {
+          // Create a new stickie
+          createApp({
+            title: user.data.name,
+            roomId: props.roomId,
+            boardId: props.boardId,
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 200, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'BoardLink',
+            state: { url: pastedText },
+            raised: true,
+          });
         } else {
           // Create a new stickie
           createApp({
