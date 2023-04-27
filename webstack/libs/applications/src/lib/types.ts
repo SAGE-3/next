@@ -13,7 +13,6 @@ import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFVie
 import { state as HCDPState, name as HCDPName } from './apps/HCDP';
 import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
 import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
-import { state as KernelDashboardState, name as KernelDashboardName } from './apps/KernelDashboard';
 import { state as KernelsState, name as KernelsName } from './apps/Kernels';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
@@ -32,6 +31,7 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 
+
 export type AppState =
   | {}
   | AIPaneState
@@ -47,7 +47,6 @@ export type AppState =
   | HCDPState
   | ImageViewerState
   | JupyterLabState
-  | KernelDashboardState
   | KernelsState
   | LeafLetState
   | LinkerState
@@ -66,35 +65,5 @@ export type AppState =
   | VideoViewerState
   | WebviewState;
 
-export type AppName =
-  | typeof AIPaneName
-  | typeof CSVViewerName
-  | typeof ChartGeneratorName
-  | typeof ChartMakerName
-  | typeof ClockName
-  | typeof CobrowseName
-  | typeof CounterName
-  | typeof DataTableName
-  | typeof DeepZoomImageName
-  | typeof GLTFViewerName
-  | typeof HCDPName
-  | typeof ImageViewerName
-  | typeof JupyterLabName
-  | typeof KernelDashboardName
-  | typeof KernelsName
-  | typeof LeafLetName
-  | typeof LinkerName
-  | typeof NotepadName
-  | typeof PDFResultName
-  | typeof PDFViewerName
-  | typeof PluginAppName
-  | typeof RTCChatName
-  | typeof SageCellName
-  | typeof SeerName
-  | typeof SensorOverviewName
-  | typeof StickieName
-  | typeof TwilioScreenshareName
-  | typeof VegaLiteName
-  | typeof VegaLiteViewerName
-  | typeof VideoViewerName
-  | typeof WebviewName;
+
+export type AppName = typeof AIPaneName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChartMakerName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
