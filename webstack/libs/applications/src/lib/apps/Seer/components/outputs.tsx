@@ -169,10 +169,10 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
             const value = data[key];
             switch (key) {
               case 'text/html':
-                if (!data[key]) return null; // hides other outputs if html is present
+                if (!data[key]) return null;
                 return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
               case 'text/plain':
-                if (data['text/html']) return null;
+                if (Object.keys(data).length > 1) return null;
                 return <Ansi key={i}>{value}</Ansi>;
               case 'image/png':
                 return <Image key={i} src={`data:image/png;base64,${value}`} />;
