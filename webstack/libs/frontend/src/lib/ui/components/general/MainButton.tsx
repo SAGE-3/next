@@ -17,6 +17,11 @@ import {
   useToast,
   MenuDivider,
   useColorModeValue,
+  Box,
+  IconButton,
+  Tooltip,
+  MenuOptionGroup,
+  MenuGroup,
 } from '@chakra-ui/react';
 import {
   MdOutlineGridOn,
@@ -29,6 +34,8 @@ import {
   MdOutlineVpnKey,
   MdHelp,
   MdArrowForward,
+  MdLock,
+  MdLockOpen,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 
@@ -52,7 +59,7 @@ import { useParams } from 'react-router';
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
   backToRoom?: () => void;
-  boardInfo?: { roomId: string; boardId: string };
+  boardInfo?: { roomId: string; boardId: string; boardName: string; roomName: string };
   config: OpenConfiguration;
 };
 /**
@@ -78,6 +85,8 @@ export function MainButton(props: MainButtonProps) {
   const { boardId } = useParams();
   const bgColorName = useColorModeValue('blackAlpha.300', 'whiteAlpha.200');
   const bgColor = useHexColor(bgColorName);
+  const lockColor = useHexColor('red');
+  const unlockColor = useHexColor('green');
 
   // Nav
   const { toAdmin } = useRouteNav();
@@ -98,11 +107,13 @@ export function MainButton(props: MainButtonProps) {
 
   const toast = useToast();
   // Copy a sharable link to the user's os clipboard
-  const handleCopyLink = (e: React.MouseEvent) => {
+  const handleCopyLink = (e: React.MouseEvent, board?: Board) => {
     if (!props.boardInfo) return;
     e.stopPropagation();
+    const roomId = board ? board.data.roomId : props.boardInfo.roomId;
+    const boardId = board ? board._id : props.boardInfo.boardId;
     // make it a sage3:// protocol link
-    copyBoardUrlToClipboard(props.boardInfo.roomId, props.boardInfo.boardId);
+    copyBoardUrlToClipboard(roomId, boardId);
     toast({
       title: 'Success',
       description: `Sharable Board link copied to clipboard.`,
@@ -159,7 +170,7 @@ export function MainButton(props: MainButtonProps) {
         >
           {user ? user.data.name : ''}
         </MenuButton>
-        <MenuList maxHeight="50vh" overflowY={'scroll'}>
+        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip">
           <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>
@@ -179,7 +190,7 @@ export function MainButton(props: MainButtonProps) {
 
           <MenuDivider />
           {props.boardInfo && (
-            <MenuItem onClick={handleCopyLink} icon={<MdLink fontSize="24px" />}>
+            <MenuItem onClick={(e) => handleCopyLink(e)} icon={<MdLink fontSize="24px" />}>
               Copy Board Link
             </MenuItem>
           )}
@@ -193,15 +204,61 @@ export function MainButton(props: MainButtonProps) {
               >
                 Go To Board
               </MenuButton>
-              <MenuList maxHeight="50vh" overflowY={'scroll'}>
-                {boards.map(
-                  (board) =>
-                    board._id !== boardId && (
-                      <MenuItem key={board._id} onClick={() => goToBoard(board)}>
-                        {board.data.name}
-                      </MenuItem>
-                    )
-                )}
+              <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width="300px">
+                <MenuGroup title={`${props.boardInfo.roomName} Boards`}>
+                  {boards.map(
+                    (board) =>
+                      board._id !== boardId && (
+                        <MenuItem
+                          as={Box}
+                          key={board._id}
+                          display="flex"
+                          justifyContent={'space-between'}
+                          py="0"
+                          pl="0"
+                          _hover={{ background: 'none' }}
+                        >
+                          <Box
+                            width="80%"
+                            whiteSpace="nowrap"
+                            overflow="hidden"
+                            onClick={() => goToBoard(board)}
+                            _hover={{ cursor: 'pointer', background: bgColor }}
+                            height="40px"
+                            lineHeight={'40px'}
+                            textOverflow={'ellipsis'}
+                          >
+                            <IconButton
+                              aria-label="LockBoard"
+                              fontSize="xl"
+                              variant="unstlyed"
+                              pointerEvents="none"
+                              color={board.data.isPrivate ? lockColor : unlockColor}
+                              m="0"
+                              p="0"
+                              _hover={{ cursor: 'initial' }}
+                              icon={board.data.isPrivate ? <MdLock /> : <MdLockOpen />}
+                            />
+                            {board.data.name}
+                          </Box>
+                          {/* <Box display="flex" justifyContent={'space-between'} width="20%"> */}
+                          <Tooltip label="Copy Board Link" placement="top" hasArrow openDelay={700}>
+                            <IconButton
+                              aria-label="Board Edit"
+                              fontSize="2xl"
+                              variant="unstlyed"
+                              m="0"
+                              p="0"
+                              _hover={{ transform: 'scale(1.3)' }}
+                              onClick={(e) => handleCopyLink(e, board)}
+                              icon={<MdLink />}
+                            />
+                          </Tooltip>
+                          {/* </Box> */}
+                        </MenuItem>
+                      )
+                  )}
+                </MenuGroup>
               </MenuList>
             </Menu>
           )}
