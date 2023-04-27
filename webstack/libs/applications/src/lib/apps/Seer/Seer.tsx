@@ -29,7 +29,7 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styles.css';
-import { MdClearAll, MdHelp, MdPlayArrow, MdStop } from 'react-icons/md';
+import { MdClearAll, MdCode, MdCodeOff, MdHelp, MdHideSource, MdPlayArrow, MdStop } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 
 import { v4 as getUUID } from 'uuid';
@@ -58,10 +58,21 @@ function AppComponent(props: App): JSX.Element {
   const [access, setAccess] = useState<boolean>(false);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const boardId = props.data.boardId;
+  const [isMarkdown, setIsMarkdown] = useState<boolean>(false);
   const SPACE = 2;
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
   // const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+
+  useEffect(() => {
+    if (!s.output) return;
+    // set the parsed output if execute_result or display_data is present
+    const parsed = JSON.parse(s.output);
+    parsed['display_data'] && parsed['display_data']['data'] && parsed['display_data']['data']['text/markdown']
+      ? setIsMarkdown(true)
+      : setIsMarkdown(false);
+    console.log('markdown', isMarkdown);
+  }, [s.output]);
 
   function getKernels() {
     if (!user) return;
@@ -331,7 +342,7 @@ function AppComponent(props: App): JSX.Element {
               </ButtonGroup>
             </HStack>
           </Box>
-          <Stack direction="row">
+          <Stack direction="row" hidden={isMarkdown}>
             <Badge variant="outline" colorScheme="facebook" mb={-1} mt={-1}>
               Edit and Execute Code (Shift + Enter)
             </Badge>
@@ -346,12 +357,18 @@ function AppComponent(props: App): JSX.Element {
               borderColor: '#008080',
               marginBottom: '-4px',
             }}
+            hidden={isMarkdown}
           >
             {<CodeEditor app={props} access={access} />}
           </Box>
           <Stack direction="row">
-            <Badge variant="outline" colorScheme="red" mb={-1}>
-              Output Box
+            <Badge variant="outline" colorScheme="red">
+              {isMarkdown ? 'Result' : 'Output Box'}
+            </Badge>
+            <Badge variant="outline" colorScheme="facebook" onClick={() => setIsMarkdown(!isMarkdown)}>
+              {isMarkdown ? <MdCode aria-label="Show Code Editor" size="16px" /> : <MdCodeOff aria-label="Hide Code Editor" size="16px" />}
+
+              {/* {isMarkdown ? `Show Code Editor` : 'Hide Code Editor'} */}
             </Badge>
           </Stack>
           <Box // output section container
