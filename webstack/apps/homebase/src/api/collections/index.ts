@@ -69,6 +69,10 @@ export async function loadCollections(): Promise<void> {
               isPrivate: false,
               privatePin: '',
               executeInfo: { executeFunc: '', params: {} },
+              online: false,
+              kernelSpecs: [],
+              availableKernels: [],
+              lastHeartBeat: 0,
             },
             '-'
           );

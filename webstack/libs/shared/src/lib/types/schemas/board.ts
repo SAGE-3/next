@@ -34,6 +34,11 @@ const schema = z.object({
     executeFunc: z.string(),
     params: z.any(),
   }),
+  // for kernels (temporary)
+  lastHeartBeat: z.number(),
+  online: z.boolean(),
+  kernelSpecs: z.array(z.any()),
+  availableKernels: z.array(z.any()),
 });
 
 export type BoardSchema = z.infer<typeof schema>;
