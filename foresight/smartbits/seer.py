@@ -109,11 +109,20 @@ class Seer(SmartBit):
 
             if resp.status_code == 200 and resp.json()["status"] == "success":
                 print("I got some code from the seer server.")
-                code = resp.json()["code"]
-                print(f"GOT CODE FROM SEER SERVER AND IT's {code}")
-                self.state.code = code
-                #self.handle_exec_result()
-                self.execute(_uuid)
+                json_resp = resp.json()
+                if "code" in json_resp:
+                    code = json_resp["code"]
+                    print(f"GOT CODE FROM SEER SERVER AND IT's {code}")
+                    self.state.code = code
+                    self.execute(_uuid)
+                else:
+                    print("I am handling data not code")
+                    msg = {"request_id": _uuid,
+                               "display_data": {
+                                   'data': json_resp["data"]
+                               }
+                           }
+                    self.handle_exec_result(msg)
             else:
                 print("Something went wrong")
                 msg = {"request_id": _uuid,
