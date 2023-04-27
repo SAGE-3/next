@@ -126,6 +126,10 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
           executeInfo: { executeFunc: '', params: {} },
+          online: false,
+          kernelSpecs: [],
+          availableKernels: [],
+          lastHeartBeat: 0,
         });
         props.onClose();
       }
