@@ -132,7 +132,7 @@ class JupyterKernelProxy:
             self.callback_info[user_passed_uuid] = callback_fn
             self.connections[kernel_id].send(json.dumps(msg), binary=False)
         except Exception as e:
-            # something happen, do no track this results
+            # something happen, do not track this results
             logger.error(f"Error occurred duirng execution of command, {e}")
             del self.results[user_passed_uuid]
             # TODO something happened and code couldn't be run
