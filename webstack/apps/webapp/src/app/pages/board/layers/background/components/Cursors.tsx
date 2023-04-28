@@ -11,9 +11,8 @@ import { Tag } from '@chakra-ui/react';
 import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import { motion, useAnimation } from 'framer-motion';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { GiArrowCursor } from 'react-icons/gi';
-import { throttle } from 'throttle-debounce';
 
 type CursorProps = {
   boardId: string;

@@ -86,7 +86,7 @@ export class MetadataProcessor {
 async function exiftoolFile(filename: string): Promise<ExifDataType> {
   return new Promise((resolve, reject) => {
     exiftool
-      .read(filename, ['-fast2', '--b']) // fast and ignore binary data
+      .read(filename, ['-fast1', '--b']) // fast and ignore binary data
       .then((tags: Tags) => {
         if (tags.errors && tags.errors.length > 0) {
           reject('EXIF> Error parsing JSON ' + tags.errors);
