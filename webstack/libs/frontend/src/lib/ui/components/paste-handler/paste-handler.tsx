@@ -109,7 +109,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 200, depth: 0 },
+            size: { width: 400, height: 375, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'BoardLink',
             state: { url: pastedText },
