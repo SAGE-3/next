@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import React from 'react';
@@ -57,11 +57,15 @@ type UserViewportProps = {
 function UserViewport(props: UserViewportProps) {
   // If this is not a wall usertype, then we don't render the viewport
   if (!props.isWall) return null;
+
+  // UI settings
   const color = useHexColor(props.color);
-  const titleBarHeight = 30 / props.scale;
-  const fontSize = 20 / props.scale;
+  const titleBarHeight = 28 / props.scale;
+  const fontSize = 18 / props.scale;
   const borderRadius = 6 / props.scale;
-  const borderWidth = 4 / props.scale;
+  const borderWidth = 3 / props.scale;
+  const textColor = useColorModeValue('white', 'black');
+
   return (
     <Box
       borderStyle="solid"
@@ -77,11 +81,14 @@ function UserViewport(props: UserViewportProps) {
       opacity={0.65}
       borderRadius={borderRadius}
       transitionProperty="left, top, width, height"
+      transitionTimingFunction={'ease-in-out'}
       transitionDuration={'0.5s'}
+      transitionDelay={'0s'}
       color="white"
       fontSize={fontSize + 'px'}
       pl="2"
       background={`linear-gradient(180deg, ${color} ${titleBarHeight}px, transparent ${titleBarHeight}px, transparent 100%)`}
+      textColor={textColor}
     >
       Viewport for {props.name}
     </Box>
