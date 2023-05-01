@@ -18,6 +18,16 @@ import {
   HStack,
   Select,
   VStack,
+  Flex,
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  UnorderedList,
+  ListItem,
+  Input,
+  Divider,
 } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import LeafletWrapper from '../SensorOverview/LeafletWrapper';
@@ -28,6 +38,29 @@ import { SAGEColors, colors } from '@sage3/shared';
 import { useAppStore, useHexColor } from '@sage3/frontend';
 import VariableCard from './viewers/VariableCard';
 import EChartsViewer from './viewers/EChartsViewer';
+
+function findDuplicateElements(...arrays: any) {
+  const elementCount: any = {};
+
+  arrays.forEach((array: any[]) => {
+    array.forEach((element) => {
+      if (element in elementCount) {
+        elementCount[element]++;
+      } else {
+        elementCount[element] = 1;
+      }
+    });
+  });
+
+  const duplicates = [];
+  for (const element in elementCount) {
+    if (elementCount[element] === arrays.length) {
+      duplicates.push(element);
+    }
+  }
+
+  return duplicates;
+}
 
 function CustomizeWidgets(props: {
   size: { width: number; height: number; depth: number };
@@ -46,7 +79,6 @@ function CustomizeWidgets(props: {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [variableNames, setVariableNames] = useState<string[]>([]);
   // const [selectedColor, setSelectedColor] = useState<SAGEColors>('blue');
-  const [selectStationOption, setSelectStationOption] = useState('multiStation');
   const [stationMetadata, setStationMetadata] = useState<any>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -56,7 +88,7 @@ function CustomizeWidgets(props: {
       const tmpVariableNames: any = [];
       for (let i = 0; i < s.stationNames.length; i++) {
         const response = await fetch(
-          `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[0]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+          `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
         );
         const stationData = await response.json();
         const sensorObservationVariableNames = Object.getOwnPropertyNames(stationData['STATION'][0]['OBSERVATIONS']);
@@ -64,22 +96,21 @@ function CustomizeWidgets(props: {
         tmpSensorMetadata.push(sensorData);
         tmpVariableNames.push(sensorObservationVariableNames);
       }
-      // For each index of the array, this will check & remove if the element was last seen in the array that does not match the current index
-      const filteredVariableNames = tmpVariableNames
-        .flat()
-        .filter(
-          (element: any, index: any, array: string | any[]) => array.indexOf(element) === index && array.lastIndexOf(element) !== index
-        );
-      setStationMetadata(tmpSensorMetadata);
+
+      const filteredVariableNames = findDuplicateElements(...tmpVariableNames);
+
+      console.log(filteredVariableNames);
+      console.log(tmpVariableNames);
       setVariableNames(filteredVariableNames);
+      setStationMetadata(tmpSensorMetadata);
       setIsLoaded(true);
     };
     fetchData();
   }, [s.stationNames]);
-
   const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
     const tmpArray: string[] = [...s.stationNames];
     const stationName = station.name;
+    setVariableNames([]);
     if (tmpArray.find((station: string) => station === stationName)) {
       tmpArray.splice(tmpArray.indexOf(stationName), 1);
       updateState(props.props._id, { stationNames: [...tmpArray] });
@@ -87,17 +118,9 @@ function CustomizeWidgets(props: {
   };
 
   const handleAddSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
-    // setSelectedStations([...selectedStations, station]);
+    setVariableNames([]);
     updateState(props.props._id, { stationNames: [...s.stationNames, station.name] });
   };
-
-  const handleChangeStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
-    const tmpArray: string[] = [];
-    const stationName = station.name;
-    tmpArray.push(stationName);
-    updateState(props.props._id, { stationNames: [...tmpArray] });
-  };
-
   const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     setIsLoaded(false);
@@ -119,13 +142,9 @@ function CustomizeWidgets(props: {
     updateState(props.props._id, { widget: { ...s.widget, color: color } });
   };
 
-  const handleStationOption = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const option = event.target.value;
-    if (option === 'singleStation') {
-      const firstStation = [s.stationNames[0]];
-      updateState(props.props._id, { stationNames: firstStation });
-    }
-    setSelectStationOption(option);
+  const handleOperationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const operation = event.target.value;
+    updateState(props.props._id, { widget: { ...s.widget, operation: operation } });
   };
 
   const generateWidget = async () => {
@@ -150,7 +169,6 @@ function CustomizeWidgets(props: {
       raised: true,
     });
   };
-
   return (
     <>
       <Button colorScheme={'green'} size="xs" onClick={onOpen}>
@@ -168,13 +186,13 @@ function CustomizeWidgets(props: {
         <DrawerContent>
           <DrawerHeader borderBottomWidth="1px">Edit Widget Menu</DrawerHeader>
           <DrawerBody>
-            {/* <Text>Station Option: </Text>
-            <Select w="10rem" placeholder={'Select Station Option'} onChange={handleStationOption}>
-              <option value="singleStation">Single Station</option>
-              <option value="multiStation">Multi-Station</option>
-            </Select> */}
             <HStack>
-              <Box border="solid 7px black" rounded="lg" height={'40vh'} width="40vw">
+              <Box
+                border={window.innerWidth < 1300 ? undefined : 'solid 7px black'}
+                rounded="lg"
+                height={window.innerWidth < 1300 ? '0' : '40vh'}
+                width="40vw"
+              >
                 <LeafletWrapper map={map} setMap={setMap} {...props.props}>
                   <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
                     <TileLayer
@@ -198,19 +216,14 @@ function CustomizeWidgets(props: {
                             fillOpacity={0}
                             eventHandlers={{
                               click: (e) => {
-                                if (selectStationOption === 'singleStation') {
-                                  handleChangeStation(station);
+                                if (station.selected) {
+                                  handleRemoveSelectedStation(station);
                                 } else {
-                                  if (station.selected) {
-                                    handleRemoveSelectedStation(station);
-                                  } else {
-                                    handleAddSelectedStation(station);
-                                  }
+                                  handleAddSelectedStation(station);
                                 }
                               },
                             }}
                           ></CircleMarker>
-
                           <SVGOverlay
                             bounds={[
                               [station.lat - 0.17, station.lon - 0.05],
@@ -238,23 +251,84 @@ function CustomizeWidgets(props: {
               </Box>
               <VStack>
                 <HStack>
-                  <Text>Visualization Type: </Text>
-                  <Select w="15rem" placeholder={'Select Visualization Type'} onChange={handleVisualizationTypeChange}>
-                    <option value="variableCard">Current Value</option>
-                    <option value="line">Line Chart</option>
-                    <option value="bar">Bar Chart</option>
-                  </Select>
+                  <Flex align={'center'}>
+                    <Text w="7rem">Choose Date:</Text>
 
-                  <Button colorScheme={'green'} onClick={generateWidget}>
+                    <Input w="16rem" mr="1rem" placeholder="Select Date and Time" size="md" type="datetime-local" />
+                    <Text w="9rem">Visualization Type: </Text>
+                    <Select w="15rem" placeholder={'Select Visualization Type'} onChange={handleVisualizationTypeChange}>
+                      <option value="variableCard">Current Value</option>
+                      <option value="line">Line Chart</option>
+                      <option value="bar">Bar Chart</option>
+                    </Select>
+                  </Flex>
+
+                  <Button size="sm" colorScheme={'green'} px="1rem" onClick={generateWidget}>
                     Generate
                   </Button>
                 </HStack>
+                <Divider />
+                <Flex>
+                  <Box pl="1rem" height="30rem" width="25rem" overflow={'auto'}>
+                    <Accordion allowMultiple>
+                      {stationMetadata.map((station: any, index: number) => {
+                        if (isLoaded) {
+                          return (
+                            <Box mr="1rem">
+                              <AccordionItem>
+                                <h2>
+                                  <AccordionButton>
+                                    <Box as="span" flex="1" textAlign="left">
+                                      {station.NAME}
+                                    </Box>
+                                    <AccordionIcon />
+                                  </AccordionButton>
+                                </h2>
+                                <AccordionPanel pb={4}>
+                                  <UnorderedList>
+                                    {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
+                                      return <ListItem>{name}</ListItem>;
+                                    })}
+                                  </UnorderedList>
+                                </AccordionPanel>
+                              </AccordionItem>
+                            </Box>
+                          );
+                        } else {
+                          return <Box>Loading</Box>;
+                        }
+                      })}
+                    </Accordion>
+                  </Box>
+                  {s.widget.visualizationType === 'variableCard' ? (
+                    <>
+                      <VariableCard
+                        variableName={s.widget.yAxisNames[0]}
+                        state={props.props}
+                        stationNames={s.stationNames}
+                        stationMetadata={stationMetadata}
+                        isLoaded={isLoaded}
+                      />
+                    </>
+                  ) : (
+                    <EChartsViewer
+                      stationNames={s.stationNames}
+                      stationMetadata={stationMetadata}
+                      isLoaded={isLoaded}
+                      dateStart={''}
+                      dateEnd={''}
+                      widget={s.widget}
+                    />
+                  )}
+                </Flex>
+
                 {s.widget.visualizationType === 'variableCard' ? (
                   <>
-                    <VStack>
-                      <Text>Current Attribute: </Text>
+                    <Box display="flex" alignItems={'center'}>
+                      <Text mx="1rem">Current Attribute: </Text>
                       <Select
-                        w="10rem"
+                        mr="1rem"
+                        w="15rem"
                         placeholder={'Select Current Value'}
                         onChange={(e) => {
                           handleYAxisChange(e);
@@ -268,10 +342,11 @@ function CustomizeWidgets(props: {
                           );
                         })}
                       </Select>
-                      <Text>Color: </Text>
+                      <Text mr="1rem">Color: </Text>
                       <Select
-                        w="10rem"
+                        w="15rem"
                         placeholder={'Select Color'}
+                        mr="1rem"
                         onChange={(e) => {
                           handleColorChange(e);
                         }}
@@ -287,70 +362,63 @@ function CustomizeWidgets(props: {
                           );
                         })}
                       </Select>
-                    </VStack>
-                    <Box>
-                      <VariableCard
-                        variableName={s.widget.yAxisNames[0]}
-                        state={props.props}
-                        stationNames={s.stationNames}
-                        stationMetadata={stationMetadata}
-                        isLoaded={isLoaded}
-                      />
+                      <Text mr="1rem">Operator: </Text>
+                      <Select
+                        w="15rem"
+                        placeholder={'Select Operation'}
+                        onChange={(e) => {
+                          handleOperationChange(e);
+                        }}
+                      >
+                        {operations.map((operation: string, index: number) => {
+                          return (
+                            <option value={operation} key={index}>
+                              {operation}
+                            </option>
+                          );
+                        })}
+                      </Select>
                     </Box>
                   </>
                 ) : null}
                 {s.widget.visualizationType === 'line' || s.widget.visualizationType === 'bar' ? (
-                  <HStack>
-                    <Box>
-                      <VStack>
-                        <Text>Y Axis: </Text>
-                        <Select
-                          w="10rem"
-                          placeholder={'Select Y Axis'}
-                          onChange={(e) => {
-                            handleYAxisChange(e);
-                          }}
-                        >
-                          {variableNames.map((name: string, index: number) => {
-                            return (
-                              <option key={index} value={name}>
-                                {name}
-                              </option>
-                            );
-                          })}
-                        </Select>
-                      </VStack>
-                      <VStack>
-                        <Text>X Axis: </Text>
-                        <Select
-                          w="10rem"
-                          placeholder={'Select X Axis'}
-                          onChange={(e) => {
-                            handleXAxisChange(e);
-                          }}
-                        >
-                          {variableNames.map((name: string, index: number) => {
-                            return (
-                              <option key={index} value={name}>
-                                {name}
-                              </option>
-                            );
-                          })}
-                        </Select>
-                      </VStack>
+                  <>
+                    <Box display="flex" alignItems={'center'}>
+                      <Text mx="1rem">X Axis: </Text>
+                      <Select
+                        w="15rem"
+                        mr="1rem"
+                        placeholder={'Select X Axis'}
+                        onChange={(e) => {
+                          handleXAxisChange(e);
+                        }}
+                      >
+                        {variableNames.map((name: string, index: number) => {
+                          return (
+                            <option key={index} value={name}>
+                              {name}
+                            </option>
+                          );
+                        })}
+                      </Select>
+                      <Text mr="1rem">Y Axis: </Text>
+                      <Select
+                        w="15rem"
+                        placeholder={'Select Y Axis'}
+                        onChange={(e) => {
+                          handleYAxisChange(e);
+                        }}
+                      >
+                        {variableNames.map((name: string, index: number) => {
+                          return (
+                            <option key={index} value={name}>
+                              {name}
+                            </option>
+                          );
+                        })}
+                      </Select>
                     </Box>
-                    <Box>
-                      <EChartsViewer
-                        stationNames={s.stationNames}
-                        visualizationType={s.widget.visualizationType}
-                        dateRange={''}
-                        yAxisNames={s.widget.yAxisNames}
-                        xAxisNames={s.widget.xAxisNames}
-                        stationMetadata={stationMetadata}
-                        isLoaded={isLoaded}
-                      />
-                    </Box>
-                  </HStack>
+                  </>
                 ) : null}
               </VStack>
             </HStack>
@@ -463,101 +531,4 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
   },
 ];
 
-{
-  /* <Modal scrollBehavior={'inside'} size="xl" isCentered motionPreset="slideInBottom" isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent maxW={'82rem'} maxH="70rem">
-          <Tabs onChange={(index) => handleTabChange(index)} index={tabIndex}>
-            <TabList>
-              <Tab>Select Your Stations</Tab>
-              <Tab>Select Visualization Type</Tab>
-              <Tab>Customize Visualization</Tab>
-            </TabList>
-            <TabPanels>
-              <TabPanel maxW={'82rem'} maxH="63rem" overflowY="auto">
-                <ModalHeader></ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  <Box height={'60vh'}>
-                    <LeafletWrapper map={map} setMap={setMap} {...props.props}>
-                      <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
-                        <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        {stations.map((data: { lat: number; lon: number; name: string; selected: boolean }, index: number) => {
-                          console.log(data.selected);
-                          return (
-                            <div key={index}>
-                              <CircleMarker
-                                key={index}
-                                center={{ lat: data.lat - 0.01, lng: data.lon }}
-                                fillColor={data.selected ? 'blue' : 'red'}
-                                stroke={false}
-                                radius={20}
-                                fillOpacity={0}
-                                eventHandlers={{
-                                  click: (e) => {
-                                    handleAddSelectedStation(data);
-                                  },
-                                }}
-                              ></CircleMarker>
-
-                              <SVGOverlay
-                                bounds={[
-                                  [data.lat - 0.17, data.lon - 0.05],
-                                  [data.lat + 0.15, data.lon + 0.05],
-                                  // [data.lat - 0.17, data.lon - 0.05],
-                                  // [data.lat + 0.17, data.lon + 0.05],
-                                ]}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                                  <g transform={`translate(100, 100) scale(3) translate(-100, -100)`}>
-                                    <circle
-                                      cx="100"
-                                      cy="100"
-                                      r="20"
-                                      fill={'#E1BB78'}
-                                      stroke={data.selected ? '#FC03DE' : 'black'}
-                                      strokeWidth="3"
-                                    />
-                                    {/* <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                                  {data[s.variableToDisplay]}
-                                </text> */
-}
-//                             </g>
-//                           </svg>
-//                         </SVGOverlay>
-//                       </div>
-//                     );
-//                   })}
-//                 </LayersControl.BaseLayer>
-//               </LeafletWrapper>
-//             </Box>
-//           </ModalBody>
-//         </TabPanel>
-//         <TabPanel>
-//           Visualization Types
-//           <VariableCard variableName="wind_speed_set_1" variableValue={'42'} />
-//           {/* <EChartsViewer
-//             stationNames: string[];
-//             visualizationType: string;
-//             dateRange: string;
-//             yAxisNames: string[];
-//             xAxisNames: string[];
-//           /> */}
-//         </TabPanel>
-//         <TabPanel>
-//           <p>three!</p>
-//         </TabPanel>
-//       </TabPanels>
-//     </Tabs>
-
-//     <ModalFooter>
-//       <Button colorScheme="blue" mr={3} onClick={onClose}>
-//         Close
-//       </Button>
-//       <Button variant="ghost">Secondary Action</Button>
-//     </ModalFooter>
-//   </ModalContent>
-// </Modal> */}
+const operations = ['average', 'max', 'min', 'current'];

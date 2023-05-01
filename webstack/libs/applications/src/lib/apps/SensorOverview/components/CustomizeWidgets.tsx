@@ -155,14 +155,10 @@ function CustomizeWidgets(props: {
                             fillOpacity={0}
                             eventHandlers={{
                               click: (e) => {
-                                if (selectStationOption === 'singleStation') {
-                                  handleChangeStation(station);
+                                if (station.selected) {
+                                  handleRemoveSelectedStation(station);
                                 } else {
-                                  if (station.selected) {
-                                    handleRemoveSelectedStation(station);
-                                  } else {
-                                    handleAddSelectedStation(station);
-                                  }
+                                  handleAddSelectedStation(station);
                                 }
                               },
                             }}

@@ -15,12 +15,12 @@ import { ChartManager } from '../../EChartsViewer/ChartManager';
 const EChartsViewer = (props: {
   stationNames: string[];
   visualizationType: string;
-  dateRange: string;
+  dateStart: string;
+  dateEnd: string;
   yAxisNames: string[];
   xAxisNames: string[];
   showDeleteButton?: boolean;
   handleDeleteWidget?: (index: number) => void;
-  selectStationOption: string;
   index?: number;
   size: { width: number; height: number; depth: number };
 }) => {
@@ -29,9 +29,6 @@ const EChartsViewer = (props: {
   const { colorMode } = useColorMode();
 
   useEffect(() => {
-    if (chartStateInstance) {
-      echarts.dispose(chartStateInstance);
-    }
     if (!chartRef.current) return;
     let chartInstance: echarts.ECharts | null = null;
     const renderInstance = echarts.getInstanceByDom(chartRef.current);
@@ -50,24 +47,45 @@ const EChartsViewer = (props: {
     }
     const options = callToChartMangaer();
     setChartStateInstance(chartInstance);
-  }, [chartRef, props.yAxisNames, props.xAxisNames, props.visualizationType, colorMode]);
+  }, [chartRef, props.yAxisNames, props.xAxisNames, props.visualizationType]);
 
+  // TODO Duplicate code. I tried adding this to the useEffect above but it would
+  // Rerender every time I moved the chart
   useEffect(() => {
     if (chartStateInstance) {
       echarts.dispose(chartStateInstance);
     }
+    if (!chartRef.current) return;
+    let chartInstance: echarts.ECharts | null = null;
+    const renderInstance = echarts.getInstanceByDom(chartRef.current);
+    if (renderInstance) {
+      chartInstance = renderInstance;
+    } else {
+      chartInstance = echarts.init(chartRef.current, colorMode);
+    }
+    chartInstance.resize({
+      height: props.size.height - 200,
+      width: props.size.width - 75,
+    });
+    async function callToChartMangaer() {
+      const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames);
+      if (chartInstance) chartInstance.setOption(options);
+    }
+    const options = callToChartMangaer();
+    setChartStateInstance(chartInstance);
   }, [colorMode]);
 
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        width: props.size.width - 25,
-        height: props.size.height - 175,
+        height: props.size.height - 200,
+        width: props.size.width - 75,
       });
     }
   }, [props.size]);
+
   return (
-    <Box border={'white solid 10px'} rounded="1rem">
+    <Box border={colorMode === 'light' ? 'black solid 5px' : 'white solid 5px'} rounded="1rem">
       {props.showDeleteButton ? (
         <Button
           onClick={() => {

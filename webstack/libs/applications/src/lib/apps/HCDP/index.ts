@@ -33,6 +33,7 @@ const widget = {
   xAxisNames: [''],
   color: '#5AB2D3',
   layout: { x: 0, y: 0, w: 11, h: 130 },
+  operation: 'average',
 };
 
 export const schema = z.object({

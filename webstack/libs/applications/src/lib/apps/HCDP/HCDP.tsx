@@ -344,14 +344,16 @@ function AppComponent(props: App): JSX.Element {
                 stroke={false}
                 fillOpacity={0}
                 radius={(5 / s.zoom) * 50 + 15}
-                eventHandlers={{
-                  // mouseover: (e) => {
-                  //   e.target.openPopup();
-                  // },
-                  click: (e) => {
-                    handleAddSelectedStation(data);
-                  },
-                }}
+                eventHandlers={
+                  {
+                    // mouseover: (e) => {
+                    //   e.target.openPopup();
+                    // },
+                    // click: (e) => {
+                    //   handleAddSelectedStation(data);
+                    // },
+                  }
+                }
               >
                 {/* <Popup className="leaflet-content">
                   <Box textAlign={'center'} transform={'translate(0,-5rem)'} mb="3rem" pb="5rem" height="350px" width="300px">
@@ -406,7 +408,7 @@ function AppComponent(props: App): JSX.Element {
               >
                 {s.variableToDisplay === 'windSpeed' ? (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    {data['windDirection'] == 0 ? null : (
+                    {/* {data['windDirection'] == 0 ? null : (
                       <g
                         ref={arrowRef}
                         fill="white"
@@ -414,11 +416,10 @@ function AppComponent(props: App): JSX.Element {
                       >
                         <Arrow degree={data['windDirection']} />
 
-                        {/* <polygon points="80,130 100,60 120,130 100,125" fill="black" /> */}
                       </g>
-                    )}
+                    )} */}
                     <g transform={`translate(100, 100) scale(2) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={data.selected ? '#FC03DE' : 'black'} strokeWidth="3" />
+                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
 
                       <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
                         {data[s.variableToDisplay]}
@@ -428,7 +429,7 @@ function AppComponent(props: App): JSX.Element {
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                     <g transform={`translate(100, 100) scale(2) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={data.selected ? '#FC03DE' : 'black'} strokeWidth="3" />
+                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
                       <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
                         {data[s.variableToDisplay]}
                       </text>

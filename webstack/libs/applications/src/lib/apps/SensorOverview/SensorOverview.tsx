@@ -20,7 +20,7 @@ import ChartLayout from './components/ChartLayout';
 import './styling.css';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import VariableCard from './components/VariableCard';
+import VariableCard from '../HCDP/viewers/VariableCard';
 import CustomizeWidgets from './components/CustomizeWidgets';
 import EChartsViewer from './components/EChartsViewer';
 
@@ -84,13 +84,14 @@ function AppComponent(props: App): JSX.Element {
                     state={props}
                     stationNames={s.stationNames}
                     stationMetadata={stationMetadata}
+                    isLoaded={true}
                   />
                 ) : (
                   <EChartsViewer
                     stationNames={s.stationNames}
-                    selectStationOption={'singleStation'}
                     visualizationType={s.widget.visualizationType}
-                    dateRange={''}
+                    dateStart={''}
+                    dateEnd={''}
                     yAxisNames={s.widget.yAxisNames}
                     xAxisNames={s.widget.xAxisNames}
                     size={props.data.size}

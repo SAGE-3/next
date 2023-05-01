@@ -11,19 +11,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Button, Spinner, useColorMode } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 import { ChartManager } from '../../EChartsViewer/ChartManager';
+import { useAppStore } from '@sage3/frontend';
 
 const EChartsViewer = (props: {
   stationNames: string[];
-  visualizationType: string;
-  dateRange: string;
+  dateStart: string;
+  dateEnd: string;
   isLoaded: boolean;
-  yAxisNames: string[];
-  stationMetadata: any;
-  xAxisNames: string[];
+  widget: any;
+  stationMetadata?: any;
+  size?: { width: number; height: number; depth: number };
 }) => {
   const chartRef = useRef<any>(null);
   const [chartStateInstance, setChartStateInstance] = useState<echarts.ECharts | null>(null);
   const { colorMode } = useColorMode();
+  const s = useAppStore((state) => state);
 
   useEffect(() => {
     if (chartStateInstance) {
@@ -38,22 +40,22 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: 400,
-      width: 800,
+      width: props.size ? props.size.height - 200 : 700,
+      height: props.size ? props.size.width - 75 : 400,
     });
     async function callToChartMangaer() {
       const options = await ChartManager(
         props.stationNames,
-        props.visualizationType,
-        props.yAxisNames,
-        props.xAxisNames,
+        props.widget.visualizationType,
+        props.widget.yAxisNames,
+        props.widget.xAxisNames,
         props.stationMetadata
       );
       if (chartInstance) chartInstance.setOption(options);
     }
-    const options = callToChartMangaer();
+    callToChartMangaer();
     setChartStateInstance(chartInstance);
-  }, [chartRef, props.yAxisNames, props.xAxisNames, props.visualizationType, colorMode, props.stationMetadata]);
+  }, [chartRef, props.widget, colorMode, props.isLoaded]);
 
   useEffect(() => {
     if (chartStateInstance) {
@@ -64,14 +66,14 @@ const EChartsViewer = (props: {
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        width: 800,
-        height: 400,
+        width: props.size ? props.size.height - 200 : 700,
+        height: props.size ? props.size.width - 75 : 400,
       });
     }
-  }, [props]);
+  }, [props.size]);
   return (
-    <Box border={'white solid 10px'} rounded="1rem" w="1000" h="420">
-      {props.isLoaded ? <div ref={chartRef}></div> : <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />}
+    <Box border={colorMode === 'light' ? 'black solid 5px' : 'white solid 5px'} rounded="1rem" w="1000" h="420">
+      {props.isLoaded ? <div ref={chartRef}></div> : <Spinner w={420} h={420} thickness="20px" speed="0.30s" emptyColor="gray.200" />}
     </Box>
   );
 };
