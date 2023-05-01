@@ -23,15 +23,14 @@ class SageCellState(TrackedBaseModel):
     language: str = ""
     isTyping: bool = False
     fontSize: int = 16
-    theme: str = "xcode"
+    theme: str = ""
     kernel: str = ""
     privateMessage: list = []
     availableKernels: list = []
     output: str = ""
-    executeInfo: ExecuteInfo
+    executeInfo: ExecuteInfo = {'executeFunc': '', 'params': {}}
 
 class SageCell(SmartBit):
-    # the key that is assigned to this in state is
     state: SageCellState
     _jupyter_client = PrivateAttr()
     _r_json = PrivateAttr()
@@ -42,27 +41,30 @@ class SageCell(SmartBit):
         super(SageCell, self).__init__(**kwargs)
         self._jupyter_client = JupyterKernelProxy()
         self._r_json = self._jupyter_client.redis_server.json()
+        self.state.executeInfo.executeFunc = ''
+        self.state.executeInfo.params = {}
         if self._r_json.get(self._redis_space) is None:
             self._r_json.set(self._redis_space, '.', {})
 
     def handle_exec_result(self, msg):
-        self.state.output = json.dumps(msg)
-        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.executeFunc = ''
         self.state.executeInfo.params = {}
+        self.state.output = json.dumps(msg)
         self.send_updates()
 
     def generate_error_message(self, user_uuid, error_msg):
-        # 'You do not have access to this kernel'
         pm = [{'userId': user_uuid, 'message': error_msg}]
-        self.state.privateMessage = pm
-        self.state.executeInfo.executeFunc = ""
+        self.state.executeInfo.executeFunc = ''
         self.state.executeInfo.params = {}
+        self.state.privateMessage = pm
         self.send_updates()
 
     def get_available_kernels(self, _uuid=None):
         """
         This function will get the kernels from the redis server
         """
+        self.state.executeInfo.executeFunc = ''
+        self.state.executeInfo.params = {}
         # get all valid kernel ids from jupyter server
         valid_kernel_list = [k['id'] for k in self._jupyter_client.get_kernels()]
         # get all kernels from redis server
@@ -75,8 +77,6 @@ class SageCell(SmartBit):
                 kernels[kernel]['kernel_alias'] = kernel[:8]
             available_kernels.append({"key": kernel, "value": kernels[kernel]})
         self.state.availableKernels = available_kernels
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
         self.send_updates()
 
     def execute(self, _uuid):
@@ -87,6 +87,8 @@ class SageCell(SmartBit):
         :param code:
         :return:
         """
+        self.state.executeInfo.executeFunc = ''
+        self.state.executeInfo.params = {}
         command_info = {
             "uuid": _uuid,
             "call_fn": self.handle_exec_result,
@@ -96,13 +98,10 @@ class SageCell(SmartBit):
         }
         if self.state.kernel:
             self._jupyter_client.execute(command_info)
-        else:
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
-            self.send_updates()
 
     def interrupt(self, _uuid=None):
-
+        self.state.executeInfo.executeFunc = ''
+        self.state.executeInfo.params = {}
         command_info = {
             "uuid": _uuid,
             "call_fn": self.handle_exec_result,
@@ -113,12 +112,6 @@ class SageCell(SmartBit):
         if self.state.kernel:
             logger.debug(f"Sending interrupt request to  kernel {command_info['kernel']}")
             self._jupyter_client.interrupt(command_info)
-        else:
-            # TODO: MLR fix to solve issue #339
-            # self.generate_error_message(SOME_USER_ID, "You need to select a kernel")
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
-            self.send_updates()
 
     def clean_up(self):
         self._jupyter_client.clean_up()
