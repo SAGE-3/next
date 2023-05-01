@@ -38,6 +38,7 @@ function AppComponent(props: App): JSX.Element {
     }
     if (!chartRef.current) return;
     let chartInstance: echarts.ECharts | null = null;
+
     const renderInstance = echarts.getInstanceByDom(chartRef.current);
     if (renderInstance) {
       chartInstance = renderInstance;

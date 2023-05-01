@@ -16,13 +16,10 @@ const EChartsViewer = (props: {
   stationNames: string[];
   visualizationType: string;
   dateRange: string;
+  isLoaded: boolean;
   yAxisNames: string[];
+  stationMetadata: any;
   xAxisNames: string[];
-  showDeleteButton?: boolean;
-  handleDeleteWidget?: (index: number) => void;
-  selectStationOption: string;
-  index?: number;
-  size: { width: number; height: number; depth: number };
 }) => {
   const chartRef = useRef<any>(null);
   const [chartStateInstance, setChartStateInstance] = useState<echarts.ECharts | null>(null);
@@ -41,16 +38,22 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: props.size.height - 175,
-      width: props.size.width - 25,
+      height: 400,
+      width: 800,
     });
     async function callToChartMangaer() {
-      const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames);
+      const options = await ChartManager(
+        props.stationNames,
+        props.visualizationType,
+        props.yAxisNames,
+        props.xAxisNames,
+        props.stationMetadata
+      );
       if (chartInstance) chartInstance.setOption(options);
     }
     const options = callToChartMangaer();
     setChartStateInstance(chartInstance);
-  }, [chartRef, props.yAxisNames, props.xAxisNames, props.visualizationType, colorMode]);
+  }, [chartRef, props.yAxisNames, props.xAxisNames, props.visualizationType, colorMode, props.stationMetadata]);
 
   useEffect(() => {
     if (chartStateInstance) {
@@ -61,23 +64,14 @@ const EChartsViewer = (props: {
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        width: props.size.width - 25,
-        height: props.size.height - 175,
+        width: 800,
+        height: 400,
       });
     }
-  }, [props.size]);
+  }, [props]);
   return (
-    <Box border={'white solid 10px'} rounded="1rem">
-      {props.showDeleteButton ? (
-        <Button
-          onClick={() => {
-            if (props.handleDeleteWidget) props.handleDeleteWidget(props.index ? props.index : 0);
-          }}
-        >
-          Delete
-        </Button>
-      ) : null}
-      <div ref={chartRef}></div>
+    <Box border={'white solid 10px'} rounded="1rem" w="1000" h="420">
+      {props.isLoaded ? <div ref={chartRef}></div> : <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />}
     </Box>
   );
 };

@@ -20,48 +20,58 @@ type seriesType = {
   data: any[];
 };
 
-export const ChartManager = async (
-  stationName: string[],
+export const ChartManagerMultiStation = async (
+  stationNames: string[],
   chartType: string,
   yAxisAttributes: string[],
   xAxisAttributes: string[],
-  stationMetadata?: any,
   transform?: (filterType | aggregateType)[]
 ): Promise<EChartsOption> => {
   const options: EChartsOption = {};
   const yAxisData: any[] = [];
-  let xAxisData: any[] = [];
-  let station;
-  if (stationMetadata === undefined) {
+  const xAxisData: any[] = [];
+  const data = [];
+
+  for (let i = 0; i < stationNames.length; i++) {
     const response = await fetch(
-      `https://api.mesowest.net/v2/stations/timeseries?STID=${stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+      `https://api.mesowest.net/v2/stations/timeseries?STID=${stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
     );
-    station = await response.json();
-    station = station.STATION[0];
-  } else {
-    station = stationMetadata[0];
+    const stationData = await response.json();
+    const metaData = stationData.STATION[0];
+    delete metaData.OBSERVATIONS;
+    delete metaData.SENSOR_VARIABLES;
+    delete metaData.SGID;
+    delete metaData.UNITS;
+    delete metaData.ELEV_DEM;
+    delete metaData.GACC;
+    delete metaData.WIMS_ID;
+    data.push(metaData);
   }
-  console.log(station);
-  for (let i = 0; i < yAxisAttributes.length; i++) {
-    yAxisData.push(station.OBSERVATIONS[yAxisAttributes[i]]);
-  }
-  xAxisData = station.OBSERVATIONS['date_time'];
-  for (let i = 0; i < xAxisData.length; i++) {
-    const date = new Date(xAxisData[i]);
-    xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
-  }
+  console.log(xAxisAttributes, yAxisAttributes);
   switch (chartType) {
-    case 'line':
-      createLineChart(options, yAxisData, xAxisData);
+    case 'scatter':
+      createScatterPlot(options, data, xAxisAttributes[0], yAxisAttributes[0]);
       break;
-    case 'bar':
-      createBarChart(options, yAxisData, xAxisData);
-      break;
+    // case 'bar':
+    //   createBarChart(options, yAxisData, xAxisData);
+    //   break;
   }
 
-  createTitle(options, yAxisAttributes);
+  // createTitle(options, yAxisAttributes);
   return options;
 };
+
+function createScatterPlot(options: EChartsOption, data: any, xAttributeName: string, yAttributeName: string) {
+  const scatterPlotData = [];
+  for (let i = 0; i < data.length; i++) {
+    scatterPlotData.push([data[xAttributeName], data[yAttributeName]]);
+  }
+  options.series = [];
+  options.series.push({
+    symbolSize: 20,
+    data: scatterPlotData,
+  });
+}
 
 function createLineChart(options: EChartsOption, yAxisData: string | any[], xAxisData: any[]) {
   options.series = [];

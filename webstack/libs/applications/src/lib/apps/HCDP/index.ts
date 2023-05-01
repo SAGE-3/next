@@ -27,6 +27,14 @@ const variableTypes = z.enum([
   'windDirection',
 ]);
 
+const widget = {
+  visualizationType: 'variableCard',
+  yAxisNames: ['wind_speed_set_1'],
+  xAxisNames: [''],
+  color: '#5AB2D3',
+  layout: { x: 0, y: 0, w: 11, h: 130 },
+};
+
 export const schema = z.object({
   location: z.array(z.number(), z.number()),
   zoom: z.number(),
@@ -37,6 +45,8 @@ export const schema = z.object({
   fontSizeMultiplier: z.number(),
   variableToDisplay: variableTypes,
   stationData: z.any(),
+  widget: z.any(),
+  stationNames: z.any(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -48,7 +58,9 @@ export const init: Partial<state> = {
   appIdsICreated: [],
   fontSizeMultiplier: 15,
   variableToDisplay: 'temperatureC',
+  stationNames: ['016HI'],
   stationData: [...stationDataTemplate],
+  widget: widget,
 };
 
 export const name = 'Hawaii Mesonet';

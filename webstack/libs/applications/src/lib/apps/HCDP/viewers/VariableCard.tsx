@@ -8,25 +8,20 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Box, Button, Text } from '@chakra-ui/react';
+import { Box, Button, Spinner, Text } from '@chakra-ui/react';
 import { useUIStore } from '@sage3/frontend';
 import { TbWind } from 'react-icons/tb';
 import { App, AppState } from '@sage3/applications/schema';
 
 export default function VariableCard(
   props: {
-    size?: { width: number; height: number; depth: number };
     variableName: string;
-    isEnabled?: boolean;
-    showDeleteButton?: boolean;
-    handleDeleteWidget?: (index: number) => void;
-    index?: number;
+    isLoaded: boolean;
     stationNames: string[];
     stationMetadata: any;
   } & { state: App }
 ) {
   const s = props.state.data.state as AppState;
-  const scale = useUIStore((state) => state.scale);
   const [variableValues, setVariableValues] = useState<any>([]);
 
   useEffect(() => {
@@ -35,7 +30,9 @@ export default function VariableCard(
     //     ? stationObservations[s.widget.yAxisNames[0]][stationObservations[s.widget.yAxisNames[0]].length - 1]
     //     : '0'
     // }
+
     const values = [];
+    console.log(props.stationMetadata);
     for (let i = 0; i < props.stationMetadata.length; i++) {
       values.push(props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[0]][0]);
     }
@@ -47,44 +44,25 @@ export default function VariableCard(
     <>
       <Box
         p="1rem"
-        w={props.size?.width ? props.size.width - 75 : '20vw'}
-        h={props.size?.height ? props.size.height - 150 : '60vh'}
+        w={'30vw'}
+        h={'30vh'}
         border="solid white 1px"
         // bgColor={props.isEnabled ? 'blackAlpha.200' : 'blackAlpha.700'}
         bgColor={s.widget.color}
       >
-        {props.showDeleteButton ? (
-          <Button
-            onClick={() => {
-              if (props.handleDeleteWidget) props.handleDeleteWidget(props.index ? props.index : 0);
-            }}
-          >
-            Delete
-          </Button>
-        ) : null}
-
-        <Text color="black" textAlign={'center'} fontSize={Math.min(40 / scale, 70)}>
+        <Text color="black" textAlign={'center'} fontSize={30}>
           <strong>{props.variableName}</strong>
         </Text>
-        {variableValues.map((variableValue: number, index: any) => {
-          return (
-            <Text
-              margin={0}
-              overflow="hidden"
-              position="absolute"
-              top="50%"
-              left="30%"
-              color="black"
-              transform={'translate(-50%, -50%)'}
-              fontSize={Math.min(100 / scale, 100)}
-            >
-              Average: {(variableValues.reduce((a: any, b: any) => a + b, 0) / variableValues.length).toFixed(3)}
-            </Text>
-          );
-        })}
+        {props.isLoaded ? (
+          <Text margin={0} overflow="hidden" color="black" fontSize={50}>
+            Average: {(variableValues.reduce((a: any, b: any) => a + b, 0) / variableValues.length).toFixed(3)}
+          </Text>
+        ) : (
+          <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
+        )}
 
         <Box margin={0} overflow="hidden" position="absolute" transform={'translate(-50%, -50%)'} top="50%" left="70%">
-          <TbWind size={Math.min(300 / scale, 200)} color="black" />
+          <TbWind size={40} color="black" />
         </Box>
       </Box>
     </>

@@ -46,6 +46,7 @@ import { useStore } from './LeafletWrapper';
 // Icon imports
 import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
 import { useParams } from 'react-router';
+import CustomizeWidgets from './CustomizeWidgets';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
@@ -68,6 +69,7 @@ function AppComponent(props: App): JSX.Element {
 
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
+  const [stationMetadata, setStationMetadata] = useState([]);
 
   useEffect(() => {
     for (let i = 0; i < s.stationData.length; i++) {
@@ -76,6 +78,7 @@ function AppComponent(props: App): JSX.Element {
       ).then((response) => {
         response.json().then((station) => {
           const tmpStation: any = s.stationData[i];
+          setStationMetadata(station);
           if (station.STATION[0].OBSERVATIONS.soil_moisture_set_1 !== undefined) {
             tmpStation.soilMoisture = Math.floor(
               station.STATION[0].OBSERVATIONS.soil_moisture_set_1[station.STATION[0].OBSERVATIONS.soil_moisture_set_1.length - 1]
@@ -537,7 +540,6 @@ function ToolbarComponent(props: App): JSX.Element {
         listOfSelectedStations.push(s.stationData[i].name);
       }
     }
-    console.log(listOfSelectedStations);
     createApp({
       title: 'SensorOverview',
       roomId: roomId!,
@@ -548,22 +550,12 @@ function ToolbarComponent(props: App): JSX.Element {
       type: 'SensorOverview',
       state: {
         listOfStationNames: listOfSelectedStations,
-        widgetsEnabled: [
-          { visualizationType: 'variableCard', yAxisNames: ['wind_speed_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
-          {
-            visualizationType: 'variableCard',
-            yAxisNames: ['relative_humidity_set_1'],
-            xAxisNames: [''],
-            layout: { x: 0, y: 0, w: 11, h: 130 },
-          },
-          { visualizationType: 'variableCard', yAxisNames: ['air_temp_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
-          {
-            visualizationType: 'line',
-            yAxisNames: ['soil_moisture_set_1'],
-            xAxisNames: ['date_time'],
-            layout: { x: 0, y: 0, w: 11, h: 130 },
-          },
-        ],
+        widget: {
+          visualizationType: 'variableCard',
+          yAxisNames: ['wind_speed_set_1'],
+          xAxisNames: [''],
+          layout: { x: 0, y: 0, w: 11, h: 130 },
+        },
       },
       raised: true,
     });
@@ -594,9 +586,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <Button onClick={handleCreateDashboard} size="xs" colorScheme={'green'}>
-        Create Dashboard
-      </Button>
+      <CustomizeWidgets props={props} size={props.data.size} widget={s.widget} />
     </HStack>
   );
 }
