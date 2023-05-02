@@ -1,16 +1,18 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { APIHttp, useHexColor, usePresenceStore } from '@sage3/frontend';
-import { Box, Heading, Tooltip, Text, useColorModeValue, IconButton, Icon, Image } from '@chakra-ui/react';
-import { App, AppName, AppState } from '../../../schema';
-import { Board, Position, Size } from '@sage3/shared/types';
 import { useState, useEffect } from 'react';
-import { MdLock, MdLockOpen, MdPerson, MdRefresh } from 'react-icons/md';
+import { Box, Heading, Tooltip, Text, useColorModeValue, IconButton, Icon, Image, Spacer } from '@chakra-ui/react';
+import { MdLock, MdPerson, MdRefresh } from 'react-icons/md';
+
+import { APIHttp, useHexColor, usePresenceStore } from '@sage3/frontend';
+import { Board, Position, Size } from '@sage3/shared/types';
+
+import { App, AppName, AppState } from '../../../schema';
 
 /* App component for BoardLink */
 
@@ -22,7 +24,7 @@ export function BoardCard(props: App): JSX.Element {
   const boardId = s.url.split('/')[s.url.split('/').length - 1];
 
   // Image
-  const logoUrl = useColorModeValue('/assets/background-boardlink.png', '/assets/background-boardlink.png');
+  const logoUrl = useColorModeValue('/assets/background-boardlink-dark.png', '/assets/background-boardlink.png');
 
   // Get presences of users
   let presences = usePresenceStore((state) => state.presences);
@@ -30,8 +32,8 @@ export function BoardCard(props: App): JSX.Element {
 
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
-  const lockColor = useHexColor('red');
-  const unlockColor = useHexColor('green');
+  // const lockColor = useHexColor('red');
+  // const unlockColor = useHexColor('green');
 
   // Apps
   const [appInfo, setAppInfo] = useState<{ position: Position; size: Size; type: AppName; id: string }[]>([]);
@@ -124,8 +126,8 @@ export function BoardCard(props: App): JSX.Element {
 
   return (
     <Box width="100%" height="100%" display="flex" flexDir="column" justifyContent={'center'} alignItems={'center'}>
-      {/* Mini map */}
 
+      {/* Mini map */}
       <Box
         width="400px"
         height="250px"
@@ -185,6 +187,7 @@ export function BoardCard(props: App): JSX.Element {
           </Text>
         )}
       </Box>
+
       {/* Info Sections */}
       <Box
         display="flex"
@@ -224,8 +227,11 @@ export function BoardCard(props: App): JSX.Element {
               {timeSinceLastUpdate}
             </Text>
           </Box>
+
+          <Spacer />
+
           <Box>
-            <Image height="35px" src={logoUrl} transform="translateX(12px)"></Image>
+            <Image height="32px" src={logoUrl}></Image>
           </Box>
 
           {/* <Button variant="solid" ml="2" colorScheme="green" size="sm" onClick={enterBoardOnOpen}>

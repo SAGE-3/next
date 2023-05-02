@@ -1,36 +1,24 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState, useEffect } from 'react';
+import { Button, Input, useDisclosure, } from '@chakra-ui/react';
+
 import { EnterBoardModal, isElectron, useAppStore } from '@sage3/frontend';
-import {
-  Button,
-  Divider,
-  Icon,
-  Input,
-  InputGroup,
-  InputLeftAddon,
-  InputLeftElement,
-  InputRightElement,
-  useDisclosure,
-} from '@chakra-ui/react';
-import { App, AppName } from '../../schema';
+import { Board } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
+import { App } from '../../schema';
 import { AppWindow } from '../../components';
-
-// Styling
-import './styling.css';
-import { Board, Position, Size } from '@sage3/shared/types';
-import { useState, useEffect } from 'react';
 
 import { OtherServerCard } from './components/OtherServerCard';
 import { BoardCard } from './components/BoardCard';
-import { MdTitle } from 'react-icons/md';
+
 
 /* App component for BoardLink */
 
@@ -86,9 +74,9 @@ function ToolbarComponent(props: App): JSX.Element {
     if (otherServer) {
       const url = s.url.replace('sage3://', 'https://');
       if (isElectron()) {
-        window.location.replace(s.url.replace('sage3://', 'https://'));
+        window.location.replace(url);
       } else {
-        window.open(s.url.replace('sage3://', 'https://'), '_blank');
+        window.open(url, '_blank');
       }
     } else {
       enterBoardOnOpen();
@@ -109,9 +97,11 @@ function ToolbarComponent(props: App): JSX.Element {
       updateCardTitle();
     }
   };
+
   return (
     <>
       {board && <EnterBoardModal board={board} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
+
       <Button colorScheme="teal" size="xs" px="6" disabled={!board} onClick={enterBoard}>
         Enter Board
       </Button>

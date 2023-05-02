@@ -1,15 +1,16 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { Box, Heading, Tooltip, Text, useColorModeValue, IconButton, Image, Icon } from '@chakra-ui/react';
-import { App, AppState } from '../../../schema';
-import { PublicInformation } from '@sage3/shared/types';
 import { useState, useEffect } from 'react';
+import { Box, Heading, Tooltip, Text, useColorModeValue, IconButton, Image, Icon, Spacer } from '@chakra-ui/react';
 import { MdExitToApp, MdRefresh } from 'react-icons/md';
+
+import { PublicInformation } from '@sage3/shared/types';
+import { App, AppState } from '../../../schema';
 
 export function OtherServerCard(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -21,7 +22,7 @@ export function OtherServerCard(props: App): JSX.Element {
   const [server, setServerInfo] = useState<PublicInformation | undefined>(undefined);
 
   // Image
-  const logoUrl = useColorModeValue('/assets/background-boardlink.png', '/assets/background-boardlink.png');
+  const logoUrl = useColorModeValue('/assets/background-boardlink-dark.png', '/assets/background-boardlink.png');
 
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
@@ -147,8 +148,9 @@ export function OtherServerCard(props: App): JSX.Element {
               {timeSinceLastUpdate}
             </Text>
           </Box>
+          <Spacer />
           <Box>
-            <Image height="35px" src={logoUrl} transform="translateX(12px)"></Image>
+            <Image height="35px" src={logoUrl}></Image>
           </Box>
         </Box>
       </Box>
