@@ -7,9 +7,11 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
+import {
+  Box, useColorModeValue, useToast, ToastId, Modal, useDisclosure,
+  ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button,
+} from '@chakra-ui/react';
 
-import { Modal, useDisclosure } from '@chakra-ui/react';
 import { isValidURL, setupApp } from '@sage3/frontend';
 import {
   useUIStore,
@@ -24,8 +26,7 @@ import {
   useAuth,
   useFiles,
 } from '@sage3/frontend';
-import { AppName } from '@sage3/applications/schema';
-
+import { AppName, AppSchema } from '@sage3/applications/schema';
 import { HelpModal } from './HelpModal';
 
 type BackgroundProps = {
@@ -40,9 +41,11 @@ export function Background(props: BackgroundProps) {
   const toastIdRef = useRef<ToastId>();
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  // Modal for opening lots of files
+  const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
 
   // Hooks
-  const { uploadFiles, openFile } = useFiles();
+  const { uploadFiles, openAppForFile } = useFiles();
 
   // Messsages
   const subMessage = useMessageStore((state) => state.subscribe);
@@ -51,6 +54,7 @@ export function Background(props: BackgroundProps) {
 
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
+  const createBatch = useAppStore((state) => state.createBatch);
 
   // User
   const { user } = useUser();
@@ -125,7 +129,7 @@ export function Background(props: BackgroundProps) {
   };
 
   // Drop event
-  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+  async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
 
     // Get the position of the drop
@@ -208,8 +212,20 @@ export function Background(props: BackgroundProps) {
             const fileTypes = JSON.parse(types);
             // Open the file at the drop location
             const num = fileIDs.length;
-            for (let i = 0; i < num; i++) {
-              openFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop, props.roomId, props.boardId);
+            if (num < 20) {
+              const batch: AppSchema[] = [];
+              let xpos = xdrop;
+              for (let i = 0; i < num; i++) {
+                const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
+                if (res) {
+                  batch.push(res);
+                  xpos += res.size.width + 10;
+                }
+              }
+              createBatch(batch);
+            } else {
+              // Too many assets selected, not doing it.
+              lotsOnOpen();
             }
           }
         }
@@ -312,9 +328,8 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'50px 50px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -335,6 +350,21 @@ export function Background(props: BackgroundProps) {
       <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
         <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       </Modal>
+
+      {/* Too many assets selected */}
+      <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Opening Assets</ModalHeader>
+          <ModalBody>Too many assets selected</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" size="sm" mr={3} onClick={lotsOnClose}>
+              OK
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
     </Box>
   );
 }

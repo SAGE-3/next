@@ -9,6 +9,7 @@
 import { SAGE3Collection } from '../generics';
 import { WebSocket } from 'ws';
 import { PresenceSchema } from '@sage3/shared/types';
+import { SBDocument } from '@sage3/sagebase';
 
 /**
  * Class to help with the management of presence of users connected to the server.
@@ -48,13 +49,13 @@ export class SAGEPresence {
   }
 
   // Helper function to set user to 'online'.
-  private async setOnline(): Promise<boolean> {
+  private async setOnline(): Promise<SBDocument<PresenceSchema> | undefined> {
     const res = await this._collection.update(this._userId, this._userId, { status: 'online' });
     return res;
   }
 
   // Helper function to set user to 'offline'.
-  private async setOffline(): Promise<boolean> {
+  private async setOffline(): Promise<SBDocument<PresenceSchema> | undefined> {
     const res = await this._collection.update(this._userId, this._userId, { status: 'offline' });
     return res;
   }

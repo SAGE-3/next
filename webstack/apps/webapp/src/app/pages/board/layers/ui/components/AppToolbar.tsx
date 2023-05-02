@@ -50,7 +50,6 @@ export function AppToolbar(props: AppToolbarProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const scale = useUIStore((state) => state.scale);
-  const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
@@ -134,7 +133,7 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(appBottomPosition);
       }
     }
-  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth, boardDragging]);
+  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
   function moveToApp() {
     if (app) {
@@ -219,7 +218,7 @@ export function AppToolbar(props: AppToolbarProps) {
         rounded="md"
         transition="opacity 0.7s"
         display="flex"
-        opacity={`${boardDragging || appDragging ? '0' : '1'}`}
+        opacity={`${appDragging ? '0' : '1'}`}
       >
         <Box display="flex" flexDirection="column">
           <Text
