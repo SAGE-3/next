@@ -15,11 +15,13 @@ import { z } from 'zod';
 
 export const schema = z.object({
   url: z.string(),
+  cardTitle: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   url: '',
+  cardTitle: '',
 };
 
 export const name = 'BoardLink';
