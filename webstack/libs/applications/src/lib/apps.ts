@@ -1,6 +1,7 @@
 // SAGE3 Generated from apps.json file
 
 import { name as AIPaneName } from './apps/AIPane';
+import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as ChartGeneratorName } from './apps/ChartGenerator';
 import { name as ChartMakerName } from './apps/ChartMaker';
@@ -32,7 +33,9 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebviewName } from './apps/Webview';
 
+
 import AIPane from './apps/AIPane/AIPane';
+import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
 import ChartMaker from './apps/ChartMaker/ChartMaker';
@@ -65,8 +68,10 @@ import VideoViewer from './apps/VideoViewer/VideoViewer';
 import Webview from './apps/Webview/Webview';
 import React from 'react';
 
+
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
+  [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent },
   [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent },
   [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent },
@@ -92,14 +97,11 @@ export const Applications = {
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent },
   [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent },
-  [TwilioScreenshareName]: {
-    AppComponent: React.memo(TwilioScreenshare.AppComponent),
-    ToolbarComponent: TwilioScreenshare.ToolbarComponent,
-  },
+  [TwilioScreenshareName]: { AppComponent: React.memo(TwilioScreenshare.AppComponent), ToolbarComponent: TwilioScreenshare.ToolbarComponent },
   [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent },
   [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent },
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;
 
 export * from './components';
