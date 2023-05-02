@@ -15,7 +15,6 @@
 
 # TODO prevent apps updates on fields that were touched?
 import os
-# import signal
 import uuid
 import json
 from board import Board
@@ -47,9 +46,7 @@ class PySage3:
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.socket = SageWebsocket(on_message_fn=self.__process_messages)
         self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
-
         # Grab and load info already on the board
-
         self.__populate_existing()
         self.done_init = True
         print("Completed configuring Sage3 Client")
@@ -141,7 +138,6 @@ class PySage3:
         print("Delete not yet  supported through API")
 
     def get_apps(self, room_id=None, board_id=None, type=None):
-
         if room_id is None or board_id is None:
             print("listing apps requires  room and board ids")
             return
