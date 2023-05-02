@@ -37,12 +37,19 @@ export const CheckUrlForBoardId = () => {
  * @returns
  */
 export function JoinBoardCheck() {
+  // Routing
+  const { toHome } = useRouteNav();
   // To handle the user entering a url containing the boardId
   const boardId = localStorage.getItem('boardId');
   localStorage.removeItem('boardId');
+
+  // Board to enter and modal
   const [boardByUrl, setBoardByUrl] = useState<Board>();
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
+
+  // Toast for information feedback
   const toast = useToast();
+
   // Enter a board if the url contains it
   useEffect(() => {
     async function joinBoard() {
@@ -56,10 +63,11 @@ export function JoinBoardCheck() {
         toast({
           title: 'Board not found',
           description: `Sorry, we couldn't find a board with the id "${boardId}"`,
-          duration: 3000,
+          duration: 5000,
           isClosable: true,
           status: 'error',
         });
+        toHome();
       }
     }
     if (boardId) {

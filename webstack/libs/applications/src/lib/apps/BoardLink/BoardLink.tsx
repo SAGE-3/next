@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { EnterBoardModal, useAppStore } from '@sage3/frontend';
+import { EnterBoardModal, isElectron, useAppStore } from '@sage3/frontend';
 import {
   Button,
   Divider,
@@ -84,7 +84,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const enterBoard = () => {
     if (otherServer) {
-      window.open(s.url.replace('sage3://', 'https://'), '_blank');
+      const url = s.url.replace('sage3://', 'https://');
+      if (isElectron()) {
+        window.location.replace(s.url.replace('sage3://', 'https://'));
+      } else {
+        window.open(s.url.replace('sage3://', 'https://'), '_blank');
+      }
     } else {
       enterBoardOnOpen();
     }

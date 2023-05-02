@@ -13,7 +13,6 @@ import { MdExitToApp, MdRefresh } from 'react-icons/md';
 
 export function OtherServerCard(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  console.log(s.cardTitle);
 
   // Other Server URl
   const serverURL = 'https://' + new URL(s.url.replace('sage3://', 'https://')).host;
@@ -36,21 +35,18 @@ export function OtherServerCard(props: App): JSX.Element {
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
-  async function updateServerInfo() {
-    console.log(serverURL);
-
+  async function refreshServerInfo() {
     const res = await fetch(serverURL + '/api/info');
     const data = await res.json();
-    console.log(serverURL, data);
     if (data) {
       setServerInfo(data);
     }
     return;
   }
 
-  function updateInfo() {
+  function refreshInfo() {
     setTimeSinceLastUpdate('Updating...');
-    updateServerInfo();
+    refreshServerInfo();
     setTimeout(() => {
       setLastUpdate(Date.now());
     }, 1000);
@@ -73,15 +69,15 @@ export function OtherServerCard(props: App): JSX.Element {
 
   // Update info every 5 minutes
   useEffect(() => {
-    updateInfo();
+    refreshInfo();
     const interval = setInterval(() => {
-      updateInfo();
+      refreshInfo();
     }, 5 * 1000 * 60); // 5 minutes
     return () => clearInterval(interval);
   }, [s.url]);
 
   useEffect(() => {
-    updateInfo();
+    refreshInfo();
   }, []);
 
   return (
@@ -145,7 +141,7 @@ export function OtherServerCard(props: App): JSX.Element {
         <Box display="flex" justifyContent={'space-between'}>
           <Box display="flex">
             <Tooltip label="Refresh" openDelay={500} hasArrow placement="top">
-              <IconButton variant="solid" size="sm" onClick={updateInfo} aria-label={'Refresh'} icon={<MdRefresh></MdRefresh>} />
+              <IconButton variant="solid" size="sm" onClick={refreshInfo} aria-label={'Refresh'} icon={<MdRefresh></MdRefresh>} />
             </Tooltip>
             <Text size="xss" transform={'translateY(4px)'} ml="2">
               {timeSinceLastUpdate}

@@ -74,6 +74,11 @@ export function BoardPage() {
     event.preventDefault();
   }
 
+  function saveBoardIdToLocalStorage() {
+    if (!boardId) return;
+    localStorage.setItem('boardId', boardId);
+  }
+
   // Handle joining and leave a board
   useEffect(() => {
     // This is if someone is joining a board by a link
@@ -98,6 +103,9 @@ export function BoardPage() {
     document.addEventListener('dragover', handleDragOver);
     document.addEventListener('drop', handleDrop);
 
+    // Handle a refresh to keep the user on the board
+    window.addEventListener('beforeunload', saveBoardIdToLocalStorage);
+
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
@@ -109,6 +117,7 @@ export function BoardPage() {
       // Remove event listeners
       document.removeEventListener('dragover', handleDragOver);
       document.removeEventListener('drop', handleDrop);
+      window.removeEventListener('beforeunload', saveBoardIdToLocalStorage);
     };
   }, [roomId, boardId]);
 
