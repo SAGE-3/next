@@ -13,7 +13,7 @@ export type Baselayer = z.infer<typeof Baselayer>;
 
 const widget = {
   visualizationType: 'variableCard',
-  yAxisNames: ['wind_speed_set_1'],
+  yAxisNames: [''],
   xAxisNames: [''],
   color: '#5AB2D3',
   layout: { x: 0, y: 0, w: 11, h: 130 },

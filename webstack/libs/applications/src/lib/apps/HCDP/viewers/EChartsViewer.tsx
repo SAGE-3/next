@@ -40,8 +40,8 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      width: props.size ? props.size.height - 200 : 700,
-      height: props.size ? props.size.width - 75 : 400,
+      width: props.size ? props.size.height : 1000,
+      height: props.size ? props.size.width : 400,
     });
     async function callToChartMangaer() {
       const options = await ChartManager(
@@ -55,7 +55,7 @@ const EChartsViewer = (props: {
     }
     callToChartMangaer();
     setChartStateInstance(chartInstance);
-  }, [chartRef, props.widget, colorMode, props.isLoaded]);
+  }, [chartRef, props.widget, colorMode, props.isLoaded, props.stationNames, props.stationMetadata]);
 
   useEffect(() => {
     if (chartStateInstance) {
@@ -66,13 +66,13 @@ const EChartsViewer = (props: {
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        width: props.size ? props.size.height - 200 : 700,
-        height: props.size ? props.size.width - 75 : 400,
+        width: props.size ? props.size.height : 1000,
+        height: props.size ? props.size.width : 400,
       });
     }
   }, [props.size]);
   return (
-    <Box border={colorMode === 'light' ? 'black solid 5px' : 'white solid 5px'} rounded="1rem" w="1000" h="420">
+    <Box border={colorMode === 'light' ? 'black solid 7px' : 'white solid 7px'} rounded="1rem" w="1000" h="420">
       {props.isLoaded ? <div ref={chartRef}></div> : <Spinner w={420} h={420} thickness="20px" speed="0.30s" emptyColor="gray.200" />}
     </Box>
   );

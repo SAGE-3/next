@@ -418,7 +418,7 @@ function AppComponent(props: App): JSX.Element {
 
                       </g>
                     )} */}
-                    <g transform={`translate(100, 100) scale(2) translate(-100, -100)`}>
+                    <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
                       <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
 
                       <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
@@ -428,7 +428,7 @@ function AppComponent(props: App): JSX.Element {
                   </svg>
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    <g transform={`translate(100, 100) scale(2) translate(-100, -100)`}>
+                    <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
                       <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
                       <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
                         {data[s.variableToDisplay]}

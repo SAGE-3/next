@@ -36,12 +36,6 @@ function AppComponent(props: App): JSX.Element {
   const bgColor = useColorModeValue('gray.100', 'gray.900');
   const textColor = useColorModeValue('gray.700', 'gray.100');
 
-  const layout = [
-    { i: '0', x: 0, y: 0, w: 1, h: 2 },
-    { i: '1', x: 1, y: 0, w: 3, h: 2 },
-    { i: '2', x: 4, y: 0, w: 1, h: 2 },
-    { i: '3', x: 4, y: 0, w: 1, h: 2 },
-  ];
   useEffect(() => {
     const fetchStationData = async () => {
       const tmpStationMetadata: any = [];
@@ -53,28 +47,28 @@ function AppComponent(props: App): JSX.Element {
         const sensorData = sensor['STATION'][0];
         tmpStationMetadata.push(sensorData);
       }
-
       setStationMetadata(tmpStationMetadata);
       // return tmpStationMetadata;
     };
     fetchStationData();
 
-    // const interval = setInterval(
-    //   () => {
-    //   },
-    //   60 * 1000
-    //   //10 minutes
-    // );
-    // return () => clearInterval(interval);
+    const interval = setInterval(
+      () => {
+        fetchStationData();
+      },
+      60 * 1000
+      //10 minutes
+    );
+    return () => clearInterval(interval);
   }, [s.stationNames]);
   return (
     <AppWindow app={props}>
       <Box overflowY="auto" p={'1rem'} bg={bgColor} h="100%">
         {stationMetadata.length > 0 ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg" p="1rem" border="solid white 1px">
-            <Text textAlign="center" fontSize={'4rem'}>
+            {/* <Text textAlign="center" fontSize={'4rem'}>
               TODO: PRINT ALL STATION NAMES
-            </Text>
+            </Text> */}
             <HStack>
               <Box>
                 {s.widget.visualizationType === 'variableCard' ? (

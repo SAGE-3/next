@@ -62,6 +62,8 @@ function findDuplicateElements(...arrays: any) {
   return duplicates;
 }
 
+const xAxisVariableNames = ['date_time', 'elevation', 'latitude', 'longitude', 'name'];
+
 function CustomizeWidgets(props: {
   size: { width: number; height: number; depth: number };
   widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
@@ -77,7 +79,7 @@ function CustomizeWidgets(props: {
   const [map, setMap] = useState<any>();
   const [selectedStations, setSelectedStations] = useState<any>([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [variableNames, setVariableNames] = useState<string[]>([]);
+  const [yAxisVariableNames, setYAxisVariableNames] = useState<string[]>([]);
   // const [selectedColor, setSelectedColor] = useState<SAGEColors>('blue');
   const [stationMetadata, setStationMetadata] = useState<any>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -98,10 +100,7 @@ function CustomizeWidgets(props: {
       }
 
       const filteredVariableNames = findDuplicateElements(...tmpVariableNames);
-
-      console.log(filteredVariableNames);
-      console.log(tmpVariableNames);
-      setVariableNames(filteredVariableNames);
+      setYAxisVariableNames(filteredVariableNames);
       setStationMetadata(tmpSensorMetadata);
       setIsLoaded(true);
     };
@@ -110,7 +109,7 @@ function CustomizeWidgets(props: {
   const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
     const tmpArray: string[] = [...s.stationNames];
     const stationName = station.name;
-    setVariableNames([]);
+    setYAxisVariableNames([]);
     if (tmpArray.find((station: string) => station === stationName)) {
       tmpArray.splice(tmpArray.indexOf(stationName), 1);
       updateState(props.props._id, { stationNames: [...tmpArray] });
@@ -118,7 +117,7 @@ function CustomizeWidgets(props: {
   };
 
   const handleAddSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
-    setVariableNames([]);
+    setYAxisVariableNames([]);
     updateState(props.props._id, { stationNames: [...s.stationNames, station.name] });
   };
   const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -146,7 +145,6 @@ function CustomizeWidgets(props: {
     const operation = event.target.value;
     updateState(props.props._id, { widget: { ...s.widget, operation: operation } });
   };
-
   const generateWidget = async () => {
     const app = await createApp({
       title: 'SensorOverview',
@@ -274,7 +272,7 @@ function CustomizeWidgets(props: {
                       {stationMetadata.map((station: any, index: number) => {
                         if (isLoaded) {
                           return (
-                            <Box mr="1rem">
+                            <Box mr="1rem" key={index}>
                               <AccordionItem>
                                 <h2>
                                   <AccordionButton>
@@ -287,7 +285,7 @@ function CustomizeWidgets(props: {
                                 <AccordionPanel pb={4}>
                                   <UnorderedList>
                                     {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
-                                      return <ListItem>{name}</ListItem>;
+                                      return <ListItem key={index}>{name}</ListItem>;
                                     })}
                                   </UnorderedList>
                                 </AccordionPanel>
@@ -334,7 +332,7 @@ function CustomizeWidgets(props: {
                           handleYAxisChange(e);
                         }}
                       >
-                        {variableNames.map((name: string, index: number) => {
+                        {yAxisVariableNames.map((name: string, index: number) => {
                           return (
                             <option key={index} value={name}>
                               {name}
@@ -393,7 +391,7 @@ function CustomizeWidgets(props: {
                           handleXAxisChange(e);
                         }}
                       >
-                        {variableNames.map((name: string, index: number) => {
+                        {xAxisVariableNames.map((name: string, index: number) => {
                           return (
                             <option key={index} value={name}>
                               {name}
@@ -409,7 +407,7 @@ function CustomizeWidgets(props: {
                           handleYAxisChange(e);
                         }}
                       >
-                        {variableNames.map((name: string, index: number) => {
+                        {yAxisVariableNames.map((name: string, index: number) => {
                           return (
                             <option key={index} value={name}>
                               {name}

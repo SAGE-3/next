@@ -38,8 +38,8 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: props.size.height - 175,
-      width: props.size.width - 25,
+      height: props.size.height - 75,
+      width: props.size.width - 75,
     });
     async function callToChartMangaer() {
       const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames);
@@ -64,7 +64,7 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: props.size.height - 200,
+      height: props.size.height - 75,
       width: props.size.width - 75,
     });
     async function callToChartMangaer() {
@@ -78,7 +78,7 @@ const EChartsViewer = (props: {
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        height: props.size.height - 200,
+        height: props.size.height - 75,
         width: props.size.width - 75,
       });
     }

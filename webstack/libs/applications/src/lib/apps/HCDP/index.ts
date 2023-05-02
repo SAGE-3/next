@@ -29,8 +29,8 @@ const variableTypes = z.enum([
 
 const widget = {
   visualizationType: 'variableCard',
-  yAxisNames: ['wind_speed_set_1'],
-  xAxisNames: [''],
+  yAxisNames: [],
+  xAxisNames: [],
   color: '#5AB2D3',
   layout: { x: 0, y: 0, w: 11, h: 130 },
   operation: 'average',
