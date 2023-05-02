@@ -8,7 +8,6 @@
 
 from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
-from pydantic import PrivateAttr
 
 
 class CounterState(TrackedBaseModel):

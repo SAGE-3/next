@@ -105,58 +105,40 @@ class Seer(SmartBit):
         print("I am in seer's execute.")
         # TODO: handle the posts as async instead
         if self.state.prompt:
-            ### THIS NEEDS TO HAPPEN HERE
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
             self.send_updates()
-            ### THIS ABOVE NEEDS TO HAPPEN HERE NO AFTER FUNCTION EXECUTES
 
+            payload = {"query": self.state.prompt}
+            headers = {'Content-Type': 'application/json'}
+            resp = httpx.post('http://127.0.0.1:5002/query', headers=headers, json=payload, timeout=15.0)
 
+            if resp.status_code == 200 and resp.json()["status"] == "success":
+                json_resp = resp.json()
+                if "code" in json_resp:
+                    self.state.code = json_resp["code"]
+                    # we need to send the updates immediatley, otherwise, the
+                    self.send_updates()
 
-            print(f"in seer's generate and the prompt: {self.state.prompt}")
-            print("\n\nSENDING REQ >>>")
-            time.sleep(10)
-            print(">>> DONE SENDING\n\n")
-            self.state.code = "print('hi')"
-            self.execute(_uuid)
-
-
-
-
-
-
-
-
-            # self.execute(_uuid)
-            # self.send_updates()
-
-            #
-            # if resp.status_code == 200 and resp.json()["status"] == "success":
-            #     json_resp = resp.json()
-            #     if "code" in json_resp:
-            #         code = json_resp["code"]
-            #
-            #         print(f"I got some code from the seer server and it's {code}")
-            #
-            #         self.execute(_uuid)
-            #     else:
-            #         print("I am handling data not code")
-            #         msg = {"request_id": _uuid,
-            #                    "display_data": {
-            #                        'data': json_resp["data"]
-            #                    }
-            #                }
-            #         self.handle_exec_result(msg)
-            # else:
-            #     print("Something went wrong")
-            #     msg = {"request_id": _uuid,
-            #            "error": {
-            #                'ename': "SeerPromptError",  # Exception name, as a string
-            #                'evalue': "Error converting prompt to code.",  # Exception value, as a string
-            #                'traceback': [ "Error code: "+ resp.status_code]  # Traceback frames, as a list of strings
-            #            }
-            #         }
-            #     self.handle_exec_result(msg)
+                    self.execute(_uuid)
+                else:
+                    print("I am handling data not code")
+                    msg = {"request_id": _uuid,
+                               "display_data": {
+                                   'data': json_resp["data"]
+                               }
+                           }
+                    self.handle_exec_result(msg)
+            else:
+                print("Something went wrong")
+                msg = {"request_id": _uuid,
+                       "error": {
+                           'ename': "SeerPromptError",  # Exception name, as a string
+                           'evalue': "Error converting prompt to code.",  # Exception value, as a string
+                           'traceback': [ "Error code: " + resp.status_code]  # Traceback frames, as a list of strings
+                       }
+                    }
+                self.handle_exec_result(msg)
 
 
     def interrupt(self):
