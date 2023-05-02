@@ -103,7 +103,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             raised: true,
           });
         } else if (pastedText.startsWith('sage3://')) {
-          // Create a new stickie
+          // Create a board link app
           createApp({
             title: user.data.name,
             roomId: props.roomId,

@@ -6,10 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useDisclosure, useToast } from '@chakra-ui/react';
-import { Board } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+import { useDisclosure, useToast } from '@chakra-ui/react';
+
+import { Board } from '@sage3/shared/types';
+
 import { useRouteNav } from '../hooks';
 import { EnterBoardModal } from '../ui';
 
@@ -44,7 +46,7 @@ export function JoinBoardCheck() {
   localStorage.removeItem('boardId');
 
   // Board to enter and modal
-  const [boardByUrl, setBoardByUrl] = useState<Board>();
+  const [boardByUrl, setBoardByUrl] = useState<Board | null>(null);
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
 
   // Toast for information feedback
@@ -62,7 +64,7 @@ export function JoinBoardCheck() {
       } else {
         toast({
           title: 'Board not found',
-          description: `Sorry, we couldn't find a board with the id "${boardId}"`,
+          description: `Sorry, we could not find a board with the id "${boardId}"`,
           duration: 5000,
           isClosable: true,
           status: 'error',
@@ -75,11 +77,8 @@ export function JoinBoardCheck() {
     }
   }, []);
 
-  return (
-    <>
-      {boardByUrl !== undefined ? (
-        <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>
-      ) : null}
-    </>
-  );
+  if (boardByUrl) {
+    return <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>
+  }
+  return null;
 }
