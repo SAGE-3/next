@@ -6,6 +6,10 @@ type useBoardUtils = {
   storeLayout: () => void;
   restoreLayout: () => void;
   alignSelectedApps: (align: 'left' | 'right' | 'top' | 'bottom' | 'even' | 'stack', lassoApps: string[]) => void;
+  // distributeSelectedApps: (distribute: 'horizontal' | 'vertical', lassoApps: string[]) => void;
+  // resizeSelectedApps: (resize: 'horizontal' | 'vertical', lassoApps: string[]) => void;
+  assignColor: (color: string, lassoApps: string[]) => void;
+  groupByTopic: (lassoApps: string[]) => void; // Stickies for now
   // sendToastMessage: (message: string, status: 'info' | 'warning' | 'success' | 'error') => void;
 };
 
@@ -13,6 +17,7 @@ export function useBoardUtils(): useBoardUtils {
   const presences = usePresenceStore((state) => state.presences);
   const updateBoard = useBoardStore((state) => state.update);
   const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
   const { user } = useUser();
   const apps = useAppStore((state) => state.apps);
   const { boardId } = useParams<{ boardId: string }>();
@@ -148,5 +153,41 @@ export function useBoardUtils(): useBoardUtils {
     }
   }
 
-  return { storeLayout, restoreLayout, organizeApps, alignSelectedApps };
+  function assignColor(color: string, lassoApps: string[]) {
+    if (boardId === undefined) {
+      return;
+    }
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    const changes = [] as { _id: string; data: { color: string } }[];
+    storeLayout();
+    selectedApps.forEach((app) => {
+      let change = { _id: app._id, data: { color: color } };
+      changes.push(change);
+    });
+    for (const change of changes) {
+      updateState(change._id, change.data);
+    }
+  }
+
+  function groupByTopic(lassoApps?: string[]) {
+    if (boardId === undefined) {
+      return;
+    }
+    const presence = presences.filter((el) => el.data.boardId === boardId).filter((el) => el.data.userId === user?._id)[0];
+    const viewportPosition = presence.data.viewport.position;
+    const viewportSize = presence.data.viewport.size;
+    // Trigger the smart function
+    updateBoard(boardId, {
+      executeInfo: {
+        executeFunc: 'group_by_topic',
+        params: {
+          viewport_position: viewportPosition,
+          viewport_size: viewportSize,
+          selected_apps: lassoApps,
+        },
+      },
+    });
+  }
+
+  return { storeLayout, restoreLayout, organizeApps, alignSelectedApps, assignColor, groupByTopic };
 }

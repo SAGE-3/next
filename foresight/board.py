@@ -8,6 +8,7 @@
 
 from smartbitcollection import SmartBitsCollection
 from utils.layout import Layout
+import numpy as np
 
 # from utils.generic_utils import import_cls
 # from utils.wall_utils import Sage3Communication
@@ -97,7 +98,27 @@ class Board:
             sb.data.size.width = coords[0]
             sb.data.size.height = coords[1]
             sb.send_updates()
+
+    def group_by_topic(self,
+        viewport_position: dict,
+        viewport_size: dict,
+        selected_apps: list = None):
         self.executeInfo = {"executeFunc": "", "params": {}}
+        colors = ['black', 'blue', 'green', 'red', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
+        # double check the selected apps are all Stickies (for now)
+
+        if selected_apps is not None:
+            for app_id in selected_apps:
+                sb = self.smartbits[app_id]
+                if sb.data.type != "Stickie":
+                    print(f"App {app_id} is not a Sticky. Not executing")
+                else:
+                    random_color = np.random.choice(colors)
+                    print(f"App {app_id} is a Sticky. Changing color to {random_color}")
+                    # print(f"App color is {sb.state}")
+                    sb.state.color = random_color
+                    sb.send_updates()
+
 
     # def __get_launch_payload(self, smartbit_cls_name, x, y, width=100, height=100, optional_data={}):
     #     # intentionally not providing a default to x and y. Easy to get lazy with things that overlap
