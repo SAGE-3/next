@@ -25,9 +25,9 @@ from board import Board
 from room import Room
 from smartbitfactory import SmartBitFactory
 from utils.sage_communication import SageCommunication
-from config import config as conf, prod_type
 from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
+from config import config as conf, prod_type
 
 
 def setup_logger():

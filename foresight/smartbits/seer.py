@@ -13,6 +13,8 @@ from smartbits.smartbit import SmartBit, ExecuteInfo
 from smartbits.smartbit import TrackedBaseModel
 from pydantic import PrivateAttr
 from jupyterkernelproxy import JupyterKernelProxy
+from config import config as conf, prod_type
+
 
 import httpx
 import json
@@ -108,10 +110,11 @@ class Seer(SmartBit):
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
             self.send_updates()
+            seer_server = conf[prod_type]["seer_server"]
 
             payload = {"query": self.state.prompt}
             headers = {'Content-Type': 'application/json'}
-            resp = httpx.post('http://127.0.0.1:5002/query', headers=headers, json=payload, timeout=15.0)
+            resp = httpx.post(f'{seer_server}/query', headers=headers, json=payload, timeout=15.0)
 
             if resp.status_code == 200 and resp.json()["status"] == "success":
                 json_resp = resp.json()

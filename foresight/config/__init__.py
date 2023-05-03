@@ -38,6 +38,7 @@ config = {
         "ws_server": f"ws://{server}:3333",
     },
     "development": {
+        "seer_server": "http://127.0.0.1:5002",
         "jupyter_server": "http://localhost",
         "jupyter_ws": "ws://localhost",
         "redis_server": "localhost",
@@ -46,6 +47,7 @@ config = {
         "flask_server": "http://127.0.0.1:5000/exec"
     },
     "local": {
+        "seer_server": "http://127.0.0.1:5002",
         "jupyter_server": 'http://localhost:8888',
         "redis_server": "localhost",
         "web_server": f"http://{server}:3333",
