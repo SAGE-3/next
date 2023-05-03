@@ -217,14 +217,14 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
         borderLeft={`0.2em solid ${useHexColor(ownerColor)}`}
         fontSize={s.fontSize + 'px'}
       >
-        <Flex direction="row" justify="left" align="center">
-          {!count ? null : (
-            <Text color={'red'} fontSize="sm">
-              [{count}]:
-            </Text>
-          )}
-          {!output ? null : output}
-        </Flex>
+        {/* <Flex direction="row" justify="left" align="center"> */}
+        {!count ? null : (
+          <Text color={'red'} fontSize="sm">
+            [{count}]:
+          </Text>
+        )}
+        {!output ? null : output}
+        {/* </Flex> */}
       </Box>
     </>
   );

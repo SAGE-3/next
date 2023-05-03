@@ -50,6 +50,7 @@ const availableKernelsSchema = z.array(
 export const schema = z.object({
   code: z.string(),
   summary: z.string(),
+  groupColor: z.string(),
   notebookUrl: z.string(),
   cellNumber: z.number(),
   language: z.string(),
@@ -74,11 +75,12 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   code: '',
   summary: '',
+  groupColor: '',
   notebookUrl: '',
   cellNumber: 0,
   language: 'python',
   isTyping: false,
-  fontSize: 16,
+  fontSize: 24,
   theme: 'vs-dark',
   kernel: '',
   output: '',

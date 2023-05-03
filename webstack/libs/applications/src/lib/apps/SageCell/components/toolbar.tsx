@@ -12,7 +12,7 @@ import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } f
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import { downloadFile, useAppStore, useUser, useUsersStore } from '@sage3/frontend';
+import { downloadFile, useAppStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
@@ -39,6 +39,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   const [ownerName, setOwnerName] = useState<string>('');
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  const scale = useUIStore((state) => state.scale);
 
   /**
    * This function gets the kernels for the board
@@ -171,7 +172,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   };
 
   return (
-    <HStack>
+    <HStack hidden={scale < 0.3}>
       <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
       {
         <>

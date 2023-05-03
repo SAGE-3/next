@@ -42,10 +42,13 @@ import {
   PopoverFooter,
   Portal,
   CircularProgress,
+  Tooltip,
 } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore, useUser, useUIStore, truncateWithEllipsis } from '@sage3/frontend';
+
+import { randomSAGEColor } from '@sage3/shared';
 
 import { state as AppState, Kernels } from './index';
 import { AppWindow } from '../../components';
@@ -78,8 +81,50 @@ const AppComponent = (props: App): JSX.Element => {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const [cellOrder, setCellOrder] = useState<string[]>([]);
+  const [showRightAddButton, setShowRightAddButton] = useState(false);
 
+  const [kernelColor, setKernelColor] = useState<string>(randomSAGEColor());
   const apps = useAppStore((state) => state.apps);
+
+  const svgAddButton = (
+    <svg width="150" height="150" viewBox="0 0 200 200">
+      <g>
+        <circle cx="100" cy="100" r="50" stroke="white" strokeWidth="6" fill={useColorModeValue('white', 'black')}></circle>
+        <text
+          x="50%"
+          y="55%"
+          dominantBaseline="middle"
+          textAnchor="middle"
+          fill={useColorModeValue('black', 'white')}
+          fontSize={`96px`}
+          fontFamily="Arial, Helvetica, sans-serif"
+        >
+          +
+        </text>
+      </g>
+    </svg>
+  );
+
+  const cellOrderCircle = (cellNumber: number) => {
+    return (
+      <svg width="150" height="150" viewBox="0 0 200 200">
+        <g>
+          <circle cx="100" cy="100" r="50" stroke="white" strokeWidth="6" fill={useColorModeValue('white', 'black')}></circle>
+          <text
+            x="50%"
+            y="55%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fill={useColorModeValue('black', 'white')}
+            fontSize={`96px`}
+            fontFamily="Arial, Helvetica, sans-serif"
+          >
+            {cellNumber}
+          </text>
+        </g>
+      </svg>
+    );
+  };
 
   // get a list of all the cells on the current board that are assigned to the same kernel
   useEffect(() => {
@@ -215,160 +260,104 @@ const AppComponent = (props: App): JSX.Element => {
   }, [s.kernel]);
 
   const scaledFontSize = Math.round(12 / (scale + Number.EPSILON));
-
-  /**
-   *
-   */
+  // const scaledEditorHeight = Math.round(editorHeight / (scale + Number.EPSILON));
+  const ww = window.innerWidth;
 
   return (
-    <AppWindow app={props}>
-      {/* Wrap the code cell and output in a container */}
-      <>
-        <Box
-          hidden={scale > 0.5}
-          bg={'black'}
-          fontSize={`${scaledFontSize}px`}
-          fontWeight="bold"
-          justifyContent={'center'}
-          alignItems={'center'}
-          display={'flex'}
-          height={'100%'}
-          width={'100%'}
-          position={'absolute'}
-        >
-          {/* <Box color={'white'} fontWeight="extrabold" position={'absolute'} top={'0'} left={'0'}> */}
-          <Box position={'absolute'} top={'-125px'} left={'-125px'}>
-            <svg width="250" height="250" viewBox="0 0 200 200">
-              <g>
-                <circle cx="100" cy="100" r="50" stroke="black" stroke-width="3" fill="rgb(121,0,121)"></circle>
-                <text
-                  x="50%"
-                  y="50%"
-                  dominant-baseline="middle"
-                  text-anchor="middle"
-                  fill="white"
-                  font-size={`${scaledFontSize}px`}
-                  font-family="Arial, Helvetica, sans-serif"
-                  font-weight="bold"
-                >
-                  {props.data.state.cellNumber}
-                </text>
-              </g>
-            </svg>
-            {/* <CircularProgress isIndeterminate color="green.300" thickness="10px" size="100px" /> */}
-            {/* <IconButton
-              aria-label="Edit"
-              icon={<MdEdit size={scaledFontSize * 2} />}
-              onClick={getKernels}
-              // position should be in the upper right corner
-              position={'absolute'}
-              // right={'5'}
-              // padding should be 10px
-              padding={'10px'}
-            /> */}
-            {/* <Popover isLazy>
-              <PopoverTrigger>
-                <Button>
-                  <MdEdit size={scaledFontSize * 2} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent>
-                <PopoverHeader fontSize={`${scaledFontSize * 2}px`}>Popover placement</PopoverHeader>
-                <PopoverArrow />
-                <PopoverCloseButton />
-                <PopoverBody>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore.
-                </PopoverBody>
-              </PopoverContent>
-            </Popover> */}
-          </Box>
-
-          {/* </Box> */}
-          {/* put a massive Jupyter icon as a faded background image */}
+    <>
+      <AppWindow app={props}>
+        <>
           <Box
-            position="absolute"
-            top="0"
-            left="0"
-            w="100%"
-            h="100%"
-            // bgImage="url('https://jupyter.org/assets/homepage/main-logo.svg')"
-            bgImage="url('/assets/icon.svg')"
-            bgRepeat="no-repeat"
-            bgSize="contain"
-            bgPosition="center"
-            opacity="0.2"
-            // bgGradient={'linear(to-r, #7928CA, #FF0080)'}
-          />
-          <Flex flexDirection="column" alignItems="center" justifyContent="center">
-            <Box
-              color={'white'}
-              fontSize={`${scaledFontSize * 2}px`}
-              bgGradient={'linear(to-r, #7928CA, #FF0080)'}
-              fontWeight="bold"
-              bgClip="text"
-            >
-              SageCell
-            </Box>
-            {s.summary == '' ? 'No summary' : s.summary}
-            {/* </Box> */}
-            {/* <CodeSummary appId={props._id} cellNumber={s.cellNumber} summary={s.summary} fontSize={scaledFontSize} /> */}
-            <CodeModal
-              cellNumber={s.cellNumber}
-              app={props}
-              access={access}
-              editorHeight={editorHeight}
-              outputs={s.output}
-              fontSize={scaledFontSize}
-            />
-          </Flex>
-        </Box>
-        <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" hidden={scale < 0.5}>
-          <StatusBar kernel={s.kernel} access={access} isTyping={s.isTyping} bgColor={bgColor} />
-          <Box
-            w={'100%'}
-            h={'100%'}
-            bg={access ? bgColor : accessDeniedColor}
-            pointerEvents={access ? 'auto' : 'none'}
-            display="flex"
-            flexDirection="column"
-            flex="1"
-            whiteSpace={'pre-wrap'}
-            overflowWrap="break-word"
-            overflowY="auto"
+            hidden={scale > 0.3}
+            bg={'black'}
+            fontSize={`${scaledFontSize}px`}
+            fontWeight="bold"
+            justifyContent={'center'}
+            alignItems={'center'}
+            display={'flex'}
+            height={'100%'}
+            width={'100%'}
+            position={'absolute'}
           >
-            {/* The code cell */}
-            {/* <Box flex="1" onClick={handleOnCellClick}> */}
-            <Box flex="1">
-              <CodeEditor app={props} access={access} editorHeight={editorHeight} />
+            <Box
+              position="absolute"
+              top="0"
+              left="0"
+              w="100%"
+              h="100%"
+              bgImage="url('/assets/icon.svg')"
+              bgRepeat="no-repeat"
+              bgSize="contain"
+              bgPosition="center"
+              opacity="0.2"
+            />
+            <Flex flexDirection="column" alignItems="center" justifyContent="center">
               <Box
-                h="20px"
-                background={'transparent'}
-                _active={{ bg: 'transparent' }}
-                _hover={{ bg: 'transparent' }}
-                cursor="row-resize"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  document.addEventListener('mousemove', handleMouseMove);
-                  document.addEventListener('mouseup', handleMouseUp);
-                }}
+                color={'white'}
+                fontSize={`${scaledFontSize * 2}px`}
+                bgGradient={'linear(to-r, #7928CA, #FF0080)'}
+                fontWeight="bold"
+                bgClip="text"
               >
-                {/* The grab bar */}
-                <Box>
-                  <Box className="arrow-top" />
-                  <Divider borderColor={'teal.600'} _hover={{ bg: 'teal.200' }} />
-                  <Box className="arrow-down" />
+                {props.data.state.cellNumber == 0 ? '[ ]' : 'SC: ' + props.data.state.cellNumber}
+              </Box>
+              {s.summary == '' ? 'No summary' : s.summary}
+              <CodeModal
+                cellNumber={s.cellNumber}
+                app={props}
+                access={access}
+                editorHeight={editorHeight}
+                outputs={s.output}
+                fontSize={scaledFontSize}
+              />
+            </Flex>
+          </Box>
+          <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" hidden={scale < 0.3}>
+            <StatusBar kernel={s.kernel} access={access} isTyping={s.isTyping} bgColor={bgColor} />
+            <Box
+              w={'100%'}
+              h={'100%'}
+              bg={access ? bgColor : accessDeniedColor}
+              pointerEvents={access ? 'auto' : 'none'}
+              display="flex"
+              flexDirection="column"
+              flex="1"
+              whiteSpace={'pre-wrap'}
+              overflowWrap="break-word"
+              overflowY="auto"
+            >
+              <Box flex="1">
+                <CodeEditor app={props} access={access} editorHeight={editorHeight} />
+                <Box
+                  h="20px"
+                  background={'transparent'}
+                  _active={{ bg: 'transparent' }}
+                  _hover={{ bg: 'transparent' }}
+                  cursor="row-resize"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                  }}
+                >
+                  {/* The grab bar */}
+                  <Box>
+                    <Box className="arrow-top" />
+                    <Divider borderColor={'teal.600'} _hover={{ bg: 'teal.200' }} />
+                    <Box className="arrow-down" />
+                  </Box>
+                </Box>
+
+                {/* The output */}
+                <Box flex="1" overflow="auto" w={'100%'} h={'100%'}>
+                  {!s.output ? null : <Outputs output={s.output} app={props} />}
                 </Box>
               </Box>
-
-              {/* The output */}
-              <Box flex="1" overflow="auto" w={'100%'} h={'100%'}>
-                {!s.output ? null : <Outputs output={s.output} app={props} />}
-              </Box>
             </Box>
           </Box>
-        </Box>
-      </>
-    </AppWindow>
+        </>
+      </AppWindow>
+    </>
   );
 };
 
@@ -394,7 +383,6 @@ function CodeModal(props: CodeModalProps) {
         size="lg"
         w="100%"
         h="100%"
-        // bgGradient={'linear(to-r, #7928CA, #FF0080)'}
         fontSize={props.fontSize}
         onClick={() => {
           onOpen();
@@ -402,10 +390,19 @@ function CodeModal(props: CodeModalProps) {
       >
         Click to Edit
       </Button>
-      <Modal isCentered isOpen={isOpen} onClose={onClose} scrollBehavior="inside" size={'5xl'}>
-        <ModalOverlay bg={useColorModeValue('whiteAlpha.300', 'blackAlpha.300')} backdropFilter="blur(10px) hue-rotate(90deg)" />
-        <ModalContent bgColor={useColorModeValue('#ECECEC', '#333')}>
-          <ModalHeader>SAGECell #{props.cellNumber}</ModalHeader>
+      <Modal isCentered isOpen={isOpen} onClose={onClose} scrollBehavior="inside" size={'90%'}>
+        <ModalOverlay bg={useColorModeValue('whiteAlpha.300', 'blackAlpha.300')} backdropFilter="blur(5px) hue-rotate(90deg)" />
+        <ModalContent bgColor={useColorModeValue('#ECECEC', '#333')} maxW="120rem">
+          <ModalHeader
+            bgGradient={'linear(to-r, #7928CA, #FF0080)'}
+            borderRadius={'0.5rem'}
+            borderBottomRadius={'0rem'}
+            color={'white'}
+            fontSize={'1.5rem'}
+            fontWeight={'bold'}
+          >
+            SAGECell #{props.cellNumber}
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Box bgColor={useColorModeValue('#EEE', '#222')}>
@@ -421,42 +418,3 @@ function CodeModal(props: CodeModalProps) {
     </>
   );
 }
-
-// interface CodeSummaryProps {
-//   appId: string;
-//   summary: string;
-//   cellNumber: number;
-//   fontSize: number;
-// }
-
-// function CodeSummary(props: CodeSummaryProps) {
-//   /* Here's a custom control */
-//   function EditableControls() {
-//     const { isEditing, getSubmitButtonProps, getCancelButtonProps, getEditButtonProps } = useEditableControls();
-//     const updateState = useAppStore((s) => s.updateState);
-
-//     return isEditing ? (
-//       <ButtonGroup
-//         // justifyContent="center"
-//         size="2xl"
-//       >
-//         <IconButton size={`${props.fontSize}px`} aria-label={''} icon={<MdCheck />} {...getSubmitButtonProps()} />
-//         <IconButton aria-label={''} icon={<MdClose />} {...getCancelButtonProps()} />
-//       </ButtonGroup>
-//     ) : (
-//       // <Flex justifyContent="center">
-//       <IconButton size={`${props.fontSize}px`} aria-label={''} icon={<MdEdit />} {...getEditButtonProps()} />
-//       // </Flex>
-//     );
-//   }
-
-//   return (
-//     <Editable textAlign="center" defaultValue={props.summary} fontSize={`${props.fontSize}px`} isPreviewFocusable={false}>
-//       <Flex justifyContent="center">
-//         <EditablePreview />
-//         <Input as={EditableInput} />
-//         <EditableControls />
-//       </Flex>
-//     </Editable>
-//   );
-// }
