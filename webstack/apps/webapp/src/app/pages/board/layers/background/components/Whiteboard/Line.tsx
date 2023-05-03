@@ -12,6 +12,7 @@ import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
 import { useHexColor } from '@sage3/frontend';
+import { useEffect } from 'react';
 
 export interface LineProps {
   line: Y.Map<any>;
@@ -63,7 +64,7 @@ export function useLine(line: Y.Map<any>) {
 
   // Subscribe to changes to the line itself and sync
   // them into React state.
-  React.useEffect(() => {
+  useEffect(() => {
     function handleChange() {
       const current = line.toJSON();
       setIsComplete(current.isComplete);
@@ -81,7 +82,7 @@ export function useLine(line: Y.Map<any>) {
 
   // Subscribe to changes in the line's points array and sync
   // them into React state.
-  React.useEffect(() => {
+  useEffect(() => {
     const points = line.get('points') as Y.Array<number>;
 
     function handleChange() {

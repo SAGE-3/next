@@ -31,6 +31,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
+  const undoLastMaker = useUIStore((state) => state.undoLastMarker);
+  const setUndoLastMaker = useUIStore((state) => state.setUndoLastMarker);
+
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
   const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
@@ -46,6 +49,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
 
   const rCurrentLine = useRef<Y.Map<any>>();
+
+  // Lines Histroy local array
+  const [lineHistory, setLineHistory] = useState<string[]>([]);
 
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
@@ -89,7 +95,7 @@ export function Whiteboard(props: WhiteboardProps) {
               ydoc.transact(() => {
                 yLine.set('id', line.id);
                 yLine.set('points', yPoints);
-                yLine.set('userColor', line.color);
+                yLine.set('userColor', line.userColor);
                 yLine.set('isComplete', true);
                 yLine.set('userId', line.userId);
               });
@@ -136,9 +142,10 @@ export function Whiteboard(props: WhiteboardProps) {
 
         rCurrentLine.current = yLine;
         yLines.push([yLine]);
+        lineHistory.push(id);
       }
     },
-    [yDoc, yLines, user, color]
+    [yDoc, yLines, user, color, lineHistory]
   );
 
   useEffect(() => {
@@ -217,6 +224,23 @@ export function Whiteboard(props: WhiteboardProps) {
       updateBoardLines();
     }
   }, [clearMarkers]);
+
+  // Undo last mark
+  useEffect(() => {
+    if (yLines && undoLastMaker) {
+      const lastLine = lineHistory.pop();
+      if (lastLine && yLines) {
+        const indices: number[] = [];
+        yLines.forEach((line, idx) => {
+          if (line.get('id') === lastLine) indices.push(idx);
+        });
+        // Reverse the indices so we delete the last elements first
+        indices.reverse().forEach((idx) => yLines.delete(idx, 1));
+        updateBoardLines();
+      }
+      setUndoLastMaker(false);
+    }
+  }, [undoLastMaker]);
 
   const spacebarPressed = useKeyPress(' ');
 
