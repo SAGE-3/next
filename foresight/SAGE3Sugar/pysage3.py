@@ -28,6 +28,8 @@ from smartbits.smartbit import SmartBit
 
 
 class PySage3:
+    def process(self, ws, msg):
+            print(f"got message {msg}")
 
     def __init__(self, conf, prod_type):
         print("Configuring ps3 client ... ")
@@ -45,6 +47,8 @@ class PySage3:
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.socket = SageWebsocket(on_message_fn=self.__process_messages)
+        self.socket = SageWebsocket(on_message_fn=self.process)
+
         self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
         # Grab and load info already on the board
         self.__populate_existing()
