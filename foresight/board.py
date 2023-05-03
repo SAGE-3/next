@@ -99,18 +99,21 @@ class Board:
         viewport_size: dict,
         selected_apps: list = None):
         self.executeInfo = {"executeFunc": "", "params": {}}
-        colors = ['black', 'blue', 'green', 'red', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
+        colors = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink']
         # double check the selected apps are all Stickies (for now)
-
         if selected_apps is not None:
+            # group all the smartbits as a list of tuples (app_id, text)
+            sticky_list = [(app_id, self.smartbits[app_id].state.text) for app_id in selected_apps]
+            print(f"sticky_list is {sticky_list}")
+            # TODO: call the clustering algorithm
+            # cluster the stickies by topic
             for app_id in selected_apps:
                 sb = self.smartbits[app_id]
                 if sb.data.type != "Stickie":
                     print(f"App {app_id} is not a Sticky. Not executing")
                 else:
                     random_color = np.random.choice(colors)
-                    print(f"App {app_id} is a Sticky. Changing color to {random_color}")
-                    # print(f"App color is {sb.state}")
+                    # print(f"App {app_id} is a Sticky. Changing color to {random_color}")
                     sb.state.color = random_color
                     sb.send_updates()
 
