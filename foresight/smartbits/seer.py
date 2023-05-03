@@ -116,10 +116,10 @@ class Seer(SmartBit):
             if resp.status_code == 200 and resp.json()["status"] == "success":
                 json_resp = resp.json()
                 if "code" in json_resp:
-                    self.state.code = json_resp["code"]
-                    # we need to send the updates immediatley, otherwise, the
-                    self.send_updates()
 
+                    self.state.code = json_resp["code"]
+                    # we need to send the updates immediatley, otherwise, the code will be executed before the updates
+                    self.send_updates()
                     self.execute(_uuid)
                 else:
                     print("I am handling data not code")
