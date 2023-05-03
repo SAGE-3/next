@@ -26,8 +26,10 @@ import {
   PopoverHeader,
   PopoverTrigger,
   color,
+  Select,
 } from '@chakra-ui/react';
 import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
+import { VscVariableGroup } from 'react-icons/vsc';
 
 import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useBoardUtils } from '@sage3/frontend';
 import { HiOutlineTrash } from 'react-icons/hi';
@@ -222,6 +224,53 @@ export function LassoToolbar() {
                   </Button>
                 </Tooltip>
               </ButtonGroup>
+            )}
+
+            {appGroup === 'SageCell' && (
+              <>
+                <Text
+                  w="100%"
+                  textAlign="left"
+                  mx={1}
+                  color={textColor}
+                  fontSize={12}
+                  fontWeight="bold"
+                  h={'auto'}
+                  userSelect={'none'}
+                  className="handle"
+                >
+                  {'SAGECell Actions'}
+                </Text>
+
+                <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
+                  <Tooltip placement="top" hasArrow={true} label={'Change Color'} openDelay={400}>
+                    <Popover size={'md'}>
+                      <PopoverTrigger>
+                        <Button size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                          <VscVariableGroup />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent width="450px">
+                        <PopoverArrow />
+                        <PopoverCloseButton />
+                        <PopoverHeader>Group Select Kernel</PopoverHeader>
+                        <PopoverBody>
+                          {/* <Select onChange={(e) => changeKernel(e.target.value, lassoApps)} placeholder="Select Kernel">
+                            {kernels &&
+                            {kernels.map((kernel) => {
+                              return (
+                                <option key={kernel} value={kernel}>
+                                  {kernel}
+                                </option>
+                              );
+                            })}
+                          </Select> */}
+                        </PopoverBody>
+                      </PopoverContent>
+                    </Popover>
+                  </Tooltip>
+                </ButtonGroup>
+              </>
             )}
 
             <Text
