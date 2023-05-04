@@ -36,6 +36,7 @@ import {
   MdArrowForward,
   MdLock,
   MdLockOpen,
+  MdPeople,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 
@@ -51,6 +52,7 @@ import {
   useBoardStore,
   EnterBoardModal,
   useHexColor,
+  UserSearchModal,
 } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
@@ -77,6 +79,8 @@ export function MainButton(props: MainButtonProps) {
   const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
   const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
+  const { isOpen: userSearchIsOpen, onOpen: userSearchOnOpen, onClose: userSearchOnClose } = useDisclosure();
+
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Boards
@@ -179,6 +183,11 @@ export function MainButton(props: MainButtonProps) {
               Admin Page
             </MenuItem>
           )}
+
+          <MenuItem onClick={userSearchOnOpen} icon={<MdPeople fontSize="24px" />}>
+            Users
+          </MenuItem>
+
           {props.config?.features?.plugins && (
             <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
               Plugins
@@ -284,6 +293,7 @@ export function MainButton(props: MainButtonProps) {
       <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
       <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
+      <UserSearchModal isOpen={userSearchIsOpen} onOpen={userSearchOnOpen} onClose={userSearchOnClose} />
     </>
   );
 }
