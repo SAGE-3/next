@@ -21,10 +21,12 @@ import { EnterBoardModal } from '../ui';
  */
 export const CheckUrlForBoardId = () => {
   const { boardId } = useParams();
+  const host = window.location.hostname;
+  const keyName = `${host}-boardId`;
   if (boardId) {
-    localStorage.setItem('boardId', boardId);
+    localStorage.setItem(keyName, boardId);
   } else {
-    localStorage.removeItem('boardId');
+    localStorage.removeItem(keyName);
   }
   const { toHome } = useRouteNav();
   useEffect(() => {
@@ -78,7 +80,7 @@ export function JoinBoardCheck() {
   }, []);
 
   if (boardByUrl) {
-    return <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>
+    return <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>;
   }
   return null;
 }
