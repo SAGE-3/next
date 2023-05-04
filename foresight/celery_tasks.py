@@ -9,7 +9,6 @@ import httpx
 
 # TODO read in the redis broker and backend from the config file
 redis_server = conf[prod_type]["redis_server"]
-print(f"redis server is {redis_server}")
 app = Celery('celery_tasks', broker=f'redis://{redis_server}/0', backend=f'redis://{redis_server}/0')
 seer_server = conf[prod_type]["seer_server"]
 
@@ -28,11 +27,12 @@ def add(params):
 
 @app.task
 def seer_task(task_name, input):
-    # TODO check that task_name is a valid Seer task, such as 'query', summarize or cluster and that query is string
+    # TODO check that task_name is a valid Seer task, such as 'nlp2code', 'summarize' or 'cluster'
+    #  and that query is string
 
     payload = {"query": input}
     headers = {'Content-Type': 'application/json'}
-    resp = httpx.post(f'{seer_server}/{task_name}', headers=headers, json=payload, timeout=15.0)
+    resp = httpx.post(f'{seer_server}/{task_name}', headers=headers, json=payload, timeout=20.0)
     return resp.json()
 
 
@@ -83,12 +83,14 @@ class CeleryTaskQueue:
 
     def execute_task(self, task_input, custom_callback):
         # TODO: implement proper validation here: task input is valid and callback is callable
-
         # get the task name form task_input
+
+        print(f"in execute task and task input is {task_input}")
         task_name = task_input['task_name']
         # get the task_params from task_input
         task_params = task_input['task_params']
         task = self.task_name_to_func.get(task_name)
+
         if task is not None:
             task_id = str(uuid.uuid4())
             result = task.apply_async(args=(task_params["_id"], task_params['query']), task_id=task_id)
@@ -116,7 +118,6 @@ if __name__ == '__main__':
     def say_done(x):
         print(f"Done with the task and the result is {x}")
 
-
     cq = CeleryTaskQueue()
 
     print("getting ready for simple add")
@@ -125,7 +126,7 @@ if __name__ == '__main__':
     print("getting ready for seer task")
     task_input = {'task_name': "seer", 'task_params': {"_id": "query",
                                                        'query': "load file test.csv"}}
-    cq.execute_task(task_input, say_done)
+    cq.execute_task(task_input, cq.say_done)
 
     # clean up the celery queue
     cq.terminate()

@@ -5,10 +5,14 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
+import json
 
 from smartbitcollection import SmartBitsCollection
 from utils.layout import Layout
 import numpy as np
+from celery_tasks import CeleryTaskQueue
+
+BOARD_COLORS = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink']
 
 
 class Board:
@@ -26,6 +30,7 @@ class Board:
         self.whiteboard_lines = None
         self.smartbits = SmartBitsCollection()
         self.stored_app_dims = {}
+        self.cq = CeleryTaskQueue()
 
         if "executeInfo" in doc["data"]:
             self.executeInfo = doc["data"]["executeInfo"]
@@ -94,6 +99,23 @@ class Board:
             sb.data.size.height = coords[1]
             sb.send_updates()
 
+    def update_stickies_form_labels(self, result):
+        data = result['data']['application/json']
+        print(f"Got results for clustering is {data} of type {type(data)}")
+
+        # {custer_label: number, ....}
+        clusters = { b:a for a,b in enumerate(data.values())}
+        for k, v in data.items():
+            sb = self.smartbits[k]
+            sb.state.text = f"{sb.state.text} ({v})"
+            sb.state.color = BOARD_COLORS[clusters[v]]
+            sb.send_updates()
+
+
+
+
+
+
     def group_by_topic(self,
                        viewport_position: dict,
                        viewport_size: dict,
@@ -101,23 +123,19 @@ class Board:
 
         self.executeInfo = {"executeFunc": "", "params": {}}
         # colors = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink']
-        colors = ['red', 'yellow', 'green']
+
 
         # double-check the selected apps are all Stickies (for now)
         if selected_apps is not None:
 
             # group all the smartbits as a list of tuples (app_id, text)
-            sticky_list = [(app_id, self.smartbits[app_id].state.text) for app_id in selected_apps]
+            stickies_query = {app_id: self.smartbits[app_id].state.text for app_id in selected_apps if self.smartbits[app_id].data.type == "Stickie"}
 
-            print(f"sticky_list is {sticky_list}")
+            print(f"sticky_list is {stickies_query}")
+            # temp_data = '{"1": "Algorithm", "2": "Data Structure", "3":  "Clustering", "4": "Volatility", "5": "Churn", "6": "Returns"}'
+            task_input = {'task_name': "seer", 'task_params': {"_id": "cluster",
+                                                               'query': json.dumps(stickies_query)}}
+            self.cq.execute_task(task_input, self.update_stickies_form_labels)
 
             # TODO: call the clustering algorithm
 
-            for app_id in selected_apps:
-                sb = self.smartbits[app_id]
-                if sb.data.type != "Stickie":
-                    print(f"App {app_id} is not a Sticky. Not executing")
-                else:
-                    random_color = np.random.choice(colors)
-                    sb.state.color = random_color
-            sb.send_updates()
