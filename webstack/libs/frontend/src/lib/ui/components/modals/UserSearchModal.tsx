@@ -45,11 +45,12 @@ interface UserSearchProps {
 export function UserSearchModal(props: UserSearchProps): JSX.Element {
   // Users & Presences
   const users = useUsersStore((state) => state.users);
-
+  const presences = usePresenceStore((state) => state.presences);
   // Local search results
   const [userResults, setUserResults] = useState<User[]>([]);
-
   const [searchPrompt, setSearchPrompt] = useState<string>('');
+  // Element to set the focus to when opening the dialog
+  const initialRef = useRef<HTMLInputElement>(null);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchPrompt(event.target.value);
@@ -58,35 +59,44 @@ export function UserSearchModal(props: UserSearchProps): JSX.Element {
   const performUserSearch = async (searchPrompt: string) => {
     // Search for users
     if (searchPrompt.length > 0) {
-      const results = users.filter(
-        (user) =>
-          user.data.name.toLowerCase().includes(searchPrompt.toLowerCase()) ||
-          user.data.email.toLowerCase().includes(searchPrompt.toLowerCase())
+      const results = users.filter((user) =>
+        user.data.name.toLowerCase().includes(searchPrompt.toLowerCase()) ||
+        user.data.email.toLowerCase().includes(searchPrompt.toLowerCase())
       );
       setUserResults(results);
     } else {
-      setUserResults([]);
+      setUserResults(users);
     }
   };
 
   // Perform search when users change and search prompt changes
   useEffect(() => {
+    // sort by name
+    users.sort((a, b) => a.data.name.localeCompare(b.data.name));
+    // sort by presence
+    users.sort((a, b) => {
+      const pa = presences.find((p) => p._id === a._id);
+      const pb = presences.find((p) => p._id === b._id);
+      if (pa && pb) return 0;
+      if (pa) return -1;
+      return 1;
+    });
     performUserSearch(searchPrompt);
-  }, [searchPrompt, users]);
+  }, [searchPrompt, users, presences]);
 
   const closeModal = () => {
     props.onClose();
   };
 
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered>
+    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered size={"xl"} initialFocusRef={initialRef}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>User Search</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <Box px="2">
-            <Input placeholder="Search for a user" _placeholder={{ color: 'gray.400', opacity: 1.0 }} onChange={handleSearchChange} />
+            <Input ref={initialRef} placeholder="Search for a user" _placeholder={{ color: 'gray.400', opacity: 1.0 }} onChange={handleSearchChange} />
           </Box>
 
           <Box px="3" mt="3">
