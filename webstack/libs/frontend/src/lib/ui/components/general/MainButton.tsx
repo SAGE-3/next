@@ -293,7 +293,12 @@ export function MainButton(props: MainButtonProps) {
       <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
       <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
-      <UserSearchModal isOpen={userSearchIsOpen} onOpen={userSearchOnOpen} onClose={userSearchOnClose} />
+
+      {
+        // The test forces the recreation of the modal when the userSearchIsOpen state changes
+        userSearchIsOpen &&
+        <UserSearchModal isOpen={userSearchIsOpen} onOpen={userSearchOnOpen} onClose={userSearchOnClose} />
+      }
     </>
   );
 }
