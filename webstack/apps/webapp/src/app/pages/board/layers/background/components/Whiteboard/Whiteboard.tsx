@@ -208,13 +208,14 @@ export function Whiteboard(props: WhiteboardProps) {
   // Clear only your markers
   useEffect(() => {
     if (yLines && clearMarkers) {
-      const indices: number[] = [];
-      yLines.forEach((line, idx) => {
-        // put the indices of the lines that belong to the user in an array
-        if (line.get('userId') === user?._id) indices.push(idx);
-      });
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('userId') === user?._id) {
+          // delete the first stroke that belongs to the user and stop
+          yLines.delete(index, 1);
+        }
+      }
       // delete the lines in reverse order
-      indices.reverse().forEach((idx) => yLines.delete(idx, 1));
       setClearMarkers(false);
       updateBoardLines();
     }
