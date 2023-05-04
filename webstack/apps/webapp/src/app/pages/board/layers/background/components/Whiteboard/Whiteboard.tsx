@@ -208,10 +208,10 @@ export function Whiteboard(props: WhiteboardProps) {
   // Clear only your markers
   useEffect(() => {
     if (yLines && clearMarkers) {
+      // delete all the users strokes
       for (let index = yLines.length - 1; index >= 0; index--) {
         const line = yLines.get(index);
         if (line.get('userId') === user?._id) {
-          // delete the first stroke that belongs to the user and stop
           yLines.delete(index, 1);
         }
       }
