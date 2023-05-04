@@ -207,7 +207,7 @@ function UserCard(props: UserCardProps) {
       enterBoardOnOpen();
     } else {
       // Chakra toast
-      toast({ title: `${props.user.data.name} is not currently within in a board.`, status: 'info', duration: 3000, isClosable: true });
+      toast({ title: `${props.user.data.name} is not currently part of any board.`, status: 'info', duration: 3000, isClosable: true });
     }
   };
 
