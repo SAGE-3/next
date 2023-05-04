@@ -29,10 +29,9 @@ export const ChartManager = async (
   transform?: (filterType | aggregateType)[]
 ): Promise<EChartsOption> => {
   const options: EChartsOption = {};
-  const yAxisData: any[] = [];
-  const xAxisData: any[] = [];
-  let station;
+
   let data = [];
+  console.log(stationMetadata);
   const stationReadableNames = [];
   if (stationMetadata === undefined) {
     for (let i = 0; i < stationNames.length; i++) {
@@ -61,39 +60,44 @@ export const ChartManager = async (
     data[i].OBSERVATIONS['latitude'] = [data[i].LATITUDE];
     data[i].OBSERVATIONS['longitude'] = [data[i].LONGITUDE];
     data[i].OBSERVATIONS['name'] = [data[i].NAME];
+    data[i].OBSERVATIONS['current temperature'] = [
+      data[i].OBSERVATIONS['air_temp_set_1'][data[i].OBSERVATIONS['air_temp_set_1'].length - 1],
+    ];
   }
+
+  //
+
+  const { xAxisData, yAxisData } = createAxisData(data, yAxisAttributes, xAxisAttributes);
   switch (chartType) {
     case 'line':
       if (data.length > 1) {
-        createMultiLineChart(options, data, yAxisAttributes, xAxisAttributes);
+        createMultiLineChart(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData);
       } else if (data.length == 1) {
-        createLineChart(options, data, yAxisAttributes, xAxisAttributes);
+        createLineChart(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData);
       }
       break;
     case 'bar':
-      createBarChart(options, data, yAxisAttributes, xAxisAttributes);
+      createBarChart(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData);
+      break;
+    case 'scatter':
+      createScatterPlot(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData);
       break;
   }
   createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
   return options;
 };
 
-function createMultiLineChart(options: EChartsOption, data: any[], yAxisAttributes: string[], xAxisAttributes: string[]) {
+function createMultiLineChart(
+  options: EChartsOption,
+  data: any[],
+  yAxisAttributes: string[],
+  xAxisAttributes: string[],
+  yAxisData: any[],
+  xAxisData: string[]
+) {
   const stationNames = [];
-  let xAxisData: any[] = [];
   for (let i = 0; i < data.length; i++) {
     stationNames.push(data[i].NAME);
-  }
-  if (xAxisAttributes[0] === 'date_time') {
-    xAxisData = data[0].OBSERVATIONS['date_time'];
-    for (let i = 0; i < xAxisData.length; i++) {
-      const date = new Date(xAxisData[i]);
-      xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
-    }
-  } else {
-    for (let i = 0; i < data.length; i++) {
-      xAxisData.push(data[i].OBSERVATIONS[xAxisAttributes[0]]);
-    }
   }
 
   options.yAxis = {
@@ -141,38 +145,28 @@ function createMultiLineChart(options: EChartsOption, data: any[], yAxisAttribut
       type: 'category',
       data: xAxisData,
       axisLine: { onZero: false },
-
+      name: xAxisAttributes[0],
       axisLabel: {
         fontSize: 30,
       },
     });
 }
 
-function createLineChart(options: EChartsOption, data: any, yAxisAttributes: string[], xAxisAttributes: string[]) {
-  const station = data[0];
-
-  const yAxisData: any[] = [];
-  let xAxisData: any[] = [];
-  for (let i = 0; i < yAxisAttributes.length; i++) {
-    yAxisData.push(station.OBSERVATIONS[yAxisAttributes[i]]);
-  }
-  if (xAxisAttributes[0] === 'date_time') {
-    xAxisData = data[0].OBSERVATIONS['date_time'];
-    for (let i = 0; i < xAxisData.length; i++) {
-      const date = new Date(xAxisData[i]);
-      xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
-    }
-  } else {
-    for (let i = 0; i < data.length; i++) {
-      xAxisData.push(data[i].OBSERVATIONS[xAxisAttributes[0]]);
-    }
-  }
-
+function createLineChart(
+  options: EChartsOption,
+  data: any,
+  yAxisAttributes: string[],
+  xAxisAttributes: string[],
+  yAxisData: any[],
+  xAxisData: any[]
+) {
   options.series = [];
+
   for (let i = 0; i < yAxisData.length; i++) {
     options.series.push({
       type: 'line',
       data: yAxisData[i],
+      name: yAxisAttributes[0],
       lineStyle: {
         width: 7, // Set the thickness of the line to 3
       },
@@ -217,6 +211,7 @@ function createLineChart(options: EChartsOption, data: any, yAxisAttributes: str
   options.xAxis = {
     type: 'category',
     data: xAxisData,
+    name: xAxisAttributes[0],
     axisLine: { onZero: false },
 
     axisLabel: {
@@ -225,25 +220,14 @@ function createLineChart(options: EChartsOption, data: any, yAxisAttributes: str
   };
 }
 
-function createBarChart(options: EChartsOption, data: any, yAxisAttributes: string[], xAxisAttributes: string[]) {
-  const station = data[0];
-  const yAxisData: any[] = [];
-  let xAxisData: any[] = [];
-  for (let i = 0; i < yAxisAttributes.length; i++) {
-    yAxisData.push(station.OBSERVATIONS[yAxisAttributes[i]]);
-  }
-  if (xAxisAttributes[0] === 'date_time') {
-    xAxisData = data[0].OBSERVATIONS['date_time'];
-    for (let i = 0; i < xAxisData.length; i++) {
-      const date = new Date(xAxisData[i]);
-      xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
-    }
-  } else {
-    for (let i = 0; i < data.length; i++) {
-      xAxisData.push(data[i].OBSERVATIONS[xAxisAttributes[0]]);
-    }
-  }
-
+function createBarChart(
+  options: EChartsOption,
+  data: any,
+  yAxisAttributes: string[],
+  xAxisAttributes: string[],
+  yAxisData: any[],
+  xAxisData: any[]
+) {
   options.series = [];
 
   options.series = [];
@@ -268,18 +252,109 @@ function createBarChart(options: EChartsOption, data: any, yAxisAttributes: stri
   }
 }
 
+function createScatterPlot(
+  options: EChartsOption,
+  data: any,
+  yAxisAttributes: string[],
+  xAxisAttributes: string[],
+  yAxisData: any[],
+  xAxisData: any[]
+) {
+  for (let i = 0; i < data.length; i++) {
+    xAxisData.push(data[i].OBSERVATIONS[xAxisAttributes[0]]);
+    yAxisData.push(data[i].OBSERVATIONS[yAxisAttributes[0]]);
+  }
+
+  options.series = [];
+
+  options.series = [];
+  options.xAxis = {
+    axisLabel: {
+      fontSize: 25,
+    },
+  };
+  options.tooltip = {
+    trigger: 'axis',
+  };
+  options.yAxis = {
+    axisLabel: {
+      fontSize: 30,
+    },
+  };
+  for (let i = 0; i < xAxisData.length; i++) {
+    options.series.push({
+      type: 'scatter',
+      data: [[xAxisData[i], yAxisData[i]]],
+    });
+  }
+}
+
 function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAttributes: string[], stationName: string) {
-  const variableName = yAxisAttributes[0].split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
-  delete variableName[variableName.length - 1];
-  delete variableName[variableName.length - 2];
-  const joinedVariableName = variableName.join(' ');
+  let finalVariableName = yAxisAttributes[0];
+  if (finalVariableName.split('_').length > 1) {
+    const variableName = yAxisAttributes[0].split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+    delete variableName[variableName.length - 1];
+    delete variableName[variableName.length - 2];
+    finalVariableName = variableName.join(' ');
+  }
 
   for (let i = 0; i < yAxisAttributes.length; i++) {
     options.title = {
-      text: `${joinedVariableName}versus ${xAxisAttributes[0]} for ${stationName}`,
+      text: `${finalVariableName} versus ${xAxisAttributes[0]} for ${stationName}`,
       textStyle: {
         fontSize: 40,
       },
     };
   }
 }
+
+const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: string[]) => {
+  let yAxisData: any[] = [];
+  let xAxisData: any[] = [];
+  const station = data[0];
+  if (
+    yAxisAttributes[0] === 'elevation' ||
+    yAxisAttributes[0] === 'latitude' ||
+    yAxisAttributes[0] === 'longitude' ||
+    yAxisAttributes[0] === 'name'
+  ) {
+    for (let i = 0; i < data.length; i++) {
+      yAxisData.push(data[i].OBSERVATIONS[yAxisAttributes[0]]);
+    }
+  } else {
+    if (yAxisAttributes[0] === 'date_time') {
+      yAxisData = data[0].OBSERVATIONS['date_time'];
+      for (let i = 0; i < yAxisData.length; i++) {
+        const date = new Date(yAxisData[i]);
+        yAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
+      }
+    } else {
+      for (let i = 0; i < yAxisAttributes.length; i++) {
+        yAxisData.push(data[0].OBSERVATIONS[yAxisAttributes[i]]);
+      }
+    }
+  }
+  if (
+    xAxisAttributes[0] === 'elevation' ||
+    xAxisAttributes[0] === 'latitude' ||
+    xAxisAttributes[0] === 'longitude' ||
+    xAxisAttributes[0] === 'name'
+  ) {
+    for (let i = 0; i < data.length; i++) {
+      xAxisData.push(data[i].OBSERVATIONS[xAxisAttributes[0]]);
+    }
+  } else {
+    if (xAxisAttributes[0] === 'date_time') {
+      xAxisData = data[0].OBSERVATIONS['date_time'];
+      for (let i = 0; i < xAxisData.length; i++) {
+        const date = new Date(xAxisData[i]);
+        xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
+      }
+    } else {
+      for (let i = 0; i < yAxisAttributes.length; i++) {
+        yAxisData.push(data[0].OBSERVATIONS[yAxisAttributes[i]]);
+      }
+    }
+  }
+  return { xAxisData, yAxisData };
+};

@@ -19,6 +19,7 @@ const EChartsViewer = (props: {
   dateEnd: string;
   yAxisNames: string[];
   xAxisNames: string[];
+  stationMetadata: any;
   showDeleteButton?: boolean;
   handleDeleteWidget?: (index: number) => void;
   index?: number;
@@ -38,11 +39,17 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: props.size.height - 75,
-      width: props.size.width - 75,
+      height: props.size.height,
+      width: props.size.width,
     });
     async function callToChartMangaer() {
-      const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames);
+      const options = await ChartManager(
+        props.stationNames,
+        props.visualizationType,
+        props.yAxisNames,
+        props.xAxisNames,
+        props.stationMetadata
+      );
       if (chartInstance) chartInstance.setOption(options);
     }
     const options = callToChartMangaer();
@@ -64,8 +71,8 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: props.size.height - 75,
-      width: props.size.width - 75,
+      height: props.size.height,
+      width: props.size.width,
     });
     async function callToChartMangaer() {
       const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames);
@@ -78,14 +85,14 @@ const EChartsViewer = (props: {
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        height: props.size.height - 75,
-        width: props.size.width - 75,
+        height: props.size.height,
+        width: props.size.width,
       });
     }
   }, [props.size]);
 
   return (
-    <Box border={colorMode === 'light' ? 'black solid 5px' : 'white solid 5px'} rounded="1rem">
+    <Box>
       {props.showDeleteButton ? (
         <Button
           onClick={() => {

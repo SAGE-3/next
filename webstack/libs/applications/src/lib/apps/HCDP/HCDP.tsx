@@ -288,6 +288,8 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <LeafletWrapper map={map} setMap={setMap} {...props}>
+      <CustomizeWidgets props={props} size={props.data.size} widget={s.widget} />
+
       <Box
         w="20rem"
         h="24rem"
@@ -491,31 +493,6 @@ function ToolbarComponent(props: App): JSX.Element {
     apikey: apiKey,
   });
 
-  // from the UI to the react state
-  const handleAddrChange = (event: any) => setAddrValue(event.target.value);
-  const changeAddr = (evt: any) => {
-    evt.preventDefault();
-
-    geocoder.text(addrValue).run(function (err: any, results: any, response: any) {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      const res = results.results[0];
-      if (res && res.latlng) {
-        const value: [number, number] = [res.latlng.lat, res.latlng.lng];
-
-        map.fitBounds([res.bounds._southWest, res.bounds._northEast]);
-        // Sync zoom after fitting bounds
-        const newZoom = map.getZoom();
-        updateState(props._id, { location: value, zoom: newZoom });
-
-        // Update the app title
-        update(props._id, { title: res.text });
-      }
-    });
-  };
-
   // Zoom in on the map
   const incZoom = () => {
     const zoom = s.zoom + 1;
@@ -562,6 +539,10 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   };
 
+  const handleOpenWidget = () => {
+    updateState(props._id, { isWidgetOpen: true });
+  };
+
   return (
     <HStack>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -587,7 +568,9 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <CustomizeWidgets props={props} size={props.data.size} widget={s.widget} />
+      <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
+        Create Widget
+      </Button>
     </HStack>
   );
 }

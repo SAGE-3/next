@@ -62,8 +62,6 @@ function findDuplicateElements(...arrays: any) {
   return duplicates;
 }
 
-const xAxisVariableNames = ['date_time', 'elevation', 'latitude', 'longitude', 'name'];
-
 function CustomizeWidgets(props: {
   size: { width: number; height: number; depth: number };
   widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
@@ -79,7 +77,7 @@ function CustomizeWidgets(props: {
   const [map, setMap] = useState<any>();
   const [selectedStations, setSelectedStations] = useState<any>([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [yAxisVariableNames, setYAxisVariableNames] = useState<string[]>([]);
+  const [axisVariableNames, setAxisVariableNames] = useState<string[]>([]);
   // const [selectedColor, setSelectedColor] = useState<SAGEColors>('blue');
   const [stationMetadata, setStationMetadata] = useState<any>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -93,23 +91,28 @@ function CustomizeWidgets(props: {
           `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
         );
         const stationData = await response.json();
+
         const sensorObservationVariableNames = Object.getOwnPropertyNames(stationData['STATION'][0]['OBSERVATIONS']);
         const sensorData: any = stationData['STATION'][0];
         tmpSensorMetadata.push(sensorData);
+
         tmpVariableNames.push(sensorObservationVariableNames);
       }
-
-      const filteredVariableNames = findDuplicateElements(...tmpVariableNames);
-      setYAxisVariableNames(filteredVariableNames);
-      setStationMetadata(tmpSensorMetadata);
+      console.log('finished Fetching data');
+      console.log(tmpSensorMetadata);
+      let filteredVariableNames = findDuplicateElements(...tmpVariableNames);
+      filteredVariableNames.push('elevation', 'latitude', 'longitude', 'name', 'current temperature');
+      //TODO: THere is a bug here. Can't figure out why it is reredeneriing multiple times
       setIsLoaded(true);
+      setAxisVariableNames(filteredVariableNames);
+      setStationMetadata(tmpSensorMetadata);
     };
     fetchData();
   }, [s.stationNames]);
   const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
     const tmpArray: string[] = [...s.stationNames];
     const stationName = station.name;
-    setYAxisVariableNames([]);
+    setAxisVariableNames([]);
     if (tmpArray.find((station: string) => station === stationName)) {
       tmpArray.splice(tmpArray.indexOf(stationName), 1);
       updateState(props.props._id, { stationNames: [...tmpArray] });
@@ -117,12 +120,11 @@ function CustomizeWidgets(props: {
   };
 
   const handleAddSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
-    setYAxisVariableNames([]);
+    setAxisVariableNames([]);
     updateState(props.props._id, { stationNames: [...s.stationNames, station.name] });
   };
   const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
-    setIsLoaded(false);
     updateState(props.props._id, { widget: { ...s.widget, visualizationType: value } });
   };
   const handleYAxisChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -175,13 +177,21 @@ function CustomizeWidgets(props: {
       <Drawer
         blockScrollOnMount={false}
         trapFocus={false}
-        closeOnOverlayClick={false}
+        // closeOnOverlayClick={false}
         placement={'bottom'}
         onClose={onClose}
-        isOpen={true}
+        isOpen={s.isWidgetOpen}
         variant="alwaysOpen"
+        onOverlayClick={() => {
+          console.log('clicked');
+        }}
       >
         <DrawerContent>
+          <Button
+            onClick={() => {
+              updateState(props.props._id, { isWidgetOpen: false });
+            }}
+          ></Button>
           <DrawerHeader borderBottomWidth="1px">Edit Widget Menu</DrawerHeader>
           <DrawerBody>
             <HStack>
@@ -258,6 +268,7 @@ function CustomizeWidgets(props: {
                       <option value="variableCard">Current Value</option>
                       <option value="line">Line Chart</option>
                       <option value="bar">Bar Chart</option>
+                      <option value="scatter">Scatter Chart</option>
                     </Select>
                   </Flex>
 
@@ -332,7 +343,7 @@ function CustomizeWidgets(props: {
                           handleYAxisChange(e);
                         }}
                       >
-                        {yAxisVariableNames.map((name: string, index: number) => {
+                        {axisVariableNames.map((name: string, index: number) => {
                           return (
                             <option key={index} value={name}>
                               {name}
@@ -379,7 +390,9 @@ function CustomizeWidgets(props: {
                     </Box>
                   </>
                 ) : null}
-                {s.widget.visualizationType === 'line' || s.widget.visualizationType === 'bar' ? (
+                {s.widget.visualizationType === 'line' ||
+                s.widget.visualizationType === 'bar' ||
+                s.widget.visualizationType === 'scatter' ? (
                   <>
                     <Box display="flex" alignItems={'center'}>
                       <Text mx="1rem">X Axis: </Text>
@@ -391,7 +404,7 @@ function CustomizeWidgets(props: {
                           handleXAxisChange(e);
                         }}
                       >
-                        {xAxisVariableNames.map((name: string, index: number) => {
+                        {axisVariableNames.map((name: string, index: number) => {
                           return (
                             <option key={index} value={name}>
                               {name}
@@ -407,7 +420,7 @@ function CustomizeWidgets(props: {
                           handleYAxisChange(e);
                         }}
                       >
-                        {yAxisVariableNames.map((name: string, index: number) => {
+                        {axisVariableNames.map((name: string, index: number) => {
                           return (
                             <option key={index} value={name}>
                               {name}

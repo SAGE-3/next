@@ -44,28 +44,33 @@ function AppComponent(props: App): JSX.Element {
           `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
         );
         const sensor = await response.json();
-        const sensorData = sensor['STATION'][0];
-        tmpStationMetadata.push(sensorData);
+        if (sensor) {
+          const sensorData = sensor['STATION'][0];
+          tmpStationMetadata.push(sensorData);
+        }
       }
       setStationMetadata(tmpStationMetadata);
       // return tmpStationMetadata;
     };
-    fetchStationData();
+    fetchStationData().catch((err) => {
+      fetchStationData();
+      console.log(err);
+    });
 
     const interval = setInterval(
       () => {
         fetchStationData();
       },
-      60 * 1000
+      60 * 10000
       //10 minutes
     );
     return () => clearInterval(interval);
   }, [s.stationNames]);
   return (
     <AppWindow app={props}>
-      <Box overflowY="auto" p={'1rem'} bg={bgColor} h="100%">
+      <Box overflowY="auto" bg={bgColor} h="100%">
         {stationMetadata.length > 0 ? (
-          <Box bgColor={bgColor} color={textColor} fontSize="lg" p="1rem" border="solid white 1px">
+          <Box bgColor={bgColor} color={textColor} fontSize="lg">
             {/* <Text textAlign="center" fontSize={'4rem'}>
               TODO: PRINT ALL STATION NAMES
             </Text> */}
@@ -89,6 +94,7 @@ function AppComponent(props: App): JSX.Element {
                     yAxisNames={s.widget.yAxisNames}
                     xAxisNames={s.widget.xAxisNames}
                     size={props.data.size}
+                    stationMetadata={stationMetadata}
                   />
                 )}
               </Box>

@@ -46,13 +46,21 @@ export default function VariableCard(
 
   useEffect(() => {
     const values: { stationName: string; value: number; average: number; variance: number; high: number; low: number }[] = [];
-    console.log(s.widget);
     if (s.widget.yAxisNames.length === 0) return;
 
-    console.log(s.widget.yAxisNames);
+    for (let i = 0; i < props.stationMetadata.length; i++) {
+      props.stationMetadata[i].OBSERVATIONS['elevation'] = [props.stationMetadata[i].ELEVATION];
+      props.stationMetadata[i].OBSERVATIONS['latitude'] = [props.stationMetadata[i].LATITUDE];
+      props.stationMetadata[i].OBSERVATIONS['longitude'] = [props.stationMetadata[i].LONGITUDE];
+      props.stationMetadata[i].OBSERVATIONS['name'] = [props.stationMetadata[i].NAME];
+      props.stationMetadata[i].OBSERVATIONS['current temperature'] = [
+        props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'][props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'].length - 1],
+      ];
+    }
+
     for (let i = 0; i < props.stationMetadata.length; i++) {
       const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[0]];
-      console.log(sensorValues.length);
+      console.log(s.widget.yAxisNames[0], sensorValues);
       if (sensorValues.length !== 0) {
         values.push({
           stationName: props.stationMetadata[i].NAME,
@@ -74,7 +82,6 @@ export default function VariableCard(
       }
     }
     setVariablesToDisplay(values);
-
     // // Code to calculate average, max, min, or display first value
     // if (s.widget.operation === 'average') {
     //   let sum = 0;
@@ -128,7 +135,7 @@ export default function VariableCard(
           isLoaded={props.isLoaded}
           stationNames={props.stationNames}
           variableToDisplayLength={0}
-          variableName={'variable_Name_set_1'}
+          variableName={s.widget.yAxisNames.length ? s.widget.yAxisNames[0] : 'variable_Name_set_1'}
           s={s}
           variable={{
             stationName: 'Station Name',
@@ -156,12 +163,11 @@ const Content = (props: {
   const variableName = props.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
   delete variableName[variableName.length - 1];
   delete variableName[variableName.length - 2];
-
   return (
     <Box
       p="1rem"
-      w={props.size?.width ? 800 : 500}
-      h={props.size?.height ? 800 : 500}
+      w={500}
+      h={500}
       border="solid white 1px"
       // bgColor={props.isEnabled ? 'blackAlpha.200' : 'blackAlpha.700'}
       bgColor={props.s.widget.color}
@@ -206,30 +212,34 @@ const Content = (props: {
               fontWeight="bold"
             >
               {/* {s.widget.operation.charAt(0).toUpperCase() + s.widget.operation.slice(1)}:  */}
-              Current: {props.variable.value.toFixed(2)}
+              Current: {isNaN(props.variable.value) ? props.variable.value : props.variable.value.toFixed(2)}
             </Text>
-            <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              overflow="hidden"
-              color="black"
-              fontSize={20}
-              fontWeight="bold"
-            >
-              Average: {props.variable.average.toFixed(2)} - Variance: {props.variable.variance.toFixed(2)}
-            </Text>
-            <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              overflow="hidden"
-              color="black"
-              fontSize={20}
-              fontWeight="bold"
-            >
-              High: {props.variable.high.toFixed(2)} - Low: {props.variable.low.toFixed(2)}
-            </Text>
+            {isNaN(props.variable.value) ? null : (
+              <>
+                <Text
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  overflow="hidden"
+                  color="black"
+                  fontSize={20}
+                  fontWeight="bold"
+                >
+                  Average: {props.variable.average.toFixed(2)} - Variance: {props.variable.variance.toFixed(2)}
+                </Text>
+                <Text
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  overflow="hidden"
+                  color="black"
+                  fontSize={20}
+                  fontWeight="bold"
+                >
+                  High: {props.variable.high.toFixed(2)} - Low: {props.variable.low.toFixed(2)}
+                </Text>
+              </>
+            )}
           </>
         ) : (
           <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
