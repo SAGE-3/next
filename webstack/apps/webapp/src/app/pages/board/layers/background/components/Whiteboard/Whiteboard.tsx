@@ -50,9 +50,6 @@ export function Whiteboard(props: WhiteboardProps) {
 
   const rCurrentLine = useRef<Y.Map<any>>();
 
-  // Lines Histroy local array
-  const [lineHistory, setLineHistory] = useState<string[]>([]);
-
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
     if (yLines) {
@@ -142,10 +139,9 @@ export function Whiteboard(props: WhiteboardProps) {
 
         rCurrentLine.current = yLine;
         yLines.push([yLine]);
-        lineHistory.push(id);
       }
     },
-    [yDoc, yLines, user, color, lineHistory]
+    [yDoc, yLines, user, color]
   );
 
   useEffect(() => {
@@ -192,13 +188,10 @@ export function Whiteboard(props: WhiteboardProps) {
       e.currentTarget.releasePointerCapture(e.pointerId);
 
       const currentLine = rCurrentLine.current;
-
       if (!currentLine) return;
 
       currentLine.set('isComplete', true);
-
       rCurrentLine.current = undefined;
-
       updateBoardLines();
     },
     [rCurrentLine.current]
@@ -217,8 +210,10 @@ export function Whiteboard(props: WhiteboardProps) {
     if (yLines && clearMarkers) {
       const indices: number[] = [];
       yLines.forEach((line, idx) => {
+        // put the indices of the lines that belong to the user in an array
         if (line.get('userId') === user?._id) indices.push(idx);
       });
+      // delete the lines in reverse order
       indices.reverse().forEach((idx) => yLines.delete(idx, 1));
       setClearMarkers(false);
       updateBoardLines();
@@ -228,16 +223,15 @@ export function Whiteboard(props: WhiteboardProps) {
   // Undo last mark
   useEffect(() => {
     if (yLines && undoLastMaker) {
-      const lastLine = lineHistory.pop();
-      if (lastLine && yLines) {
-        const indices: number[] = [];
-        yLines.forEach((line, idx) => {
-          if (line.get('id') === lastLine) indices.push(idx);
-        });
-        // Reverse the indices so we delete the last elements first
-        indices.reverse().forEach((idx) => yLines.delete(idx, 1));
-        updateBoardLines();
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('userId') === user?._id) {
+          // delete the first stroke that belongs to the user and stop
+          yLines.delete(index, 1);
+          break;
+        }
       }
+      updateBoardLines();
       setUndoLastMaker(false);
     }
   }, [undoLastMaker]);
