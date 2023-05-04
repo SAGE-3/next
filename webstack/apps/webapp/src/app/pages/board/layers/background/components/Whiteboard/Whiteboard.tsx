@@ -215,9 +215,8 @@ export function Whiteboard(props: WhiteboardProps) {
           yLines.delete(index, 1);
         }
       }
-      // delete the lines in reverse order
-      setClearMarkers(false);
       updateBoardLines();
+      setClearMarkers(false);
     }
   }, [clearMarkers]);
 
