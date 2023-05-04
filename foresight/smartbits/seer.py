@@ -114,7 +114,7 @@ class Seer(SmartBit):
 
             payload = {"query": self.state.prompt}
             headers = {'Content-Type': 'application/json'}
-            resp = httpx.post(f'{seer_server}/query', headers=headers, json=payload, timeout=15.0)
+            resp = httpx.post(f'{seer_server}/nlp2code', headers=headers, json=payload, timeout=15.0)
 
             if resp.status_code == 200 and resp.json()["status"] == "success":
                 json_resp = resp.json()

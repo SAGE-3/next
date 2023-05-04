@@ -9,6 +9,7 @@
 import os
 
 prod_type = os.getenv('ENVIRONMENT')
+
 if prod_type is None:
     raise Exception("Cannot find ENVIRONMENT env. variable. Exported?")
 
@@ -24,6 +25,7 @@ if prod_type == 'backend':
 
 config = {
     "production": {
+        "seer_server": None,
         "jupyter_server": f"https://{server}:4443",
         "jupyter_ws": f"wss://{server}:4443",
         "redis_server": "redis-server",
@@ -31,6 +33,7 @@ config = {
         "ws_server": f"wss://{server}",
     },
     "backend": {
+        "seer_server": None,
         "jupyter_server": "http://jupyter:8888",
         "jupyter_ws": "ws://jupyter:8888",
         "redis_server": "redis-server",

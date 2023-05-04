@@ -27,6 +27,7 @@ from smartbitfactory import SmartBitFactory
 from utils.sage_communication import SageCommunication
 from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
+
 from config import config as conf, prod_type
 
 

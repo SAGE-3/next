@@ -123,12 +123,15 @@ if __name__ == '__main__':
     print("getting ready for simple add")
     cq.execute_add_task("one", say_done)
 
-    print("getting ready for seer task")
-    task_input = {'task_name': "seer", 'task_params': {"_id": "query",
-                                                       'query': "load file test.csv"}}
-    cq.execute_task(task_input, cq.say_done)
 
+    # THIS TEST REQUIRED SEER TO BE DEPLOYED
+    # print("getting ready for seer task")
+    # task_input = {'task_name': "seer", 'task_params': {"_id": "query",
+    #                                                    'query': "load file test.csv"}}
+    # cq.execute_task(task_input, cq.say_done)
     # clean up the celery queue
+
+
     cq.terminate()
 
     print("I am done")
