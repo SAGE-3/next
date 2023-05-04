@@ -76,7 +76,9 @@ export function BoardPage() {
 
   function saveBoardIdToLocalStorage() {
     if (!boardId) return;
-    localStorage.setItem('boardId', boardId);
+    const host = window.location.hostname;
+    const keyName = `${host}-boardId`;
+    localStorage.setItem(keyName, boardId);
   }
 
   // Handle joining and leave a board
