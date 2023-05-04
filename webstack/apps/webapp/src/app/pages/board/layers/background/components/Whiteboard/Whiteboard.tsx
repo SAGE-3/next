@@ -31,6 +31,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
+  const undoLastMaker = useUIStore((state) => state.undoLastMarker);
+  const setUndoLastMaker = useUIStore((state) => state.setUndoLastMarker);
+
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
   const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
@@ -89,7 +92,7 @@ export function Whiteboard(props: WhiteboardProps) {
               ydoc.transact(() => {
                 yLine.set('id', line.id);
                 yLine.set('points', yPoints);
-                yLine.set('userColor', line.color);
+                yLine.set('userColor', line.userColor);
                 yLine.set('isComplete', true);
                 yLine.set('userId', line.userId);
               });
@@ -185,13 +188,10 @@ export function Whiteboard(props: WhiteboardProps) {
       e.currentTarget.releasePointerCapture(e.pointerId);
 
       const currentLine = rCurrentLine.current;
-
       if (!currentLine) return;
 
       currentLine.set('isComplete', true);
-
       rCurrentLine.current = undefined;
-
       updateBoardLines();
     },
     [rCurrentLine.current]
@@ -208,15 +208,33 @@ export function Whiteboard(props: WhiteboardProps) {
   // Clear only your markers
   useEffect(() => {
     if (yLines && clearMarkers) {
-      const indices: number[] = [];
-      yLines.forEach((line, idx) => {
-        if (line.get('userId') === user?._id) indices.push(idx);
-      });
-      indices.reverse().forEach((idx) => yLines.delete(idx, 1));
-      setClearMarkers(false);
+      // delete all the users strokes
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('userId') === user?._id) {
+          yLines.delete(index, 1);
+        }
+      }
       updateBoardLines();
+      setClearMarkers(false);
     }
   }, [clearMarkers]);
+
+  // Undo last mark
+  useEffect(() => {
+    if (yLines && undoLastMaker) {
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('userId') === user?._id) {
+          // delete the first stroke that belongs to the user and stop
+          yLines.delete(index, 1);
+          break;
+        }
+      }
+      updateBoardLines();
+      setUndoLastMaker(false);
+    }
+  }, [undoLastMaker]);
 
   const spacebarPressed = useKeyPress(' ');
 
