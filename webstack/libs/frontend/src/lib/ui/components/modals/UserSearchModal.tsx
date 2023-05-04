@@ -68,9 +68,9 @@ export function UserSearchModal(props: UserSearchProps): JSX.Element {
     users.sort((a, b) => {
       const pa = presences.find((p) => p._id === a._id);
       const pb = presences.find((p) => p._id === b._id);
-      if (pa && pb) return a.data.name.localeCompare(b.data.name);
+      if (pa && pb) return 0;
       if (pa) return -1;
-      return a.data.name.localeCompare(b.data.name);
+      return 1;
     });
     // remove current user
     return users.filter((u) => u._id !== user?._id);
