@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useToast } from '@chakra-ui/react';
-import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-icons/md';
+import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink, MdFavorite, MdFavoriteBorder } from 'react-icons/md';
 
 import { SBDocument } from '@sage3/sagebase';
 import { BoardSchema, Board } from '@sage3/shared/types';
@@ -31,10 +31,12 @@ export type BoardCardProps = {
  * @returns
  */
 export function BoardCard(props: BoardCardProps) {
-  const { user } = useUser();
+  const { user, addFavorite, removeFavorite } = useUser();
   const { auth } = useAuth();
   const [yours, setYours] = useState(false);
   const [isGuest, setIsGuest] = useState(true);
+
+  const boardIsFav = user?.data.favorites.find((el) => el.id === props.board._id);
 
   // Is it my board?
   useEffect(() => {
@@ -97,6 +99,18 @@ export function BoardCard(props: BoardCardProps) {
       isClosable: true,
       status: 'success',
     });
+  };
+
+  // Add or remove a favorite board from the users favorites
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    const isFavorite = user?.data.favorites.find((el) => el.id === props.board._id);
+    if (isFavorite && removeFavorite) {
+      removeFavorite(props.board._id);
+    } else if (addFavorite) {
+      addFavorite(props.board._id, 'board');
+    }
   };
 
   return (
@@ -167,6 +181,22 @@ export function BoardCard(props: BoardCardProps) {
               onClick={handleCopyLink}
               isDisabled={isGuest}
               icon={<MdLink />}
+            />
+          </Tooltip>
+
+          <Tooltip
+            openDelay={400}
+            placement="top-start"
+            hasArrow
+            label={isGuest ? 'Guests cannot copy sharable link' : 'Copy sharable link'}
+          >
+            <IconButton
+              aria-label={boardIsFav ? 'Unfavorite' : 'Favorite'}
+              fontSize="2xl"
+              variant="unstlyed"
+              ml="-3"
+              onClick={handleFavorite}
+              icon={boardIsFav ? <MdFavorite /> : <MdFavoriteBorder />}
             />
           </Tooltip>
 

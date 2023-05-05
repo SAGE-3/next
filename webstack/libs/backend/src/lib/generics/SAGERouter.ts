@@ -36,19 +36,21 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   });
 
   // GET: Get all the docs, multiple docs by id, or query
-  router.get('/', async ({ query, body }, res) => {
+  router.get('/', async ({ query }, res) => {
     let docs = null;
-    // If body has property 'batch', this is a batch request
-    if (body && body.batch) {
-      docs = await collection.getBatch(body.batch);
-    }
+    // If query has property 'batch', this is a batch request
     // Check for a query, if not query get all the docs
-    else if (Object.keys(query).length === 0) {
+    if (Object.keys(query).length === 0) {
       docs = await collection.getAll();
     } else if (Object.keys(query).length === 1) {
-      const field = Object.keys(query)[0];
-      const q = query[field] as string | number;
-      docs = await collection.query(field, q);
+      if (Object.keys(query)[0] === 'batch') {
+        const batch = (query['batch'] as string).split(',');
+        docs = await collection.getBatch(batch);
+      } else {
+        const field = Object.keys(query)[0];
+        const q = query[field] as string | number;
+        docs = await collection.query(field, q);
+      }
     } else {
       res.status(500).send({ success: false, message: 'Too many query parameters. Only one query parameter allowed.', data: undefined });
     }

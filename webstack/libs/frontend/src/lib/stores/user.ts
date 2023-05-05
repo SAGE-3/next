@@ -13,7 +13,7 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { User, UserSchema } from '@sage3/shared/types';
+import { FavoriteType, User, UserSchema } from '@sage3/shared/types';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';

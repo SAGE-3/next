@@ -22,7 +22,16 @@ import {
 } from '@chakra-ui/react';
 
 import { Board, Room } from '@sage3/shared/types';
-import { CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
+import {
+  APIHttp,
+  BoardCard,
+  CreateRoomModal,
+  EnterBoardByIdModal,
+  RoomCard,
+  useHexColor,
+  usePresenceStore,
+  useRoomStore,
+} from '@sage3/frontend';
 import { useUser, useAuth } from '@sage3/frontend';
 import { MdAdd, MdExitToApp, MdSearch, MdSort } from 'react-icons/md';
 
@@ -39,6 +48,26 @@ type RoomListProps = {
 export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
+
+  // Favorite Boards
+  const [favoriteBoards, setFavoriteBoards] = useState<Board[]>([]);
+
+  useEffect(() => {
+    const fetchFavBoards = async () => {
+      if (user?.data.favorites) {
+        const boardIds = user.data.favorites.filter((fav) => fav.type === 'board').map((fav) => fav.id);
+        if (boardIds.length > 0) {
+          const boards = await APIHttp.GET<Board>('/boards', boardIds);
+          if (boards.success && boards.data) {
+            setFavoriteBoards(boards.data);
+          }
+        }
+      }
+    };
+    if (user) {
+      fetchFavBoards();
+    }
+  }, [user]);
 
   const { auth } = useAuth();
   const [isGuest, setIsGuest] = useState(true);
@@ -198,6 +227,17 @@ export function RoomList(props: RoomListProps) {
           },
         }}
       >
+        <ul>
+          {favoriteBoards.map((board) => (
+            <li style={{ margin: '10px' }} key={board._id}>
+              <BoardCard
+                board={board}
+                userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                onSelect={() => props.onBoardClick(board)}
+              />
+            </li>
+          ))}
+        </ul>
         <ul>
           {(filterBoards ? filterBoards : props.rooms)
             // show only public rooms or mine

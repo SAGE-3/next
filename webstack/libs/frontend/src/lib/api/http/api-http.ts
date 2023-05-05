@@ -58,6 +58,7 @@ async function POST<T extends CollectionDocs>(url: string, body: T['data'] | T['
 
 async function GET<T extends CollectionDocs>(url: string, body?: string[]): Promise<GETResponse<T>> {
   try {
+    if (body) url = url + '?' + new URLSearchParams({ batch: body.join(',') });
     const response = await fetch('/api' + url, {
       method: 'GET',
       credentials: 'include',
@@ -65,7 +66,6 @@ async function GET<T extends CollectionDocs>(url: string, body?: string[]): Prom
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: body ? JSON.stringify({ batch: body }) : undefined,
     });
     const data = await response.json();
     if (data.success === false) {

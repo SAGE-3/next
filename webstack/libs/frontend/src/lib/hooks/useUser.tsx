@@ -13,7 +13,7 @@
  * @version 1.0.0
  */
 
-import { User, UserSchema } from '@sage3/shared/types';
+import { FavoriteType, User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
@@ -23,6 +23,8 @@ const UserContext = createContext({
   loading: true,
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
+  addFavorite: null as ((id: string, type: FavoriteType) => Promise<void>) | null,
+  removeFavorite: null as ((id: string) => Promise<void>) | null,
 });
 
 export function useUser() {
@@ -33,6 +35,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const { auth } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [checkComplete, setCheckComplete] = useState(false);
 
   const fetchUser = useCallback(async () => {
     if (auth) {
@@ -88,5 +91,61 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     [user]
   );
 
-  return <UserContext.Provider value={{ user, loading, update, create }}>{props.children}</UserContext.Provider>;
+  // DB check for new fields
+  useEffect(() => {
+    const checkForMissingFields = async () => {
+      if (!user) return;
+      const favorites = user.data.favorites ? true : false;
+      const realName = user.data.realName ? true : false;
+      const updates = {} as Partial<UserSchema>;
+      if (!favorites) {
+        updates['favorites'] = [];
+      }
+      if (!realName) {
+        updates['realName'] = user.data.name;
+      }
+      if (Object.keys(updates).length > 0) {
+        update(updates);
+      }
+      setCheckComplete(true);
+    };
+    if (!checkComplete) {
+      checkForMissingFields();
+    }
+  }, [user, update, checkComplete]);
+
+  /**
+   * Add a favorite to the user
+   */
+  const addFavorite = useCallback(
+    async (id: string, type: FavoriteType): Promise<void> => {
+      if (user) {
+        const currFav = user.data.favorites ? user.data.favorites : [];
+        const updates = { favorites: [...currFav, { id, type }] };
+        update(updates);
+      }
+      return;
+    },
+    [user, update]
+  );
+
+  /**
+   * Remove a favorite to the user
+   */
+  const removeFavorite = useCallback(
+    async (id: string): Promise<void> => {
+      if (user) {
+        const currFav = user.data.favorites ? user.data.favorites : [];
+        const filterFav = currFav.filter((fav) => fav.id !== id);
+        const updates = { favorites: filterFav };
+        update(updates);
+      }
+      return;
+    },
+    [user, update]
+  );
+
+  return (
+    <UserContext.Provider value={{ user, loading, update, create, addFavorite, removeFavorite }}>{props.children}</UserContext.Provider>
+  );
 }
