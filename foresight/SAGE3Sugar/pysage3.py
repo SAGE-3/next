@@ -14,6 +14,7 @@
 #  and no unknown fields
 
 # TODO prevent apps updates on fields that were touched?
+
 import os
 import uuid
 import json
@@ -28,8 +29,6 @@ from smartbits.smartbit import SmartBit
 
 
 class PySage3:
-    def process(self, ws, msg):
-            print(f"got message {msg}")
 
     def __init__(self, conf, prod_type):
         print("Configuring ps3 client ... ")
@@ -47,7 +46,6 @@ class PySage3:
         self.rooms = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.socket = SageWebsocket(on_message_fn=self.__process_messages)
-        self.socket = SageWebsocket(on_message_fn=self.process)
 
         self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
         # Grab and load info already on the board
@@ -151,21 +149,40 @@ class PySage3:
             return {x[0]: x[1] for x in self.rooms[room_id].boards[board_id].smartbits}
 
     def __process_messages(self, ws, msg):
-        msg = json.loads(msg)
-        # if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
-        #     pass
+        message = json.loads(msg)
+        # Duplicate messages for the time being to allow python to work
+        # event.doc is now an array of docs
+        for doc in message['event']['doc']:
+            msg = message.copy()
+            msg['event']['doc'] = doc
+        # End of duplicating messages so old code can work
+            collection = msg["event"]['col']
+            doc = msg['event']['doc']
+            msg_type = msg["event"]["type"]
+            app_id = doc["_id"]
 
-        collection = msg["event"]['col']
-        doc = msg['event']['doc']
+            # Its a create message
+            if msg_type == "CREATE":
+                self.__MSG_METHODS[msg_type](collection, doc)
+            # Its a delete message
+            elif msg_type == "DELETE":
+                self.__MSG_METHODS[msg_type](collection, doc)
+            # Its an update message
+            elif msg_type == "UPDATE":
+                # all updates for this message [{id: string, updates: {}}, {id:string, updates: {}}...]
+                all_updates = msg['event']['updates']
+                msg_updates = {}
+                # find the updates for this specific app
+                for u in all_updates:
+                    if u['id'] == app_id:
+                        msg_updates = u['updates']
+                        break
+                msg['event']['updates'] = msg_updates
 
-        msg_type = msg["event"]["type"]
-        if msg_type == "UPDATE":
-            # app_id = msg["event"]["doc"]["_id"]
-            #
-            updates = msg['event']['updates']
-            self.__MSG_METHODS[msg_type](collection, doc, updates)
-        else:
-            self.__MSG_METHODS[msg_type](collection, doc)
+                if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                    pass
+
+                self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
 
     # def update_app(self, app, **kwargs):
     #     print("I am updating the app with the following attributes")
@@ -213,7 +230,6 @@ class PySage3:
                 "filename": asset["data"]["originalfilename"],
                 "mimetype": asset["data"]["mimetype"],
                 "size":  asset["data"]["size"]
-                #"uri": self.s3_comm.format_public_url(asset["_id"])
             })
         return assets_info
 
