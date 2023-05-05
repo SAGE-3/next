@@ -35,7 +35,7 @@ import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useB
 import { HiOutlineTrash } from 'react-icons/hi';
 
 // buttons for the toolbar
-import { BsFillGrid3X3GapFill, BsFillPaletteFill, BsWindowStack } from 'react-icons/bs';
+import { BsFillGrid3X3GapFill, BsFillPaletteFill, BsLayoutWtf, BsWindowStack } from 'react-icons/bs';
 import { AiOutlineAppstore } from 'react-icons/ai';
 import { CiAlignBottom, CiAlignLeft, CiAlignRight, CiAlignTop } from 'react-icons/ci';
 import { colors } from '@sage3/shared';
@@ -62,7 +62,7 @@ export function LassoToolbar() {
   // Boards
   const boards = useBoardStore((state) => state.boards);
 
-  const { alignSelectedApps, assignColor, groupByTopic } = useBoardUtils();
+  const { alignSelectedApps, assignColor, groupByTopic, organizeApps } = useBoardUtils();
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
@@ -287,6 +287,11 @@ export function LassoToolbar() {
               {'Actions'}
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
+              <Tooltip placement="top" hasArrow={true} label={'Organize Selected Apps'} openDelay={400}>
+                <Button onClick={() => organizeApps('app_type', 'tiles', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                  <BsLayoutWtf />
+                </Button>
+              </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
                   <MdZoomOutMap />

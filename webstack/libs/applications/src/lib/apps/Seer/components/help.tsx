@@ -109,7 +109,7 @@ export function HelpModal(props: HelpProps) {
           </Box>
           <Box mt={4}></Box>
           <Flex justifyContent="center" alignItems="center">
-            <Image boxSize={'48px'} src={docsImageSource} alt="SAGE3 Docs" />
+            <Image boxSize={'86px'} src={docsImageSource} alt="SAGE3 Docs" />
           </Flex>
         </ModalBody>
         <ModalFooter>

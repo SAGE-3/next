@@ -21,6 +21,7 @@ import {
   useColorModeValue,
   useToast,
   useDisclosure,
+  Code,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -38,6 +39,7 @@ import { ToolbarComponent } from './components/toolbar';
 import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
+import { BiHide, BiShow } from 'react-icons/bi';
 
 /**
  * Seer App
@@ -59,6 +61,9 @@ function AppComponent(props: App): JSX.Element {
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const boardId = props.data.boardId;
   const [isMarkdown, setIsMarkdown] = useState<boolean>(false);
+  const [showCode, setShowCode] = useState<boolean>(false);
+  const [showOutput, setShowOutput] = useState<boolean>(false);
+
   const SPACE = 2;
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
@@ -69,8 +74,8 @@ function AppComponent(props: App): JSX.Element {
   //   // set the parsed output if execute_result or display_data is present
   //   const parsed = JSON.parse(s.output);
   //   parsed['display_data'] && parsed['display_data']['data'] && parsed['display_data']['data']['text/markdown']
-  //     ? setIsMarkdown(true)
-  //     : setIsMarkdown(false);
+  //     ? setShowCode(true)
+  //     : setShowCode(false);
   //   console.log('markdown', isMarkdown);
   // }, [s.output]);
 
@@ -230,6 +235,16 @@ function AppComponent(props: App): JSX.Element {
               {s.isTyping ? 'Typing...' : ''}
             </Badge>
             <Spacer />
+            {/* <Tooltip label="Show/Hide Code" placement="top">
+              <Badge variant="outline" colorScheme="red" onClick={() => setShowCode(!showCode)}>
+                {showCode ? 'Show Code' : 'Hide Code'}
+              </Badge>
+            </Tooltip>
+            <Tooltip label="Show/Hide Output" placement="top">
+              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
+                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
+              </Badge>
+            </Tooltip> */}
             <Tooltip label="Click for help" placement="top">
               <IconButton
                 onClick={() => helpOnOpen()}
@@ -291,6 +306,7 @@ function AppComponent(props: App): JSX.Element {
                   width: '100%',
                   height: '100%',
                   fontSize: s.fontSize + 'px',
+                  fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace',
                   minHeight: '150px',
                 }}
                 _focus={{
@@ -342,7 +358,7 @@ function AppComponent(props: App): JSX.Element {
               </ButtonGroup>
             </HStack>
           </Box>
-          <Stack direction="row" hidden={isMarkdown}>
+          <Stack direction="row">
             <Badge variant="outline" colorScheme="facebook" mb={-1} mt={-1}>
               Edit and Execute Code (Shift + Enter)
             </Badge>
@@ -357,17 +373,22 @@ function AppComponent(props: App): JSX.Element {
               borderColor: '#008080',
               marginBottom: '-4px',
             }}
-            hidden={isMarkdown}
+            hidden={showCode}
           >
             {<CodeEditor app={props} access={access} />}
           </Box>
-          <Stack direction="row">
-            <Badge variant="outline" colorScheme="red">
-              {isMarkdown ? 'Result' : 'Output Box'}
+          <Stack direction="row" hidden={showOutput}>
+            <Badge variant="outline" colorScheme="red" mb={-1}>
+              Outputs
             </Badge>
-            <Badge variant="outline" colorScheme="facebook" onClick={() => setIsMarkdown(!isMarkdown)}>
-              {isMarkdown ? <MdCode aria-label="Show Code Editor" size="16px" /> : <MdCodeOff aria-label="Hide Code Editor" size="16px" />}
-            </Badge>
+            {/* <Tooltip label="Show/Hide Output" placement="top">
+              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
+                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
+              </Badge>
+            </Tooltip> */}
+            {/* <Badge variant="ghost" colorScheme="facebook" onClick={() => setShowOutput(!showOutput)}>
+              {showOutput ? <BiShow aria-label="Show Output Editor" size="16px" /> : <BiHide aria-label="Hide Output" size="16px" />}
+            </Badge> */}
           </Stack>
           <Box // output section container
             style={{
@@ -376,6 +397,7 @@ function AppComponent(props: App): JSX.Element {
               border: '2px solid',
               borderColor: '#008080',
             }}
+            hidden={showOutput}
           >
             {!s.output ? <></> : <Outputs output={s.output} app={props} />}
           </Box>
