@@ -49,15 +49,15 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const roomId = props.app.data.roomId;
   const boardId = props.app.data.boardId;
 
-  // Saving the text after 1sec of inactivity
+  // Saving the text after 1.5sec of inactivity
   const debounceSave = useRef(
-    debounce(500, (val) => {
+    debounce(1500, (val) => {
       updateState(props.app._id, { code: val });
     })
   );
 
   const debounceIsTyping = useRef(
-    debounce(1000, () => {
+    debounce(3000, () => {
       updateState(props.app._id, { isTyping: false });
     })
   );
