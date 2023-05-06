@@ -17,6 +17,7 @@ type useBoardUtils = {
   // alignSelectedApps: (align: 'left' | 'right' | 'top' | 'bottom' | 'even' | 'column' | 'stack', lassoApps: string[]) => void;
   assignColor: (color: string, lassoApps: string[]) => void;
   groupByTopic: (lassoApps: string[]) => void; // Stickies for now
+  assignKernel: (kernel: string, lassoApps: string[]) => void;
 };
 
 export function useBoardUtils(): useBoardUtils {
@@ -314,5 +315,27 @@ export function useBoardUtils(): useBoardUtils {
     });
   }
 
-  return { storeLayout, restoreLayout, organizeApps, alignSelectedApps, assignColor, groupByTopic };
+  /**
+   * Assign the selected kernel to the selected cells
+   * @param kernel  kernel to assign to the cells
+   * @param lassoApps  array of app ids
+   * @returns  void
+   */
+  function assignKernel(kernel: string, lassoApps: string[]) {
+    if (boardId === undefined) {
+      return;
+    }
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    const changes = [] as { _id: string; data: { kernel: string } }[];
+    storeLayout();
+    selectedApps.forEach((app) => {
+      let change = { _id: app._id, data: { kernel: kernel } };
+      changes.push(change);
+    });
+    for (const change of changes) {
+      updateState(change._id, change.data);
+    }
+  }
+
+  return { storeLayout, restoreLayout, organizeApps, alignSelectedApps, assignColor, groupByTopic, assignKernel };
 }

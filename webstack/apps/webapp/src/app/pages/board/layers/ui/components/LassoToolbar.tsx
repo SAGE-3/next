@@ -25,6 +25,7 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
+  Select,
 } from '@chakra-ui/react';
 import {
   MdAlignHorizontalCenter,
@@ -42,7 +43,16 @@ import {
 } from 'react-icons/md';
 import { VscVariableGroup } from 'react-icons/vsc';
 
-import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useBoardUtils } from '@sage3/frontend';
+import {
+  ConfirmModal,
+  useAppStore,
+  useBoardStore,
+  useHexColor,
+  useUIStore,
+  useBoardUtils,
+  useCursorBoardPosition,
+  useUser,
+} from '@sage3/frontend';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 // buttons for the toolbar
@@ -67,11 +77,27 @@ export function LassoToolbar() {
   const lassoApps = useUIStore((state) => state.selectedApps);
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
+  const { user } = useUser();
+
+  const [xy1, setXY1] = useState({ x: 0, y: 0 });
+  const [xy2, setXY2] = useState({ x: 0, y: 0 });
+  const userCursor = useCursorBoardPosition();
+
+  // Get initial position
+  const mouseDown = () => {
+    const position = userCursor.position;
+    setXY1({ x: position.x, y: position.y });
+  };
+
+  const mouseUp = () => {
+    const position = userCursor.position;
+    setXY2({ x: position.x, y: position.y });
+  };
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
 
-  const { alignSelectedApps, assignColor, groupByTopic, organizeApps } = useBoardUtils();
+  const { alignSelectedApps, assignColor, groupByTopic, organizeApps, assignKernel } = useBoardUtils();
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
@@ -113,6 +139,28 @@ export function LassoToolbar() {
     fitApps(selectedApps);
   };
 
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
+
+  function getMyKernels() {
+    if (!user || !lassoApps.length) return;
+    if (lassoApps.length > 0 && appGroup === 'SageCell') {
+      // get the available kernels from the first selected app
+      const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+      // get the board id
+      const boardId = selectedApps[0].data.boardId;
+      const availableKernels = selectedApps[0].data.state.availableKernels;
+      // filter kernels by board
+      const kernels = availableKernels.filter((el: { value: { board: string } }) => el.value.board === boardId);
+      // keep public kernels and kernels owned by the user
+      const myKernels = kernels.filter(
+        (kernel: { value: { is_private: any; owner_uuid: string } }) => !kernel.value.is_private || kernel.value.owner_uuid === user?._id
+      );
+      setMyKernels(myKernels);
+      console.log('kernels', kernels);
+      console.log('my kernels', myKernels);
+    }
+  }
+
   return (
     <>
       {showLasso && (
@@ -127,6 +175,21 @@ export function LassoToolbar() {
           p="2"
           rounded="md"
         >
+          {/* // show the lasso top left corner position and bottom right corner position */}
+          <Text
+            w="100%"
+            textAlign="left"
+            mx={1}
+            color={textColor}
+            fontSize={12}
+            fontWeight="bold"
+            h={'auto'}
+            userSelect={'none'}
+            onMouseDown={mouseDown}
+            onMouseUp={mouseUp}
+          >
+            {`(${xy1.x}, ${xy1.y}) - (${xy2.x}, ${xy2.y})`}
+          </Text>
           <Box display="flex" flexDirection="column">
             <Text
               w="100%"
@@ -281,10 +344,10 @@ export function LassoToolbar() {
                 </Text>
 
                 <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
-                  <Tooltip placement="top" hasArrow={true} label={'Change Color'} openDelay={400}>
+                  <Tooltip placement="top" hasArrow={true} label={'Group Assign Kernel'} openDelay={400}>
                     <Popover size={'md'}>
                       <PopoverTrigger>
-                        <Button size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                        <Button size="xs" p="0" mx="2px" colorScheme={'teal'} onClick={getMyKernels}>
                           <VscVariableGroup />
                         </Button>
                       </PopoverTrigger>
@@ -293,16 +356,17 @@ export function LassoToolbar() {
                         <PopoverCloseButton />
                         <PopoverHeader>Group Select Kernel</PopoverHeader>
                         <PopoverBody>
-                          {/* <Select onChange={(e) => changeKernel(e.target.value, lassoApps)} placeholder="Select Kernel">
-                            {kernels &&
-                            {kernels.map((kernel) => {
-                              return (
-                                <option key={kernel} value={kernel}>
-                                  {kernel}
+                          <Select onChange={(e) => assignKernel(e.target.value, lassoApps)} placeholder="Select Kernel">
+                            {myKernels
+                              .filter((el) => el.value.kernel_name === 'python3')
+                              .map((el) => (
+                                <option value={el.key} key={el.key}>
+                                  {el.value.is_private ? '<Private> ' : ''}
+                                  {el.value.kernel_alias} (
+                                  {el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'})
                                 </option>
-                              );
-                            })}
-                          </Select> */}
+                              ))}
+                          </Select>
                         </PopoverBody>
                       </PopoverContent>
                     </Popover>
