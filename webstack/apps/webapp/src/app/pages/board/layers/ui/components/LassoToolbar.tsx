@@ -79,20 +79,20 @@ export function LassoToolbar() {
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
   const { user } = useUser();
 
-  const [xy1, setXY1] = useState({ x: 0, y: 0 });
-  const [xy2, setXY2] = useState({ x: 0, y: 0 });
-  const userCursor = useCursorBoardPosition();
+  // const [xy1, setXY1] = useState({ x: 0, y: 0 });
+  // const [xy2, setXY2] = useState({ x: 0, y: 0 });
+  // const userCursor = useCursorBoardPosition();
 
-  // Get initial position
-  const mouseDown = () => {
-    const position = userCursor.position;
-    setXY1({ x: position.x, y: position.y });
-  };
+  // // Get initial position
+  // const mouseDown = () => {
+  //   const position = userCursor.position;
+  //   setXY1({ x: position.x, y: position.y });
+  // };
 
-  const mouseUp = () => {
-    const position = userCursor.position;
-    setXY2({ x: position.x, y: position.y });
-  };
+  // const mouseUp = () => {
+  //   const position = userCursor.position;
+  //   setXY2({ x: position.x, y: position.y });
+  // };
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
@@ -175,21 +175,6 @@ export function LassoToolbar() {
           p="2"
           rounded="md"
         >
-          {/* // show the lasso top left corner position and bottom right corner position */}
-          <Text
-            w="100%"
-            textAlign="left"
-            mx={1}
-            color={textColor}
-            fontSize={12}
-            fontWeight="bold"
-            h={'auto'}
-            userSelect={'none'}
-            onMouseDown={mouseDown}
-            onMouseUp={mouseUp}
-          >
-            {`(${xy1.x}, ${xy1.y}) - (${xy2.x}, ${xy2.y})`}
-          </Text>
           <Box display="flex" flexDirection="column">
             <Text
               w="100%"
