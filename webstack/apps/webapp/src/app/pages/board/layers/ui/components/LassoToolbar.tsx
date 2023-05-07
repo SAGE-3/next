@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import {
   Box,
   useColorModeValue,
@@ -42,6 +43,9 @@ import {
   MdZoomOutMap,
 } from 'react-icons/md';
 import { VscVariableGroup } from 'react-icons/vsc';
+import { HiOutlineTrash } from 'react-icons/hi';
+// buttons for the toolbar
+import { BsFillGrid3X3GapFill, BsFillPaletteFill, BsLayoutWtf } from 'react-icons/bs';
 
 import {
   ConfirmModal,
@@ -50,15 +54,10 @@ import {
   useHexColor,
   useUIStore,
   useBoardUtils,
-  useCursorBoardPosition,
   useUser,
 } from '@sage3/frontend';
-import { HiOutlineTrash } from 'react-icons/hi';
 
-// buttons for the toolbar
-import { BsFillGrid3X3GapFill, BsFillPaletteFill, BsLayoutWtf, BsWindowStack } from 'react-icons/bs';
 import { colors } from '@sage3/shared';
-import { useEffect, useState } from 'react';
 
 /**
  * Lasso Toolbar Component
@@ -79,25 +78,23 @@ export function LassoToolbar() {
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
   const { user } = useUser();
 
-  // const [xy1, setXY1] = useState({ x: 0, y: 0 });
-  // const [xy2, setXY2] = useState({ x: 0, y: 0 });
-  // const userCursor = useCursorBoardPosition();
-
-  // // Get initial position
-  // const mouseDown = () => {
-  //   const position = userCursor.position;
-  //   setXY1({ x: position.x, y: position.y });
-  // };
-
-  // const mouseUp = () => {
-  //   const position = userCursor.position;
-  //   setXY2({ x: position.x, y: position.y });
-  // };
-
   // Boards
   const boards = useBoardStore((state) => state.boards);
-
   const { alignSelectedApps, assignColor, groupByTopic, organizeApps, assignKernel } = useBoardUtils();
+
+  // Theme
+  const background = useColorModeValue('gray.50', 'gray.700');
+  const panelBackground = useHexColor(background);
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const borderColor = useColorModeValue('gray.200', 'gray.500');
+
+  // Local store to track the current set of apps if they are the same type
+  const [appGroup, setAppGroup] = useState('none');
+
+  // Modal disclosure for the Close selected apps
+  const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
+
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
@@ -114,17 +111,6 @@ export function LassoToolbar() {
       }
     }
   }, [lassoApps]);
-  // Theme
-  const background = useColorModeValue('gray.50', 'gray.700');
-  const panelBackground = useHexColor(background);
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  const borderColor = useColorModeValue('gray.200', 'gray.500');
-
-  // Local store to track the current set of apps if they are the same type
-  const [appGroup, setAppGroup] = useState('none');
-
-  // Modal disclosure for the Close selected apps
-  const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
 
   // Close all the selected apps
   const closeSelectedApps = () => {
@@ -138,8 +124,6 @@ export function LassoToolbar() {
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     fitApps(selectedApps);
   };
-
-  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
 
   function getMyKernels() {
     if (!user || !lassoApps.length) return;
@@ -156,8 +140,6 @@ export function LassoToolbar() {
         (kernel: { value: { is_private: any; owner_uuid: string } }) => !kernel.value.is_private || kernel.value.owner_uuid === user?._id
       );
       setMyKernels(myKernels);
-      console.log('kernels', kernels);
-      console.log('my kernels', myKernels);
     }
   }
 
