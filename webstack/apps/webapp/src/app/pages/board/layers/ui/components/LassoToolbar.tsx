@@ -156,8 +156,6 @@ export function LassoToolbar() {
         (kernel: { value: { is_private: any; owner_uuid: string } }) => !kernel.value.is_private || kernel.value.owner_uuid === user?._id
       );
       setMyKernels(myKernels);
-      console.log('kernels', kernels);
-      console.log('my kernels', myKernels);
     }
   }
 
@@ -239,12 +237,12 @@ export function LassoToolbar() {
                 <Button onClick={() => alignSelectedApps('center', lassoApps)} size="xs" p="0" mx="2px">
                   <MdAlignHorizontalCenter />
                 </Button>
-              </Tooltip>{' '}
+              </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Middle Align Row'} openDelay={400}>
                 <Button onClick={() => alignSelectedApps('middle', lassoApps)} size="xs" p="0" mx="2px">
                   <MdAlignVerticalCenter />
                 </Button>
-              </Tooltip>{' '}
+              </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Stack Apps'} openDelay={400}>
                 <Button onClick={() => alignSelectedApps('stack', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
                   <MdAutoAwesomeMotion />
@@ -271,39 +269,40 @@ export function LassoToolbar() {
 
             {appGroup === 'Stickie' && (
               <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
-                <Tooltip placement="top" hasArrow={true} label={'Change Color'} openDelay={400}>
-                  {/* Dropdown for color picker */}
-                  <Popover size={'md'}>
-                    <PopoverTrigger>
-                      <Button size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                        <BsFillPaletteFill />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent width="450px">
-                      <PopoverArrow />
-                      <PopoverCloseButton />
-                      <PopoverHeader>Change Color</PopoverHeader>
-                      <PopoverBody>
-                        <ButtonGroup size="md" colorScheme="teal">
-                          {colors.map((color) => {
-                            const c = useHexColor(color);
-                            return (
-                              <Button
-                                key={c}
-                                value={c}
-                                bgColor={c}
-                                _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
-                                _active={{ background: c, opacity: 0.9 }}
-                                size={'md'}
-                                onClick={() => assignColor(color, lassoApps)}
-                              />
-                            );
-                          })}
-                        </ButtonGroup>
-                      </PopoverBody>
-                    </PopoverContent>
-                  </Popover>
-                </Tooltip>
+                <Popover size={'md'}>
+                  <Tooltip placement="top" hasArrow={true} label={'Change Color'} openDelay={400}>
+                    <Box display="inline-block">
+                      <PopoverTrigger>
+                        <Button size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                          <BsFillPaletteFill />
+                        </Button>
+                      </PopoverTrigger>
+                    </Box>
+                  </Tooltip>
+                  <PopoverContent width="450px">
+                    <PopoverArrow />
+                    <PopoverCloseButton />
+                    <PopoverHeader>Change Color</PopoverHeader>
+                    <PopoverBody>
+                      <ButtonGroup size="md" colorScheme="teal">
+                        {colors.map((color) => {
+                          const c = useHexColor(color);
+                          return (
+                            <Button
+                              key={c}
+                              value={c}
+                              bgColor={c}
+                              _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
+                              _active={{ background: c, opacity: 0.9 }}
+                              size={'md'}
+                              onClick={() => assignColor(color, lassoApps)}
+                            />
+                          );
+                        })}
+                      </ButtonGroup>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
                 <Tooltip placement="top" hasArrow={true} label={'Group By Topic'} openDelay={400}>
                   <Button onClick={() => groupByTopic(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
                     <BsFillGrid3X3GapFill />
@@ -329,33 +328,36 @@ export function LassoToolbar() {
                 </Text>
 
                 <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
-                  <Tooltip placement="top" hasArrow={true} label={'Group Assign Kernel'} openDelay={400}>
-                    <Popover size={'md'}>
-                      <PopoverTrigger>
-                        <Button size="xs" p="0" mx="2px" colorScheme={'teal'} onClick={getMyKernels}>
-                          <VscVariableGroup />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent width="450px">
-                        <PopoverArrow />
-                        <PopoverCloseButton />
-                        <PopoverHeader>Group Select Kernel</PopoverHeader>
-                        <PopoverBody>
-                          <Select onChange={(e) => assignKernel(e.target.value, lassoApps)} placeholder="Select Kernel">
-                            {myKernels
-                              .filter((el) => el.value.kernel_name === 'python3')
-                              .map((el) => (
-                                <option value={el.key} key={el.key}>
-                                  {el.value.is_private ? '<Private> ' : ''}
-                                  {el.value.kernel_alias} (
-                                  {el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'})
-                                </option>
-                              ))}
-                          </Select>
-                        </PopoverBody>
-                      </PopoverContent>
-                    </Popover>
-                  </Tooltip>
+                  <Popover size={'md'}>
+                    <Tooltip placement="top" hasArrow={true} label={'Group Assign Kernel'} openDelay={400}>
+                      {/* Fix to allow tooltip and popover trigger - https://github.com/chakra-ui/chakra-ui/issues/2843 */}
+                      <Box display="inline-block">
+                        <PopoverTrigger>
+                          <Button size="xs" p="0" mx="2px" colorScheme={'teal'} onClick={getMyKernels}>
+                            <VscVariableGroup />
+                          </Button>
+                        </PopoverTrigger>
+                      </Box>
+                    </Tooltip>
+                    <PopoverContent width="450px">
+                      <PopoverArrow />
+                      <PopoverCloseButton />
+                      <PopoverHeader>Group Select Kernel</PopoverHeader>
+                      <PopoverBody>
+                        <Select onChange={(e) => assignKernel(e.target.value, lassoApps)} placeholder="Select Kernel">
+                          {myKernels
+                            .filter((el) => el.value.kernel_name === 'python3')
+                            .map((el) => (
+                              <option value={el.key} key={el.key}>
+                                {el.value.is_private ? '<Private> ' : ''}
+                                {el.value.kernel_alias} (
+                                {el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'})
+                              </option>
+                            ))}
+                        </Select>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
                 </ButtonGroup>
               </>
             )}
