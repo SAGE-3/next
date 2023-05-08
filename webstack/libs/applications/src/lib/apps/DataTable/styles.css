@@ -58,7 +58,8 @@ td {
 }
 
 tbody td:hover {
-  background-color: darkslategray;
+  /* seems to be a globla style */
+  /* background-color: darkslategray; */
 }
 
 .highlight {
