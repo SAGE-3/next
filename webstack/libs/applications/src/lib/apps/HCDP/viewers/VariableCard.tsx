@@ -60,7 +60,6 @@ export default function VariableCard(
 
     for (let i = 0; i < props.stationMetadata.length; i++) {
       const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[0]];
-      console.log(s.widget.yAxisNames[0], sensorValues);
       if (sensorValues.length !== 0) {
         values.push({
           stationName: props.stationMetadata[i].NAME,
@@ -131,21 +130,23 @@ export default function VariableCard(
           )}
         </Wrap>
       ) : (
-        <Content
-          isLoaded={props.isLoaded}
-          stationNames={props.stationNames}
-          variableToDisplayLength={0}
-          variableName={s.widget.yAxisNames.length ? s.widget.yAxisNames[0] : 'variable_Name_set_1'}
-          s={s}
-          variable={{
-            stationName: 'Station Name',
-            value: 42,
-            average: 38.42,
-            variance: 12,
-            high: 82,
-            low: 12,
-          }}
-        />
+        <Box display="flex" flexDirection={'row'} justifyContent="center" alignContent={'center'} justifyItems={'center'}>
+          <Content
+            isLoaded={props.isLoaded}
+            stationNames={props.stationNames}
+            variableToDisplayLength={0}
+            variableName={s.widget.yAxisNames.length ? s.widget.yAxisNames[0] : 'variable_Name_set_1'}
+            s={s}
+            variable={{
+              stationName: 'Station Name',
+              value: 42,
+              average: 38.42,
+              variance: 12,
+              high: 82,
+              low: 12,
+            }}
+          />
+        </Box>
       )}
     </>
   );

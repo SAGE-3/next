@@ -72,58 +72,47 @@ function AppComponent(props: App): JSX.Element {
   const [stationMetadata, setStationMetadata] = useState([]);
 
   useEffect(() => {
-    for (let i = 0; i < s.stationData.length; i++) {
-      fetch(
-        `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-      ).then((response) => {
-        response.json().then((station) => {
-          const tmpStation: any = s.stationData[i];
-          setStationMetadata(station);
-          if (station.STATION[0].OBSERVATIONS.soil_moisture_set_1 !== undefined) {
-            tmpStation.soilMoisture = Math.floor(
-              station.STATION[0].OBSERVATIONS.soil_moisture_set_1[station.STATION[0].OBSERVATIONS.soil_moisture_set_1.length - 1]
-            );
-          }
-          if (station.STATION[0].OBSERVATIONS.wind_speed_set_1 !== undefined) {
-            {
-              tmpStation.windSpeed = Math.floor(
-                station.STATION[0].OBSERVATIONS.wind_speed_set_1[station.STATION[0].OBSERVATIONS.wind_speed_set_1.length - 1]
-              );
-            }
-          }
-          if (station.STATION[0].OBSERVATIONS.wind_direction_set_1 !== undefined) {
-            {
-              tmpStation.windDirection = Math.floor(
-                station.STATION[0].OBSERVATIONS.wind_direction_set_1[station.STATION[0].OBSERVATIONS.wind_direction_set_1.length - 1]
-              );
-            }
-          }
-          if (station.STATION[0].OBSERVATIONS.relative_humidity_set_1 !== undefined) {
-            tmpStation.relativeHumidity = Math.floor(
-              station.STATION[0].OBSERVATIONS.relative_humidity_set_1[station.STATION[0].OBSERVATIONS.relative_humidity_set_1.length - 1]
-            );
-          }
-          if (station.STATION[0].OBSERVATIONS.air_temp_set_1 !== undefined) {
-            tmpStation.temperatureC = Math.floor(
-              station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1]
-            );
-            tmpStation.temperatureF = convertToFahrenheit(
-              Math.floor(station.STATION[0].OBSERVATIONS.air_temp_set_1[station.STATION[0].OBSERVATIONS.air_temp_set_1.length - 1])
-            );
-          }
-
-          if (station.STATION[0].OBSERVATIONS.solar_radiation_set_1 !== undefined) {
-            tmpStation.solarRadiation = Math.floor(
-              station.STATION[0].OBSERVATIONS.solar_radiation_set_1[station.STATION[0].OBSERVATIONS.solar_radiation_set_1.length - 1]
-            );
-          }
-
-          const tmpStationData = [...s.stationData];
-          tmpStationData[tmpStationData.indexOf(station)] = tmpStation;
-          updateState(props._id, { stationData: [...tmpStationData] });
-        });
-      });
-    }
+    const fetchStationData = async () => {
+      const tmpStationData = [...s.stationData];
+      for (let i = 0; i < s.stationData.length; i++) {
+        const repsonse = await fetch(
+          `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+        );
+        const station = await repsonse.json();
+        const tmpStation: any = s.stationData[i];
+        if (station.STATION[0].OBSERVATIONS.soil_moisture_set_1 !== undefined) {
+          const soilMoisture = station.STATION[0].OBSERVATIONS.soil_moisture_set_1;
+          tmpStation.soilMoisture = Math.floor(soilMoisture[soilMoisture.length - 1]);
+        }
+        if (station.STATION[0].OBSERVATIONS.wind_speed_set_1 !== undefined) {
+          const windSpeed = station.STATION[0].OBSERVATIONS.wind_speed_set_1;
+          tmpStation.windSpeed = Math.floor(windSpeed[windSpeed.length - 1]);
+        }
+        if (station.STATION[0].OBSERVATIONS.wind_direction_set_1 !== undefined) {
+          const windDirection = station.STATION[0].OBSERVATIONS.wind_direction_set_1;
+          tmpStation.windDirection = Math.floor(windDirection[windDirection.length - 1]);
+        }
+        if (station.STATION[0].OBSERVATIONS.air_temp_set_1 !== undefined) {
+          const airTemp = station.STATION[0].OBSERVATIONS.air_temp_set_1;
+          const tempInFahrenheit = convertToFahrenheit(Math.floor(airTemp[airTemp.length - 1]));
+          const tempInCelcius = Math.floor(airTemp[airTemp.length - 1]);
+          tmpStation.temperatureF = tempInFahrenheit;
+          tmpStation.temperatureC = tempInCelcius;
+        }
+        if (station.STATION[0].OBSERVATIONS.relative_humidity_set_1 !== undefined) {
+          const relativeHumidity = station.STATION[0].OBSERVATIONS.relative_humidity_set_1;
+          tmpStation.relativeHumidity = Math.floor(relativeHumidity[relativeHumidity.length - 1]);
+        }
+        if (station.STATION[0].OBSERVATIONS.solar_radiation_set_1 !== undefined) {
+          const solarRadiation = station.STATION[0].OBSERVATIONS.solar_radiation_set_1;
+          tmpStation.solarRadiation = Math.floor(solarRadiation[solarRadiation.length - 1]);
+        }
+        tmpStationData[tmpStationData.indexOf(station)] = tmpStation;
+        setStationMetadata(station);
+      }
+      updateState(props._id, { stationData: [...tmpStationData] });
+    };
+    fetchStationData();
   }, []);
   // Function to generate charts either for createAllCharts, or createChartTemplate
   const createChart = (appPos: { x: number; y: number; z: number }, stationName: string, axisTitle: string, climateProp: string) => {
@@ -288,7 +277,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <LeafletWrapper map={map} setMap={setMap} {...props}>
-      <CustomizeWidgets props={props} size={props.data.size} widget={s.widget} />
+      <CustomizeWidgets {...props} size={props.data.size} widget={s.widget} />
 
       <Box
         w="20rem"

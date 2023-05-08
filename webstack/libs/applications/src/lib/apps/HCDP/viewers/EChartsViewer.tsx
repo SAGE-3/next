@@ -12,6 +12,7 @@ import { Box, Button, Spinner, useColorMode } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 import { ChartManager } from '../../EChartsViewer/ChartManager';
 import { useAppStore } from '@sage3/frontend';
+import '../styling.css';
 
 const EChartsViewer = (props: {
   stationNames: string[];
@@ -40,10 +41,11 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      width: props.size ? props.size.height : 1000,
-      height: props.size ? props.size.width : 400,
+      width: props.size ? props.size.height : 1090,
+      height: props.size ? props.size.width : 410,
     });
     async function callToChartMangaer() {
+      console.log('I got Called');
       const options = await ChartManager(
         props.stationNames,
         props.widget.visualizationType,
@@ -66,14 +68,14 @@ const EChartsViewer = (props: {
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        width: props.size ? props.size.height : 1000,
-        height: props.size ? props.size.width : 400,
+        width: props.size ? props.size.height : 1090,
+        height: props.size ? props.size.width : 410,
       });
     }
   }, [props.size]);
   return (
-    <Box border={colorMode === 'light' ? 'black solid 7px' : 'white solid 7px'} rounded="1rem" w="1000" h="420">
-      {props.isLoaded ? <div ref={chartRef}></div> : <Spinner w={420} h={420} thickness="20px" speed="0.30s" emptyColor="gray.200" />}
+    <Box border={colorMode === 'light' ? 'black solid 2px' : 'white solid 2px'} rounded="4" w="1090" h="415" position="relative">
+      {props.isLoaded ? <div ref={chartRef} /> : <div className="loader" />}
     </Box>
   );
 };

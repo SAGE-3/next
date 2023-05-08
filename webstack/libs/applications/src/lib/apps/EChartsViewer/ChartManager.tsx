@@ -291,10 +291,14 @@ function createScatterPlot(
 
 function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAttributes: string[], stationName: string) {
   let finalVariableName = yAxisAttributes[0];
+  if (!finalVariableName) {
+    finalVariableName = 'None';
+  }
   if (finalVariableName.split('_').length > 1) {
     const variableName = yAxisAttributes[0].split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
-    delete variableName[variableName.length - 1];
-    delete variableName[variableName.length - 2];
+    variableName.pop();
+    variableName.pop();
+
     finalVariableName = variableName.join(' ');
   }
 
