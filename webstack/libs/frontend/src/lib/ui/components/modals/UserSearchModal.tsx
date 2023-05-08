@@ -25,10 +25,10 @@ import {
   InputGroup,
   InputLeftElement,
 } from '@chakra-ui/react';
+import { MdSearch } from 'react-icons/md';
 
 import { Board, User } from '@sage3/shared/types';
 import { EnterBoardModal, useHexColor, usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
-import { MdSearch } from 'react-icons/md';
 
 // User Search Modal Props
 interface UserSearchProps {
@@ -72,23 +72,25 @@ export function UserSearchModal(props: UserSearchProps): JSX.Element {
       if (pa) return -1;
       return 1;
     });
-    // remove current user
-    return users.filter((u) => u._id !== user?._id);
+    // remove current user, guest, and offline users
+    return users.filter((u) => u._id !== user?._id && u.data.userRole !== 'guest' && presences.find((p) => p._id === u._id));
   };
 
   // Perform the user search and set the results
   const performUserSearch = async (searchPrompt: string) => {
-    const sortedUsers = sortAndFilterUsers();
+    // Remove extra spaces
+    const term = searchPrompt.trim();
     // Search for users
-    if (searchPrompt.length > 0) {
+    if (term.length > 0) {
+      const sortedUsers = sortAndFilterUsers();
       const results = sortedUsers.filter(
         (user) =>
-          user.data.name.toLowerCase().includes(searchPrompt.toLowerCase()) ||
-          user.data.email.toLowerCase().includes(searchPrompt.toLowerCase())
+          user.data.name.toLowerCase().includes(term.toLowerCase()) ||
+          user.data.email.toLowerCase().includes(term.toLowerCase())
       );
       setUserResults(results);
     } else {
-      setUserResults(sortedUsers);
+      setUserResults([]);
     }
   };
 
@@ -153,7 +155,7 @@ type UserCardProps = {
 function UserCard(props: UserCardProps) {
   // Status colors
   const onlineColor = useHexColor('green');
-  const awayColor = useHexColor('yellow');
+  // const awayColor = useHexColor('yellow');
   const offlineColor = useHexColor('red');
 
   // Card Background colors
