@@ -13,7 +13,7 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { BoardSchema, Presence, PresenceSchema } from '@sage3/shared/types';
+import { Presence, PresenceSchema } from '@sage3/shared/types';
 import { APIHttp, SocketAPI } from '../api';
 
 // Dev Tools
