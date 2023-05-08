@@ -47,17 +47,10 @@ import { HiOutlineTrash } from 'react-icons/hi';
 // buttons for the toolbar
 import { BsFillGrid3X3GapFill, BsFillPaletteFill, BsLayoutWtf } from 'react-icons/bs';
 
-import {
-  ConfirmModal,
-  useAppStore,
-  useBoardStore,
-  useHexColor,
-  useUIStore,
-  useBoardUtils,
-  useUser,
-} from '@sage3/frontend';
+import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useBoardUtils, useUser } from '@sage3/frontend';
 
 import { colors } from '@sage3/shared';
+import { useParams } from 'react-router-dom';
 
 /**
  * Lasso Toolbar Component
@@ -80,6 +73,8 @@ export function LassoToolbar() {
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
+  const boardId = useParams<{ boardId: string }>().boardId;
+
   const { alignSelectedApps, assignColor, groupByTopic, organizeApps, assignKernel } = useBoardUtils();
 
   // Theme
@@ -194,7 +189,7 @@ export function LassoToolbar() {
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Grid'} openDelay={400}>
-                <Button onClick={() => alignSelectedApps('even', lassoApps)} size="xs" p="0" mx="2px">
+                <Button onClick={() => alignSelectedApps('grid', lassoApps)} size="xs" p="0" mx="2px">
                   <MdGridView />
                 </Button>
               </Tooltip>
@@ -287,11 +282,13 @@ export function LassoToolbar() {
                     </PopoverBody>
                   </PopoverContent>
                 </Popover>
-                <Tooltip placement="top" hasArrow={true} label={'Group By Topic'} openDelay={400}>
-                  <Button onClick={() => groupByTopic(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                    <BsFillGrid3X3GapFill />
-                  </Button>
-                </Tooltip>
+                {boardId && ( // Board cannot be undefined
+                  <Tooltip placement="top" hasArrow={true} label={'Group By Topic'} openDelay={400}>
+                    <Button onClick={() => groupByTopic(boardId, lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                      <BsFillGrid3X3GapFill />
+                    </Button>
+                  </Tooltip>
+                )}
               </ButtonGroup>
             )}
 
@@ -360,11 +357,19 @@ export function LassoToolbar() {
               {'Actions'}
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
-              <Tooltip placement="top" hasArrow={true} label={'Organize Selected Apps'} openDelay={400}>
-                <Button onClick={() => organizeApps('app_type', 'tiles', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                  <BsLayoutWtf />
-                </Button>
-              </Tooltip>
+              {boardId && (
+                <Tooltip placement="top" hasArrow={true} label={'Organize Selected Apps'} openDelay={400}>
+                  <Button
+                    onClick={() => organizeApps(boardId, 'app_type', 'tiles', lassoApps)}
+                    size="xs"
+                    p="0"
+                    mx="2px"
+                    colorScheme={'teal'}
+                  >
+                    <BsLayoutWtf />
+                  </Button>
+                </Tooltip>
+              )}
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
                   <MdZoomOutMap />
