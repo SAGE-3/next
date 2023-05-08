@@ -62,17 +62,9 @@ export function UserSearchModal(props: UserSearchProps): JSX.Element {
 
   // Sort the users by presence and name. Remove current user.
   const sortAndFilterUsers = () => {
-    // sort by name
+    // Sort by name
     users.sort((a, b) => a.data.name.localeCompare(b.data.name));
-    // sort by presence and name
-    users.sort((a, b) => {
-      const pa = presences.find((p) => p._id === a._id);
-      const pb = presences.find((p) => p._id === b._id);
-      if (pa && pb) return 0;
-      if (pa) return -1;
-      return 1;
-    });
-    // remove current user, guest, and offline users
+    // Remove current user, guest, and offline users
     return users.filter((u) => u._id !== user?._id && u.data.userRole !== 'guest' && presences.find((p) => p._id === u._id));
   };
 
