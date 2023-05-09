@@ -25,23 +25,27 @@ const EChartsViewer = (props: {
 }) => {
   // HTML element reference
   const chartRef = useRef<any>(null);
-  // Echart instance
-  const [chart, setChart] = useState<echarts.ECharts | null>(null);
+  const outboxRef = useRef<any>(null);
   // Echart options
-  const [chartOptions, setChartOptions] = useState<echarts.EChartsCoreOption>({});
+  const [chartOptions, setChartOptions] = useState<echarts.EChartsCoreOption | null>(null);
   // Users SAGE 3 color mode
   const { colorMode } = useColorMode();
 
   // If the chartRef changes, update the chart instance
   useEffect(() => {
-    if (!chartRef.current) return;
-    const chartInstance = echarts.init(chartRef.current, colorMode);
-    chartInstance.resize({
-      width: props.size ? props.size.height : 1090,
-      height: props.size ? props.size.width : 410,
-    });
-    setChart(chartInstance);
-  }, [chartRef.current]);
+    if (!chartRef.current || !chartOptions || !outboxRef.current) return;
+    const chart = echarts.getInstanceByDom(chartRef.current);
+    if (chart) {
+      chart.dispose();
+    }
+
+    const chartInstance = echarts.init(chartRef.current);
+    const width = outboxRef.current.getBoundingClientRect().width;
+    const height = outboxRef.current.getBoundingClientRect().height;
+    chartInstance.resize({ width, height });
+
+    chartInstance.setOption(chartOptions);
+  }, [chartRef.current, outboxRef.current, colorMode, chartOptions]);
 
   // Props update
   useEffect(() => {
@@ -53,49 +57,33 @@ const EChartsViewer = (props: {
         props.widget.yAxisNames,
         props.widget.xAxisNames,
         colorMode,
-
         props.stationMetadata
       );
-      // Compare Options, update only if they are different
-      if (JSON.stringify(options) !== JSON.stringify(chartOptions)) {
-        console.log('set the optoins');
-        setChartOptions(options);
-      }
+      setChartOptions(options);
     }
     if (props.isLoaded) {
       callToChartMangaer();
     }
-  }, [JSON.stringify(props.widget), JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded]);
+  }, [JSON.stringify(props.widget), JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode]);
 
-  // If the users changes color mode update echarts color pallete
-  useEffect(() => {
-    if (!chart) return;
-    chart.setOption(chartOptions);
-  }, [JSON.stringify(chartOptions), chart]);
+  // useEffect(() => {
+  //   if (!outboxRef.current || !chartRef.current) return;
+  //   const chart = echarts.getInstanceByDom(chartRef.current);
+  //   if (chart) {
 
-  // If the users changes color mode update echarts color pallete
-  useEffect(() => {
-    if (!chart) return;
-    chart.dispose();
-    const chartInstance = echarts.init(chartRef.current, colorMode);
-    chartInstance.resize({
-      width: props.size ? props.size.height : 1100,
-      height: props.size ? props.size.width : 410,
-    });
-    setChart(chartInstance);
-  }, [colorMode]);
-  // Size
-  useEffect(() => {
-    if (chart) {
-      chart.resize({
-        width: props.size ? props.size.height : 1100,
-        height: props.size ? props.size.width : 410,
-      });
-    }
-  }, [props.size]);
+  //   }
+  // }, [outboxRef.current, chartRef.current]);
+
   return (
-    <Box border={colorMode === 'light' ? 'black solid 2px' : 'white solid 2px'} rounded="4" w="1100" h="415" position="relative">
-      {props.isLoaded ? <div ref={chartRef} /> : <div className="loader" />}
+    <Box w="100%" h="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} ref={outboxRef}>
+      {props.isLoaded ? (
+        <div ref={chartRef} />
+      ) : (
+        <Box transform={`scale(8) translateY(3px)`}>
+          <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color={'teal'} size="xl" />
+        </Box>
+      )}
+      {/* // <div className="loader" /> */}
     </Box>
   );
 };

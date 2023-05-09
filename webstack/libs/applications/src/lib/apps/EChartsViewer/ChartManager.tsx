@@ -308,7 +308,6 @@ function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAtt
       text: `${finalVariableName} versus ${xAxisAttributes[0]} for ${stationName}`,
       textStyle: {
         fontSize: 40,
-        color: '#ffffff',
       },
     };
   }
@@ -332,7 +331,8 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
       yAxisData = data[0].OBSERVATIONS['date_time'];
       for (let i = 0; i < yAxisData.length; i++) {
         const date = new Date(yAxisData[i]);
-        yAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
+        //yAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
+        yAxisData[i] = date.toDateString();
       }
     } else {
       for (let i = 0; i < yAxisAttributes.length; i++) {
@@ -352,10 +352,10 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
   } else {
     if (xAxisAttributes[0] === 'date_time') {
       xAxisData = [...data[0].OBSERVATIONS['date_time']];
-
       for (let i = 0; i < xAxisData.length; i++) {
         const date = new Date(xAxisData[i]);
-        xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
+        // xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
+        xAxisData[i] = date.toDateString();
       }
     } else {
       for (let i = 0; i < yAxisAttributes.length; i++) {

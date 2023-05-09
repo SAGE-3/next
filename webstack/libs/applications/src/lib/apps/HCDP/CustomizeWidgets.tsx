@@ -64,24 +64,26 @@ function findDuplicateElements(...arrays: any) {
 }
 
 const CustomizeWidgets = React.memo(
-  (props: {
-    size: { width: number; height: number; depth: number };
-    widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
-    assetid: string;
-    overlay: boolean;
-    location: number[];
-    baseLayer: any;
-    zoom: number;
+  (
+    props: App & {
+      size: { width: number; height: number; depth: number };
+      widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
+      assetid: string;
+      overlay: boolean;
+      location: number[];
+      baseLayer: any;
+      zoom: number;
 
-    stationNames: string[];
-    _id: string;
-    roomId: string;
-    boardId: string;
-    isWidgetOpen: boolean;
+      stationNames: string[];
+      _id: string;
+      roomId: string;
+      boardId: string;
+      isWidgetOpen: boolean;
 
-    // handleDeleteWidget: (index: number) => void;
-    // handleAddWidget: (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => void;
-  }) => {
+      // handleDeleteWidget: (index: number) => void;
+      // handleAddWidget: (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => void;
+    }
+  ) => {
     const updateState = useAppStore((state) => state.updateState);
     const createApp = useAppStore((state) => state.create);
 
@@ -162,8 +164,8 @@ const CustomizeWidgets = React.memo(
         roomId: props.roomId!,
         boardId: props.boardId!,
         //TODO get middle of the screen space
-        position: { x: 100, y: 100, z: 0 },
-        size: { width: 1000, height: 1000, depth: 0 },
+        position: { x: props.data.position.x + 1000, y: props.data.position.y, z: 0 },
+        size: { width: 2000, height: 500, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'SensorOverview',
         state: {
@@ -196,27 +198,40 @@ const CustomizeWidgets = React.memo(
             console.log('clicked');
           }}
         >
-          <DrawerContent bg="#393E46" pb="1rem">
-            <Button
-              onClick={() => {
-                updateState(props._id, { isWidgetOpen: false });
-              }}
-              bg="#394867"
-              size="sm"
-              color="white"
-            >
-              Close Widget
-            </Button>
-            <DrawerHeader borderBottomWidth="1px">Visualization Generator</DrawerHeader>
-            <DrawerBody>
-              <HStack>
-                <Box height="40rem" width="25rem" overflow="hidden" border="2px solid black" rounded={'lg'}>
+          <DrawerContent bg="transparent">
+            <Box display="flex" justifyContent="center">
+              <Box width="400px" background="#393E46" display="flex" justifyContent={'center'} borderRadius="20px 20px 0 0"></Box>
+            </Box>
+            <Box display="flex" justifyContent="center" background="#393E46" alignContent="center">
+              <Text fontSize="4xl" fontWeight="bold">
+                Visualization Generator
+              </Text>
+              <Button
+                onClick={() => {
+                  updateState(props._id, { isWidgetOpen: false });
+                }}
+                bg="red.400"
+                size="sm"
+                color="white"
+                fontWeight="bold"
+                mx="4"
+                transform={'translateY(12px)'}
+              >
+                X
+              </Button>
+            </Box>
+            {/* <DrawerHeader bg="#393E46" textAlign={'center'} borderBottomWidth="1px">
+              Visualization Generator
+            </DrawerHeader> */}
+            <DrawerBody bg="#393E46">
+              <Box display="flex" justifyContent="center" alignContent="center" height="100%" pb={4}>
+                <Box border="3px solid" borderColor="gray.700" boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="30rem">
                   <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
                     <Heading size="md" isTruncated={true}>
                       Selected Stations
                     </Heading>
                   </Box>
-                  <Accordion allowMultiple>
+                  <Accordion allowMultiple overflowY="scroll" height="35rem">
                     {!isLoaded
                       ? props.stationNames.map((stationName: string, index: number) => {
                           return (
@@ -250,12 +265,7 @@ const CustomizeWidgets = React.memo(
                         })}
                   </Accordion>
                 </Box>
-                <Box
-                  border={window.innerWidth < 1300 ? undefined : 'solid 2px black'}
-                  rounded="md"
-                  height={window.innerWidth < 1300 ? '0' : '40rem'}
-                  width="40rem"
-                >
+                <Box border="3px solid" borderColor="gray.700" boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="40rem">
                   <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
                     <Heading size="md">Map</Heading>
                   </Box>
@@ -327,9 +337,9 @@ const CustomizeWidgets = React.memo(
                     </LayersControl.BaseLayer>
                   </LeafletWrapper>
                 </Box>
-                <Box border="2px solid black" rounded="lg" height="40rem">
+                <Box border="3px solid" borderColor="gray.700" boxShadow="lg" overflow="hidden" mx="3" rounded="lg" height="40rem">
                   <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
-                    <Heading size="md">Visualization Settings</Heading>
+                    <Heading size="md">Options</Heading>
                   </Box>
                   <Box py="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
                     <Box
@@ -456,37 +466,45 @@ const CustomizeWidgets = React.memo(
                   </Box>
                 </Box>
                 <Box
-                  border="2px solid black"
+                  border="3px solid"
+                  borderColor="gray.700"
+                  boxShadow="lg"
+                  overflow="hidden"
+                  mx="3"
                   rounded="lg"
                   height="40rem"
                   width="70rem"
                   display="flex"
                   flexDirection={'column'}
-                  // justifyContent="center"
-                  // alignContent={'center'}
+                  alignContent={'center'}
                 >
-                  {props.widget.visualizationType === 'variableCard' ? (
-                    <>
-                      {/* <VariableCard
-                      variableName={s.widget.yAxisNames[0]}
-                      state={props}
-                      stationNames={s.stationNames}
-                      stationMetadata={stationMetadata}
-                      isLoaded={isLoaded}
-                    /> */}
-                    </>
-                  ) : (
-                    <EChartsViewer
-                      stationNames={props.stationNames}
-                      stationMetadata={stationMetadata}
-                      isLoaded={isLoaded}
-                      dateStart={''}
-                      dateEnd={''}
-                      widget={props.widget}
-                    />
-                  )}
+                  <Box bg="gray.800" p="1rem">
+                    <Heading size="md">Preview</Heading>
+                  </Box>
+                  <Box height="100%" width="100%" justifyContent={'center'}>
+                    {props.widget.visualizationType === 'variableCard' ? (
+                      <>
+                        <VariableCard
+                          variableName={props.widget.yAxisNames[0]}
+                          state={props}
+                          stationNames={props.stationNames}
+                          stationMetadata={stationMetadata}
+                          isLoaded={isLoaded}
+                        />
+                      </>
+                    ) : (
+                      <EChartsViewer
+                        stationNames={props.stationNames}
+                        stationMetadata={stationMetadata}
+                        isLoaded={isLoaded}
+                        dateStart={''}
+                        dateEnd={''}
+                        widget={props.widget}
+                      />
+                    )}
+                  </Box>
                 </Box>
-              </HStack>
+              </Box>
             </DrawerBody>
           </DrawerContent>
         </Drawer>
