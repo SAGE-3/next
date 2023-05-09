@@ -184,12 +184,6 @@ class PySage3:
 
                 self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
 
-    # def update_app(self, app, **kwargs):
-    #     print("I am updating the app with the following attributes")
-    #     print(kwargs)
-    #     for k,v in kwargs:
-    #         if k in app.data:
-    #             app
 
     def update_size(self, app, width=None, height=None, depth=None):
         if not isinstance(app, SmartBit):
@@ -234,10 +228,12 @@ class PySage3:
         return assets_info
 
     def get_public_url(self, asset_id):
+        """Returns the public url for the asset with the given id"""
         return self.s3_comm.format_public_url(asset_id)
 
     def update_state_attrs(self, app, **kwargs):
-        print("I am here")
+        """Updates the state attributes of the given app.
+        The attributes to be updated are passed as kwargs"""
         if not isinstance(app, SmartBit):
             print(f"Apps should be a smartbit. Found {type(app)}")
             return

@@ -98,7 +98,6 @@ class SAGEProxy:
 
     def populate_existing(self):
         # Populate existing rooms
-
         rooms_info = self.s3_comm.get_rooms()
         # print(rooms_info)
         for room_info in rooms_info:

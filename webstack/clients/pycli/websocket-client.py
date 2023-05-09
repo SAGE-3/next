@@ -6,7 +6,7 @@ import json
 import uuid
 
 def on_message(ws, message):
-    print('Got> message')
+    # print('Got> message')
     res = json.loads(message)
     if res['success']:
         numrooms = len(res['data'])
