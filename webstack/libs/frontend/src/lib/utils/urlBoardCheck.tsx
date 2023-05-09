@@ -21,12 +21,10 @@ import { EnterBoardModal } from '../ui';
  */
 export const CheckUrlForBoardId = () => {
   const { boardId } = useParams();
-  const host = window.location.hostname;
-  const keyName = `${host}-boardId`;
   if (boardId) {
-    localStorage.setItem(keyName, boardId);
+    localStorage.setItem('boardId', boardId);
   } else {
-    localStorage.removeItem(keyName);
+    localStorage.removeItem('boardId');
   }
   const { toHome } = useRouteNav();
   useEffect(() => {
