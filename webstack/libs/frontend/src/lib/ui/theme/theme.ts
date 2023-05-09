@@ -29,5 +29,27 @@ const styles = {
   }),
 };
 
+// Custom component variants
+const components = {
+  // Drawer variant to allow pointer events to the underlying content
+  Drawer: {
+    variants: {
+      clickThrough: {
+        overlay: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
+        dialogContainer: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
+        dialog: {
+          pointerEvents: 'auto',
+        },
+      },
+    },
+  },
+};
+
 // Extend the theme
-export const theme = extendTheme({ config, colors, styles });
+export const theme = extendTheme({ config, components, colors, styles });

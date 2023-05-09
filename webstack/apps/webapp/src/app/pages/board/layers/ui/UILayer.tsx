@@ -41,6 +41,7 @@ import {
   AnnotationsPanel,
   PluginsPanel,
 } from './components';
+import { AppDrawer } from './components/AppDrawer';
 
 type UILayerProps = {
   boardId: string;
@@ -232,6 +233,10 @@ export function UILayer(props: UILayerProps) {
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />
+
+      {/* AppDrawer */}
+
+      <AppDrawer />
     </>
   );
 }

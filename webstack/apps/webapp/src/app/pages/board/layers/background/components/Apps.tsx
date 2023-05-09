@@ -11,6 +11,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
 import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
+import { App } from '@sage3/applications/schema';
 
 // Renders all the apps
 export function Apps() {
@@ -132,7 +133,8 @@ export function Apps() {
       {/* Apps array */}
       {apps.map((app) => {
         if (app.data.type in Applications) {
-          const Component = Applications[app.data.type].AppComponent;
+          const Component = Applications[app.data.type].AppComponent as (props: App & { noWindow?: boolean }) => JSX.Element;
+          const prop = { ...app, noWindow: false };
           return (
             // Wrap the components in an errorboundary to protect the board from individual app errors
             <ErrorBoundary
@@ -141,7 +143,7 @@ export function Apps() {
                 <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={app} />
               )}
             >
-              <Component key={app._id} {...app}></Component>
+              <Component key={app._id} {...prop}></Component>
             </ErrorBoundary>
           );
         } else {
