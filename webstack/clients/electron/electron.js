@@ -437,7 +437,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({ ...state, ...options });
 
   // Build a menu
-  buildMenu(mainWindow);
+  buildMenu(mainWindow, commander);
 
   // Analytics on start
   if (!commander.server.includes('localhost') && analytics_enabled) {
