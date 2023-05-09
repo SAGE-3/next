@@ -47,6 +47,7 @@ import { useStore } from './LeafletWrapper';
 import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
 import { useParams } from 'react-router';
 import CustomizeWidgets from './CustomizeWidgets';
+import { AppWindow } from '@sage3/applications/apps';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
@@ -276,77 +277,92 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <LeafletWrapper map={map} setMap={setMap} {...props}>
-      <CustomizeWidgets {...props} size={props.data.size} widget={s.widget} />
-
-      <Box
-        w="20rem"
-        h="24rem"
-        bg="gray.300"
-        position="absolute"
-        zIndex="999"
-        color={'black'}
-        top="2px"
-        left="2px"
-        border="10px"
-        rounded={10}
-        // margin="auto"
-        padding="0 20px"
-        fontWeight={'bold'}
-        fontSize="xl"
-      >
-        <br />
-        <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
-          <Stack direction="column">
-            <Radio colorScheme="orange" value="temperatureC">
-              <p style={{ fontSize: 30 }}>Temperature C</p>
-            </Radio>
-            <Radio size="lg" colorScheme="orange" value="temperatureF">
-              <p style={{ fontSize: 30 }}>Temperature F</p>
-            </Radio>
-            <Radio size="lg" colorScheme="orange" value="soilMoisture">
-              <p style={{ fontSize: 30 }}>Soil Moisture</p>
-            </Radio>
-            <Radio size="lg" colorScheme="orange" value="windSpeed">
-              <p style={{ fontSize: 30 }}>Wind Speed</p>
-            </Radio>
-            <Radio size="lg" colorScheme="orange" value="relativeHumidity">
-              <p style={{ fontSize: 30 }}>Relative Humidity</p>
-            </Radio>
-            <Radio size="lg" colorScheme="orange" value="solarRadiation">
-              <p style={{ fontSize: 30 }}>Solar Radiation</p>
-            </Radio>
-          </Stack>
-        </RadioGroup>
-      </Box>
-      <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    <AppWindow app={props}>
+      <LeafletWrapper map={map} setMap={setMap} {...props}>
+        <CustomizeWidgets
+          {...props}
+          size={props.data.size}
+          widget={s.widget}
+          assetid={props.data.state.assetid}
+          overlay={props.data.state.overlay}
+          location={props.data.state.location}
+          baseLayer={props.data.state.baseLayer}
+          zoom={props.data.state.zoom}
+          stationNames={s.stationNames}
+          _id={props._id}
+          roomId={props.data.roomId!}
+          boardId={props.data.boardId!}
+          isWidgetOpen={s.isWidgetOpen}
         />
 
-        {s.stationData.map((data: SensorTypes, index: number) => {
-          return (
-            <div key={index}>
-              <CircleMarker
-                key={index}
-                center={{ lat: data.lat - 0.01, lng: data.lon }}
-                fillColor={'rgb(244, 187, 68)'}
-                stroke={false}
-                fillOpacity={0}
-                radius={(5 / s.zoom) * 50 + 15}
-                eventHandlers={
-                  {
-                    // mouseover: (e) => {
-                    //   e.target.openPopup();
-                    // },
-                    // click: (e) => {
-                    //   handleAddSelectedStation(data);
-                    // },
+        <Box
+          w="20rem"
+          h="24rem"
+          bg="gray.300"
+          position="absolute"
+          zIndex="999"
+          color={'black'}
+          top="2px"
+          left="2px"
+          border="10px"
+          rounded={10}
+          // margin="auto"
+          padding="0 20px"
+          fontWeight={'bold'}
+          fontSize="xl"
+        >
+          <br />
+          <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
+            <Stack direction="column">
+              <Radio colorScheme="orange" value="temperatureC">
+                <p style={{ fontSize: 30 }}>Temperature C</p>
+              </Radio>
+              <Radio size="lg" colorScheme="orange" value="temperatureF">
+                <p style={{ fontSize: 30 }}>Temperature F</p>
+              </Radio>
+              <Radio size="lg" colorScheme="orange" value="soilMoisture">
+                <p style={{ fontSize: 30 }}>Soil Moisture</p>
+              </Radio>
+              <Radio size="lg" colorScheme="orange" value="windSpeed">
+                <p style={{ fontSize: 30 }}>Wind Speed</p>
+              </Radio>
+              <Radio size="lg" colorScheme="orange" value="relativeHumidity">
+                <p style={{ fontSize: 30 }}>Relative Humidity</p>
+              </Radio>
+              <Radio size="lg" colorScheme="orange" value="solarRadiation">
+                <p style={{ fontSize: 30 }}>Solar Radiation</p>
+              </Radio>
+            </Stack>
+          </RadioGroup>
+        </Box>
+        <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          {s.stationData.map((data: SensorTypes, index: number) => {
+            return (
+              <div key={index}>
+                <CircleMarker
+                  key={index}
+                  center={{ lat: data.lat - 0.01, lng: data.lon }}
+                  fillColor={'rgb(244, 187, 68)'}
+                  stroke={false}
+                  fillOpacity={0}
+                  radius={(5 / s.zoom) * 50 + 15}
+                  eventHandlers={
+                    {
+                      // mouseover: (e) => {
+                      //   e.target.openPopup();
+                      // },
+                      // click: (e) => {
+                      //   handleAddSelectedStation(data);
+                      // },
+                    }
                   }
-                }
-              >
-                {/* <Popup className="leaflet-content">
+                >
+                  {/* <Popup className="leaflet-content">
                   <Box textAlign={'center'} transform={'translate(0,-5rem)'} mb="3rem" pb="5rem" height="350px" width="300px">
                     <Center>
                       <VStack>
@@ -387,19 +403,19 @@ function AppComponent(props: App): JSX.Element {
                     </Center>
                   </Box>
                 </Popup> */}
-              </CircleMarker>
+                </CircleMarker>
 
-              <SVGOverlay
-                bounds={[
-                  [data.lat - 0.17, data.lon - 0.05],
-                  [data.lat + 0.15, data.lon + 0.05],
-                  // [data.lat - 0.17, data.lon - 0.05],
-                  // [data.lat + 0.17, data.lon + 0.05],
-                ]}
-              >
-                {s.variableToDisplay === 'windSpeed' ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    {/* {data['windDirection'] == 0 ? null : (
+                <SVGOverlay
+                  bounds={[
+                    [data.lat - 0.17, data.lon - 0.05],
+                    [data.lat + 0.15, data.lon + 0.05],
+                    // [data.lat - 0.17, data.lon - 0.05],
+                    // [data.lat + 0.17, data.lon + 0.05],
+                  ]}
+                >
+                  {s.variableToDisplay === 'windSpeed' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                      {/* {data['windDirection'] == 0 ? null : (
                       <g
                         ref={arrowRef}
                         fill="white"
@@ -409,30 +425,31 @@ function AppComponent(props: App): JSX.Element {
 
                       </g>
                     )} */}
-                    <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
+                      <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
+                        <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
 
-                      <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                        {data[s.variableToDisplay]}
-                      </text>
-                    </g>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                    <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
-                      <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-                      <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                        {data[s.variableToDisplay]}
-                      </text>
-                    </g>
-                  </svg>
-                )}
-              </SVGOverlay>
-            </div>
-          );
-        })}
-      </LayersControl.BaseLayer>
-    </LeafletWrapper>
+                        <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
+                          {data[s.variableToDisplay]}
+                        </text>
+                      </g>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                      <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
+                        <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
+                        <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
+                          {data[s.variableToDisplay]}
+                        </text>
+                      </g>
+                    </svg>
+                  )}
+                </SVGOverlay>
+              </div>
+            );
+          })}
+        </LayersControl.BaseLayer>
+      </LeafletWrapper>
+    </AppWindow>
   );
 }
 

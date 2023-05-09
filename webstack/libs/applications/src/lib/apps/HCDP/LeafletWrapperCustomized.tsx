@@ -40,8 +40,18 @@ export function getStaticAssetUrl(filename: string): string {
 const maxZoom = 18;
 const minZoom = 1;
 
-function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
-  const s = props.data.state as AppState;
+function LeafletWrapper(props: {
+  children: any;
+  map: any;
+  setMap: any;
+  _id: string;
+  assetid: string;
+  overlay: any;
+  size: any;
+  location: any;
+  baseLayer: any;
+  zoom: any;
+}) {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
 
@@ -57,13 +67,13 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
 
   // Convert ID to asset
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.assetid);
+    const myasset = assets.find((a) => a._id === props.assetid);
     if (myasset) {
       setFile(myasset);
       // Update the app title
       update(props._id, { title: myasset?.data.originalfilename });
     }
-  }, [s.assetid, assets]);
+  }, [props.assetid, assets]);
 
   // Convert asset to URL
   useEffect(() => {
@@ -124,16 +134,16 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
       shadowSize: [0, 0],
       iconSize: [24, 40],
     });
-  }, [props.map, s.overlay]);
+  }, [props.map, props.overlay]);
 
   // Add or remove the overlay layer with the geojson data
   useEffect(() => {
-    if (s.overlay && props.map) {
+    if (props.overlay && props.map) {
       overlayLayer.current?.addTo(props.map);
     } else {
       if (props.map) overlayLayer.current?.removeFrom(props.map);
     }
-  }, [props.map, s.overlay]);
+  }, [props.map, props.overlay]);
 
   // Window resize
   useEffect(() => {
@@ -144,14 +154,14 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
       setTimeout(() => {
         if (props.map) {
           props.map.invalidateSize();
-          if (props.map.getCenter().lat !== s.location[0] || props.map.getCenter().lng !== s.location[1]) {
+          if (props.map.getCenter().lat !== props.location[0] || props.map.getCenter().lng !== props.location[1]) {
             const loc = new Leaflet.LatLng(props.map.getCenter().lat, props.map.getCenter().lng);
             props.map.setView(loc);
           }
         }
       }, 250);
     }
-  }, [props.data.size.width, props.data.size.height, props.map]);
+  }, [props.size.width, props.size.height, props.map]);
 
   // Location sync
   const onMove = useCallback(() => {
@@ -159,7 +169,7 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
       const value: [number, number] = [props.map.getCenter().lat, props.map.getCenter().lng];
       updateState(props._id, { location: value });
     }
-  }, [props.map, s.location]);
+  }, [props.map, props.location]);
 
   // Drag events
   useEffect(() => {
@@ -176,10 +186,10 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
   // Synchronize the view
   useEffect(() => {
     if (props.map) {
-      const loc = new Leaflet.LatLng(s.location[0], s.location[1]);
+      const loc = new Leaflet.LatLng(props.location[0], props.location[1]);
       props.map.setView(loc);
     }
-  }, [s.location, props.map]);
+  }, [props.location, props.map]);
 
   // BaseLayer sync
   const onBaseLayerChange = useCallback(
@@ -187,7 +197,7 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
       const value = e.name;
       updateState(props._id, { baseLayer: value });
     },
-    [s.baseLayer]
+    [props.baseLayer]
   );
 
   useEffect(() => {
@@ -204,11 +214,11 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
   // Overlay layer control
   const onOverlayAdd = useCallback(() => {
     updateState(props._id, { overlay: true });
-  }, [s.overlay]);
+  }, [props.overlay]);
 
   const onOverlayRemove = useCallback(() => {
     updateState(props._id, { overlay: false });
-  }, [s.overlay]);
+  }, [props.overlay]);
 
   useEffect(() => {
     if (props.map) {
@@ -227,18 +237,18 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
     if (props.map) {
       props.map.invalidateSize();
     }
-  }, [props.map, s.baseLayer]);
+  }, [props.map, props.baseLayer]);
 
   useEffect(() => {
     if (props.map) {
-      props.map.setZoom(s.zoom);
+      props.map.setZoom(props.zoom);
     }
-  }, [props.map, s.zoom]);
+  }, [props.map, props.zoom]);
 
   // Zoom in on the map
   const incZoom = () => {
     if (selected) {
-      const zoom = s.zoom + 1;
+      const zoom = props.zoom + 1;
       const limitZoom = Math.min(zoom, maxZoom);
       updateState(props._id, { zoom: limitZoom });
     }
@@ -247,20 +257,20 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
   // Zoom out on the map
   const decZoom = () => {
     if (selected) {
-      const zoom = s.zoom - 1;
+      const zoom = props.zoom - 1;
       const limitZoom = Math.max(zoom, minZoom);
       updateState(props._id, { zoom: limitZoom });
     }
   };
 
   // + and - keyboard keys for zooming
-  useHotkeys('=', incZoom, { dependencies: [selected, s.zoom] });
-  useHotkeys('-', decZoom, { dependencies: [selected, s.zoom] });
+  useHotkeys('=', incZoom, { dependencies: [selected, props.zoom] });
+  useHotkeys('-', decZoom, { dependencies: [selected, props.zoom] });
 
   return (
     <MapContainer
-      center={[s.location[0], s.location[1]]}
-      zoom={s.zoom}
+      center={[props.location[0], props.location[1]]}
+      zoom={props.zoom}
       keyboard={false}
       preferCanvas={true}
       style={{ height: `91%`, width: `100%`, zIndex: 0 }}

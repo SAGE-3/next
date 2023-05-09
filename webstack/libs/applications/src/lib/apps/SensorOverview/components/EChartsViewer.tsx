@@ -48,6 +48,7 @@ const EChartsViewer = (props: {
         props.visualizationType,
         props.yAxisNames,
         props.xAxisNames,
+        colorMode,
         props.stationMetadata
       );
       if (chartInstance) chartInstance.setOption(options);
@@ -75,7 +76,7 @@ const EChartsViewer = (props: {
       width: props.size.width,
     });
     async function callToChartMangaer() {
-      const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames);
+      const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames, colorMode);
       if (chartInstance) chartInstance.setOption(options);
     }
     const options = callToChartMangaer();

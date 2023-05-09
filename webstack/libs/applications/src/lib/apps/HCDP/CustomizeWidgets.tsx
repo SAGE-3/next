@@ -31,8 +31,8 @@ import {
   Heading,
 } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
-import LeafletWrapper from '../SensorOverview/LeafletWrapper';
-import { App, AppSchema, AppState } from '@sage3/applications/schema';
+import LeafletWrapper from './LeafletWrapperCustomized';
+import { App, AppState } from '@sage3/applications/schema';
 import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay, MapContainer } from 'react-leaflet';
 import { SAGEColors, colors } from '@sage3/shared';
 
@@ -64,13 +64,24 @@ function findDuplicateElements(...arrays: any) {
 }
 
 const CustomizeWidgets = React.memo(
-  (
-    props: App & {
-      size: { width: number; height: number; depth: number };
-      widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
-    }
-  ) => {
-    const s = props.data.state as AppState;
+  (props: {
+    size: { width: number; height: number; depth: number };
+    widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
+    assetid: string;
+    overlay: boolean;
+    location: number[];
+    baseLayer: any;
+    zoom: number;
+
+    stationNames: string[];
+    _id: string;
+    roomId: string;
+    boardId: string;
+    isWidgetOpen: boolean;
+
+    // handleDeleteWidget: (index: number) => void;
+    // handleAddWidget: (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => void;
+  }) => {
     const updateState = useAppStore((state) => state.updateState);
     const createApp = useAppStore((state) => state.create);
 
@@ -82,14 +93,13 @@ const CustomizeWidgets = React.memo(
     // const [selectedColor, setSelectedColor] = useState<SAGEColors>('blue');
     const [stationMetadata, setStationMetadata] = useState<any>([]);
     const [isLoaded, setIsLoaded] = useState(false);
-
     useEffect(() => {
       const fetchData = async () => {
         const tmpSensorMetadata: any = [];
         const tmpVariableNames: any = [];
-        for (let i = 0; i < s.stationNames.length; i++) {
+        for (let i = 0; i < props.stationNames.length; i++) {
           const response = await fetch(
-            `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+            `https://api.mesowest.net/v2/stations/timeseries?STID=${props.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
           );
           const stationData = await response.json();
 
@@ -99,19 +109,17 @@ const CustomizeWidgets = React.memo(
 
           tmpVariableNames.push(sensorObservationVariableNames);
         }
-
+        console.log(tmpSensorMetadata);
         let filteredVariableNames = findDuplicateElements(...tmpVariableNames);
         filteredVariableNames.push('elevation', 'latitude', 'longitude', 'name', 'current temperature');
-        //TODO: THere is a bug here. Can't figure out why it is reredeneriing multiple times
         setIsLoaded(true);
         setAxisVariableNames(filteredVariableNames);
         setStationMetadata(tmpSensorMetadata);
       };
-      console.log('CustomizeWiget got called');
       fetchData();
-    }, [s.stationNames]);
+    }, [JSON.stringify(props.stationNames)]);
     const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
-      const tmpArray: string[] = [...s.stationNames];
+      const tmpArray: string[] = [...props.stationNames];
       const stationName = station.name;
       setAxisVariableNames([]);
       if (tmpArray.find((station: string) => station === stationName)) {
@@ -122,50 +130,51 @@ const CustomizeWidgets = React.memo(
 
     const handleAddSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
       setAxisVariableNames([]);
-      updateState(props._id, { stationNames: [...s.stationNames, station.name] });
+      updateState(props._id, { stationNames: [...props.stationNames, station.name] });
     };
     const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       const value = event.target.value;
-      updateState(props._id, { widget: { ...s.widget, visualizationType: value } });
+      updateState(props._id, { widget: { ...props.widget, visualizationType: value } });
     };
     const handleYAxisChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       const value = event.target.value;
 
-      updateState(props._id, { widget: { ...s.widget, yAxisNames: [value] } });
+      updateState(props._id, { widget: { ...props.widget, yAxisNames: [value] } });
     };
 
     const handleXAxisChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       const value = event.target.value;
-      updateState(props._id, { widget: { ...s.widget, xAxisNames: [value] } });
+      updateState(props._id, { widget: { ...props.widget, xAxisNames: [value] } });
     };
 
     const handleColorChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       const color = event.target.value;
-      updateState(props._id, { widget: { ...s.widget, color: color } });
+      updateState(props._id, { widget: { ...props.widget, color: color } });
     };
 
     const handleOperationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       const operation = event.target.value;
-      updateState(props._id, { widget: { ...s.widget, operation: operation } });
+      updateState(props._id, { widget: { ...props.widget, operation: operation } });
     };
     const generateWidget = async () => {
       const app = await createApp({
         title: 'SensorOverview',
-        roomId: props.data.roomId!,
-        boardId: props.data.boardId!,
-        position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
+        roomId: props.roomId!,
+        boardId: props.boardId!,
+        //TODO get middle of the screen space
+        position: { x: 100, y: 100, z: 0 },
         size: { width: 1000, height: 1000, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'SensorOverview',
         state: {
           sensorData: {},
-          stationNames: s.stationNames,
+          stationNames: props.stationNames,
           listOfStationNames: '016HI',
           location: [21.297, -157.816],
           zoom: 8,
           baseLayer: 'OpenStreetMap',
           overlay: true,
-          widget: s.widget,
+          widget: props.widget,
         },
         raised: true,
       });
@@ -181,7 +190,7 @@ const CustomizeWidgets = React.memo(
           // closeOnOverlayClick={false}
           placement={'bottom'}
           onClose={onClose}
-          isOpen={s.isWidgetOpen}
+          isOpen={props.isWidgetOpen}
           variant="alwaysOpen"
           onOverlayClick={() => {
             console.log('clicked');
@@ -209,7 +218,7 @@ const CustomizeWidgets = React.memo(
                   </Box>
                   <Accordion allowMultiple>
                     {!isLoaded
-                      ? s.stationNames.map((stationName: string, index: number) => {
+                      ? props.stationNames.map((stationName: string, index: number) => {
                           return (
                             <Box p="1rem" key={index}>
                               Loading Station...
@@ -251,14 +260,25 @@ const CustomizeWidgets = React.memo(
                     <Heading size="md">Map</Heading>
                   </Box>
 
-                  <LeafletWrapper map={map} setMap={setMap} {...props}>
-                    <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
+                  <LeafletWrapper
+                    map={map}
+                    setMap={setMap}
+                    {...props}
+                    _id={props._id}
+                    assetid={props.assetid}
+                    overlay={props.overlay}
+                    size={props.size}
+                    location={props.location}
+                    baseLayer={props.baseLayer}
+                    zoom={props.zoom}
+                  >
+                    <LayersControl.BaseLayer checked={props.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
                       <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
                       {stationData.map((station: { lat: number; lon: number; name: string; selected: boolean }, index: number) => {
-                        if (s.stationNames.includes(station.name)) {
+                        if (props.stationNames.includes(station.name)) {
                           station.selected = true;
                         } else {
                           station.selected = false;
@@ -340,7 +360,7 @@ const CustomizeWidgets = React.memo(
                     </Box>
                   </Box>
 
-                  {s.widget.visualizationType === 'variableCard' ? (
+                  {props.widget.visualizationType === 'variableCard' ? (
                     <Box p="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
                       <Box display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
                         <Text>Current Attribute: </Text>
@@ -385,9 +405,9 @@ const CustomizeWidgets = React.memo(
                       </Box>
                     </Box>
                   ) : null}
-                  {s.widget.visualizationType === 'line' ||
-                  s.widget.visualizationType === 'bar' ||
-                  s.widget.visualizationType === 'scatter' ? (
+                  {props.widget.visualizationType === 'line' ||
+                  props.widget.visualizationType === 'bar' ||
+                  props.widget.visualizationType === 'scatter' ? (
                     <Box p="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
                       <Box display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
                         <Text>X Axis: </Text>
@@ -445,24 +465,24 @@ const CustomizeWidgets = React.memo(
                   // justifyContent="center"
                   // alignContent={'center'}
                 >
-                  {s.widget.visualizationType === 'variableCard' ? (
+                  {props.widget.visualizationType === 'variableCard' ? (
                     <>
-                      <VariableCard
-                        variableName={s.widget.yAxisNames[0]}
-                        state={props}
-                        stationNames={s.stationNames}
-                        stationMetadata={stationMetadata}
-                        isLoaded={isLoaded}
-                      />
+                      {/* <VariableCard
+                      variableName={s.widget.yAxisNames[0]}
+                      state={props}
+                      stationNames={s.stationNames}
+                      stationMetadata={stationMetadata}
+                      isLoaded={isLoaded}
+                    /> */}
                     </>
                   ) : (
                     <EChartsViewer
-                      stationNames={s.stationNames}
+                      stationNames={props.stationNames}
                       stationMetadata={stationMetadata}
                       isLoaded={isLoaded}
                       dateStart={''}
                       dateEnd={''}
-                      widget={s.widget}
+                      widget={props.widget}
                     />
                   )}
                 </Box>
@@ -477,33 +497,62 @@ const CustomizeWidgets = React.memo(
 
 function arePropsEqual(
   prevProps: {
+    size: {
+      width: number;
+      height: number;
+      depth: number;
+    };
+    widget: {
+      visualizationType: string;
+      yAxisNames: string[];
+      xAxisNames: string[];
+      stationNames: string[];
+    };
+    assetid: string;
+    overlay: boolean;
+    isWidgetOpen: boolean;
+    location: number[];
+    baseLayer: any;
+    zoom: number;
+    stationNames: string[];
     _id: string;
-    _createdAt: number;
-    _updatedAt: number;
-    _updatedBy: string;
-    _createdBy: string;
-    data: AppSchema;
-    size: { width: number; height: number; depth: number };
-    widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
+    roomId: string;
+    boardId: string;
   },
   nextProps: {
+    size: {
+      width: number;
+      height: number;
+      depth: number;
+    };
+    widget: {
+      visualizationType: string;
+      yAxisNames: string[];
+      xAxisNames: string[];
+      stationNames: string[];
+    };
+    assetid: string;
+    overlay: boolean;
+    isWidgetOpen: boolean;
+    location: number[];
+    baseLayer: any;
+    zoom: number;
+    stationNames: string[];
     _id: string;
-    _createdAt: number;
-    _updatedAt: number;
-    _updatedBy: string;
-    _createdBy: string;
-    data: AppSchema;
-    size: { width: number; height: number; depth: number };
-    widget: { visualizationType: string; yAxisNames: string[]; xAxisNames: string[]; stationNames: string[] };
+    roomId: string;
+    boardId: string;
   }
 ) {
-  // Compare only the properties that you want to use to determine equality
+  // Compare all properties to determine equality
   return (
-    prevProps.widget.yAxisNames === nextProps.widget.yAxisNames
-    // prevProps.widget.xAxisNames === nextProps.widget.xAxisNames &&
-    // prevProps.widget.stationNames === nextProps.widget.stationNames &&
-    // prevProps.widget.visualizationType === nextProps.widget.visualizationType &&
-    // prevProps.data.position.x === nextProps.data.position.x
+    prevProps.size.width === nextProps.size.width &&
+    prevProps.size.height === nextProps.size.height &&
+    prevProps.size.depth === nextProps.size.depth &&
+    prevProps.widget.visualizationType === nextProps.widget.visualizationType &&
+    prevProps.widget.yAxisNames === nextProps.widget.yAxisNames &&
+    prevProps.widget.xAxisNames === nextProps.widget.xAxisNames &&
+    prevProps.widget.stationNames === nextProps.widget.stationNames &&
+    prevProps.isWidgetOpen === nextProps.isWidgetOpen
   );
 }
 

@@ -25,13 +25,14 @@ export const ChartManager = async (
   chartType: string,
   yAxisAttributes: string[],
   xAxisAttributes: string[],
+  colorMode: string,
   stationMetadata?: any,
+
   transform?: (filterType | aggregateType)[]
 ): Promise<EChartsOption> => {
-  const options: EChartsOption = {};
+  let options: EChartsOption = {};
 
   let data = [];
-  console.log(stationMetadata);
   const stationReadableNames = [];
   if (stationMetadata === undefined) {
     for (let i = 0; i < stationNames.length; i++) {
@@ -40,7 +41,6 @@ export const ChartManager = async (
       );
       const sensor = await response.json();
       const sensorData = sensor['STATION'][0];
-
       stationReadableNames.push(sensorData.NAME);
       data.push(sensorData);
     }
@@ -84,6 +84,7 @@ export const ChartManager = async (
       break;
   }
   createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
+  options = customizeChart(options, colorMode);
   return options;
 };
 
@@ -307,6 +308,7 @@ function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAtt
       text: `${finalVariableName} versus ${xAxisAttributes[0]} for ${stationName}`,
       textStyle: {
         fontSize: 40,
+        color: '#ffffff',
       },
     };
   }
@@ -349,16 +351,37 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
     }
   } else {
     if (xAxisAttributes[0] === 'date_time') {
-      xAxisData = data[0].OBSERVATIONS['date_time'];
+      xAxisData = [...data[0].OBSERVATIONS['date_time']];
+
       for (let i = 0; i < xAxisData.length; i++) {
         const date = new Date(xAxisData[i]);
         xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
       }
     } else {
       for (let i = 0; i < yAxisAttributes.length; i++) {
-        yAxisData.push(data[0].OBSERVATIONS[yAxisAttributes[i]]);
+        xAxisData.push(data[0].OBSERVATIONS[yAxisAttributes[i]]);
       }
     }
   }
   return { xAxisData, yAxisData };
 };
+
+function customizeChart(options: EChartsOption, colorMode: string) {
+  // Set the color mode
+  if (colorMode === 'dark') {
+    options.backgroundColor = '#222';
+    options.textStyle = { color: '#eee' };
+    options.axisLine = { lineStyle: { color: '#eee' } };
+    options.tooltip = { backgroundColor: '#333', textStyle: { color: '#eee' } };
+  } else if (colorMode === 'light') {
+    options.backgroundColor = '#fff';
+    options.textStyle = { color: '#333' };
+    options.axisLine = { lineStyle: { color: '#999' } };
+    options.tooltip = { backgroundColor: '#fff', textStyle: { color: '#333' } };
+  } else {
+    throw new Error('Invalid color mode');
+  }
+
+  // Return the modified options object
+  return options;
+}
