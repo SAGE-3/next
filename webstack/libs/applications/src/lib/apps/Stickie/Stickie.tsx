@@ -29,6 +29,12 @@ import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen } from 'react-icons
 import { useParams } from 'react-router';
 import { SAGEColors } from '@sage3/shared';
 
+// Embedded app
+function EmbeddedAppComponent(props: App) {
+  const s = props.data.state as AppState;
+  return <textarea value={s.text} disabled />;
+}
+
 /**
  * NoteApp SAGE3 application
  *
@@ -46,7 +52,7 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
-  const selectedApp = useUIStore(state => state.selectedAppId)
+  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
 
@@ -291,4 +297,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, EmbeddedAppComponent };

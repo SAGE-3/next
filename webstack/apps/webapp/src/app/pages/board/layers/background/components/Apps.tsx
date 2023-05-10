@@ -133,7 +133,7 @@ export function Apps() {
       {/* Apps array */}
       {apps.map((app) => {
         if (app.data.type in Applications) {
-          const Component = Applications[app.data.type].AppComponent as (props: App & { noWindow?: boolean }) => JSX.Element;
+          const Component = Applications[app.data.type].AppComponent as (props: App) => JSX.Element;
           const prop = { ...app, noWindow: false };
           return (
             // Wrap the components in an errorboundary to protect the board from individual app errors

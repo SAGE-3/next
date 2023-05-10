@@ -15,8 +15,9 @@ import {
   DrawerCloseButton,
   DrawerHeader,
   DrawerBody,
-  Input,
+  Text,
   DrawerFooter,
+  Box,
 } from '@chakra-ui/react';
 import { AppError, Applications } from '@sage3/applications/apps';
 import { App } from '@sage3/applications/schema';
@@ -45,15 +46,17 @@ export function AppDrawer(props: AppDrawerProps) {
   const apps = useAppStore((state) => state.apps);
   const app = apps[0];
   let Component = null;
-  let prop = { ...app, noWindow: true };
+  let prop = { ...app, isEmbedded: true } as App;
 
   if (app) {
-    Component = Applications[app.data.type].AppComponent as (props: App & { noWindow?: boolean }) => JSX.Element;
+    Component = Applications[app.data.type].EmbeddedAppComponent as (props: App) => JSX.Element;
   }
 
   return (
     <>
-      <Button onClick={onOpen}>Open</Button>
+      <Button onClick={onOpen} position="absolute" right="2" bottom="40px">
+        Open
+      </Button>
       <Drawer isOpen={isOpen} placement={placement} onClose={onClose} closeOnOverlayClick={false} size={'xl'} variant="clickThrough">
         <DrawerOverlay />
         <DrawerContent>
@@ -61,7 +64,7 @@ export function AppDrawer(props: AppDrawerProps) {
           <DrawerHeader>{app ? `${app.data.type}: ${app.data.title}` : 'No App Selected'}</DrawerHeader>
 
           <DrawerBody>
-            {Component && (
+            {Component ? (
               <ErrorBoundary
                 key={app._id}
                 fallbackRender={({ error, resetErrorBoundary }) => (
@@ -70,6 +73,10 @@ export function AppDrawer(props: AppDrawerProps) {
               >
                 <Component key={app._id} {...prop}></Component>
               </ErrorBoundary>
+            ) : (
+              <Box>
+                <Text size="xl">Sorry this app doesn't have embedded view.</Text>
+              </Box>
             )}
           </DrawerBody>
 
