@@ -162,6 +162,7 @@ class TrackedBaseModel(BaseModel):
 class Position(TrackedBaseModel):
     x: int
     y: int
+    z: int
 
 
 class Size(TrackedBaseModel):
@@ -199,7 +200,6 @@ class Data(TrackedBaseModel):
     rotation: Rotation
     # type: AppTypes
     type: str
-    # owner_id: str = Field(alias='ownerId')
     # owner_id: str = Field(alias='ownerId')
 
 

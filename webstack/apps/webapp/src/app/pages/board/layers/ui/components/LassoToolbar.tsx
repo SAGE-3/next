@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import {
   Box,
   useColorModeValue,
@@ -25,21 +26,31 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
-  color,
   Select,
 } from '@chakra-ui/react';
-import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
+import {
+  MdAlignHorizontalCenter,
+  MdAlignHorizontalLeft,
+  MdAlignHorizontalRight,
+  MdAlignVerticalBottom,
+  MdAlignVerticalCenter,
+  MdAlignVerticalTop,
+  MdAutoAwesomeMotion,
+  MdBarChart,
+  MdCopyAll,
+  MdGridView,
+  MdSend,
+  MdZoomOutMap,
+} from 'react-icons/md';
 import { VscVariableGroup } from 'react-icons/vsc';
-
-import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useBoardUtils } from '@sage3/frontend';
 import { HiOutlineTrash } from 'react-icons/hi';
-
 // buttons for the toolbar
-import { BsFillGrid3X3GapFill, BsFillPaletteFill, BsLayoutWtf, BsWindowStack } from 'react-icons/bs';
-import { AiOutlineAppstore } from 'react-icons/ai';
-import { CiAlignBottom, CiAlignLeft, CiAlignRight, CiAlignTop } from 'react-icons/ci';
+import { BsFillGrid3X3GapFill, BsFillPaletteFill, BsLayoutWtf } from 'react-icons/bs';
+
+import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useBoardUtils, useUser } from '@sage3/frontend';
+
 import { colors } from '@sage3/shared';
-import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 /**
  * Lasso Toolbar Component
@@ -58,11 +69,27 @@ export function LassoToolbar() {
   const lassoApps = useUIStore((state) => state.selectedApps);
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
+  const { user } = useUser();
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
+  const boardId = useParams<{ boardId: string }>().boardId;
 
-  const { alignSelectedApps, assignColor, groupByTopic, organizeApps } = useBoardUtils();
+  const { alignSelectedApps, assignColor, groupByTopic, organizeApps, assignKernel } = useBoardUtils();
+
+  // Theme
+  const background = useColorModeValue('gray.50', 'gray.700');
+  const panelBackground = useHexColor(background);
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const borderColor = useColorModeValue('gray.200', 'gray.500');
+
+  // Local store to track the current set of apps if they are the same type
+  const [appGroup, setAppGroup] = useState('none');
+
+  // Modal disclosure for the Close selected apps
+  const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
+
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
@@ -79,17 +106,6 @@ export function LassoToolbar() {
       }
     }
   }, [lassoApps]);
-  // Theme
-  const background = useColorModeValue('gray.50', 'gray.700');
-  const panelBackground = useHexColor(background);
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  const borderColor = useColorModeValue('gray.200', 'gray.500');
-
-  // Local store to track the current set of apps if they are the same type
-  const [appGroup, setAppGroup] = useState('none');
-
-  // Modal disclosure for the Close selected apps
-  const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
 
   // Close all the selected apps
   const closeSelectedApps = () => {
@@ -103,6 +119,24 @@ export function LassoToolbar() {
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     fitApps(selectedApps);
   };
+
+  function getMyKernels() {
+    if (!user || !lassoApps.length) return;
+    if (lassoApps.length > 0 && appGroup === 'SageCell') {
+      // get the available kernels from the first selected app
+      const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+      // get the board id
+      const boardId = selectedApps[0].data.boardId;
+      const availableKernels = selectedApps[0].data.state.availableKernels;
+      // filter kernels by board
+      const kernels = availableKernels.filter((el: { value: { board: string } }) => el.value.board === boardId);
+      // keep public kernels and kernels owned by the user
+      const myKernels = kernels.filter(
+        (kernel: { value: { is_private: any; owner_uuid: string } }) => !kernel.value.is_private || kernel.value.owner_uuid === user?._id
+      );
+      setMyKernels(myKernels);
+    }
+  }
 
   return (
     <>
@@ -136,32 +170,61 @@ export function LassoToolbar() {
             <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
               <Tooltip placement="top" hasArrow={true} label={'Align Left'} openDelay={400}>
                 <Button onClick={() => alignSelectedApps('left', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                  <CiAlignLeft />
+                  <MdAlignHorizontalLeft />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Align Right'} openDelay={400}>
                 <Button onClick={() => alignSelectedApps('right', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                  <CiAlignRight />
+                  <MdAlignHorizontalRight />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Align Top'} openDelay={400}>
                 <Button onClick={() => alignSelectedApps('top', lassoApps)} size="xs" p="0" mx="2px">
-                  <CiAlignTop />
+                  <MdAlignVerticalTop />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Align Bottom'} openDelay={400}>
                 <Button onClick={() => alignSelectedApps('bottom', lassoApps)} size="xs" p="0" mx="2px">
-                  <CiAlignBottom />
+                  <MdAlignVerticalBottom />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Align Evenly'} openDelay={400}>
-                <Button onClick={() => alignSelectedApps('even', lassoApps)} size="xs" p="0" mx="2px">
-                  <AiOutlineAppstore />
+              <Tooltip placement="top" hasArrow={true} label={'Grid'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('grid', lassoApps)} size="xs" p="0" mx="2px">
+                  <MdGridView />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+            <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
+              <Tooltip placement="top" hasArrow={true} label={'Align in Columns'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('column', lassoApps)} size="xs" p="0" mx="2px">
+                  <MdBarChart />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Align in Rows'} openDelay={400}>
+                <Button
+                  onClick={() => alignSelectedApps('row', lassoApps)}
+                  size="xs"
+                  p="0"
+                  mx="2px"
+                  colorScheme={'teal'}
+                  transform={`rotate(90deg)`}
+                >
+                  <MdBarChart />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Center Align Column'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('center', lassoApps)} size="xs" p="0" mx="2px">
+                  <MdAlignHorizontalCenter />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Middle Align Row'} openDelay={400}>
+                <Button onClick={() => alignSelectedApps('middle', lassoApps)} size="xs" p="0" mx="2px">
+                  <MdAlignVerticalCenter />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Stack Apps'} openDelay={400}>
                 <Button onClick={() => alignSelectedApps('stack', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                  <BsWindowStack />
+                  <MdAutoAwesomeMotion />
                 </Button>
               </Tooltip>
             </ButtonGroup>
@@ -185,44 +248,47 @@ export function LassoToolbar() {
 
             {appGroup === 'Stickie' && (
               <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
-                <Tooltip placement="top" hasArrow={true} label={'Change Color'} openDelay={400}>
-                  {/* Dropdown for color picker */}
-                  <Popover size={'md'}>
-                    <PopoverTrigger>
-                      <Button size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                        <BsFillPaletteFill />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent width="450px">
-                      <PopoverArrow />
-                      <PopoverCloseButton />
-                      <PopoverHeader>Change Color</PopoverHeader>
-                      <PopoverBody>
-                        <ButtonGroup size="md" colorScheme="teal">
-                          {colors.map((color) => {
-                            const c = useHexColor(color);
-                            return (
-                              <Button
-                                key={c}
-                                value={c}
-                                bgColor={c}
-                                _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
-                                _active={{ background: c, opacity: 0.9 }}
-                                size={'md'}
-                                onClick={() => assignColor(color, lassoApps)}
-                              />
-                            );
-                          })}
-                        </ButtonGroup>
-                      </PopoverBody>
-                    </PopoverContent>
-                  </Popover>
-                </Tooltip>
-                <Tooltip placement="top" hasArrow={true} label={'Group By Topic'} openDelay={400}>
-                  <Button onClick={() => groupByTopic(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                    <BsFillGrid3X3GapFill />
-                  </Button>
-                </Tooltip>
+                <Popover size={'md'}>
+                  <Tooltip placement="top" hasArrow={true} label={'Change Color'} openDelay={400}>
+                    <Box display="inline-block">
+                      <PopoverTrigger>
+                        <Button size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                          <BsFillPaletteFill />
+                        </Button>
+                      </PopoverTrigger>
+                    </Box>
+                  </Tooltip>
+                  <PopoverContent width="450px">
+                    <PopoverArrow />
+                    <PopoverCloseButton />
+                    <PopoverHeader>Change Color</PopoverHeader>
+                    <PopoverBody>
+                      <ButtonGroup size="md" colorScheme="teal">
+                        {colors.map((color) => {
+                          const c = useHexColor(color);
+                          return (
+                            <Button
+                              key={c}
+                              value={c}
+                              bgColor={c}
+                              _hover={{ background: c, opacity: 0.7, transform: 'scaleY(1.2)' }}
+                              _active={{ background: c, opacity: 0.9 }}
+                              size={'md'}
+                              onClick={() => assignColor(color, lassoApps)}
+                            />
+                          );
+                        })}
+                      </ButtonGroup>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
+                {boardId && ( // Board cannot be undefined
+                  <Tooltip placement="top" hasArrow={true} label={'Group By Topic'} openDelay={400}>
+                    <Button onClick={() => groupByTopic(boardId, lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                      <BsFillGrid3X3GapFill />
+                    </Button>
+                  </Tooltip>
+                )}
               </ButtonGroup>
             )}
 
@@ -243,32 +309,36 @@ export function LassoToolbar() {
                 </Text>
 
                 <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
-                  <Tooltip placement="top" hasArrow={true} label={'Change Color'} openDelay={400}>
-                    <Popover size={'md'}>
-                      <PopoverTrigger>
-                        <Button size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                          <VscVariableGroup />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent width="450px">
-                        <PopoverArrow />
-                        <PopoverCloseButton />
-                        <PopoverHeader>Group Select Kernel</PopoverHeader>
-                        <PopoverBody>
-                          {/* <Select onChange={(e) => changeKernel(e.target.value, lassoApps)} placeholder="Select Kernel">
-                            {kernels &&
-                            {kernels.map((kernel) => {
-                              return (
-                                <option key={kernel} value={kernel}>
-                                  {kernel}
-                                </option>
-                              );
-                            })}
-                          </Select> */}
-                        </PopoverBody>
-                      </PopoverContent>
-                    </Popover>
-                  </Tooltip>
+                  <Popover size={'md'}>
+                    <Tooltip placement="top" hasArrow={true} label={'Group Assign Kernel'} openDelay={400}>
+                      {/* Fix to allow tooltip and popover trigger - https://github.com/chakra-ui/chakra-ui/issues/2843 */}
+                      <Box display="inline-block">
+                        <PopoverTrigger>
+                          <Button size="xs" p="0" mx="2px" colorScheme={'teal'} onClick={getMyKernels}>
+                            <VscVariableGroup />
+                          </Button>
+                        </PopoverTrigger>
+                      </Box>
+                    </Tooltip>
+                    <PopoverContent width="450px">
+                      <PopoverArrow />
+                      <PopoverCloseButton />
+                      <PopoverHeader>Group Select Kernel</PopoverHeader>
+                      <PopoverBody>
+                        <Select onChange={(e) => assignKernel(e.target.value, lassoApps)} placeholder="Select Kernel">
+                          {myKernels
+                            .filter((el) => el.value.kernel_name === 'python3')
+                            .map((el) => (
+                              <option value={el.key} key={el.key}>
+                                {el.value.is_private ? '<Private> ' : ''}
+                                {el.value.kernel_alias} (
+                                {el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'})
+                              </option>
+                            ))}
+                        </Select>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
                 </ButtonGroup>
               </>
             )}
@@ -287,11 +357,19 @@ export function LassoToolbar() {
               {'Actions'}
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
-              <Tooltip placement="top" hasArrow={true} label={'Organize Selected Apps'} openDelay={400}>
-                <Button onClick={() => organizeApps('app_type', 'tiles', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-                  <BsLayoutWtf />
-                </Button>
-              </Tooltip>
+              {boardId && (
+                <Tooltip placement="top" hasArrow={true} label={'Organize Selected Apps'} openDelay={400}>
+                  <Button
+                    onClick={() => organizeApps(boardId, 'app_type', 'tiles', lassoApps)}
+                    size="xs"
+                    p="0"
+                    mx="2px"
+                    colorScheme={'teal'}
+                  >
+                    <BsLayoutWtf />
+                  </Button>
+                </Tooltip>
+              )}
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
                   <MdZoomOutMap />
