@@ -100,7 +100,37 @@ export const ChartManager = async (
   createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
   options = customizeChart(options, colorMode);
   options.color = createColors(options, data);
+  createXAxis(options, xAxisAttributes, xAxisData, chartType);
+  createYAxis(options);
   return options;
+};
+
+const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisData: any[], chartType: string) => {
+  if (chartType == 'scatter') {
+    options.xAxis = {
+      axisLabel: {
+        fontSize: 25,
+      },
+    };
+  } else {
+    options.xAxis = {
+      data: xAxisData,
+      name: xAxisAttributes[0],
+      axisLabel: {
+        fontSize: 30,
+      },
+    };
+  }
+};
+
+const createYAxis = (options: EChartsOption) => {
+  options.yAxis = {
+    type: 'value',
+    axisLabel: {
+      fontSize: 30,
+    },
+    min: 'dataMin',
+  };
 };
 
 const createColors = (options: any, data: any): string[] => {
@@ -132,14 +162,6 @@ function createMultiLineChart(
     stationNames.push(data[i].NAME);
   }
 
-  options.yAxis = {
-    type: 'value',
-    axisLabel: {
-      fontSize: 30,
-    },
-    min: 'dataMin',
-  };
-
   options.series = [];
 
   for (let i = 0; i < data.length; i++) {
@@ -153,9 +175,7 @@ function createMultiLineChart(
       data: data[i].OBSERVATIONS[yAxisAttributes[0]],
     });
   }
-  options.tooltip = {
-    trigger: 'axis',
-  };
+
   options.legend = {
     data: stationNames,
     textStyle: {
@@ -166,23 +186,14 @@ function createMultiLineChart(
     top: 70,
     left: 'center',
   };
-  (options.grid = {
+  options.grid = {
     left: '3%',
     right: '4%',
     bottom: '3%',
     // Leave enough space at the top for the title and legend
     top: 100,
     containLabel: true,
-  }),
-    (options.xAxis = {
-      type: 'category',
-      data: xAxisData,
-      axisLine: { onZero: false },
-      name: xAxisAttributes[0],
-      axisLabel: {
-        fontSize: 30,
-      },
-    });
+  };
 }
 
 function createLineChart(
@@ -221,7 +232,7 @@ function createLineChart(
       },
     });
   }
-  (options.dataZoom = [
+  options.dataZoom = [
     {
       show: true,
       realtime: true,
@@ -234,23 +245,7 @@ function createLineChart(
       start: 65,
       end: 85,
     },
-  ]),
-    (options.yAxis = {
-      type: 'value',
-      axisLabel: {
-        fontSize: 30,
-      },
-    });
-  options.xAxis = {
-    type: 'category',
-    data: xAxisData,
-    name: xAxisAttributes[0],
-    axisLine: { onZero: false },
-
-    axisLabel: {
-      fontSize: 30,
-    },
-  };
+  ];
 }
 
 function createBarChart(
@@ -264,20 +259,7 @@ function createBarChart(
   options.series = [];
 
   options.series = [];
-  options.xAxis = {
-    type: 'category',
-    data: xAxisData,
-    axisLabel: {
-      fontSize: 25,
-    },
-  };
-  options.yAxis = {
-    type: 'value',
-    axisLabel: {
-      fontSize: 30,
-    },
-    min: 'dataMin',
-  };
+
   for (let i = 0; i < yAxisData.length; i++) {
     options.series.push({
       type: 'bar',
@@ -304,19 +286,11 @@ function createScatterPlot(
   options.series = [];
 
   options.series = [];
-  options.xAxis = {
-    axisLabel: {
-      fontSize: 25,
-    },
-  };
+
   options.tooltip = {
     trigger: 'axis',
   };
-  options.yAxis = {
-    axisLabel: {
-      fontSize: 30,
-    },
-  };
+
   options.grid = {
     top: '70px',
     left: '10%',
