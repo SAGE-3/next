@@ -12,7 +12,7 @@ import { SBDoc } from './SBSchema';
 const UserType = z.enum(['wall', 'client']);
 export type UserType = z.infer<typeof UserType>;
 
-const UserRole = z.enum(['admin', 'user', 'guest']);
+const UserRole = z.enum(['admin', 'user', 'guest', 'spectator']);
 export type UserRole = z.infer<typeof UserRole>;
 
 /**
