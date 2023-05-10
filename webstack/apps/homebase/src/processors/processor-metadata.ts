@@ -34,7 +34,7 @@ export class MetadataProcessor {
   constructor(redisUrl: string, folder: string) {
     this.queue = new SBQueue(redisUrl, 'metadata-queue');
     this.output = folder;
-
+    // Add a function to extract metadata
     this.queue.addProcessor(async (job) => {
       const data = await exiftoolFile(path.join(this.output, job.data.file));
       const fn = `${job.data.file}.json`;
@@ -69,11 +69,9 @@ export class MetadataProcessor {
    *
    * @memberOf TaskManager
    */
-  addFile(id: string, file: string): Promise<any> {
-    return this.queue.addTask({ id, file }).then((job) => {
-      // returns the promise for the job completion
-      return job.finished();
-    });
+  async addFile(id: string, file: string) {
+    const job = await this.queue.addTask({ id, file });
+    return job;
   }
 }
 

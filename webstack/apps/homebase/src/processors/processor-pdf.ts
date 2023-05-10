@@ -85,7 +85,7 @@ export class PDFProcessor {
   constructor(redisUrl: string, folder: string) {
     this.queue = new SBQueue(redisUrl, 'pdf-queue');
     this.output = folder;
-
+    // Add a function to convert PDF
     this.queue.addProcessor(async (job) => {
       const data = await pdfProcessing(job);
       return Promise.resolve({
@@ -116,11 +116,9 @@ export class PDFProcessor {
    *
    * @memberOf TaskManager
    */
-  addFile(id: string, filename: string): Promise<any> {
-    return this.queue.addTask({ id, filename, pathname: this.output }).then((job) => {
-      // returns the promise for the job completion
-      return job.finished();
-    });
+  async addFile(id: string, filename: string) {
+    const job = await this.queue.addTask({ id, filename, pathname: this.output });
+    return job;
   }
 }
 
