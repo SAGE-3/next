@@ -126,7 +126,7 @@ export function uploadHandler(req: express.Request, res: express.Response): void
           destination: elt.destination,
           size: elt.size,
           mimetype: elt.mimetype,
-          dateCreated: now,
+          // dateCreated: now,
           dateAdded: now,
           ...newdata,
         },
