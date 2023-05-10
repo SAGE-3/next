@@ -30,6 +30,12 @@ const EChartsViewer = (props: {
   const [chartOptions, setChartOptions] = useState<echarts.EChartsCoreOption | null>(null);
   // Users SAGE 3 color mode
   const { colorMode } = useColorMode();
+  const [variableNames, setVariableNames] = useState<any>([]);
+
+  useEffect(() => {
+    setVariableNames(Object.keys(props.stationMetadata[0].OBSERVATIONS));
+  }, []);
+  console.log(variableNames);
 
   // If the chartRef changes, update the chart instance
   useEffect(() => {

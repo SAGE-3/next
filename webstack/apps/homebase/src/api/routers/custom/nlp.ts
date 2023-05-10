@@ -11,7 +11,7 @@ import { SAGEnlp } from '@sage3/backend';
 import { Configuration, OpenAIApi } from 'openai';
 
 const configuration = new Configuration({
-  apiKey: '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',
+  apiKey: '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',
 });
 const openai = new OpenAIApi(configuration);
 
@@ -49,7 +49,7 @@ export function NLPRouter(): express.Router {
     // if (responseMessage) success = true;
     console.log(completion.data.choices[0]);
 
-    if (success) res.status(200).send({ success: true, message: completion.data.choices[0] });
+    if (success) res.status(200).send({ success: true, message: completion.data.choices[0].message?.content });
     else res.status(500).send({ success: false, message: 'Failed to process the nlp request.' });
   });
 

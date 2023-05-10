@@ -23,7 +23,15 @@ type seriesType = {
 const stationColors: { stationName: string; color: string }[] = [];
 
 const getRandomColor = () => {
-  return '#' + Math.floor(Math.random() * 16777215).toString(16);
+  // Generate random values for red, green, and blue between 150 and 255
+  const red = Math.floor(Math.random() * 156) + 100;
+  const green = Math.floor(Math.random() * 156) + 100;
+  const blue = Math.floor(Math.random() * 156) + 100;
+
+  // Convert the red, green, and blue values to hexadecimal format and combine them into a color string
+  const color = `#${red.toString(16)}${green.toString(16)}${blue.toString(16)}`;
+
+  return color;
 };
 
 export const ChartManager = async (
@@ -268,6 +276,7 @@ function createBarChart(
     axisLabel: {
       fontSize: 30,
     },
+    min: 'dataMin',
   };
   for (let i = 0; i < yAxisData.length; i++) {
     options.series.push({
@@ -323,6 +332,7 @@ function createScatterPlot(
     options.series.push({
       type: 'scatter',
       name: xAxisData[i].name ? xAxisData[i].name : 'unknown',
+      symbolSize: 20,
       data: [[xAxisData[i].value, yAxisData[i]]],
     });
     options.legend.data?.push(xAxisData[i].name ? xAxisData[i].name : 'unknown');
