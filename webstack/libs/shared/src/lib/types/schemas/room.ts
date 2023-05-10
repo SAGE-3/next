@@ -23,6 +23,8 @@ const schema = z.object({
   privatePin: z.string(),
   // Is the board listed publicly?
   isListed: z.boolean(),
+  // Members of the room
+  members: z.array(z.string()),
 });
 
 export type RoomSchema = z.infer<typeof schema>;

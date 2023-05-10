@@ -37,7 +37,7 @@ import { SAGEBase } from '@sage3/sagebase';
 import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter } from './custom';
 
 import { config } from '../../config';
-import { appPermissions } from '../permissions/apps';
+import { boardPermission } from '../permissions/boardPermission';
 
 /**
  * API Loader function
@@ -63,8 +63,8 @@ export function expressAPIRouter(): express.Router {
   // Collections
   router.use('/users', UsersCollection.router());
   router.use('/assets', AssetsCollection.router());
-  router.use('/apps', appPermissions, AppsCollection.router());
-  router.use('/boards', BoardsCollection.router());
+  router.use('/apps', AppsCollection.router());
+  router.use('/boards', boardPermission, BoardsCollection.router());
   router.use('/rooms', RoomsCollection.router());
   router.use('/presence', PresenceCollection.router());
   router.use('/message', MessageCollection.router());

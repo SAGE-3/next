@@ -118,6 +118,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
           isListed: isListed,
+          members: [user._id],
         });
         props.onClose();
       }

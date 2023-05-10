@@ -15,7 +15,7 @@ import { UsersCollection } from '../collections';
 import { SBAuthSchema } from '@sage3/sagebase';
 
 // The actual permissions
-const permissions: { [key: string]: { [key: string]: () => Promise<boolean> } } = {
+const permissions: { [role: string]: { [action: string]: () => Promise<boolean> } } = {
   admin: {
     create: () => Promise.resolve(true),
     read: () => Promise.resolve(true),

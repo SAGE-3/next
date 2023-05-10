@@ -54,6 +54,7 @@ export async function loadCollections(): Promise<void> {
             isPrivate: false,
             privatePin: '',
             isListed: true,
+            members: [],
           },
           '-'
         );
