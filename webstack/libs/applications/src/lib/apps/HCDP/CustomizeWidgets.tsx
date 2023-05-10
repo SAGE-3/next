@@ -29,6 +29,8 @@ import {
   Input,
   Divider,
   Heading,
+  Tooltip,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import LeafletWrapper from './LeafletWrapperCustomized';
@@ -39,6 +41,11 @@ import { SAGEColors, colors } from '@sage3/shared';
 import { useAppStore, useHexColor } from '@sage3/frontend';
 import VariableCard from './viewers/VariableCard';
 import EChartsViewer from './viewers/EChartsViewer';
+
+type NLPRequestResponse = {
+  success: boolean;
+  message: string;
+};
 
 function findDuplicateElements(...arrays: any) {
   const elementCount: any = {};
@@ -61,6 +68,19 @@ function findDuplicateElements(...arrays: any) {
   }
 
   return duplicates;
+}
+
+export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
+  const response = await fetch('/api/nlp', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
+  });
+  return (await response.json()) as NLPRequestResponse;
 }
 
 const CustomizeWidgets = React.memo(
@@ -95,6 +115,10 @@ const CustomizeWidgets = React.memo(
     // const [selectedColor, setSelectedColor] = useState<SAGEColors>('blue');
     const [stationMetadata, setStationMetadata] = useState<any>([]);
     const [isLoaded, setIsLoaded] = useState(false);
+    const textColor = useColorModeValue('gray.700', 'gray.100');
+
+    const [prompt, setPrompt] = useState<string>('');
+
     useEffect(() => {
       const fetchData = async () => {
         const tmpSensorMetadata: any = [];
@@ -181,6 +205,17 @@ const CustomizeWidgets = React.memo(
         raised: true,
       });
     };
+
+    const handlePromptChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setPrompt(value);
+    };
+
+    const sendToChatGPT = async () => {
+      const message = await NLPHTTPRequest(prompt);
+      console.log(message);
+    };
+
     return (
       <>
         <Button colorScheme={'green'} size="xs" onClick={onOpen}>
@@ -255,7 +290,11 @@ const CustomizeWidgets = React.memo(
                                 <AccordionPanel pb={4}>
                                   <UnorderedList>
                                     {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
-                                      return <ListItem key={index}>{name}</ListItem>;
+                                      return (
+                                        <Tooltip label="Information on the attribute" aria-label="A tooltip">
+                                          <ListItem key={index}>{name}</ListItem>
+                                        </Tooltip>
+                                      );
                                     })}
                                   </UnorderedList>
                                 </AccordionPanel>
@@ -324,8 +363,8 @@ const CustomizeWidgets = React.memo(
                                     cx="100"
                                     cy="100"
                                     r="20"
-                                    fill={station.selected ? '#FC03DE' : '#E1BB78'}
-                                    stroke={station.selected ? '#FC03DE' : 'black'}
+                                    fill={station.selected ? '#2e3f8f' : '#E1BB78'}
+                                    stroke={'black'}
                                     strokeWidth="3"
                                   />
                                 </g>
@@ -337,7 +376,16 @@ const CustomizeWidgets = React.memo(
                     </LayersControl.BaseLayer>
                   </LeafletWrapper>
                 </Box>
-                <Box border="3px solid" borderColor="gray.700" boxShadow="lg" overflow="hidden" mx="3" rounded="lg" height="40rem">
+                <Box
+                  border="3px solid"
+                  borderColor="gray.700"
+                  boxShadow="lg"
+                  overflow="hidden"
+                  mx="3"
+                  rounded="lg"
+                  height="40rem"
+                  width="40rem"
+                >
                   <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
                     <Heading size="md">Options</Heading>
                   </Box>
@@ -464,6 +512,14 @@ const CustomizeWidgets = React.memo(
                       Generate
                     </Button>
                   </Box>
+                  <Box p="1rem" display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
+                    <Input type={'text'} onChange={handlePromptChange}></Input>
+                  </Box>
+                  <Box p="1rem" display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
+                    <Button size="sm" colorScheme={'green'} onClick={sendToChatGPT}>
+                      Create Chart
+                    </Button>
+                  </Box>
                 </Box>
                 <Box
                   border="3px solid"
@@ -481,7 +537,7 @@ const CustomizeWidgets = React.memo(
                   <Box bg="gray.800" p="1rem">
                     <Heading size="md">Preview</Heading>
                   </Box>
-                  <Box height="100%" width="100%" justifyContent={'center'}>
+                  <Box color={textColor} height="100%" width="100%" justifyContent={'center'}>
                     {props.widget.visualizationType === 'variableCard' ? (
                       <>
                         <VariableCard

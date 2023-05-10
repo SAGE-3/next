@@ -20,6 +20,12 @@ type seriesType = {
   data: any[];
 };
 
+const stationColors: { stationName: string; color: string }[] = [];
+
+const getRandomColor = () => {
+  return '#' + Math.floor(Math.random() * 16777215).toString(16);
+};
+
 export const ChartManager = async (
   stationNames: string[],
   chartType: string,
@@ -85,7 +91,24 @@ export const ChartManager = async (
   }
   createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
   options = customizeChart(options, colorMode);
+  options.color = createColors(options, data);
   return options;
+};
+
+const createColors = (options: any, data: any): string[] => {
+  const colors: string[] = [];
+  for (let i = 0; i < data.length; i++) {
+    const stationName = data[i].NAME;
+    const stationIndex = stationColors.findIndex((station) => station.stationName === stationName);
+    if (stationIndex === -1) {
+      const color = getRandomColor();
+      stationColors.push({ stationName, color });
+      colors.push(color);
+    } else {
+      colors.push(stationColors[stationIndex].color);
+    }
+  }
+  return colors;
 };
 
 function createMultiLineChart(
@@ -106,6 +129,7 @@ function createMultiLineChart(
     axisLabel: {
       fontSize: 30,
     },
+    min: 'dataMin',
   };
 
   options.series = [];
@@ -249,6 +273,7 @@ function createBarChart(
     options.series.push({
       type: 'bar',
       data: yAxisData[i],
+      colorBy: 'data',
     });
   }
 }
@@ -261,8 +286,9 @@ function createScatterPlot(
   yAxisData: any[],
   xAxisData: any[]
 ) {
+  console.log(xAxisData);
   for (let i = 0; i < data.length; i++) {
-    xAxisData.push(data[i].OBSERVATIONS[xAxisAttributes[0]]);
+    xAxisData.push({ value: data[i].OBSERVATIONS[xAxisAttributes[0]], name: data[i].NAME });
     yAxisData.push(data[i].OBSERVATIONS[yAxisAttributes[0]]);
   }
 
@@ -282,11 +308,24 @@ function createScatterPlot(
       fontSize: 30,
     },
   };
+  options.grid = {
+    top: '70px',
+    left: '10%',
+    right: '10%',
+    bottom: '40px',
+    containLabel: true,
+  };
+  options.legend = {
+    top: '60px',
+    data: [],
+  };
   for (let i = 0; i < xAxisData.length; i++) {
     options.series.push({
       type: 'scatter',
-      data: [[xAxisData[i], yAxisData[i]]],
+      name: xAxisData[i].name ? xAxisData[i].name : 'unknown',
+      data: [[xAxisData[i].value, yAxisData[i]]],
     });
+    options.legend.data?.push(xAxisData[i].name ? xAxisData[i].name : 'unknown');
   }
 }
 
@@ -358,11 +397,13 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
         xAxisData[i] = date.toDateString();
       }
     } else {
-      for (let i = 0; i < yAxisAttributes.length; i++) {
-        xAxisData.push(data[0].OBSERVATIONS[yAxisAttributes[i]]);
-      }
+      // for (let i = 0; i < xAxisAttributes.length; i++) {
+      //   console.log(data[0].OBSERVATIONS[xAxisAttributes[i]], xAxisAttributes[i]);
+      //   xAxisData.push(data[0].OBSERVATIONS[xAxisAttributes[i]]);
+      // }
     }
   }
+
   return { xAxisData, yAxisData };
 };
 
@@ -370,7 +411,7 @@ function customizeChart(options: EChartsOption, colorMode: string) {
   // Set the color mode
   if (colorMode === 'dark') {
     options.backgroundColor = '#222';
-    options.textStyle = { color: '#eee' };
+    options.textStyle = { color: '#ffffff' };
     options.axisLine = { lineStyle: { color: '#eee' } };
     options.tooltip = { backgroundColor: '#333', textStyle: { color: '#eee' } };
   } else if (colorMode === 'light') {

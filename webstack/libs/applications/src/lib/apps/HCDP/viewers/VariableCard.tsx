@@ -41,11 +41,29 @@ export default function VariableCard(
 ) {
   const s = props.state.data.state as AppState;
   const [variablesToDisplay, setVariablesToDisplay] = useState<
-    { stationName: string; value: number; average: number; variance: number; high: number; low: number }[]
+    {
+      stationName: string;
+      value: number;
+      average: number;
+      variance: number;
+      high: number;
+      low: number;
+      startDate: string;
+      endDate: string;
+    }[]
   >([]);
 
   useEffect(() => {
-    const values: { stationName: string; value: number; average: number; variance: number; high: number; low: number }[] = [];
+    const values: {
+      stationName: string;
+      value: number;
+      average: number;
+      variance: number;
+      high: number;
+      low: number;
+      startDate: string;
+      endDate: string;
+    }[] = [];
     if (s.widget.yAxisNames.length === 0) return;
 
     for (let i = 0; i < props.stationMetadata.length; i++) {
@@ -68,6 +86,8 @@ export default function VariableCard(
           variance: calculateVariance(sensorValues),
           high: Math.max(...sensorValues),
           low: Math.min(...sensorValues),
+          startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
+          endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
         });
       } else {
         values.push({
@@ -77,32 +97,12 @@ export default function VariableCard(
           variance: 0,
           high: 0,
           low: 0,
+          startDate: '2023-05-09T21:45:00Z',
+          endDate: '2022-04-25T19:55:00Z',
         });
       }
     }
     setVariablesToDisplay(values);
-    // // Code to calculate average, max, min, or display first value
-    // if (s.widget.operation === 'average') {
-    //   let sum = 0;
-    //   for (let i = 0; i < values.length; i++) {
-    //     sum += values[i];
-    //   }
-    //   const average = sum / values.length;
-    //   setVariableToDisplay(average);
-    //   console.log(average);
-    // } else if (s.widget.operation === 'max') {
-    //   const max = Math.max(...values);
-    //   setVariableToDisplay(max);
-    //   console.log(max);
-    // } else if (s.widget.operation === 'min') {
-    //   const min = Math.min(...values);
-    //   console.log(min);
-
-    //   setVariableToDisplay(min);
-    // } else {
-    //   console.log(values[0]);
-    //   setVariableToDisplay(values[0]);
-    // }
   }, [props.stationMetadata, s.widget.operation, s.widget.yAxisNames]);
   return (
     <>
@@ -110,7 +110,16 @@ export default function VariableCard(
         <Wrap>
           {variablesToDisplay.map(
             (
-              variable: { stationName: string; value: number; average: number; variance: number; high: number; low: number },
+              variable: {
+                stationName: string;
+                value: number;
+                average: number;
+                variance: number;
+                high: number;
+                low: number;
+                startDate: string;
+                endDate: string;
+              },
               index: number
             ) => {
               return (
@@ -144,6 +153,8 @@ export default function VariableCard(
               variance: 12,
               high: 82,
               low: 12,
+              startDate: '2023-05-09T21:45:00Z',
+              endDate: '2022-04-25T19:55:00Z',
             }}
           />
         </Box>
@@ -159,11 +170,22 @@ const Content = (props: {
   variableName: string;
   size?: { width: number; height: number; depth: number };
   variableToDisplayLength: number;
-  variable: { stationName: string; value: number; average: number; variance: number; high: number; low: number };
+  variable: {
+    stationName: string;
+    value: number;
+    average: number;
+    variance: number;
+    high: number;
+    low: number;
+    startDate: string;
+    endDate: string;
+  };
 }) => {
   const variableName = props.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
   delete variableName[variableName.length - 1];
   delete variableName[variableName.length - 2];
+  const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+
   return (
     <Box
       p="1rem"
@@ -179,25 +201,25 @@ const Content = (props: {
     >
       {props.size ? null : (
         <Box>
-          <Text color="gray.700" textAlign={'center'} fontSize={20} fontWeight="bold">
+          <Text color="gray.700" justifyContent={'center'} alignContent="center" textAlign={'center'} fontSize={20} fontWeight="bold">
             Note: These values are not real. They are just placeholders for the real values.
           </Text>
         </Box>
       )}
       <Box>
-        <Text color="black" textAlign={'center'} fontSize={48} fontWeight="bold">
+        <Text color="black" textAlign={'center'} fontSize={35} fontWeight="bold">
           {variableName.join(' ')}
         </Text>
       </Box>
 
       <Box>
-        <Text color="black" textAlign={'center'} fontSize={48} fontWeight="bold">
+        <Text color="black" textAlign={'center'} fontSize={30}>
           {props.variable.stationName}
         </Text>
       </Box>
 
       <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
-        <TbWind fontSize="96px" color="black" />
+        <TbWind fontSize="120px" color="black" />
       </Box>
       <Box mt={2}>
         {props.isLoaded ? (
@@ -209,12 +231,24 @@ const Content = (props: {
               alignItems="center"
               overflow="hidden"
               color="black"
-              fontSize={40}
+              fontSize={35}
               fontWeight="bold"
             >
               {/* {s.widget.operation.charAt(0).toUpperCase() + s.widget.operation.slice(1)}:  */}
               Current: {isNaN(props.variable.value) ? props.variable.value : props.variable.value.toFixed(2)}
             </Text>
+            <Text
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              overflow="hidden"
+              color="gray.700"
+              fontSize={20}
+              fontWeight="semibold"
+            >
+              <>Last updated: 5 minutes ago</>
+            </Text>
+            <br />
             {isNaN(props.variable.value) ? null : (
               <>
                 <Text
@@ -223,7 +257,7 @@ const Content = (props: {
                   alignItems="center"
                   overflow="hidden"
                   color="black"
-                  fontSize={20}
+                  fontSize={25}
                   fontWeight="bold"
                 >
                   Average: {props.variable.average.toFixed(2)} - Variance: {props.variable.variance.toFixed(2)}
@@ -234,13 +268,24 @@ const Content = (props: {
                   alignItems="center"
                   overflow="hidden"
                   color="black"
-                  fontSize={20}
+                  fontSize={25}
                   fontWeight="bold"
                 >
                   High: {props.variable.high.toFixed(2)} - Low: {props.variable.low.toFixed(2)}
                 </Text>
               </>
             )}
+            <Text
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              overflow="hidden"
+              color="gray.700"
+              fontSize={20}
+              fontWeight="semibold"
+            >
+              <>Since: {new Date(props.variable.startDate).toLocaleString()}</>
+            </Text>
           </>
         ) : (
           <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />

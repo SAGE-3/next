@@ -39,7 +39,7 @@ const EChartsViewer = (props: {
       chart.dispose();
     }
 
-    const chartInstance = echarts.init(chartRef.current);
+    const chartInstance = echarts.init(chartRef.current, colorMode);
     const width = outboxRef.current.getBoundingClientRect().width;
     const height = outboxRef.current.getBoundingClientRect().height;
     chartInstance.resize({ width, height });
