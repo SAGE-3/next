@@ -59,6 +59,7 @@ class TrackedBaseModel(BaseModel):
     def refresh_data_form_update(self, update_data, updates):
         # TODO replace this temp solution, which updates everything with a
         #  solution that updates only necessary fields
+
         update_data['state'] = update_data['data']['state']
         del (update_data['data']['state'])
         # we don't need to update the following keys:
@@ -200,6 +201,7 @@ class Data(TrackedBaseModel):
     rotation: Rotation
     # type: AppTypes
     type: str
+    raised: bool
     # owner_id: str = Field(alias='ownerId')
 
 

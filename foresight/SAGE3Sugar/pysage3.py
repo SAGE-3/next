@@ -14,7 +14,7 @@
 #  and no unknown fields
 
 # TODO prevent apps updates on fields that were touched?
-
+import time
 import math
 import uuid
 import json
@@ -417,6 +417,37 @@ class PySage3:
         for smartbit in smartbits:
             smartbit.send_updates()
 
+    def align_by_col(self, smartbits: List[SmartBit], num_cols: int = 1, gap: int = 20) -> None:
+
+        sorted_smartbits = sorted(smartbits, key=lambda sb: (sb.data.size.height), reverse=True)
+
+        # Calculate the width of each column
+        column_width = max(sb.data.size.width for sb in smartbits) + gap
+
+        # Starting position for the first column
+        x = smartbits[0].data.position.x + smartbits[0].data.size.width / 2
+        y = smartbits[0].data.position.y
+
+        # Iterate over the sorted smartbits
+        for smartbit in sorted_smartbits:
+            # Set the position of the current smartbit in the current column
+            smartbit.data.position.x = x
+            smartbit.data.position.y = y
+
+            # Update the starting position for the next column
+            x += column_width
+
+            # If the number of columns exceeds the number of smartbits, wrap to the next row
+            if x >= smartbits[0].data.position.x + num_cols * column_width:
+                x = smartbits[0].data.position.x
+                y += smartbit.data.size.height + gap
+
+        # Adjust the positions of the smartbits to align to the left within each column
+        print("Getting ready to adjust positions")
+        for smartbit in smartbits:
+            smartbit.data.position.x -= smartbit.data.size.width / 2
+            smartbit.send_updates()
+
     def align_to_top(self, smartbits: List[SmartBit]):
         _, _, top_y, _ = self.get_app_geometry(smartbits)
         for smartbit in smartbits:
@@ -462,6 +493,20 @@ class PySage3:
                                         ((smartbit.data.size.height/2) - smartbit.data.position.y)
             smartbit.send_updates()
 
+    def align_stack(self, smartbits: List[SmartBit], gap: int = 20):
+        left_x, _, top_y, _ = self.get_app_geometry(smartbits)
+        for i, smartbit in enumerate(smartbits):
+            smartbit.data.position.y = top_y + i * gap
+            smartbit.data.position.x = left_x + i * gap
+            smartbit.data.raised=True
+
+        for i, smartbit in enumerate(smartbits):
+            smartbit.data.raised = True
+            smartbit.send_updates()
+            smartbit.data.raised = False
+            smartbit.send_updates()
+
+
     def align_selected_apps(self, smartbits: List[SmartBit] = None, align: str = '') -> None:
         """
         Aligns the apps in the list according to the given align_type
@@ -475,6 +520,9 @@ class PySage3:
 
         by_dim = int(align.split(":")[1]) if len(align.split(":")) == 2 else 1
         align = align.split(":")[0]
+
+        print(f"align is {align} and by_dim is {by_dim}")
+
         if smartbits is not None:
 
             if align == '':
@@ -504,79 +552,19 @@ class PySage3:
                 for smartbit in smartbits:
                     smartbit.data.position.x -= smartbit.data.size.width / 2
             elif 'column' in align:
-                if ':' in align:
-                    num_cols = int(align.split(':')[1])
-                else:
-                    num_cols = 1
-                sorted_smartbits = sorted(smartbits, key=lambda sb: (sb.data.size.height), reverse=True)
-                num_apps = len(smartbits)
-                num_rows = math.ceil(num_apps / num_cols)
-                # Calculate the width of each column
-                column_width = max(sb.data.size.width for sb in smartbits) + gap
+                self.align_by_col(smartbits, num_cols=by_dim)
 
-                # Starting position for the first column
-                x = smartbits[0].data.position.x + smartbits[0].data.size.width / 2
-                y = smartbits[0].data.position.y
 
-                # Iterate over the sorted smartbits
-                for smartbit in sorted_smartbits:
-                    # Set the position of the current smartbit in the current column
-                    smartbit.data.position.x = x
-                    smartbit.data.position.y = y
-
-                    # Update the starting position for the next column
-                    x += column_width
-
-                    # If the number of columns exceeds the number of smartbits, wrap to the next row
-                    if x >= smartbits[0].data.position.x + num_cols * column_width:
-                        x = smartbits[0].data.position.x
-                        y += smartbit.data.size.height + gap
-
-                # Adjust the positions of the smartbits to align to the left within each column
-                for smartbit in smartbits:
-                    smartbit.data.position.x -= smartbit.data.size.width / 2
             elif 'row' in align:
                 print(f"alinging over {by_dim} rows")
                 self.align_by_row(smartbits, num_rows=by_dim)
-            elif align == 'grid':
-                pass
-            # elif align == 'circle':
-            #     # Sort apps by size in descending order
-            #     sorted_smartbits = sorted(smartbits, key=lambda x: (x.data.size.width, x.data.size.height), reverse=True)
-            #
-            #     # Calculate the total area of all apps
-            #     total_area = sum(smartbit.data.size.width * smartbit.data.size.height for smartbit in sorted_smartbits)
-            #
-            #     # Calculate the radius of the circle
-            #     radius = math.sqrt(total_area / math.pi)
-            #
-            #     # Calculate the angle between each app
-            #     angle = 2 * math.pi / len(sorted_smartbits)
-            #
-            #     # Move and align the apps in a circle
-            #     for i, smartbit in enumerate(sorted_smartbits):
-            #         smartbit.data.position.x = center_x + radius * math.cos(i * angle)
-            #         smartbit.data.position.y = center_y + radius * math.sin(i * angle)
-
             elif align == 'col-center':
                 # Find the widest app
                 self.align_col_center(smartbits)
-
             elif align == 'row-center':
                 self.align_row_center()
-
-            # elif align == 'stack':
-            #     for i, smartbit in enumerate(smartbits):
-            #         if i == 0:
-            #             smartbit.data.position.x = left_app.data.position.x
-            #             smartbit.data.position.y = top_app.data.position.y
-            #         smartbit.data.position.x = left_app.data.position.x + gap * 2 * i
-            #         smartbit.data.position.y = top_app.data.position.y + gap * 2 * i
-
-            for i, smartbit in enumerate(smartbits):
-                print(f'Moving {smartbit.app_id} ({smartbit.data.type}) to ({smartbit.data.position.x}, {smartbit.data.position.y}, {smartbit.data.position.z})')
-                # smartbit.send_updates()
-
+            elif align == 'stack':
+                self.align_stack(smartbits)
 
     def clean_up(self):
         print("cleaning up client resources")
