@@ -31,24 +31,27 @@ export class MetadataProcessor {
   private queue: SBQueue;
   private output: string;
 
-  constructor(redisUrl: string, folder: string) {
+  constructor(redisUrl: string, folder: string, worker = true) {
     this.queue = new SBQueue(redisUrl, 'metadata-queue');
     this.output = folder;
-    // Add a function to extract metadata
-    // this.queue.addProcessor(async (job) => {
-    //   const data = await exiftoolFile(path.join(this.output, job.data.file));
-    //   const fn = `${job.data.file}.json`;
-    //   const metadataFilename = path.join(this.output, fn);
-    //   fs.writeFileSync(metadataFilename, JSON.stringify(data, null, 2));
-    //   return Promise.resolve({
-    //     file: job.data.file,
-    //     id: job.data.id,
-    //     data: data,
-    //     result: fn,
-    //   });
-    // });
 
-    this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/metadata.js');
+    // Add a function to extract metadata
+    if (worker) {
+      this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/metadata.js');
+    } else {
+      this.queue.addProcessor(async (job) => {
+        const data = await exiftoolFile(path.join(this.output, job.data.file));
+        const fn = `${job.data.file}.json`;
+        const metadataFilename = path.join(this.output, fn);
+        fs.writeFileSync(metadataFilename, JSON.stringify(data, null, 2));
+        return Promise.resolve({
+          file: job.data.file,
+          id: job.data.id,
+          data: data,
+          result: fn,
+        });
+      });
+    }
   }
 
   /**

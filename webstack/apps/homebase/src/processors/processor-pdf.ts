@@ -82,19 +82,23 @@ export class PDFProcessor {
   private queue: SBQueue;
   private output: string;
 
-  constructor(redisUrl: string, folder: string) {
+  constructor(redisUrl: string, folder: string, worker = true) {
     this.queue = new SBQueue(redisUrl, 'pdf-queue');
     this.output = folder;
+
     // Add a function to convert PDF
-    // this.queue.addProcessor(async (job) => {
-    //   const data = await pdfProcessing(job);
-    //   return Promise.resolve({
-    //     file: job.data.filename,
-    //     id: job.data.id,
-    //     result: data,
-    //   });
-    // });
-    this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/pdf.js');
+    if (worker) {
+      this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/pdf.js');
+    } else {
+      this.queue.addProcessor(async (job) => {
+        const data = await pdfProcessing(job);
+        return Promise.resolve({
+          file: job.data.filename,
+          id: job.data.id,
+          result: data,
+        });
+      });
+    }
   }
 
   /**
