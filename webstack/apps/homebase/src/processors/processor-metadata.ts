@@ -48,7 +48,7 @@ export class MetadataProcessor {
     //   });
     // });
 
-    this.queue.addProcessorSandboxed('metadata.js');
+    this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/metadata.js');
   }
 
   /**

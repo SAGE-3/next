@@ -41,14 +41,15 @@ export class ImageProcessor {
     this.queue = new SBQueue(redisUrl, 'image-queue');
     this.output = folder;
     // Add a function to process images
-    this.queue.addProcessor(async (job) => {
-      const data = await sharpProcessing(job);
-      return Promise.resolve({
-        file: job.data.filename,
-        id: job.data.id,
-        result: data,
-      });
-    });
+    // this.queue.addProcessor(async (job) => {
+    //   const data = await sharpProcessing(job);
+    //   return Promise.resolve({
+    //     file: job.data.filename,
+    //     id: job.data.id,
+    //     result: data,
+    //   });
+    // });
+    this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/image.js');
   }
 
   /**

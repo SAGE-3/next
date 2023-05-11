@@ -60,11 +60,10 @@ export class SBQueue {
   }
 
   addProcessorSandboxed(file: string): void {
-    // const processorFile = path.resolve("./build/workers/sand.js");
     const processorFile = path.resolve(file);
     const worker = new Worker(this.getName(), processorFile, {
       connection: this.connection,
-      concurrency: 8,
+      concurrency: 4,
     });
     // Worker events: completed, progress, failed
     worker.on('failed', (j, err) => {

@@ -86,14 +86,15 @@ export class PDFProcessor {
     this.queue = new SBQueue(redisUrl, 'pdf-queue');
     this.output = folder;
     // Add a function to convert PDF
-    this.queue.addProcessor(async (job) => {
-      const data = await pdfProcessing(job);
-      return Promise.resolve({
-        file: job.data.filename,
-        id: job.data.id,
-        result: data,
-      });
-    });
+    // this.queue.addProcessor(async (job) => {
+    //   const data = await pdfProcessing(job);
+    //   return Promise.resolve({
+    //     file: job.data.filename,
+    //     id: job.data.id,
+    //     result: data,
+    //   });
+    // });
+    this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/pdf.js');
   }
 
   /**
