@@ -6,13 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import * as path from 'path';
+
 /**
  * NPM modules
  */
 
 // Queue package for handling distributed jobs and messages
-// import * as Bull from 'bull';
 import { Queue, QueueEvents, Worker } from 'bullmq';
+// REDIS connection used by bullmq
 import IORedis from 'ioredis';
 
 /**
@@ -51,6 +53,19 @@ export class SBQueue {
   addProcessor(job: (j: any) => Promise<any>): void {
     // Create a worker to process the tasks
     const worker = new Worker(this.getName(), job, { connection: this.connection });
+    // Worker events: completed, progress, failed
+    worker.on('failed', (j, err) => {
+      if (j) console.log('Worker>', this.getName(), `${j.id} has failed with ${err.message}`);
+    });
+  }
+
+  addProcessorSandboxed(file: string): void {
+    // const processorFile = path.resolve("./build/workers/sand.js");
+    const processorFile = path.resolve(file);
+    const worker = new Worker(this.getName(), processorFile, {
+      connection: this.connection,
+      concurrency: 8,
+    });
     // Worker events: completed, progress, failed
     worker.on('failed', (j, err) => {
       if (j) console.log('Worker>', this.getName(), `${j.id} has failed with ${err.message}`);

@@ -35,18 +35,20 @@ export class MetadataProcessor {
     this.queue = new SBQueue(redisUrl, 'metadata-queue');
     this.output = folder;
     // Add a function to extract metadata
-    this.queue.addProcessor(async (job) => {
-      const data = await exiftoolFile(path.join(this.output, job.data.file));
-      const fn = `${job.data.file}.json`;
-      const metadataFilename = path.join(this.output, fn);
-      fs.writeFileSync(metadataFilename, JSON.stringify(data, null, 2));
-      return Promise.resolve({
-        file: job.data.file,
-        id: job.data.id,
-        data: data,
-        result: fn,
-      });
-    });
+    // this.queue.addProcessor(async (job) => {
+    //   const data = await exiftoolFile(path.join(this.output, job.data.file));
+    //   const fn = `${job.data.file}.json`;
+    //   const metadataFilename = path.join(this.output, fn);
+    //   fs.writeFileSync(metadataFilename, JSON.stringify(data, null, 2));
+    //   return Promise.resolve({
+    //     file: job.data.file,
+    //     id: job.data.id,
+    //     data: data,
+    //     result: fn,
+    //   });
+    // });
+
+    this.queue.addProcessorSandboxed('metadata.js');
   }
 
   /**
@@ -70,7 +72,7 @@ export class MetadataProcessor {
    * @memberOf TaskManager
    */
   async addFile(id: string, file: string) {
-    const job = await this.queue.addTask({ id, file });
+    const job = await this.queue.addTask({ id, file, output: this.output });
     return job;
   }
 }
