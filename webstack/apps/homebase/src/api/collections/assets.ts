@@ -79,7 +79,9 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
       t2 = await this.imgQ.addFile(id, file);
     } else if (isPDF(fileType)) {
       // convert PDF to images
-      t2 = await this.pdfQ.addFile(id, file);
+      t2 = await this.pdfQ.addFile(id, file).catch((err) => {
+        return Promise.reject(err);
+      });
     }
     const exif = t1.data;
     // Find a creation date from all the exif dates

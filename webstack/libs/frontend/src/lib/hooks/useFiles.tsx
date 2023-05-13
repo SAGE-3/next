@@ -28,7 +28,7 @@ import {
 } from '@sage3/shared';
 
 // Upload with axios and progress event
-import axios, { AxiosProgressEvent } from 'axios';
+import axios, { AxiosProgressEvent, AxiosError, AxiosResponse } from 'axios';
 
 import { useAssetStore } from '../stores';
 import { useUser } from './useUser';
@@ -159,20 +159,37 @@ export function useFiles(): UseFiles {
             });
           }
         },
-      })
-        .catch((error: Error) => {
-          console.log('Upload> Error: ', error);
-        })
-        .finally(() => {
-          if (!filenames) {
-            toast({
-              title: 'Upload with Errors',
-              status: 'warning',
-              duration: 4000,
-              isClosable: true,
-            });
-          }
-        });
+      }).then((response: AxiosResponse) => {
+        if (toastIdRef.current) {
+          toast.update(toastIdRef.current, {
+            title: 'Upload',
+            description: 'Upload complete',
+            duration: 4000,
+            isClosable: true,
+          });
+        }
+      }).finally(() => {
+        // Some errors with the files
+        if (!filenames) {
+          toast({
+            title: 'Upload with Errors',
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        }
+      }).catch((error: AxiosError) => {
+        // Big error in file handling in backend
+        if (toastIdRef.current) {
+          toast.update(toastIdRef.current, {
+            title: 'Upload',
+            description: 'Upload failed: ' + (error.response?.data || error.code),
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        }
+      });
     }
   };
 
@@ -355,7 +372,6 @@ export function useFiles(): UseFiles {
         }
       }
     }
-
     return null;
   }
 
