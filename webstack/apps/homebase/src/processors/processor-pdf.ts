@@ -139,9 +139,14 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
     // const extension = filename.substring(filename.lastIndexOf('.'));
     let pdfTask;
     const data = new Uint8Array(fs.readFileSync(pathname));
+
+    // @ts-ignore
+    const canvasFactory = new NodeCanvasFactory();
+
     try {
       pdfTask = pdfjs.getDocument({
         data,
+        canvasFactory,
         cMapUrl: CMAP_URL,
         cMapPacked: CMAP_PACKED,
         standardFontDataUrl: FONT_URL,
@@ -150,12 +155,22 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
       console.error('Error Loading PDF', err);
       return;
     }
+    const allText: string[] = [];
     return pdfTask.promise.then((pdf: any) => {
       // console.log('PDF> num pages', pdf.numPages);
       const arr = Array.from({ length: pdf.numPages }).map((_n, i) => {
         // console.log('PDF> Page', i);
         return pdf.getPage(i + 1).then(async (page: any) => {
           // console.log('PDF> got page', i + 1);
+          const text = await page.getTextContent();
+          let pageText = '';
+          for (let k = 0; k < text.items.length; k++) {
+            const item = text.items[k];
+            if (item.str === ' ' && item.width < 0.1) continue;
+            if (item.str) pageText += item.str;
+            if (item.hasEOL) pageText += '\n';
+          }
+          allText[i] = pageText;
 
           // Instead of using a scaling factor, we try to get a given dimension
           // on the long end (in pixels)
@@ -177,7 +192,6 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
           const viewport = page.getViewport({ scale: scale });
 
           // @ts-ignore
-          const canvasFactory = new NodeCanvasFactory();
           const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
           const maxWidth = Math.floor(viewport.width);
@@ -193,7 +207,6 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
           const renderContext = {
             canvasContext: canvasAndContext.context,
             viewport,
-            canvasFactory,
           };
 
           const renderResult = await page.render(renderContext).promise.then(async () => {
@@ -238,6 +251,10 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
       });
       return Promise.all(arr).then((pdfres) => {
         console.log('PDF> processing done');
+        console.log('PDF> Text');
+        for (let i = 0; i < allText.length; i++) {
+          console.log(allText[i]);
+        }
         resolve(pdfres);
       });
     });
