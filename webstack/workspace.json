@@ -100,6 +100,40 @@
       },
       "tags": []
     },
+    "workers": {
+      "root": "libs/workers",
+      "sourceRoot": "libs/workers/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/workers/**/*.ts"]
+          }
+        },
+        "build": {
+          "builder": "@nrwl/js:tsc",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/workers",
+            "tsConfig": "libs/workers/tsconfig.lib.json",
+            "packageJson": "libs/workers/package.json",
+            "main": "libs/workers/src/index.ts",
+            "assets": ["libs/workers/*.md"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/workers"],
+          "options": {
+            "jestConfig": "libs/workers/jest.config.ts",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "sagebase": {
       "root": "libs/sagebase",
       "sourceRoot": "libs/sagebase/src",

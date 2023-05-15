@@ -26,6 +26,7 @@
       "@sage3/applications/schema": ["libs/applications/src/lib/schema.ts"],
       "@sage3/backend": ["libs/backend/src/index.ts"],
       "@sage3/frontend": ["libs/frontend/src/index.ts"],
+      "@sage3/workers": ["libs/workers/src/index.ts"],
       "@sage3/sagebase": ["libs/sagebase/src/index.ts"],
       "@sage3/sageplugin": ["libs/sageplugin/src/index.ts"],
       "@sage3/shared": ["libs/shared/src/index.ts"],
