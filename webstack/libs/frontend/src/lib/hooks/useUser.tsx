@@ -33,6 +33,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const { auth } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  console.log(auth);
 
   const fetchUser = useCallback(async () => {
     if (auth) {
