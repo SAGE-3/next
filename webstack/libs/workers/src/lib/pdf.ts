@@ -53,27 +53,50 @@ async function pdfProcessing(job: any) {
     const pathname: string = path.join(job.data.pathname, filename);
     const directory: string = job.data.pathname;
     const filenameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
-    // const extension = filename.substring(filename.lastIndexOf('.'));
     let pdfTask;
+
+    // Read the PDF file into a buffer
     const data = new Uint8Array(fs.readFileSync(pathname));
+
+    // @ts-ignore
+    const canvasFactory = new NodeCanvasFactory();
+
+    // Pass the data to the PDF.js library
     try {
       pdfTask = pdfjs.getDocument({
         data,
+        canvasFactory,
         cMapUrl: CMAP_URL,
         cMapPacked: CMAP_PACKED,
         standardFontDataUrl: FONT_URL,
       });
     } catch (err) {
-      console.error('Error Loading PDF', err);
+      console.error('PDF> Error parsing file', err);
       return reject(err);
     }
+
+    // Array of pages
+    const allText: string[] = [];
+
+    // Process each page
     return pdfTask.promise
       .then((pdf: any) => {
-        // console.log('PDF> num pages', pdf.numPages);
         const arr = Array.from({ length: pdf.numPages }).map((_n, i) => {
-          // console.log('PDF> Page', i);
           return pdf.getPage(i + 1).then(async (page: any) => {
-            // console.log('PDF> got page', i + 1);
+            // Get the text content of the page
+            const text = await page.getTextContent();
+            let pageText = '';
+            for (let k = 0; k < text.items.length; k++) {
+              const item = text.items[k];
+              // Remove very small spaces
+              if (item.str === ' ' && item.width < 0.1) continue;
+              // Add the text
+              if (item.str) pageText += item.str;
+              // Add the end of line
+              if (item.hasEOL) pageText += '\n';
+            }
+            // Store the text into a page array
+            allText[i] = pageText;
 
             // Instead of using a scaling factor, we try to get a given dimension
             // on the long end (in pixels)
@@ -94,8 +117,6 @@ async function pdfProcessing(job: any) {
             // Finally, get the viewport with the calculated scale
             const viewport = page.getViewport({ scale: scale });
 
-            // @ts-ignore
-            const canvasFactory = new NodeCanvasFactory();
             const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
             const maxWidth = Math.floor(viewport.width);
@@ -111,7 +132,6 @@ async function pdfProcessing(job: any) {
             const renderContext = {
               canvasContext: canvasAndContext.context,
               viewport,
-              canvasFactory,
             };
 
             const renderResult = await page.render(renderContext).promise.then(async () => {
@@ -155,6 +175,17 @@ async function pdfProcessing(job: any) {
           });
         });
         return Promise.all(arr).then((pdfres) => {
+          // Get all the text data
+          const textdata = {
+            count: allText.length,
+            pages: allText,
+          };
+          // Save the text to a file
+          console.log('PDF> saving text content');
+          const f = job.data.filename;
+          const fn = path.join(job.data.pathname, path.basename(f, path.extname(f))) + '-text.json';
+          fs.writeFileSync(fn, JSON.stringify(textdata, null, 2));
+          // Return the result
           console.log('PDF> processing done');
           resolve(pdfres);
         });
