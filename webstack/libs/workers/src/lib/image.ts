@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -7,16 +7,28 @@
  */
 
 // Node modules
-import { getStaticAssetUrl } from '@sage3/backend';
 import * as fs from 'fs';
 import * as path from 'path';
-
 // Image processing tool
 import * as sharp from 'sharp';
 
-// SAGEBase queue
-import { SBQueue } from '../connectors';
-import { ExtraImageType } from '@sage3/shared/types';
+import { SandboxedJob } from 'bullmq';
+
+// Function doing the task
+export default async (job: SandboxedJob) => {
+  // Process the file
+  const data = await sharpProcessing(job);
+  // Return the result
+  return {
+    file: job.data.filename,
+    id: job.data.id,
+    result: data,
+  };
+};
+
+function getStaticAssetUrl(filename: string): string {
+  return `api/assets/static/${filename}`;
+}
 
 // Placeholder for the image options, actually values calculated from the image
 const options: { width: number; quality: number }[] = [
@@ -27,68 +39,12 @@ const options: { width: number; quality: number }[] = [
 ];
 
 /**
- * Converting image to multiple resolutions using 'sharp'
- *
- * @export
- * @class ImageProcessor
- */
-export class ImageProcessor {
-  // Bull queues
-  private queue: SBQueue;
-  private output: string;
-
-  constructor(redisUrl: string, folder: string, worker = true) {
-    this.queue = new SBQueue(redisUrl, 'image-queue');
-    this.output = folder;
-
-    // Add a function to process images
-    if (worker) {
-      this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/image.js');
-    } else {
-      this.queue.addProcessor(async (job) => {
-        const data = await sharpProcessing(job);
-        return Promise.resolve({
-          file: job.data.filename,
-          id: job.data.id,
-          result: data,
-        });
-      });
-    }
-  }
-
-  /**
-   * Return bull queue name
-   *
-   * @returns {string}
-   *
-   * @memberOf FileProcessor
-   */
-  getName(): string {
-    return this.queue.getName();
-  }
-
-  /**
-   * Create a task to process a file
-   *
-   * @param {string} id
-   * @param {string} file
-   * @returns {Promise<any>}
-   *
-   * @memberOf TaskManager
-   */
-  async addFile(id: string, filename: string) {
-    const job = await this.queue.addTask({ id, filename, pathname: this.output });
-    return job;
-  }
-}
-
-/**
  * Process a file, using exec method
  *
  * @method file
  * @param filename {String} name of the file to be tested
  */
-async function sharpProcessing(job: any): Promise<ExtraImageType> {
+async function sharpProcessing(job: any) {
   return new Promise((resolve, reject) => {
     const filename: string = job.data.filename;
     const pathname: string = path.join(job.data.pathname, filename);
@@ -158,7 +114,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
             .then((res) => {
               // Get last image size (the full size jpeg)
               const { width: imgWidth, height: imgHeight } = res[res.length - 1];
-              const imageData: ExtraImageType = {
+              const imageData = {
                 filename: pathname,
                 // the default source
                 url: getStaticAssetUrl(`${filenameWithoutExt}-${options[0].width}.webp`),
