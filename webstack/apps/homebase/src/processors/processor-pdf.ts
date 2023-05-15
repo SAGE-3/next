@@ -250,11 +250,17 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
         });
       });
       return Promise.all(arr).then((pdfres) => {
+        const textdata = {
+          count: allText.length,
+          pages: allText,
+        };
+        // Save the text to a file
+        console.log('PDF> saving text content');
+        const f = job.data.filename;
+        const fn = path.join(job.data.pathname, path.basename(f, path.extname(f))) + '-text.json';
+        fs.writeFileSync(fn, JSON.stringify(textdata, null, 2));
+        // Reurn the result
         console.log('PDF> processing done');
-        console.log('PDF> Text');
-        for (let i = 0; i < allText.length; i++) {
-          console.log(allText[i]);
-        }
         resolve(pdfres);
       });
     });
