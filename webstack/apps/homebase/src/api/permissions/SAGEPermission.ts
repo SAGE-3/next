@@ -6,22 +6,22 @@ import { AppSchema } from '@sage3/applications/schema';
 
 type Action = 'create' | 'read' | 'update' | 'delete';
 type Role = UserSchema['userRole'];
-type Resource<T extends SBJSON> = { name: string; collection: SAGE3Collection<T> };
+type Resource = { name: string; collection: SAGE3Collection<any> };
 
-type Ability = { role: Role[]; action: Action[]; resource: Resource<SBJSON>[] };
+type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
 
-type Rule<T extends SBJSON> = { resource: Resource<T>; field: keyof T; condition: '=' | 'includes' };
-type Access = { resource: Resource<SBJSON>; action: Action[]; rules: Rule<SBJSON>[]; allRules: boolean };
+type Rule = { resource: Resource; field: string; condition: '=' | 'includes' };
+type Access = { resource: Resource; action: Action[]; rules: Rule[]; allRules: boolean };
 
 type PermissionConfig = {
-  resources: Resource<SBJSON>[];
+  resources: Resource[];
   abilites: Ability[];
   access: Access[];
 };
 
-const appResource: Resource<AppSchema> = { name: 'apps', collection: AppsCollection };
-const boardResource: Resource<BoardSchema> = { name: 'boards', collection: BoardsCollection };
-const roomResource: Resource<RoomSchema> = { name: 'rooms', collection: RoomsCollection };
+const appResource: Resource = { name: 'apps', collection: AppsCollection };
+const boardResource: Resource = { name: 'boards', collection: BoardsCollection };
+const roomResource: Resource = { name: 'rooms', collection: RoomsCollection };
 
 const Perm: PermissionConfig = {
   resources: [appResource, boardResource, roomResource],
@@ -37,15 +37,15 @@ const Perm: PermissionConfig = {
       action: ['create'],
       allRules: false,
       rules: [
-        { resource: roomResource, field: 'members', condition: 'includes' } as Rule<RoomSchema>,
-        { resource: roomResource, field: 'ownerId', condition: '=' } as Rule<RoomSchema>,
+        { resource: roomResource, field: 'members', condition: 'includes' },
+        { resource: roomResource, field: 'ownerId', condition: '=' },
       ],
     },
     {
       resource: boardResource,
       action: ['update'],
       allRules: true,
-      rules: [{ resource: roomResource, field: 'ownerId', condition: '=' } as Rule<RoomSchema>],
+      rules: [{ resource: roomResource, field: 'ownerId', condition: '=' }],
     },
   ],
 };
@@ -121,3 +121,6 @@ class SAGEPermission {
     );
   }
 }
+
+const SAGEPermissionInstance = new SAGEPermission(Perm);
+SAGEPermissionInstance.can('admin', 'create', 'boards');
