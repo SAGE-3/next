@@ -165,14 +165,19 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* The clock Top Right */}
-      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px', display: showUI ? 'flex' : 'none', }} opacity={0.7} />
+      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px', display: showUI ? 'flex' : 'none' }} opacity={0.7} />
 
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
         <MainButton
           buttonStyle="solid"
           backToRoom={() => toHome(props.roomId)}
-          boardInfo={{ boardId: props.boardId, roomId: props.roomId }}
+          boardInfo={{
+            boardId: props.boardId,
+            roomId: props.roomId,
+            boardName: board ? board?.data.name : '',
+            roomName: room ? room?.data.name : '',
+          }}
           config={config}
         />
       </Box>

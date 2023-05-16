@@ -1,6 +1,7 @@
 // SAGE3 Generated from apps.json file
 
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
+import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChartMakerName, init as defaultChartMaker } from './apps/ChartMaker';
@@ -33,6 +34,7 @@ import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
+  [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
   [ChartGeneratorName]: defaultChartGenerator,
   [ChartMakerName]: defaultChartMaker,
