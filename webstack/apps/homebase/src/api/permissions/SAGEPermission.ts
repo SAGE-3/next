@@ -1,11 +1,11 @@
 import { SAGE3Collection } from '@sage3/backend';
-import { SBJSON } from '@sage3/sagebase';
-import { BoardSchema, RoomSchema, UserSchema } from '@sage3/shared/types';
+import { UserSchema } from '@sage3/shared/types';
 import { AppsCollection, BoardsCollection, RoomsCollection } from '../collections';
-import { AppSchema } from '@sage3/applications/schema';
 
-type Action = 'create' | 'read' | 'update' | 'delete';
-type Role = UserSchema['userRole'];
+type Action = 'create' | 'read' | 'update' | 'delete' | 'all';
+type ActionArg = 'create' | 'read' | 'update' | 'delete';
+type Role = UserSchema['userRole'] | 'all';
+type RoleArg = 'admin' | 'user' | 'guest' | 'spectator';
 type Resource = { name: string; collection: SAGE3Collection<any> };
 
 type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
@@ -56,12 +56,27 @@ class SAGEPermission {
     this._config = config;
   }
 
+  // Check ability
+  private async checkAbility(role: RoleArg, action: ActionArg, resource: string, ability: Ability) {
+    // Check if the role is allowed
+    if (!ability.role.includes('all') && !ability.role.includes(role)) {
+      return false;
+    }
+    // Check if the action is allowed
+    if (!ability.action.includes('all') && !ability.action.includes(action)) {
+      return false;
+    }
+    // Check if the resource is allowed
+    if (!ability.resource.find((el) => el.name === resource)) {
+      return false;
+    }
+    return true;
+  }
+
   // Check if the user can perform the action
-  public async can(role: Role, action: Action, resource: string) {
+  public async can(role: RoleArg, action: ActionArg, resource: string) {
     // Filter the abilities for the role, action, and resource
-    const abilities = this._config.abilites.filter(
-      (ability) => ability.role.includes(role) && ability.action.includes(action) && ability.resource.find((el) => el.name === resource)
-    );
+    const abilities = this._config.abilites.filter((ability) => this.checkAbility(role, action, resource, ability));
     if (abilities.length === 0) {
       return false;
     }
@@ -69,7 +84,7 @@ class SAGEPermission {
   }
 
   // Check if the user is authorized to perform the action
-  public async allowed(role: Role, action: Action, resource: string, resource_id: string, check_value: string | number) {
+  public async allowed(role: RoleArg, action: ActionArg, resource: string, resource_id: string, check_value: string | number) {
     // Check if they can first
     const can = await this.can(role, action, resource);
     if (!can) {
@@ -123,4 +138,4 @@ class SAGEPermission {
 }
 
 const SAGEPermissionInstance = new SAGEPermission(Perm);
-SAGEPermissionInstance.can('admin', 'create', 'boards');
+SAGEPermissionInstance.can('user', 'create', 'boards');
