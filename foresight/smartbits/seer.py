@@ -57,7 +57,7 @@ class Seer(SmartBit):
             self._jupyter_client.redis_server.json().set('JUPYTER:KERNELS', '.', {})
 
     def handle_exec_result(self, msg):
-        print(f"received exec result: {msg}")
+        # print(f"received exec result: {msg}")
         self.state.output = json.dumps(msg)
         self.state.executeInfo.executeFunc = ""
         self.state.executeInfo.params = {}
@@ -104,7 +104,6 @@ class Seer(SmartBit):
             self._jupyter_client.execute(command_info)
 
     def generate(self, _uuid):
-        print("I am in seer's execute.")
         # TODO: handle the posts as async instead
         if self.state.prompt:
             self.state.executeInfo.executeFunc = ""
@@ -125,7 +124,6 @@ class Seer(SmartBit):
                     self.send_updates()
                     self.execute(_uuid)
                 else:
-                    print("I am handling data not code")
                     msg = {"request_id": _uuid,
                                "display_data": {
                                    'data': json_resp["data"]
@@ -133,7 +131,6 @@ class Seer(SmartBit):
                            }
                     self.handle_exec_result(msg)
             else:
-                print("Something went wrong")
                 msg = {"request_id": _uuid,
                        "error": {
                            'ename': "SeerPromptError",  # Exception name, as a string
