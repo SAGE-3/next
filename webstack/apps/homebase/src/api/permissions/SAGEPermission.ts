@@ -26,8 +26,8 @@ const roomResource: Resource = { name: 'rooms', collection: RoomsCollection };
 const Perm: PermissionConfig = {
   resources: [appResource, boardResource, roomResource],
   abilites: [
-    { role: ['admin'], action: ['create', 'read', 'update', 'delete'], resource: [appResource, boardResource, roomResource] },
-    { role: ['user'], action: ['create', 'read', 'update', 'delete'], resource: [appResource, boardResource, roomResource] },
+    { role: ['admin'], action: ['all'], resource: [appResource, boardResource, roomResource] },
+    { role: ['user'], action: ['all'], resource: [appResource, boardResource, roomResource] },
     { role: ['guest', 'spectator'], action: ['read'], resource: [appResource, boardResource, roomResource] },
     { role: ['guest'], action: ['update'], resource: [appResource] },
   ],
@@ -55,7 +55,6 @@ class SAGEPermission {
   constructor(config: PermissionConfig) {
     this._config = config;
   }
-
   // Check ability
   private async checkAbility(role: RoleArg, action: ActionArg, resource: string, ability: Ability) {
     // Check if the role is allowed
@@ -83,7 +82,9 @@ class SAGEPermission {
     return true;
   }
 
-  // Check if the user is authorized to perform the action
+  // Check if the user is authorized to perform the action on the specified resource
+  // Resource_id is the id of the resource
+  // Check_value is the value to check against
   public async allowed(role: RoleArg, action: ActionArg, resource: string, resource_id: string, check_value: string | number) {
     // Check if they can first
     const can = await this.can(role, action, resource);
