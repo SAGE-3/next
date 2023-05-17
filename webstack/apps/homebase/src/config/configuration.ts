@@ -35,6 +35,8 @@ async function loadConfig(): Promise<ServerConfiguration> {
   if (process.env.NODE_ENV && process.env.NODE_ENV.indexOf('production') > -1) {
     production = true;
   }
+  // HOT FIX, NX bug in 16.1
+  if (!process.env.NODE_ENV) production = true;
 
   // Pick the correct filename
   let filename: string;
