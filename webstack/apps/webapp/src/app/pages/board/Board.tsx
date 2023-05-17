@@ -81,6 +81,9 @@ export function BoardPage() {
 
   // Handle joining and leave a board
   useEffect(() => {
+    // Update the document title
+    document.title = 'SAGE3 - Board';
+
     // This is if someone is joining a board by a link
     subRooms();
     // Sub to boards belonging to this room
