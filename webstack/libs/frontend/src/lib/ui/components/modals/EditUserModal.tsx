@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -26,10 +26,13 @@ import {
   FormControl,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
+import { formatDistance } from 'date-fns';
+
 import { UserSchema } from '@sage3/shared/types';
-import { useAuth } from '@sage3/frontend';
-import { useUser } from '../../../hooks';
 import { SAGEColors } from '@sage3/shared';
+import { useAuth } from '@sage3/frontend';
+
+import { useUser } from '../../../hooks';
 import { ColorPicker } from '../general';
 
 interface EditUserModalProps {
@@ -40,9 +43,10 @@ interface EditUserModalProps {
 
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { user, update } = useUser();
-
-  const { auth } = useAuth();
+  // Get the user auth information
+  const { auth, expire } = useAuth();
   const [isGuest, setIsGuest] = useState(true);
+
   // Are you a guest?
   useEffect(() => {
     if (auth) {
@@ -58,20 +62,8 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const handleColorChange = (color: string) => setColor(color as SAGEColors);
   const handleTypeChange = (type: UserSchema['userType']) => setType(type);
 
-  // const modalBackground = useColorModeValue('white', 'gray.700');
-
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-  // useEffect(() => {
-  //   initialRef.current?.select();
-  // }, [initialRef.current]);
-
-  const setRef = useCallback((_node: HTMLInputElement) => {
-    if (initialRef.current) {
-      initialRef.current.select();
-    }
-  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -140,6 +132,12 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             Authentication:{' '}
             <em>
               {auth?.provider} {!isGuest && <>- {auth?.email}</>}
+            </em>
+          </Text>
+          <Text fontSize={'md'}>
+            Login expiration:{' '}
+            <em>
+              {formatDistance(new Date(expire), new Date(), { includeSeconds: true, addSuffix: true })}
             </em>
           </Text>
           {isGuest && (
