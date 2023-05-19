@@ -120,25 +120,25 @@ export function FunctionButtons(props: FunctionButtonsProps) {
     >
 
       <Tooltip placement="top" hasArrow={true} label={'Share Your Screen'} openDelay={400} ml="1">
-        <Button color={btColor} onClick={() => newApplication('Screenshare')}>
+        <Button aria-label='share screen' color={btColor} onClick={() => newApplication('Screenshare')}>
           <MdIosShare fontSize="18px" />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top" hasArrow={true} label={'Create a Stickie'} openDelay={400} ml="1">
-        <Button color={btColor} onClick={() => newApplication('Stickie', user?.data.name)}>
+        <Button aria-label='create stickie' color={btColor} onClick={() => newApplication('Stickie', user?.data.name)}>
           <MdOutlineStickyNote2 fontSize="18px" />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top" hasArrow={true} label={'Create a SageCell'} openDelay={400} ml="1">
-        <Button color={btColor} onClick={() => newApplication('SageCell')}>
+        <Button aria-label='create sagecell' color={btColor} onClick={() => newApplication('SageCell')}>
           <MdCode fontSize="18px" />
         </Button>
       </Tooltip>
 
       <Tooltip placement="top" hasArrow={true} label={'Open a Webview'} openDelay={400} ml="1">
-        <Button color={btColor} onClick={() => newApplication('Webview')}>
+        <Button aria-label='create webview' color={btColor} onClick={() => newApplication('Webview')}>
           <MdWeb fontSize="18px" />
         </Button>
       </Tooltip>

@@ -70,70 +70,65 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   /**
    * Process a file for metadata, and pdf/image processing
    */
-  public async processFile(id: string, file: string, fileType: string): Promise<any> {
-    return new Promise((resolve) => {
-      const tasks = [] as Promise<any>[];
-      // extract metadata
-      const t1 = this.metaQ.addFile(id, file);
-      tasks.push(t1);
-      // convert image to multiple sizes
-      if (isImage(fileType) && !isGIF(fileType)) {
-        const t2 = this.imgQ.addFile(id, file);
-        tasks.push(t2);
-      } else if (isPDF(fileType)) {
-        // convert PDF to images
-        const t2 = this.pdfQ.addFile(id, file);
-        tasks.push(t2);
-      }
-      Promise.all(tasks).then(async ([r1, r2]) => {
-        const exif = r1.data;
-        // Find a creation date from all the exif dates
-        let realDate = new Date();
-        if (!isNaN(Date.parse(exif.CreateDate))) {
-          realDate = new Date(exif.CreateDate);
-        } else if (!isNaN(Date.parse(exif.DateTimeOriginal))) {
-          realDate = new Date(exif.DateTimeOriginal);
-        } else if (!isNaN(Date.parse(exif.ModifyDate))) {
-          realDate = new Date(exif.ModifyDate);
-        } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
-          realDate = new Date(exif.FileModifyDate);
-        }
-        if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
-          // image or pdf processed
-          resolve({
-            dateCreated: realDate.toISOString(),
-            metadata: r1.result,
-            derived: r2.result,
-          });
-        } else if (isVideo(fileType)) {
-          // get the dimensions of the video from the medata
-          const imgWidth = exif['ImageWidth'] || 1280;
-          const imgHeight = exif['ImageHeight'] || 720;
-          // video file: store width and height in the derived field
-          resolve({
-            dateCreated: realDate.toISOString(),
-            metadata: r1.result,
-            derived: {
-              filename: file,
-              url: '/' + getStaticAssetUrl(file),
-              fullSize: '/' + getStaticAssetUrl(file),
-              // video size
-              width: imgWidth,
-              height: imgHeight,
-              // save the image aspect ratio
-              aspectRatio: imgWidth / imgHeight,
-              sizes: [],
-            },
-          });
-        } else {
-          // everything else
-          resolve({
-            dateCreated: realDate.toISOString(),
-            metadata: r1.result,
-          });
-        }
+  public async processFile(id: string, file: string, fileType: string) {
+    // extract metadata
+    const t1 = await this.metaQ.addFile(id, file);
+    let t2;
+    // convert image to multiple sizes
+    if (isImage(fileType) && !isGIF(fileType)) {
+      t2 = await this.imgQ.addFile(id, file);
+    } else if (isPDF(fileType)) {
+      // convert PDF to images
+      t2 = await this.pdfQ.addFile(id, file).catch((err) => {
+        return Promise.reject(err);
       });
-    });
+    }
+    const exif = t1.data;
+    // Find a creation date from all the exif dates
+    let realDate = new Date();
+    if (!isNaN(Date.parse(exif.CreateDate))) {
+      realDate = new Date(exif.CreateDate);
+    } else if (!isNaN(Date.parse(exif.DateTimeOriginal))) {
+      realDate = new Date(exif.DateTimeOriginal);
+    } else if (!isNaN(Date.parse(exif.ModifyDate))) {
+      realDate = new Date(exif.ModifyDate);
+    } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
+      realDate = new Date(exif.FileModifyDate);
+    }
+    if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
+      // image or pdf processed
+      return {
+        dateCreated: realDate.toISOString(),
+        metadata: t1.result,
+        derived: t2.result,
+      };
+    } else if (isVideo(fileType)) {
+      // get the dimensions of the video from the medata
+      const imgWidth = exif['ImageWidth'] || 1280;
+      const imgHeight = exif['ImageHeight'] || 720;
+      // video file: store width and height in the derived field
+      return {
+        dateCreated: realDate.toISOString(),
+        metadata: t1.result,
+        derived: {
+          filename: file,
+          url: '/' + getStaticAssetUrl(file),
+          fullSize: '/' + getStaticAssetUrl(file),
+          // video size
+          width: imgWidth,
+          height: imgHeight,
+          // save the image aspect ratio
+          aspectRatio: imgWidth / imgHeight,
+          sizes: [],
+        },
+      };
+    } else {
+      // everything else
+      return {
+        dateCreated: realDate.toISOString(),
+        metadata: t1.result,
+      };
+    }
   }
 }
 

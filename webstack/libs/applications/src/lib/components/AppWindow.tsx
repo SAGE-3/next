@@ -20,6 +20,7 @@ type WindowProps = {
   lockAspectRatio?: boolean | number;
   lockToBackground?: boolean;
   processing?: boolean;
+  disableResize?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -74,6 +75,7 @@ export function AppWindow(props: WindowProps) {
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
   const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
+  const enableResize = props.disableResize === undefined ? true : !props.disableResize;
 
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const outerBorderRadius = 12;
@@ -292,6 +294,7 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
+      enableResizing={enableResize}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -320,7 +323,6 @@ export function AppWindow(props: WindowProps) {
       // This happens locally before updating the server.
       // enableResizing={!isGuest}
       // disableDragging={isGuest}
-      enableResizing={true}
       disableDragging={false}
     >
       {/* Title Above app */}

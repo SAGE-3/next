@@ -24,7 +24,7 @@ const updater = require('./updater');
  * @param {*} window
  * @returns
  */
-function buildSageMenu(window) {
+function buildSageMenu(window, commander) {
   let tray = null;
   app.whenReady().then(() => {
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
@@ -431,8 +431,8 @@ function buildSageMenu(window) {
  * Build the electron Menu system
  * @param {Electron.BrowserWindow} The electron browser window menu to build
  */
-function buildMenu(window) {
-  const menu = buildSageMenu(window);
+function buildMenu(window, commander) {
+  const menu = buildSageMenu(window, commander);
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(menu));
 }
 

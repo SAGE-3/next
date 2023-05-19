@@ -416,6 +416,19 @@ function ToolbarComponent(props: App): JSX.Element {
             >
               Download
             </MenuItem>
+            <MenuItem
+              icon={<MdFileDownload />}
+              onClick={() => {
+                if (file) {
+                  const url = file?.data.file;
+                  const parts = url.split('.');
+                  const filename = file?.data.originalfilename + '.json';
+                  downloadFile('api/assets/static/' + parts[0] + '-text.json', filename);
+                }
+              }}
+            >
+              Download Text
+            </MenuItem>
             <MenuItem icon={<MdOutlineFastRewind />} onClick={() => handlePrev(10)}>
               Back 10 pages
             </MenuItem>

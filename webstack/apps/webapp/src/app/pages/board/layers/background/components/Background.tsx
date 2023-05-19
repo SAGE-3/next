@@ -152,11 +152,13 @@ export function Background(props: BackgroundProps) {
         });
         return;
       }
-
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer).then((files) => {
         // do the actual upload
         uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+      }).catch((err) => {
+        console.log('Error> uploading files', err);
+        lotsOnOpen();
       });
     } else {
       // Drag/Drop a URL
@@ -394,6 +396,11 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
 
     const dt = evdt;
     const length = evdt.items.length;
+    if (length > 20) {
+      reject('Too many files');
+      return;
+    }
+
     for (let i = 0; i < length; i++) {
       const entry = dt.items[i].webkitGetAsEntry();
       if (entry?.isFile) {

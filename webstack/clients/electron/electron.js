@@ -307,8 +307,15 @@ const saveState = async () => {
     Object.assign(state, getCurrentPosition());
   }
   state.fullscreen = mainWindow.isFullScreen();
-  state.server = mainWindow.webContents.getURL();
+
+  // Save the board URL in a format that can be used to re-enter the board
+  var boardURL = mainWindow.webContents.getURL();
+  boardURL = boardURL.replace('/board/', '/enter/');
+  state.server = boardURL;
+
+  // Save the state
   windowStore.setWindow(state);
+
   if (commander.clear) {
     console.log('Preferences> clear all');
     windowStore.clear();
@@ -430,7 +437,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({ ...state, ...options });
 
   // Build a menu
-  buildMenu(mainWindow);
+  buildMenu(mainWindow, commander);
 
   // Analytics on start
   if (!commander.server.includes('localhost') && analytics_enabled) {
