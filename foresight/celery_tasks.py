@@ -7,7 +7,6 @@ from celery import Celery
 import time
 import httpx
 
-# TODO read in the redis broker and backend from the config file
 redis_server = conf[prod_type]["redis_server"]
 app = Celery('celery_tasks', broker=f'redis://{redis_server}/0', backend=f'redis://{redis_server}/0')
 seer_server = conf[prod_type]["seer_server"]
