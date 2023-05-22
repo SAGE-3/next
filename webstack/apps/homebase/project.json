@@ -14,6 +14,7 @@
         "tsConfig": "apps/homebase/tsconfig.app.json",
         "assets": ["apps/homebase/src/assets"],
         "target": "node",
+        "deleteOutputPath": false,
         "compiler": "tsc"
       },
       "configurations": {

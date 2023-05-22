@@ -18,7 +18,8 @@
         "assets": ["apps/webapp/src/favicon.ico", "apps/webapp/src/assets"],
         "styles": ["apps/webapp/src/styles.scss"],
         "scripts": [],
-        "webpackConfig": "@nx/react/plugins/webpack"
+        "webpackConfig": "@nx/react/plugins/webpack",
+        "deleteOutputPath": false
       },
       "configurations": {
         "production": {
