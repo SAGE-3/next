@@ -13,7 +13,7 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
-import { Position } from '@sage3/shared/types';
+import { Position, Size } from '@sage3/shared/types';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -37,6 +37,10 @@ interface UIState {
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
 
+  // The user's local viewport.
+  viewport: { position: Omit<Position, 'z'>; size: Omit<Size, 'depth'> };
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => void;
+
   // Selected Apps
   selectedApps: string[];
   deltaPos: { p: Position; id: string };
@@ -50,10 +54,12 @@ interface UIState {
   whiteboardMode: boolean; // marker mode enabled
   clearMarkers: boolean;
   clearAllMarkers: boolean;
+  undoLastMarker: boolean;
   markerColor: SAGEColors;
   setMarkerColor: (color: SAGEColors) => void;
   setWhiteboardMode: (enable: boolean) => void;
   setClearMarkers: (clear: boolean) => void;
+  setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
 
   // lasso
@@ -117,10 +123,13 @@ export const useUIStore = create<UIState>((set, get) => ({
   markerColor: 'red',
   clearMarkers: false,
   clearAllMarkers: false,
+  undoLastMarker: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
@@ -209,6 +218,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+  setUndoLastMarker: (undo: boolean) => set((state) => ({ ...state, undoLastMarker: undo })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
     if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));

@@ -185,8 +185,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), { addSuffix: false });
 
   // Select the color when item is selected
-  const highlight = selected ? 'teal.600' : 'inherit';
-  const colorHover = useColorModeValue('gray.400', 'gray.600');
+  const highlight = selected ? useColorModeValue('teal.400', 'teal.600') : 'inherit';
+  const colorHover = useColorModeValue('gray.200', 'gray.600');
   const hover = selected ? highlight : colorHover;
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');

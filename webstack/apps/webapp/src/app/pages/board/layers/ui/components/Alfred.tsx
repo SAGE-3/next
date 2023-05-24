@@ -25,10 +25,10 @@ import {
   usePresenceStore,
   useUIStore,
   useUser,
-  useData,
   useCursorBoardPosition,
   useAssetStore,
   useUsersStore,
+  useConfigStore,
 } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
@@ -47,8 +47,8 @@ type props = {
 const MaxElements = 12;
 
 export function Alfred(props: props) {
-  // get features
-  const data = useData('/api/info');
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
   // UI
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -70,9 +70,9 @@ export function Alfred(props: props) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
-    if (appName === 'JupyterLab' && data.features && !data.features['jupyter']) return;
-    if (appName === 'SageCell' && data.features && !data.features['cell']) return;
-    if (appName === 'Screenshare' && data.features && !data.features['twilio']) return;
+    if (appName === 'JupyterLab' && config.features && !config.features.apps.includes('jupyter')) return;
+    if (appName === 'SageCell' && config.features && !config.features.apps.includes('cell')) return;
+    if (appName === 'Screenshare' && config.features && !config.features.apps.includes('twilio')) return;
 
     // Get around  the center of the board
     const x = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);

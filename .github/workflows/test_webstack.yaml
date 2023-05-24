@@ -35,5 +35,8 @@ jobs:
       - name: Build Homebase
         run: yarn build --if-present
 
+      - name: Build Workers
+        run: yarn build workers --if-present
+
       - name: Build Webapp
         run: yarn build webapp --if-present

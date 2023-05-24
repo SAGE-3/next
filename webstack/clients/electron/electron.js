@@ -72,7 +72,6 @@ const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 // with Electron version >= 17, sources available in the main process
 const desktopCapturer = electron.desktopCapturer;
-const Menu = electron.Menu;
 const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
@@ -220,6 +219,23 @@ app.setAboutPanelOptions({
  */
 var mainWindow;
 
+function showHidingWindow() {
+  const res = electron.dialog.showMessageBoxSync(mainWindow, {
+    title: 'Notification from SAGE3',
+    message: 'Do you want to hide the SAGE3 window ?',
+    detail: 'SAGE3 will keep running in the menu bar during screen sharing.',
+    type: 'question',
+    defaultId: 0,
+    cancelId: 1,
+    // icon: path.join(__dirname, 'images/s3.png'),
+    buttons: ['OK', 'Cancel'],
+  });
+  if (!res) {
+    // Hide the window
+    mainWindow.blur();
+  }
+}
+
 /**
  * Opens a window.
  *
@@ -291,8 +307,15 @@ const saveState = async () => {
     Object.assign(state, getCurrentPosition());
   }
   state.fullscreen = mainWindow.isFullScreen();
-  state.server = mainWindow.webContents.getURL();
+
+  // Save the board URL in a format that can be used to re-enter the board
+  var boardURL = mainWindow.webContents.getURL();
+  boardURL = boardURL.replace('/board/', '/enter/');
+  state.server = boardURL;
+
+  // Save the state
   windowStore.setWindow(state);
+
   if (commander.clear) {
     console.log('Preferences> clear all');
     windowStore.clear();
@@ -414,7 +437,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({ ...state, ...options });
 
   // Build a menu
-  buildMenu(mainWindow);
+  buildMenu(mainWindow, commander);
 
   // Analytics on start
   if (!commander.server.includes('localhost') && analytics_enabled) {
@@ -516,6 +539,12 @@ function createWindow() {
   mainWindow.on('leave-full-screen', function () {
     mainWindow.setMenuBarVisibility(true);
   });
+  // mainWindow.on('blur', function () {
+  //   console.log('Electron>	Window blurred');
+  // });
+  // mainWindow.on('focus', function () {
+  //   console.log('Electron>	Window show');
+  // });
 
   // when the display client is loaded
   mainWindow.webContents.on('did-finish-load', function () {
@@ -689,6 +718,19 @@ function createWindow() {
 
   ipcMain.on('load-landing', () => {
     mainWindow.loadFile('./html/landing.html');
+  });
+
+  // Request from the renderer process
+  ipcMain.on('hide-main-window', () => {
+    showHidingWindow();
+  });
+  ipcMain.on('show-main-window', () => {
+    mainWindow.show();
+  });
+  ipcMain.on('request-current-display', () => {
+    const winBounds = mainWindow.getBounds();
+    const whichScreen = electron.screen.getDisplayNearestPoint({ x: winBounds.x, y: winBounds.y });
+    mainWindow.webContents.send('current-display', whichScreen.id);
   });
 
   // Request for a screenshot from the web client

@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { Box, Button, useToast, Tooltip } from '@chakra-ui/react';
 
 import { BsPencilFill } from 'react-icons/bs';
-import { FaEraser, FaTrash, FaCamera } from 'react-icons/fa';
+import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 
 import { useUIStore, useAppStore, usePanelStore, isElectron } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
@@ -33,6 +33,7 @@ export function AnnotationsPanel() {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const markerColor = useUIStore((state) => state.markerColor);
   const setMarkerColor = useUIStore((state) => state.setMarkerColor);
+  const setUndoLastMarker = useUIStore((state) => state.setUndoLastMarker);
 
   // Get the annotation panel
   const panel = usePanelStore((state) => state.getPanel('annotations'));
@@ -83,6 +84,12 @@ export function AnnotationsPanel() {
         </Tooltip>
 
         <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
+
+        <Tooltip placement="top" hasArrow label="Undo Last Line">
+          <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
+            <FaUndo />
+          </Button>
+        </Tooltip>
 
         <Tooltip placement="top" hasArrow label="Erase Your Lines">
           <Button onClick={() => setClearMarkers(true)} ml="2" size="sm">

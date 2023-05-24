@@ -1,6 +1,7 @@
 // SAGE3 Generated from apps.json file
 
 import { name as AIPaneName } from './apps/AIPane';
+import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as ChartGeneratorName } from './apps/ChartGenerator';
 import { name as ChartMakerName } from './apps/ChartMaker';
@@ -35,6 +36,7 @@ import { name as WebviewName } from './apps/Webview';
 
 
 import AIPane from './apps/AIPane/AIPane';
+import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
 import ChartMaker from './apps/ChartMaker/ChartMaker';
@@ -71,6 +73,7 @@ import React from 'react';
 
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
+  [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent },
   [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent },
   [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent },

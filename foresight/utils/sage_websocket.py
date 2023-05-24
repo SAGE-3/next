@@ -5,6 +5,7 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
+from config import config as conf, prod_type
 from typing import Callable
 import os
 import websocket
@@ -18,12 +19,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-from config import config as conf, prod_type
-
-
 class SageWebsocket:
 
-    def __init__(self, on_message_fn: Callable =None):
+    def __init__(self, on_message_fn: Callable = None):
         self.connected = False
         self.ws = websocket.WebSocketApp(conf[prod_type]["ws_server"]+"/api",
                                          header={
@@ -52,7 +50,8 @@ class SageWebsocket:
         self.connected = True
 
     def on_message(self, ws, message):
-        logger.warning(f"received message in default func on_message {message}, WRANIGN---not doing anything")
+        logger.warning(
+            f"received message in default func on_message {message}, WRANIGN---not doing anything")
         # msg = json.loads(message)
         # sub_id = msg['id']
         # if self.queue_list[sub_id]:
@@ -75,7 +74,8 @@ class SageWebsocket:
             logger.info('Websocket still not connected')
             count = count + 1
             if count > attempts:
-                logger.error('Could not establish a connection to the server after {attempts} attempts')
+                logger.error(
+                    'Could not establish a connection to the server after {attempts} attempts')
                 return False
             time.sleep(2)
         return True
@@ -85,10 +85,11 @@ class SageWebsocket:
         logger.debug(f"Subscribing to {routes}")
         if not self.check_connection():
             return
-        # # Generate id for subscription
-        subscription_id = str(uuid.uuid4())
+
         # WS Message
         for route in routes:
+            # # Generate id for subscription
+            subscription_id = str(uuid.uuid4())
             msg_sub = {
                 'route': route,
                 'id': subscription_id, 'method': 'SUB'

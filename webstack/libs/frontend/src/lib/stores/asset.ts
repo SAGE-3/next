@@ -65,29 +65,31 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
       // Socket Subscribe Message
       const route = '/assets';
       // Socket Listenting to updates from server about the current assets
-      assetSub = await SocketAPI.subscribe<AssetSchema>(route, (message) => {
-        const doc = message.doc as Asset;
+      assetSub = await SocketAPI.subscribe<Asset>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ assets: [...get().assets, doc] });
+            const docs = message.doc as Asset[];
+            set({ assets: [...get().assets, ...docs] });
             break;
           }
           case 'UPDATE': {
-            const files = [...get().assets];
-            const idx = files.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              files[idx] = doc;
-            }
-            set({ assets: files });
+            const docs = message.doc as Asset[];
+            const assets = [...get().assets];
+            docs.forEach((doc) => {
+              const idx = assets.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                assets[idx] = doc;
+              }
+            });
+            set({ assets });
             break;
           }
           case 'DELETE': {
-            const files = [...get().assets];
-            const idx = files.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              files.splice(idx, 1);
-            }
-            set({ assets: files });
+            const docs = message.doc as Asset[];
+            const ids = docs.map((d) => d._id);
+            const assets = [...get().assets];
+            const remainingAssets = assets.filter((a) => !ids.includes(a._id));
+            set({ assets: remainingAssets });
           }
         }
       });

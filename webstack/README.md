@@ -77,13 +77,13 @@ This needs information pertaining to the new generator and such.
 #### Create a 'node' library (can be used in frontend or backend barring use of server-side deps)
 
 ```bash
-yarn nx g @nrwl/node:library authorize-action
+yarn nx g @nx/node:library authorize-action
 ```
 
 #### Create a 'react' lib for a SAGE3 app
 
 ```bash
-yarn nx g @nrwl/react:component notebook-viewer --project=applications --export=false
+yarn nx g @nx/react:component notebook-viewer --project=applications --export=false
 ```
 
 #### Build 'webapp' for deployment
@@ -95,11 +95,11 @@ yarn nx build --buildLibsFromSource --configuration=production
 #### Create a 'react' library
 
 ```bash
-yarn nx g @nrwl/react:lib ui-lib
+yarn nx g @nx/react:lib ui-lib
 ```
 
 #### Create a component in the 'react' UI library and aggregate the export
 
 ```bash
-yarn nx g @nrwl/react:component <component-name> --project=components --export
+yarn nx g @nx/react:component <component-name> --project=components --export
 ```

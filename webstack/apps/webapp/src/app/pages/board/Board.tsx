@@ -19,7 +19,6 @@ import {
   useUsersStore,
   PasteHandler,
   useUIStore,
-  useData,
   useUser,
   usePluginListener,
   usePluginStore,
@@ -27,7 +26,6 @@ import {
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
-import { OpenConfiguration } from '@sage3/shared/types';
 
 /**
  * The board page which displays the board and its apps.
@@ -36,9 +34,6 @@ export function BoardPage() {
   // Navigation and routing
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
-
-  // Config file
-  const config = useData('/api/configuration') as OpenConfiguration;
 
   if (!roomId || !boardId) {
     toHome(roomId);
@@ -79,8 +74,16 @@ export function BoardPage() {
     event.preventDefault();
   }
 
+  function saveBoardIdToLocalStorage() {
+    if (!boardId) return;
+    localStorage.setItem('boardId', boardId);
+  }
+
   // Handle joining and leave a board
   useEffect(() => {
+    // Update the document title
+    document.title = 'SAGE3 - Board';
+
     // This is if someone is joining a board by a link
     subRooms();
     // Sub to boards belonging to this room
@@ -103,6 +106,9 @@ export function BoardPage() {
     document.addEventListener('dragover', handleDragOver);
     document.addEventListener('drop', handleDrop);
 
+    // Handle a refresh to keep the user on the board
+    window.addEventListener('beforeunload', saveBoardIdToLocalStorage);
+
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
     return () => {
       // Unsub from board updates
@@ -114,8 +120,9 @@ export function BoardPage() {
       // Remove event listeners
       document.removeEventListener('dragover', handleDragOver);
       document.removeEventListener('drop', handleDrop);
+      window.removeEventListener('beforeunload', saveBoardIdToLocalStorage);
     };
-  }, []);
+  }, [roomId, boardId]);
 
   return (
     <>
@@ -123,7 +130,7 @@ export function BoardPage() {
       <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer>
 
       {/* Upper layer for local UI stuff */}
-      <UILayer boardId={boardId} roomId={roomId} config={config}></UILayer>
+      <UILayer boardId={boardId} roomId={roomId}></UILayer>
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />

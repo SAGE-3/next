@@ -1,0 +1,76 @@
+{
+  "name": "webapp",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/webapp/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/webapp",
+        "index": "apps/webapp/src/index.html",
+        "baseHref": "",
+        "main": "apps/webapp/src/main.tsx",
+        "polyfills": "apps/webapp/src/polyfills.ts",
+        "tsConfig": "apps/webapp/tsconfig.app.json",
+        "assets": ["apps/webapp/src/favicon.ico", "apps/webapp/src/assets"],
+        "styles": ["apps/webapp/src/styles.scss"],
+        "scripts": [],
+        "webpackConfig": "@nx/react/plugins/webpack",
+        "deleteOutputPath": false
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/webapp/src/environments/environment.ts",
+              "with": "apps/webapp/src/environments/environment.prod.ts"
+            }
+          ],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "options": {
+        "buildTarget": "webapp:build",
+        "hmr": true,
+        "proxyConfig": "apps/webapp/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "webapp:build:production",
+          "hmr": false
+        },
+        "development": {
+          "buildTarget": "webapp:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/webapp/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/webapp"],
+      "options": {
+        "jestConfig": "apps/webapp/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}
