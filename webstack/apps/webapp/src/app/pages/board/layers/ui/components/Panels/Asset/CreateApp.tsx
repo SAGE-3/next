@@ -127,8 +127,9 @@ export async function setupAppForFile(
       position: { x: xDrop, y: yDrop, z: 0 },
       size: { width: 800, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
-      type: 'LeafLet',
-      state: { ...(initialValues['LeafLet'] as AppState), assetid: file.id },
+      type: 'MapGL',
+      // type: 'LeafLet',
+      state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },
       raised: true,
     };
   } else if (isMD(file.type)) {

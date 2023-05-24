@@ -8,21 +8,31 @@
 
 import { useEffect, useState } from 'react';
 import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input } from '@chakra-ui/react';
-
-import create from 'zustand';
-import maplibregl from 'maplibre-gl';
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-
-import { App } from '../../schema';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-
-import { useAppStore } from '@sage3/frontend';
-
 import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+
+// Data store
+import create from 'zustand';
+// Map library
+import maplibregl from 'maplibre-gl';
+// Geocoding
+import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
+// Turfjs geojson utilities functions
+import bbox from '@turf/bbox';
+import center from '@turf/center';
+
+import { useAppStore, useAssetStore } from '@sage3/frontend';
+import { Asset } from '@sage3/shared/types';
+import { App } from '../../schema';
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
 
 // Styling
 import './maplibre-gl.css';
+
+// Get a URL for an asset
+export function getStaticAssetUrl(filename: string): string {
+  return `/api/assets/static/${filename}`;
+}
 
 // Zustand store to communicate with toolbar
 export const useStore = create((set) => ({
@@ -39,37 +49,120 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
   const saveMap = useStore((state: any) => state.saveMap);
   const map = useStore((state: any) => state.map[props._id]);
   // Presence Information
   // const { user } = useUser();
 
+  // Assets store
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<Asset>();
+
+  // Convert ID to asset
+  useEffect(() => {
+    const myasset = assets.find((a) => a._id === s.assetid);
+    if (myasset) {
+      setFile(myasset);
+      // Update the app title
+      update(props._id, { title: myasset?.data.originalfilename });
+    }
+  }, [s.assetid, assets]);
+
+  // Convert asset to URL
+  useEffect(() => {
+    if (file && map) {
+      // when the map is loaded, add the source and layers
+      map.on('load', () => {
+        const newURL = getStaticAssetUrl(file.data.file);
+        console.log('MapGL> Adding source to map', newURL);
+        // Get the GEOJSON data from the asset
+        fetch(newURL, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        }).then(function (response) {
+          return response.json();
+        }).then(function (gson) {
+          // Add the source to the map
+          map.addSource(file._id, {
+            type: 'geojson',
+            data: gson
+          });
+          // Layer for Polygons (lines and fills)
+          map.addLayer({
+            id: file._id + 'line',
+            source: file._id,
+            type: "line",
+            paint: {
+              "line-color": "#000",
+              "line-width": 2,
+            },
+            filter: ['==', '$type', 'Polygon']
+          });
+          map.addLayer({
+            id: file._id + 'fill',
+            source: file._id,
+            type: "fill",
+            paint: {
+              "fill-outline-color": "#000",
+              "fill-color": '#39b5e6',
+              "fill-opacity": 0.4,
+            },
+            filter: ['==', '$type', 'Polygon']
+          });
+          // Layer for points
+          map.addLayer({
+            id: file._id + 'symbol',
+            source: file._id,
+            type: "circle",
+            paint: {
+              "circle-color": '#ff7800',
+              "circle-opacity": 0.4,
+              "circle-stroke-width": 2,
+              "circle-radius": 5,
+            },
+            filter: ['==', '$type', 'Point']
+          });
+
+          // Calculate the bounding box and center using turf library
+          const box = bbox(gson);
+          const cc = center(gson).geometry.coordinates;
+          // Duration is zero to get a valid zoom value next
+          map.fitBounds(box, { padding: 20, duration: 0 });
+          updateState(props._id, { zoom: map.getZoom(), location: cc });
+        });
+      });
+    }
+  }, [file, map]);
+
   useEffect(() => {
     const localmap = new maplibregl.Map({
       container: 'map' + props._id,
       attributionControl: false,
-      // style: 'https://api.maptiler.com/maps/bright/style.json?key=4vBZtdgkPHakm28uzrnt',
+      style: 'https://api.maptiler.com/maps/bright/style.json?key=4vBZtdgkPHakm28uzrnt',
       // style: 'https://demotiles.maplibre.org/style.json',
 
-      style: {
-        "version": 8,
-        "sources": {
-          "world": {
-            "type": "raster",
-            "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-            "tileSize": 256,
-            "attribution": "Tiles &copy; Esri &mdash; Source: Esri, and the GIS User Community",
-            "maxzoom": 19
-          }
-        },
-        "layers": [
-          {
-            "id": "world",
-            "type": "raster",
-            "source": "world"
-          }
-        ]
-      },
+      // style: {
+      //   "version": 8,
+      //   "sources": {
+      //     "world": {
+      //       "type": "raster",
+      //       "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+      //       "tileSize": 256,
+      //       "attribution": "Tiles &copy; Esri &mdash; Source: Esri, and the GIS User Community",
+      //       "maxzoom": 19
+      //     }
+      //   },
+      //   "layers": [
+      //     {
+      //       "id": "world",
+      //       "type": "raster",
+      //       "source": "world"
+      //     }
+      //   ]
+      // },
 
 
       // style: {
@@ -108,8 +201,8 @@ function AppComponent(props: App): JSX.Element {
     });
 
     // Add button for attribution
-    localmap.addControl(new maplibregl.AttributionControl({ compact: true }));
-
+    localmap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+    // Remove compass
     localmap.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 
     // Disable map rotations
@@ -165,7 +258,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
-  // @ts-expect-error
+  // @ts-ignore
   const geocoder = new esriLeafletGeocoder.geocode({
     apikey: apiKey,
 
@@ -187,7 +280,7 @@ function ToolbarComponent(props: App): JSX.Element {
         // Bounds
         const ne = res.bounds._northEast;
         const sw = res.bounds._southWest;
-        const bbox = [[sw.lng, sw.lat], [ne.lng, ne.lat]];
+        const bbox = [sw.lng, sw.lat, ne.lng, ne.lat] as [number, number, number, number];
         map.fitBounds(new maplibregl.LngLatBounds(bbox), { duration: 0 });
         map.setCenter(center, { duration: 0 });
 
