@@ -9,6 +9,7 @@
 import { RedisClientType } from 'redis';
 import * as passport from 'passport';
 import { Express, NextFunction, Request, Response } from 'express';
+import { formatDistance } from 'date-fns';
 
 // eslint-disable-next-line
 const session = require('express-session');
@@ -133,7 +134,9 @@ export class SBAuth {
     // Route to quickly verify authentication
     express.get('/auth/verify', this.authenticate, (req, res) => {
       const user = req.user as SBAuthSchema;
-      res.status(200).send({ success: true, authentication: true, auth: user });
+      // Get the expiration date from the session cookie
+      const exp = new Date(req.session.cookie._expires);
+      res.status(200).send({ success: true, authentication: true, auth: user, expire: exp.getTime() });
     });
 
     return this;
