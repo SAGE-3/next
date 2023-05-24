@@ -30,8 +30,7 @@
       "@sage3/sageplugin": ["libs/sageplugin/src/index.ts"],
       "@sage3/shared": ["libs/shared/src/index.ts"],
       "@sage3/shared/types": ["libs/shared/src/lib/types/index.ts"],
-      "@sage3/workers": ["libs/workers/src/index.ts"],
-      "@sage3/workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
+      "@sage3/workers": ["libs/workers/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
