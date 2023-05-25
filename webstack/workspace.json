@@ -199,7 +199,7 @@
         "build": {
           "builder": "@nrwl/web:webpack",
           "outputs": ["{options.outputPath}"],
-          "defaultConfiguration": "production",
+          "defaultConfiguration": "development",
           "options": {
             "outputPath": "dist/apps/webapp",
             "index": "apps/webapp/src/index.html",
