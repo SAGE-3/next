@@ -92,6 +92,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       type: appName,
       state: { ...(initialValues[appName] as any) },
       raised: true,
+      dragging: false,
     });
   };
 

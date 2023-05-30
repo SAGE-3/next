@@ -147,6 +147,7 @@ export function BoardContextMenu(props: ContextProps) {
       type: appName,
       state: { ...(initialValues[appName] as any) },
       raised: true,
+      dragging: false,
     });
   };
 
@@ -168,6 +169,7 @@ export function BoardContextMenu(props: ContextProps) {
       type: 'JupyterLab',
       state: { ...initialValues['JupyterLab'], jupyterURL: '' },
       raised: true,
+      dragging: false,
     });
   };
 
