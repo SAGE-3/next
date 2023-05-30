@@ -18,6 +18,9 @@ import { throttle } from 'throttle-debounce';
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sage3/frontend';
 import { App, AppSchema } from '../schema';
 
+// Time in ms to send updates to the server
+const UpdateRate = 1000 / 3;
+
 type WindowProps = {
   app: App;
   children: JSX.Element;
@@ -136,7 +139,8 @@ export function AppWindow(props: WindowProps) {
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
   }, [props.app.data.size, props.app.data.position]);
 
-  const throttlePositionUpdate = throttle(300, (x: number, y: number) => {
+  // Throttle the position update
+  const throttlePositionUpdate = throttle(UpdateRate, (x: number, y: number) => {
     update(props.app._id, { position: { x, y, z: props.app.data.position.z } });
   });
   const updatePositionFunc = useCallback(throttlePositionUpdate, []);
@@ -207,7 +211,8 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
-  const throttleSizeUpdate = throttle(300, (width: number, height: number, position: Position) => {
+  // Throttle the size update
+  const throttleSizeUpdate = throttle(UpdateRate, (width: number, height: number, position: Position) => {
     update(props.app._id, {
       position: { ...props.app.data.position, x: position.x, y: position.y, },
       size: { ...props.app.data.size, width, height, },
