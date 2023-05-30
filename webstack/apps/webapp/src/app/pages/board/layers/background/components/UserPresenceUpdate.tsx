@@ -24,10 +24,10 @@ export function UserPresenceUpdate() {
 
   // Window resize hook
   const { width: winWidth, height: winHeight } = useWindowResize();
-  const { uiToBoard } = useCursorBoardPosition();
+  const { mouseToBoard } = useCursorBoardPosition();
 
   // Throttle the Update
-  const throttleUpdate = throttle(1000, (vx: number, vy: number, vw: number, vh: number, cx?: number, cy?: number) => {
+  const throttleUpdate = throttle(300, (vx: number, vy: number, vw: number, vh: number, cx?: number, cy?: number) => {
     const cursor = cx && cy ? { x: cx, y: cy, z: 0 } : undefined;
     const viewport = { position: { x: vx, y: vy, z: 0 }, size: { width: vw, height: vh, depth: 0 } };
     const update = {
@@ -54,15 +54,11 @@ export function UserPresenceUpdate() {
 
   // Mouse Move
   useEffect(() => {
-    const mouseMove = (e: MouseEvent) => {
-      if (!boardDragging) {
-        const { x, y } = uiToBoard(e.clientX, e.clientY);
-        throttleUpdateFunc(-boardPosition.x, -boardPosition.y, winWidth / scale, winHeight / scale, x, y);
-      }
-    };
-    window.addEventListener('mousemove', mouseMove);
-    return () => window.removeEventListener('mousemove', mouseMove);
-  }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight, boardDragging, uiToBoard]);
+    if (!boardDragging) {
+      const { x, y } = mouseToBoard();
+      throttleUpdateFunc(-boardPosition.x, -boardPosition.y, winWidth / scale, winHeight / scale, x, y);
+    }
+  }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight, boardDragging, mouseToBoard]);
 
   return null;
 }
