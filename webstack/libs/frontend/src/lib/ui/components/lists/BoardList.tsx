@@ -144,7 +144,7 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label='create a board' borderRadius="md" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
@@ -158,6 +158,7 @@ export function BoardList(props: BoardListProps) {
                   onChange={handleFilterBoards}
                   placeholder="Find Board..."
                   _placeholder={{ opacity: 1 }}
+                  name="findBoard"
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
               </InputGroup>
@@ -166,7 +167,7 @@ export function BoardList(props: BoardListProps) {
           <Box>
             <Box mr="4">
               <InputGroup>
-                <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
+                <Select name="sortBoard" mt="2" onChange={handleSortChange} icon={<MdSort />}>
                   <option value="Name"> Name</option>
                   <option value="Users">Users</option>
                   <option value="Created">Created</option>

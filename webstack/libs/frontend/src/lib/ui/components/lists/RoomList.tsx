@@ -140,12 +140,12 @@ export function RoomList(props: RoomListProps) {
           <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
             <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
               <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" mr="2" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label='create room' borderRadius="md" mr="2" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
               <Tooltip label="Enter Board by ID" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" onClick={onOpenEnterBoard}>
+                <Button aria-label='enter board' borderRadius="md" fontSize="3xl" onClick={onOpenEnterBoard}>
                   <MdExitToApp />
                 </Button>
               </Tooltip>
@@ -159,6 +159,7 @@ export function RoomList(props: RoomListProps) {
                   onChange={handleFilterBoards}
                   placeholder="Find Room..."
                   _placeholder={{ opacity: 1 }}
+                  name="findRoom"
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />{' '}
               </InputGroup>
@@ -166,7 +167,7 @@ export function RoomList(props: RoomListProps) {
           </Box>
           <Box pr="4">
             <InputGroup>
-              <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
+              <Select name="sortRoom" mt="2" onChange={handleSortChange} icon={<MdSort />}>
                 <option value="Name"> Name</option>
                 <option value="Users">Users</option>
                 <option value="Created">Created</option>

@@ -31,10 +31,13 @@ let config: ServerConfiguration;
 async function loadConfig(): Promise<ServerConfiguration> {
   // Test if development or production mode
   let production = false;
-  console.log('Mode>', process.env.NODE_ENV);
+  console.log('NODE_ENV =', process.env.NODE_ENV);
   if (process.env.NODE_ENV && process.env.NODE_ENV.indexOf('production') > -1) {
     production = true;
   }
+  // HOT FIX, NX bug in 16.1
+  // if (!process.env.NODE_ENV) production = true;
+  console.log('Mode>', production ? 'Production' : 'Development');
 
   // Pick the correct filename
   let filename: string;

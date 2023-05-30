@@ -70,7 +70,7 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
     subscribe: async () => {
       set({ ...get(), messages: [] });
 
-      const msg = await APIHttp.GET<MessageSchema, Message>('/message');
+      const msg = await APIHttp.GET<Message>('/message');
       if (msg.success) {
         set({ messages: msg.data });
       } else {
@@ -106,29 +106,31 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
       // Socket Subscribe Message
       const route = '/message';
       // Socket Listenting to updates from server
-      msgSub = await SocketAPI.subscribe<MessageSchema>(route, (message) => {
-        const doc = message.doc as Message;
+      msgSub = await SocketAPI.subscribe<Message>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ messages: [...get().messages, doc], lastone: doc });
+            const docs = message.doc as Message[];
+            set({ messages: [...get().messages, ...docs] });
             break;
           }
           case 'UPDATE': {
-            const msg = [...get().messages];
-            const idx = msg.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              msg[idx] = doc;
-            }
-            set({ messages: msg });
+            const docs = message.doc as Message[];
+            const messages = [...get().messages];
+            docs.forEach((doc) => {
+              const idx = messages.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                messages[idx] = doc;
+              }
+            });
+            set({ messages });
             break;
           }
           case 'DELETE': {
-            const msg = [...get().messages];
-            const idx = msg.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              msg.splice(idx, 1);
-            }
-            set({ messages: msg });
+            const docs = message.doc as Message[];
+            const ids = docs.map((d) => d._id);
+            const messages = [...get().messages];
+            const remainingMessages = messages.filter((a) => !ids.includes(a._id));
+            set({ messages: remainingMessages });
           }
         }
       });

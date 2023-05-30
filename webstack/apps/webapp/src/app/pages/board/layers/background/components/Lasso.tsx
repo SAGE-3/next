@@ -60,6 +60,8 @@ export function Lasso(props: LassoProps) {
     const position = userCursor.position;
     set_last_mousex(position.x);
     set_last_mousey(position.y);
+    set_mousex(position.x);
+    set_mousey(position.y);
     setMouseDown(true);
   };
 
@@ -107,25 +109,18 @@ export function Lasso(props: LassoProps) {
   );
 }
 
-
 function checkContain(pos: Position, size: Size, pt: Position, size2: Size) {
-  const res = pos.x > pt.x &&
-    pos.y > pt.y &&
-    pos.x + size.width < pt.x + size2.width &&
-    pos.y + size.height < pt.y + size2.height;
+  const res = pos.x > pt.x && pos.y > pt.y && pos.x + size.width < pt.x + size2.width && pos.y + size.height < pt.y + size2.height;
   return res;
 }
 
 function checkOverlap(pos: Position, size: Size, pt: Position, size2: Size) {
   // if rectangle has area 0, no overlap
-  if (size.width === 0 || size.height === 0 || size2.width === 0 || size2.height === 0)
-    return false;
+  if (size.width === 0 || size.height === 0 || size2.width === 0 || size2.height === 0) return false;
   // If one rectangle is on left side of other
-  if (pos.x > pt.x + size2.width || pt.x > pos.x + size.width)
-    return false;
+  if (pos.x > pt.x + size2.width || pt.x > pos.x + size.width) return false;
   // If one rectangle is above other
-  if (pos.y + size.height < pt.y || pt.y + size2.height < pos.y)
-    return false;
+  if (pos.y + size.height < pt.y || pt.y + size2.height < pos.y) return false;
   return true;
 }
 

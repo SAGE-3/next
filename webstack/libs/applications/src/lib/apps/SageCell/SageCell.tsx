@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Divider, Badge, Spacer, Stack } from '@chakra-ui/react';
+import { Box, useColorModeValue, Divider } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore, useUser, truncateWithEllipsis } from '@sage3/frontend';
@@ -18,6 +18,7 @@ import { App } from '../../schema';
 import { CodeEditor } from './components/editor';
 import { Outputs } from './components/outputs';
 import { ToolbarComponent } from './components/toolbar';
+import { StatusBar } from './components/status';
 
 import './styles.css';
 
@@ -36,7 +37,6 @@ const AppComponent = (props: App): JSX.Element => {
   const updateState = useAppStore((state) => state.updateState);
   // Needed for Div resizing
   const [editorHeight, setEditorHeight] = useState(150); // not beign used?
-
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
@@ -116,30 +116,7 @@ const AppComponent = (props: App): JSX.Element => {
     <AppWindow app={props}>
       {/* Wrap the code cell and output in a container */}
       <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column">
-        <Stack direction="row" bgColor={bgColor} p={1}>
-          <Badge variant="outline" colorScheme="blue">
-            {s.kernel ? `Kernel: ${truncateWithEllipsis(s.kernel, 8)}` : 'No Kernel Selected'}
-          </Badge>
-          <Spacer />
-          {!s.kernel && !access ? ( // no kernel selected and no access
-            <Badge variant="outline" colorScheme="red">
-              Offline{' '}
-            </Badge>
-          ) : !s.kernel && access ? ( // no kernel selected but access
-            <Badge variant="outline" colorScheme="yellow">
-              {/* {setAccess(false)} somewhere ?? */}
-              Online{' '}
-            </Badge>
-          ) : s.kernel && !access ? ( // kernel selected but no access
-            <Badge variant="outline" colorScheme="red">
-              No Access{' '}
-            </Badge>
-          ) : s.kernel && access ? ( // kernel selected and access
-            <Badge variant="outline" colorScheme="green">
-              Online{' '}
-            </Badge>
-          ) : null}
-        </Stack>
+        <StatusBar kernel={s.kernel} access={access} isTyping={s.isTyping} bgColor={bgColor} />
         <Box
           w={'100%'}
           h={'100%'}

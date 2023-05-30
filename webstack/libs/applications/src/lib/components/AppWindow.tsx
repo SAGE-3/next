@@ -10,7 +10,7 @@ import { useEffect, useState, useRef } from 'react';
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 import { Box, useToast, Text, Spinner, useColorModeValue, ToastId } from '@chakra-ui/react';
 
-import { App } from '../schema';
+import { App, AppSchema } from '../schema';
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
 
 type WindowProps = {
@@ -20,6 +20,7 @@ type WindowProps = {
   lockAspectRatio?: boolean | number;
   lockToBackground?: boolean;
   processing?: boolean;
+  disableResize?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -73,7 +74,9 @@ export function AppWindow(props: WindowProps) {
 
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
-  const borderWidth = Math.min(Math.max(4 / scale, 2), 20);
+  const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
+  const enableResize = props.disableResize === undefined ? true : !props.disableResize;
+
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const outerBorderRadius = 12;
   const innerBorderRadius = outerBorderRadius - borderWidth;
@@ -92,6 +95,7 @@ export function AppWindow(props: WindowProps) {
   const update = useAppStore((state) => state.update);
   const storeError = useAppStore((state) => state.error);
   const clearError = useAppStore((state) => state.clearError);
+  const updateBatch = useAppStore((state) => state.updateBatch);
 
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
@@ -171,19 +175,15 @@ export function AppWindow(props: WindowProps) {
       },
     });
     if (isGrouped) {
+      const updates = [] as { id: string; updates: Partial<AppSchema> }[];
       selectedApps.forEach((appId) => {
         if (appId === props.app._id) return;
         const app = apps.find((el) => el._id == appId);
         if (!app) return;
         const p = app.data.position;
-        update(appId, {
-          position: {
-            x: p.x + dx,
-            y: p.y + dy,
-            z: p.z,
-          },
-        });
+        updates.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
       });
+      updateBatch(updates);
     }
 
     // Trying to optimize performance
@@ -294,6 +294,7 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
+      enableResizing={enableResize}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -322,7 +323,6 @@ export function AppWindow(props: WindowProps) {
       // This happens locally before updating the server.
       // enableResizing={!isGuest}
       // disableDragging={isGuest}
-      enableResizing={true}
       disableDragging={false}
     >
       {/* Title Above app */}

@@ -6,8 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Electorn
+// Electron
 const electron = require('electron');
+const { app, Menu, Tray, nativeImage } = require('electron');
+const shell = electron.shell;
+const path = require('path');
 
 // Store
 const bookmarkStore = require('./bookmarkstore');
@@ -21,7 +24,35 @@ const updater = require('./updater');
  * @param {*} window
  * @returns
  */
-function buildSageMenu(window) {
+function buildSageMenu(window, commander) {
+  let tray = null;
+  app.whenReady().then(() => {
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show Main Window',
+        click: function () {
+          window.show();
+        },
+      },
+      {
+        label: 'Hide Main Window',
+        click: function () {
+          window.blur();
+        },
+      },
+      {
+        label: 'Quit SAGE3',
+        accelerator: 'CommandOrControl+Q',
+        click: function () {
+          electron.app.quit();
+        },
+      },
+    ]);
+    tray.setToolTip('SAGE3 controls');
+    tray.setContextMenu(contextMenu);
+  });
+
   // Clear Bookmarks button
   const clearBookmarks = {
     label: 'Restore Original Bookmarks',
@@ -304,7 +335,25 @@ function buildSageMenu(window) {
       role: 'help',
       submenu: [
         {
-          label: 'Learn More',
+          label: 'Quick Start Guide',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-2023b.pdf');
+          },
+        },
+        {
+          label: 'Keyboard Shortcuts',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/Shortcuts');
+          },
+        },
+        {
+          label: 'Developer Site',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/intro');
+          },
+        },
+        {
+          label: 'Main Site',
           click: function () {
             shell.openExternal('http://sage3.sagecommons.org/');
           },
@@ -382,8 +431,8 @@ function buildSageMenu(window) {
  * Build the electron Menu system
  * @param {Electron.BrowserWindow} The electron browser window menu to build
  */
-function buildMenu(window) {
-  const menu = buildSageMenu(window);
+function buildMenu(window, commander) {
+  const menu = buildSageMenu(window, commander);
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(menu));
 }
 

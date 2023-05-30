@@ -26,6 +26,7 @@ const availableKernelsSchema = z.array(
 export const schema = z.object({
   code: z.string(),
   language: z.string(),
+  isTyping: z.boolean(),
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
@@ -50,6 +51,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   code: '',
   language: 'python',
+  isTyping: false,
   fontSize: 16,
   theme: 'xcode',
   kernel: '',
