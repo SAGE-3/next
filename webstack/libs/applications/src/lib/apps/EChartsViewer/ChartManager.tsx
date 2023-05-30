@@ -111,6 +111,7 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
       axisLabel: {
         fontSize: 25,
       },
+      min: 'dataMin',
     };
   } else {
     options.xAxis = {
@@ -168,7 +169,7 @@ function createMultiLineChart(
     options.series.push({
       name: data[i].NAME,
       type: 'line',
-      stack: 'total',
+
       lineStyle: {
         width: 7, // Set the thickness of the line to 3
       },
@@ -257,14 +258,12 @@ function createBarChart(
   xAxisData: any[]
 ) {
   options.series = [];
-
-  options.series = [];
-
   for (let i = 0; i < yAxisData.length; i++) {
     options.series.push({
       type: 'bar',
       data: yAxisData[i],
       colorBy: 'data',
+      label: { show: true, fontSize: 20 },
     });
   }
 }
@@ -277,7 +276,6 @@ function createScatterPlot(
   yAxisData: any[],
   xAxisData: any[]
 ) {
-  console.log(xAxisData);
   for (let i = 0; i < data.length; i++) {
     xAxisData.push({ value: data[i].OBSERVATIONS[xAxisAttributes[0]], name: data[i].NAME });
     yAxisData.push(data[i].OBSERVATIONS[yAxisAttributes[0]]);
@@ -285,31 +283,19 @@ function createScatterPlot(
 
   options.series = [];
 
-  options.series = [];
-
-  options.tooltip = {
-    trigger: 'axis',
-  };
-
-  options.grid = {
-    top: '70px',
-    left: '10%',
-    right: '10%',
-    bottom: '40px',
-    containLabel: true,
-  };
-  options.legend = {
-    top: '60px',
-    data: [],
-  };
+  // options.legend = {
+  //   top: '60px',
+  //   data: [],
+  // };
   for (let i = 0; i < xAxisData.length; i++) {
     options.series.push({
       type: 'scatter',
       name: xAxisData[i].name ? xAxisData[i].name : 'unknown',
       symbolSize: 20,
       data: [[xAxisData[i].value, yAxisData[i]]],
+      label: { show: true, fontSize: 20, position: 'right', color: 'white', formatter: xAxisData[i].name ? xAxisData[i].name : 'unknown' },
     });
-    options.legend.data?.push(xAxisData[i].name ? xAxisData[i].name : 'unknown');
+    // options.legend.data?.push(xAxisData[i].name ? xAxisData[i].name : 'unknown');
   }
 }
 

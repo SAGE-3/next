@@ -34,6 +34,9 @@ const widget = {
   color: '#5AB2D3',
   layout: { x: 0, y: 0, w: 11, h: 130 },
   operation: 'average',
+  startDate: 2302305101134,
+  endDate: 2302305111134,
+  since: 1140,
 };
 
 export const schema = z.object({

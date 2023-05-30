@@ -30,6 +30,12 @@ const calculateVariance = (values: number[]) => {
   return variance;
 };
 
+const calculateStdDev = (values: number[]) => {
+  const variance = calculateVariance(values);
+  const stdDev = Math.sqrt(variance);
+  return stdDev;
+};
+
 export default function VariableCard(
   props: {
     variableName: string;
@@ -45,7 +51,7 @@ export default function VariableCard(
       stationName: string;
       value: number;
       average: number;
-      variance: number;
+      stdDev: number;
       high: number;
       low: number;
       startDate: string;
@@ -58,7 +64,7 @@ export default function VariableCard(
       stationName: string;
       value: number;
       average: number;
-      variance: number;
+      stdDev: number;
       high: number;
       low: number;
       startDate: string;
@@ -83,7 +89,7 @@ export default function VariableCard(
           stationName: props.stationMetadata[i].NAME,
           value: sensorValues[sensorValues.length - 1],
           average: calculateMean(sensorValues),
-          variance: calculateVariance(sensorValues),
+          stdDev: calculateStdDev(sensorValues),
           high: Math.max(...sensorValues),
           low: Math.min(...sensorValues),
           startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
@@ -94,7 +100,7 @@ export default function VariableCard(
           stationName: props.stationMetadata[i].NAME,
           value: 0,
           average: 0,
-          variance: 0,
+          stdDev: 0,
           high: 0,
           low: 0,
           startDate: '2023-05-09T21:45:00Z',
@@ -107,14 +113,22 @@ export default function VariableCard(
   return (
     <>
       {props.size ? (
-        <Wrap>
+        <Box
+          display="flex"
+          flexWrap="wrap"
+          alignItems="center"
+          flexDirection={'row'}
+          justifyContent="center"
+          alignContent={'center'}
+          justifyItems={'center'}
+        >
           {variablesToDisplay.map(
             (
               variable: {
                 stationName: string;
                 value: number;
                 average: number;
-                variance: number;
+                stdDev: number;
                 high: number;
                 low: number;
                 startDate: string;
@@ -123,21 +137,20 @@ export default function VariableCard(
               index: number
             ) => {
               return (
-                <WrapItem key={index}>
-                  <Content
-                    size={props.size}
-                    isLoaded={props.isLoaded}
-                    variableName={s.widget.yAxisNames[0]}
-                    stationNames={props.stationNames}
-                    variableToDisplayLength={variablesToDisplay.length}
-                    s={s}
-                    variable={variable}
-                  />
-                </WrapItem>
+                <Content
+                  size={props.size}
+                  isLoaded={props.isLoaded}
+                  variableName={s.widget.yAxisNames[0]}
+                  stationNames={props.stationNames}
+                  variableToDisplayLength={variablesToDisplay.length}
+                  s={s}
+                  key={index}
+                  variable={variable}
+                />
               );
             }
           )}
-        </Wrap>
+        </Box>
       ) : (
         <Box display="flex" flexDirection={'row'} justifyContent="center" alignContent={'center'} justifyItems={'center'}>
           <Content
@@ -150,7 +163,7 @@ export default function VariableCard(
               stationName: 'Station Name',
               value: 42,
               average: 38.42,
-              variance: 12,
+              stdDev: 12,
               high: 82,
               low: 12,
               startDate: '2023-05-09T21:45:00Z',
@@ -174,7 +187,7 @@ const Content = (props: {
     stationName: string;
     value: number;
     average: number;
-    variance: number;
+    stdDev: number;
     high: number;
     low: number;
     startDate: string;
@@ -185,7 +198,6 @@ const Content = (props: {
   delete variableName[variableName.length - 1];
   delete variableName[variableName.length - 2];
   const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-
   return (
     <Box
       p="1rem"
@@ -260,7 +272,7 @@ const Content = (props: {
                   fontSize={25}
                   fontWeight="bold"
                 >
-                  Average: {props.variable.average.toFixed(2)} - Variance: {props.variable.variance.toFixed(2)}
+                  Average: {props.variable.average.toFixed(2)} - Std Dev: {props.variable.stdDev.toFixed(2)}
                 </Text>
                 <Text
                   display="flex"
@@ -282,9 +294,9 @@ const Content = (props: {
               overflow="hidden"
               color="gray.700"
               fontSize={20}
-              fontWeight="semibold"
+              fontWeight="bold"
             >
-              <>Since: {new Date(props.variable.startDate).toLocaleString()}</>
+              <>24 hour observation</>
             </Text>
           </>
         ) : (

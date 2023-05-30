@@ -56,7 +56,6 @@ const EChartsViewer = (props: {
   // Props update
   useEffect(() => {
     async function callToChartMangaer() {
-      console.log(props.stationMetadata);
       const options = await ChartManager(
         props.stationNames,
         props.widget.visualizationType,

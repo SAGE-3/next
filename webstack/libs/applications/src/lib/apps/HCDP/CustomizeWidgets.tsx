@@ -124,18 +124,27 @@ const CustomizeWidgets = React.memo(
         const tmpSensorMetadata: any = [];
         const tmpVariableNames: any = [];
         for (let i = 0; i < props.stationNames.length; i++) {
-          const response = await fetch(
-            `https://api.mesowest.net/v2/stations/timeseries?STID=${props.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-          );
-          const stationData = await response.json();
+          let response: Response | null = null;
+          let stationData = null;
+          if (props.widget.visualizationType === 'variableCard') {
+            response =
+              await fetch(`https://api.synopticdata.com/v2/stations/timeseries?STID=${props.stationNames[i]}&showemptystations=1&recent=1440&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local
+            `);
+          } else {
+            response = await fetch(
+              `https://api.mesowest.net/v2/stations/timeseries?STID=${props.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+            );
+          }
 
-          const sensorObservationVariableNames = Object.getOwnPropertyNames(stationData['STATION'][0]['OBSERVATIONS']);
-          const sensorData: any = stationData['STATION'][0];
-          tmpSensorMetadata.push(sensorData);
+          if (response) {
+            stationData = await response.json();
+            const sensorObservationVariableNames = Object.getOwnPropertyNames(stationData['STATION'][0]['OBSERVATIONS']);
+            const sensorData: any = stationData['STATION'][0];
+            tmpSensorMetadata.push(sensorData);
 
-          tmpVariableNames.push(sensorObservationVariableNames);
+            tmpVariableNames.push(sensorObservationVariableNames);
+          }
         }
-        console.log(tmpSensorMetadata);
         let filteredVariableNames = findDuplicateElements(...tmpVariableNames);
         filteredVariableNames.push('elevation', 'latitude', 'longitude', 'name', 'current temperature');
         setIsLoaded(true);
@@ -212,8 +221,7 @@ const CustomizeWidgets = React.memo(
     };
 
     const sendToChatGPT = async () => {
-      const message = await NLPHTTPRequest(prompt);
-      console.log(message);
+      // const message = await NLPHTTPRequest(prompt);
     };
 
     return (
@@ -291,7 +299,7 @@ const CustomizeWidgets = React.memo(
                                   <UnorderedList>
                                     {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
                                       return (
-                                        <Tooltip label="Information on the attribute" aria-label="A tooltip">
+                                        <Tooltip key={index} label="Information on the attribute" aria-label="A tooltip">
                                           <ListItem key={index}>{name}</ListItem>
                                         </Tooltip>
                                       );
