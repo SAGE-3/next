@@ -391,7 +391,7 @@ export function Files(props: FilesProps): JSX.Element {
   }
 
   // Select the file when clicked
-  const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
+  const onKeyboard = (e: React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

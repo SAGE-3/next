@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -11,8 +11,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { strict as assert } from 'assert';
 
-// SAGEBase queue
-import { SBQueue } from '../connectors';
+import { SandboxedJob } from 'bullmq';
+
+// import { Canvas } from 'skia-canvas';
+import { createCanvas } from 'canvas';
+// Image processing tool
+import * as sharp from 'sharp';
 
 // load legacy pdf build
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -20,70 +24,21 @@ const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
 const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
 const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
-import { createCanvas } from 'canvas';
 
-import { getStaticAssetUrl } from '@sage3/backend';
-import { ExtraPDFType } from '@sage3/shared/types';
+// Function doing the task
+export default async (job: SandboxedJob) => {
+  // Process the file
+  const data = await pdfProcessing(job);
+  // Return the result
+  return {
+    file: job.data.filename,
+    id: job.data.id,
+    result: data,
+  };
+};
 
-// Image processing tool
-import * as sharp from 'sharp';
-
-/**
- * Converting PDF to multiple resolutions using pdfjs and sharp
- *
- * @export
- * @class PDFProcessor
- */
-export class PDFProcessor {
-  // Bull queues
-  private queue: SBQueue;
-  private output: string;
-
-  constructor(redisUrl: string, folder: string, worker = true) {
-    this.queue = new SBQueue(redisUrl, 'pdf-queue');
-    this.output = folder;
-
-    // Add a function to convert PDF
-    if (worker) {
-      this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/pdf.js');
-    } else {
-      this.queue.addProcessor(async (job) => {
-        const data = await pdfProcessing(job).catch((err) => {
-          return Promise.reject(err);
-        });
-        return Promise.resolve({
-          file: job.data.filename,
-          id: job.data.id,
-          result: data,
-        });
-      });
-    }
-  }
-
-  /**
-   * Return bull queue name
-   *
-   * @returns {string}
-   *
-   * @memberOf FileProcessor
-   */
-  getName(): string {
-    return this.queue.getName();
-  }
-
-  /**
-   * Create a task to process a file
-   *
-   * @param {string} id
-   * @param {string} file
-   * @returns {Promise<any>}
-   *
-   * @memberOf TaskManager
-   */
-  async addFile(id: string, filename: string) {
-    const job = await this.queue.addTask({ id, filename, pathname: this.output });
-    return job;
-  }
+function getStaticAssetUrl(filename: string): string {
+  return `api/assets/static/${filename}`;
 }
 
 /**
@@ -92,7 +47,7 @@ export class PDFProcessor {
  * @method file
  * @param filename {String} name of the file to be tested
  */
-async function pdfProcessing(job: any): Promise<ExtraPDFType> {
+async function pdfProcessing(job: any) {
   return new Promise((resolve, reject) => {
     const filename: string = job.data.filename;
     const pathname: string = path.join(job.data.pathname, filename);
@@ -100,11 +55,11 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
     const filenameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
     let pdfTask;
 
-    // @ts-ignore
-    const canvasFactory = new NodeCanvasFactory();
-
     // Read the PDF file into a buffer
     const data = new Uint8Array(fs.readFileSync(pathname));
+
+    // @ts-ignore
+    const canvasFactory = new NodeCanvasFactory();
 
     // Pass the data to the PDF.js library
     try {

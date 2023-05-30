@@ -78,7 +78,7 @@ export function JoinBoardCheck() {
   }, []);
 
   if (boardByUrl) {
-    return <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>
+    return <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>;
   }
   return null;
 }

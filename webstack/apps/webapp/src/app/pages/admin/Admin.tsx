@@ -88,6 +88,9 @@ export function AdminPage() {
   const toast = useToast();
 
   useEffect(() => {
+    // Update the document title
+    document.title = 'SAGE3 - Admin';
+
     fetchAll();
   }, []);
 

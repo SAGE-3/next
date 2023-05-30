@@ -230,7 +230,7 @@ function AppComponent(props: App): JSX.Element {
         div.blur();
       });
       div.addEventListener('mouseenter', () => {
-        // Focus on the div for jeyboard events
+        // Focus on the div for keyboard events
         div.focus({ preventScroll: true });
       });
     }
@@ -415,6 +415,19 @@ function ToolbarComponent(props: App): JSX.Element {
               }}
             >
               Download
+            </MenuItem>
+            <MenuItem
+              icon={<MdFileDownload />}
+              onClick={() => {
+                if (file) {
+                  const url = file?.data.file;
+                  const parts = url.split('.');
+                  const filename = file?.data.originalfilename + '.json';
+                  downloadFile('api/assets/static/' + parts[0] + '-text.json', filename);
+                }
+              }}
+            >
+              Download Text
             </MenuItem>
             <MenuItem icon={<MdOutlineFastRewind />} onClick={() => handlePrev(10)}>
               Back 10 pages

@@ -144,7 +144,7 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label='create a board' borderRadius="md" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
