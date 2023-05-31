@@ -127,6 +127,7 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
     options.xAxis = {
       axisLabel: {
         fontSize: 25,
+        margin: 20,
       },
       min: 'dataMin',
     };
@@ -134,9 +135,16 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
     options.xAxis = {
       data: xAxisData,
       name: xAxisAttributes[0],
+      nameLocation: 'middle',
+      nameTextStyle: {
+        fontSize: 40, // Increase the font size here
+        fontWeight: 'bold', // Customize the style of the title (optional)
+      },
       axisLabel: {
         fontSize: 30,
+        margin: 20,
       },
+      nameGap: 50,
     };
   }
 };
@@ -205,9 +213,9 @@ function createMultiLineChart(
     left: 'center',
   };
   options.grid = {
-    left: '3%',
-    right: '4%',
-    bottom: '3%',
+    left: '5%',
+    right: '5%',
+    bottom: '10%',
     // Leave enough space at the top for the title and legend
     top: 100,
     containLabel: true,
