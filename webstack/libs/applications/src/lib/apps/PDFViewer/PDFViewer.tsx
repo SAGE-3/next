@@ -230,7 +230,7 @@ function AppComponent(props: App): JSX.Element {
         div.blur();
       });
       div.addEventListener('mouseenter', () => {
-        // Focus on the div for jeyboard events
+        // Focus on the div for keyboard events
         div.focus({ preventScroll: true });
       });
     }

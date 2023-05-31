@@ -1,7 +1,7 @@
-const nrwlConfig = require('@nx/node/plugins/webpack.js'); // require the main @nx/react/plugins/webpack configuration function.
+const nrwlConfig = require('@nrwl/node/plugins/webpack.js'); // require the main @nrwl/react/plugins/webpack configuration function.
 
 module.exports = (config, context) => {
-  nrwlConfig(config); // first call it so that it @nx/node plugin adds its configs,
+  nrwlConfig(config); // first call it so that it @nrwl/node plugin adds its configs,
 
   // then override your config.
   return {
