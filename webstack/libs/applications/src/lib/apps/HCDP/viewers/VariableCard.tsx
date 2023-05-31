@@ -42,6 +42,8 @@ export default function VariableCard(
     isLoaded: boolean;
     stationNames: string[];
     stationMetadata: any;
+    startDate: string;
+    timeSinceLastUpdate: string;
     size?: { width: number; height: number; depth: number };
   } & { state: App }
 ) {
@@ -103,7 +105,7 @@ export default function VariableCard(
           stdDev: 0,
           high: 0,
           low: 0,
-          startDate: '2023-05-09T21:45:00Z',
+          startDate: props.startDate,
           endDate: '2022-04-25T19:55:00Z',
         });
       }
@@ -144,6 +146,7 @@ export default function VariableCard(
                   stationNames={props.stationNames}
                   variableToDisplayLength={variablesToDisplay.length}
                   s={s}
+                  timeSinceLastUpdate={props.timeSinceLastUpdate}
                   key={index}
                   variable={variable}
                 />
@@ -159,6 +162,7 @@ export default function VariableCard(
             variableToDisplayLength={0}
             variableName={s.widget.yAxisNames.length ? s.widget.yAxisNames[0] : 'variable_Name_set_1'}
             s={s}
+            timeSinceLastUpdate={props.timeSinceLastUpdate}
             variable={{
               stationName: 'Station Name',
               value: 42,
@@ -166,7 +170,7 @@ export default function VariableCard(
               stdDev: 12,
               high: 82,
               low: 12,
-              startDate: '2023-05-09T21:45:00Z',
+              startDate: props.startDate,
               endDate: '2022-04-25T19:55:00Z',
             }}
           />
@@ -183,6 +187,7 @@ const Content = (props: {
   variableName: string;
   size?: { width: number; height: number; depth: number };
   variableToDisplayLength: number;
+  timeSinceLastUpdate: string;
   variable: {
     stationName: string;
     value: number;
@@ -258,7 +263,7 @@ const Content = (props: {
               fontSize={20}
               fontWeight="semibold"
             >
-              <>Last updated: 5 minutes ago</>
+              <>{props.timeSinceLastUpdate}</>
             </Text>
             <br />
             {isNaN(props.variable.value) ? null : (

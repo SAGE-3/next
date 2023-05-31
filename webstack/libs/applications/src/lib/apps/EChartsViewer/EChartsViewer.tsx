@@ -51,8 +51,8 @@ function AppComponent(props: App): JSX.Element {
       width: props.data.size.width,
     });
     async function callToChartMangaer() {
-      const options = await ChartManager(s.stationName, s.chartType, s.yAxisAttributes, s.xAxisAttributes, s.transform);
-      if (chartInstance) chartInstance.setOption(options);
+      // const options = await ChartManager(s.stationName, s.chartType, s.yAxisAttributes, s.xAxisAttributes, s.transform);
+      // if (chartInstance) chartInstance.setOption(options);
     }
     const options = callToChartMangaer();
     setChartStateInstance(chartInstance);

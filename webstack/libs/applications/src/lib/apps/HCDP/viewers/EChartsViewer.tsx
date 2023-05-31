@@ -62,6 +62,8 @@ const EChartsViewer = (props: {
         props.widget.yAxisNames,
         props.widget.xAxisNames,
         colorMode,
+        props.widget.startDate,
+
         props.stationMetadata
       );
       setChartOptions(options);
@@ -82,7 +84,9 @@ const EChartsViewer = (props: {
   return (
     <Box w="100%" h="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} ref={outboxRef}>
       {props.isLoaded ? (
-        <div ref={chartRef} />
+        <>
+          <div ref={chartRef} />
+        </>
       ) : (
         <Box transform={`scale(8) translateY(3px)`}>
           <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color={'teal'} size="xl" />

@@ -27,6 +27,29 @@ const variableTypes = z.enum([
   'windDirection',
 ]);
 
+function getFormattedDateTime() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+function getFormattedDateTime24HoursBefore() {
+  const now = new Date();
+  now.setHours(now.getHours() - 24);
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
 const widget = {
   visualizationType: 'variableCard',
   yAxisNames: [],
@@ -34,9 +57,9 @@ const widget = {
   color: '#5AB2D3',
   layout: { x: 0, y: 0, w: 11, h: 130 },
   operation: 'average',
-  startDate: 2302305101134,
-  endDate: 2302305111134,
-  since: 1140,
+  startDate: getFormattedDateTime24HoursBefore(),
+  endDate: getFormattedDateTime(),
+  sinceInMinutes: 1140,
 };
 
 export const schema = z.object({

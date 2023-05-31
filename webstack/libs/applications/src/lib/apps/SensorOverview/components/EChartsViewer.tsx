@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Button, Spinner, useColorMode } from '@chakra-ui/react';
+import { Box, Button, useColorMode } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 import { ChartManager } from '../../EChartsViewer/ChartManager';
 
@@ -20,6 +20,8 @@ const EChartsViewer = (props: {
   yAxisNames: string[];
   xAxisNames: string[];
   stationMetadata: any;
+  startDate: string;
+  timeSinceLastUpdate: string;
   showDeleteButton?: boolean;
   handleDeleteWidget?: (index: number) => void;
   index?: number;
@@ -39,7 +41,7 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: props.size.height,
+      height: props.size.height - 40,
       width: props.size.width,
     });
     async function callToChartMangaer() {
@@ -49,6 +51,7 @@ const EChartsViewer = (props: {
         props.yAxisNames,
         props.xAxisNames,
         colorMode,
+        props.startDate,
         props.stationMetadata
       );
       if (chartInstance) chartInstance.setOption(options);
@@ -72,11 +75,18 @@ const EChartsViewer = (props: {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
     chartInstance.resize({
-      height: props.size.height,
+      height: props.size.height - 40,
       width: props.size.width,
     });
     async function callToChartMangaer() {
-      const options = await ChartManager(props.stationNames, props.visualizationType, props.yAxisNames, props.xAxisNames, colorMode);
+      const options = await ChartManager(
+        props.stationNames,
+        props.visualizationType,
+        props.yAxisNames,
+        props.xAxisNames,
+        colorMode,
+        props.startDate
+      );
       if (chartInstance) chartInstance.setOption(options);
     }
     const options = callToChartMangaer();
@@ -86,14 +96,14 @@ const EChartsViewer = (props: {
   useEffect(() => {
     if (chartStateInstance) {
       chartStateInstance.resize({
-        height: props.size.height,
+        height: props.size.height - 40,
         width: props.size.width,
       });
     }
   }, [props.size]);
 
   return (
-    <Box>
+    <Box bg="#222">
       {props.showDeleteButton ? (
         <Button
           onClick={() => {
@@ -103,7 +113,10 @@ const EChartsViewer = (props: {
           Delete
         </Button>
       ) : null}
-      <div ref={chartRef}></div>
+      <Box bg="#222" p="5px">
+        {props.timeSinceLastUpdate}
+      </Box>
+      <div ref={chartRef} />
     </Box>
   );
 };

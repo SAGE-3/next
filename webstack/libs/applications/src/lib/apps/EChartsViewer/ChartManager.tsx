@@ -34,26 +34,43 @@ const getRandomColor = () => {
   return color;
 };
 
+function convertToFormattedDateTime(date: Date) {
+  const now = new Date(date);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
 export const ChartManager = async (
   stationNames: string[],
   chartType: string,
   yAxisAttributes: string[],
   xAxisAttributes: string[],
   colorMode: string,
+  startDate: string,
   stationMetadata?: any,
-
   transform?: (filterType | aggregateType)[]
 ): Promise<EChartsOption> => {
   let options: EChartsOption = {};
 
   let data = [];
   const stationReadableNames = [];
+
   if (stationMetadata === undefined) {
     for (let i = 0; i < stationNames.length; i++) {
       const response = await fetch(
-        `https://api.mesowest.net/v2/stations/timeseries?STID=${stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+        `https://api.mesowest.net/v2/stations/timeseries?STID=${
+          stationNames[i]
+        }&showemptystations=1&start=${startDate}&end=${convertToFormattedDateTime(
+          new Date()
+        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
       );
       const sensor = await response.json();
+      console.log(sensor);
       const sensorData = sensor['STATION'][0];
       stationReadableNames.push(sensorData.NAME);
       data.push(sensorData);

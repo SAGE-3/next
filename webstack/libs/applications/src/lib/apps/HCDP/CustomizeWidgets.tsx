@@ -83,6 +83,40 @@ export async function NLPHTTPRequest(message: string): Promise<NLPRequestRespons
   return (await response.json()) as NLPRequestResponse;
 }
 
+function convertToFormattedDateTime(date: Date) {
+  const now = new Date(date);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
+function getFormattedDateTime24HoursBefore() {
+  const now = new Date();
+  now.setHours(now.getHours() - 24);
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
+function formatDuration(ms: number) {
+  if (ms < 0) ms = -ms;
+  const mins = Math.floor(ms / 60000) % 60;
+  if (mins > 0) {
+    return `Refreshed ${mins} minutes ago`;
+  } else {
+    return `Refreshed less than a minute ago`;
+  }
+}
+
 const CustomizeWidgets = React.memo(
   (
     props: App & {
@@ -118,7 +152,10 @@ const CustomizeWidgets = React.memo(
     const textColor = useColorModeValue('gray.700', 'gray.100');
 
     const [prompt, setPrompt] = useState<string>('');
+    const [startDate, setStartDate] = useState<string>(getFormattedDateTime24HoursBefore());
 
+    const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
+    const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
     useEffect(() => {
       const fetchData = async () => {
         const tmpSensorMetadata: any = [];
@@ -126,18 +163,18 @@ const CustomizeWidgets = React.memo(
         for (let i = 0; i < props.stationNames.length; i++) {
           let response: Response | null = null;
           let stationData = null;
-          if (props.widget.visualizationType === 'variableCard') {
-            response =
-              await fetch(`https://api.synopticdata.com/v2/stations/timeseries?STID=${props.stationNames[i]}&showemptystations=1&recent=1440&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local
-            `);
-          } else {
-            response = await fetch(
-              `https://api.mesowest.net/v2/stations/timeseries?STID=${props.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-            );
-          }
+
+          response = await fetch(
+            `https://api.mesowest.net/v2/stations/timeseries?STID=${
+              props.stationNames[i]
+            }&showemptystations=1&start=${startDate}&end=${convertToFormattedDateTime(
+              new Date()
+            )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+          );
 
           if (response) {
             stationData = await response.json();
+
             const sensorObservationVariableNames = Object.getOwnPropertyNames(stationData['STATION'][0]['OBSERVATIONS']);
             const sensorData: any = stationData['STATION'][0];
             tmpSensorMetadata.push(sensorData);
@@ -151,8 +188,30 @@ const CustomizeWidgets = React.memo(
         setAxisVariableNames(filteredVariableNames);
         setStationMetadata(tmpSensorMetadata);
       };
-      fetchData();
-    }, [JSON.stringify(props.stationNames)]);
+      // This will run every 10 minutes
+      const interval = setInterval(() => {
+        fetchData();
+        setLastUpdate(Date.now());
+      }, 600000);
+
+      return () => clearInterval(interval);
+    }, [JSON.stringify(props.stationNames), startDate]);
+
+    useEffect(() => {
+      const updateTimesinceLastUpdate = () => {
+        if (lastUpdate > 0) {
+          const delta = Date.now() - lastUpdate;
+          setTimeSinceLastUpdate(formatDuration(delta));
+          console.log(formatDuration(delta));
+        }
+      };
+      updateTimesinceLastUpdate();
+      const interval = setInterval(() => {
+        updateTimesinceLastUpdate();
+      }, 1000 * 30); // 30 seconds
+      return () => clearInterval(interval);
+    }, [lastUpdate]);
+
     const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
       const tmpArray: string[] = [...props.stationNames];
       const stationName = station.name;
@@ -222,6 +281,14 @@ const CustomizeWidgets = React.memo(
 
     const sendToChatGPT = async () => {
       // const message = await NLPHTTPRequest(prompt);
+    };
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedDate = e.target.value;
+      const date = new Date(selectedDate);
+      const startDate = convertToFormattedDateTime(date);
+      updateState(props._id, { widget: { ...props.widget, startDate: startDate } });
+      setStartDate(startDate);
     };
 
     return (
@@ -407,7 +474,7 @@ const CustomizeWidgets = React.memo(
                     >
                       <Text>Choose Date:</Text>
 
-                      <Input w="240px" mr="1rem" placeholder="Select Date and Time" type="datetime-local" />
+                      <Input w="240px" mr="1rem" onChange={handleDateChange} placeholder="Select Date and Time" type="datetime-local" />
                     </Box>
                     <Box
                       transform="translate(-8px, 0px)"
@@ -554,6 +621,8 @@ const CustomizeWidgets = React.memo(
                           stationNames={props.stationNames}
                           stationMetadata={stationMetadata}
                           isLoaded={isLoaded}
+                          startDate={startDate}
+                          timeSinceLastUpdate={timeSinceLastUpdate}
                         />
                       </>
                     ) : (

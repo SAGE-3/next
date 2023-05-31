@@ -24,6 +24,40 @@ import VariableCard from '../HCDP/viewers/VariableCard';
 import CustomizeWidgets from './components/CustomizeWidgets';
 import EChartsViewer from './components/EChartsViewer';
 
+function convertToFormattedDateTime(date: Date) {
+  const now = new Date(date);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
+function formatDuration(ms: number) {
+  if (ms < 0) ms = -ms;
+  const mins = Math.floor(ms / 60000) % 60;
+  if (mins > 0) {
+    return `Refreshed ${mins} minutes ago`;
+  } else {
+    return `Refreshed less than a minute ago`;
+  }
+}
+
+function getFormattedDateTime24HoursBefore() {
+  const now = new Date();
+  now.setHours(now.getHours() - 24);
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
 /* App component for Sensor Overview */
 
 function AppComponent(props: App): JSX.Element {
@@ -36,14 +70,43 @@ function AppComponent(props: App): JSX.Element {
   const bgColor = useColorModeValue('gray.100', 'gray.900');
   const textColor = useColorModeValue('gray.700', 'gray.100');
 
+  const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
+  const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
+
+  useEffect(() => {
+    const updateTimesinceLastUpdate = () => {
+      if (lastUpdate > 0) {
+        const delta = Date.now() - lastUpdate;
+        setTimeSinceLastUpdate(formatDuration(delta));
+        console.log(formatDuration(delta));
+      }
+    };
+    updateTimesinceLastUpdate();
+    const interval = setInterval(() => {
+      updateTimesinceLastUpdate();
+    }, 1000 * 30); // 30 seconds
+    return () => clearInterval(interval);
+  }, [lastUpdate]);
+
   useEffect(() => {
     const fetchStationData = async () => {
       const tmpStationMetadata: any = [];
       for (let i = 0; i < s.stationNames.length; i++) {
-        const response = await fetch(
-          `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[i]}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-        );
+        let url = '';
+        if (props.data.state.widget.visualizationType === 'variableCard') {
+          url = `https://api.mesowest.net/v2/stations/timeseries?STID=${
+            s.stationNames[i]
+          }&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
+            new Date()
+          )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+        } else {
+          url = `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[i]}&showemptystations=1&start=${
+            props.data.state.widget.startDate
+          }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+        }
+        const response = await fetch(url);
         const sensor = await response.json();
+
         if (sensor) {
           const sensorData = sensor['STATION'][0];
           tmpStationMetadata.push(sensorData);
@@ -60,12 +123,13 @@ function AppComponent(props: App): JSX.Element {
     const interval = setInterval(
       () => {
         fetchStationData();
+        setLastUpdate(Date.now());
       },
       60 * 10000
       //10 minutes
     );
     return () => clearInterval(interval);
-  }, [s.stationNames]);
+  }, [JSON.stringify(s.stationNames)]);
   return (
     <AppWindow app={props}>
       <Box overflowY="auto" bg={bgColor} h="100%">
@@ -82,7 +146,9 @@ function AppComponent(props: App): JSX.Element {
                     variableName={s.widget.yAxisNames[0]}
                     state={props}
                     stationNames={s.stationNames}
+                    startDate={s.widget.startDate}
                     stationMetadata={stationMetadata}
+                    timeSinceLastUpdate={timeSinceLastUpdate}
                     isLoaded={true}
                   />
                 ) : (
@@ -91,8 +157,10 @@ function AppComponent(props: App): JSX.Element {
                     visualizationType={s.widget.visualizationType}
                     dateStart={''}
                     dateEnd={''}
+                    timeSinceLastUpdate={timeSinceLastUpdate}
                     yAxisNames={s.widget.yAxisNames}
                     xAxisNames={s.widget.xAxisNames}
+                    startDate={s.widget.startDate}
                     size={props.data.size}
                     stationMetadata={stationMetadata}
                   />
