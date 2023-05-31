@@ -75,7 +75,7 @@ export function LassoToolbar() {
   const boards = useBoardStore((state) => state.boards);
   const boardId = useParams<{ boardId: string }>().boardId;
 
-  const { alignSelectedApps, assignColor, groupByTopic, organizeApps, assignKernel } = useBoardUtils();
+  const { alignSelectedApps, assignColor, groupByTopic, organizeApps, assignKernel, smartAlign } = useBoardUtils();
 
   // Theme
   const background = useColorModeValue('gray.50', 'gray.700');
@@ -169,22 +169,36 @@ export function LassoToolbar() {
             {/* Button Group for all the layout options */}
             <ButtonGroup size="xs" isAttached variant="outline" colorScheme={'teal'}>
               <Tooltip placement="top" hasArrow={true} label={'Align Left'} openDelay={400}>
-                <Button onClick={() => alignSelectedApps('left', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                {/* <Button onClick={() => alignSelectedApps('left', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}> */}
+                <Button
+                  onClick={() => smartAlign(boardId ? boardId : 'none', 'left', lassoApps)}
+                  size="xs"
+                  p="0"
+                  mx="2px"
+                  colorScheme={'teal'}
+                >
                   <MdAlignHorizontalLeft />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Align Right'} openDelay={400}>
-                <Button onClick={() => alignSelectedApps('right', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                {/* <Button onClick={() => alignSelectedApps('right', lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}> */}
+                <Button
+                  onClick={() => smartAlign(boardId ? boardId : 'none', 'right', lassoApps)}
+                  size="xs"
+                  p="0"
+                  mx="2px"
+                  colorScheme={'teal'}
+                >
                   <MdAlignHorizontalRight />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Align Top'} openDelay={400}>
-                <Button onClick={() => alignSelectedApps('top', lassoApps)} size="xs" p="0" mx="2px">
+                <Button onClick={() => smartAlign(boardId ? boardId : 'none', 'top', lassoApps)} size="xs" p="0" mx="2px">
                   <MdAlignVerticalTop />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Align Bottom'} openDelay={400}>
-                <Button onClick={() => alignSelectedApps('bottom', lassoApps)} size="xs" p="0" mx="2px">
+                <Button onClick={() => smartAlign(boardId ? boardId : 'none', 'bottom', lassoApps)} size="xs" p="0" mx="2px">
                   <MdAlignVerticalBottom />
                 </Button>
               </Tooltip>

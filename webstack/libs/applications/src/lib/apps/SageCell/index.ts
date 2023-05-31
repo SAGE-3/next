@@ -53,7 +53,7 @@ export const init: Partial<state> = {
   language: 'python',
   isTyping: false,
   fontSize: 16,
-  theme: 'xcode',
+  theme: '',
   kernel: '',
   output: '',
   privateMessage: [],
