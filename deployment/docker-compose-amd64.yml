@@ -42,7 +42,7 @@ services:
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
-    command: python proxy.py
+    command: ./Tasks go && python proxy.py
     depends_on:
       node-server:
         condition: service_healthy
