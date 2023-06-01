@@ -191,6 +191,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
               color: board.data.color,
             },
             raised: true,
+            dragging: false,
           });
         } else {
           const newApps = [] as AppSchema[];

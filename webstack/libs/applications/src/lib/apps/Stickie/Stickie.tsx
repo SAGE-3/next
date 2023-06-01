@@ -137,6 +137,7 @@ function AppComponent(props: App): JSX.Element {
           // keep the same color, like a clone operation except for the text
           state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
           raised: true,
+          dragging: false,
         });
       }
     }

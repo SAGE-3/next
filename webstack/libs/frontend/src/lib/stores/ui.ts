@@ -42,10 +42,12 @@ interface UIState {
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => void;
 
   // Selected Apps
-  selectedApps: string[];
+  selectedAppsIds: string[];
+  selectedAppsSnapshot: { [id: string]: Position };
   deltaPos: { p: Position; id: string };
   setDeltaPostion: (position: Position, id: string) => void;
-  setSelectedApps: (appId: string[]) => void;
+  setSelectedAppsIds: (appId: string[]) => void;
+  setSelectedAppSnapshot: (apps: { [id: string]: Position }) => void;
   addSelectedApp: (appId: string) => void;
   removeSelectedApp: (appId: string) => void;
   clearSelectedApps: () => void;
@@ -114,7 +116,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   showAppTitle: false,
   boardDragging: false,
   appDragging: false,
-  selectedApps: [],
+  selectedAppsIds: [],
+  selectedAppsSnapshot: {},
   lassoMode: false,
   lassoColor: 'red',
   clearLassos: false,
@@ -203,16 +206,20 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
   setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
-  setSelectedApps: (appIds: string[]) => set((state) => ({ ...state, selectedApps: appIds })),
-  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedApps, appId] })),
+  setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds })),
+  setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
+    snapshot = structuredClone(snapshot);
+    set((state) => ({ ...state, selectedAppsSnapshot: snapshot }));
+  },
+  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedAppsIds, appId] })),
   removeSelectedApp: (appId: string) =>
     set((state) => {
-      const newArray = state.selectedApps;
-      const index = state.selectedApps.indexOf(appId);
+      const newArray = state.selectedAppsIds;
+      const index = state.selectedAppsIds.indexOf(appId);
       newArray.splice(index, 1);
       return { ...state, selectedApps: newArray };
     }),
-  clearSelectedApps: () => set((state) => ({ ...state, selectedApps: [] })),
+  clearSelectedApps: () => set((state) => ({ ...state, selectedAppsIds: [] })),
 
   setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),

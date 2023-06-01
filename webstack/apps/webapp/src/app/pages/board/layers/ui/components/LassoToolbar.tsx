@@ -27,7 +27,7 @@ export function LassoToolbar() {
   const duplicate = useAppStore((state) => state.duplicateApps);
 
   // UI Store
-  const lassoApps = useUIStore((state) => state.selectedApps);
+  const lassoApps = useUIStore((state) => state.selectedAppsIds);
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
 

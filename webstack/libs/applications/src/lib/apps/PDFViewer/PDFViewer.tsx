@@ -141,6 +141,7 @@ function AppComponent(props: App): JSX.Element {
           result: JSON.stringify(result, null, 4),
         },
         raised: true,
+        dragging: false,
       });
     }
   }, [s.analyzed]);

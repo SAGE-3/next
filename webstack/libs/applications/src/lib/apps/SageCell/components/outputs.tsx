@@ -106,6 +106,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       type: 'Webview',
       state: { webviewurl: url },
       raised: true,
+      dragging: false,
     });
   };
 

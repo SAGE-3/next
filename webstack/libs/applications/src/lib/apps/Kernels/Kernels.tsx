@@ -137,6 +137,7 @@ function AppComponent(props: App): JSX.Element {
       type: 'SageCell',
       state: { ...initialValues['SageCell'], kernel: kid },
       raised: true,
+      dragging: false,
     });
   }
 
@@ -154,6 +155,7 @@ function AppComponent(props: App): JSX.Element {
       type: 'JupyterLab',
       state: { ...initialValues['JupyterLab'] },
       raised: true,
+      dragging: false,
     });
   }
 

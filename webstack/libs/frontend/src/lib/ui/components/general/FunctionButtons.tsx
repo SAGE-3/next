@@ -75,6 +75,7 @@ export function FunctionButtons(props: FunctionButtonsProps) {
       type: appName,
       state: { ...(initialValues[appName] as any) },
       raised: true,
+      dragging: false,
     });
   };
   const controls = useAnimation();
