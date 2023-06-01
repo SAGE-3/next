@@ -1,13 +1,22 @@
 #!/bin/sh
 
+if [ "$ENVIRONMENT" == "development" ]; then
+  args="--broker redis://localhost:6379/0 --result-backend redis://localhost:6379/1"
+else
+  args="--broker redis://redis-server:6379/0 --result-backend redis://redis-server:6379/1"
+fi
+
+
 if [ $# -eq 0 ]; then
-	celery -A smartbits worker --loglevel=INFO -E
+        # run in foreground, blocking
+	celery $args -A smartbits worker --loglevel=INFO -E
 else
         if [ $1 = "stop" ]; then
-		celery -A smartbits control shutdown
+		celery $args -A smartbits control shutdown
         fi
         if [ $1 = "go" ]; then
-		celery -A smartbits worker --loglevel=INFO -E -D
+                # run in background and returns
+		celery $args -A smartbits worker --loglevel=INFO -E -D
         fi
 fi
 
