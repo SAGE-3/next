@@ -153,12 +153,10 @@ function AppComponent(props: App): JSX.Element {
     if (div) {
       div.addEventListener('keydown', handleUserKeyPress);
       div.addEventListener('mouseleave', () => {
-        console.log('leave')
         // remove focus onto div
         div.blur();
       });
       div.addEventListener('mouseenter', () => {
-        console.log('enter')
         // Focus on the div for keyboard events
         div.focus({ preventScroll: true });
       });
