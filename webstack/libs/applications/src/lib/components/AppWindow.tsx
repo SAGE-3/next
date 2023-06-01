@@ -154,7 +154,6 @@ export function AppWindow(props: WindowProps) {
 
   // Update the position of the grouped windows
   const throttleGroupPositionUpdate = throttle(UpdateRate, (dx: number, dy: number) => {
-    console.log('update group position', dx, dy, groupedAppsStart);
     const updates = [] as { id: string; updates: Partial<AppSchema> }[];
     for (const appId of selectedApps) {
       const app = apps.find((el) => el._id == appId);
