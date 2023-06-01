@@ -18,7 +18,7 @@ python3 /conf/redis-store.py $token
 
 # dependencies (requirements.txt)
 pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx pydantic
-pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share plotly
+pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share plotly jupyter_collaboration
 # extras
 #pip3 install python-magic rq dill opencv-python Pillow
 
