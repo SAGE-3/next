@@ -296,6 +296,7 @@ function ToolbarComponent(props: App): JSX.Element {
             spec: JSON.stringify(specifications[i]),
           },
           raised: true,
+          dragging: false,
         });
 
         // Add messages

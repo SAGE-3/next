@@ -68,6 +68,7 @@ export function setupApp(
     type: type,
     state: { ...(initialValues[type] as AppState), ...init },
     raised: true,
+    dragging: false,
   };
 }
 

@@ -6,12 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState, useRef } from 'react';
-import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
-import { Box, useToast, Text, Spinner, useColorModeValue, ToastId } from '@chakra-ui/react';
+import { useEffect, useState, useCallback } from 'react';
+import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
 
+import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
+// Just to get the type
+import { ResizeDirection } from 're-resizable';
+// Slowdown the events
+import { throttle } from 'throttle-debounce';
+
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sage3/frontend';
 import { App, AppSchema } from '../schema';
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
+
+// Time in ms to send updates to the server
+const UpdateRate = 1000 / 3;
 
 type WindowProps = {
   app: App;
@@ -35,9 +43,6 @@ export function AppWindow(props: WindowProps) {
     }
   }, [auth]);
 
-  // Ref to the app container
-  const divRef = useRef<HTMLDivElement>(null);
-
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const zindex = useUIStore((state) => state.zIndex);
@@ -50,8 +55,11 @@ export function AppWindow(props: WindowProps) {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
-  const selectedApps = useUIStore((state) => state.selectedApps);
+  const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
+  const selectedAppsSnapshot = useUIStore((state) => state.selectedAppsSnapshot);
+  const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
+
   const isGrouped = selectedApps.includes(props.app._id);
   const lassoMode = useUIStore((state) => state.lassoMode);
   const deltaPosition = useUIStore((state) => state.deltaPos);
@@ -62,7 +70,8 @@ export function AppWindow(props: WindowProps) {
   const [size, setSize] = useState({ width: props.app.data.size.width, height: props.app.data.size.height });
   const [myZ, setMyZ] = useState(zindex);
   const [appWasDragged, setAppWasDragged] = useState(false);
-  const [dragStatePos, setDragStartPosition] = useState(props.app.data.position);
+
+  const [groupedAppsStart, setGroupedAppsStart] = useState<{ [id: string]: Position }>({});
 
   // Colors
   const bg = useColorModeValue('gray.100', 'gray.700');
@@ -104,12 +113,12 @@ export function AppWindow(props: WindowProps) {
   useEffect(() => {
     if (isGrouped) {
       if (selectedApps.includes(props.app._id) && props.app._id != deltaPosition.id) {
-        const x = props.app.data.position.x + deltaPosition.p.x;
-        const y = props.app.data.position.y + deltaPosition.p.y;
+        const x = selectedAppsSnapshot[props.app._id].x + deltaPosition.p.x;
+        const y = selectedAppsSnapshot[props.app._id].y + deltaPosition.p.y;
         setPos({ x, y });
       }
     }
-  }, [deltaPosition]);
+  }, [deltaPosition, selectedAppsSnapshot]);
 
   // Track the app store errors
   useEffect(() => {
@@ -131,95 +140,157 @@ export function AppWindow(props: WindowProps) {
 
   // If size or position change, update the local state.
   useEffect(() => {
-    setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
-    setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
-  }, [props.app.data.size, props.app.data.position]);
+    if (!selectedApps.includes(props.app._id)) {
+      setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
+      setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
+    }
+  }, [props.app.data.size, props.app.data.position, selectedApps]);
+
+  // Throttle the position update
+  const throttlePositionUpdate = throttle(UpdateRate, (x: number, y: number) => {
+    update(props.app._id, { position: { x, y, z: props.app.data.position.z } });
+  });
+  const updatePositionFunc = useCallback(throttlePositionUpdate, []);
+
+  // Update the position of the grouped windows
+  const throttleGroupPositionUpdate = throttle(UpdateRate, (dx: number, dy: number) => {
+    const updates = [] as { id: string; updates: Partial<AppSchema> }[];
+    for (const appId of selectedApps) {
+      const app = apps.find((el) => el._id == appId);
+      const startPos = groupedAppsStart[appId];
+      if (app && startPos) {
+        updates.push({
+          id: appId,
+          updates: {
+            position: {
+              x: startPos.x + dx,
+              y: startPos.y + dy,
+              z: app.data.position.z,
+            },
+          },
+        });
+      }
+    }
+    updateBatch(updates);
+  });
+
+  const updateGroupPositionFunc = useCallback(throttleGroupPositionUpdate, [groupedAppsStart, selectedApps]);
 
   // Handle when the window starts to drag
   function handleDragStart() {
-    // Trying to optimize performance
-    if (divRef.current) {
-      // divRef.current.style.willChange = 'transform';
-    }
     setAppDragging(true);
     bringForward();
-    setDragStartPosition(props.app.data.position);
     setDeltaPosition({ x: 0, y: 0, z: 0 }, props.app._id);
+
+    if (isGrouped) {
+      const updates = [] as { id: string; updates: Partial<AppSchema> }[];
+      const groupedAppsStart = {} as { [id: string]: { x: number; y: number; z: number } };
+      for (const appId of selectedApps) {
+        const app = apps.find((el) => el._id == appId);
+        if (app) {
+          updates.push({ id: appId, updates: { dragging: true } });
+          groupedAppsStart[appId] = { x: app.data.position.x, y: app.data.position.y, z: app.data.position.z };
+        }
+        setGroupedAppsStart(groupedAppsStart);
+        setSelectedAppsSnapshot(groupedAppsStart);
+        updateBatch(updates);
+      }
+    } else {
+      update(props.app._id, { dragging: true });
+    }
   }
 
   // When the window is being dragged
   function handleDrag(_e: RndDragEvent, data: DraggableData) {
     setAppWasDragged(true);
     if (isGrouped) {
-      const dx = data.x - props.app.data.position.x;
-      const dy = data.y - props.app.data.position.y;
+      const dx = data.x - groupedAppsStart[props.app._id].x;
+      const dy = data.y - groupedAppsStart[props.app._id].y;
       setDeltaPosition({ x: dx, y: dy, z: 0 }, props.app._id);
+      updateGroupPositionFunc(dx, dy);
+    } else {
+      updatePositionFunc(data.x, data.y);
     }
+    setPos({ x: data.x, y: data.y });
   }
 
   // Handle when the app is finished being dragged
   function handleDragStop(_e: RndDragEvent, data: DraggableData) {
-    let x = data.x;
-    let y = data.y;
-    x = Math.round(x / gridSize) * gridSize;
-    y = Math.round(y / gridSize) * gridSize;
-    const dx = x - props.app.data.position.x;
-    const dy = y - props.app.data.position.y;
+    const x = Math.round(data.x / gridSize) * gridSize;
+    const y = Math.round(data.y / gridSize) * gridSize;
     setPos({ x, y });
     setAppDragging(false);
-    update(props.app._id, {
-      position: {
-        x,
-        y,
-        z: props.app.data.position.z,
-      },
-    });
     if (isGrouped) {
       const updates = [] as { id: string; updates: Partial<AppSchema> }[];
-      selectedApps.forEach((appId) => {
-        if (appId === props.app._id) return;
+      for (const appId of selectedApps) {
         const app = apps.find((el) => el._id == appId);
-        if (!app) return;
-        const p = app.data.position;
-        updates.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
-      });
+        const startPos = groupedAppsStart[appId];
+        if (app && startPos) {
+          updates.push({
+            id: appId,
+            updates: {
+              dragging: false,
+            },
+          });
+        }
+      }
+      setGroupedAppsStart({});
       updateBatch(updates);
-    }
-
-    // Trying to optimize performance
-    if (divRef.current) {
-      // divRef.current.style.willChange = 'auto';
+    } else {
+      update(props.app._id, {
+        dragging: false,
+        position: { x, y, z: props.app.data.position.z },
+      });
     }
   }
+
+  // Throttle the size update
+  const throttleSizeUpdate = throttle(UpdateRate, (width: number, height: number, position: Position) => {
+    update(props.app._id, {
+      position: { ...props.app.data.position, x: position.x, y: position.y },
+      size: { ...props.app.data.size, width, height },
+    });
+  });
+  const updateSizeFunc = useCallback(throttleSizeUpdate, []);
 
   // Handle when the window starts to resize
   function handleResizeStart() {
-    // Trying to optimize performance
-    if (divRef.current) {
-      // divRef.current.style.willChange = 'transform';
-    }
     setAppDragging(true);
     bringForward();
+    update(props.app._id, { dragging: true });
   }
 
   // Handle when the app is resizing
-  function handleResize(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
+  function handleResize(
+    e: MouseEvent | TouchEvent,
+    _direction: ResizeDirection,
+    ref: HTMLElement,
+    _delta: ResizableDelta,
+    position: Position
+  ) {
     // Get the width and height of the app after the resize
-    const width = parseInt(ref.offsetWidth);
-    const height = parseInt(ref.offsetHeight);
-
+    const width = ref.offsetWidth;
+    const height = ref.offsetHeight;
     // Set local state
     setSize({ width, height });
     setAppWasDragged(true);
     setPos({ x: position.x, y: position.y });
+    updateSizeFunc(width, height, position);
   }
 
   // Handle when the app is fnished being resized
-  function handleResizeStop(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
+  function handleResizeStop(
+    e: MouseEvent | TouchEvent,
+    _direction: ResizeDirection,
+    ref: HTMLElement,
+    _delta: ResizableDelta,
+    position: Position
+  ) {
     // Get the width and height of the app after the resize
-    const width = parseInt(ref.offsetWidth);
-    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
-    const height = parseInt(ref.offsetHeight);
+    const width = ref.offsetWidth;
+    // Subtract the height of the title bar.
+    // The title bar is just for the UI, we don't want to save the additional height to the server.
+    const height = ref.offsetHeight;
 
     // Set local state
     setPos({ x: position.x, y: position.y });
@@ -228,22 +299,10 @@ export function AppWindow(props: WindowProps) {
 
     // Update the size and position of the app in the server
     update(props.app._id, {
-      position: {
-        ...props.app.data.position,
-        x: position.x,
-        y: position.y,
-      },
-      size: {
-        ...props.app.data.size,
-        width,
-        height,
-      },
+      dragging: false,
+      position: { ...props.app.data.position, x: position.x, y: position.y },
+      size: { ...props.app.data.size, width, height },
     });
-
-    // Trying to optimize performance
-    if (divRef.current) {
-      // divRef.current.style.willChange = 'auto';
-    }
   }
 
   // Track raised state
@@ -362,8 +421,8 @@ export function AppWindow(props: WindowProps) {
         width={size.width + borderWidth * 2}
         height={size.height + borderWidth * 2}
         borderRadius={outerBorderRadius}
-        opacity={isGrouped ? 0.6 : 1}
-        zIndex={isGrouped ? 1000000 : -1} // Behind everything
+        opacity={isGrouped || (!appDragging && props.app.data.dragging) ? 0.6 : 1}
+        zIndex={isGrouped || (!appDragging && props.app.data.dragging) ? 1000000 : -1} // Behind everything
         background={selected || isGrouped ? selectColor : borderColor}
         boxShadow={'4px 4px 12px 0px rgb(0 0 0 / 25%)'}
         pointerEvents={'none'}
@@ -371,7 +430,6 @@ export function AppWindow(props: WindowProps) {
 
       {/* The Application */}
       <Box
-        ref={divRef}
         id={'app_' + props.app._id}
         width="100%"
         height="100%"
@@ -382,6 +440,7 @@ export function AppWindow(props: WindowProps) {
       >
         {props.children}
       </Box>
+
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
       {!selected ? (
         <Box
@@ -398,7 +457,7 @@ export function AppWindow(props: WindowProps) {
         ></Box>
       ) : null}
       {/* This div is to block the app from being interacted with when the user is dragging the board or an app */}
-      {boardDragging || appDragging ? (
+      {boardDragging || appDragging || props.app.data.dragging ? (
         <Box
           position="absolute"
           left="0px"
