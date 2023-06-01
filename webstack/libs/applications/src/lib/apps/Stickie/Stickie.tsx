@@ -172,6 +172,10 @@ function AppComponent(props: App): JSX.Element {
           readOnly={locked} // Only the creator can edit
           zIndex={1}
           name={'stickie' + props._id}
+          css={{
+            // Balance the text, improve text layouts
+            textWrap: "balance"
+          }}
         />
         {locked && (
           <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
