@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]; then
+	celery -A smartbits worker --loglevel=INFO -E
+else
+        if [ $1 = "stop" ]; then
+		celery -A smartbits control shutdown
+        fi
+        if [ $1 = "go" ]; then
+		celery -A smartbits worker --loglevel=INFO -E -D
+        fi
+fi
+
