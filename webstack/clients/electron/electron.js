@@ -492,8 +492,8 @@ function createWindow() {
       if (state === 'completed') {
         // Send a message to the renderer process to show a notification
         mainWindow.webContents.send('download', {
-          filename: evt.sender.getFilename(),
-          bytes: evt.sender.getTotalBytes(),
+          filename: item.getFilename(),
+          bytes: item.getTotalBytes(),
           completed: true,
         });
       } else {
