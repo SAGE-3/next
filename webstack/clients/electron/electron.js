@@ -47,7 +47,7 @@ const { buildMenu } = require('./src/menuBuilder');
 // Store
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
-const bookmarkStore = require('./src/bookmarkStore');
+const bookmarkStore = require('./src/bookmarkstore');
 
 // Analytics
 var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
