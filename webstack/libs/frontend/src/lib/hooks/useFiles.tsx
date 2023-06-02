@@ -101,7 +101,6 @@ export function useFiles(): UseFiles {
       for (let i = 0; i < fileListLength; i++) {
         // check the mime type we got from the browser, and check with mime lib. if needed
         const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
-
         if (isValid(filetype)) {
           if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
             // 100MB

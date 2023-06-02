@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as express from 'express';
 
 // SAGE3 modules
-import { AssetSchema } from '@sage3/shared/types';
+import { AssetSchema, ExtraVideoType } from '@sage3/shared/types';
 import { getStaticAssetUrl, SAGE3Collection, sageRouter } from '@sage3/backend';
 import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
@@ -130,20 +130,25 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
       const imgWidth = exif['ImageWidth'] || 1280;
       const imgHeight = exif['ImageHeight'] || 720;
       // video file: store width and height in the derived field
+      const extras: ExtraVideoType = {
+        filename: file,
+        url: '/' + getStaticAssetUrl(file),
+        // video size
+        width: imgWidth,
+        height: imgHeight,
+        // save the image aspect ratio
+        aspectRatio: imgWidth / imgHeight,
+        // video metadata
+        duration: exif['Duration'] || '',
+        birate: exif['AvgBitrate'] || '',
+        framerate: exif['VideoFrameRate'] || 0,
+        compressor: exif['CompressorName'] || exif['CompressorID'] || '',
+        audioFormat: exif['AudioFormat'] || '',
+      };
       return {
         dateCreated: realDate.toISOString(),
         metadata: t1.result,
-        derived: {
-          filename: file,
-          url: '/' + getStaticAssetUrl(file),
-          fullSize: '/' + getStaticAssetUrl(file),
-          // video size
-          width: imgWidth,
-          height: imgHeight,
-          // save the image aspect ratio
-          aspectRatio: imgWidth / imgHeight,
-          sizes: [],
-        },
+        derived: extras,
       };
     } else {
       // everything else
