@@ -7,28 +7,23 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Button, useColorMode } from '@chakra-ui/react';
+import { useColorMode } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 import * as echarts from 'echarts';
-import type { EChartsOption } from 'echarts';
 
 // Styling
 import './styling.css';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
-import { ChartManager } from './ChartManager';
-
 /* App component for EChartsViewer */
 
 function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
   const chartRef = useRef<any>(null);
 
-  const updateState = useAppStore((state) => state.updateState);
   const [chartStateInstance, setChartStateInstance] = useState<echarts.ECharts | null>(null);
   const { colorMode } = useColorMode();
 
@@ -45,7 +40,6 @@ function AppComponent(props: App): JSX.Element {
     } else {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
-    console.log(chartInstance);
     chartInstance.resize({
       height: props.data.size.height,
       width: props.data.size.width,

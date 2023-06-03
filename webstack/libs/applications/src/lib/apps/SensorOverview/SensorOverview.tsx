@@ -6,23 +6,19 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, useCursorBoardPosition, useHexColor, useUIStore } from '@sage3/frontend';
-import { Box, HStack, Text, Spinner, useColorModeValue, Wrap, WrapItem } from '@chakra-ui/react';
+import { useAppStore, useUIStore } from '@sage3/frontend';
+import { Box, HStack, Spinner, useColorModeValue, Button, ButtonGroup } from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import GridLayout from 'react-grid-layout';
-
-import ChartLayout from './components/ChartLayout';
 
 // Styling
 import './styling.css';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router';
 import VariableCard from '../HCDP/viewers/VariableCard';
-import CustomizeWidgets from './components/CustomizeWidgets';
-import EChartsViewer from './components/EChartsViewer';
+import EChartsViewer from '../HCDP/viewers/EChartsViewer';
+import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
 
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
@@ -65,10 +61,11 @@ function AppComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
   const [stationMetadata, setStationMetadata] = useState([]);
-  const scale = useUIStore((state) => state.scale);
 
   const bgColor = useColorModeValue('gray.100', 'gray.900');
   const textColor = useColorModeValue('gray.700', 'gray.100');
+
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
@@ -78,7 +75,6 @@ function AppComponent(props: App): JSX.Element {
       if (lastUpdate > 0) {
         const delta = Date.now() - lastUpdate;
         setTimeSinceLastUpdate(formatDuration(delta));
-        console.log(formatDuration(delta));
       }
     };
     updateTimesinceLastUpdate();
@@ -90,29 +86,30 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     const fetchStationData = async () => {
-      const tmpStationMetadata: any = [];
-      for (let i = 0; i < s.stationNames.length; i++) {
-        let url = '';
-        if (props.data.state.widget.visualizationType === 'variableCard') {
-          url = `https://api.mesowest.net/v2/stations/timeseries?STID=${
-            s.stationNames[i]
-          }&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-            new Date()
-          )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-        } else {
-          url = `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationNames[i]}&showemptystations=1&start=${
-            props.data.state.widget.startDate
-          }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-        }
-        const response = await fetch(url);
-        const sensor = await response.json();
-
-        if (sensor) {
-          const sensorData = sensor['STATION'][0];
-          tmpStationMetadata.push(sensorData);
-        }
+      setIsLoaded(false);
+      let tmpStationMetadata: any = [];
+      let url = '';
+      if (props.data.state.widget.visualizationType === 'variableCard') {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+          s.stationNames
+        )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
+          new Date()
+        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      } else {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+          props.data.state.widget.startDate
+        }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
       }
+
+      const response = await fetch(url);
+      const sensor = await response.json();
+      if (sensor) {
+        const sensorData = sensor['STATION'];
+        tmpStationMetadata = sensorData;
+      }
+
       setStationMetadata(tmpStationMetadata);
+      setIsLoaded(true);
       // return tmpStationMetadata;
     };
     fetchStationData().catch((err) => {
@@ -129,22 +126,20 @@ function AppComponent(props: App): JSX.Element {
       //10 minutes
     );
     return () => clearInterval(interval);
-  }, [JSON.stringify(s.stationNames)]);
+  }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
   return (
     <AppWindow app={props}>
       <Box overflowY="auto" bg={bgColor} h="100%">
         {stationMetadata.length > 0 ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg">
-            {/* <Text textAlign="center" fontSize={'4rem'}>
-              TODO: PRINT ALL STATION NAMES
-            </Text> */}
+            <CustomizeWidgets {...props} />
             <HStack>
               <Box>
                 {s.widget.visualizationType === 'variableCard' ? (
                   <VariableCard
                     size={props.data.size}
                     variableName={s.widget.yAxisNames[0]}
-                    state={props}
+                    state={props.data.state}
                     stationNames={s.stationNames}
                     startDate={s.widget.startDate}
                     stationMetadata={stationMetadata}
@@ -154,13 +149,10 @@ function AppComponent(props: App): JSX.Element {
                 ) : (
                   <EChartsViewer
                     stationNames={s.stationNames}
-                    visualizationType={s.widget.visualizationType}
-                    dateStart={''}
-                    dateEnd={''}
+                    isLoaded={isLoaded}
+                    startDate={props.data.state.widget.startDate}
                     timeSinceLastUpdate={timeSinceLastUpdate}
-                    yAxisNames={s.widget.yAxisNames}
-                    xAxisNames={s.widget.xAxisNames}
-                    startDate={s.widget.startDate}
+                    widget={s.widget}
                     size={props.data.size}
                     stationMetadata={stationMetadata}
                   />
@@ -189,19 +181,24 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
-  // const handleDeleteWidget = (widgetIndex: number) => {
-  //   const tmpWidgetsEnabled = [...s.widgetsEnabled];
-  //   tmpWidgetsEnabled.splice(widgetIndex, 1);
-  //   updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
-  // };
+  const handleOpenWidget = () => {
+    updateState(props._id, { isWidgetOpen: true });
+  };
 
-  // const handleAddWidget = (visualizationType: string, yAxisNames: string[], xAxisNames: string[]) => {
-  //   const tmpWidgetsEnabled = [...s.widgetsEnabled];
-  //   tmpWidgetsEnabled.push({ visualizationType: visualizationType, yAxisNames: yAxisNames, xAxisNames: xAxisNames });
-  //   console.log(tmpWidgetsEnabled);
-  //   updateState(props._id, { widgetsEnabled: tmpWidgetsEnabled });
-  // };
-  return <>{/* <CustomizeWidgets props={props} size={props.data.size} widget={s.widget} /> */}</>;
+  return (
+    <>
+      {' '}
+      <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
+        Edit Visualization
+      </Button>
+      {s.widget.visualizationType === 'variableCard' ? (
+        <ButtonGroup size="sm" isAttached variant="outline">
+          {/* <Button >Celcius</Button>
+  <Button >Fahrenheit</Button> */}
+        </ButtonGroup>
+      ) : null}
+    </>
+  );
 }
 
 export default { AppComponent, ToolbarComponent };

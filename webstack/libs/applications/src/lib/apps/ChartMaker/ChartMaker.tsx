@@ -35,7 +35,7 @@ import { useParams } from 'react-router';
 import { Asset } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
 import createPropertyList from './components/createPropertyList';
-import { SensorTypes, stationDataTemplate } from '../HCDP/stationData';
+import { SensorTypes, stationDataTemplate } from '../HCDP/data/stationData';
 
 type NLPRequestResponse = {
   success: boolean;

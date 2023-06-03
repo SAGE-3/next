@@ -30,14 +30,12 @@ import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 
-import Arrow from './Arrow';
-
 // Leaflet plus React
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
 
-import { SensorTypes, stationDataTemplate } from './stationData';
+import { SensorTypes, stationDataTemplate } from './data/stationData';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
@@ -46,7 +44,7 @@ import { useStore } from './LeafletWrapper';
 // Icon imports
 import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
 import { useParams } from 'react-router';
-import CustomizeWidgets from './CustomizeWidgets';
+import CustomizeWidgets from './menu/CustomizeWidgets';
 import { AppWindow } from '@sage3/applications/apps';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
@@ -124,21 +122,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <LeafletWrapper map={map} setMap={setMap} {...props}>
-        <CustomizeWidgets
-          {...props}
-          size={props.data.size}
-          widget={s.widget}
-          assetid={props.data.state.assetid}
-          overlay={props.data.state.overlay}
-          location={props.data.state.location}
-          baseLayer={props.data.state.baseLayer}
-          zoom={props.data.state.zoom}
-          stationNames={s.stationNames}
-          _id={props._id}
-          roomId={props.data.roomId!}
-          boardId={props.data.boardId!}
-          isWidgetOpen={s.isWidgetOpen}
-        />
+        <CustomizeWidgets {...props} />
 
         <Box
           w="20rem"
@@ -378,7 +362,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
       <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
-        Create Widget
+        Create Visualization
       </Button>
     </HStack>
   );

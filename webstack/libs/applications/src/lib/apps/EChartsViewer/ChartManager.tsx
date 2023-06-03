@@ -59,7 +59,6 @@ export const ChartManager = async (
 
   let data = [];
   const stationReadableNames = [];
-
   if (stationMetadata === undefined) {
     for (let i = 0; i < stationNames.length; i++) {
       const response = await fetch(
@@ -70,16 +69,10 @@ export const ChartManager = async (
         )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
       );
       const sensor = await response.json();
-      console.log(sensor);
       const sensorData = sensor['STATION'][0];
       stationReadableNames.push(sensorData.NAME);
       data.push(sensorData);
     }
-    // const response = await fetch(
-    //   `https://api.mesowest.net/v2/stations/timeseries?STID=${stationNames}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-    // );
-    // station = await response.json();
-    // station = station.STATION[0];
   } else {
     data = stationMetadata;
     for (let i = 0; i < stationMetadata.length; i++) {
@@ -119,7 +112,20 @@ export const ChartManager = async (
   options.color = createColors(options, data);
   createXAxis(options, xAxisAttributes, xAxisData, chartType);
   createYAxis(options);
+  createGrid(options);
+
   return options;
+};
+
+const createGrid = (options: EChartsOption) => {
+  options.grid = {
+    left: '5%',
+    right: '5%',
+    bottom: '20%',
+    // Leave enough space at the top for the title and legend
+    top: 100,
+    containLabel: true,
+  };
 };
 
 const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisData: any[], chartType: string) => {
@@ -127,7 +133,7 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
     options.xAxis = {
       axisLabel: {
         fontSize: 25,
-        margin: 20,
+        margin: 25,
       },
       min: 'dataMin',
     };
@@ -142,9 +148,9 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
       },
       axisLabel: {
         fontSize: 30,
-        margin: 20,
+        margin: 25,
       },
-      nameGap: 50,
+      nameGap: 70,
     };
   }
 };
@@ -211,14 +217,6 @@ function createMultiLineChart(
     // Set the legend's position below the title
     top: 70,
     left: 'center',
-  };
-  options.grid = {
-    left: '5%',
-    right: '5%',
-    bottom: '10%',
-    // Leave enough space at the top for the title and legend
-    top: 100,
-    containLabel: true,
   };
 }
 
@@ -343,6 +341,7 @@ function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAtt
       textStyle: {
         fontSize: 40,
       },
+      left: 'center',
     };
   }
 }

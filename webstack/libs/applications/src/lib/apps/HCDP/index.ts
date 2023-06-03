@@ -12,7 +12,7 @@
  */
 
 import { z } from 'zod';
-import { stationDataTemplate } from './stationData';
+import { stationDataTemplate } from './data/stationData';
 
 const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
 export type Baselayer = z.infer<typeof Baselayer>;

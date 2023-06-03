@@ -12,14 +12,16 @@ import { Box, Button, Spinner, useColorMode } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 import { ChartManager } from '../../EChartsViewer/ChartManager';
 import { useAppStore } from '@sage3/frontend';
+import VariableUnits from '../data/VariableUnits';
 import '../styling.css';
 
 const EChartsViewer = (props: {
   stationNames: string[];
-  dateStart: string;
-  dateEnd: string;
+  startDate: string;
   isLoaded: boolean;
   widget: any;
+
+  timeSinceLastUpdate?: string;
   stationMetadata?: any;
   size?: { width: number; height: number; depth: number };
 }) => {
@@ -30,12 +32,6 @@ const EChartsViewer = (props: {
   const [chartOptions, setChartOptions] = useState<echarts.EChartsCoreOption | null>(null);
   // Users SAGE 3 color mode
   const { colorMode } = useColorMode();
-  const [variableNames, setVariableNames] = useState<any>([]);
-
-  // useEffect(() => {
-  //   setVariableNames(Object.keys(props.stationMetadata[0].OBSERVATIONS));
-  // }, []);
-  // console.log(variableNames);
 
   // If the chartRef changes, update the chart instance
   useEffect(() => {
@@ -48,11 +44,10 @@ const EChartsViewer = (props: {
     const chartInstance = echarts.init(chartRef.current, colorMode);
     const width = outboxRef.current.getBoundingClientRect().width;
     const height = outboxRef.current.getBoundingClientRect().height;
-    chartInstance.resize({ width, height });
+    chartInstance.resize({ width: props.size ? props.size.width - 20 : width, height: props.size ? props.size.height - 40 : height });
 
     chartInstance.setOption(chartOptions);
-  }, [chartRef.current, outboxRef.current, colorMode, chartOptions]);
-
+  }, [chartRef.current, outboxRef.current, colorMode, chartOptions, JSON.stringify(props.size)]);
   // Props update
   useEffect(() => {
     async function callToChartMangaer() {
@@ -62,10 +57,11 @@ const EChartsViewer = (props: {
         props.widget.yAxisNames,
         props.widget.xAxisNames,
         colorMode,
-        props.widget.startDate,
+        props.startDate,
 
         props.stationMetadata
       );
+
       setChartOptions(options);
     }
     if (props.isLoaded) {
@@ -73,27 +69,25 @@ const EChartsViewer = (props: {
     }
   }, [JSON.stringify(props.widget), JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode]);
 
-  // useEffect(() => {
-  //   if (!outboxRef.current || !chartRef.current) return;
-  //   const chart = echarts.getInstanceByDom(chartRef.current);
-  //   if (chart) {
-
-  //   }
-  // }, [outboxRef.current, chartRef.current]);
-
   return (
-    <Box w="100%" h="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} ref={outboxRef}>
-      {props.isLoaded ? (
-        <>
-          <div ref={chartRef} />
-        </>
-      ) : (
-        <Box transform={`scale(8) translateY(3px)`}>
-          <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color={'teal'} size="xl" />
-        </Box>
-      )}
-      {/* // <div className="loader" /> */}
-    </Box>
+    <>
+      <Box w="100%" h="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} ref={outboxRef}>
+        {props.timeSinceLastUpdate ? (
+          <Box bg="#222" p="5px" w="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} fontSize={'25px'}>
+            {props.timeSinceLastUpdate}
+          </Box>
+        ) : null}
+        {props.isLoaded ? (
+          <>
+            <div ref={chartRef} />
+          </>
+        ) : (
+          <Box transform={`scale(${4 * Math.min(props.size ? props.size.width / 300 : 0, props.size ? props.size.height / 300 : 0)})`}>
+            <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" size="xl" />
+          </Box>
+        )}
+      </Box>
+    </>
   );
 };
 export default EChartsViewer;

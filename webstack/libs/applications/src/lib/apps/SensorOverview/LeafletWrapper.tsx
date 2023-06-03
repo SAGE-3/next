@@ -22,6 +22,7 @@ import { MapContainer, TileLayer, LayersControl, Marker, Popup } from 'react-lea
 import 'leaflet/dist/leaflet.css';
 
 import create from 'zustand';
+import React from 'react';
 
 // Zustand store to communicate with toolbar
 export const useStore = create((set: any) => ({
