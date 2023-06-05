@@ -6,11 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
 import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useParams } from 'react-router';
 
 // Renders all the apps
 export function Apps() {
@@ -26,7 +27,12 @@ export function Apps() {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false });
 
+  const userCursor = useCursorBoardPosition();
+  const cursorPositionRef = useRef(userCursor);
+  const { roomId, boardId } = useParams();
+
   const { position } = useCursorBoardPosition();
+  const createApp = useAppStore((state) => state.create);
 
   // Fitapps
   const fitApps = useUIStore((state) => state.fitApps);
@@ -126,6 +132,41 @@ export function Apps() {
     },
     { dependencies: [previousLocation.set] }
   );
+
+  useEffect(() => {
+    const handleDrop = (event: any) => {
+      event.preventDefault();
+      const { x, y } = userCursor.uiToBoard(event.pageX, event.pageY);
+      const { id } = event.target;
+      // const cursorPosition = cursorPositionRef.current;
+      const state = JSON.parse(event.dataTransfer.getData('text'));
+      createApp({
+        title: 'SensorOverview',
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: x, y: y, z: 0 },
+        size: { width: 1000, height: 1000, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'SensorOverview',
+        state: state,
+        raised: true,
+      });
+    };
+    // Remove existing event listeners
+    const cleanup = () => {
+      document.removeEventListener('drop', handleDrop);
+    };
+
+    // Add event listener
+    document.addEventListener('drop', handleDrop);
+
+    // Cleanup function
+    return cleanup;
+  }, []);
+
+  useEffect(() => {
+    cursorPositionRef.current = userCursor;
+  }, [userCursor]);
 
   return (
     <>

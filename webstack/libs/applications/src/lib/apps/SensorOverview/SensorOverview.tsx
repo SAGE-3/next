@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { Box, HStack, Spinner, useColorModeValue, Button, ButtonGroup } from '@chakra-ui/react';
 import { App } from '../../schema';
 
@@ -15,7 +15,7 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
-import { useEffect, useState } from 'react';
+import { HtmlHTMLAttributes, useEffect, useRef, useState } from 'react';
 import VariableCard from '../HCDP/viewers/VariableCard';
 import EChartsViewer from '../HCDP/viewers/EChartsViewer';
 import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
@@ -69,7 +69,6 @@ function AppComponent(props: App): JSX.Element {
 
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
-
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
       if (lastUpdate > 0) {
@@ -83,7 +82,6 @@ function AppComponent(props: App): JSX.Element {
     }, 1000 * 30); // 30 seconds
     return () => clearInterval(interval);
   }, [lastUpdate]);
-
   useEffect(() => {
     const fetchStationData = async () => {
       setIsLoaded(false);
@@ -127,6 +125,7 @@ function AppComponent(props: App): JSX.Element {
     );
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
+
   return (
     <AppWindow app={props}>
       <Box overflowY="auto" bg={bgColor} h="100%">

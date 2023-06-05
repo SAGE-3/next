@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Box, Button, Spinner, Text, Wrap, WrapItem, Image } from '@chakra-ui/react';
-import { useUIStore } from '@sage3/frontend';
+import { useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { TbWind } from 'react-icons/tb';
 import VariableUnits from '../data/VariableUnits';
 
@@ -83,6 +83,7 @@ type VariableProps = {
   unit: string;
   startDate: string;
   endDate: string;
+  stationSTIDName: string;
   images: string[];
 };
 
@@ -136,6 +137,7 @@ export default function VariableCard(
           high: Math.max(...sensorValues),
           low: Math.min(...sensorValues),
           unit: unit,
+          stationSTIDName: props.stationMetadata[i].STID,
           startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
           endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
           images: images,
@@ -149,6 +151,7 @@ export default function VariableCard(
           high: 0,
           low: 0,
           unit: unit,
+          stationSTIDName: props.stationMetadata[i].STID,
           startDate: props.startDate,
           endDate: '2022-04-25T19:55:00Z',
           images: images,
@@ -175,22 +178,42 @@ export default function VariableCard(
           alignContent={'center'}
           justifyItems={'center'}
         >
-          {variablesToDisplay.map((variable: VariableProps, index: number) => {
-            return (
-              <Content
-                size={props.size}
-                isLoaded={props.isLoaded}
-                secondaryValuesToDisplay={secondaryValuesToDisplay}
-                variableName={s.widget.yAxisNames[0]}
-                stationNames={props.stationNames}
-                variableToDisplayLength={variablesToDisplay.length}
-                s={s}
-                timeSinceLastUpdate={props.timeSinceLastUpdate}
-                key={index}
-                variable={variable}
-              />
-            );
-          })}
+          {variablesToDisplay.length === 1
+            ? variablesToDisplay.map((variable: VariableProps, index: number) => {
+                return (
+                  <React.Fragment key={index}>
+                    <Content
+                      size={props.size}
+                      isLoaded={props.isLoaded}
+                      secondaryValuesToDisplay={secondaryValuesToDisplay}
+                      variableName={s.widget.yAxisNames[0]}
+                      stationNames={props.stationNames}
+                      variableToDisplayLength={variablesToDisplay.length}
+                      s={s}
+                      timeSinceLastUpdate={props.timeSinceLastUpdate}
+                      key={index}
+                      variable={variable}
+                    />
+                  </React.Fragment>
+                );
+              })
+            : variablesToDisplay.map((variable: VariableProps, index: number) => {
+                return (
+                  <React.Fragment key={index}>
+                    <Content
+                      isLoaded={props.isLoaded}
+                      secondaryValuesToDisplay={secondaryValuesToDisplay}
+                      variableName={s.widget.yAxisNames[0]}
+                      stationNames={props.stationNames}
+                      variableToDisplayLength={variablesToDisplay.length}
+                      s={s}
+                      timeSinceLastUpdate={props.timeSinceLastUpdate}
+                      key={index}
+                      variable={variable}
+                    />
+                  </React.Fragment>
+                );
+              })}
         </Box>
       ) : (
         <Box display="flex" flexDirection={'row'} justifyContent="center" alignContent={'center'} justifyItems={'center'}>
@@ -213,6 +236,7 @@ export default function VariableCard(
                     low: 12,
                     unit: 'unit',
                     startDate: props.startDate,
+                    stationSTIDName: 'HI012',
                     endDate: '2022-04-25T19:55:00Z',
                     images: [],
                   }
@@ -242,6 +266,23 @@ const Content = (props: {
   return (
     <Box
       draggable={true}
+      onDragStart={(e) => {
+        console.log(props.s);
+        e.dataTransfer.clearData();
+        e.dataTransfer.setData(
+          'text/plain',
+          JSON.stringify({
+            sensorData: {},
+            stationNames: [props.variable.stationSTIDName],
+            listOfStationNames: props.variable.stationSTIDName,
+            location: props.s.location,
+            zoom: props.s.zoom,
+            baseLayer: props.s.baseLayer,
+            overlay: props.s.overlay,
+            widget: props.s.widget,
+          })
+        );
+      }}
       p="1rem"
       w={500}
       h={500}
