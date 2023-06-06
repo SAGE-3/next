@@ -71,7 +71,7 @@ async function logout(): Promise<void> {
  * Verify the authentication of the current user.
  * @returns {boolean} returns true if the user if authenticated
  */
-async function verify(): Promise<{ success: boolean; authentication: boolean; auth: SBAuthSchema | null }> {
+async function verify(): Promise<{ success: boolean; authentication: boolean; expire: number; auth: SBAuthSchema | null }> {
   const res = await fetch('/auth/verify', {
     method: 'GET',
     credentials: 'include',
@@ -80,14 +80,15 @@ async function verify(): Promise<{ success: boolean; authentication: boolean; au
       'Content-Type': 'application/json',
     },
   });
-  if (!res.ok) return { success: false, authentication: false, auth: null };
+  if (!res.ok) return { success: false, authentication: false, expire: 0, auth: null };
   return res.json();
 }
 
 type AuthenticatedType = {
   auth: SBAuthSchema | null;
   loading: boolean;
-  verify: () => Promise<{ success: boolean; authentication: boolean; auth: SBAuthSchema | null }>;
+  expire: number;
+  verify: () => Promise<{ success: boolean; authentication: boolean; expire: number; auth: SBAuthSchema | null }>;
   logout: () => Promise<void>;
   googleLogin: () => void;
   ciLogin: () => void;
@@ -103,15 +104,15 @@ export function useAuth() {
 }
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const [auth, setAuth] = useState<AuthenticatedType>({ auth: null, loading: true, verify, logout, googleLogin, ciLogin, guestLogin });
+  const [auth, setAuth] = useState<AuthenticatedType>({ auth: null, loading: true, expire: 0, verify, logout, googleLogin, ciLogin, guestLogin });
 
   useEffect(() => {
     async function fetchAuth() {
       const verifyRes = await verify();
       if (verifyRes.auth) {
-        setAuth({ auth: verifyRes.auth, loading: false, verify, logout, googleLogin, ciLogin, guestLogin });
+        setAuth({ auth: verifyRes.auth, loading: false, expire: verifyRes.expire, verify, logout, googleLogin, ciLogin, guestLogin });
       } else {
-        setAuth({ auth: null, verify, loading: false, logout, googleLogin, ciLogin, guestLogin });
+        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, ciLogin, guestLogin });
       }
     }
 

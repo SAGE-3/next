@@ -13,9 +13,13 @@
  * @version 1.0.0
  */
 
+// Node modules
+import * as fs from 'fs';
+
 // Express web server framework
 import * as express from 'express';
 
+// SAGE3 modules
 import { AssetSchema } from '@sage3/shared/types';
 import { getStaticAssetUrl, SAGE3Collection, sageRouter } from '@sage3/backend';
 import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
@@ -46,6 +50,8 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     this.router().use('/static', express.static(assetFolder));
     // Finish the initialization by adding file processors
     this.setup();
+    // Check the consistency of the collection
+    await this.check();
   }
 
   /**
@@ -65,6 +71,23 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     // A queue for PDF processing
     this.pdfQ = new PDFProcessor(redisUrl, assetFolder);
     console.log('Queue> pdf initialized', this.pdfQ.getName());
+  }
+
+  /**
+   * Checking up the asset DB at startup.
+   */
+  public async check() {
+    const all = await AssetsCollection.getAll();
+    console.log('Assets> count', all?.length);
+    if (all) {
+      for (const asset of all) {
+        const exists = fs.existsSync(asset.data.path);
+        if (!exists) {
+          console.log('Assets> not present, deleting from DB', asset._id, asset.data.originalfilename);
+          await AssetsCollection.delete(asset._id);
+        }
+      }
+    }
   }
 
   /**

@@ -14,6 +14,7 @@ type useBoardUtils = {
   alignSelectedApps: (align: string, lassoApps: string[]) => void;
   groupByTopic: (boardId: string, lassoApps: string[]) => void; // Stickies for now
   organizeApps: (boardId: string, by: 'app_type' | 'app_id', mode: 'tiles' | 'grid', lassoApps?: string[]) => void;
+  smartAlign: (boardId: string, alignType: 'left' | 'right' | 'top' | 'bottom' | 'stack', lassoApps: string[]) => void;
 };
 
 export function useBoardUtils(): useBoardUtils {
@@ -259,11 +260,33 @@ export function useBoardUtils(): useBoardUtils {
     });
   }
 
+  /**
+   * Organize the apps
+   *
+   * @param boardId  board id
+   * @param alignType  'left' | 'right' | 'top' | 'bottom' | 'stack'
+   * @param lassoApps  list of app ids
+   * @returns  void
+   */
+  function smartAlign(boardId: string, alignType: 'left' | 'right' | 'top' | 'bottom' | 'stack', lassoApps: string[]) {
+    // Trigger the smart function
+    updateBoard(boardId, {
+      executeInfo: {
+        executeFunc: 'align_selected_apps',
+        params: {
+          selected_apps: lassoApps,
+          align_type: alignType,
+        },
+      },
+    });
+  }
+
   return {
     assignColor,
     assignKernel,
     alignSelectedApps,
     groupByTopic,
     organizeApps,
+    smartAlign,
   };
 }

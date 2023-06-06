@@ -24,7 +24,7 @@ from smartbits.genericsmartbit import GenericSmartBit
 from utils.sage_websocket import SageWebsocket
 from json_templates.templates import create_app_template
 
-from alignment_stratgies import *
+from alignment_strategies import *
 
 class PySage3:
 
@@ -34,7 +34,6 @@ class PySage3:
         self.done_init = False
         self.conf = conf
         self.prod_type = prod_type
-        # self.__headers = {'Authorization': f"Bearer {os.getenv('TOKEN')}"}
         self.__MSG_METHODS = {
             "CREATE": self.__handle_create,
             "UPDATE": self.__handle_update,
@@ -133,16 +132,6 @@ class PySage3:
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
         print("Delete not yet supported through API")
-
-    # def get_apps(self, room_id=None, board_id=None, type=None):
-    #     if room_id is None or board_id is None:
-    #         print("listing apps requires  room and board ids")
-    #         return
-    #     if type is not None:
-    #         return {x[0]: x[1] for x in self.rooms[room_id].boards[board_id].smartbits if x[1].data.type == type}
-    #     else:
-    #         return {x[0]: x[1] for x in self.rooms[room_id].boards[board_id].smartbits}
-
 
     def __process_messages(self, ws, msg):
         message = json.loads(msg)
@@ -266,47 +255,30 @@ class PySage3:
             setattr(app.state, k, v)
         app.send_updates()
 
-    def set_room(self, room_id):
-        if room_id in self.rooms:
-            self.room = room_id
-        else:
-            print(f"Room {room_id} not found")
+    # def set_room(self, room_id):
+    #     if room_id in self.rooms:
+    #         self.room = room_id
+    #     else:
+    #         print(f"Room {room_id} not found")
 
-    def set_board(self, board_id):
-        if self.room is None:
-            print("Please set current room first")
-            return
-        room_id = self.room
-        if board_id in self.rooms[room_id].boards:
-            self.board = board_id
-        else:
-            print(f"Board {board_id} not found")
+    # def set_board(self, board_id):
+    #     if self.room is None:
+    #         print("Please set current room first")
+    #         return
+    #     room_id = self.room
+    #     if board_id in self.rooms[room_id].boards:
+    #         self.board = board_id
+    #     else:
+    #         print(f"Board {board_id} not found")
 
-    def get_current_room(self):
-        return self.room
+    # def get_current_room(self):
+    #     return self.room
 
-    def get_current_board(self):
-        return self.board
+    # def get_current_board(self):
+    #     return self.board
 
-    def get_apps(self, room_id: str = None, board_id: str = None) -> List[dict]:
-        if room_id is None and board_id is None:
-            print("Please provide a room id or a board id")
-            return
-        if room_id and board_id:
-            print("Please provide either a room id or a board id, not both")
-            return
-        apps = self.s3_comm.get_apps()
-        if room_id is not None:
-            return [app for app in apps if app['data']['roomId'] == room_id]
-        if board_id is not None:
-            return [app for app in apps if app['data']['boardId'] == board_id]
-        return apps
-
-    def get_apps_by_type(self, app_type: str = None, room_id: str = None, board_id: str = None) -> List[dict]:
-        apps = self.get_apps(room_id, board_id)
-        if app_type is None:
-            print("Please provide an app type to filter by")
-        return [app for app in apps if app['data']['type'] == app_type]
+    def get_apps(self):
+        return self.s3_comm.get_apps()
 
     def get_apps_by_room(self, room_id: str = None) -> List[dict]:
         if room_id is None:
@@ -318,31 +290,21 @@ class PySage3:
             print("Please provide a board id to filter by")
         return self.get_apps(board_id=board_id)
 
-    def get_apps_by_ids(self, room_id: str = None, board_id: str = None, app_ids: List[str] = None) -> List[dict]:
-        apps = self.get_apps(room_id, board_id)
-        return [app for app in apps if app['_id'] in app_ids]
-
-    def get_smartbit_by_id(self, app_id: str, room_id: str = None, board_id: str = None) -> dict:
+    def get_smartbits(self, room_id: str=None, board_id: str=None) -> dict:
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
             return
-        smartbits = self.get_smartbits(room_id, board_id)
-        return smartbits[app_id]
+        smartbits = self.rooms.get(room_id).boards.get(board_id).smartbits
+        return smartbits
 
-    def get_smartbits(self, room_id: str = None, board_id: str = None) -> dict:
-        if room_id is None or board_id is None:
-            print("Please provide a room id and a board id")
-            return
-        return self.rooms[room_id].boards[board_id].smartbits.smartbits_collection
-
-    def get_smartbits_by_ids(self, app_ids: list, room_id: str = None, board_id: str = None) -> list:
-        if room_id is None or board_id is None:
-            print("Please provide a room id and a board id")
-            return
-        if app_ids is None:
-            print("Please provide a list of app ids to filter by")
-        smartbits = self.get_smartbits(room_id, board_id)
-        return [smartbits[app_id] for app_id in app_ids]
+    # def get_smartbits_by_ids(self, app_ids: list, room_id: str = None, board_id: str = None) -> list:
+    #     if room_id is None or board_id is None:
+    #         print("Please provide a room id and a board id")
+    #         return
+    #     if app_ids is None:
+    #         print("Please provide a list of app ids to filter by")
+    #     smartbits = self.get_smartbits(room_id, board_id)
+    #     return [smartbits[app_id] for app_id in app_ids]
 
     def get_smartbits_by_type(self, app_type: str, room_id: str = None, board_id: str = None) -> list:
         if room_id is None or board_id is None:
@@ -353,25 +315,24 @@ class PySage3:
         smartbits = self.get_smartbits(room_id, board_id)
         return [v for k, v in smartbits.items() if v.data.type == 'Stickie']
 
-    def sort_apps_by_creation_date(self, apps: list = None) -> dict:
-        if apps is None:
-            apps = self.get_apps()
-        apps = sorted(apps, key=lambda x: x['_createdAt'], reverse=False)
-        return apps
+    # def sort_apps_by_creation_date(self, apps: list = None) -> dict:
+    #     if apps is None:
+    #         apps = self.get_apps()
+    #     apps = sorted(apps, key=lambda x: x['_createdAt'], reverse=False)
+    #     return apps
 
-    def sort_apps_by_type(self, apps: list = None) -> dict:
-        if apps is None:
-            apps = self.get_apps()
-        apps = sorted(apps, key=lambda x: x['data']['type'], reverse=False)
-        return apps
+    # def sort_apps_by_type(self, apps: list = None) -> dict:
+    #     if apps is None:
+    #         apps = self.get_apps()
+    #     apps = sorted(apps, key=lambda x: x['data']['type'], reverse=False)
+    #     return apps
 
-    def sort_apps_by_size(self, apps: list = None) -> dict:
-        if apps is None:
-            apps = self.get_apps()
-        apps = sorted(apps, key=lambda x: x['data']['size']['width'], reverse=False)
-        apps = sorted(apps, key=lambda x: x['data']['size']['height'], reverse=False)
-        return apps
-
+    # def sort_apps_by_size(self, apps: list = None) -> dict:
+    #     if apps is None:
+    #         apps = self.get_apps()
+    #     apps = sorted(apps, key=lambda x: x['data']['size']['width'], reverse=False)
+    #     apps = sorted(apps, key=lambda x: x['data']['size']['height'], reverse=False)
+    #     return apps
 
     def get_types_count(self, apps: list = None) -> dict:
         """
@@ -403,13 +364,8 @@ class PySage3:
 
         by_dim = kwargs.get("by_dim", 1) # number of rows or columns to use
 
-
-
         if smartbits is None:
             return
-
-        # left_x, right_x, top_y, bottom_y = self.get_app_geometry(smartbits)
-        # center_x, center_y = (left_x + (right_x - left_x) / 2, top_y + (bottom_y - top_y) / 2)
 
         if align == 'left':
             align_to_left(smartbits)
@@ -423,10 +379,6 @@ class PySage3:
             align_by_col(smartbits, num_cols=by_dim)
         elif 'row' in align:
             align_by_row(smartbits, num_rows=by_dim)
-        # elif align == 'col-center':
-        #     self.align_col_center(smartbits)
-        # elif align == 'row-center':
-        #     self.align_row_center()
         elif align == 'stack':
             align_stack(smartbits)
 

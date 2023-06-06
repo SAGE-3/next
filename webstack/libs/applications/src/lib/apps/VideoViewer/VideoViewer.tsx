@@ -6,7 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useParams } from 'react-router';
 import { Box, Button, ButtonGroup, Tooltip, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack } from '@chakra-ui/react';
 import {
   MdAccessTime,
@@ -18,20 +19,20 @@ import {
   MdLoop,
   MdPause,
   MdPlayArrow,
-  MdSync,
   MdVolumeOff,
   MdVolumeUp,
+  MdScreenshotMonitor,
 } from 'react-icons/md';
 // Time functions
 import { format as formatTime } from 'date-fns';
 
 import { Asset, ExtraImageType } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, useUser, downloadFile, useUIStore, usePresenceStore, useHexColor } from '@sage3/frontend';
+import { useAppStore, useAssetStore, downloadFile, useHexColor } from '@sage3/frontend';
 
-import { App } from '../../schema';
+import { App, AppSchema } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import create from 'zustand';
+import { initialValues } from '../../initialValues';
 
 /**
  * Return a string for a duration
@@ -45,18 +46,21 @@ function getDurationString(n: number): string {
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
+  // Navigation and routing
+  const { roomId, boardId } = useParams();
+  // App store
   const update = useAppStore((state) => state.update);
+  const createApp = useAppStore((state) => state.create);
   // Assets
   const [url, setUrl] = useState<string>();
   const [file, setFile] = useState<Asset>();
   const assets = useAssetStore((state) => state.assets);
-
   // Aspect Ratio
   const [aspectRatio, setAspecRatio] = useState(16 / 9);
-
   // Html Ref
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Div around the pages to capture events
+  const divRef = useRef<HTMLDivElement>(null);
 
   // Get Asset from store
   useEffect(() => {
@@ -107,6 +111,64 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.loop, videoRef]);
 
+  // Event handler
+  const handleUserKeyPress = useCallback(
+    async (evt: KeyboardEvent) => {
+      evt.stopPropagation();
+      switch (evt.code) {
+        case 'KeyD': {
+          // Trigger a download
+          if (file) {
+            const filename = file.data.originalfilename;
+            const extras = file.data.derived as ExtraImageType;
+            const video_url = extras.url;
+            downloadFile(video_url, filename);
+          }
+          break;
+        }
+        case 'KeyC': {
+          // Capture a screenshot
+          if (videoRef.current) {
+            const setup = await captureFrame(videoRef.current);
+            if (setup && roomId && boardId) {
+              createApp({
+                ...setup,
+                roomId: roomId,
+                boardId: boardId,
+                position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+                size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+              } as AppSchema);
+            }
+          }
+          break;
+        }
+      }
+    },
+    [s, file, props.data.position]
+  );
+
+  // Attach/detach event handler from the div
+  useEffect(() => {
+    const div = divRef.current;
+    if (div) {
+      div.addEventListener('keydown', handleUserKeyPress);
+      div.addEventListener('mouseleave', () => {
+        console.log('leave')
+        // remove focus onto div
+        div.blur();
+      });
+      div.addEventListener('mouseenter', () => {
+        console.log('enter')
+        // Focus on the div for keyboard events
+        div.focus({ preventScroll: true });
+      });
+    }
+    return () => {
+      if (div) div.removeEventListener('keydown', handleUserKeyPress);
+    };
+  }, [divRef, handleUserKeyPress]);
+
+
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div
@@ -117,6 +179,9 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
           borderRadius: '0 0 6px 6px',
         }}
+        // setting for keyboard handler
+        ref={divRef}
+        tabIndex={1}
       >
         <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true}></video>
       </div>
@@ -126,9 +191,12 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  // Navigation and routing
+  const { roomId, boardId } = useParams();
 
   // Appstore
   const updateState = useAppStore((state) => state.updateState);
+  const createApp = useAppStore((state) => state.create);
 
   // Stores
   const assets = useAssetStore((state) => state.assets);
@@ -145,17 +213,17 @@ function ToolbarComponent(props: App): JSX.Element {
   const teal = useHexColor('teal');
 
   useEffect(() => {
-    let interval: NodeJS.Timer | null = null;
+    let interval: number | null = null;
     const obtainVideoRef = () => {
       const video = document.getElementById(`${props._id}-video`) as HTMLVideoElement;
       if (video) {
         setVideoRef(video);
-        if (interval) clearInterval(interval);
+        if (interval) window.clearInterval(interval);
       }
     };
-    interval = setInterval(obtainVideoRef, 500);
+    interval = window.setInterval(obtainVideoRef, 500);
     return () => {
-      if (interval) clearInterval(interval);
+      if (interval) window.clearInterval(interval);
     };
   }, []);
 
@@ -228,6 +296,41 @@ function ToolbarComponent(props: App): JSX.Element {
       const extras = file.data.derived as ExtraImageType;
       const video_url = extras.url;
       downloadFile(video_url, filename);
+    }
+  };
+
+
+  // Screenshot the video and open an image viewer
+  const handleScreenshot = async () => {
+    if (videoRef) {
+      if (s.paused) {
+        // Just capture now
+        const setup = await captureFrame(videoRef);
+        if (setup && roomId && boardId) {
+          createApp({
+            ...setup,
+            roomId: roomId,
+            boardId: boardId,
+            position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+            size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+          } as AppSchema);
+        }
+      } else {
+        // Next frame, then capture
+        videoRef.requestVideoFrameCallback(async () => {
+          // params to requestVideoFrameCallback: (now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata)
+          const setup = await captureFrame(videoRef);
+          if (setup && roomId && boardId) {
+            createApp({
+              ...setup,
+              roomId: roomId,
+              boardId: boardId,
+              position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+              size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+            } as AppSchema);
+          }
+        });
+      }
     }
   };
 
@@ -313,6 +416,7 @@ function ToolbarComponent(props: App): JSX.Element {
             onChange={seekChangeHandle}
             onChangeStart={seekStartHandle}
             onChangeEnd={seekEndHandle}
+            focusThumbOnChange={false}
           >
             <SliderTrack bg={'gray.200'}>
               <SliderFilledTrack bg={teal} />
@@ -354,6 +458,11 @@ function ToolbarComponent(props: App): JSX.Element {
                 <MdFileDownload />
               </Button>
             </Tooltip>
+            <Tooltip placement="top-start" hasArrow={true} label={'Screenshot'} openDelay={400}>
+              <Button onClick={handleScreenshot} isDisabled={!videoRef}>
+                <MdScreenshotMonitor />
+              </Button>
+            </Tooltip>
           </ButtonGroup>
         </>
       )}
@@ -362,3 +471,36 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 export default { AppComponent, ToolbarComponent };
+
+
+/**
+ * Draw a video into a canvas and return the image
+ * @param video: HTMLVideoElement
+ * @returns a Partial of AppSchema for an ImageViewer or null
+ */
+async function captureFrame(video: HTMLVideoElement) {
+  if (video) {
+    // Create a canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      // Draw the video into the canvas
+      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+      // Get the image from the canvas
+      const image = await canvas.toDataURL('image/png');
+      canvas.remove();
+      // Return app setup
+      const init = { assetid: image };
+      return {
+        title: 'Screenshot',
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'ImageViewer',
+        state: { ...(initialValues['ImageViewer'] as AppState), ...init },
+        raised: false,
+      };
+    }
+  }
+  return null;
+}

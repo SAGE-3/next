@@ -1,6 +1,7 @@
 from smartbits.smartbit import SmartBit
 from typing import List
 
+
 def get_app_geometry(smartbits: List[SmartBit] = None):
     """function to get the left_x, right_x, """
     left_x = min([smartbit.data.position.x for smartbit in smartbits])

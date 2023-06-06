@@ -9,8 +9,8 @@ import json
 
 from smartbitcollection import SmartBitsCollection
 from utils.layout import Layout
-import numpy as np
 from celery_tasks import CeleryTaskQueue
+from alignment_strategies import *
 
 BOARD_COLORS = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink']
 
@@ -112,10 +112,6 @@ class Board:
             sb.send_updates()
 
 
-
-
-
-
     def group_by_topic(self,
                        viewport_position: dict,
                        viewport_size: dict,
@@ -139,3 +135,42 @@ class Board:
 
             # TODO: call the clustering algorithm
 
+
+    def align_selected_apps(self, selected_apps: List[str], align_type: str = None) -> None:
+        """
+        Aligns the apps in the list according to the given align_type
+
+        :param apps: list of apps to be aligned
+        :param align_type: type of alignment. Possible values: left, right, top, bottom
+        :return: list of apps aligned
+        """
+        # sort smartbits by the word in parentheses in the state.text field
+        smartbits = [self.smartbits[app_id] for app_id in selected_apps]
+        # print(f"smartbits is {smartbits}")
+
+        if smartbits is None or len(smartbits) == 0 or align_type is None:
+            return
+
+        by_dim = 1
+
+        if align_type == 'left':
+            align_to_left(smartbits)
+        elif align_type == 'right':
+            align_to_right(smartbits)
+        elif align_type == 'top':
+            align_to_top(smartbits)
+        elif align_type == 'bottom':
+            align_to_bottom(smartbits)
+        elif 'column' in align_type:
+            align_by_col(smartbits, num_cols=by_dim)
+        elif 'row' in align_type:
+            align_by_row(smartbits, num_rows=by_dim)
+        elif align_type == 'stack':
+            align_stack(smartbits)
+
+    def clean_up(self):
+        print("cleaning up client resources")
+        for room_id in self.rooms.keys():
+            for board_id in self.rooms[room_id].boards.keys():
+                for app_info in self.rooms[room_id].boards[board_id].smartbits:
+                    app_info[1].clean_up()
