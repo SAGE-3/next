@@ -101,6 +101,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             type: 'Webview',
             state: { webviewurl: final_url },
             raised: true,
+            dragging: false,
           });
         } else if (pastedText.startsWith('sage3://')) {
           // Create a board link app
@@ -114,6 +115,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             type: 'BoardLink',
             state: { url: pastedText },
             raised: true,
+            dragging: false,
           });
         } else {
           // Create a new stickie
@@ -127,6 +129,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             type: 'Stickie',
             state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
             raised: true,
+            dragging: false,
           });
         }
       }

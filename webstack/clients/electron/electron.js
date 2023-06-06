@@ -47,7 +47,7 @@ const { buildMenu } = require('./src/menuBuilder');
 // Store
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
-const bookmarkStore = require('./src/bookmarkStore');
+const bookmarkStore = require('./src/bookmarkstore');
 
 // Analytics
 var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
@@ -492,8 +492,8 @@ function createWindow() {
       if (state === 'completed') {
         // Send a message to the renderer process to show a notification
         mainWindow.webContents.send('download', {
-          filename: evt.sender.getFilename(),
-          bytes: evt.sender.getTotalBytes(),
+          filename: item.getFilename(),
+          bytes: item.getTotalBytes(),
           completed: true,
         });
       } else {
@@ -633,11 +633,21 @@ function createWindow() {
     //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36';
   });
 
-  // Probably not used anymore
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
-      contents.on('new-window', function (newWindowEvent, url) {
-        newWindowEvent.preventDefault();
+      // OLD API
+      // contents.on('new-window', function (newWindowEvent, url) {
+      //   console.log('Webview> New window', url);
+      //   newWindowEvent.preventDefault();
+      // });
+
+      // NEW API
+      contents.on('dom-ready', () => {
+        // Block creating new windows from webviews
+        // TODO: tell the renderer to create another webview
+        contents.setWindowOpenHandler((details) => {
+          return { action: 'deny' };
+        });
       });
 
       // Block automatic download from webviews

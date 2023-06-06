@@ -58,6 +58,9 @@ export function HomePage() {
 
   // Subscribe to user updates
   useEffect(() => {
+    // Update the document title
+    document.title = 'SAGE3 - Rooms and Boards';
+
     subscribeToPresence();
     subscribeToUsers();
     subToRooms();

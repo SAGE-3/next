@@ -1,6 +1,6 @@
 {
   "name": "SAGE3",
-  "version": "1.0.0-beta.20",
+  "version": "1.0.0-beta.31",
   "description": "Electron-based SAGE3 client",
   "main": "electron.js",
   "repository": {
@@ -17,7 +17,7 @@
     "uuid": "8.3.0"
   },
   "devDependencies": {
-    "electron": "24.1.2",
+    "electron": "^25.0.1",
     "electron-notarize": "^1",
     "electron-packager": "latest"
   },

@@ -125,6 +125,7 @@ function ToolbarComponent(props: App): JSX.Element {
         spec: s.spec,
       },
       raised: true,
+      dragging: false,
     });
   };
 
