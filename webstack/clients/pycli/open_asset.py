@@ -73,7 +73,7 @@ async def listAssets():
 
 
 async def createApp(data):
-    """List boards"""
+    """Create an app"""
     head = {"Authorization": "Bearer {}".format(token)}
     r = requests.post(web_server + "/api/apps", headers=head, json=data)
     return r.json()
@@ -122,7 +122,7 @@ async def main():
                         "raised": True,
                     }
                 )
-                print("App>", app)
+                print("App> result", app)
 
 
 if __name__ == "__main__":
