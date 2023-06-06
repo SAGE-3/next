@@ -121,6 +121,7 @@ class Seer(SmartBit):
                 if "code" in json_resp:
 
                     self.state.code = json_resp["code"]
+                    print(f"The code I received is: {self.state.code}")
                     # we need to send the updates immediatley, otherwise, the code will be executed before the updates
                     self.send_updates()
                     self.execute(_uuid)

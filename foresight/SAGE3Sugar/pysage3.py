@@ -399,7 +399,7 @@ class PySage3:
         :return: list of apps aligned
         """
         # sort smartbits by the word in parentheses in the state.text field
-        smartbits = sorted(smartbits, key=lambda sb: (sb.state.text.split('(')[1].split(')')[0]))
+        # smartbits = sorted(smartbits, key=lambda sb: (sb.state.text.split('(')[1].split(')')[0]))
 
         by_dim = kwargs.get("by_dim", 1) # number of rows or columns to use
 

@@ -13,15 +13,16 @@ prod_type = os.getenv('ENVIRONMENT')
 if prod_type is None:
     raise Exception("Cannot find ENVIRONMENT env. variable. Exported?")
 
-if prod_type == 'development' and not os.getenv('SAGE3_SERVER'):
+
+if prod_type == 'backend':
+    server = "host.docker.internal"
+elif prod_type == 'development' and not os.getenv('SAGE3_SERVER'):
     server = "localhost"
 elif prod_type == 'production' and not os.getenv('SAGE3_SERVER'):
     server = "host.docker.internal"
 else:
     server = os.getenv('SAGE3_SERVER')
 
-if prod_type == 'backend':
-    server = "host.docker.internal"
 
 config = {
     "production": {
