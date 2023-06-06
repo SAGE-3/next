@@ -338,18 +338,18 @@ const CustomizeWidgets = React.memo((props: App) => {
                   {!isLoaded
                     ? props.data.state.stationNames.map((stationName: string, index: number) => {
                         return (
-                          <Box p="1rem" key={index}>
+                          <Box p="1rem" key={index} bg={index % 2 == 1 ? '#393E46' : '#42474E'}>
                             Loading Station...
                           </Box>
                         );
                       })
                     : stationMetadata.map((station: any, index: number) => {
                         return (
-                          <Box key={index}>
+                          <Box key={index} bg={index % 2 == 1 ? '#393E46' : '#42474E'}>
                             <AccordionItem>
                               <h2>
                                 <AccordionButton>
-                                  <Box as="span" flex="1" textAlign="left">
+                                  <Box as="span" flex="1" textAlign="left" ml={'15px'}>
                                     {station.NAME}
                                   </Box>
                                   <AccordionIcon />
@@ -359,7 +359,7 @@ const CustomizeWidgets = React.memo((props: App) => {
                                 <UnorderedList>
                                   {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
                                     return (
-                                      <Tooltip key={index} label="Information on the attribute" aria-label="A tooltip">
+                                      <Tooltip key={index} label="Information on the attribute" openDelay={300} aria-label="A tooltip">
                                         <ListItem key={index}>{name}</ListItem>
                                       </Tooltip>
                                     );
@@ -615,7 +615,7 @@ const CustomizeWidgets = React.memo((props: App) => {
                 flexDirection={'column'}
                 alignContent={'center'}
               >
-                <Box bg="gray.800" p="1rem">
+                <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
                   <Heading size="md">Preview</Heading>
                 </Box>
                 <Box color={textColor} height="100%" width="100%" justifyContent={'center'}>

@@ -12,6 +12,7 @@ import { Box, Button, Spinner, Text, Wrap, WrapItem, Image } from '@chakra-ui/re
 import { useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { TbWind } from 'react-icons/tb';
 import VariableUnits from '../data/VariableUnits';
+import { stationColors, getRandomColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
 
@@ -57,6 +58,7 @@ function compareWithStandardDeviation(average: number, standardDeviation: number
 }
 
 function lightenColor(hexColor: string) {
+  console.log(hexColor, '****');
   // Parse the hexadecimal color string to RGB values
   let r = parseInt(hexColor.substr(1, 2), 16);
   let g = parseInt(hexColor.substr(3, 2), 16);
@@ -83,6 +85,7 @@ type VariableProps = {
   unit: string;
   startDate: string;
   endDate: string;
+  color: string;
   stationSTIDName: string;
   images: string[];
 };
@@ -128,6 +131,15 @@ export default function VariableCard(
           images = VariableUnits[i].images;
         }
       }
+      const stationIndex = stationColors.findIndex((station) => station.stationName === props.stationMetadata[i].NAME);
+      let color = '';
+      if (stationIndex === -1) {
+        color = getRandomColor();
+        stationColors.push({ stationName: props.stationMetadata[i].NAME, color });
+      } else {
+        color = stationColors[stationIndex].color;
+      }
+      console.log(color);
       if (sensorValues.length !== 0) {
         values.push({
           stationName: props.stationMetadata[i].NAME,
@@ -137,6 +149,7 @@ export default function VariableCard(
           high: Math.max(...sensorValues),
           low: Math.min(...sensorValues),
           unit: unit,
+          color: color,
           stationSTIDName: props.stationMetadata[i].STID,
           startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
           endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
@@ -151,6 +164,7 @@ export default function VariableCard(
           high: 0,
           low: 0,
           unit: unit,
+          color: color,
           stationSTIDName: props.stationMetadata[i].STID,
           startDate: props.startDate,
           endDate: '2022-04-25T19:55:00Z',
@@ -166,6 +180,7 @@ export default function VariableCard(
     }
     setVariablesToDisplay(values);
   }, [props.stationMetadata, JSON.stringify(props.state.widget)]);
+
   return (
     <>
       {props.size ? (
@@ -235,6 +250,7 @@ export default function VariableCard(
                     high: 82,
                     low: 12,
                     unit: 'unit',
+                    color: '#fff321',
                     startDate: props.startDate,
                     stationSTIDName: 'HI012',
                     endDate: '2022-04-25T19:55:00Z',
@@ -283,12 +299,13 @@ const Content = (props: {
           })
         );
       }}
+      boxShadow={'lg'}
       p="1rem"
       w={500}
       h={500}
       border="solid white 6px"
       borderRadius={'24px'}
-      style={{ background: `linear-gradient(180deg, ${lightenColor(props.s.widget.color)}, ${props.s.widget.color})` }}
+      style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
       display="flex"
       margin="1rem"
       flexDirection="column"

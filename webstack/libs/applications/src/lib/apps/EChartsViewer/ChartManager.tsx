@@ -20,9 +20,9 @@ type seriesType = {
   data: any[];
 };
 
-const stationColors: { stationName: string; color: string }[] = [];
+export const stationColors: { stationName: string; color: string }[] = [];
 
-const getRandomColor = () => {
+export const getRandomColor = () => {
   // Generate random values for red, green, and blue between 150 and 255
   const red = Math.floor(Math.random() * 156) + 100;
   const green = Math.floor(Math.random() * 156) + 100;
