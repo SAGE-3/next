@@ -24,6 +24,8 @@ export type { JWTPayload } from './adapters';
 import {
   passportGoogleSetup,
   SBAuthGoogleConfig,
+  passportAppleSetup,
+  SBAuthAppleConfig,
   passportJWTSetup,
   SBAuthJWTConfig,
   passportGuestSetup,
@@ -35,8 +37,9 @@ import {
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'cilogon' | 'guest' | 'jwt')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt')[];
   googleConfig?: SBAuthGoogleConfig;
+  appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
@@ -98,6 +101,17 @@ export class SBAuth {
             passport.authenticate('google', { prompt: 'select_account', scope: ['profile', 'email'] })
           );
           express.get(config.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
+        }
+      }
+
+      // Apple Setup
+      if (config.strategies.includes('apple') && config.appleConfig) {
+        if (passportAppleSetup(config.appleConfig)) {
+          express.get(
+            config.appleConfig.routeEndpoint,
+            passport.authenticate('apple', { prompt: 'select_account', scope: ['profile', 'email'] })
+          );
+          express.get(config.appleConfig.callbackURL, passport.authenticate('apple', { successRedirect: '/', failureRedirect: '/' }));
         }
       }
 
