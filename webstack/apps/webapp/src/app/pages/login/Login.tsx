@@ -11,7 +11,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack, useColorModeValue } from '@chakra-ui/react';
 
 import { FcGoogle } from 'react-icons/fc';
-import { FaGhost } from 'react-icons/fa';
+import { FaGhost, FaApple } from 'react-icons/fa';
 
 import { isElectron, useAuth, useRouteNav } from '@sage3/frontend';
 import { GetServerInfo } from '@sage3/frontend';
@@ -20,7 +20,7 @@ import { GetServerInfo } from '@sage3/frontend';
 import cilogonLogo from '../../../assets/cilogon.png';
 
 export function LoginPage() {
-  const { auth, googleLogin, ciLogin, guestLogin } = useAuth();
+  const { auth, googleLogin, appleLogin, ciLogin, guestLogin } = useAuth();
   const { toHome } = useRouteNav();
   // Server name and list
   const [serverName, setServerName] = useState<string>('');
@@ -121,6 +121,21 @@ export function LoginPage() {
             />
             <Button width="100%" isDisabled={shouldDisable || !logins.includes('google')} justifyContent="left" onClick={googleLogin}>
               Login with Google
+            </Button>
+          </ButtonGroup>
+
+          {/* Apple Auth Service */}
+          <ButtonGroup isAttached size="lg" width="100%">
+            <IconButton
+              width="80px"
+              aria-label="Login with Apple"
+              icon={<FaApple size="30" width="50px" />}
+              pointerEvents="none"
+              borderRight={`3px solid`}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
+            />
+            <Button width="100%" isDisabled={shouldDisable || !logins.includes('apple')} justifyContent="left" onClick={appleLogin}>
+              Login with Apple
             </Button>
           </ButtonGroup>
 
