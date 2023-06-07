@@ -107,11 +107,8 @@ export class SBAuth {
       // Apple Setup
       if (config.strategies.includes('apple') && config.appleConfig) {
         if (passportAppleSetup(config.appleConfig)) {
-          express.get(
-            config.appleConfig.routeEndpoint,
-            passport.authenticate('apple', { prompt: 'select_account', scope: ['profile', 'email'] })
-          );
-          express.get(config.appleConfig.callbackURL, passport.authenticate('apple', { successRedirect: '/', failureRedirect: '/' }));
+          express.get(config.appleConfig.routeEndpoint, passport.authenticate('apple'));
+          express.post(config.appleConfig.callbackURL, passport.authenticate('apple', { successRedirect: '/', failureRedirect: '/' }));
         }
       }
 

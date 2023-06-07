@@ -7,6 +7,8 @@
  */
 
 import * as passport from 'passport';
+import * as jwt from 'jsonwebtoken';
+// @ts-ignore
 import * as AppleStrategy from 'passport-apple';
 
 import { SBAuthDB } from '../SBAuthDatabase';
@@ -20,14 +22,6 @@ export type SBAuthAppleConfig = {
   privateKeyLocation: string;
 };
 
-/*
-   client_id: string;
-    team_id: string;
-    redirect_uri: string;
-    key_id: string;
-    scope: string;
-*/
-
 /**
  * Setup function of the Google Passport Strategy.
  * @param router The express router
@@ -35,38 +29,40 @@ export type SBAuthAppleConfig = {
 export function passportAppleSetup(config: SBAuthAppleConfig): boolean {
   try {
     passport.use(
-      'apple',
       // @ts-ignore
       new AppleStrategy(
         {
-          authorizationURL: config.routeEndpoint,
           clientID: config.clientID,
           teamID: config.teamID,
           keyID: config.keyID,
+          callbackURL: config.callbackURL,
+          routeEndpoint: config.routeEndpoint,
           privateKeyLocation: config.privateKeyLocation,
-          scope: 'email name',
           passReqToCallback: true,
+          scope: 'email name',
         },
-        async (
-          req: any,
-          accessToken: string,
-          refreshToken: string,
-          decodedIdToken: AppleStrategy.DecodedIdToken,
-          profile: AppleStrategy.Profile,
-          verified: AppleStrategy.VerifyCallback
-        ) => {
-          console.log('Apple Login> profile', profile);
-          const displayName = profile.displayName;
-          const email = profile.emails ? profile.emails[0].value : '';
-          const picture = profile.photos ? profile.photos[0].value : '';
-          const extras = {
-            displayName: displayName ?? '',
-            email: email ?? '',
-            picture: picture ?? '',
-          };
-          const authRecord = await SBAuthDB.findOrAddAuth('apple', profile.id, extras);
-          if (authRecord != undefined) {
-            verified(null, authRecord);
+        async (req: any, accessToken: string, refreshToken: string, idToken: any, profile: any, verified: Function) => {
+          const decoded = jwt.decode(idToken, { json: true });
+          if (decoded) {
+            const id = decoded.sub!;
+            // profile only on first login ever
+            let user;
+            if (req.body && req.body.user) {
+              user = JSON.parse(req.body.user);
+            }
+            const displayName = user ? user.name.firstName + ' ' + user.name.lastName : idToken.sub;
+            const email = user ? user.email : decoded.email || '';
+            const extras = {
+              displayName: displayName ?? '',
+              email: email ?? '',
+              picture: '',
+            };
+            const authRecord = await SBAuthDB.findOrAddAuth('apple', id, extras);
+            if (authRecord != undefined) {
+              verified(null, authRecord);
+            } else {
+              verified(null, undefined);
+            }
           } else {
             verified(null, undefined);
           }
