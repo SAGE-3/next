@@ -159,7 +159,6 @@
     "@types/node": "^18.11.9",
     "@types/openseadragon": "^3.0.3",
     "@types/passport": "^1.0.6",
-    "@types/passport-apple": "^1.1.1",
     "@types/passport-google-oauth20": "^2.0.6",
     "@types/passport-jwt": "^3.0.6",
     "@types/passport-local": "^1.0.33",
