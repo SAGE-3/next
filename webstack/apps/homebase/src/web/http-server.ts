@@ -47,6 +47,8 @@ export function createApp(assetPath: string): express.Express {
 
   // Cookies
   app.use(cookieParser());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
   // adding Helmet to enhance your API's security
   // All options

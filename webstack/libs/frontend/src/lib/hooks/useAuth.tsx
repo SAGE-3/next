@@ -33,6 +33,14 @@ function ciLogin(): void {
 }
 
 /**
+ * Endpoint to login with Apple
+ */
+function appleLogin(): void {
+  // return to host with the same protocol (http/https)
+  window.location.replace(`${window.location.protocol}//${window.location.host}/auth/apple`);
+}
+
+/**
  * Endpoint to login with Guest
  */
 async function guestLogin(): Promise<void> {
@@ -91,6 +99,7 @@ type AuthenticatedType = {
   verify: () => Promise<{ success: boolean; authentication: boolean; expire: number; auth: SBAuthSchema | null }>;
   logout: () => Promise<void>;
   googleLogin: () => void;
+  appleLogin: () => void;
   ciLogin: () => void;
   guestLogin: () => Promise<void>;
 };
@@ -104,15 +113,15 @@ export function useAuth() {
 }
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const [auth, setAuth] = useState<AuthenticatedType>({ auth: null, loading: true, expire: 0, verify, logout, googleLogin, ciLogin, guestLogin });
+  const [auth, setAuth] = useState<AuthenticatedType>({ auth: null, loading: true, expire: 0, verify, logout, googleLogin, appleLogin, ciLogin, guestLogin });
 
   useEffect(() => {
     async function fetchAuth() {
       const verifyRes = await verify();
       if (verifyRes.auth) {
-        setAuth({ auth: verifyRes.auth, loading: false, expire: verifyRes.expire, verify, logout, googleLogin, ciLogin, guestLogin });
+        setAuth({ auth: verifyRes.auth, loading: false, expire: verifyRes.expire, verify, logout, googleLogin, appleLogin, ciLogin, guestLogin });
       } else {
-        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, ciLogin, guestLogin });
+        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, appleLogin, ciLogin, guestLogin });
       }
     }
 
