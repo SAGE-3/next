@@ -10,7 +10,7 @@ type Resource = { name: string; collection: SAGE3Collection<any> };
 
 type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
 
-type Rule = { resource: Resource; field: string; condition: '=' | 'includes' };
+type Rule = { resource: Resource; field: string; condition: '=' | 'includes'; ref_prop?: string };
 type Access = { resource: Resource; action: Action[]; rules: Rule[]; allRules: boolean };
 
 type PermissionConfig = {
@@ -56,7 +56,7 @@ class SAGEPermission {
     this._config = config;
   }
   // Check ability
-  private async checkAbility(role: RoleArg, action: ActionArg, resource: string, ability: Ability) {
+  private checkAbility(role: RoleArg, action: ActionArg, resource: string, ability: Ability) {
     // Check if the role is allowed
     if (!ability.role.includes('all') && !ability.role.includes(role)) {
       return false;
@@ -73,7 +73,7 @@ class SAGEPermission {
   }
 
   // Check if the user can perform the action
-  public async can(role: RoleArg, action: ActionArg, resource: string) {
+  public can(role: RoleArg, action: ActionArg, resource: string) {
     // Filter the abilities for the role, action, and resource
     const abilities = this._config.abilites.filter((ability) => this.checkAbility(role, action, resource, ability));
     if (abilities.length === 0) {
@@ -87,7 +87,7 @@ class SAGEPermission {
   // Check_value is the value to check against
   public async allowed(role: RoleArg, action: ActionArg, resource: string, resource_id: string, check_value: string | number) {
     // Check if they can first
-    const can = await this.can(role, action, resource);
+    const can = this.can(role, action, resource);
     if (!can) {
       return false;
     }
@@ -138,5 +138,4 @@ class SAGEPermission {
   }
 }
 
-const SAGEPermissionInstance = new SAGEPermission(Perm);
-SAGEPermissionInstance.can('user', 'create', 'boards');
+export const SAGEPermissionInstance = new SAGEPermission(Perm);

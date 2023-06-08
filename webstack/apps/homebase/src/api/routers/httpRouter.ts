@@ -39,6 +39,8 @@ import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter } from './
 import { config } from '../../config';
 import { boardPermission } from '../permissions/boardPermission';
 
+import { SAGEPermissionInstance } from '../permissions/SAGE3Authorization';
+
 /**
  * API Loader function
  * @export
@@ -82,3 +84,42 @@ export function expressAPIRouter(): express.Router {
 
   return router;
 }
+
+console.log('can admin create board', SAGEPermissionInstance.can('admin', 'create', 'boards'));
+console.log('can admin read board', SAGEPermissionInstance.can('admin', 'read', 'boards'));
+console.log('can admin update board', SAGEPermissionInstance.can('admin', 'update', 'boards'));
+console.log('can admin delete board', SAGEPermissionInstance.can('admin', 'delete', 'boards'));
+console.log('can user create board', SAGEPermissionInstance.can('user', 'create', 'boards'));
+console.log('can user read board', SAGEPermissionInstance.can('user', 'read', 'boards'));
+console.log('can user update board', SAGEPermissionInstance.can('user', 'update', 'boards'));
+console.log('can user delete board', SAGEPermissionInstance.can('user', 'delete', 'boards'));
+console.log('can guest create board', SAGEPermissionInstance.can('guest', 'create', 'boards'));
+console.log('can guest read board', SAGEPermissionInstance.can('guest', 'read', 'boards'));
+console.log('can guest update board', SAGEPermissionInstance.can('guest', 'update', 'boards'));
+console.log('can guest create board', SAGEPermissionInstance.can('guest', 'create', 'boards'));
+
+console.log('can admin create room', SAGEPermissionInstance.can('admin', 'create', 'rooms'));
+console.log('can admin read room', SAGEPermissionInstance.can('admin', 'read', 'rooms'));
+console.log('can admin update room', SAGEPermissionInstance.can('admin', 'update', 'rooms'));
+console.log('can admin delete room', SAGEPermissionInstance.can('admin', 'delete', 'rooms'));
+console.log('can user create room', SAGEPermissionInstance.can('user', 'create', 'rooms'));
+console.log('can user read room', SAGEPermissionInstance.can('user', 'read', 'rooms'));
+console.log('can user update room', SAGEPermissionInstance.can('user', 'update', 'rooms'));
+console.log('can user delete room', SAGEPermissionInstance.can('user', 'delete', 'rooms'));
+console.log('can guest create room', SAGEPermissionInstance.can('guest', 'create', 'rooms'));
+console.log('can guest read room', SAGEPermissionInstance.can('guest', 'read', 'rooms'));
+console.log('can guest update room', SAGEPermissionInstance.can('guest', 'update', 'rooms'));
+console.log('can guest create room', SAGEPermissionInstance.can('guest', 'create', 'rooms'));
+
+console.log('can admin create app', SAGEPermissionInstance.can('admin', 'create', 'apps'));
+console.log('can admin read app', SAGEPermissionInstance.can('admin', 'read', 'apps'));
+console.log('can admin update app', SAGEPermissionInstance.can('admin', 'update', 'apps'));
+console.log('can admin delete app', SAGEPermissionInstance.can('admin', 'delete', 'apps'));
+console.log('can user create app', SAGEPermissionInstance.can('user', 'create', 'apps'));
+console.log('can user read app', SAGEPermissionInstance.can('user', 'read', 'apps'));
+console.log('can user update app', SAGEPermissionInstance.can('user', 'update', 'apps'));
+console.log('can user delete app', SAGEPermissionInstance.can('user', 'delete', 'apps'));
+console.log('can guest create app', SAGEPermissionInstance.can('guest', 'create', 'apps'));
+console.log('can guest read app', SAGEPermissionInstance.can('guest', 'read', 'apps'));
+console.log('can guest update app', SAGEPermissionInstance.can('guest', 'update', 'apps'));
+console.log('can guest create app', SAGEPermissionInstance.can('guest', 'create', 'apps'));
