@@ -5,6 +5,8 @@ on:
     paths:
       - 'webstack/clients/electron/**'
       - '.github/workflows/**'
+    tags:
+      - '*'
     branches:
       - dev
 
