@@ -1,1 +1,6 @@
+name: Tag client macos-arm
 
+on:
+  push:
+    tags:
+      - '*'
