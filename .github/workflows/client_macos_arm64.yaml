@@ -5,8 +5,6 @@ on:
     paths:
       - 'webstack/clients/electron/**'
       - '.github/workflows/**'
-    tags:
-      - '*'
     branches:
       - dev
 
@@ -67,9 +65,3 @@ jobs:
         with:
           name: SAGE3-darwin-arm64.dmg
           path: webstack/clients/electron/SAGE3-darwin-arm64/SAGE3-darwin-arm64.dmg
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: webstack/clients/electron/SAGE3-darwin-arm64/SAGE3-darwin-arm64.dmg
-
