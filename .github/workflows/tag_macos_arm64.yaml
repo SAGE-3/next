@@ -1,4 +1,4 @@
-name: Tag macos-arm
+name: Tag release macos-arm
 
 on:
   push:
