@@ -57,10 +57,8 @@ jobs:
           npx electron-osx-sign --type=development --signature-flags=library --hardened-runtime --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist SAGE3-darwin-arm64/SAGE3.app
           node notarize-arm.js
         working-directory: webstack/clients/electron
-      - uses: actions/upload-artifact@v3
-        with:
-          name: auto-update-sage3-darwin-arm64
-          path: webstack/clients/electron/SAGE3-darwin-arm64/SAGE3.app
+      - name: Zip app folder
+        run: zip -r auto-update-sage3-darwin-arm64.zip webstack/clients/electron/SAGE3-darwin-arm64/SAGE3.app
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
