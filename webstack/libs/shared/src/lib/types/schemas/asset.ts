@@ -47,6 +47,7 @@ export const ExtraVideoSchema = z.object({
   framerate: z.number(),
   compressor: z.string(),
   audioFormat: z.string(),
+  rotation: z.number(),
 });
 // Create the Typescript type
 export type ExtraVideoType = z.infer<typeof ExtraVideoSchema>;

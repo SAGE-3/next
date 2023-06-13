@@ -34,7 +34,7 @@ import { uploadMiddleware } from '../../../connectors/upload-connector';
 import { AssetsCollection, AppsCollection, MessageCollection, UsersCollection } from '../../collections';
 
 // Lib Imports
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
 import {
   isCSV,
@@ -236,7 +236,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
             );
             posx += width + 10;
           } else if (isVideo(elt.mimetype)) {
-            const derived = newdata.derived as ExtraImageType;
+            const derived = newdata.derived as ExtraVideoType;
             let width = tw || 800;
             let height = th || 450;
             if (derived.aspectRatio) {
