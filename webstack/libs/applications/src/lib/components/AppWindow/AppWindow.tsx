@@ -106,7 +106,7 @@ export function AppWindow(props: WindowProps) {
         setPos({ x, y });
       }
     }
-  }, [deltaPosition, selectedAppsSnapshot]);
+  }, [deltaPosition.p.x, deltaPosition.p.y, deltaPosition.id, selectedAppsSnapshot]);
 
   // Track the app store errors
   useEffect(() => {
@@ -132,7 +132,7 @@ export function AppWindow(props: WindowProps) {
       setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
       setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
     }
-  }, [props.app.data.size, props.app.data.position, selectedApps]);
+  }, [props.app.data.size.width, props.app.data.size.height, props.app.data.position.x, props.app.data.position.y, selectedApps]);
 
   // Throttle the position update
   const throttlePositionUpdate = throttle(UpdateRate, (x: number, y: number) => {

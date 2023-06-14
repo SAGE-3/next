@@ -5,9 +5,10 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+
 import { Box, Text, useColorModeValue } from '@chakra-ui/react';
+
 import { useUIStore } from '@sage3/frontend';
-import React from 'react';
 
 type WindowTitleProps = {
   size: { width: number; height: number };
@@ -29,35 +30,31 @@ export function WindowTitle(props: WindowTitleProps) {
 
   const appTitles = useUIStore((state) => state.showAppTitle);
 
-  return (
-    <>
-      {appTitles && (
-        <Box
-          position="absolute"
-          top="0px"
-          left="0px"
-          width={size.width}
-          transform={`translate(-${2 / scale}px, calc(-100% - ${4 / scale}px))`}
-          display="flex"
-          justifyContent="left"
-          alignItems="center"
-          pointerEvents="none"
-        >
-          <Text
-            color={titleColor}
-            fontSize={16 / scale}
-            whiteSpace="nowrap"
-            textOverflow="ellipsis"
-            overflow="hidden"
-            background={titleBackground}
-            backdropFilter={`blur(${Math.max(5, 5 / scale)}px) brightness(${titleBrightness})`}
-            borderRadius={6}
-            px={2}
-          >
-            {title}
-          </Text>
-        </Box>
-      )}
-    </>
-  );
+  if (!appTitles) return null;
+
+  return <Box
+    position="absolute"
+    top="0px"
+    left="0px"
+    width={size.width}
+    transform={`translate(-${2 / scale}px, calc(-100% - ${4 / scale}px))`}
+    display="flex"
+    justifyContent="left"
+    alignItems="center"
+    pointerEvents="none"
+  >
+    <Text
+      color={titleColor}
+      fontSize={16 / scale}
+      whiteSpace="nowrap"
+      textOverflow="ellipsis"
+      overflow="hidden"
+      background={titleBackground}
+      backdropFilter={`blur(${Math.max(5, 5 / scale)}px) brightness(${titleBrightness})`}
+      borderRadius={6}
+      px={2}
+    >
+      {title}
+    </Text>
+  </Box>;
 }

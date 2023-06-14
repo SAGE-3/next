@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { Box, Spinner } from '@chakra-ui/react';
-import React from 'react';
 
 type ProcessingBoxProps = {
   size: { width: number; height: number };
@@ -27,6 +26,7 @@ export function ProcessingBox(props: ProcessingBoxProps) {
   const selected = props.selected;
   const size = props.size;
   const colors = props.colors;
+
   return (
     <Box
       position="absolute"

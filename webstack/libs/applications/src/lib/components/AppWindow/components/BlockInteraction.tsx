@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { Box } from '@chakra-ui/react';
-import React from 'react';
 
 type BlockInteractionProps = {
   innerBorderRadius: number;
@@ -18,6 +17,7 @@ type BlockInteractionProps = {
  */
 export function BlockInteraction(props: BlockInteractionProps) {
   const innerBorderRadius = props.innerBorderRadius;
+
   return (
     <Box
       position="absolute"

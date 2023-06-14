@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { Box } from '@chakra-ui/react';
-import React from 'react';
 
 type WindowBorderProps = {
   size: { width: number; height: number };
@@ -32,6 +31,7 @@ export function WindowBorder(props: WindowBorderProps) {
   const selectColor = props.selectColor;
   const borderRadius = props.borderRadius;
   const dragging = props.dragging;
+
   return (
     <Box
       position="absolute"
