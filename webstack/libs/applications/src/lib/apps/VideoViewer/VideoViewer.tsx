@@ -73,7 +73,7 @@ function AppComponent(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
-      const extras = myasset.data.derived as ExtraImageType;
+      const extras = myasset.data.derived as ExtraVideoType;
       setAspecRatio(extras.aspectRatio || 1);
       // Update the app title
       update(props._id, { title: myasset?.data.originalfilename });
@@ -496,6 +496,7 @@ function ToolbarComponent(props: App): JSX.Element {
                 <ListItem>Audio: {extras?.audioFormat}</ListItem>
                 <ListItem>Video: {extras?.compressor}</ListItem>
                 <ListItem>Framerate: {extras?.framerate}</ListItem>
+                <ListItem>Rotation: {extras?.rotation}</ListItem>
               </UnorderedList>
             </PopoverBody>
           </PopoverContent>
