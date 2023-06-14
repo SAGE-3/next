@@ -58,8 +58,9 @@ jobs:
           node notarize-arm.js
         working-directory: webstack/clients/electron
       - name: Zip app folder
-        run: zip -r auto-update-sage3-darwin-arm64.zip . -i SAGE3.app
-        working-directory: webstack/clients/electron/SAGE3-darwin-arm64
+        run: |
+          cd webstack/clients/electron/SAGE3-darwin-arm64
+          zip -r auto-update-sage3-darwin-arm64.zip . -i SAGE3.app
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
