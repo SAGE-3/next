@@ -127,9 +127,15 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
       };
     } else if (isVideo(fileType)) {
       // get the dimensions of the video from the medata
-      const imgWidth = exif['ImageWidth'] || 1280;
-      const imgHeight = exif['ImageHeight'] || 720;
-      // video file: store width and height in the derived field
+      let imgWidth = exif['ImageWidth'] || 1280;
+      let imgHeight = exif['ImageHeight'] || 720;
+      const rotation = exif['Rotation'] || 0;
+      if (rotation === 90 || rotation === 270) {
+        // swap width and height
+        const tmp = imgWidth;
+        imgWidth = imgHeight;
+        imgHeight = tmp;
+      }
       const extras: ExtraVideoType = {
         filename: file,
         url: '/' + getStaticAssetUrl(file),
@@ -144,6 +150,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
         framerate: exif['VideoFrameRate'] || 0,
         compressor: exif['CompressorName'] || exif['CompressorID'] || '',
         audioFormat: exif['AudioFormat'] || '',
+        rotation: rotation,
       };
       return {
         dateCreated: realDate.toISOString(),

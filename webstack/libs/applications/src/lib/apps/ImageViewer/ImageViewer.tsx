@@ -75,7 +75,7 @@ function AppComponent(props: App): JSX.Element {
         setSizes(extra.sizes);
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
-        //TODO Extract image size
+        // TODO Extract image size
         const localOrigSizes = { 'width': extra.width, 'height': extra.height }
         setOrigSizes(localOrigSizes)
 
