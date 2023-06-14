@@ -54,11 +54,6 @@ jobs:
       - name: Zip app folder
         run: |
           cd SAGE3-darwin-arm64
-          rm -fr SAGE3.app/Contents/Resources/app/node_modules/electron-installer*
-          rm -fr SAGE3.app/Contents/Resources/app/node_modules/electron-winstaller*
-          rm -fr SAGE3.app/Contents/Resources/app/node_modules/appdmg
-          rm -fr SAGE3.app/Contents/Resources/*.lproj
-          rm -fr Contents/Frameworks/Electron\ Framework.framework/Versions/A/Resources/*.lproj
           zip -r -9 auto-update-sage3-darwin-arm64.zip SAGE3.app
       - name: Release
         uses: softprops/action-gh-release@v1
