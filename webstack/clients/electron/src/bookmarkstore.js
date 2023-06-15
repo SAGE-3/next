@@ -62,3 +62,4 @@ module.exports = {
     store.set('bookmarks', defaultBookmarks);
   },
 };
+

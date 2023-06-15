@@ -10,3 +10,4 @@ export * from './GoogleAdapter';
 export * from './GuestAdapter';
 export * from './JWTAdapter';
 export * from './CILoginAdapter';
+export * from './AppleAdapter';

@@ -39,7 +39,7 @@ async function checkForUpdates(server, opendialog = false) {
   try {
     const response = await fetch(update_url, update_server.startsWith('https') ? { agent } : undefined);
     const data = await response.json();
-    console.log('DATA', data.releases[0]);
+    console.log('Updater> release', data.releases[0]);
     // if not the expected data structure, stop
     if (!data.currentRelease) return;
     const remotev = semver.parse(data.currentRelease);
@@ -85,7 +85,7 @@ function showUpdateDialog(current, release) {
       if (response === 0) {
         setImmediate(() => {
           // pick the right url for current machine
-          console.log('update url', process.platform, process.arch);
+          console.log('Updater> arch', process.platform, process.arch);
           let platform = process.platform;
           if (platform === 'darwin') {
             if (process.arch === 'arm64') {
