@@ -7,19 +7,39 @@
  */
 
 import { useEffect } from 'react';
-import { CreateUserModal, useRouteNav, useUser } from '@sage3/frontend';
+import { CreateUserModal, useAuth, useRouteNav, useUser } from '@sage3/frontend';
 import { UserSchema } from '@sage3/shared/types';
 
+/**
+ * Account Creation page when a user first joins the application
+ */
 export function AccountPage() {
+  const { auth } = useAuth();
   const { user, create } = useUser();
   const { toHome } = useRouteNav();
 
+  // If the user has been set, go to the homepage
   useEffect(() => {
     if (user) {
       toHome();
     }
   }, [user]);
 
+  // If the user is a spectator, create a user for them
+  useEffect(() => {
+    if (auth && auth.provider === 'spectator') {
+      handleCreateUser({
+        name: `Spectator#${Math.floor(Math.random() * 10000)}`,
+        email: ``,
+        color: 'red',
+        profilePicture: '',
+        userType: 'client',
+        userRole: 'spectator',
+      });
+    }
+  }, [auth]);
+
+  // Create a user
   const handleCreateUser = (user: UserSchema) => {
     if (create) {
       create(user);

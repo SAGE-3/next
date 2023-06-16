@@ -1,21 +1,15 @@
 import { SAGE3Collection } from '@sage3/backend';
-import { UserSchema } from '@sage3/shared/types';
 import { AppsCollection, BoardsCollection, RoomsCollection } from '../collections';
 
-type Action = 'create' | 'read' | 'update' | 'delete' | 'all';
-type ActionArg = 'create' | 'read' | 'update' | 'delete';
-type Role = UserSchema['userRole'] | 'all';
-type RoleArg = 'admin' | 'user' | 'guest' | 'spectator';
-type Resource = { name: string; collection: SAGE3Collection<any> };
+import { SAGE3Ability, ResourceArg, Action, ActionArg, RoleArg } from '@sage3/shared';
 
-type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
+type Resource = { name: ResourceArg; collection: SAGE3Collection<any> };
 
 type Rule = { resource: Resource; field: string; condition: '=' | 'includes'; ref_prop?: string };
 type Access = { resource: Resource; action: Action[]; rules: Rule[]; allRules: boolean };
 
 type PermissionConfig = {
   resources: Resource[];
-  abilites: Ability[];
   access: Access[];
 };
 
@@ -25,12 +19,6 @@ const roomResource: Resource = { name: 'rooms', collection: RoomsCollection };
 
 const Perm: PermissionConfig = {
   resources: [appResource, boardResource, roomResource],
-  abilites: [
-    { role: ['admin'], action: ['all'], resource: [appResource, boardResource, roomResource] },
-    { role: ['user'], action: ['all'], resource: [appResource, boardResource, roomResource] },
-    { role: ['guest', 'spectator'], action: ['read'], resource: [appResource, boardResource, roomResource] },
-    { role: ['guest'], action: ['update'], resource: [appResource] },
-  ],
   access: [
     {
       resource: boardResource,
@@ -55,39 +43,13 @@ class SAGEPermission {
   constructor(config: PermissionConfig) {
     this._config = config;
   }
-  // Check ability
-  private checkAbility(role: RoleArg, action: ActionArg, resource: string, ability: Ability) {
-    // Check if the role is allowed
-    if (!ability.role.includes('all') && !ability.role.includes(role)) {
-      return false;
-    }
-    // Check if the action is allowed
-    if (!ability.action.includes('all') && !ability.action.includes(action)) {
-      return false;
-    }
-    // Check if the resource is allowed
-    if (!ability.resource.find((el) => el.name === resource)) {
-      return false;
-    }
-    return true;
-  }
-
-  // Check if the user can perform the action
-  public can(role: RoleArg, action: ActionArg, resource: string) {
-    // Filter the abilities for the role, action, and resource
-    const abilities = this._config.abilites.filter((ability) => this.checkAbility(role, action, resource, ability));
-    if (abilities.length === 0) {
-      return false;
-    }
-    return true;
-  }
 
   // Check if the user is authorized to perform the action on the specified resource
   // Resource_id is the id of the resource
   // Check_value is the value to check against
-  public async allowed(role: RoleArg, action: ActionArg, resource: string, resource_id: string, check_value: string | number) {
+  public async allowed(role: RoleArg, action: ActionArg, resource: Resource['name'], resource_id: string, check_value: string | number) {
     // Check if they can first
-    const can = this.can(role, action, resource);
+    const can = SAGE3Ability.can(role, action, resource);
     if (!can) {
       return false;
     }

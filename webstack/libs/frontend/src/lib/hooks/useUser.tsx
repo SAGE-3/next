@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -15,12 +15,13 @@
 
 import { User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { APIHttp, SocketAPI } from '../api';
+import { APIHttp } from '../api';
 import { useAuth } from './useAuth';
 
 const UserContext = createContext({
   user: undefined as User | undefined,
   loading: true,
+  exists: false,
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
 });
@@ -33,20 +34,23 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const { auth } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  console.log(auth);
+  const [exists, setExists] = useState(false);
 
   const fetchUser = useCallback(async () => {
     if (auth) {
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
         setUser(userResponse.data[0]);
+        setExists(true);
       } else {
         setUser(undefined);
         setLoading(false);
+        setExists(false);
       }
     } else {
       setUser(undefined);
       setLoading(false);
+      setExists(false);
     }
   }, [auth]);
 
@@ -64,6 +68,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         const userResponse = await APIHttp.POST<User>('/users/create', user);
         if (userResponse.data) {
           setUser(userResponse.data[0]);
+          setExists(true);
         }
       }
     },
@@ -89,5 +94,5 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     [user]
   );
 
-  return <UserContext.Provider value={{ user, loading, update, create }}>{props.children}</UserContext.Provider>;
+  return <UserContext.Provider value={{ user, loading, exists, update, create }}>{props.children}</UserContext.Provider>;
 }

@@ -60,6 +60,7 @@
       "guest",
       "jwt",
       "google",
+      "spectator",
       // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
@@ -68,6 +69,11 @@
     "guestConfig": {
        // Endpoint for the guest login. No need to change this
       "routeEndpoint": "/auth/guest"
+    },
+        // Spectator configuration
+    "spectatorConfig": {
+       // Endpoint for the guest login. No need to change this
+      "routeEndpoint": "/auth/spectator"
     },
     // Google configuration
     "googleConfig": {
