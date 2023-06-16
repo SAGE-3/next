@@ -328,6 +328,15 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
+  // When closing the app, deselect it
+  useEffect(() => {
+    return () => {
+      if (selectedApp === props.app._id) {
+        setSelectedApp('');
+      }
+    }
+  }, [selectedApp]);
+
   return (
     <Rnd
       bounds="parent"
