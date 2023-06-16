@@ -70,9 +70,9 @@
        // Endpoint for the guest login. No need to change this
       "routeEndpoint": "/auth/guest"
     },
-        // Spectator configuration
+    // Spectator configuration
     "spectatorConfig": {
-       // Endpoint for the guest login. No need to change this
+      // Endpoint for the guest login. No need to change this
       "routeEndpoint": "/auth/spectator"
     },
     // Google configuration

@@ -26,6 +26,8 @@ import { CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor, usePresenc
 import { useUser, useAuth } from '@sage3/frontend';
 import { MdAdd, MdExitToApp, MdSearch, MdSort } from 'react-icons/md';
 
+import { SAGE3Ability } from '@sage3/shared';
+
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
   selectedRoom: Room | undefined;
@@ -40,14 +42,8 @@ export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
 
-  const { auth } = useAuth();
-  const [isGuest, setIsGuest] = useState(true);
-  // Are you a guest?
-  useEffect(() => {
-    if (auth) {
-      setIsGuest(auth.provider === 'guest');
-    }
-  }, [auth]);
+  // Abilities
+  const canCreateRoom = SAGE3Ability.can(user?.data.userRole, 'create', 'room');
 
   // Data stores
   const storeError = useRoomStore((state) => state.error);
@@ -140,13 +136,8 @@ export function RoomList(props: RoomListProps) {
           <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
             <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
               <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label='create room' borderRadius="md" mr="2" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label="create room" borderRadius="md" mr="2" fontSize="3xl" isDisabled={!canCreateRoom} onClick={onOpen}>
                   <MdAdd />
-                </Button>
-              </Tooltip>
-              <Tooltip label="Enter Board by ID" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label='enter board' borderRadius="md" fontSize="3xl" onClick={onOpenEnterBoard}>
-                  <MdExitToApp />
                 </Button>
               </Tooltip>
             </Box>

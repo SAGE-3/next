@@ -12,11 +12,12 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { ErrorBoundary } from 'react-error-boundary';
 import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { duplicate } from 'vega-lite';
 import { BsTrash } from 'react-icons/bs';
 import { HiOutlineTrash } from 'react-icons/hi';
+import { SAGE3Ability } from '@sage3/shared';
 
 type AppToolbarProps = {};
 
@@ -60,6 +61,11 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
+
+  //Abilities
+  const { user } = useUser();
+  const canDeleteApp = SAGE3Ability.can(user?.data.userRole, 'delete', 'app');
+  const canDuplicateApp = SAGE3Ability.can(user?.data.userRole, 'create', 'app');
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {
@@ -188,12 +194,26 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Duplicate App'} openDelay={400} ml="1">
-              <Button onClick={() => duplicate([app._id])} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+              <Button
+                onClick={() => duplicate([app._id])}
+                backgroundColor={commonButtonColors}
+                size="xs"
+                mx="1"
+                p={0}
+                isDisabled={!canDuplicateApp}
+              >
                 <MdCopyAll size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
-              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
+              <Button
+                onClick={() => deleteApp(app._id)}
+                backgroundColor={commonButtonColors}
+                size="xs"
+                mr="1"
+                p={0}
+                isDisabled={!canDeleteApp}
+              >
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>

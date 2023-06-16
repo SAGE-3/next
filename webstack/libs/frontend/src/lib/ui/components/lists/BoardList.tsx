@@ -23,8 +23,9 @@ import {
 
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth, useUser } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 type BoardListProps = {
   onBoardClick: (board: Board) => void;
@@ -53,14 +54,9 @@ export function BoardList(props: BoardListProps) {
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
 
-  const { auth } = useAuth();
-  const [isGuest, setIsGuest] = useState(true);
-  // Are you a guest?
-  useEffect(() => {
-    if (auth) {
-      setIsGuest(auth.provider === 'guest');
-    }
-  }, [auth]);
+  // Abilities
+  const { user } = useUser();
+  const canCreateBoards = SAGE3Ability.can(user?.data.userRole, 'create', 'board');
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');
@@ -144,7 +140,7 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label='create a board' borderRadius="md" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label="create a board" borderRadius="md" fontSize="3xl" isDisabled={!canCreateBoards} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>

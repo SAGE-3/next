@@ -24,6 +24,7 @@ import {
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 export interface NavProps {
   fitApps: () => void;
@@ -44,6 +45,10 @@ export function NavigationPanel(props: NavProps) {
   const presences = usePresenceStore((state) => state.presences);
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+
+  // Abilities
+  const canOrganize = SAGE3Ability.can(user?.data.userRole, 'update', 'app');
+  const canDelete = SAGE3Ability.can(user?.data.userRole, 'delete', 'app');
 
   // user's viewport
   const usersPresence = presences.find((el) => el.data.userId === user?._id);
@@ -242,14 +247,29 @@ export function NavigationPanel(props: NavProps) {
                 />
               </Tooltip>
               <Tooltip label="Clear Board" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
+                <IconButton
+                  icon={<MdDelete />}
+                  colorScheme="teal"
+                  size="sm"
+                  aria-label="clear"
+                  onClick={props.clearBoard}
+                  isDisabled={!canDelete}
+                />
               </Tooltip>
             </Box>
 
             {/* Organize Apps and Fit View */}
             <Box display="flex" mb="2">
               <Tooltip label="Organize Apps" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mr="2" size="sm" aria-label="clear" />
+                <IconButton
+                  icon={<MdGridView />}
+                  onClick={organizeOnOpen}
+                  colorScheme="teal"
+                  mr="2"
+                  size="sm"
+                  aria-label="clear"
+                  isDisabled={!canOrganize}
+                />
               </Tooltip>
               <Tooltip label="Show All Apps" placement="top" hasArrow openDelay={500}>
                 <IconButton icon={<MdFitScreen />} colorScheme="teal" size="sm" aria-label="fit apps" onClick={props.fitApps} />

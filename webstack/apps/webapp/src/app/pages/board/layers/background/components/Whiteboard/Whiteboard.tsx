@@ -15,6 +15,7 @@ import { WebsocketProvider } from 'y-websocket';
 // SAGE Imports
 import { useBoardStore, useHotkeys, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
+import { SAGE3Ability } from '@sage3/shared';
 
 type WhiteboardProps = {
   boardId: string;
@@ -22,6 +23,9 @@ type WhiteboardProps = {
 
 export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
+
+  // Can annotate
+  const canAnnotate = SAGE3Ability.can(user?.data.userRole, 'update', 'board');
 
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -122,7 +126,7 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc) {
+      if (yLines && yDoc && canAnnotate) {
         e.currentTarget.setPointerCapture(e.pointerId);
         const id = Date.now().toString();
         const yPoints = new Y.Array<number>();
@@ -246,7 +250,9 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'shift+w',
     () => {
-      setWhiteboardMode(!whiteboardMode);
+      if (canAnnotate) {
+        setWhiteboardMode(!whiteboardMode);
+      }
     },
     { dependencies: [whiteboardMode] }
   );

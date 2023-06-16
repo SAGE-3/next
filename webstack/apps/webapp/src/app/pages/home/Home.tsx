@@ -22,7 +22,7 @@ import {
   usePluginStore,
   useConfigStore,
 } from '@sage3/frontend';
-import { Board, OpenConfiguration, Room } from '@sage3/shared/types';
+import { Board, Room } from '@sage3/shared/types';
 
 import { useParams } from 'react-router-dom';
 

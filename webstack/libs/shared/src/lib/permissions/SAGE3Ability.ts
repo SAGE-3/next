@@ -10,7 +10,7 @@ import { UserSchema } from '@sage3/shared/types';
 
 // Actions
 export type Action = ActionArg | 'all';
-export type ActionArg = 'create' | 'read' | 'update' | 'delete' | 'upload' | 'download';
+export type ActionArg = 'create' | 'read' | 'update' | 'delete' | 'upload' | 'download' | 'resize' | 'move';
 
 // Roles
 export type Role = RoleArg | 'all';
@@ -18,7 +18,7 @@ export type RoleArg = UserSchema['userRole'];
 
 // Resources
 export type Resource = ResourceArg | 'all';
-export type ResourceArg = 'assets' | 'apps' | 'boards' | 'message' | 'plugin' | 'presence' | 'rooms';
+export type ResourceArg = 'assets' | 'app' | 'board' | 'message' | 'plugin' | 'presence' | 'room' | 'user';
 
 // Abliity
 type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
@@ -31,10 +31,11 @@ const config: AbilityConfig = {
   abilites: [
     { role: ['admin'], resource: ['all'], action: ['all'] },
     { role: ['user'], resource: ['all'], action: ['all'] },
-    { role: ['guest'], resource: ['apps', 'presence'], action: ['create', 'read', 'update'] },
-    { role: ['guest'], resource: ['assets', 'boards', 'message', 'plugin', 'rooms'], action: ['read'] },
+    { role: ['guest'], resource: ['app', 'presence', 'user'], action: ['create', 'read', 'update'] },
+    { role: ['guest'], resource: ['app'], action: ['resize', 'move'] },
+    { role: ['guest'], resource: ['assets', 'board', 'message', 'plugin', 'room'], action: ['read'] },
     { role: ['guest'], resource: ['assets'], action: ['upload', 'download'] },
-    { role: ['spectator'], resource: ['assets', 'apps', 'boards', 'message', 'plugin', 'presence', 'rooms'], action: ['read'] },
+    { role: ['spectator'], resource: ['assets', 'app', 'board', 'message', 'plugin', 'presence', 'room', 'user'], action: ['read'] },
     { role: ['spectator'], resource: ['assets'], action: ['download'] },
   ],
 };
@@ -55,7 +56,7 @@ class SAGE3AbilityClass {
     this._config = config;
   }
   // Check if a user role can perform a specific action ability
-  private checkAbility(role: RoleArg, action: ActionArg, resource: string, ability: Ability) {
+  private checkAbility(role: RoleArg, action: ActionArg, resource: ResourceArg, ability: Ability) {
     // Check if the role is allowed
     if (!ability.role.includes('all') && !ability.role.includes(role)) {
       return false;
@@ -65,14 +66,17 @@ class SAGE3AbilityClass {
       return false;
     }
     // Check if the resource is allowed
-    if (!ability.resource.find((el) => el === resource)) {
+    if (!ability.resource.includes('all') && !ability.resource.includes(resource)) {
       return false;
     }
     return true;
   }
 
   // Check if the user can perform the action
-  public can(role: RoleArg, action: ActionArg, resource: ResourceArg) {
+  public can(role: RoleArg | undefined, action: ActionArg, resource: ResourceArg) {
+    if (!role) {
+      return false;
+    }
     // Filter the abilities for the role, action, and resource
     const abilities = this._config.abilites.filter((ability) => this.checkAbility(role, action, resource, ability));
     // Return true if the user has at least one ability

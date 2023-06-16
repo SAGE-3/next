@@ -11,7 +11,6 @@ import { Box, Input, InputGroup, InputRightElement, Select, useColorModeValue, u
 
 import { User } from '@sage3/shared/types';
 import { usePresenceStore, UserCard, useRoomStore, useUsersStore } from '@sage3/frontend';
-import { useUser, useAuth } from '@sage3/frontend';
 import { MdSearch } from 'react-icons/md';
 
 type UserListProps = {
@@ -20,23 +19,14 @@ type UserListProps = {
 };
 
 export function UserList(props: UserListProps) {
-  // Me
-  const { user } = useUser();
-  const { auth } = useAuth();
-
   // Data stores
   const users = useUsersStore((state) => state.users);
-  console.log(users);
-  const presences = usePresenceStore((state) => state.presences);
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
-  const deleteRoom = useRoomStore((state) => state.delete);
   const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   // UI elements
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
   const toast = useToast();
-  const [filteredUsers, setFilteredUsers] = useState<User[] | null>(null);
   const [search, setSearch] = useState('');
 
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');

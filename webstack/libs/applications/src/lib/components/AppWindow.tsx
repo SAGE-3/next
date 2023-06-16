@@ -15,8 +15,9 @@ import { ResizeDirection } from 're-resizable';
 // Slowdown the events
 import { throttle } from 'throttle-debounce';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
 import { App, AppSchema } from '../schema';
+import { SAGE3Ability } from '@sage3/shared';
 
 // Time in ms to send updates to the server
 const UpdateRate = 1000 / 3;
@@ -33,15 +34,12 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Guest mode disabled for now
-  const { auth } = useAuth();
+  const { user } = useUser();
 
-  const [isGuest, setIsGuest] = useState(true);
-  // Are you a guest?
-  useEffect(() => {
-    if (auth) {
-      setIsGuest(auth.provider === 'guest');
-    }
-  }, [auth]);
+  // Can update
+  const canMove = SAGE3Ability.can(user?.data.userRole, 'move', 'app');
+  const canResize = SAGE3Ability.can(user?.data.userRole, 'resize', 'app');
+  const canDelete = SAGE3Ability.can(user?.data.userRole, 'delete', 'app');
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
@@ -353,11 +351,12 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
-      enableResizing={enableResize}
+      enableResizing={enableResize && canResize}
+      disableDragging={!canMove}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto',
+        pointerEvents: spacebarPressed || lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -377,12 +376,6 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      // TODO: Make this not required in the future with persmissions system
-      // Not ideal but right now we need this to prevent guests from moving apps.
-      // This happens locally before updating the server.
-      // enableResizing={!isGuest}
-      // disableDragging={isGuest}
-      disableDragging={false}
     >
       {/* Title Above app */}
       {appTitles ? (

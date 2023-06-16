@@ -59,6 +59,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
   description: string;
+  isDisabled?: boolean;
 }
 
 // Button with a title and using the font size from parent panel
@@ -72,16 +73,18 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
         <IconButton
           borderRadius="md"
           h="auto"
-          p={0} m={0}
+          p={0}
+          m={0}
           fontSize="4xl"
           justifyContent="flex-center"
           aria-label={props.description}
           icon={props.icon}
-          background={"transparent"}
+          background={'transparent'}
           color={props.isActive ? iconHoverColor : iconColor}
           transition={'all 0.2s'}
           variant="ghost"
           onClick={props.onClick}
+          isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
         />
       </Tooltip>
@@ -113,11 +116,11 @@ export function Panel(props: PanelProps) {
   if (!panel) return null;
   const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
-  const zIndex = panels.findIndex(el => el.name == panel.name);
+  const zIndex = panels.findIndex((el) => el.name == panel.name);
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);
 
   // Track the size of the panel
-  const [w,] = useState(props.width);
+  const [w] = useState(props.width);
 
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
@@ -205,7 +208,7 @@ export function Panel(props: PanelProps) {
 
   const handleCloseClick = (e: any) => {
     e.stopPropagation();
-    update({ show: false })
+    update({ show: false });
   };
 
   const handleMinimizeClick = (e: any) => {
@@ -216,7 +219,7 @@ export function Panel(props: PanelProps) {
   // Handle a drag start of the panel
   const handleDragStart = () => {
     bringPanelForward(props.name);
-  }
+  };
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
@@ -277,7 +280,10 @@ export function Panel(props: PanelProps) {
           display="flex"
           transition="all .2s "
           bg={panelBackground}
-          pt={1} pr={2} pb={2} pl={1}
+          pt={1}
+          pr={2}
+          pb={2}
+          pl={1}
           borderRadius={'md'}
           ref={ref}
           width="100%"
